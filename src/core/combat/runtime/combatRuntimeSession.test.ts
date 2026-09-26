@@ -2,8 +2,14 @@ import { expect, it, vi } from 'vitest';
 import { CombatRuntimeAssembly, type CombatOperatorProgram } from './combatRuntimeAssembly';
 import type {
   CompiledSkillProgram,
+  ResolvedActionSequence,
   ResolvedSkillBuffDefinition,
 } from '../../compiler/combatProgram';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import type {
+  ActionGraphNode,
+  ActionGraphStep,
+} from '../../../../packages/game-data-contract/src/actionGraph';
 import type { CombatStateGraph } from '../state/combatState';
 import { CombatRuntimeSession } from './combatRuntimeSession';
 import { StandardPlayerDamageEnvironment } from './standardPlayerDamageEnvironment';
@@ -12,6 +18,30 @@ import { AbilityEntityChildSkillPrograms } from '../abilities/abilityEntityChild
 import { CombatOperationPrograms } from '../actions/combatOperationPrograms';
 import { CombatSkillPrograms } from '../skills/combatSkillPrograms';
 import { ProjectileCallbackPrograms } from '../abilities/projectileCallbackPrograms';
+
+const compileGraphEntry = (
+  revision: string,
+  entry: string | null,
+  nodes: Record<string, ActionGraphNode>,
+): ResolvedActionSequence => ({
+  graph: createActionGraphCompilation({ nodes }, 1, revision).compileAll(),
+  entry,
+  callSite: revision,
+});
+
+const chainEntry = (
+  revision: string,
+  actions: readonly ActionGraphStep[],
+): ResolvedActionSequence => {
+  const nodes: Record<string, ActionGraphNode> = {};
+  actions.forEach((action, index) => {
+    nodes[`step-${index}`] = {
+      action,
+      next: index + 1 < actions.length ? `step-${index + 1}` : null,
+    };
+  });
+  return compileGraphEntry(revision, actions.length === 0 ? null : 'step-0', nodes);
+};
 
 const enemy = {
   source: { kind: 'custom' as const, level: 1 },
@@ -112,9 +142,9 @@ function createFixture(
         ? [
             {
               startFrame: 2,
-              sequence: {
-                steps: [
-                  {
+              sequence: compileGraphEntry('camera-sensitive-selection', 'branch', {
+                branch: {
+                  action: {
                     kind: 'conditional',
                     parameters: {
                       condition: {
@@ -123,33 +153,34 @@ function createFixture(
                         value: { kind: 'constant', value: 0 },
                       },
                     },
-                    whenTrue: {
-                      steps: [
-                        {
-                          kind: 'modifyActionValue',
-                          parameters: {
-                            key: 'selected',
-                            operation: 'assign',
-                            value: { kind: 'constant', value: 1 },
-                          },
-                        },
-                      ],
-                    },
-                    whenFalse: {
-                      steps: [
-                        {
-                          kind: 'modifyActionValue',
-                          parameters: {
-                            key: 'selected',
-                            operation: 'assign',
-                            value: { kind: 'constant', value: 2 },
-                          },
-                        },
-                      ],
+                    whenTrue: { $sequence: 'selected-one' },
+                    whenFalse: { $sequence: 'selected-two' },
+                  },
+                  next: null,
+                },
+                'selected-one': {
+                  action: {
+                    kind: 'modifyActionValue',
+                    parameters: {
+                      key: 'selected',
+                      operation: 'assign',
+                      value: { kind: 'constant', value: 1 },
                     },
                   },
-                ],
-              },
+                  next: null,
+                },
+                'selected-two': {
+                  action: {
+                    kind: 'modifyActionValue',
+                    parameters: {
+                      key: 'selected',
+                      operation: 'assign',
+                      value: { kind: 'constant', value: 2 },
+                    },
+                  },
+                  next: null,
+                },
+              }),
             },
           ]
         : [],
@@ -173,14 +204,12 @@ function createFixture(
     abilityEventResponses: (['ownerSwitchToGuard', 'ownerSwitchToCenter'] as const).map(event => ({
       event,
       priority: 0,
-      sequence: {
-        steps: [
-          {
-            kind: 'modifyActionValue',
-            parameters: { key: 'count', operation: 'add', value: { kind: 'constant', value: 1 } },
-          },
-        ],
-      },
+      sequence: chainEntry(`switch-counter-${event}`, [
+        {
+          kind: 'modifyActionValue',
+          parameters: { key: 'count', operation: 'add', value: { kind: 'constant', value: 1 } },
+        },
+      ]),
     })),
   };
   const operators: CombatOperatorProgram[] = [
@@ -197,19 +226,16 @@ function createFixture(
         {
           key: 'switch-counter',
           initialBlackboard: {},
-          enableSequence: {
-            steps: [
-              {
-                kind: 'applyBuff',
-                parameters: {
-                  buffId: 'switch-counter',
-                  definition: switchCounter,
-                  target: 'caster',
-                  asChildBuff: true,
-                },
+          enableSequence: chainEntry('switch-counter-enable', [
+            {
+              kind: 'applyBuff',
+              parameters: {
+                buffId: 'switch-counter',
+                target: 'caster',
+                asChildBuff: true,
               },
-            ],
-          },
+            },
+          ]),
         },
       ],
     },

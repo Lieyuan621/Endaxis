@@ -4,10 +4,11 @@
  */
 import type {
   OperatorDefinition,
-  SkillDefinition,
   SkillGroupDefinition,
+  SkillDefinition,
   SkillLevelSource,
 } from '../game-data/operatorDefinition';
+
 import type { SkillCastDocument } from '../project/schema';
 import { listSkillGroupDefinitionBindings } from '../game-data/operatorSkillDefinitions';
 
@@ -17,14 +18,14 @@ export interface ResolvedSkillDefinition {
   readonly definition: SkillDefinition;
   /** 定义所属的编辑器技能库分组；只能用于展示、放置和兼容旧项目身份。 */
   readonly group: SkillGroupDefinition;
-  /** 单技能等级来源；旧生成产物迁移完成前才允许回退到组字段。 */
+  /** 该技能使用的等级来源；自定义技能未指定时沿用被覆盖技能的设置。 */
   readonly levelSource: SkillLevelSource;
   readonly variantKey?: string;
 }
 
 /** 解析技能块当前引用的游戏数据模板，不考虑完整自定义覆盖。 */
 export function resolveSkillTemplateDefinition(
-  cast: SkillCastDocument,
+  cast: Pick<SkillCastDocument, 'id' | 'source'>,
   operator: OperatorDefinition,
 ): ResolvedSkillDefinition {
   const source = cast.source;
@@ -92,7 +93,7 @@ export function resolveSkillTemplateDefinition(
  * 调用方仍需按当前技能等级解析 `LevelValues`，并应用构筑修正。
  */
 export function resolveEffectiveSkillDefinition(
-  cast: SkillCastDocument,
+  cast: Pick<SkillCastDocument, 'id' | 'source' | 'customDefinition'>,
   operator: OperatorDefinition,
 ): ResolvedSkillDefinition {
   const source = cast.source;

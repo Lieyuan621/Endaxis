@@ -5,6 +5,22 @@ import {
 } from '../src/source/presentationActions.ts';
 import { parseKnownNativeActionSequenceSource } from '../src/source/actionLeaf.ts';
 import { compileCombatActionSequenceSource } from '../src/compiler/buffs/buffRuntimeProjection.ts';
+import type { CombatActionProjectionContextSource } from '../src/compiler/combatProjectionCommon.ts';
+import {
+  createActionGraphBuilder,
+  readActionGraphChain,
+} from '../src/compiler/actions/actionGraphBuilder.ts';
+import type { CompiledBuffStepSource } from '../src/compiler/actions/combatActionProjectionTypes.ts';
+
+/** 图编译包装：返回入口同层动作数组，保持旧断言的扁平比较形状。 */
+function projectSequence(
+  source: Parameters<typeof compileCombatActionSequenceSource>[0],
+  context: Omit<CombatActionProjectionContextSource, 'graph'>,
+) {
+  const builder = createActionGraphBuilder<CompiledBuffStepSource>();
+  const entry = compileCombatActionSequenceSource(source, { ...context, graph: builder });
+  return { steps: readActionGraphChain(builder.finish(), entry) };
+}
 import { targetFixture } from './sourceFixtures.ts';
 
 const meta = { isEnable: true, priorityLevel: 'Default', priorityOffset: 0, serverActionIndex: 1 };
@@ -45,7 +61,7 @@ describe('语音与镜头锁定的新版字段', () => {
       {},
     );
     expect(
-      compileCombatActionSequenceSource(source, {
+      projectSequence(source, {
         actionOwnerTarget: 'caster',
         actionSourceTarget: 'caster',
         actionTargetTarget: 'enemy',

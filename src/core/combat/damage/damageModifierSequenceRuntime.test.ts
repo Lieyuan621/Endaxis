@@ -6,7 +6,11 @@ import {
   scalarFixture,
   targetFixture,
 } from '../../../../tools/game-data-compiler/test/sourceFixtures.ts';
-import { compileActionSequence } from '../../compiler/compileSkill';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import { createActionGraphBuilder } from '../../../../tools/game-data-compiler/src/compiler/actions/actionGraphBuilder.ts';
+import type { CompiledBuffStepSource } from '../../../../tools/game-data-compiler/src/compiler/actions/combatActionProjectionTypes.ts';
+import type { ActionGraphNode } from '../../../../packages/game-data-contract/src/actionGraph';
+import type { ResolvedActionSequence } from '../../compiler/combatProgram';
 import { CombatAttributeSet } from '../attributes/combatAttributes';
 import { CombatBuffContainer, type CombatBuffDefinition } from '../buffs/combatBuffs';
 import { DamageModifier } from './damageModifiers';
@@ -24,6 +28,38 @@ import type { CombatOperationContext } from '../skills/skillRuntime';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 
 // 对应当前 skillimbue 条件结构；走正式原生解析、公共投影和技能程序编译，不手写等价 JS 分支。
+const compileGraphEntry = (
+  revision: string,
+  entry: string | null,
+  nodes: Record<string, ActionGraphNode>,
+): ResolvedActionSequence => ({
+  graph: createActionGraphCompilation({ nodes }, 1, revision).compileAll(),
+  entry,
+  callSite: revision,
+});
+
+/** 工具投影直接构建图节点；测试用同一构建器收集节点后再编译，不自写转换。 */
+const compileDomainSequence = (
+  revision: string,
+  source: Parameters<typeof compileCombatConditionSequenceSource>[0],
+): ResolvedActionSequence => {
+  const builder = createActionGraphBuilder<CompiledBuffStepSource>();
+  const reference = compileCombatConditionSequenceSource(source, {
+    graph: builder,
+    damageModifierContext: true,
+    actionOwnerTarget: 'buffOwner',
+    actionSourceTarget: 'caster',
+    actionTargetTarget: 'enemy',
+    fixedBuffOwnerTarget: 'caster',
+    fixedBuffSourceTarget: 'caster',
+  });
+  return {
+    graph: createActionGraphCompilation(builder.finish(), 1, revision).compileAll(),
+    entry: reference.$sequence,
+    callSite: revision,
+  };
+};
+
 function sourceProgram() {
   const action = (name: string, fields = {}) => ({
     $type: `Beyond.Gameplay.Core.${name}, Gameplay.Beyond`,
@@ -40,48 +76,38 @@ function sourceProgram() {
   });
   const mask = (value: number) =>
     action('Conditions.CheckDamageDecorateMask+Data', { checkType: 'HasAny', mask: value });
-  return compileActionSequence(
-    compileCombatConditionSequenceSource(
-      parseKnownNativeActionSequenceSource(
-        sequence(
-          action('Conditions.CheckSkillCastId+Data'),
-          mask(768),
-          action('IfElseAction+IfElseActionData', {
-            conditionAction: sequence(mask(256)),
-            alwaysNext: true,
-            succeedActions: sequence(
-              action('SimpleCalcBBAction+Data', {
-                key: 'real_imbue_scale',
-                operation: 'Multiply',
-                value1: scalarFixture(0, 'imbue_scale'),
-                value2: scalarFixture(1.5),
-              }),
-            ),
-            failActions: sequence(
-              action('ModifyDynamicBlackboard+Data', {
-                key: 'real_imbue_scale',
-                operation: 'Assign',
-                directValue: true,
-                value: scalarFixture(0, 'imbue_scale'),
-                calculationTarget: targetFixture('Owner'),
-                calculateType: 'HpRatio',
-              }),
-            ),
-          }),
-        ),
-        'modifier.condition',
-        {},
+  return compileDomainSequence(
+    'modifier.condition',
+    parseKnownNativeActionSequenceSource(
+      sequence(
+        action('Conditions.CheckSkillCastId+Data'),
+        mask(768),
+        action('IfElseAction+IfElseActionData', {
+          conditionAction: sequence(mask(256)),
+          alwaysNext: true,
+          succeedActions: sequence(
+            action('SimpleCalcBBAction+Data', {
+              key: 'real_imbue_scale',
+              operation: 'Multiply',
+              value1: scalarFixture(0, 'imbue_scale'),
+              value2: scalarFixture(1.5),
+            }),
+          ),
+          failActions: sequence(
+            action('ModifyDynamicBlackboard+Data', {
+              key: 'real_imbue_scale',
+              operation: 'Assign',
+              directValue: true,
+              value: scalarFixture(0, 'imbue_scale'),
+              calculationTarget: targetFixture('Owner'),
+              calculateType: 'HpRatio',
+            }),
+          ),
+        }),
       ),
-      {
-        damageModifierContext: true,
-        actionOwnerTarget: 'buffOwner',
-        actionSourceTarget: 'caster',
-        actionTargetTarget: 'enemy',
-        fixedBuffOwnerTarget: 'caster',
-        fixedBuffSourceTarget: 'caster',
-      },
+      'modifier.condition',
+      {},
     ),
-    1,
   );
 }
 
@@ -301,15 +327,16 @@ describe('Buff 同步伤害条件程序', () => {
       original,
     );
     const program = createDamageModifierConditionProgram(
-      {
-        steps: [
-          {
+      compileGraphEntry('defender-input-target', 'step-0', {
+        'step-0': {
+          action: {
             kind: 'conditional',
             parameters: { condition: { kind: 'constant', value: true } },
-            whenTrue: { steps: [] },
+            whenTrue: { $sequence: null },
           },
-        ],
-      },
+          next: null,
+        },
+      }),
       runtime,
       { resolveInputTarget: operatorId => ({ kind: 'operator', operatorId }) },
     );
@@ -453,7 +480,16 @@ describe('Buff 同步伤害条件程序', () => {
     );
     expect(() =>
       createDamageModifierConditionProgram(
-        { steps: [{ kind: 'repeatEachTick', parameters: {}, body: { steps: [] } }] },
+        compileGraphEntry('unsupported-synchronous-step', 'step-0', {
+          'step-0': {
+            action: {
+              kind: 'repeatEachTick',
+              parameters: {},
+              body: { $sequence: null },
+            },
+            next: null,
+          },
+        }),
         runtime,
       ),
     ).toThrow('unsupported synchronous modifier step');

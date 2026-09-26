@@ -1,3 +1,5 @@
+import { rootActionSteps } from '../../compiler/actionProgramInspection';
+import type { CompiledGraphEntry } from '../../compiler/combatProgram';
 import type { CombatOperatorProgram } from './combatRuntimeAssembly';
 
 /**
@@ -19,6 +21,17 @@ export function inspectKnockDownControlConsumers(operators: readonly CombatOpera
         visit(child, `${path}[${index}]`, operatorIndex, casterIsOperator, ownerKey),
       );
     } else if (value !== null && typeof value === 'object') {
+      if ('graph' in value && 'entry' in value) {
+        // 只沿入口的语义出口检查；graph 是共享目录，含回指，不能作为 JSON 对象递归。
+        visit(
+          rootActionSteps(value as CompiledGraphEntry),
+          `${path}.nodes`,
+          operatorIndex,
+          casterIsOperator,
+          ownerKey,
+        );
+        return;
+      }
       const row = value as Record<string, unknown>;
       rows.push({ row, path, ownerKey });
       if (row.kind === 'applyBuff') {

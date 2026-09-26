@@ -1,21 +1,29 @@
+import type { SkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
 /**
  * 算出一个技能块上的命中点画在哪、对应哪个命中。
  *
  * 本模块只从定义收集稳定身份与无运行结果时的局部回退偏移；实际位置由页面消费
  * `DamageApplied(castId, hitId)` 回执。条件分支里的命中点会标记出来，由页面决定怎么显示。
  * 命中点来自调用方提供的 SkillDefinition（目录或自定义），投影层不再从存档快照读取。
+ * 未显式命名的伤害按调用位置路径 + 编译图节点 ID 分配身份，与运行时
+ * `deriveAnonymousDamageStepKey` 规则一致，模拟后可以直接用回执 hitId 匹配。
  */
 import type {
   CombatCondition,
-  OperatorAbilityEntityDefinitions,
-  OperatorBuffDefinitions,
-  SkillBuffDefinition,
-  SkillDefinition,
-  CombatStepDefinition,
+  OperatorDefinition,
 } from '../../../core/game-data/operatorDefinition';
 import type { SkillCastDocument } from '../../../core/project/schema';
-import { deriveHitId } from '../../../core/combat/timeline/deriveHitId';
-import { compareCombatNumbers } from '../../../../packages/game-data-contract/src/primitives';
+import {
+  deriveAnonymousDamageStepKey,
+  deriveHitId,
+} from '../../../core/combat/timeline/deriveHitId';
+import { compareCombatNumbers } from '../../../core/mechanics/combatNumbers.ts';
+import type {
+  ActionGraphDefinition,
+  ActionGraphResourceDefinition,
+  ActionGraphReference,
+  ActionGraphStep,
+} from '../../../../packages/game-data-contract/src/actionGraph';
 
 /** 一个可渲染的命中点。 */
 export interface TimelineHitMarker {
@@ -78,267 +86,362 @@ function resolveStaticCondition(condition: CombatCondition): boolean | null {
   return compareCombatNumbers(condition.left.value, condition.right.value, condition.operator);
 }
 
-function collectDamageSteps(
-  step: CombatStepDefinition,
-  conditional: boolean,
-  markers: TimelineHitMarker[],
-  cast: SkillCastDocument,
-  frameOffset: number,
-  abilityEntityDefinitions?: OperatorAbilityEntityDefinitions,
-  buffDefinitions?: OperatorBuffDefinitions,
-  activeBuffIds: ReadonlySet<string> = new Set(),
-): void {
-  if (step.kind === 'dealDamage' || step.kind === 'dealFixedDamage') {
-    if (step.key === undefined || step.key.length === 0) {
-      throw new Error(
-        `damage step '${step.kind}' in cast '${cast.id}' is missing a stable key for projection`,
-      );
-    }
-    markers.push({
-      stepKey: step.key,
-      hitId: deriveHitId(cast.id, step.key),
-      frameOffset,
-      conditional,
-    });
-    return;
-  }
-  if (step.kind === 'switch') {
-    for (const option of step.options)
-      for (const nested of option.sequence.steps) {
-        collectDamageSteps(
-          nested,
-          true,
-          markers,
-          cast,
-          frameOffset,
-          abilityEntityDefinitions,
-          buffDefinitions,
-          activeBuffIds,
-        );
-      }
-    return;
-  }
-  if (step.kind === 'conditional') {
-    const staticResult = resolveStaticCondition(step.parameters.condition);
-    if (staticResult === false) {
-      for (const nested of step.whenFalse?.steps ?? []) {
-        collectDamageSteps(
-          nested,
-          conditional,
-          markers,
-          cast,
-          frameOffset,
-          abilityEntityDefinitions,
-          buffDefinitions,
-          activeBuffIds,
-        );
-      }
-      return;
-    }
-    // 只有纯常量比较可在无模拟预览中证明；其余分支仍等待实际回执。
-    for (const nested of step.whenTrue.steps)
-      collectDamageSteps(
-        nested,
-        staticResult === true ? conditional : true,
-        markers,
-        cast,
-        frameOffset,
-        abilityEntityDefinitions,
-        buffDefinitions,
-        activeBuffIds,
-      );
-    if (staticResult === true) return;
-    for (const nested of step.whenFalse?.steps ?? []) {
-      collectDamageSteps(
-        nested,
-        true,
-        markers,
-        cast,
-        frameOffset,
-        abilityEntityDefinitions,
-        buffDefinitions,
-        activeBuffIds,
-      );
-    }
-    return;
-  }
-  if (step.kind === 'once' || step.kind === 'withActionBlackboardScope') {
-    for (const nested of step.body.steps)
-      collectDamageSteps(
-        nested,
-        conditional,
-        markers,
-        cast,
-        frameOffset,
-        abilityEntityDefinitions,
-        buffDefinitions,
-        activeBuffIds,
-      );
-    return;
-  }
-  if (step.kind === 'repeatEachTick' || step.kind === 'forEachContextTarget') {
-    for (const nested of step.body.steps)
-      collectDamageSteps(
-        nested,
-        conditional,
-        markers,
-        cast,
-        frameOffset,
-        abilityEntityDefinitions,
-        buffDefinitions,
-        activeBuffIds,
-      );
-    return;
-  }
-  if (step.kind === 'listenForCombatEvents') {
-    for (const response of step.parameters.responses) {
-      for (const nested of response.sequence.steps) {
-        collectDamageSteps(
-          nested,
-          true,
-          markers,
-          cast,
-          frameOffset,
-          abilityEntityDefinitions,
-          buffDefinitions,
-          activeBuffIds,
-        );
-      }
-    }
-    return;
-  }
-  if (step.kind === 'applyBuff') {
-    if (step.parameters.inheritSourceSkillCastInfo === false) return;
-    if (typeof step.parameters.buffId !== 'string') return;
-    const buffId = step.parameters.buffId;
-    const definition = step.parameters.definition ?? buffDefinitions?.[buffId];
-    if (definition === undefined || activeBuffIds.has(buffId)) return;
-    const nextActiveBuffIds = new Set(activeBuffIds).add(buffId);
-    collectBuffDamageSteps(
-      definition,
-      markers,
-      cast,
-      frameOffset,
-      abilityEntityDefinitions,
-      buffDefinitions,
-      nextActiveBuffIds,
-    );
-    return;
-  }
-  const childSkill =
-    step.kind === 'spawnAbilityEntity'
-      ? (() => {
-          const entityDefinition =
-            step.parameters.definition ??
-            abilityEntityDefinitions?.[step.parameters.abilityEntityId];
-          if (entityDefinition === undefined) return undefined;
-          const requestedSkillId = step.parameters.childSkillId;
-          if (requestedSkillId !== undefined) {
-            if (entityDefinition.childSkill?.skillId === requestedSkillId) {
-              return entityDefinition.childSkill;
-            }
-            return entityDefinition.childSkills?.[requestedSkillId];
-          }
-          if (entityDefinition.childSkill !== undefined) return entityDefinition.childSkill;
-          const namedChildren = Object.values(entityDefinition.childSkills ?? {});
-          return namedChildren.length === 1 ? namedChildren[0] : undefined;
-        })()
-      : step.kind === 'startCurrentAbilityEntityChildSkill'
-        ? step.parameters.childSkill
-        : undefined;
-  if (childSkill !== undefined) {
-    for (const scheduled of childSkill.scheduledSequences) {
-      for (const nested of scheduled.sequence.steps) {
-        collectDamageSteps(
-          nested,
-          conditional,
-          markers,
-          cast,
-          frameOffset + scheduled.startFrame,
-          abilityEntityDefinitions,
-          buffDefinitions,
-          activeBuffIds,
-        );
-      }
-    }
-  }
-}
-
-function collectBuffDamageSteps(
-  definition: SkillBuffDefinition,
-  markers: TimelineHitMarker[],
-  cast: SkillCastDocument,
-  frameOffset: number,
-  abilityEntityDefinitions: OperatorAbilityEntityDefinitions | undefined,
-  buffDefinitions: OperatorBuffDefinitions | undefined,
-  activeBuffIds: ReadonlySet<string>,
-): void {
-  const collectSequence = (steps: readonly CombatStepDefinition[], offset: number) => {
-    for (const step of steps) {
-      collectDamageSteps(
-        step,
-        true,
-        markers,
-        cast,
-        offset,
-        abilityEntityDefinitions,
-        buffDefinitions,
-        activeBuffIds,
-      );
-    }
-  };
-  for (const scheduled of definition.scheduledSequences ?? []) {
-    collectSequence(scheduled.sequence.steps, frameOffset + scheduled.startFrame);
-  }
-  for (const sequence of Object.values(definition.lifecycleSequences ?? {})) {
-    if (sequence !== undefined) collectSequence(sequence.steps, frameOffset);
-  }
-  for (const response of definition.abilityEventResponses ?? []) {
-    collectSequence(response.sequence.steps, frameOffset);
-  }
-  for (const response of definition.igniteEventResponses ?? []) {
-    collectSequence(response.sequence.steps, frameOffset);
-  }
-}
+/**
+ * 编译图节点 ID：主图为 `[null, localId]`，宏图为 `[macroId, localId]`，
+ * 与运行时编译产物中的节点身份一致。
+ */
+const compiledNodeId = (ns: string | null, localId: string): string =>
+  JSON.stringify([ns, localId]);
 
 /**
- * 收集一次技能释放的全部命中点，按序列声明顺序返回。
- * 调用方传入本次使用的技能定义；伤害步骤缺少 key 时直接报错。
+ * 图内部子调用的 callSite 追加规则，与 ActionGraphExecution 的 #child 一致：
+ * `${callSite}/${encodeURIComponent(compiledNodeId)}:${port}`。
  */
-export function projectCastHitMarkers(
+const childCallSite = (
+  callSite: string,
+  ns: string | null,
+  localId: string,
+  port: number,
+  identity = compiledNodeId(ns, localId),
+): string => `${callSite}/${encodeURIComponent(identity)}:${port}`;
+
+/** Buff 宿主内各入口的编译路径根规则，与 createProgramDefinitionCompiler 一致。 */
+const buffEntryCallSite = {
+  scheduled: (buffId: string, index: number) =>
+    `buffDefinitions.${JSON.stringify(buffId)}.scheduledSequences[${index}].sequence`,
+  lifecycle: (buffId: string, key: string) =>
+    `buffDefinitions.${JSON.stringify(buffId)}.lifecycleSequences.${key}`,
+  abilityEventResponse: (buffId: string, index: number) =>
+    `buffDefinitions.${JSON.stringify(buffId)}.abilityEventResponses[${index}].sequence`,
+  igniteEventResponse: (buffId: string, index: number) =>
+    `buffDefinitions.${JSON.stringify(buffId)}.igniteEventResponses[${index}].sequence`,
+};
+
+/** 只读取图节点来生成模拟前预览；共享节点按每次入口访问，不展开或复制动作树。 */
+export function projectCastGraphHitMarkers(
   cast: SkillCastDocument,
   definition: SkillDefinition,
-  abilityEntityDefinitions?: OperatorAbilityEntityDefinitions,
-  buffDefinitions?: OperatorBuffDefinitions,
+  operator: OperatorDefinition,
 ): readonly TimelineHitMarker[] {
   const markers: TimelineHitMarker[] = [];
-  for (const scheduled of definition.scheduledSequences) {
-    for (const step of scheduled.sequence.steps) {
-      collectDamageSteps(
-        step,
-        false,
-        markers,
-        cast,
-        scheduled.startFrame,
-        abilityEntityDefinitions,
-        buffDefinitions,
-      );
-    }
-  }
-  return markers;
-}
+  let resource: ActionGraphResourceDefinition | undefined = definition.actionGraph;
+  let graph: ActionGraphDefinition = definition.actionGraph.main;
+  const activeNodes = new Map<ActionGraphDefinition, Set<string>>();
+  const activeMacros = new Set<object>();
 
-/** 按稳定 step key 查询一次释放中的命中标记；找不到时返回 null。 */
-export function findCastHitMarker(
-  cast: SkillCastDocument,
-  stepKey: string,
-  definition: SkillDefinition,
-  abilityEntityDefinitions?: OperatorAbilityEntityDefinitions,
-  buffDefinitions?: OperatorBuffDefinitions,
-): TimelineHitMarker | null {
-  return (
-    projectCastHitMarkers(cast, definition, abilityEntityDefinitions, buffDefinitions).find(
-      marker => marker.stepKey === stepKey,
-    ) ?? null
+  // 每个宿主解析自己的节点和宏；返回后继续外层调用，不能把局部 ID 当全局 ID。
+  const inOwner = <T extends object>(
+    owner: T & { readonly actionGraph?: ActionGraphResourceDefinition },
+    collectOwner: () => void,
+  ): void => {
+    const previousGraph = graph;
+    const previousResource = resource;
+    if (owner.actionGraph !== undefined) {
+      resource = owner.actionGraph;
+      graph = owner.actionGraph.main;
+    }
+    try {
+      collectOwner();
+    } finally {
+      graph = previousGraph;
+      resource = previousResource;
+    }
+  };
+
+  const visit = (
+    entry: ActionGraphReference,
+    callSite: string,
+    ns: string | null,
+    callback: (
+      localId: string,
+      action: ActionGraphStep,
+      callSite: string,
+      ns: string | null,
+      identity: string,
+      identities?: ReadonlyMap<string, string>,
+    ) => void,
+    identities?: ReadonlyMap<string, string>,
+  ): void => {
+    const entered: string[] = [];
+    const currentGraph = graph;
+    const currentNodes = activeNodes.get(currentGraph) ?? new Set<string>();
+    activeNodes.set(currentGraph, currentNodes);
+    let id = entry.$sequence;
+    try {
+      while (id !== null) {
+        if (currentNodes.has(id)) throw new Error(`hit preview has recursive graph node '${id}'`);
+        const node = currentGraph.nodes[id];
+        if (node === undefined) throw new Error(`hit preview refers to missing graph node '${id}'`);
+        currentNodes.add(id);
+        entered.push(id);
+        const identity = identities?.get(id) ?? compiledNodeId(ns, id);
+        if (node.action.kind === 'callMacro') {
+          const macro = resource?.macros[node.action.macroId];
+          if (macro === undefined)
+            throw new Error(`hit preview refers to missing macro '${node.action.macroId}'`);
+          if (activeMacros.has(macro))
+            throw new Error(`hit preview has recursive macro '${node.action.macroId}'`);
+          activeMacros.add(macro);
+          try {
+            graph = macro.graph;
+            const bindings = node.action.nodeBindings;
+            visit(
+              macro.entry,
+              bindings === undefined ? childCallSite(callSite, ns, id, 0, identity) : callSite,
+              node.action.macroId,
+              callback,
+              bindings === undefined
+                ? undefined
+                : new Map(
+                    Object.entries(bindings).map(([nodeId, original]) => [
+                      nodeId,
+                      identities?.get(original) ?? compiledNodeId(ns, original),
+                    ]),
+                  ),
+            );
+          } finally {
+            graph = currentGraph;
+            activeMacros.delete(macro);
+          }
+        } else {
+          callback(id, node.action, callSite, ns, identity, identities);
+        }
+        id = node.next;
+      }
+    } finally {
+      for (const nodeId of entered) currentNodes.delete(nodeId);
+    }
+  };
+
+  const collect = (
+    entry: ActionGraphReference,
+    callSite: string,
+    ns: string | null,
+    frameOffset: number,
+    conditional: boolean,
+    activeBuffIds: ReadonlySet<string>,
+    activeEntityIds: ReadonlySet<string>,
+    identities?: ReadonlyMap<string, string>,
+  ): void => {
+    const collectStep: Parameters<typeof visit>[3] = (
+      nodeId,
+      step,
+      nodeCallSite,
+      nodeNs,
+      identity,
+      nodeIdentities,
+    ) => {
+      if (step.kind === 'dealDamage' || step.kind === 'dealFixedDamage') {
+        const stepKey = step.key ?? deriveAnonymousDamageStepKey(nodeCallSite, identity);
+        markers.push({
+          stepKey,
+          hitId: deriveHitId(cast.id, stepKey),
+          frameOffset,
+          conditional,
+        });
+        return;
+      }
+      if (step.kind === 'switch') {
+        step.options.forEach((option, index) =>
+          collect(
+            option.sequence,
+            childCallSite(nodeCallSite, nodeNs, nodeId, index, identity),
+            nodeNs,
+            frameOffset,
+            true,
+            activeBuffIds,
+            activeEntityIds,
+            nodeIdentities,
+          ),
+        );
+        return;
+      }
+      if (step.kind === 'conditional') {
+        const staticResult = resolveStaticCondition(step.parameters.condition);
+        if (staticResult !== false)
+          collect(
+            step.whenTrue,
+            childCallSite(nodeCallSite, nodeNs, nodeId, 0, identity),
+            nodeNs,
+            frameOffset,
+            conditional || staticResult === null,
+            activeBuffIds,
+            activeEntityIds,
+            nodeIdentities,
+          );
+        if (staticResult !== true && step.whenFalse !== undefined)
+          collect(
+            step.whenFalse,
+            childCallSite(nodeCallSite, nodeNs, nodeId, 1, identity),
+            nodeNs,
+            frameOffset,
+            conditional || staticResult === null,
+            activeBuffIds,
+            activeEntityIds,
+            nodeIdentities,
+          );
+        return;
+      }
+      if (
+        step.kind === 'once' ||
+        step.kind === 'withActionBlackboardScope' ||
+        step.kind === 'repeatEachTick' ||
+        step.kind === 'repeatByActionValue' ||
+        step.kind === 'forEachContextTarget'
+      ) {
+        collect(
+          step.body,
+          childCallSite(nodeCallSite, nodeNs, nodeId, 0, identity),
+          nodeNs,
+          frameOffset,
+          conditional,
+          activeBuffIds,
+          activeEntityIds,
+          nodeIdentities,
+        );
+        return;
+      }
+      if (step.kind === 'listenForCombatEvents') {
+        step.parameters.responses.forEach((response, index) =>
+          collect(
+            response.sequence,
+            childCallSite(nodeCallSite, nodeNs, nodeId, index, identity),
+            nodeNs,
+            frameOffset,
+            true,
+            activeBuffIds,
+            activeEntityIds,
+            nodeIdentities,
+          ),
+        );
+        return;
+      }
+      if (step.kind === 'applyBuff') {
+        if (step.parameters.inheritSourceSkillCastInfo === false) return;
+        if (typeof step.parameters.buffId !== 'string') return;
+        const buffId = step.parameters.buffId;
+        const buff = operator.buffDefinitions?.[buffId];
+        if (buff === undefined || activeBuffIds.has(buffId)) return;
+        const nextBuffIds = new Set(activeBuffIds).add(buffId);
+        inOwner(buff, () => {
+          (buff.scheduledSequences ?? []).forEach((scheduled, index) =>
+            collect(
+              scheduled.sequence,
+              buffEntryCallSite.scheduled(buffId, index),
+              null,
+              frameOffset + scheduled.startFrame,
+              true,
+              nextBuffIds,
+              activeEntityIds,
+            ),
+          );
+          for (const [key, sequence] of Object.entries(buff.lifecycleSequences ?? {}))
+            if (sequence !== undefined)
+              collect(
+                sequence,
+                buffEntryCallSite.lifecycle(buffId, key),
+                null,
+                frameOffset,
+                true,
+                nextBuffIds,
+                activeEntityIds,
+              );
+          (buff.abilityEventResponses ?? []).forEach((response, index) =>
+            collect(
+              response.sequence,
+              buffEntryCallSite.abilityEventResponse(buffId, index),
+              null,
+              frameOffset,
+              true,
+              nextBuffIds,
+              activeEntityIds,
+            ),
+          );
+          (buff.igniteEventResponses ?? []).forEach((response, index) =>
+            collect(
+              response.sequence,
+              buffEntryCallSite.igniteEventResponse(buffId, index),
+              null,
+              frameOffset,
+              true,
+              nextBuffIds,
+              activeEntityIds,
+            ),
+          );
+        });
+        return;
+      }
+      if (step.kind !== 'spawnAbilityEntity' && step.kind !== 'startCurrentAbilityEntityChildSkill')
+        return;
+      const entityId =
+        step.kind === 'spawnAbilityEntity' ? step.parameters.abilityEntityId : undefined;
+      if (entityId !== undefined && activeEntityIds.has(entityId)) return;
+      const entity =
+        step.kind === 'spawnAbilityEntity'
+          ? (step.parameters.definition ?? operator.abilityEntityDefinitions?.[entityId!])
+          : undefined;
+      const requestedSkillId =
+        step.kind === 'spawnAbilityEntity' ? step.parameters.childSkillId : undefined;
+      const childSkill =
+        step.kind === 'startCurrentAbilityEntityChildSkill'
+          ? step.parameters.childSkill
+          : requestedSkillId !== undefined
+            ? entity?.childSkill?.skillId === requestedSkillId
+              ? entity.childSkill
+              : entity?.childSkills?.[requestedSkillId]
+            : (entity?.childSkill ??
+              (Object.values(entity?.childSkills ?? {}).length === 1
+                ? Object.values(entity?.childSkills ?? {})[0]
+                : undefined));
+      if (childSkill === undefined) return;
+      const nextEntityIds =
+        entityId === undefined ? activeEntityIds : new Set(activeEntityIds).add(entityId);
+      const collectChild = () =>
+        inOwner(childSkill, () => {
+          // 运行时按编译路径区分子技能来源：宿主目录实体以 abilityEntityDefinitions 为根，
+          // 内联定义/子技能参数挂在触发节点的 graph.<compiledNodeId>.parameters 路径下。
+          const inlineRoot = `graph.${compiledNodeId(nodeNs, nodeId)}`;
+          const entityRoot =
+            step.kind === 'spawnAbilityEntity' && step.parameters.definition !== undefined
+              ? `${inlineRoot}.parameters.definition`
+              : step.kind === 'startCurrentAbilityEntityChildSkill'
+                ? `${inlineRoot}.parameters.childSkill`
+                : entityId !== undefined
+                  ? `abilityEntityDefinitions.${JSON.stringify(entityId)}${
+                      entity?.childSkill?.skillId === undefined ||
+                      childSkill.skillId === entity.childSkill.skillId
+                        ? '.childSkill'
+                        : `.childSkills.${JSON.stringify(childSkill.skillId)}`
+                    }`
+                  : inlineRoot;
+          childSkill.scheduledSequences.forEach((scheduled, index) =>
+            collect(
+              scheduled.sequence,
+              `${entityRoot}.scheduledSequences[${index}].sequence`,
+              null,
+              frameOffset + scheduled.startFrame,
+              conditional,
+              activeBuffIds,
+              nextEntityIds,
+            ),
+          );
+        });
+      if (entity === undefined) collectChild();
+      else inOwner(entity, collectChild);
+    };
+    visit(entry, callSite, ns, collectStep, identities);
+  };
+
+  definition.scheduledSequences.forEach((scheduled, index) =>
+    collect(
+      scheduled.sequence,
+      `${definition.key}:scheduledSequences[${index}].sequence`,
+      null,
+      scheduled.startFrame,
+      false,
+      new Set(),
+      new Set(),
+    ),
   );
+  return markers;
 }

@@ -1,3 +1,4 @@
+import { validateActionGraphReferenceDefinition } from '../game-data/validation/actionPrograms';
 /**
  * 不可信 JSON 进入新版项目模型的顶层校验边界。
  * 加载、导入和迁移结果都必须先通过这里，业务代码不能直接断言外部对象是存档。
@@ -29,6 +30,11 @@ import {
   validateWeaponInstance,
 } from './scenarioValidation';
 import { validateSkillDefinition } from '../game-data/validateSkillDefinition';
+import { validateActionGraphOwner } from '../action-graph/actionGraphValidation';
+import type {
+  ActionGraphDefinition,
+  ActionGraphResourceDefinition,
+} from '../../../packages/game-data-contract/src/actionGraph';
 import { validateComboSkillConditions } from '../game-data/validateComboSkillConditions';
 import {
   isObject,
@@ -88,10 +94,25 @@ function validateProjectTemplateRecord(
     }
     const definitionPath = `${templatePath}.definition`;
     if (kind === 'operator') {
+      try {
+        validateActionGraphOwner(
+          template.definition as {
+            actionGraph?: ActionGraphDefinition | ActionGraphResourceDefinition;
+          },
+          definitionPath,
+        );
+      } catch (error) {
+        issues.push({
+          path: definitionPath,
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+
       issues.push(
         ...validateComboSkillConditions(
           template.definition.comboSkillConditions,
           `${definitionPath}.comboSkillConditions`,
+          validateActionGraphReferenceDefinition,
         ),
       );
       if (
@@ -311,8 +332,31 @@ function validateSkillCast(
           });
         }
       }
+      const isGraphDefinition =
+        isObject(def.actionGraph) &&
+        isObject(def.actionGraph.main) &&
+        isObject(def.actionGraph.macros);
+      if (!isGraphDefinition) {
+        issues.push({
+          path: `${defPath}.actionGraph`,
+          message: 'custom skill requires its own action graph',
+        });
+      }
       const sdIssues = validateSkillDefinition(value.customDefinition, defPath);
       for (const sd of sdIssues) issues.push(sd);
+      if (isGraphDefinition) {
+        try {
+          validateActionGraphOwner(
+            def as { actionGraph: ActionGraphDefinition | ActionGraphResourceDefinition },
+            defPath,
+          );
+        } catch (error) {
+          issues.push({
+            path: defPath,
+            message: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
     }
   }
 }

@@ -1,12 +1,55 @@
 import { describe, expect, it } from 'vitest';
 import type { CompiledSkillProgram, ResolvedActionSequence } from '../../compiler/combatProgram';
 import type { CombatOperatorProgram } from './combatRuntimeAssembly';
-import { compileOperatorBuffDefinitions } from '../../compiler/compileSkill';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import type {
+  ActionGraphNode,
+  ActionGraphStep,
+} from '../../../../packages/game-data-contract/src/actionGraph';
 import {
   assertStandardPlayerDamageCompatibility,
   inspectStandardPlayerDamageCompatibility,
   StandardPlayerDamageCompatibilityError,
 } from './standardPlayerDamageCompatibility';
+
+const compileGraphEntry = (
+  revision: string,
+  entry: string | null,
+  nodes: Record<string, ActionGraphNode>,
+): ResolvedActionSequence => ({
+  graph: createActionGraphCompilation({ nodes }, 1, revision).compileAll(),
+  entry,
+  callSite: revision,
+});
+
+const chainEntry = (
+  revision: string,
+  actions: readonly ActionGraphStep[],
+): ResolvedActionSequence => {
+  const nodes: Record<string, ActionGraphNode> = {};
+  actions.forEach((action, index) => {
+    nodes[`step-${index}`] = {
+      action,
+      next: index + 1 < actions.length ? `step-${index + 1}` : null,
+    };
+  });
+  return compileGraphEntry(revision, actions.length === 0 ? null : 'step-0', nodes);
+};
+
+/** 把线性步骤数组接到链上，返回入口节点名；可用 overrides 替换某一步为分支节点。 */
+function chainNodes(
+  actions: readonly ActionGraphStep[],
+  overrides: Record<number, ActionGraphStep> = {},
+): Record<string, ActionGraphNode> {
+  const nodes: Record<string, ActionGraphNode> = {};
+  actions.forEach((action, index) => {
+    nodes[`step-${index}`] = {
+      action: overrides[index] ?? action,
+      next: index + 1 < actions.length ? `step-${index + 1}` : null,
+    };
+  });
+  return nodes;
+}
 
 function program(sequence: ResolvedActionSequence): CompiledSkillProgram {
   return {
@@ -68,7 +111,7 @@ function operator(
                   tag: 'normalSkill' as const,
                   scope: 'operator' as const,
                 },
-                sequence: { steps: [] },
+                sequence: chainEntry('equipment-handler-empty', []),
               })),
             },
           ],
@@ -93,7 +136,9 @@ describe('standardPlayerDamageCompatibility', () => {
     expect(
       inspectStandardPlayerDamageCompatibility(
         compatibilityInput(
-          operator({ steps: [{ kind: 'markCurrentSkillCanDash', parameters: {} }] }),
+          operator(
+            chainEntry('compat-dash-marker', [{ kind: 'markCurrentSkillCanDash', parameters: {} }]),
+          ),
         ),
       ),
     ).toEqual([]);
@@ -103,8 +148,8 @@ describe('standardPlayerDamageCompatibility', () => {
     expect(
       inspectStandardPlayerDamageCompatibility(
         compatibilityInput(
-          operator({
-            steps: [
+          operator(
+            chainEntry('compat-restrict-ultimate', [
               {
                 kind: 'restrictUltimateEnergyRecovery',
                 parameters: {
@@ -113,16 +158,16 @@ describe('standardPlayerDamageCompatibility', () => {
                   clearUltimateEnergyOnEnd: true,
                 },
               },
-            ],
-          }),
+            ]),
+          ),
         ),
       ),
     ).toEqual([]);
   });
 
   it('已内嵌配置列可执行；强化列仍要求来源面板', () => {
-    const sequence = (enhanced: boolean): ResolvedActionSequence => ({
-      steps: [
+    const sequence = (enhanced: boolean): ResolvedActionSequence =>
+      chainEntry(`compat-read-setting-${enhanced}`, [
         {
           kind: 'readSkillSettingData',
           parameters: {
@@ -143,8 +188,7 @@ describe('standardPlayerDamageCompatibility', () => {
             ],
           },
         },
-      ],
-    });
+      ]);
     expect(
       inspectStandardPlayerDamageCompatibility(compatibilityInput(operator(sequence(false)))),
     ).toEqual([]);
@@ -160,27 +204,25 @@ describe('standardPlayerDamageCompatibility', () => {
     ).toEqual([]);
   });
   it('普通倒地必须有显式装配、来源面板和隐式 Buff，不能漏过 Buff 内行为', () => {
-    const sequence: ResolvedActionSequence = {
-      steps: [
-        {
-          kind: 'applyKnockDown',
-          parameters: {
-            target: 'enemy',
-            duration: { kind: 'constant', value: 1 },
-            force: false,
-            isExtra: false,
-            targetFilter: 'aliveOnly',
-            returnWhen: 'always',
-          },
+    const sequence: ResolvedActionSequence = chainEntry('compat-knockdown-root', [
+      {
+        kind: 'applyKnockDown',
+        parameters: {
+          target: 'enemy',
+          duration: { kind: 'constant', value: 1 },
+          force: false,
+          isExtra: false,
+          targetFilter: 'aliveOnly',
+          returnWhen: 'always',
         },
-      ],
-    };
+      },
+    ]);
     const entry = {
       ...operator(sequence, 0, true),
-      buffDefinitions: compileOperatorBuffDefinitions({
-        buff_physical_knockdown: { stackingType: 'refresh', durationSeconds: 2 },
-        buff_physical_no_guard: { stackingType: 'refresh', durationSeconds: 2 },
-      }),
+      buffDefinitions: {
+        buff_physical_knockdown: { stackingType: 'refresh' as const, durationSeconds: 2 },
+        buff_physical_no_guard: { stackingType: 'refresh' as const, durationSeconds: 2 },
+      },
     };
     expect(inspectStandardPlayerDamageCompatibility(compatibilityInput(entry))).toEqual([
       expect.objectContaining({ detail: expect.stringContaining('root knock-down') }),
@@ -193,48 +235,44 @@ describe('standardPlayerDamageCompatibility', () => {
     });
     expect(missing).toHaveLength(3);
     expect(missing.map(issue => issue.detail).join('\n')).toContain('attribute panel');
-    const unrelated = compileOperatorBuffDefinitions({
+    const unrelated = {
       bad: {
-        stackingType: 'unique',
+        stackingType: 'unique' as const,
         scheduledSequences: [
           {
             startFrame: 0,
-            sequence: {
-              steps: [
-                {
-                  kind: 'dealDamage',
-                  parameters: { damageType: 'lifeDrain', attackScale: 1, tags: [] },
-                },
-              ],
-            },
+            sequence: chainEntry('compat-knockdown-unrelated', [
+              {
+                kind: 'dealDamage',
+                parameters: { damageType: 'lifeDrain', attackScale: 1, tags: [] },
+              },
+            ]),
           },
         ],
       },
-    });
+    };
     expect(
       inspectStandardPlayerDamageCompatibility({
         ...input,
         operators: [{ ...entry, buffDefinitions: { ...entry.buffDefinitions, ...unrelated } }],
       }),
     ).toEqual([]);
-    const unsupportedRoot = compileOperatorBuffDefinitions({
+    const unsupportedRoot = {
       buff_physical_knockdown: {
-        stackingType: 'unique',
+        stackingType: 'unique' as const,
         scheduledSequences: [
           {
             startFrame: 0,
-            sequence: {
-              steps: [
-                {
-                  kind: 'dealDamage',
-                  parameters: { damageType: 'lifeDrain', attackScale: 1, tags: [] },
-                },
-              ],
-            },
+            sequence: chainEntry('compat-knockdown-buff-root', [
+              {
+                kind: 'dealDamage',
+                parameters: { damageType: 'lifeDrain', attackScale: 1, tags: [] },
+              },
+            ]),
           },
         ],
       },
-    });
+    };
     expect(
       inspectStandardPlayerDamageCompatibility({
         ...input,
@@ -247,28 +285,31 @@ describe('standardPlayerDamageCompatibility', () => {
   it('Switch 不会隐藏未选分支的不兼容行为，报告包含候选路径', () => {
     const issues = inspectStandardPlayerDamageCompatibility(
       compatibilityInput(
-        operator({
-          steps: [
-            {
-              kind: 'switch',
-              parameters: { choice: { kind: 'constant', value: 0 }, alwaysNext: true },
-              options: [
-                { value: { kind: 'constant', value: 0 }, sequence: { steps: [] } },
-                {
-                  value: { kind: 'constant', value: 1 },
-                  sequence: {
-                    steps: [
-                      {
-                        kind: 'changeResource',
-                        parameters: { resource: 'sp', recipient: 'caster', amount: 1 },
-                      },
-                    ],
+        operator(
+          compileGraphEntry('compat-switch-branches', 'switch', {
+            switch: {
+              action: {
+                kind: 'switch',
+                parameters: { choice: { kind: 'constant', value: 0 }, alwaysNext: true },
+                options: [
+                  { value: { kind: 'constant', value: 0 }, sequence: { $sequence: null } },
+                  {
+                    value: { kind: 'constant', value: 1 },
+                    sequence: { $sequence: 'option-one' },
                   },
-                },
-              ],
+                ],
+              },
+              next: null,
             },
-          ],
-        }),
+            'option-one': {
+              action: {
+                kind: 'changeResource',
+                parameters: { resource: 'sp', recipient: 'caster', amount: 1 },
+              },
+              next: null,
+            },
+          }),
+        ),
       ),
     );
     expect(issues).toHaveLength(1);
@@ -278,22 +319,25 @@ describe('standardPlayerDamageCompatibility', () => {
   it('递归检查 repeatByActionValue 的动作体，不把运行时已支持的容器误报为未支持', () => {
     const issues = inspectStandardPlayerDamageCompatibility(
       compatibilityInput(
-        operator({
-          steps: [
-            {
-              kind: 'repeatByActionValue',
-              parameters: { count: { kind: 'constant', value: 2 } },
-              body: {
-                steps: [
-                  {
-                    kind: 'dealDamage',
-                    parameters: { damageType: 'electric', attackScale: 1, tags: [] },
-                  },
-                ],
+        operator(
+          compileGraphEntry('compat-repeat-body', 'repeat', {
+            repeat: {
+              action: {
+                kind: 'repeatByActionValue',
+                parameters: { count: { kind: 'constant', value: 2 } },
+                body: { $sequence: 'repeat-body' },
               },
+              next: null,
             },
-          ],
-        }),
+            'repeat-body': {
+              action: {
+                kind: 'dealDamage',
+                parameters: { damageType: 'electric', attackScale: 1, tags: [] },
+              },
+              next: null,
+            },
+          }),
+        ),
       ),
     );
 
@@ -303,25 +347,28 @@ describe('standardPlayerDamageCompatibility', () => {
   it('允许技能动作上下文读取既有 Buff 黑板并参与条件判断', () => {
     const issues = inspectStandardPlayerDamageCompatibility(
       compatibilityInput(
-        operator({
-          steps: [
-            {
-              kind: 'conditional',
-              parameters: {
-                condition: {
-                  kind: 'buffBlackboardValueCompare',
-                  target: 'caster',
-                  query: { kind: 'id', buffIds: ['buff:test'] },
-                  desiredKey: 'enabled',
-                  outputKey: 'enabled',
-                  operator: 'greater',
-                  value: { kind: 'constant', value: 0 },
+        operator(
+          compileGraphEntry('compat-buff-blackboard-compare', 'branch', {
+            branch: {
+              action: {
+                kind: 'conditional',
+                parameters: {
+                  condition: {
+                    kind: 'buffBlackboardValueCompare',
+                    target: 'caster',
+                    query: { kind: 'id', buffIds: ['buff:test'] },
+                    desiredKey: 'enabled',
+                    outputKey: 'enabled',
+                    operator: 'greater',
+                    value: { kind: 'constant', value: 0 },
+                  },
                 },
+                whenTrue: { $sequence: null },
               },
-              whenTrue: { steps: [] },
+              next: null,
             },
-          ],
-        }),
+          }),
+        ),
       ),
     );
     expect(issues).toEqual([]);
@@ -330,8 +377,8 @@ describe('standardPlayerDamageCompatibility', () => {
   it('accepts current-cast Buff lifetime with context binding checked at execution', () => {
     const issues = inspectStandardPlayerDamageCompatibility(
       compatibilityInput(
-        operator({
-          steps: [
+        operator(
+          chainEntry('compat-current-cast-buff', [
             {
               kind: 'applyBuff',
               parameters: {
@@ -340,204 +387,188 @@ describe('standardPlayerDamageCompatibility', () => {
                 lifetimeOwner: 'currentCastSkill',
               },
             },
-          ],
-        }),
+          ]),
+        ),
       ),
     );
     expect(issues).toEqual([]);
   });
   it('accepts the closed standard damage, Buff, poise, infliction, action value and resource subset', () => {
+    const rootActions: ActionGraphStep[] = [
+      {
+        kind: 'modifyActionValue',
+        parameters: {
+          key: 'scale',
+          operation: 'assign',
+          value: { kind: 'constant', value: 1 },
+        },
+      },
+      {
+        kind: 'dealDamage',
+        parameters: {
+          damageType: 'electric',
+          attackScale: { kind: 'blackboard', key: 'scale' },
+          tags: ['normalSkill'],
+          stagger: 10,
+        },
+      },
+      { kind: 'dealStagger', parameters: { value: 10 } },
+      {
+        kind: 'applyElementalInfliction',
+        parameters: { element: 'electric', isExtra: false },
+      },
+      {
+        kind: 'applyPhysicalInfliction',
+        parameters: {
+          type: 'fracture',
+          target: 'enemy',
+          isExtra: false,
+          noGuardBuffId: 'buff:no-guard',
+          noGuardDefinition: {
+            stackingType: 'stack',
+            priority: 0,
+            maxStackCount: 1,
+          },
+          fractureBuffId: 'buff:fracture',
+          fractureDefinition: {
+            stackingType: 'stack',
+            priority: 0,
+            maxStackCount: 1,
+          },
+        },
+      },
+      {
+        kind: 'applyElementalReaction',
+        parameters: {
+          reaction: 'electrification',
+          target: 'enemy',
+          durationSeconds: 5,
+          effectiveness: 1,
+        },
+      },
+      {
+        kind: 'consumeElementalReaction',
+        parameters: { reaction: 'electrification', target: 'enemy' },
+      },
+      {
+        kind: 'conditional',
+        parameters: {
+          condition: {
+            kind: 'entityTagMatch',
+            target: 'enemy',
+            tagQueryType: 'hasAny',
+            tags: ['Skill/Character/Common/SpellStatus/Conduct'],
+          },
+        },
+        whenTrue: { $sequence: 'conduct-apply' },
+      },
+      {
+        kind: 'conditional',
+        parameters: {
+          condition: {
+            kind: 'elementalReactionActive',
+            reaction: 'electrification',
+            minimumLevel: 1,
+          },
+        },
+        whenTrue: { $sequence: null },
+      },
+      {
+        kind: 'conditional',
+        parameters: {
+          condition: {
+            kind: 'all',
+            conditions: [
+              {
+                kind: 'eventDamageTagsMatch',
+                match: 'hasAny',
+                tags: ['normalAttackLastCombo'],
+              },
+              {
+                kind: 'eventDamageFeaturesMatch',
+                match: 'exceptAny',
+                features: ['dot'],
+              },
+            ],
+          },
+        },
+        whenTrue: { $sequence: null },
+      },
+      {
+        kind: 'createTimedMarker',
+        parameters: {
+          markerId: 'marker',
+          target: 'enemy',
+          durationSeconds: { kind: 'constant', value: 1 },
+          autoFinishByAction: false,
+        },
+      },
+      {
+        kind: 'changeResource',
+        parameters: { resource: 'sp', recipient: 'team', amount: 10 },
+      },
+      {
+        kind: 'changeResource',
+        parameters: { resource: 'ultimateEnergy', recipient: 'caster', amount: 10 },
+      },
+      {
+        kind: 'dealDamage',
+        parameters: {
+          damageType: 'electric',
+          calculation: 'breakingAttack',
+          calculationMultiplier: 1,
+          attackScale: 9,
+          tags: ['powerAttack'],
+        },
+      },
+      { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+      {
+        kind: 'startTimeDilation',
+        parameters: {
+          scope: 'global',
+          durationSeconds: { kind: 'constant', value: 1 },
+          slot: 'Test/TimeSlot1',
+          priority: 1,
+          curve: { kind: 'named', key: 'ComboSkill' },
+          finishByAction: false,
+          ignoredTargets: ['caster'],
+        },
+      },
+      {
+        kind: 'startUltimateTimeDilation',
+        parameters: {
+          priority: 1,
+          targetScale: { kind: 'constant', value: 0 },
+          ignoredTargets: [],
+        },
+      },
+    ];
+    const nodes = chainNodes(rootActions);
+    nodes['conduct-apply'] = {
+      action: {
+        kind: 'applyBuff',
+        parameters: {
+          buffId: 'buff:inline',
+          target: 'caster',
+        },
+      },
+      next: 'conduct-finish',
+    };
+    nodes['conduct-finish'] = {
+      action: {
+        kind: 'finishBuffsByTag',
+        parameters: {
+          target: 'enemy',
+          tagQueryType: 'hasAny',
+          buffTags: ['Skill/Character/Common/SpellStatus/Conduct'],
+          reason: 'early',
+        },
+      },
+      next: null,
+    };
     const issues = inspectStandardPlayerDamageCompatibility(
       compatibilityInput(
-        operator({
-          steps: [
-            {
-              kind: 'modifyActionValue',
-              parameters: {
-                key: 'scale',
-                operation: 'assign',
-                value: { kind: 'constant', value: 1 },
-              },
-            },
-            {
-              kind: 'dealDamage',
-              parameters: {
-                damageType: 'electric',
-                attackScale: { kind: 'blackboard', key: 'scale' },
-                tags: ['normalSkill'],
-                stagger: 10,
-              },
-            },
-            { kind: 'dealStagger', parameters: { value: 10 } },
-            {
-              kind: 'applyElementalInfliction',
-              parameters: { element: 'electric', isExtra: false },
-            },
-            {
-              kind: 'applyPhysicalInfliction',
-              parameters: {
-                type: 'fracture',
-                target: 'enemy',
-                isExtra: false,
-                noGuardBuffId: 'buff:no-guard',
-                noGuardDefinition: {
-                  stackingType: 'stack',
-                  priority: 0,
-                  maxStackCount: 1,
-                },
-                fractureBuffId: 'buff:fracture',
-                fractureDefinition: {
-                  stackingType: 'stack',
-                  priority: 0,
-                  maxStackCount: 1,
-                },
-              },
-            },
-            {
-              kind: 'applyElementalReaction',
-              parameters: {
-                reaction: 'electrification',
-                target: 'enemy',
-                durationSeconds: 5,
-                effectiveness: 1,
-              },
-            },
-            {
-              kind: 'consumeElementalReaction',
-              parameters: { reaction: 'electrification', target: 'enemy' },
-            },
-            {
-              kind: 'conditional',
-              parameters: {
-                condition: {
-                  kind: 'entityTagMatch',
-                  target: 'enemy',
-                  tagQueryType: 'hasAny',
-                  tags: ['Skill/Character/Common/SpellStatus/Conduct'],
-                },
-              },
-              whenTrue: {
-                steps: [
-                  {
-                    kind: 'applyBuff',
-                    parameters: {
-                      buffId: 'buff:inline',
-                      target: 'caster',
-                      definition: {
-                        stackingType: 'stack',
-                        priority: 0,
-                        maxStackCount: 1,
-                        lifecycleSequences: {
-                          enhanceChanged: {
-                            steps: [
-                              {
-                                kind: 'finishBuffsById',
-                                parameters: {
-                                  target: 'caster',
-                                  buffIds: ['buff:old'],
-                                  reason: 'other',
-                                },
-                              },
-                            ],
-                          },
-                        },
-                      },
-                    },
-                  },
-                  {
-                    kind: 'finishBuffsByTag',
-                    parameters: {
-                      target: 'enemy',
-                      tagQueryType: 'hasAny',
-                      buffTags: ['Skill/Character/Common/SpellStatus/Conduct'],
-                      reason: 'early',
-                    },
-                  },
-                ],
-              },
-            },
-            {
-              kind: 'conditional',
-              parameters: {
-                condition: {
-                  kind: 'elementalReactionActive',
-                  reaction: 'electrification',
-                  minimumLevel: 1,
-                },
-              },
-              whenTrue: { steps: [] },
-            },
-            {
-              kind: 'conditional',
-              parameters: {
-                condition: {
-                  kind: 'all',
-                  conditions: [
-                    {
-                      kind: 'eventDamageTagsMatch',
-                      match: 'hasAny',
-                      tags: ['normalAttackLastCombo'],
-                    },
-                    {
-                      kind: 'eventDamageFeaturesMatch',
-                      match: 'exceptAny',
-                      features: ['dot'],
-                    },
-                  ],
-                },
-              },
-              whenTrue: { steps: [] },
-            },
-            {
-              kind: 'createTimedMarker',
-              parameters: {
-                markerId: 'marker',
-                target: 'enemy',
-                durationSeconds: { kind: 'constant', value: 1 },
-                autoFinishByAction: false,
-              },
-            },
-            {
-              kind: 'changeResource',
-              parameters: { resource: 'sp', recipient: 'team', amount: 10 },
-            },
-            {
-              kind: 'changeResource',
-              parameters: { resource: 'ultimateEnergy', recipient: 'caster', amount: 10 },
-            },
-            {
-              kind: 'dealDamage',
-              parameters: {
-                damageType: 'electric',
-                calculation: 'breakingAttack',
-                calculationMultiplier: 1,
-                attackScale: 9,
-                tags: ['powerAttack'],
-              },
-            },
-            { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
-            {
-              kind: 'startTimeDilation',
-              parameters: {
-                scope: 'global',
-                durationSeconds: { kind: 'constant', value: 1 },
-                slot: 'Test/TimeSlot1',
-                priority: 1,
-                curve: { kind: 'named', key: 'ComboSkill' },
-                finishByAction: false,
-                ignoredTargets: ['caster'],
-              },
-            },
-            {
-              kind: 'startUltimateTimeDilation',
-              parameters: {
-                priority: 1,
-                targetScale: { kind: 'constant', value: 0 },
-                ignoredTargets: [],
-              },
-            },
-          ],
-        }),
+        operator(compileGraphEntry('compat-closed-subset', 'step-0', nodes), 100, true),
         100,
         true,
       ),
@@ -547,19 +578,20 @@ describe('standardPlayerDamageCompatibility', () => {
   });
 
   it('accepts operator healing and health checks only when runtime vitals are assembled', () => {
-    const sequence: ResolvedActionSequence = {
-      steps: [
-        {
-          kind: 'heal',
-          parameters: {
-            target: 'buffSource',
-            attribute: 'will',
-            multiplier: { kind: 'constant', value: 1 },
-            addition: 0,
-            tags: [],
-          },
-        },
-        {
+    const healStep: ActionGraphStep = {
+      kind: 'heal',
+      parameters: {
+        target: 'buffSource',
+        attribute: 'will',
+        multiplier: { kind: 'constant', value: 1 },
+        addition: 0,
+        tags: [],
+      },
+    };
+    const sequence: ResolvedActionSequence = compileGraphEntry('compat-heal-check', 'step-0', {
+      'step-0': { action: healStep, next: 'step-1' },
+      'step-1': {
+        action: {
           kind: 'conditional',
           parameters: {
             condition: {
@@ -570,10 +602,11 @@ describe('standardPlayerDamageCompatibility', () => {
               value: { kind: 'constant', value: 1 },
             },
           },
-          whenTrue: { steps: [] },
+          whenTrue: { $sequence: null },
         },
-      ],
-    };
+        next: null,
+      },
+    });
 
     expect(
       inspectStandardPlayerDamageCompatibility(compatibilityInput(operator(sequence, 0, true))),
@@ -586,22 +619,20 @@ describe('standardPlayerDamageCompatibility', () => {
   });
 
   it('accepts source attribute snapshots only with a resolved operator panel', () => {
-    const sequence: ResolvedActionSequence = {
-      steps: [
-        {
-          kind: 'storeSourceAttributeValue',
-          parameters: {
-            attribute: { kind: 'specific', key: 'will' },
-            stage: 'armedNonConverted',
-            useFloor: false,
-            divisor: { kind: 'constant', value: 1 },
-            multiplier: { kind: 'constant', value: 1 },
-            base: { kind: 'constant', value: 0 },
-            targetKey: 'will',
-          },
+    const sequence: ResolvedActionSequence = chainEntry('compat-source-attribute', [
+      {
+        kind: 'storeSourceAttributeValue',
+        parameters: {
+          attribute: { kind: 'specific', key: 'will' },
+          stage: 'armedNonConverted',
+          useFloor: false,
+          divisor: { kind: 'constant', value: 1 },
+          multiplier: { kind: 'constant', value: 1 },
+          base: { kind: 'constant', value: 0 },
+          targetKey: 'will',
         },
-      ],
-    };
+      },
+    ]);
 
     expect(
       inspectStandardPlayerDamageCompatibility(compatibilityInput(operator(sequence, 0, true))),
@@ -616,78 +647,98 @@ describe('standardPlayerDamageCompatibility', () => {
   it('recursively reports unsupported branches and nested conditions in stable order', () => {
     const issues = inspectStandardPlayerDamageCompatibility(
       compatibilityInput(
-        operator({
-          steps: [
-            {
-              kind: 'conditional',
-              parameters: {
-                condition: {
-                  kind: 'all',
-                  conditions: [
-                    { kind: 'combatActive' },
-                    {
-                      kind: 'not',
-                      condition: { kind: 'skillBranchEnabled', branchKey: 'unsupported' },
-                    },
-                  ],
+        operator(
+          compileGraphEntry('compat-nested-report', 'branch', {
+            branch: {
+              action: {
+                kind: 'conditional',
+                parameters: {
+                  condition: {
+                    kind: 'all',
+                    conditions: [
+                      { kind: 'combatActive' },
+                      {
+                        kind: 'not',
+                        condition: { kind: 'skillBranchEnabled', branchKey: 'unsupported' },
+                      },
+                    ],
+                  },
                 },
+                whenTrue: { $sequence: null },
+                whenFalse: { $sequence: 'nested-once' },
               },
-              whenTrue: { steps: [] },
-              whenFalse: {
-                steps: [
-                  {
-                    kind: 'once',
-                    parameters: { scopeKey: 'nested' },
-                    body: {
-                      steps: [
-                        {
-                          kind: 'applyBuff',
-                          parameters: {
-                            buffId: 'buff:inline',
-                            target: 'enemy',
-                            definition: {
-                              stackingType: 'stack',
-                              priority: 0,
-                              maxStackCount: 1,
-                              lifecycleSequences: {
-                                enable: {
-                                  steps: [
-                                    {
-                                      kind: 'setContextFlag',
-                                      parameters: {
-                                        flag: 'unsupported-nested-operation',
-                                        value: true,
-                                        target: 'caster',
-                                      },
-                                    },
-                                  ],
-                                },
+              next: null,
+            },
+            'nested-once': {
+              action: {
+                kind: 'once',
+                parameters: { scopeKey: 'nested' },
+                body: { $sequence: 'nested-infliction' },
+              },
+              next: null,
+            },
+            'nested-infliction': {
+              action: {
+                kind: 'applyPhysicalInfliction',
+                parameters: {
+                  type: 'fracture',
+                  target: 'enemy',
+                  isExtra: false,
+                  noGuardBuffId: 'buff:inline',
+                  noGuardDefinition: {
+                    stackingType: 'stack',
+                    priority: 0,
+                    maxStackCount: 1,
+                    lifecycleSequences: {
+                      enable: { $sequence: 'nested-unsupported-operation' },
+                    },
+                    actionGraph: {
+                      main: {
+                        nodes: {
+                          'nested-unsupported-operation': {
+                            action: {
+                              kind: 'setContextFlag',
+                              parameters: {
+                                flag: 'unsupported-nested-operation',
+                                value: true,
+                                target: 'caster',
                               },
                             },
+                            next: null,
                           },
                         },
-                      ],
+                      },
+                      macros: {},
                     },
                   },
-                ],
+                  fractureBuffId: 'buff:fracture',
+                  fractureDefinition: {
+                    stackingType: 'stack',
+                    priority: 0,
+                    maxStackCount: 1,
+                  },
+                },
               },
+              next: null,
             },
-          ],
-        }),
+          }),
+        ),
       ),
     );
 
     expect(issues.map(issue => issue.code)).toEqual(['unsupported-condition', 'unsupported-step']);
     expect(issues[0]?.path).toContain('.parameters.condition.conditions[1].condition');
     expect(issues[1]?.path).toContain(
-      '.whenFalse.steps[0].body.steps[0].parameters.definition.lifecycleSequences.enable.steps[0]',
+      '.whenFalse.steps[0].body.steps[0].parameters.noGuardDefinition.lifecycleSequences.enable.steps[0]',
     );
   });
 
   it('does not reject unsupported skills that cannot run before the requested end frame', () => {
-    const entry = operator({
-      steps: [{ kind: 'applyBuff', parameters: { buffId: 'buff:missing', target: 'enemy' } }],
-    });
+    const entry = operator(
+      chainEntry('compat-missing-buff', [
+        { kind: 'applyBuff', parameters: { buffId: 'buff:missing', target: 'enemy' } },
+      ]),
+    );
 
     expect(
       inspectStandardPlayerDamageCompatibility({
@@ -699,12 +750,12 @@ describe('standardPlayerDamageCompatibility', () => {
   });
 
   it('checks each submitted cast program independently from the fixed definition and other casts', () => {
-    const unsupported = program({
-      steps: [
+    const unsupported = program(
+      chainEntry('compat-cast-unsupported', [
         { kind: 'applyElementalInfliction', parameters: { element: 'heat', isExtra: false } },
-      ],
-    });
-    const supported = program({ steps: [] });
+      ]),
+    );
+    const supported = program(chainEntry('compat-cast-supported', []));
     const entry: CombatOperatorProgram = {
       operatorId: 'operator:1',
       skills: [],
@@ -747,7 +798,7 @@ describe('standardPlayerDamageCompatibility', () => {
   });
 
   it('does not inspect a scheduled skill action that starts after the requested end frame', () => {
-    const base = operator({ steps: [] });
+    const base = operator(chainEntry('compat-late-base', []));
     const entry: CombatOperatorProgram = {
       ...base,
       skills: [
@@ -756,14 +807,12 @@ describe('standardPlayerDamageCompatibility', () => {
           timelineActions: [
             {
               startFrame: 20,
-              sequence: {
-                steps: [
-                  {
-                    kind: 'applyBuff',
-                    parameters: { buffId: 'buff:missing', target: 'enemy' },
-                  },
-                ],
-              },
+              sequence: chainEntry('compat-late-action', [
+                {
+                  kind: 'applyBuff',
+                  parameters: { buffId: 'buff:missing', target: 'enemy' },
+                },
+              ]),
             },
           ],
         },
@@ -783,29 +832,27 @@ describe('standardPlayerDamageCompatibility', () => {
     const issues = inspectStandardPlayerDamageCompatibility(
       compatibilityInput(
         operator(
-          {
-            steps: [
-              {
-                kind: 'dealDamage',
-                parameters: {
-                  damageType: 'lifeDrain',
-                  calculation: 'breakingAttack',
-                  attackScale: 1,
-                  calculationMultiplier: 2,
-                  tags: [],
-                  attackScalePerStatusStack: {
-                    statusKey: 'marked',
-                    target: 'enemy',
-                    coefficient: 0.1,
-                  },
+          chainEntry('compat-damage-fields', [
+            {
+              kind: 'dealDamage',
+              parameters: {
+                damageType: 'lifeDrain',
+                calculation: 'breakingAttack',
+                attackScale: 1,
+                calculationMultiplier: 2,
+                tags: [],
+                attackScalePerStatusStack: {
+                  statusKey: 'marked',
+                  target: 'enemy',
+                  coefficient: 0.1,
                 },
               },
-              {
-                kind: 'changeResource',
-                parameters: { resource: 'sp', recipient: 'caster', amount: 1 },
-              },
-            ],
-          },
+            },
+            {
+              kind: 'changeResource',
+              parameters: { resource: 'sp', recipient: 'caster', amount: 1 },
+            },
+          ]),
           1,
         ),
       ),
@@ -820,10 +867,12 @@ describe('standardPlayerDamageCompatibility', () => {
 
   it('checks equipment handler conditions and steps instead of rejecting all listeners', () => {
     expect(
-      inspectStandardPlayerDamageCompatibility(compatibilityInput(operator({ steps: [] }, 1))),
+      inspectStandardPlayerDamageCompatibility(
+        compatibilityInput(operator(chainEntry('compat-equipment-empty', []), 1)),
+      ),
     ).toEqual([]);
 
-    const entry = operator({ steps: [] }, 1);
+    const entry = operator(chainEntry('compat-equipment-base', []), 1);
     const contribution = entry.equipmentContributions![0]!;
     const handler = contribution.eventHandlers[0]!;
     const issues = inspectStandardPlayerDamageCompatibility(
@@ -835,18 +884,16 @@ describe('standardPlayerDamageCompatibility', () => {
             eventHandlers: [
               {
                 ...handler,
-                sequence: {
-                  steps: [
-                    {
-                      kind: 'dealDamage',
-                      parameters: {
-                        damageType: 'electric',
-                        attackScale: 1,
-                        tags: ['normalSkill'],
-                      },
+                sequence: chainEntry('compat-equipment-deal-damage', [
+                  {
+                    kind: 'dealDamage',
+                    parameters: {
+                      damageType: 'electric',
+                      attackScale: 1,
+                      tags: ['normalSkill'],
                     },
-                  ],
-                },
+                  },
+                ]),
               },
             ],
           },
@@ -859,11 +906,11 @@ describe('standardPlayerDamageCompatibility', () => {
   it('rejects elemental infliction without an installed infliction document', () => {
     const issues = inspectStandardPlayerDamageCompatibility(
       compatibilityInput(
-        operator({
-          steps: [
+        operator(
+          chainEntry('compat-infestation-missing', [
             { kind: 'applyElementalInfliction', parameters: { element: 'heat', isExtra: false } },
-          ],
-        }),
+          ]),
+        ),
       ),
     );
 
@@ -874,54 +921,64 @@ describe('standardPlayerDamageCompatibility', () => {
   it('accepts detached projectile finish callbacks when their body is compatible', () => {
     const issues = inspectStandardPlayerDamageCompatibility(
       compatibilityInput(
-        operator({
-          steps: [
-            {
-              kind: 'launchProjectile',
-              parameters: { finish: 0.1, recycleDelaySeconds: 0 },
-              callbacks: [
-                {
-                  event: 'finish',
-                  skill: {
-                    skillId: 'callback',
-                    nativeSkillType: 'normalSkill',
-                    naturalDurationFrames: 1,
-                    castResource: {
-                      costFrame: 0,
-                      cooldownSeconds: 0,
-                      maxChargeTime: 1,
-                      cost: {
-                        resource: 'ultimateEnergy',
-                        value: 0,
-                        availabilityThreshold: 0,
-                      },
-                    },
-                    initialBlackboard: {},
-                    timelineActions: [
-                      {
-                        startFrame: 0,
-                        endFrame: 0,
-                        sequence: {
-                          steps: [
-                            {
-                              kind: 'changeResource',
-                              parameters: {
-                                resource: 'sp',
-                                amount: 1,
-                                recipient: 'team',
-                                spGainKind: 'gain',
-                              },
-                            },
-                          ],
+        operator(
+          compileGraphEntry('compat-projectile-callback', 'step-0', {
+            'step-0': {
+              action: {
+                kind: 'launchProjectile',
+                parameters: { finish: 0.1, recycleDelaySeconds: 0 },
+                callbacks: [
+                  {
+                    event: 'finish',
+                    skill: {
+                      skillId: 'callback',
+                      nativeSkillType: 'normalSkill',
+                      naturalDurationFrames: 1,
+                      castResource: {
+                        costFrame: 0,
+                        cooldownSeconds: 0,
+                        maxChargeTime: 1,
+                        cost: {
+                          resource: 'ultimateEnergy',
+                          value: 0,
+                          availabilityThreshold: 0,
                         },
                       },
-                    ],
+                      blackboard: {},
+                      scheduledSequences: [
+                        {
+                          startFrame: 0,
+                          endFrame: 0,
+                          sequence: { $sequence: 'callback-resource' },
+                        },
+                      ],
+                      actionGraph: {
+                        main: {
+                          nodes: {
+                            'callback-resource': {
+                              action: {
+                                kind: 'changeResource',
+                                parameters: {
+                                  resource: 'sp',
+                                  amount: 1,
+                                  recipient: 'team',
+                                  spGainKind: 'gain',
+                                },
+                              },
+                              next: null,
+                            },
+                          },
+                        },
+                        macros: {},
+                      },
+                    },
                   },
-                },
-              ],
+                ],
+              },
+              next: null,
             },
-          ],
-        }),
+          }),
+        ),
       ),
     );
 
@@ -930,16 +987,16 @@ describe('standardPlayerDamageCompatibility', () => {
 
   it('throws one aggregate error containing all issues', () => {
     const operators = [
-      operator({
-        steps: [
+      operator(
+        chainEntry('compat-aggregate-error', [
           { kind: 'dealStagger', parameters: { value: 10 } },
           {
             kind: 'applyBuff',
             parameters: { buffId: 'buff:missing', target: 'enemy' },
           },
           { kind: 'setContextFlag', parameters: { flag: 'ready', value: true, target: 'caster' } },
-        ],
-      }),
+        ]),
+      ),
     ];
 
     try {

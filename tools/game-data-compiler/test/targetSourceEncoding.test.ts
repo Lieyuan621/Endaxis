@@ -14,6 +14,7 @@ import {
 import { parseTargetGroupActionSource } from '../src/source/targetGroup.ts';
 import { parseKnownNativeActionSequenceSource } from '../src/source/actionLeaf.ts';
 import { compileCombatActionSequenceSource } from '../src/compiler/buffs/buffRuntimeProjection.ts';
+import { createActionGraphBuilder } from '../src/compiler/actions/actionGraphBuilder.ts';
 
 describe('公共目标来源编码', () => {
   it('投射物查询保留自己的几何和身份，不冒充敌方 ShapeFinder', () => {
@@ -77,6 +78,7 @@ describe('公共目标来源编码', () => {
         actionOwnerTarget: 'caster',
         actionSourceTarget: 'caster',
         actionTargetTarget: 'enemy',
+        graph: createActionGraphBuilder(),
       }),
     ).toThrow();
     expect(() =>

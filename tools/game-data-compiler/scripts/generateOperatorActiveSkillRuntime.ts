@@ -186,7 +186,7 @@ export function prepareProjectileProjection(
   >,
   launches: readonly ProjectileLaunchActionSource[],
   visualOnlyIds: ReadonlySet<string>,
-  callbackContext: CombatActionProjectionContextSource,
+  callbackContext: Omit<CombatActionProjectionContextSource, 'graph'>,
 ): {
   readonly compileProjectileLaunch: NonNullable<
     CombatActionProjectionExtensionsSource['compileProjectileLaunch']

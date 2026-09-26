@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { OperatorDefinition } from '../../../packages/game-data-contract/src/operators.ts';
+
 import { avywenna } from '../../../src/data/operators/avywenna.generated.ts';
 
 const { planOperatorDefinition, renderOperatorDefinitionFiles } = vi.hoisted(() => ({

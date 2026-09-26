@@ -1,721 +1,870 @@
 /** 由 tools/game-data-compiler 整名生成；不要手工编辑。 */
-import type { OperatorDefinition, SkillDefinition } from '../../core/game-data/operatorDefinition';
-import {
-  branch,
-  once,
-  repeatEachTick,
-  scheduled,
-  sequence,
-  step,
-  withSkillBlackboard,
-} from './definitionHelpers';
 
-export const catcherChr_0020_meurs_attack1: SkillDefinition = withSkillBlackboard(
-  {
-    key: 'chr_0020_meurs_attack1',
-    timelineBlockFrames: 21,
-    naturalDurationFrames: 114,
-    exclusiveFrame: 25,
-    offsetRecordFrame: 12,
-    inputWindows: {
-      commandMappings: [
-        {
-          startFrame: 0,
-          endFrame: 39,
-          input: 'basicAttack',
-          targetSkillId: 'chr_0020_meurs_attack2',
+import type { ActionGraphResourceDefinition } from '../../../packages/game-data-contract/src/actionGraph';
+import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills';
+import type { SkillBuffDefinition } from '../../../packages/game-data-contract/src/buffs';
+import type { ComboSkillConditionDefinition } from '../../../packages/game-data-contract/src/operators';
+import type { OperatorDefinition } from '../../../packages/game-data-contract/src/operators';
+export const catcherChr_0020_meurs_attack1ActionGraph = {
+  main: {
+    nodes: {
+      changeResourceByActionValue_1: {
+        action: {
+          kind: 'changeResourceByActionValue',
+          parameters: {
+            resource: 'sp',
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            coefficient: { kind: 'constant', value: 1 },
+            recipient: 'team',
+            spGainKind: 'gain',
+            spGainSource: 'normalAttack',
+          },
         },
-      ],
-      allowedNextSkills: [{ startFrame: 21, endFrame: 39, skillIds: ['chr_0020_meurs_attack2'] }],
-    },
-    costFrame: 0,
-    scheduledSequences: [
-      scheduled(
-        12,
-        sequence(
-          repeatEachTick(
-            sequence(
-              step(
-                'dealDamage',
-                {
-                  damageType: 'physical',
-                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                  tags: ['normalAttack'],
-                },
-                'chr_0020_meurs_attack1:/scheduledSequences/0/sequence/steps/0/body/steps/0',
-              ),
-              branch(
-                { kind: 'casterControlled' },
-                sequence(
-                  step('startTimeDilation', {
-                    scope: 'entity',
-                    durationSeconds: { kind: 'constant', value: 0.15 },
-                    slot: 'TimeDilation/Layer/Entity/HitStop',
-                    priority: 10,
-                    curve: { kind: 'named', key: 'char_hard_stop' },
-                    finishByAction: false,
-                    targets: ['enemy', 'caster'],
-                  }),
-                  branch(
-                    { kind: 'casterControlled' },
-                    sequence(
-                      step('changeResourceByActionValue', {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'atb' },
-                        coefficient: { kind: 'constant', value: 1 },
-                        recipient: 'team',
-                        spGainKind: 'gain',
-                        spGainSource: 'normalAttack',
-                      }),
-                    ),
-                  ),
-                ),
-                undefined,
-                { alwaysNext: true },
-              ),
-            ),
-            {
-              nativeChanneling: {
-                executeEachFrame: true,
-                triggerIntervalSeconds: 0.033,
-                maxCountPerTarget: 1,
-                targetTriggerIntervalSeconds: 0.033,
-              },
+        next: null,
+      },
+      conditional_2: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
+        },
+        next: null,
+      },
+      startTimeDilation_3: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.15 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
+        },
+        next: 'conditional_2',
+      },
+      conditional_4: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' }, alwaysNext: true },
+          whenTrue: { $sequence: 'startTimeDilation_3' },
+        },
+        next: null,
+      },
+      dealDamage_5: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+            tags: ['normalAttack'],
+          },
+        },
+        next: 'conditional_4',
+      },
+      repeatEachTick_6: {
+        action: {
+          kind: 'repeatEachTick',
+          parameters: {
+            nativeChanneling: {
+              executeEachFrame: true,
+              triggerIntervalSeconds: 0.033,
+              maxCountPerTarget: 1,
+              targetTriggerIntervalSeconds: 0.033,
             },
-          ),
-        ),
-        14,
-      ),
-      scheduled(
-        21,
-        sequence(step('reachSkillOperableBoundary', { skillIds: ['chr_0020_meurs_attack2'] })),
-        39,
-      ),
-    ],
-    timelineContinuationSkillId: 'chr_0020_meurs_attack2',
-    skillType: 'basicAttack',
-    levelSource: 'basicAttack',
-    nativeSkillType: 'attack',
+          },
+          body: { $sequence: 'dealDamage_5' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_7: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0020_meurs_attack2'] },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+    },
   },
-  {
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const catcherChr_0020_meurs_attack1: SkillDefinition = {
+  actionGraph: catcherChr_0020_meurs_attack1ActionGraph,
+  key: 'chr_0020_meurs_attack1',
+  blackboard: {
     atb: 0,
     atk_scale: [0.35, 0.39, 0.42, 0.46, 0.49, 0.53, 0.56, 0.6, 0.63, 0.67, 0.73, 0.79],
     env_dmg: 20,
   },
-);
-
-export const catcherChr_0020_meurs_attack2: SkillDefinition = withSkillBlackboard(
-  {
-    key: 'chr_0020_meurs_attack2',
-    timelineBlockFrames: 21,
-    naturalDurationFrames: 126,
-    exclusiveFrame: 25,
-    offsetRecordFrame: 10,
-    inputWindows: {
-      commandMappings: [
-        {
-          startFrame: 0,
-          endFrame: 35,
-          input: 'basicAttack',
-          targetSkillId: 'chr_0020_meurs_attack3',
-        },
-      ],
-      allowedNextSkills: [{ startFrame: 21, endFrame: 35, skillIds: ['chr_0020_meurs_attack3'] }],
-    },
-    costFrame: 9,
-    scheduledSequences: [
-      scheduled(
-        10,
-        sequence(
-          repeatEachTick(
-            sequence(
-              step(
-                'dealDamage',
-                {
-                  damageType: 'physical',
-                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                  tags: ['normalAttack'],
-                },
-                'chr_0020_meurs_attack2:/scheduledSequences/0/sequence/steps/0/body/steps/0',
-              ),
-              branch(
-                { kind: 'casterControlled' },
-                sequence(
-                  step('startTimeDilation', {
-                    scope: 'entity',
-                    durationSeconds: { kind: 'constant', value: 0.25 },
-                    slot: 'TimeDilation/Layer/Entity/HitStop',
-                    priority: 10,
-                    curve: { kind: 'named', key: 'char_hard_stop' },
-                    finishByAction: false,
-                    targets: ['enemy', 'caster'],
-                  }),
-                  step('changeResourceByActionValue', {
-                    resource: 'sp',
-                    amount: { kind: 'blackboard', key: 'atb' },
-                    coefficient: { kind: 'constant', value: 1 },
-                    recipient: 'team',
-                    spGainKind: 'gain',
-                    spGainSource: 'normalAttack',
-                  }),
-                ),
-                undefined,
-                { alwaysNext: true },
-              ),
-            ),
-            {
-              nativeChanneling: {
-                executeEachFrame: true,
-                triggerIntervalSeconds: 0.033,
-                maxCountPerTarget: 1,
-                targetTriggerIntervalSeconds: 0.033,
-              },
-            },
-          ),
-        ),
-        13,
-      ),
-      scheduled(
-        21,
-        sequence(step('reachSkillOperableBoundary', { skillIds: ['chr_0020_meurs_attack3'] })),
-        35,
-      ),
+  timelineBlockFrames: 21,
+  naturalDurationFrames: 114,
+  exclusiveFrame: 25,
+  offsetRecordFrame: 12,
+  inputWindows: {
+    commandMappings: [
+      {
+        startFrame: 0,
+        endFrame: 39,
+        input: 'basicAttack',
+        targetSkillId: 'chr_0020_meurs_attack2',
+      },
     ],
-    timelineContinuationSkillId: 'chr_0020_meurs_attack3',
-    skillType: 'basicAttack',
-    levelSource: 'basicAttack',
-    nativeSkillType: 'attack',
+    allowedNextSkills: [{ startFrame: 21, endFrame: 39, skillIds: ['chr_0020_meurs_attack2'] }],
   },
-  {
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 12, endFrame: 14, sequence: { $sequence: 'repeatEachTick_6' } },
+    { startFrame: 21, endFrame: 39, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
+  ],
+  timelineContinuationSkillId: 'chr_0020_meurs_attack2',
+  skillType: 'basicAttack',
+  levelSource: 'basicAttack',
+  nativeSkillType: 'attack',
+};
+
+export const catcherChr_0020_meurs_attack2ActionGraph = {
+  main: {
+    nodes: {
+      changeResourceByActionValue_1: {
+        action: {
+          kind: 'changeResourceByActionValue',
+          parameters: {
+            resource: 'sp',
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            coefficient: { kind: 'constant', value: 1 },
+            recipient: 'team',
+            spGainKind: 'gain',
+            spGainSource: 'normalAttack',
+          },
+        },
+        next: null,
+      },
+      startTimeDilation_2: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.25 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
+        },
+        next: 'changeResourceByActionValue_1',
+      },
+      conditional_3: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' }, alwaysNext: true },
+          whenTrue: { $sequence: 'startTimeDilation_2' },
+        },
+        next: null,
+      },
+      dealDamage_4: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            tags: ['normalAttack'],
+          },
+        },
+        next: 'conditional_3',
+      },
+      repeatEachTick_5: {
+        action: {
+          kind: 'repeatEachTick',
+          parameters: {
+            nativeChanneling: {
+              executeEachFrame: true,
+              triggerIntervalSeconds: 0.033,
+              maxCountPerTarget: 1,
+              targetTriggerIntervalSeconds: 0.033,
+            },
+          },
+          body: { $sequence: 'dealDamage_4' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_6: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0020_meurs_attack3'] },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const catcherChr_0020_meurs_attack2: SkillDefinition = {
+  actionGraph: catcherChr_0020_meurs_attack2ActionGraph,
+  key: 'chr_0020_meurs_attack2',
+  blackboard: {
     atb: 0,
     atk_scale: [0.39, 0.42, 0.46, 0.5, 0.54, 0.58, 0.62, 0.65, 0.69, 0.74, 0.8, 0.87],
     env_dmg: 20,
   },
-);
-
-export const catcherChr_0020_meurs_attack3: SkillDefinition = withSkillBlackboard(
-  {
-    key: 'chr_0020_meurs_attack3',
-    timelineBlockFrames: 28,
-    naturalDurationFrames: 126,
-    exclusiveFrame: 32,
-    offsetRecordFrame: 16,
-    inputWindows: {
-      commandMappings: [
-        {
-          startFrame: 0,
-          endFrame: 44,
-          input: 'basicAttack',
-          targetSkillId: 'chr_0020_meurs_attack4',
-        },
-      ],
-      allowedNextSkills: [{ startFrame: 28, endFrame: 44, skillIds: ['chr_0020_meurs_attack4'] }],
-    },
-    costFrame: 9,
-    scheduledSequences: [
-      scheduled(
-        16,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'physical',
-              attackScale: { kind: 'blackboard', key: 'atk_scale' },
-              tags: ['normalAttack'],
-            },
-            'chr_0020_meurs_attack3:/scheduledSequences/0/sequence/steps/0',
-          ),
-          branch(
-            { kind: 'casterControlled' },
-            sequence(
-              step('startTimeDilation', {
-                scope: 'entity',
-                durationSeconds: { kind: 'constant', value: 0.15 },
-                slot: 'TimeDilation/Layer/Entity/HitStop',
-                priority: 10,
-                curve: { kind: 'named', key: 'char_hard_stop' },
-                finishByAction: false,
-                targets: ['enemy', 'caster'],
-              }),
-              branch(
-                { kind: 'casterControlled' },
-                sequence(
-                  step('changeResourceByActionValue', {
-                    resource: 'sp',
-                    amount: { kind: 'blackboard', key: 'atb' },
-                    coefficient: { kind: 'constant', value: 1 },
-                    recipient: 'team',
-                    spGainKind: 'gain',
-                    spGainSource: 'normalAttack',
-                  }),
-                ),
-              ),
-            ),
-            undefined,
-            { alwaysNext: true },
-          ),
-        ),
-        17,
-      ),
-      scheduled(
-        28,
-        sequence(step('reachSkillOperableBoundary', { skillIds: ['chr_0020_meurs_attack4'] })),
-        44,
-      ),
+  timelineBlockFrames: 21,
+  naturalDurationFrames: 126,
+  exclusiveFrame: 25,
+  offsetRecordFrame: 10,
+  inputWindows: {
+    commandMappings: [
+      {
+        startFrame: 0,
+        endFrame: 35,
+        input: 'basicAttack',
+        targetSkillId: 'chr_0020_meurs_attack3',
+      },
     ],
-    timelineContinuationSkillId: 'chr_0020_meurs_attack4',
-    skillType: 'basicAttack',
-    levelSource: 'basicAttack',
-    nativeSkillType: 'attack',
+    allowedNextSkills: [{ startFrame: 21, endFrame: 35, skillIds: ['chr_0020_meurs_attack3'] }],
   },
-  {
+  costFrame: 9,
+  scheduledSequences: [
+    { startFrame: 10, endFrame: 13, sequence: { $sequence: 'repeatEachTick_5' } },
+    { startFrame: 21, endFrame: 35, sequence: { $sequence: 'reachSkillOperableBoundary_6' } },
+  ],
+  timelineContinuationSkillId: 'chr_0020_meurs_attack3',
+  skillType: 'basicAttack',
+  levelSource: 'basicAttack',
+  nativeSkillType: 'attack',
+};
+
+export const catcherChr_0020_meurs_attack3ActionGraph = {
+  main: {
+    nodes: {
+      changeResourceByActionValue_1: {
+        action: {
+          kind: 'changeResourceByActionValue',
+          parameters: {
+            resource: 'sp',
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            coefficient: { kind: 'constant', value: 1 },
+            recipient: 'team',
+            spGainKind: 'gain',
+            spGainSource: 'normalAttack',
+          },
+        },
+        next: null,
+      },
+      conditional_2: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
+        },
+        next: null,
+      },
+      startTimeDilation_3: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.15 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
+        },
+        next: 'conditional_2',
+      },
+      conditional_4: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' }, alwaysNext: true },
+          whenTrue: { $sequence: 'startTimeDilation_3' },
+        },
+        next: null,
+      },
+      dealDamage_5: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+            tags: ['normalAttack'],
+          },
+        },
+        next: 'conditional_4',
+      },
+      reachSkillOperableBoundary_6: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0020_meurs_attack4'] },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const catcherChr_0020_meurs_attack3: SkillDefinition = {
+  actionGraph: catcherChr_0020_meurs_attack3ActionGraph,
+  key: 'chr_0020_meurs_attack3',
+  blackboard: {
     atb: 0,
     atk_scale: [0.54, 0.59, 0.65, 0.7, 0.76, 0.81, 0.86, 0.92, 0.97, 1.04, 1.12, 1.22],
     env_dmg: 20,
   },
-);
-
-export const catcherChr_0020_meurs_attack4: SkillDefinition = withSkillBlackboard(
-  {
-    key: 'chr_0020_meurs_attack4',
-    timelineBlockFrames: 45,
-    naturalDurationFrames: 114,
-    exclusiveFrame: 47,
-    offsetRecordFrame: 23,
-    inputWindows: {
-      commandMappings: [
-        {
-          startFrame: 0,
-          endFrame: 60,
-          input: 'basicAttack',
-          targetSkillId: 'chr_0020_meurs_attack1',
-        },
-      ],
-      allowedNextSkills: [{ startFrame: 45, endFrame: 60, skillIds: ['chr_0020_meurs_attack1'] }],
-    },
-    costFrame: 9,
-    scheduledSequences: [
-      scheduled(
-        23,
-        sequence(
-          repeatEachTick(
-            sequence(
-              step(
-                'dealDamage',
-                {
-                  damageType: 'physical',
-                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                  tags: ['normalAttack', 'normalAttackLastCombo'],
-                  stagger: { kind: 'blackboard', key: 'poise' },
-                  staggerOnlyWhenCasterControlled: true,
-                },
-                'chr_0020_meurs_attack4:/scheduledSequences/0/sequence/steps/0/body/steps/0',
-              ),
-              branch(
-                { kind: 'casterControlled' },
-                sequence(
-                  step('startTimeDilation', {
-                    scope: 'entity',
-                    durationSeconds: { kind: 'constant', value: 0.4 },
-                    slot: 'TimeDilation/Layer/Entity/HitStop',
-                    priority: 10,
-                    curve: { kind: 'named', key: 'char_hard_stop' },
-                    finishByAction: false,
-                    targets: ['enemy', 'caster'],
-                  }),
-                  once(
-                    'SkillData.chr_0020_meurs_attack4.actionGroupData.timelineActions[6]._sequenceActionData.actionData[0].actionOnTick.actionData[2].succeedActions.actionData[2]',
-                    sequence(
-                      step('changeResourceByActionValue', {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'atb' },
-                        coefficient: { kind: 'constant', value: 1 },
-                        recipient: 'team',
-                        spGainKind: 'gain',
-                        spGainSource: 'normalAttack',
-                      }),
-                    ),
-                  ),
-                ),
-                undefined,
-                { alwaysNext: true },
-              ),
-            ),
-            {
-              nativeChanneling: {
-                executeEachFrame: true,
-                triggerIntervalSeconds: 0.033,
-                maxCountPerTarget: 1,
-                targetTriggerIntervalSeconds: 0.033,
-              },
-            },
-          ),
-        ),
-        25,
-      ),
-      scheduled(
-        45,
-        sequence(step('reachSkillOperableBoundary', { skillIds: ['chr_0020_meurs_attack1'] })),
-        60,
-      ),
+  timelineBlockFrames: 28,
+  naturalDurationFrames: 126,
+  exclusiveFrame: 32,
+  offsetRecordFrame: 16,
+  inputWindows: {
+    commandMappings: [
+      {
+        startFrame: 0,
+        endFrame: 44,
+        input: 'basicAttack',
+        targetSkillId: 'chr_0020_meurs_attack4',
+      },
     ],
-    timelineContinuationSkillId: 'chr_0020_meurs_attack1',
-    skillType: 'basicAttack',
-    levelSource: 'basicAttack',
-    nativeSkillType: 'attack',
+    allowedNextSkills: [{ startFrame: 28, endFrame: 44, skillIds: ['chr_0020_meurs_attack4'] }],
   },
-  {
+  costFrame: 9,
+  scheduledSequences: [
+    { startFrame: 16, endFrame: 17, sequence: { $sequence: 'dealDamage_5' } },
+    { startFrame: 28, endFrame: 44, sequence: { $sequence: 'reachSkillOperableBoundary_6' } },
+  ],
+  timelineContinuationSkillId: 'chr_0020_meurs_attack4',
+  skillType: 'basicAttack',
+  levelSource: 'basicAttack',
+  nativeSkillType: 'attack',
+};
+
+export const catcherChr_0020_meurs_attack4ActionGraph = {
+  main: {
+    nodes: {
+      changeResourceByActionValue_1: {
+        action: {
+          kind: 'changeResourceByActionValue',
+          parameters: {
+            resource: 'sp',
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            coefficient: { kind: 'constant', value: 1 },
+            recipient: 'team',
+            spGainKind: 'gain',
+            spGainSource: 'normalAttack',
+          },
+        },
+        next: null,
+      },
+      once_2: {
+        action: {
+          kind: 'once',
+          parameters: {},
+          body: { $sequence: 'changeResourceByActionValue_1' },
+        },
+        next: null,
+      },
+      startTimeDilation_3: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.4 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
+        },
+        next: 'once_2',
+      },
+      conditional_4: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' }, alwaysNext: true },
+          whenTrue: { $sequence: 'startTimeDilation_3' },
+        },
+        next: null,
+      },
+      dealDamage_5: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            tags: ['normalAttack', 'normalAttackLastCombo'],
+            stagger: { kind: 'valueNode', nodeId: 'data_4' },
+            staggerOnlyWhenCasterControlled: true,
+          },
+        },
+        next: 'conditional_4',
+      },
+      repeatEachTick_6: {
+        action: {
+          kind: 'repeatEachTick',
+          parameters: {
+            nativeChanneling: {
+              executeEachFrame: true,
+              triggerIntervalSeconds: 0.033,
+              maxCountPerTarget: 1,
+              targetTriggerIntervalSeconds: 0.033,
+            },
+          },
+          body: { $sequence: 'dealDamage_5' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_7: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0020_meurs_attack1'] },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const catcherChr_0020_meurs_attack4: SkillDefinition = {
+  actionGraph: catcherChr_0020_meurs_attack4ActionGraph,
+  key: 'chr_0020_meurs_attack4',
+  blackboard: {
     atb: 25,
     atk_scale: [0.71, 0.78, 0.85, 0.92, 0.99, 1.07, 1.14, 1.21, 1.28, 1.37, 1.47, 1.6],
     atk_scale2: 0.5,
     env_dmg: 40,
     poise: 22,
   },
-);
+  timelineBlockFrames: 45,
+  naturalDurationFrames: 114,
+  exclusiveFrame: 47,
+  offsetRecordFrame: 23,
+  inputWindows: {
+    commandMappings: [
+      {
+        startFrame: 0,
+        endFrame: 60,
+        input: 'basicAttack',
+        targetSkillId: 'chr_0020_meurs_attack1',
+      },
+    ],
+    allowedNextSkills: [{ startFrame: 45, endFrame: 60, skillIds: ['chr_0020_meurs_attack1'] }],
+  },
+  costFrame: 9,
+  scheduledSequences: [
+    { startFrame: 23, endFrame: 25, sequence: { $sequence: 'repeatEachTick_6' } },
+    { startFrame: 45, endFrame: 60, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
+  ],
+  timelineContinuationSkillId: 'chr_0020_meurs_attack1',
+  skillType: 'basicAttack',
+  levelSource: 'basicAttack',
+  nativeSkillType: 'attack',
+};
 
-export const catcherChr_0020_meurs_power_attack: SkillDefinition = withSkillBlackboard(
-  {
-    key: 'chr_0020_meurs_power_attack',
-    timelineBlockFrames: 35,
-    naturalDurationFrames: 135,
-    exclusiveFrame: 75,
-    offsetRecordFrame: 0,
-    inputWindows: {
-      allowedNextSkills: [
-        {
-          startFrame: 35,
-          endFrame: 75,
-          skillIds: ['chr_0020_meurs_normal_skill', 'chr_0020_meurs_combo_skill'],
+export const catcherChr_0020_meurs_power_attackActionGraph = {
+  main: {
+    nodes: {
+      gainFinisherSp_1: {
+        action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+        next: null,
+      },
+      dealDamage_2: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+            calculation: 'breakingAttack',
+            calculationMultiplier: 0.4,
+            tags: ['normalAttack', 'powerAttack'],
+          },
         },
-      ],
-    },
-    costFrame: 9,
-    scheduledSequences: [
-      scheduled(
-        15,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'physical',
-              attackScale: { kind: 'blackboard', key: 'atk_scale' },
-              calculation: 'breakingAttack',
-              calculationMultiplier: 0.4,
-              tags: ['normalAttack', 'powerAttack'],
-            },
-            'chr_0020_meurs_power_attack:/scheduledSequences/0/sequence/steps/0',
-          ),
-          step('gainFinisherSp', { factor: 1, recipient: 'team' }),
-        ),
-        17,
-      ),
-      scheduled(
-        35,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'physical',
-              attackScale: { kind: 'blackboard', key: 'atk_scale' },
-              calculation: 'breakingAttack',
-              calculationMultiplier: 0.6,
-              tags: ['normalAttack', 'powerAttack'],
-            },
-            'chr_0020_meurs_power_attack:/scheduledSequences/1/sequence/steps/0',
-          ),
-          branch(
-            { kind: 'casterControlled' },
-            sequence(
-              step('startTimeDilation', {
-                scope: 'entity',
-                durationSeconds: { kind: 'constant', value: 0.3 },
-                slot: 'TimeDilation/Layer/Entity/HitStop',
-                priority: 10,
-                curve: { kind: 'named', key: 'char_normal_attack' },
-                finishByAction: false,
-                targets: ['caster'],
-              }),
-            ),
-            undefined,
-            { alwaysNext: true },
-          ),
-        ),
-        37,
-      ),
-      scheduled(
-        0,
-        sequence(
-          step('applyBuff', {
+        next: 'gainFinisherSp_1',
+      },
+      startTimeDilation_3: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.3 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'char_normal_attack' },
+            finishByAction: false,
+            targets: ['caster'],
+          },
+        },
+        next: null,
+      },
+      conditional_4: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' }, alwaysNext: true },
+          whenTrue: { $sequence: 'startTimeDilation_3' },
+        },
+        next: null,
+      },
+      dealDamage_5: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            calculation: 'breakingAttack',
+            calculationMultiplier: 0.6,
+            tags: ['normalAttack', 'powerAttack'],
+          },
+        },
+        next: 'conditional_4',
+      },
+      applyBuff_6: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
             buffId: 'buff_common_power_attack_disable_cast_skill',
             target: 'caster',
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
-          }),
-        ),
-        35,
-      ),
-      scheduled(
-        0,
-        sequence(
-          step('applyBuff', {
+          },
+        },
+        next: null,
+      },
+      applyBuff_7: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
             buffId: 'buff_common_full_immune_medium',
             target: 'caster',
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
-          }),
-        ),
-        75,
-      ),
-    ],
-    skillType: 'finisher',
-    levelSource: 'basicAttack',
-    nativeSkillType: 'breakingAttack',
-  },
-  { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
-);
-
-export const catcherChr_0020_meurs_plunging_attack_end: SkillDefinition = withSkillBlackboard(
-  {
-    key: 'chr_0020_meurs_plunging_attack_end',
-    timelineBlockFrames: 21,
-    naturalDurationFrames: 108,
-    exclusiveFrame: 20,
-    offsetRecordFrame: 0,
-    costFrame: 9,
-    scheduledSequences: [
-      scheduled(
-        1,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'physical',
-              attackScale: { kind: 'blackboard', key: 'atk_scale' },
-              tags: ['normalAttack', 'plungingAttack'],
-            },
-            'chr_0020_meurs_plunging_attack_end:/scheduledSequences/0/sequence/steps/0',
-          ),
-          branch(
-            { kind: 'casterControlled' },
-            sequence(
-              step('changeResourceByActionValue', {
-                resource: 'sp',
-                amount: { kind: 'blackboard', key: 'atb' },
-                coefficient: { kind: 'constant', value: 1 },
-                recipient: 'team',
-                spGainKind: 'gain',
-                spGainSource: 'normalAttack',
-              }),
-            ),
-          ),
-        ),
-        2,
-      ),
-    ],
-    skillType: 'plungingAttack',
-    levelSource: 'basicAttack',
-    nativeSkillType: 'attack',
-  },
-  { atb: 0, atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8] },
-);
-
-export const catcherChr_0020_meurs_normal_skill: SkillDefinition = withSkillBlackboard(
-  {
-    key: 'chr_0020_meurs_normal_skill',
-    timelineBlockFrames: 129,
-    naturalDurationFrames: 373,
-    exclusiveFrame: 285,
-    offsetRecordFrame: 0,
-    inputWindows: {
-      allowedNextSkills: [
-        { startFrame: 95, endFrame: 129, skillIds: ['chr_0020_meurs_normal_skill'] },
-      ],
+          },
+        },
+        next: null,
+      },
     },
-    costFrame: 0,
-    scheduledSequences: [
-      scheduled(
-        0,
-        sequence(
-          step('findCharacterTeamTargets', {
-            saveToContextKey: 'MainChar',
-            selection: { kind: 'controlledOperator' },
-          }),
-        ),
-        3,
-      ),
-      scheduled(
-        0,
-        sequence(
-          step('changeResourceByActionValue', {
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const catcherChr_0020_meurs_power_attack: SkillDefinition = {
+  actionGraph: catcherChr_0020_meurs_power_attackActionGraph,
+  key: 'chr_0020_meurs_power_attack',
+  blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
+  timelineBlockFrames: 35,
+  naturalDurationFrames: 135,
+  exclusiveFrame: 75,
+  offsetRecordFrame: 0,
+  inputWindows: {
+    allowedNextSkills: [
+      {
+        startFrame: 35,
+        endFrame: 75,
+        skillIds: ['chr_0020_meurs_normal_skill', 'chr_0020_meurs_combo_skill'],
+      },
+    ],
+  },
+  costFrame: 9,
+  scheduledSequences: [
+    { startFrame: 15, endFrame: 17, sequence: { $sequence: 'dealDamage_2' } },
+    { startFrame: 35, endFrame: 37, sequence: { $sequence: 'dealDamage_5' } },
+    { startFrame: 0, endFrame: 35, sequence: { $sequence: 'applyBuff_6' } },
+    { startFrame: 0, endFrame: 75, sequence: { $sequence: 'applyBuff_7' } },
+  ],
+  skillType: 'finisher',
+  levelSource: 'basicAttack',
+  nativeSkillType: 'breakingAttack',
+};
+
+export const catcherChr_0020_meurs_plunging_attack_endActionGraph = {
+  main: {
+    nodes: {
+      changeResourceByActionValue_1: {
+        action: {
+          kind: 'changeResourceByActionValue',
+          parameters: {
             resource: 'sp',
-            amount: { kind: 'blackboard', key: 'atb_return_base' },
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            coefficient: { kind: 'constant', value: 1 },
+            recipient: 'team',
+            spGainKind: 'gain',
+            spGainSource: 'normalAttack',
+          },
+        },
+        next: null,
+      },
+      conditional_2: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
+        },
+        next: null,
+      },
+      dealDamage_3: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            tags: ['normalAttack', 'plungingAttack'],
+          },
+        },
+        next: 'conditional_2',
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const catcherChr_0020_meurs_plunging_attack_end: SkillDefinition = {
+  actionGraph: catcherChr_0020_meurs_plunging_attack_endActionGraph,
+  key: 'chr_0020_meurs_plunging_attack_end',
+  blackboard: {
+    atb: 0,
+    atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
+  },
+  timelineBlockFrames: 21,
+  naturalDurationFrames: 108,
+  exclusiveFrame: 20,
+  offsetRecordFrame: 0,
+  costFrame: 9,
+  scheduledSequences: [{ startFrame: 1, endFrame: 2, sequence: { $sequence: 'dealDamage_3' } }],
+  skillType: 'plungingAttack',
+  levelSource: 'basicAttack',
+  nativeSkillType: 'attack',
+};
+
+export const catcherChr_0020_meurs_normal_skillActionGraph = {
+  main: {
+    nodes: {
+      findCharacterTeamTargets_1: {
+        action: {
+          kind: 'findCharacterTeamTargets',
+          parameters: { saveToContextKey: 'MainChar', selection: { kind: 'controlledOperator' } },
+        },
+        next: null,
+      },
+      changeResourceByActionValue_2: {
+        action: {
+          kind: 'changeResourceByActionValue',
+          parameters: {
+            resource: 'sp',
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 1 },
             recipient: 'team',
             spGainKind: 'refund',
             spGainSource: 'default',
-          }),
-        ),
-        3,
-      ),
-      scheduled(
-        0,
-        sequence(
-          step('applyBuff', {
+          },
+        },
+        next: null,
+      },
+      applyBuff_3: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
             buffId: 'buff_common_obtain_ultimate_sp',
             target: 'caster',
             inheritSourceSkillCastInfo: true,
             blackboardAssignments: { ratio: { kind: 'constant', value: 0.5 } },
-          }),
-        ),
-        3,
-      ),
-      scheduled(
-        60,
-        sequence(
-          step('applyBuff', {
-            buffId: 'buff_common_obtain_ultimate_sp',
-            target: 'caster',
-            inheritSourceSkillCastInfo: true,
-            blackboardAssignments: { ratio: { kind: 'constant', value: 0.5 } },
-          }),
-        ),
-        62,
-      ),
-      scheduled(45, sequence(step('jumpTimeline', { destinationFrame: 255 })), 46),
-      scheduled(129, sequence(step('markCurrentSkillCanInterrupt', {})), 132),
-      scheduled(194, sequence(step('finishTimeline', {})), 195),
-      scheduled(
-        0,
-        sequence(
-          step('applyBuff', {
+          },
+        },
+        next: null,
+      },
+      jumpTimeline_5: {
+        action: { kind: 'jumpTimeline', parameters: { destinationFrame: 255 } },
+        next: null,
+      },
+      markCurrentSkillCanInterrupt_6: {
+        action: { kind: 'markCurrentSkillCanInterrupt', parameters: {} },
+        next: null,
+      },
+      finishTimeline_7: { action: { kind: 'finishTimeline', parameters: {} }, next: null },
+      applyBuff_8: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
             buffId: 'buff_chr_0020_meurs_reduce_damage',
             target: 'party',
             finishByAction: true,
-            blackboardAssignments: { taken_dmg: { kind: 'blackboard', key: 'taken_dmg' } },
-          }),
-        ),
-        83,
-      ),
-      scheduled(
-        0,
-        sequence(
-          step('listenForCombatEvents', {
+            blackboardAssignments: { taken_dmg: { kind: 'valueNode', nodeId: 'data_2' } },
+          },
+        },
+        next: null,
+      },
+      jumpTimeline_opt1: {
+        action: { kind: 'jumpTimeline', parameters: { destinationFrame: 60 } },
+        next: null,
+      },
+      conditional_opt2: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          whenTrue: { $sequence: 'jumpTimeline_opt1' },
+        },
+        next: null,
+      },
+      conditional_10: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+          whenTrue: { $sequence: 'jumpTimeline_opt1' },
+        },
+        next: null,
+      },
+      listenForCombatEvents_opt3: {
+        action: {
+          kind: 'listenForCombatEvents',
+          parameters: {
             responses: [
               {
                 key: 'SkillData.chr_0020_meurs_normal_skill.actionGroupData.timelineActions[19]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
                 event: { kind: 'operatorHit' },
                 phase: 'dataAction',
                 priority: 0,
-                sequence: sequence(
-                  branch(
-                    {
-                      kind: 'eventDamageFeaturesMatch',
-                      match: 'exceptAny',
-                      features: ['dot', 'remainArea'],
-                    },
-                    sequence(step('jumpTimeline', { destinationFrame: 60 })),
-                  ),
-                ),
+                sequence: { $sequence: 'conditional_10' },
               },
               {
                 key: 'SkillData.chr_0020_meurs_normal_skill.actionGroupData.timelineActions[19]._sequenceActionData.actionData[0].abilityActionMap[1].actions[0]',
                 event: { kind: 'abilityEvent', event: 'addedBuff' },
                 phase: 'dataAction',
                 priority: 0,
-                sequence: sequence(
-                  branch(
-                    { kind: 'eventBuffIdMatch', buffIds: ['buff_eny_0018_lbtough_pre_catch'] },
-                    sequence(step('jumpTimeline', { destinationFrame: 60 })),
-                  ),
-                ),
+                sequence: { $sequence: 'conditional_opt2' },
               },
             ],
-          }),
-        ),
-        60,
-      ),
-      scheduled(
-        83,
-        sequence(
-          repeatEachTick(
-            sequence(
-              step('applyBuff', {
-                buffId: 'buff_physical_no_guard',
-                target: 'enemy',
-                inheritSourceSkillCastInfo: true,
-              }),
-              once(
-                'SkillData.chr_0020_meurs_normal_skill.actionGroupData.timelineActions[25]._sequenceActionData.actionData[0].actionOnTick.actionData[1]',
-                sequence(
-                  branch(
-                    {
-                      kind: 'actionValueCompare',
-                      left: { kind: 'blackboard', key: 'potential5_atb', fallback: 0 },
-                      operator: 'greater',
-                      right: { kind: 'constant', value: 0 },
-                    },
-                    sequence(
-                      branch(
-                        {
-                          kind: 'buffStackCompare',
-                          target: 'caster',
-                          tagQueryType: 'hasAny',
-                          buffTags: ['Skill/Character/Common/HpShield'],
-                          operator: 'greaterOrEqual',
-                          value: { kind: 'constant', value: 1 },
-                        },
-                        sequence(
-                          step('changeResourceByActionValue', {
-                            resource: 'sp',
-                            amount: { kind: 'blackboard', key: 'potential5_atb' },
-                            coefficient: { kind: 'constant', value: 1 },
-                            recipient: 'team',
-                            spGainKind: 'refund',
-                            spGainSource: 'skill',
-                          }),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              step(
-                'dealDamage',
-                {
-                  damageType: 'physical',
-                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                  tags: ['normalSkill'],
-                  features: ['canBreakWeakness'],
-                  stagger: { kind: 'blackboard', key: 'poise' },
-                },
-                'chr_0020_meurs_normal_skill:/scheduledSequences/9/sequence/steps/0/body/steps/2',
-              ),
-              step('startTimeDilation', {
-                scope: 'entity',
-                durationSeconds: { kind: 'constant', value: 0.4 },
-                slot: 'TimeDilation/Layer/Entity/HitStop',
-                priority: 10,
-                curve: { kind: 'named', key: 'char_hard_stop' },
-                finishByAction: false,
-                targets: ['enemy', 'caster'],
-              }),
-            ),
-            {
-              nativeChanneling: {
-                executeEachFrame: true,
-                triggerIntervalSeconds: 0.033,
-                maxCountPerTarget: 1,
-                targetTriggerIntervalSeconds: 0,
-              },
+          },
+        },
+        next: null,
+      },
+      changeResourceByActionValue_15: {
+        action: {
+          kind: 'changeResourceByActionValue',
+          parameters: {
+            resource: 'sp',
+            amount: { kind: 'valueNode', nodeId: 'data_5' },
+            coefficient: { kind: 'constant', value: 1 },
+            recipient: 'team',
+            spGainKind: 'refund',
+            spGainSource: 'skill',
+          },
+        },
+        next: null,
+      },
+      conditional_16: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+          whenTrue: { $sequence: 'changeResourceByActionValue_15' },
+        },
+        next: null,
+      },
+      conditional_17: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+          whenTrue: { $sequence: 'conditional_16' },
+        },
+        next: null,
+      },
+      startTimeDilation_18: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.4 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
+        },
+        next: null,
+      },
+      dealDamage_19: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_9' },
+            tags: ['normalSkill'],
+            features: ['canBreakWeakness'],
+            stagger: { kind: 'valueNode', nodeId: 'data_10' },
+          },
+        },
+        next: 'startTimeDilation_18',
+      },
+      once_20: {
+        action: { kind: 'once', parameters: {}, body: { $sequence: 'conditional_17' } },
+        next: 'dealDamage_19',
+      },
+      applyBuff_21: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffId: 'buff_physical_no_guard',
+            target: 'enemy',
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: 'once_20',
+      },
+      repeatEachTick_22: {
+        action: {
+          kind: 'repeatEachTick',
+          parameters: {
+            nativeChanneling: {
+              executeEachFrame: true,
+              triggerIntervalSeconds: 0.033,
+              maxCountPerTarget: 1,
+              targetTriggerIntervalSeconds: 0,
             },
-          ),
-        ),
-        85,
-      ),
-      scheduled(
-        60,
-        sequence(
-          step('startTimeDilation', {
+          },
+          body: { $sequence: 'applyBuff_21' },
+        },
+        next: null,
+      },
+      startTimeDilation_23: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
             scope: 'entity',
             durationSeconds: { kind: 'constant', value: 0.7 },
             slot: 'TimeDilation/Layer/Entity/HitStop',
@@ -754,53 +903,116 @@ export const catcherChr_0020_meurs_normal_skill: SkillDefinition = withSkillBlac
             },
             finishByAction: false,
             targets: ['enemy', 'caster'],
-          }),
-        ),
-        63,
-      ),
-    ],
-    costs: [{ resource: 'sp', value: 100 }],
-    skillType: 'battleSkill',
-    levelSource: 'battleSkill',
-    nativeSkillType: 'normalSkill',
+          },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb_return_base' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'taken_dmg' } },
+      data_3: {
+        type: 'boolean',
+        expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_eny_0018_lbtough_pre_catch'] },
+      },
+      data_4: {
+        type: 'boolean',
+        expression: {
+          kind: 'eventDamageFeaturesMatch',
+          match: 'exceptAny',
+          features: ['dot', 'remainArea'],
+        },
+      },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'potential5_atb' } },
+      data_6: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffStackCompare',
+          target: 'caster',
+          tagQueryType: 'hasAny',
+          buffTags: ['Skill/Character/Common/HpShield'],
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+        },
+      },
+      data_7: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'potential5_atb', fallback: 0 },
+      },
+      data_8: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_7' },
+          operator: 'greater',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+    },
   },
-  {
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const catcherChr_0020_meurs_normal_skill: SkillDefinition = {
+  key: 'chr_0020_meurs_normal_skill',
+  blackboard: {
     atb_return_base: 30,
     atk_scale: [1.78, 1.96, 2.13, 2.31, 2.49, 2.67, 2.85, 3.02, 3.2, 3.42, 3.69, 4],
     poise: 20,
     potential5_atb: 0,
     taken_dmg: 0.9,
   },
-);
+  timelineBlockFrames: 129,
+  naturalDurationFrames: 373,
+  exclusiveFrame: 285,
+  offsetRecordFrame: 0,
+  inputWindows: {
+    allowedNextSkills: [
+      { startFrame: 95, endFrame: 129, skillIds: ['chr_0020_meurs_normal_skill'] },
+    ],
+  },
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findCharacterTeamTargets_1' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'changeResourceByActionValue_2' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'applyBuff_3' } },
+    { startFrame: 60, endFrame: 62, sequence: { $sequence: 'applyBuff_3' } },
+    { startFrame: 45, endFrame: 46, sequence: { $sequence: 'jumpTimeline_5' } },
+    { startFrame: 129, endFrame: 132, sequence: { $sequence: 'markCurrentSkillCanInterrupt_6' } },
+    { startFrame: 194, endFrame: 195, sequence: { $sequence: 'finishTimeline_7' } },
+    { startFrame: 0, endFrame: 83, sequence: { $sequence: 'applyBuff_8' } },
+    { startFrame: 0, endFrame: 60, sequence: { $sequence: 'listenForCombatEvents_opt3' } },
+    { startFrame: 83, endFrame: 85, sequence: { $sequence: 'repeatEachTick_22' } },
+    { startFrame: 60, endFrame: 63, sequence: { $sequence: 'startTimeDilation_23' } },
+  ],
+  costs: [{ resource: 'sp', value: 100 }],
+  skillType: 'battleSkill',
+  levelSource: 'battleSkill',
+  nativeSkillType: 'normalSkill',
+  actionGraph: catcherChr_0020_meurs_normal_skillActionGraph,
+};
 
-export const catcherChr_0020_meurs_combo_skill: SkillDefinition = withSkillBlackboard(
-  {
-    key: 'chr_0020_meurs_combo_skill',
-    timelineBlockFrames: 46,
-    naturalDurationFrames: 98,
-    exclusiveFrame: 45,
-    offsetRecordFrame: 0,
-    inputWindows: {
-      allowedNextSkills: [
-        { startFrame: 24, endFrame: 60, skillIds: ['chr_0020_meurs_normal_skill'] },
-      ],
-    },
-    costFrame: 0,
-    scheduledSequences: [
-      scheduled(
-        17,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'physical',
-              attackScale: { kind: 'blackboard', key: 'atk_scale' },
-              tags: ['comboSkill'],
-              features: ['canBreakWeakness'],
-            },
-            'chr_0020_meurs_combo_skill:/scheduledSequences/0/sequence/steps/0',
-          ),
-          step('startTimeDilation', {
+export const catcherChr_0020_meurs_combo_skillActionGraph = {
+  main: {
+    nodes: {
+      changeResourceByActionValue_1: {
+        action: {
+          kind: 'changeResourceByActionValue',
+          parameters: {
+            resource: 'ultimateEnergy',
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            coefficient: { kind: 'constant', value: 1 },
+            recipient: 'caster',
+          },
+        },
+        next: null,
+      },
+      startTimeDilation_2: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
             scope: 'entity',
             durationSeconds: { kind: 'constant', value: 0.4 },
             slot: 'TimeDilation/Layer/Entity/HitStop',
@@ -808,31 +1020,26 @@ export const catcherChr_0020_meurs_combo_skill: SkillDefinition = withSkillBlack
             curve: { kind: 'named', key: 'char_hard_stop' },
             finishByAction: false,
             targets: ['enemy', 'caster'],
-          }),
-          step('changeResourceByActionValue', {
-            resource: 'ultimateEnergy',
-            amount: { kind: 'blackboard', key: 'usp' },
-            coefficient: { kind: 'constant', value: 1 },
-            recipient: 'caster',
-          }),
-        ),
-        18,
-      ),
-      scheduled(
-        20,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'physical',
-              attackScale: { kind: 'blackboard', key: 'atk_scale_1' },
-              tags: ['comboSkill'],
-              features: ['canBreakWeakness'],
-              stagger: { kind: 'blackboard', key: 'poise' },
-            },
-            'chr_0020_meurs_combo_skill:/scheduledSequences/1/sequence/steps/0',
-          ),
-          step('startTimeDilation', {
+          },
+        },
+        next: 'changeResourceByActionValue_1',
+      },
+      dealDamage_3: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+            tags: ['comboSkill'],
+            features: ['canBreakWeakness'],
+          },
+        },
+        next: 'startTimeDilation_2',
+      },
+      startTimeDilation_4: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
             scope: 'entity',
             durationSeconds: { kind: 'constant', value: 0.2 },
             slot: 'TimeDilation/Layer/Entity/HitStop',
@@ -840,75 +1047,109 @@ export const catcherChr_0020_meurs_combo_skill: SkillDefinition = withSkillBlack
             curve: { kind: 'named', key: 'meurs_comboskill2' },
             finishByAction: false,
             targets: ['enemy', 'caster'],
-          }),
-        ),
-        21,
-      ),
-      scheduled(
-        20,
-        sequence(
-          step('modifyActionValue', {
+          },
+        },
+        next: null,
+      },
+      applyBuff_7: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffId: 'buff_chr_0020_meurs_combo_skill_shield',
+            target: 'casterAndLowestHealthRatioOperatorExceptCaster',
+            inheritSourceSkillCastInfo: true,
+            copiedBlackboardAssignments: {
+              shield_def_rate: 'shield_def_rate',
+              shield_base: 'shield_base',
+              duration: 'shield_duration',
+            },
+          },
+        },
+        next: null,
+      },
+      mergeContextTargets_8: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: {
+            saveToContextKey: 'shieldTar',
+            sources: [
+              { kind: 'context', contextKey: 'aMate' },
+              { kind: 'target', target: 'caster' },
+            ],
+          },
+        },
+        next: 'applyBuff_7',
+      },
+      findCharacterTeamTargets_9: {
+        action: {
+          kind: 'findCharacterTeamTargets',
+          parameters: {
+            saveToContextKey: 'aMate',
+            selection: { kind: 'lowestHealthRatioOperator', excludeCaster: true },
+          },
+        },
+        next: 'mergeContextTargets_8',
+      },
+      applyBuff_10: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffId: 'buff_chr_0020_meurs_combo_skill_shield',
+            target: 'casterAndControlledOperator',
+            inheritSourceSkillCastInfo: true,
+            copiedBlackboardAssignments: {
+              shield_def_rate: 'shield_def_rate',
+              shield_base: 'shield_base',
+              duration: 'shield_duration',
+            },
+          },
+        },
+        next: null,
+      },
+      mergeContextTargets_11: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: {
+            saveToContextKey: 'shieldTar',
+            sources: [
+              { kind: 'context', contextKey: 'mainChar' },
+              { kind: 'target', target: 'caster' },
+            ],
+          },
+        },
+        next: 'applyBuff_10',
+      },
+      findCharacterTeamTargets_12: {
+        action: {
+          kind: 'findCharacterTeamTargets',
+          parameters: { saveToContextKey: 'mainChar', selection: { kind: 'controlledOperator' } },
+        },
+        next: 'mergeContextTargets_11',
+      },
+      conditional_13: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' }, alwaysNext: true },
+          whenTrue: { $sequence: 'findCharacterTeamTargets_9' },
+          whenFalse: { $sequence: 'findCharacterTeamTargets_12' },
+        },
+        next: null,
+      },
+      modifyActionValue_14: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
             key: 'shield_duration',
             operation: 'add',
-            value: { kind: 'blackboard', key: 'potential3_duration' },
-          }),
-          branch(
-            { kind: 'casterControlled' },
-            sequence(
-              step('findCharacterTeamTargets', {
-                saveToContextKey: 'aMate',
-                selection: { kind: 'lowestHealthRatioOperator', excludeCaster: true },
-              }),
-              step('mergeContextTargets', {
-                saveToContextKey: 'shieldTar',
-                sources: [
-                  { kind: 'context', contextKey: 'aMate' },
-                  { kind: 'target', target: 'caster' },
-                ],
-              }),
-              step('applyBuff', {
-                buffId: 'buff_chr_0020_meurs_combo_skill_shield',
-                target: 'casterAndLowestHealthRatioOperatorExceptCaster',
-                inheritSourceSkillCastInfo: true,
-                copiedBlackboardAssignments: {
-                  shield_def_rate: 'shield_def_rate',
-                  shield_base: 'shield_base',
-                  duration: 'shield_duration',
-                },
-              }),
-            ),
-            sequence(
-              step('findCharacterTeamTargets', {
-                saveToContextKey: 'mainChar',
-                selection: { kind: 'controlledOperator' },
-              }),
-              step('mergeContextTargets', {
-                saveToContextKey: 'shieldTar',
-                sources: [
-                  { kind: 'context', contextKey: 'mainChar' },
-                  { kind: 'target', target: 'caster' },
-                ],
-              }),
-              step('applyBuff', {
-                buffId: 'buff_chr_0020_meurs_combo_skill_shield',
-                target: 'casterAndControlledOperator',
-                inheritSourceSkillCastInfo: true,
-                copiedBlackboardAssignments: {
-                  shield_def_rate: 'shield_def_rate',
-                  shield_base: 'shield_base',
-                  duration: 'shield_duration',
-                },
-              }),
-            ),
-            { alwaysNext: true },
-          ),
-        ),
-        21,
-      ),
-      scheduled(
-        0,
-        sequence(
-          step('startTimeDilation', {
+            value: { kind: 'valueNode', nodeId: 'data_4' },
+          },
+        },
+        next: 'conditional_13',
+      },
+      startTimeDilation_16: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
             scope: 'global',
             durationSeconds: { kind: 'constant', value: 0.567000031 },
             slot: 'unassigned',
@@ -917,18 +1158,39 @@ export const catcherChr_0020_meurs_combo_skill: SkillDefinition = withSkillBlack
             finishByAction: false,
             ignoredTargets: ['caster'],
             ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
-          }),
-        ),
-        14,
-      ),
-    ],
-    smartTarget: 'trigger',
-    cooldownFrames: [1050, 1050, 1050, 1050, 1050, 1050, 1050, 1050, 1050, 1050, 1050, 990],
-    skillType: 'comboSkill',
-    levelSource: 'comboSkill',
-    nativeSkillType: 'comboSkill',
+          },
+        },
+        next: null,
+      },
+      dealDamage_opt1: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
+            tags: ['comboSkill'],
+            features: ['canBreakWeakness'],
+            stagger: { kind: 'valueNode', nodeId: 'data_6' },
+          },
+        },
+        next: 'startTimeDilation_4',
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'potential3_duration' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1' } },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+    },
   },
-  {
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const catcherChr_0020_meurs_combo_skill: SkillDefinition = {
+  key: 'chr_0020_meurs_combo_skill',
+  blackboard: {
     atk_scale: [0.25, 0.27, 0.3, 0.32, 0.34, 0.37, 0.39, 0.42, 0.44, 0.47, 0.51, 0.55],
     atk_scale_1: [1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.93, 2.08, 2.25],
     poise: 10,
@@ -938,30 +1200,37 @@ export const catcherChr_0020_meurs_combo_skill: SkillDefinition = withSkillBlack
     shield_duration: 10,
     usp: 10,
   },
-);
+  timelineBlockFrames: 46,
+  naturalDurationFrames: 98,
+  exclusiveFrame: 45,
+  offsetRecordFrame: 0,
+  inputWindows: {
+    allowedNextSkills: [
+      { startFrame: 24, endFrame: 60, skillIds: ['chr_0020_meurs_normal_skill'] },
+    ],
+  },
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 17, endFrame: 18, sequence: { $sequence: 'dealDamage_3' } },
+    { startFrame: 20, endFrame: 21, sequence: { $sequence: 'dealDamage_opt1' } },
+    { startFrame: 20, endFrame: 21, sequence: { $sequence: 'modifyActionValue_14' } },
+    { startFrame: 0, endFrame: 14, sequence: { $sequence: 'startTimeDilation_16' } },
+  ],
+  smartTarget: 'trigger',
+  cooldownFrames: [1050, 1050, 1050, 1050, 1050, 1050, 1050, 1050, 1050, 1050, 1050, 990],
+  skillType: 'comboSkill',
+  levelSource: 'comboSkill',
+  nativeSkillType: 'comboSkill',
+  actionGraph: catcherChr_0020_meurs_combo_skillActionGraph,
+};
 
-export const catcherChr_0020_meurs_ultimate_skill: SkillDefinition = withSkillBlackboard(
-  {
-    key: 'chr_0020_meurs_ultimate_skill',
-    timelineBlockFrames: 121,
-    naturalDurationFrames: 193,
-    exclusiveFrame: 120,
-    offsetRecordFrame: 0,
-    inputWindows: {
-      allowedNextSkills: [
-        {
-          startFrame: 103,
-          endFrame: 120,
-          skillIds: ['chr_0020_meurs_combo_skill', 'chr_0020_meurs_normal_skill'],
-        },
-      ],
-    },
-    costFrame: 9,
-    scheduledSequences: [
-      scheduled(
-        0,
-        sequence(
-          step('startTimeDilation', {
+export const catcherChr_0020_meurs_ultimate_skillActionGraph = {
+  main: {
+    nodes: {
+      startTimeDilation_1: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
             scope: 'entity',
             durationSeconds: { kind: 'constant', value: 1 },
             slot: 'TimeDilation/Layer/Entity/HitStop',
@@ -969,14 +1238,14 @@ export const catcherChr_0020_meurs_ultimate_skill: SkillDefinition = withSkillBl
             curve: { kind: 'named', key: 'RESETto1' },
             finishByAction: false,
             targets: ['caster'],
-          }),
-        ),
-        3,
-      ),
-      scheduled(
-        46,
-        sequence(
-          step('applyBuff', {
+          },
+        },
+        next: null,
+      },
+      applyBuff_2: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
             buffId: 'buff_chr_0020_meurs_ult_weak',
             target: 'enemy',
             inheritSourceSkillCastInfo: true,
@@ -984,25 +1253,14 @@ export const catcherChr_0020_meurs_ultimate_skill: SkillDefinition = withSkillBl
               weak_scale: 'weak_scale',
               weak_duration: 'weak_duration',
             },
-          }),
-        ),
-        49,
-      ),
-      scheduled(
-        46,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'physical',
-              attackScale: { kind: 'blackboard', key: 'atk_scale' },
-              tags: ['ultimateSkill'],
-              features: ['canBreakWeakness'],
-              stagger: { kind: 'blackboard', key: 'poise' },
-            },
-            'chr_0020_meurs_ultimate_skill:/scheduledSequences/2/sequence/steps/0',
-          ),
-          step('startTimeDilation', {
+          },
+        },
+        next: null,
+      },
+      startTimeDilation_3: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
             scope: 'entity',
             durationSeconds: { kind: 'constant', value: 0.2 },
             slot: 'TimeDilation/Layer/Entity/HitStop',
@@ -1010,59 +1268,40 @@ export const catcherChr_0020_meurs_ultimate_skill: SkillDefinition = withSkillBl
             curve: { kind: 'named', key: 'char_hard_stop' },
             finishByAction: false,
             targets: ['enemy', 'caster'],
-          }),
-        ),
-        49,
-      ),
-      scheduled(
-        64,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'physical',
-              attackScale: { kind: 'blackboard', key: 'atk_scale_1' },
-              tags: ['ultimateSkill'],
-              features: ['canBreakWeakness'],
-              stagger: { kind: 'blackboard', key: 'poise' },
-            },
-            'chr_0020_meurs_ultimate_skill:/scheduledSequences/3/sequence/steps/0',
-          ),
-          step('startTimeDilation', {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 0.2 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 10,
-            curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
-          }),
-        ),
-        67,
-      ),
-      scheduled(
-        85,
-        sequence(
-          step('applyKnockDown', {
-            target: 'enemy',
-            duration: { kind: 'blackboard', key: 'knockdown_time' },
-            force: false,
-            isExtra: false,
-            targetFilter: 'aliveOnly',
-            returnWhen: 'always',
-          }),
-          step(
-            'dealDamage',
-            {
-              damageType: 'physical',
-              attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
-              tags: ['ultimateSkill'],
-              features: ['canBreakWeakness'],
-              stagger: { kind: 'blackboard', key: 'poise1' },
-            },
-            'chr_0020_meurs_ultimate_skill:/scheduledSequences/4/sequence/steps/1',
-          ),
-          step('startTimeDilation', {
+          },
+        },
+        next: null,
+      },
+      dealDamage_4: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+            tags: ['ultimateSkill'],
+            features: ['canBreakWeakness'],
+            stagger: { kind: 'valueNode', nodeId: 'data_2' },
+          },
+        },
+        next: 'startTimeDilation_3',
+      },
+      dealDamage_6: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            tags: ['ultimateSkill'],
+            features: ['canBreakWeakness'],
+            stagger: { kind: 'valueNode', nodeId: 'data_4' },
+          },
+        },
+        next: 'startTimeDilation_3',
+      },
+      startTimeDilation_7: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
             scope: 'entity',
             durationSeconds: { kind: 'constant', value: 0.4 },
             slot: 'TimeDilation/Layer/Entity/HitStop',
@@ -1070,64 +1309,108 @@ export const catcherChr_0020_meurs_ultimate_skill: SkillDefinition = withSkillBl
             curve: { kind: 'named', key: 'char_hard_stop' },
             finishByAction: false,
             targets: ['enemy', 'caster'],
-          }),
-        ),
-        88,
-      ),
-      scheduled(
-        102,
-        sequence(
-          branch(
-            {
-              kind: 'actionValueCompare',
-              left: { kind: 'blackboard', key: 'talent_1', fallback: 0 },
-              operator: 'greaterOrEqual',
-              right: { kind: 'constant', value: 1 },
-            },
-            sequence(
-              step('spawnAbilityEntity', {
-                abilityEntityId: 'abilityentity_chr_0020_meurs_talent_shockwave',
-                childSkillId: 'chr_0020_meurs_talent_shockwave',
-                inheritActionBlackboard: true,
-                dieWhenSourceDies: false,
-              }),
-            ),
-          ),
-        ),
-        105,
-      ),
-      scheduled(0, sequence(step('hideUi', { onlyBlockInput: false })), 38),
-      scheduled(
-        0,
-        sequence(
-          step('startUltimateTimeDilation', {
+          },
+        },
+        next: null,
+      },
+      dealDamage_8: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
+            tags: ['ultimateSkill'],
+            features: ['canBreakWeakness'],
+            stagger: { kind: 'valueNode', nodeId: 'data_6' },
+          },
+        },
+        next: 'startTimeDilation_7',
+      },
+      applyKnockDown_9: {
+        action: {
+          kind: 'applyKnockDown',
+          parameters: {
+            target: 'enemy',
+            duration: { kind: 'valueNode', nodeId: 'data_7' },
+            force: false,
+            isExtra: false,
+            targetFilter: 'aliveOnly',
+            returnWhen: 'always',
+          },
+        },
+        next: 'dealDamage_8',
+      },
+      spawnAbilityEntity_10: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            abilityEntityId: 'abilityentity_chr_0020_meurs_talent_shockwave',
+            childSkillId: 'chr_0020_meurs_talent_shockwave',
+            inheritActionBlackboard: true,
+            dieWhenSourceDies: false,
+          },
+        },
+        next: null,
+      },
+      conditional_11: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
+          whenTrue: { $sequence: 'spawnAbilityEntity_10' },
+        },
+        next: null,
+      },
+      hideUi_12: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
+      startUltimateTimeDilation_13: {
+        action: {
+          kind: 'startUltimateTimeDilation',
+          parameters: {
             priority: 100,
             targetScale: { kind: 'constant', value: 0 },
             ignoredTargets: [],
-          }),
-        ),
-        38,
-      ),
-      scheduled(
-        0,
-        sequence(
-          step('applyBuff', {
+          },
+        },
+        next: null,
+      },
+      applyBuff_14: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
             buffId: 'buff_common_damage_immune_ult_skill',
             target: 'caster',
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
-          }),
-        ),
-        120,
-      ),
-    ],
-    cooldownFrames: 450,
-    costs: [{ resource: 'ultimateEnergy', value: 80 }],
-    skillType: 'ultimate',
-    levelSource: 'ultimate',
-    nativeSkillType: 'ultimateSkill',
+          },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2' } },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'poise1' } },
+      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'knockdown_time' } },
+      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'talent_1', fallback: 0 } },
+      data_9: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_8' },
+          operator: 'greaterOrEqual',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+    },
   },
-  {
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const catcherChr_0020_meurs_ultimate_skill: SkillDefinition = {
+  key: 'chr_0020_meurs_ultimate_skill',
+  blackboard: {
     atk_scale: [0.89, 0.98, 1.07, 1.16, 1.25, 1.34, 1.43, 1.51, 1.6, 1.72, 1.85, 2],
     atk_scale_1: [1.2, 1.32, 1.44, 1.56, 1.68, 1.8, 1.92, 2.04, 2.16, 2.31, 2.49, 2.7],
     atk_scale_2: [1.78, 1.96, 2.13, 2.31, 2.49, 2.67, 2.84, 3.02, 3.2, 3.42, 3.69, 4],
@@ -1140,22 +1423,493 @@ export const catcherChr_0020_meurs_ultimate_skill: SkillDefinition = withSkillBl
     weak_scale: [0.2, 0.2, 0.2, 0.2, 0.2, 0.25, 0.25, 0.25, 0.25, 0.3, 0.3, 0.3],
     poise_display: 20,
   },
-);
-
-export const catcherCommon_character_perfect_dodge: SkillDefinition = withSkillBlackboard(
-  {
-    key: 'common_character_perfect_dodge',
-    timelineBlockFrames: 16,
-    naturalDurationFrames: 15,
-    exclusiveFrame: 15,
-    offsetRecordFrame: 0,
-    costFrame: 0,
-    scheduledSequences: [],
-    skillType: 'dodge',
-    nativeSkillType: 'dodge',
+  timelineBlockFrames: 121,
+  naturalDurationFrames: 193,
+  exclusiveFrame: 120,
+  offsetRecordFrame: 0,
+  inputWindows: {
+    allowedNextSkills: [
+      {
+        startFrame: 103,
+        endFrame: 120,
+        skillIds: ['chr_0020_meurs_combo_skill', 'chr_0020_meurs_normal_skill'],
+      },
+    ],
   },
-  {},
-);
+  costFrame: 9,
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_1' } },
+    { startFrame: 46, endFrame: 49, sequence: { $sequence: 'applyBuff_2' } },
+    { startFrame: 46, endFrame: 49, sequence: { $sequence: 'dealDamage_4' } },
+    { startFrame: 64, endFrame: 67, sequence: { $sequence: 'dealDamage_6' } },
+    { startFrame: 85, endFrame: 88, sequence: { $sequence: 'applyKnockDown_9' } },
+    { startFrame: 102, endFrame: 105, sequence: { $sequence: 'conditional_11' } },
+    { startFrame: 0, endFrame: 38, sequence: { $sequence: 'hideUi_12' } },
+    { startFrame: 0, endFrame: 38, sequence: { $sequence: 'startUltimateTimeDilation_13' } },
+    { startFrame: 0, endFrame: 120, sequence: { $sequence: 'applyBuff_14' } },
+  ],
+  cooldownFrames: 450,
+  costs: [{ resource: 'ultimateEnergy', value: 80 }],
+  skillType: 'ultimate',
+  levelSource: 'ultimate',
+  nativeSkillType: 'ultimateSkill',
+  actionGraph: catcherChr_0020_meurs_ultimate_skillActionGraph,
+};
+
+export const catcherCommon_character_perfect_dodgeActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const catcherCommon_character_perfect_dodge: SkillDefinition = {
+  actionGraph: catcherCommon_character_perfect_dodgeActionGraph,
+  key: 'common_character_perfect_dodge',
+  blackboard: {},
+  timelineBlockFrames: 16,
+  naturalDurationFrames: 15,
+  exclusiveFrame: 15,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [],
+  skillType: 'dodge',
+  nativeSkillType: 'dodge',
+};
+
+const catcherComboCondition1ActionGraph = {
+  main: {
+    nodes: {
+      conditional_1: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+          whenTrue: { $sequence: null },
+        },
+        next: null,
+      },
+      conditional_2: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          whenTrue: { $sequence: 'conditional_1' },
+        },
+        next: null,
+      },
+      conditional_3: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          whenTrue: { $sequence: 'conditional_2' },
+        },
+        next: null,
+      },
+      conditional_4: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+          whenTrue: { $sequence: 'conditional_3' },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'actionInputTargetObjectTypeMatch', objectTypes: ['enemy'] },
+      },
+      data_2: {
+        type: 'boolean',
+        expression: {
+          kind: 'eventDamageFeaturesMatch',
+          match: 'exceptAny',
+          features: ['dot', 'remainArea'],
+        },
+      },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'healthCompare',
+          target: 'contextTarget',
+          contextKey: 'trigger',
+          valueType: 'ratio',
+          operator: 'less',
+          value: { kind: 'constant', value: 0.4 },
+        },
+      },
+      data_4: {
+        type: 'boolean',
+        expression: {
+          kind: 'contextTargetIdentityMatch',
+          contextKey: 'trigger',
+          other: 'controlledOperator',
+          operator: 'equal',
+        },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const catcherComboCondition1: ComboSkillConditionDefinition = {
+  key: 'native-combo:0',
+  skillKey: 'chr_0020_meurs_combo_skill',
+  event: 'takeDamage',
+  immediately: false,
+  initialValues: null,
+  sequence: { $sequence: 'conditional_4' },
+  actionGraph: catcherComboCondition1ActionGraph,
+};
+
+const catcherComboCondition2ActionGraph = {
+  main: {
+    nodes: {
+      conditional_1: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'constant', value: false } },
+          whenTrue: { $sequence: null },
+        },
+        next: null,
+      },
+      applyBuff_2: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffId: 'buff_chr_0020_meurs_signal_weakness_trigger_combo',
+            target: 'enemy',
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: 'conditional_1',
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const catcherComboCondition2: ComboSkillConditionDefinition = {
+  key: 'native-combo:1',
+  skillKey: 'chr_0020_meurs_combo_skill',
+  event: 'weaknessSet',
+  immediately: false,
+  initialValues: null,
+  sequence: { $sequence: 'applyBuff_2' },
+  actionGraph: catcherComboCondition2ActionGraph,
+};
+
+const catcherBuff1ActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const catcherBuff1: SkillBuffDefinition = {
+  stackingType: 'stack',
+  priority: 0,
+  maxStackCount: 1,
+  durationSeconds: { blackboardKey: 'duration' },
+  presentation: {
+    visible: true,
+    iconId: 'icon_battle_buff_def_up',
+    iconPath: '/icons/icon_battle_buff_def_up.webp',
+    showInHeadBarCommon: false,
+    showInHeadBarAttached: false,
+    showInSquadIcon: true,
+    onlyShowForMainCharacter: false,
+    blinkInMainCharHpBar: false,
+    showProgressInHpBar: false,
+    showProgressInNormalSkillButton: false,
+    useWeakProgressInNormalSkillButton: false,
+    showProgressInUltimateSkillButton: false,
+    forceRaiseIconEvent: false,
+    showWarningBackground: false,
+    playStrongInAnimation: false,
+    hasCharHpBarVfxType: false,
+    charHpBarVfxType: 'Fire',
+    iconStyleInSquad: 'Default',
+    abnormalColorType: 'Physical',
+    orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
+  },
+  applyTags: ['Skill/Character/Common/HpShield'],
+  extendTags: [],
+  blackboard: { duration: 10, shield_base: 100, shield_def_rate: 0.5 },
+  attributeModifiers: [],
+  shields: [
+    {
+      infinityValue: false,
+      value: {
+        attributeSource: 'buffSource',
+        attribute: 'Def',
+        multiplier: { blackboardKey: 'shield_def_rate' },
+        addition: { blackboardKey: 'shield_base' },
+      },
+      damageAbsorptions: [],
+      absorbCount: -1,
+      absorbAllDamageWhenConsumed: false,
+      removeBuffWhenConsumed: true,
+      priority: 'normal',
+      replaceHitEffect: true,
+    },
+  ],
+  actionGraph: catcherBuff1ActionGraph,
+};
+
+const catcherBuff2ActionGraph = {
+  main: {
+    nodes: {
+      dealDamage_1: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+            calculation: 'attribute',
+            calculationAttribute: 'Def',
+            calculationAddition: { kind: 'valueNode', nodeId: 'data_2' },
+            tags: [],
+          },
+        },
+        next: null,
+      },
+      conditional_2: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          whenTrue: { $sequence: 'dealDamage_1' },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'def_scale' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'dmg_base' } },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'eventDamageTagsMatch',
+          match: 'hasAny',
+          tags: ['normalSkill', 'ultimateSkill'],
+        },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const catcherBuff2: SkillBuffDefinition = {
+  stackingType: 'unique',
+  priority: 0,
+  maxStackCount: 0,
+  applyTags: [],
+  extendTags: [],
+  blackboard: { def_scale: 1, dmg_base: 100 },
+  attributeModifiers: [],
+  abilityEventResponses: [
+    { event: 'outputDamage', priority: 0, sequence: { $sequence: 'conditional_2' } },
+  ],
+  actionGraph: catcherBuff2ActionGraph,
+};
+
+const catcherBuff3ActionGraph = {
+  main: {
+    nodes: {
+      applyBuff_1: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffId: 'buff_common_affixes_shelter',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            asChildBuff: true,
+            blackboardAssignments: {
+              duration: { kind: 'constant', value: 9999999 },
+              rate: { kind: 'valueNode', nodeId: 'data_1' },
+            },
+          },
+        },
+        next: null,
+      },
+      applyBuff_2: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffId: 'buff_chr_0020_meurs_reduce_damage_remain',
+            target: 'buffOwner',
+            source: 'buffSource',
+            inheritSourceSkillCastInfo: true,
+            blackboardAssignments: { duration: { kind: 'constant', value: 0.5 } },
+            copiedBlackboardAssignments: { taken_dmg: 'taken_dmg' },
+          },
+        },
+        next: null,
+      },
+    },
+    dataNodes: { data_1: { type: 'number', expression: { kind: 'blackboard', key: 'taken_dmg' } } },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const catcherBuff3: SkillBuffDefinition = {
+  stackingType: 'unique',
+  priority: 0,
+  maxStackCount: 1,
+  durationSeconds: { blackboardKey: 'duration' },
+  applyTags: ['Skill/Character/Common/Shielded'],
+  extendTags: [],
+  blackboard: { duration: 9999, taken_dmg: 0.1 },
+  attributeModifiers: [],
+  lifecycleSequences: {
+    enable: { $sequence: 'applyBuff_1' },
+    finish: { $sequence: 'applyBuff_2' },
+  },
+  actionGraph: catcherBuff3ActionGraph,
+};
+
+const catcherBuff4ActionGraph = {
+  main: {
+    nodes: {
+      applyBuff_1: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffId: 'buff_common_affixes_shelter',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            asChildBuff: true,
+            blackboardAssignments: {
+              duration: { kind: 'valueNode', nodeId: 'data_1' },
+              rate: { kind: 'valueNode', nodeId: 'data_2' },
+            },
+          },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'taken_dmg' } },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const catcherBuff4: SkillBuffDefinition = {
+  stackingType: 'refresh',
+  priority: 0,
+  maxStackCount: 1,
+  durationSeconds: { blackboardKey: 'duration' },
+  applyTags: [],
+  extendTags: [],
+  blackboard: { duration: 0.5, taken_dmg: 0.1 },
+  attributeModifiers: [],
+  lifecycleSequences: { enable: { $sequence: 'applyBuff_1' } },
+  actionGraph: catcherBuff4ActionGraph,
+};
+
+const catcherBuff5ActionGraph = {
+  main: {
+    nodes: {
+      openComboWindow_1: {
+        action: { kind: 'openComboWindow', parameters: { nextSkillKeyFromSlot: 'comboSkill' } },
+        next: null,
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const catcherBuff5: SkillBuffDefinition = {
+  stackingType: 'unique',
+  priority: 0,
+  maxStackCount: 1,
+  durationSeconds: 0.4,
+  applyTags: [],
+  extendTags: [],
+  blackboard: {},
+  attributeModifiers: [],
+  lifecycleSequences: { finish: { $sequence: 'openComboWindow_1' } },
+  actionGraph: catcherBuff5ActionGraph,
+};
+
+const catcherBuff6ActionGraph = {
+  main: {
+    nodes: {
+      storeSourceAttributeValue_1: {
+        action: {
+          kind: 'storeSourceAttributeValue',
+          parameters: {
+            attribute: { kind: 'specific', key: 'will' },
+            stage: 'finalNonConverted',
+            useFloor: true,
+            divisor: { kind: 'constant', value: 10 },
+            multiplier: { kind: 'valueNode', nodeId: 'data_1' },
+            base: { kind: 'constant', value: 0 },
+            targetKey: 'def_up',
+          },
+        },
+        next: null,
+      },
+    },
+    dataNodes: { data_1: { type: 'number', expression: { kind: 'blackboard', key: 'rate' } } },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const catcherBuff6: SkillBuffDefinition = {
+  stackingType: 'unique',
+  priority: 0,
+  maxStackCount: 0,
+  triggerIntervalSeconds: 0.1,
+  waitFirstTriggerInterval: false,
+  maxTriggerCount: 99999,
+  applyTags: [],
+  extendTags: [],
+  blackboard: { def_up: 0, rate: 1 },
+  attributeModifiers: [
+    { attribute: 'Def', slot: 'baseAddition', value: { blackboardKey: 'def_up' } },
+  ],
+  lifecycleSequences: { trigger: { $sequence: 'storeSourceAttributeValue_1' } },
+  actionGraph: catcherBuff6ActionGraph,
+};
+
+const catcherBuff7ActionGraph = {
+  main: {
+    nodes: {
+      applyBuff_1: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffId: 'buff_common_affixes_weak',
+            target: 'enemy',
+            inheritSourceSkillCastInfo: true,
+            asChildBuff: true,
+            blackboardAssignments: {
+              duration: { kind: 'valueNode', nodeId: 'data_1' },
+              rate: { kind: 'valueNode', nodeId: 'data_2' },
+            },
+          },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'weak_duration' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'weak_scale' } },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const catcherBuff7: SkillBuffDefinition = {
+  stackingType: 'stack',
+  priority: 0,
+  maxStackCount: 1,
+  durationSeconds: { blackboardKey: 'weak_duration' },
+  applyTags: [],
+  extendTags: [],
+  blackboard: { weak_duration: 0, weak_scale: 0 },
+  attributeModifiers: [],
+  lifecycleSequences: { enable: { $sequence: 'applyBuff_1' } },
+  actionGraph: catcherBuff7ActionGraph,
+};
 
 export const catcher: OperatorDefinition = {
   slug: 'catcher',
@@ -1249,79 +2003,14 @@ export const catcher: OperatorDefinition = {
     comboSkill: { kind: 'skillSlot', skillSlotKey: 'comboSkill' },
     ultimate: { kind: 'skillSlot', skillSlotKey: 'ultimate' },
   },
-  comboSkillConditions: [
-    {
-      key: 'native-combo:0',
-      skillKey: 'chr_0020_meurs_combo_skill',
-      event: 'takeDamage',
-      immediately: false,
-      initialValues: null,
-      sequence: sequence(
-        branch(
-          {
-            kind: 'contextTargetIdentityMatch',
-            contextKey: 'trigger',
-            other: 'controlledOperator',
-            operator: 'equal',
-          },
-          sequence(
-            branch(
-              {
-                kind: 'healthCompare',
-                target: 'contextTarget',
-                contextKey: 'trigger',
-                valueType: 'ratio',
-                operator: 'less',
-                value: { kind: 'constant', value: 0.4 },
-              },
-              sequence(
-                branch(
-                  {
-                    kind: 'eventDamageFeaturesMatch',
-                    match: 'exceptAny',
-                    features: ['dot', 'remainArea'],
-                  },
-                  sequence(
-                    branch(
-                      { kind: 'actionInputTargetObjectTypeMatch', objectTypes: ['enemy'] },
-                      sequence(),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    },
-    {
-      key: 'native-combo:1',
-      skillKey: 'chr_0020_meurs_combo_skill',
-      event: 'weaknessSet',
-      immediately: false,
-      initialValues: null,
-      sequence: sequence(
-        step('applyBuff', {
-          buffId: 'buff_chr_0020_meurs_signal_weakness_trigger_combo',
-          target: 'enemy',
-          inheritSourceSkillCastInfo: true,
-        }),
-        branch({ kind: 'constant', value: false }, sequence()),
-      ),
-    },
-  ],
+  comboSkillConditions: [catcherComboCondition1, catcherComboCondition2],
   comboSkillPriority: 'default',
   talents: [
     {
       levels: 2,
-      initializationSequence: sequence(
-        step('applyBuff', {
-          buffId: 'buff_chr_0020_meurs_talent_0',
-          target: 'caster',
-          inheritSourceSkillCastInfo: false,
-          blackboardAssignments: { rate: [1, 1.2] },
-        }),
-      ),
+      attachedBuffs: [
+        { buffId: 'buff_chr_0020_meurs_talent_0', blackboardAssignments: { rate: [1, 1.2] } },
+      ],
     },
     {
       levels: 2,
@@ -1346,17 +2035,12 @@ export const catcher: OperatorDefinition = {
   potentials: [
     {
       levels: 1,
-      initializationSequence: sequence(
-        step('applyBuff', {
+      attachedBuffs: [
+        {
           buffId: 'buff_chr_0020_meurs_potential_1',
-          target: 'caster',
-          inheritSourceSkillCastInfo: false,
-          blackboardAssignments: {
-            def_scale: { kind: 'constant', value: 5 },
-            dmg_base: { kind: 'constant', value: 300 },
-          },
-        }),
-      ),
+          blackboardAssignments: { def_scale: 5, dmg_base: 300 },
+        },
+      ],
     },
     {
       levels: 1,
@@ -1402,215 +2086,13 @@ export const catcher: OperatorDefinition = {
     },
   ],
   buffDefinitions: {
-    buff_chr_0020_meurs_combo_skill_shield: {
-      stackingType: 'stack',
-      priority: 0,
-      maxStackCount: 1,
-      durationSeconds: { blackboardKey: 'duration' },
-      presentation: {
-        visible: true,
-        iconId: 'icon_battle_buff_def_up',
-        iconPath: '/icons/icon_battle_buff_def_up.webp',
-        showInHeadBarCommon: false,
-        showInHeadBarAttached: false,
-        showInSquadIcon: true,
-        onlyShowForMainCharacter: false,
-        blinkInMainCharHpBar: false,
-        showProgressInHpBar: false,
-        showProgressInNormalSkillButton: false,
-        useWeakProgressInNormalSkillButton: false,
-        showProgressInUltimateSkillButton: false,
-        forceRaiseIconEvent: false,
-        showWarningBackground: false,
-        playStrongInAnimation: false,
-        hasCharHpBarVfxType: false,
-        charHpBarVfxType: 'Fire',
-        iconStyleInSquad: 'Default',
-        abnormalColorType: 'Physical',
-        orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
-      },
-      applyTags: ['Skill/Character/Common/HpShield'],
-      extendTags: [],
-      blackboard: { duration: 10, shield_base: 100, shield_def_rate: 0.5 },
-      attributeModifiers: [],
-      shields: [
-        {
-          infinityValue: false,
-          value: {
-            attributeSource: 'buffSource',
-            attribute: 'Def',
-            multiplier: { blackboardKey: 'shield_def_rate' },
-            addition: { blackboardKey: 'shield_base' },
-          },
-          damageAbsorptions: [],
-          absorbCount: -1,
-          absorbAllDamageWhenConsumed: false,
-          removeBuffWhenConsumed: true,
-          priority: 'normal',
-          replaceHitEffect: true,
-        },
-      ],
-    },
-    buff_chr_0020_meurs_potential_1: {
-      stackingType: 'unique',
-      priority: 0,
-      maxStackCount: 0,
-      applyTags: [],
-      extendTags: [],
-      blackboard: { def_scale: 1, dmg_base: 100 },
-      attributeModifiers: [],
-      abilityEventResponses: [
-        {
-          event: 'outputDamage',
-          priority: 0,
-          sequence: sequence(
-            branch(
-              {
-                kind: 'eventDamageTagsMatch',
-                match: 'hasAny',
-                tags: ['normalSkill', 'ultimateSkill'],
-              },
-              sequence(
-                step(
-                  'dealDamage',
-                  {
-                    damageType: 'physical',
-                    attackScale: { kind: 'blackboard', key: 'def_scale' },
-                    calculation: 'attribute',
-                    calculationAttribute: 'Def',
-                    calculationAddition: { kind: 'blackboard', key: 'dmg_base' },
-                    tags: [],
-                  },
-                  'buff_chr_0020_meurs_potential_1:/abilityEventResponses/0/sequence/steps/0/whenTrue/steps/0',
-                ),
-              ),
-            ),
-          ),
-        },
-      ],
-    },
-    buff_chr_0020_meurs_reduce_damage: {
-      stackingType: 'unique',
-      priority: 0,
-      maxStackCount: 1,
-      durationSeconds: { blackboardKey: 'duration' },
-      applyTags: ['Skill/Character/Common/Shielded'],
-      extendTags: [],
-      blackboard: { duration: 9999, taken_dmg: 0.1 },
-      attributeModifiers: [],
-      lifecycleSequences: {
-        enable: sequence(
-          step('applyBuff', {
-            buffId: 'buff_common_affixes_shelter',
-            target: 'caster',
-            inheritSourceSkillCastInfo: true,
-            asChildBuff: true,
-            blackboardAssignments: {
-              duration: { kind: 'constant', value: 9999999 },
-              rate: { kind: 'blackboard', key: 'taken_dmg' },
-            },
-          }),
-        ),
-        finish: sequence(
-          step('applyBuff', {
-            buffId: 'buff_chr_0020_meurs_reduce_damage_remain',
-            target: 'buffOwner',
-            source: 'buffSource',
-            inheritSourceSkillCastInfo: true,
-            blackboardAssignments: { duration: { kind: 'constant', value: 0.5 } },
-            copiedBlackboardAssignments: { taken_dmg: 'taken_dmg' },
-          }),
-        ),
-      },
-    },
-    buff_chr_0020_meurs_reduce_damage_remain: {
-      stackingType: 'refresh',
-      priority: 0,
-      maxStackCount: 1,
-      durationSeconds: { blackboardKey: 'duration' },
-      applyTags: [],
-      extendTags: [],
-      blackboard: { duration: 0.5, taken_dmg: 0.1 },
-      attributeModifiers: [],
-      lifecycleSequences: {
-        enable: sequence(
-          step('applyBuff', {
-            buffId: 'buff_common_affixes_shelter',
-            target: 'caster',
-            inheritSourceSkillCastInfo: true,
-            asChildBuff: true,
-            blackboardAssignments: {
-              duration: { kind: 'blackboard', key: 'duration' },
-              rate: { kind: 'blackboard', key: 'taken_dmg' },
-            },
-          }),
-        ),
-      },
-    },
-    buff_chr_0020_meurs_signal_weakness_trigger_combo: {
-      stackingType: 'unique',
-      priority: 0,
-      maxStackCount: 1,
-      durationSeconds: 0.4,
-      applyTags: [],
-      extendTags: [],
-      blackboard: {},
-      attributeModifiers: [],
-      lifecycleSequences: {
-        finish: sequence(step('openComboWindow', { nextSkillKeyFromSlot: 'comboSkill' })),
-      },
-    },
-    buff_chr_0020_meurs_talent_0: {
-      stackingType: 'unique',
-      priority: 0,
-      maxStackCount: 0,
-      triggerIntervalSeconds: 0.1,
-      waitFirstTriggerInterval: false,
-      maxTriggerCount: 99999,
-      applyTags: [],
-      extendTags: [],
-      blackboard: { def_up: 0, rate: 1 },
-      attributeModifiers: [
-        { attribute: 'Def', slot: 'baseAddition', value: { blackboardKey: 'def_up' } },
-      ],
-      lifecycleSequences: {
-        trigger: sequence(
-          step('storeSourceAttributeValue', {
-            attribute: { kind: 'specific', key: 'will' },
-            stage: 'finalNonConverted',
-            useFloor: true,
-            divisor: { kind: 'constant', value: 10 },
-            multiplier: { kind: 'blackboard', key: 'rate' },
-            base: { kind: 'constant', value: 0 },
-            targetKey: 'def_up',
-          }),
-        ),
-      },
-    },
-    buff_chr_0020_meurs_ult_weak: {
-      stackingType: 'stack',
-      priority: 0,
-      maxStackCount: 1,
-      durationSeconds: { blackboardKey: 'weak_duration' },
-      applyTags: [],
-      extendTags: [],
-      blackboard: { weak_duration: 0, weak_scale: 0 },
-      attributeModifiers: [],
-      lifecycleSequences: {
-        enable: sequence(
-          step('applyBuff', {
-            buffId: 'buff_common_affixes_weak',
-            target: 'enemy',
-            inheritSourceSkillCastInfo: true,
-            asChildBuff: true,
-            blackboardAssignments: {
-              duration: { kind: 'blackboard', key: 'weak_duration' },
-              rate: { kind: 'blackboard', key: 'weak_scale' },
-            },
-          }),
-        ),
-      },
-    },
+    buff_chr_0020_meurs_combo_skill_shield: catcherBuff1,
+    buff_chr_0020_meurs_potential_1: catcherBuff2,
+    buff_chr_0020_meurs_reduce_damage: catcherBuff3,
+    buff_chr_0020_meurs_reduce_damage_remain: catcherBuff4,
+    buff_chr_0020_meurs_signal_weakness_trigger_combo: catcherBuff5,
+    buff_chr_0020_meurs_talent_0: catcherBuff6,
+    buff_chr_0020_meurs_ult_weak: catcherBuff7,
   },
   abilityEntityDefinitions: {
     abilityentity_chr_0020_meurs_talent_shockwave: {
@@ -1624,6 +2106,85 @@ export const catcher: OperatorDefinition = {
       lifetime: { kind: 'limited', durationSeconds: 2 },
       deathReleaseDelaySeconds: 0.100000001490116,
       childSkill: {
+        actionGraph: {
+          main: {
+            nodes: {
+              dealDamage_1: {
+                action: {
+                  kind: 'dealDamage',
+                  parameters: {
+                    damageType: 'physical',
+                    attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+                    tags: ['ultimateSkill'],
+                  },
+                  key: 'abilityentity_chr_0020_meurs_talent_shockwave:chr_0020_meurs_talent_shockwave:/childSkill/actionGraph/main/nodes/dealDamage_1/action',
+                },
+                next: null,
+              },
+              dealDamage_2: {
+                action: {
+                  kind: 'dealDamage',
+                  parameters: {
+                    damageType: 'physical',
+                    attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+                    tags: ['ultimateSkill'],
+                  },
+                  key: 'abilityentity_chr_0020_meurs_talent_shockwave:chr_0020_meurs_talent_shockwave:/childSkill/actionGraph/main/nodes/dealDamage_2/action',
+                },
+                next: null,
+              },
+              dealDamage_3: {
+                action: {
+                  kind: 'dealDamage',
+                  parameters: {
+                    damageType: 'physical',
+                    attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+                    tags: ['ultimateSkill'],
+                  },
+                  key: 'abilityentity_chr_0020_meurs_talent_shockwave:chr_0020_meurs_talent_shockwave:/childSkill/actionGraph/main/nodes/dealDamage_3/action',
+                },
+                next: null,
+              },
+              finishTimeline_4: { action: { kind: 'finishTimeline', parameters: {} }, next: null },
+              conditional_5: {
+                action: {
+                  kind: 'conditional',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+                  whenTrue: { $sequence: 'finishTimeline_4' },
+                },
+                next: null,
+              },
+            },
+            dataNodes: {
+              data_1: {
+                type: 'number',
+                expression: { kind: 'blackboard', key: 'atk_scale_shockwave' },
+              },
+              data_2: {
+                type: 'number',
+                expression: { kind: 'blackboard', key: 'atk_scale_shockwave' },
+              },
+              data_3: {
+                type: 'number',
+                expression: { kind: 'blackboard', key: 'atk_scale_shockwave' },
+              },
+              data_4: {
+                type: 'number',
+                expression: { kind: 'blackboard', key: 'talent_1', fallback: 0 },
+              },
+              data_5: {
+                type: 'boolean',
+                expression: {
+                  kind: 'actionValueCompare',
+                  left: { kind: 'valueNode', nodeId: 'data_4' },
+                  operator: 'less',
+                  right: { kind: 'constant', value: 2 },
+                },
+              },
+            },
+          },
+          macros: {},
+        },
         skillId: 'chr_0020_meurs_talent_shockwave',
         nativeSkillType: 'normalSkill',
         naturalDurationFrames: 60,
@@ -1635,66 +2196,10 @@ export const catcher: OperatorDefinition = {
         },
         blackboard: { atb: 0, atk_scale_shockwave: 0.42, env_dmg: 20, spawn_count: 0, talent_1: 0 },
         scheduledSequences: [
-          scheduled(
-            3,
-            sequence(
-              step(
-                'dealDamage',
-                {
-                  damageType: 'physical',
-                  attackScale: { kind: 'blackboard', key: 'atk_scale_shockwave' },
-                  tags: ['ultimateSkill'],
-                },
-                'abilityentity_chr_0020_meurs_talent_shockwave:chr_0020_meurs_talent_shockwave:/childSkill/scheduledSequences/0/sequence/steps/0',
-              ),
-            ),
-            5,
-          ),
-          scheduled(
-            18,
-            sequence(
-              step(
-                'dealDamage',
-                {
-                  damageType: 'physical',
-                  attackScale: { kind: 'blackboard', key: 'atk_scale_shockwave' },
-                  tags: ['ultimateSkill'],
-                },
-                'abilityentity_chr_0020_meurs_talent_shockwave:chr_0020_meurs_talent_shockwave:/childSkill/scheduledSequences/1/sequence/steps/0',
-              ),
-            ),
-            20,
-          ),
-          scheduled(
-            33,
-            sequence(
-              step(
-                'dealDamage',
-                {
-                  damageType: 'physical',
-                  attackScale: { kind: 'blackboard', key: 'atk_scale_shockwave' },
-                  tags: ['ultimateSkill'],
-                },
-                'abilityentity_chr_0020_meurs_talent_shockwave:chr_0020_meurs_talent_shockwave:/childSkill/scheduledSequences/2/sequence/steps/0',
-              ),
-            ),
-            35,
-          ),
-          scheduled(
-            29,
-            sequence(
-              branch(
-                {
-                  kind: 'actionValueCompare',
-                  left: { kind: 'blackboard', key: 'talent_1', fallback: 0 },
-                  operator: 'less',
-                  right: { kind: 'constant', value: 2 },
-                },
-                sequence(step('finishTimeline', {})),
-              ),
-            ),
-            32,
-          ),
+          { startFrame: 3, endFrame: 5, sequence: { $sequence: 'dealDamage_1' } },
+          { startFrame: 18, endFrame: 20, sequence: { $sequence: 'dealDamage_2' } },
+          { startFrame: 33, endFrame: 35, sequence: { $sequence: 'dealDamage_3' } },
+          { startFrame: 29, endFrame: 32, sequence: { $sequence: 'conditional_5' } },
         ],
       },
     },

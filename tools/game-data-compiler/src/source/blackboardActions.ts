@@ -5,6 +5,7 @@ import {
   requireNativeEnum,
   requireRecord,
 } from './primitives.ts';
+import { readBlackboardCalculationType } from './nativeEnums.ts';
 
 // OperationType 的原生元数据常量。
 const BLACKBOARD_OPERATIONS = new Map([
@@ -265,7 +266,7 @@ export function parseBlackboardMutationActionSource(
       action.calculationTarget,
       `${path}.calculationTarget`,
     ),
-    calculationType: requireNonEmptyString(action.calculateType, `${path}.calculateType`),
+    calculationType: readBlackboardCalculationType(action.calculateType, `${path}.calculateType`),
   };
 }
 

@@ -14,6 +14,7 @@ import {
   CombatReceiptCollector,
   type CombatReceiptEntry,
 } from '../../core/combat/receipt/combatReceipt';
+import { ActionGraphDefinitionRepository } from '../../core/compiler/actionGraphDefinitionRepository';
 
 function historyOf(entries: readonly CombatReceiptEntry[]) {
   const receipt = new CombatReceiptCollector();
@@ -28,6 +29,8 @@ const service = new ScenarioSimulationService({
     getWeapon: () => null,
     getGear: () => null,
     getGearSet: () => null,
+    actionPrograms: new ActionGraphDefinitionRepository(),
+    getCommonDefinitionSources: () => [],
   },
   resources: {
     sharedSpGain: { baseGainEfficiency: 1 },
@@ -83,6 +86,69 @@ function createPerlicaScenario(): ScenarioDocument {
 }
 
 describe('useScenarioSimulation', () => {
+  it('运行中或完成后只改节点坐标，不重算也不使结果过期', async () => {
+    const initial = createPerlicaScenario();
+    initial.tracks[0]!.skillCasts = [
+      {
+        id: 'layout',
+        source: { kind: 'operatorSkill', skillGroupKey: 'basicAttack', skillKey: 'basic' },
+        placement: { startFrame: 0 },
+      },
+    ];
+    const scenario = shallowRef(initial);
+    let calls = 0;
+    let finish!: (value: unknown) => void;
+    const fakeService = {
+      simulate: () => {
+        calls++;
+        return new Promise(resolve => {
+          finish = resolve;
+        });
+      },
+    } as unknown as ScenarioSimulationService;
+    const scope = effectScope();
+    let result!: UseScenarioSimulationResult;
+    scope.run(() => {
+      result = useScenarioSimulation({ scenario, service: fakeService, debounceMs: 10_000 });
+    });
+    const move = (x: number) => {
+      const track = scenario.value.tracks[0]!;
+      scenario.value = {
+        ...scenario.value,
+        tracks: [
+          {
+            ...track,
+            skillCasts: track.skillCasts.map(cast => ({
+              ...cast,
+              presentation: {
+                graph: { main: { nodePositions: { a: { x, y: 0 } }, entryPositions: {} } },
+              },
+            })),
+          },
+          null,
+          null,
+          null,
+        ],
+      };
+    };
+    try {
+      const pending = result.simulateNow();
+      move(100);
+      finish({ availabilityDiagnostics: [], executionDiagnostics: [], comboWindowDiagnostics: [] });
+      await pending;
+      expect(result.stale.value).toBe(false);
+      expect(result.published.value?.scenario).toBe(scenario.value);
+      const run = result.run.value;
+      move(200);
+      await nextTick();
+      expect(calls).toBe(1);
+      expect(result.stale.value).toBe(false);
+      expect(result.run.value).toBe(run);
+      expect(result.published.value?.scenario).toBe(scenario.value);
+    } finally {
+      scope.stop();
+    }
+  });
   it('publishes immediate results without waiting for a timer', async () => {
     const scenario = shallowRef(createPerlicaScenario());
     const names: string[] = [];

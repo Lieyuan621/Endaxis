@@ -1,8 +1,5 @@
-import type {
-  OperatorDefinition,
-  SkillDefinition,
-  SkillGroupDefinition,
-} from './operatorDefinition';
+import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
+import type { OperatorDefinition, SkillGroupDefinition } from './operatorDefinition';
 
 /** 按技能 ID 替换干员定义中的技能，且必须恰好命中一次。 */
 export function installCompiledSkillDefinition(

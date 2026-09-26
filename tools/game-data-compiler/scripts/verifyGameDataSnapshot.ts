@@ -53,6 +53,9 @@ export async function verifyGameDataSnapshot(root: string, catalog: GameDataSour
     if (entry.provider !== 'akedb' && entry.provider !== 'vfs-index-browser') {
       throw new Error(`unknown source provider: ${logicalPath}`);
     }
+    if (collection === 'BuffData' && entry.provider !== 'akedb') {
+      throw new Error(`BuffData must come from AKEDB: ${logicalPath}`);
+    }
     if (
       entry.provider === 'vfs-index-browser' &&
       entry.fallbackReason !== 'not-in-akedb-index' &&
@@ -113,7 +116,7 @@ export async function verifyGameDataSnapshot(root: string, catalog: GameDataSour
     if (inventory && inventory.files !== count)
       throw new Error(`collection inventory count mismatch: ${collection}`);
     if (!inventory || count === 0) missingInputs.push(`${collection}/<inventory>`);
-    else if (inventory.vfs !== 'available')
+    else if (collection !== 'BuffData' && inventory.vfs !== 'available')
       missingInputs.push(`${collection}/<VFS inventory unavailable>`);
   }
   return {

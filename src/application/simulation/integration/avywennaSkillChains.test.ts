@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { ActionGraphDefinitionRepository } from '../../../core/compiler/actionGraphDefinitionRepository';
 import { avywenna } from '../../../data/operators/avywenna.generated';
 import { gameDataRepository } from '../../../data/gameDataRepository';
 import { ScenarioSimulationService } from '../scenarioSimulationService';
@@ -89,6 +90,10 @@ async function simulate(casts: readonly (readonly [string, number])[], potential
     }).scenario;
   return new ScenarioSimulationService({
     index: {
+      actionPrograms: new ActionGraphDefinitionRepository(),
+      getCommonDefinitionSources: () => [
+        { id: 'shared', buffDefinitions: gameDataRepository.getCommonBuffDefinitions!() },
+      ],
       getOperator: slug => (slug === operator.slug ? operator : null),
       getCommonBuffDefinitions: () => gameDataRepository.getCommonBuffDefinitions!(),
       getWeapon: () => null,

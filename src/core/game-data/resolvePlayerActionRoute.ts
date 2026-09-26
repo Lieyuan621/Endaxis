@@ -5,7 +5,7 @@ import type { OperatorDefinition, PlayerSkillInput } from './operatorDefinition'
  * 只用于新块默认值与旧项目迁移；模拟会保留存档中的 action 并独立校验实际解析结果。
  */
 export function resolveUniquePlayerActionForSkill(
-  operator: OperatorDefinition,
+  operator: Pick<OperatorDefinition, 'playerActionRoutes' | 'skillSlots' | 'slug'>,
   skillKey: string,
 ): PlayerSkillInput | undefined {
   const matches = Object.entries(operator.playerActionRoutes ?? {}).flatMap(([input, route]) => {

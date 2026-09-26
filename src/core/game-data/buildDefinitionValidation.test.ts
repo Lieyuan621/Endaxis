@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { emptyActionGraph } from '../../test/compiledGraphEntry';
 import { createEmptyProject } from '../project/createProject';
 import type { EndaxisProjectDocument, TrackDocument } from '../project/schema';
 import type { GearDefinition, GearSetDefinition, WeaponDefinition } from './equipmentDefinition';
@@ -17,16 +18,31 @@ const operator = {
       key: 'battleSkill',
       skillType: 'battleSkill',
       levelSource: 'battleSkill',
-      skills: { key: 'current-skill', timelineBlockFrames: 30, scheduledSequences: [] },
+      skills: {
+        key: 'current-skill',
+        timelineBlockFrames: 30,
+        scheduledSequences: [],
+        actionGraph: emptyActionGraph(),
+      },
       variants: [
         {
           key: 'variant',
           levelSource: 'battleSkill',
-          skills: { key: 'variant-skill', timelineBlockFrames: 30, scheduledSequences: [] },
+          skills: {
+            key: 'variant-skill',
+            timelineBlockFrames: 30,
+            scheduledSequences: [],
+            actionGraph: emptyActionGraph(),
+          },
         },
       ],
       replacementSkills: [
-        { key: 'replacement-skill', timelineBlockFrames: 30, scheduledSequences: [] },
+        {
+          key: 'replacement-skill',
+          timelineBlockFrames: 30,
+          scheduledSequences: [],
+          actionGraph: emptyActionGraph(),
+        },
       ],
       routedReplacementSkills: [
         {
@@ -36,6 +52,7 @@ const operator = {
             levelSource: 'comboSkill',
             timelineBlockFrames: 30,
             scheduledSequences: [],
+            actionGraph: emptyActionGraph(),
           },
           skillType: 'comboSkill',
           levelSource: 'comboSkill',

@@ -1,7 +1,7 @@
 /** 验证真实序列内核在兄弟分支中恢复进度，以及同步结束不会继续执行后续步骤。 */
 import { describe, expect, it } from 'vitest';
 import { StateStepper } from '../runtime/stateStepper';
-import { createActionSequenceState } from '../state/actionState';
+import { COMBAT_STEP_STATE, type ActionStepState } from '../state/actionState';
 import {
   endActionSequence,
   executeActionSequence,
@@ -9,6 +9,17 @@ import {
   type ActionSequenceExecutionHost,
 } from './actionSequenceExecution';
 import { STEP_RESULT_MODE, type CombatExecutionContext } from './combatStep';
+
+/** 共享内核状态的测试夹具：与图执行器同样按 `entries()` 枚举步骤生命周期。 */
+function createActionSequenceState(stepCount: number): { entries: ActionStepState[] } {
+  return {
+    entries: Array.from({ length: stepCount }, () => ({
+      state: COMBAT_STEP_STATE.pending,
+      executeResult: false,
+      executionPermitted: false,
+    })),
+  };
+}
 
 function createSession() {
   return new StateStepper(

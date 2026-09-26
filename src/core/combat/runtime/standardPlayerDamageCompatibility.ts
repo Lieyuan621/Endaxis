@@ -1,3 +1,4 @@
+import { rootActionSteps } from '../../compiler/actionProgramInspection';
 /**
  * 在启动模拟前检查编译产物是否完全落在标准玩家生命伤害环境的能力边界内。
  * 本模块只报告结构化问题，不读取运行时状态；环境扩展能力时应先更新这里，再接入执行器。
@@ -175,7 +176,7 @@ function inspectSequence(
   flags: CompatibilityFlags,
   source: 'skill' | 'equipment' = 'skill',
 ): void {
-  sequence.steps.forEach((step, index) => {
+  rootActionSteps(sequence).forEach((step, index) => {
     const stepPath = `${path}.steps[${index}]`;
     switch (step.kind) {
       case 'mergeContextTargets':
@@ -363,15 +364,6 @@ function inspectSequence(
       case 'outputKnockDown':
         return;
       case 'applyBuff':
-        if (step.parameters.definition !== undefined) {
-          inspectBuffDefinition(
-            step.parameters.definition,
-            `${stepPath}.parameters.definition`,
-            collect,
-            flags,
-            source,
-          );
-        }
         return;
       case 'createGlobalBuff':
       case 'inheritBuffById':
@@ -549,7 +541,7 @@ function inspectSequence(
   });
 }
 
-/** 内联 Buff 会在施加后创建自己的时间线、生命周期和事件响应，必须一起预检。 */
+/** Buff 创建自己的时间线、生命周期和事件响应，必须随所属对象的定义目录一起预检。 */
 function inspectBuffDefinition(
   definition: ResolvedSkillBuffDefinition,
   path: string,

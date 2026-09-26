@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
+
 import type { OperatorDefinition } from '../../../core/game-data/operatorDefinition';
 import { createEmptyScenario } from '../../../core/project/createProject';
-import { lifeng, perlica } from '../../../data/operators';
+import { lifeng, perlica, operatorDefinitions } from '../../../data/operators';
 import * as operators from '../../../data/operators';
 import { gameDataRepository } from '../../../data/gameDataRepository';
 import { skillSettings } from '../../../data/combat/skillSettings';
@@ -63,6 +64,40 @@ function createChain(operator: OperatorDefinition) {
 }
 
 describe('generated basic attack chain input timing', () => {
+  it('浮空连携通过原生切换退出，不等待静态预览的六秒结束点', async () => {
+    const scenario = createChain(operators.typhoeus);
+    scenario.tracks[0]!.skillCasts = [];
+    const battle = placeSkillGroup({
+      scenario,
+      trackIndex: 0,
+      operator: operators.typhoeus,
+      skillGroupKey: 'battleSkill',
+      startFrame: 1,
+      ids: { allocate: () => 'floating:battle' },
+    });
+    const combo = placeSkillGroup({
+      scenario: battle.scenario,
+      trackIndex: 0,
+      operator: operators.typhoeus,
+      skillGroupKey: 'comboSkill',
+      skillKey: 'chr_0034_typhoea_combo_skillfloating',
+      startFrame: 30,
+      ids: { allocate: () => 'floating:combo' },
+    });
+    const run = await service.simulate(combo.scenario, 240);
+    const interrupted = run.receiptEntries.find(
+      entry => entry.data?.castId === 'floating:combo' && entry.event === 'SkillInterrupted',
+    );
+    expect(interrupted).toMatchObject({ frame: 97, data: { reason: 'castNextSkill' } });
+    expect(
+      run.receiptEntries.some(
+        entry =>
+          entry.frame === 97 &&
+          entry.event === 'SkillStarted' &&
+          entry.data?.skillId === 'chr_0034_typhoea_normal_skill_floating_loop',
+      ),
+    ).toBe(true);
+  });
   it('陈千语连携块尾可接 A1，战技提前窗口不缩短块宽', async () => {
     const scenario = createChain(operators.chenQianyu);
     const track = scenario.tracks[0]!;
@@ -289,7 +324,7 @@ describe('generated basic attack chain input timing', () => {
     },
   );
   it.each(
-    Object.values(operators).flatMap(operator =>
+    operatorDefinitions.flatMap(operator =>
       [-60, 0, 1].map(startFrame => ({ operator, startFrame })),
     ),
   )(

@@ -6,6 +6,7 @@
  */
 import type { GameplayTag, GameplayTagQueryType } from './gameplayTags.ts';
 import type { AbilityEvent } from './abilityEvents.ts';
+import type { ActionGraphReference } from './actionGraph.ts';
 
 import {
   type BuffApplicationSource,
@@ -47,7 +48,6 @@ import {
   type AbilityEntityDefinition,
   type AbilityEntityTargetQuery,
   type SkillTriggerScope,
-  type ProjectileCallbackSkillDefinition,
 } from './skills.ts';
 import { type SkillBuffDefinition, type SkillGlobalBuffDefinition } from './buffs.ts';
 import type {
@@ -623,8 +623,6 @@ export interface CombatStepParameters {
           /** 运行时读取 Buff ID 的动作黑板键。 */
           readonly blackboardKey: string;
         };
-    /** 本步骤施加的完整 Buff 蓝图；运行时实例创建后不再被后续同 key 步骤改写。 */
-    definition?: SkillBuffDefinition;
     /** 接收 Buff 的单体或队伍目标。 */
     target: BuffApplicationTarget;
     /** 原生 CreateBuffAction 的循环次数；省略时执行一次，正小数按 `int < float` 语义向上取整。 */
@@ -1584,9 +1582,9 @@ type CombatStepNode<K extends CombatStepKind> = {
 } & (K extends 'conditional'
   ? {
       /** 条件成立时执行。 */
-      whenTrue: ActionSequenceDefinition;
+      whenTrue: ActionGraphReference;
       /** 条件不成立时执行；省略时不执行额外步骤。 */
-      whenFalse?: ActionSequenceDefinition;
+      whenFalse?: ActionGraphReference;
     }
   : K extends 'switch'
     ? {
@@ -1596,35 +1594,35 @@ type CombatStepNode<K extends CombatStepKind> = {
     : K extends 'once'
       ? {
           /** 在此一次性作用域中执行的子序列。 */
-          body: ActionSequenceDefinition;
+          body: ActionGraphReference;
         }
       : K extends 'withActionBlackboardScope'
         ? {
             /** 在子动作黑板中执行的序列。 */
-            body: ActionSequenceDefinition;
+            body: ActionGraphReference;
           }
         : K extends 'repeatEachTick'
           ? {
               /** 每次触发时执行的序列。 */
-              body: ActionSequenceDefinition;
+              body: ActionGraphReference;
             }
           : K extends 'repeatByActionValue'
             ? {
                 /** 每次循环执行的序列。 */
-                body: ActionSequenceDefinition;
+                body: ActionGraphReference;
               }
             : K extends 'launchProjectile'
               ? {
                   /** 每项都是完整的原生回调技能，不并入发射技能的时间轴。 */
                   callbacks: readonly {
                     event: 'hit' | 'block' | 'reach' | 'finish';
-                    skill: ProjectileCallbackSkillDefinition;
+                    skill: AbilityEntityChildSkillDefinition;
                   }[];
                 }
               : K extends 'forEachContextTarget'
                 ? {
                     /** 对每个目标执行的序列。 */
-                    body: ActionSequenceDefinition;
+                    body: ActionGraphReference;
                   }
                 : {});
 
@@ -1636,18 +1634,12 @@ export type CombatStepForKind<K extends CombatStepKind> = {
   [Kind in K]: CombatStepNode<Kind>;
 }[K];
 
-/** 同一时点严格按数组顺序同步执行的步骤集合。 */
-export interface ActionSequenceDefinition {
-  /** 按数组顺序同步执行的步骤。 */
-  steps: readonly CombatStepDefinition[];
-}
-
 /** 候选值是标签而非索引；允许重复，首个匹配获胜。空分支也是有效候选，不得删除。 */
 export interface ActionSwitchOptionDefinition {
   /** 与 `switch.choice` 比较的候选值。 */
   readonly value: ActionValueOperand;
   /** 此候选首先匹配时执行的序列。 */
-  readonly sequence: ActionSequenceDefinition;
+  readonly sequence: ActionGraphReference;
 }
 
 /** 相对技能释放帧调度的点事件或持续序列。 */
@@ -1657,7 +1649,7 @@ export interface ScheduledSequenceDefinition {
   /** 仅有状态动作需要；到达该帧时对已经开始的序列调用结束生命周期。 */
   endFrame?: number;
   /** 到达起始帧时执行或启动的动作序列。 */
-  sequence: ActionSequenceDefinition;
+  sequence: ActionGraphReference;
 }
 
 /** 技能临时监听器对一类战斗事件的同步响应。 */
@@ -1673,7 +1665,7 @@ export interface CombatEventResponseDefinition {
   /** 事件发生后还需满足的条件。 */
   condition?: CombatCondition;
   /** 条件成立时同步执行的动作序列。 */
-  sequence: ActionSequenceDefinition;
+  sequence: ActionGraphReference;
 }
 
 /**

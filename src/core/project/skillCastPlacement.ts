@@ -49,17 +49,19 @@ export function resolveScenarioInitialFrame(scenario: ScenarioDocument): number 
   );
 }
 
-export interface SkillCastPlacementChain {
-  readonly anchor: SkillCastDocument;
-  readonly casts: readonly SkillCastDocument[];
+export interface SkillCastPlacementChain<
+  Cast extends Pick<SkillCastDocument, 'id' | 'placement'> = SkillCastDocument,
+> {
+  readonly anchor: Cast;
+  readonly casts: readonly Cast[];
 }
 
 /** 包含独立项；链之间按原数组首次出现成员的顺序，链内按前驱关系排列。 */
-export function getSkillCastPlacementChains(
-  casts: readonly SkillCastDocument[],
-): readonly SkillCastPlacementChain[] {
-  const byId = new Map<string, SkillCastDocument>();
-  const successor = new Map<string, SkillCastDocument>();
+export function getSkillCastPlacementChains<
+  Cast extends Pick<SkillCastDocument, 'id' | 'placement'>,
+>(casts: readonly Cast[]): readonly SkillCastPlacementChain<Cast>[] {
+  const byId = new Map<string, Cast>();
+  const successor = new Map<string, Cast>();
   for (const cast of casts) {
     if (byId.has(cast.id)) throw new Error(`duplicate skill cast '${cast.id}'`);
     byId.set(cast.id, cast);
@@ -79,11 +81,11 @@ export function getSkillCastPlacementChains(
       throw new Error(`skill cast '${previous}' has more than one successor`);
     successor.set(previous, cast);
   }
-  const chainByCast = new Map<string, SkillCastPlacementChain>();
+  const chainByCast = new Map<string, SkillCastPlacementChain<Cast>>();
   for (const anchor of casts) {
     if (anchor.placement.afterCastId !== undefined) continue;
-    const members: SkillCastDocument[] = [];
-    let current: SkillCastDocument | undefined = anchor;
+    const members: Cast[] = [];
+    let current: Cast | undefined = anchor;
     while (current !== undefined) {
       members.push(current);
       current = successor.get(current.id);

@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { actionSteps } from '../../test/actionProgramMatchers';
 import { perlica } from '../../data/operators/perlica.generated';
+
+import { ActionGraphDefinitionRepository } from './actionGraphDefinitionRepository';
 import type {
   GearDefinition,
   GearSetDefinition,
@@ -54,8 +57,17 @@ const gearSet: GearSetDefinition = {
   slug: 'test-set',
   modifiers: [{ kind: 'panelStat', stat: 'artsIntensity', value: 10 }],
   buffDefinitions: { 'buff.test-set': { stackingType: 'unique' } },
-  initializationSequence: {
-    steps: [{ kind: 'applyBuff', parameters: { buffId: 'buff.test-set', target: 'caster' } }],
+  initializationSequence: { $sequence: 'init' },
+  actionGraph: {
+    main: {
+      nodes: {
+        init: {
+          action: { kind: 'applyBuff', parameters: { buffId: 'buff.test-set', target: 'caster' } },
+          next: null,
+        },
+      },
+    },
+    macros: {},
   },
 };
 
@@ -105,7 +117,11 @@ function index() {
 
 describe('compileScenarioEquipment', () => {
   it('compiles equipped builds, relative attributes, and one active three-piece set', () => {
-    const [compiled] = compileScenarioEquipment(scenario(), index());
+    const [compiled] = compileScenarioEquipment(
+      scenario(),
+      index(),
+      new ActionGraphDefinitionRepository(),
+    );
 
     expect(compiled!.operatorId).toBe('track:0');
     expect(compiled!.contributions.map(entry => entry.source)).toEqual([
@@ -134,15 +150,19 @@ describe('compileScenarioEquipment', () => {
     });
     expect(compiled!.contributions.at(-1)).toMatchObject({
       buffDefinitions: { 'buff.test-set': { stackingType: 'unique' } },
-      initializationSequence: {
-        steps: [{ kind: 'applyBuff', parameters: { buffId: 'buff.test-set' } }],
-      },
+      initializationSequence: actionSteps([
+        { kind: 'applyBuff', parameters: { buffId: 'buff.test-set' } },
+      ]),
     });
   });
 
   it('fails closed when an equipped Build has no definition', () => {
     expect(() =>
-      compileScenarioEquipment(scenario(), { ...index(), getWeapon: () => null }),
+      compileScenarioEquipment(
+        scenario(),
+        { ...index(), getWeapon: () => null },
+        new ActionGraphDefinitionRepository(),
+      ),
     ).toThrow("weapon definition 'test-weapon' does not exist");
   });
 
@@ -150,8 +170,8 @@ describe('compileScenarioEquipment', () => {
     const value = scenario();
     value.tracks[0]!.operator = null;
 
-    expect(() => compileScenarioEquipment(value, index())).toThrow(
-      'configures equipment without an operator instance',
-    );
+    expect(() =>
+      compileScenarioEquipment(value, index(), new ActionGraphDefinitionRepository()),
+    ).toThrow('configures equipment without an operator instance');
   });
 });

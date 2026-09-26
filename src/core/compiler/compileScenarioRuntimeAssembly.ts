@@ -1,3 +1,4 @@
+import { compileCommonDefinitionSources } from './compileCommonDefinitionSources';
 /**
  * 将场景的时间轴、初始资源和应用层提供的运行环境组合成运行时装配参数。
  *
@@ -5,7 +6,7 @@
  * 由调用方显式注入。调用方可以把返回值直接交给 `CombatRuntimeAssembly`，但不得把这里当作
  * 缺失规则的默认值来源。
  */
-import { compareCombatNumbers } from '../../../packages/game-data-contract/src/primitives';
+import { compareCombatNumbers } from '../mechanics/combatNumbers.ts';
 import type {
   CombatOperatorProgram,
   CombatRuntimeAssemblyOptions,
@@ -48,6 +49,7 @@ export type ScenarioRuntimeBuildIndex = Pick<
   GameDataRepository,
   'getOperator' | 'getWeapon' | 'getGear' | 'getGearSet'
 > &
+  Required<Pick<GameDataRepository, 'actionPrograms' | 'getCommonDefinitionSources'>> &
   Partial<
     Pick<
       GameDataRepository,
@@ -83,10 +85,10 @@ export interface CompileScenarioRuntimeAssemblyOptions {
   readonly mechanicAdapters?: MechanicAdapterRegistry;
 }
 
-type CompileScenarioMechanicsOptions = Pick<
-  CompileScenarioRuntimeAssemblyOptions,
-  'index' | 'mechanicAdapters'
->;
+type CompileScenarioMechanicsOptions = {
+  readonly index: Pick<ScenarioRuntimeBuildIndex, 'getMechanic'>;
+  readonly mechanicAdapters?: MechanicAdapterRegistry;
+};
 
 /** 供所有场景入口复用的机制定义解析；环境尚未创建时也可安全调用。 */
 export function compileScenarioMechanics(
@@ -178,19 +180,27 @@ export function compileScenarioCustomSkillCastPrograms(
   index: ScenarioRuntimeBuildIndex,
 ): readonly CombatSkillCastProgram[] {
   const builds = resolveScenarioBuilds(scenario, index);
+  const importsForLevel = compileCommonDefinitionSources(
+    index.getCommonDefinitionSources(),
+    index.actionPrograms,
+  ).importsForLevel;
   const panels = new Map(
     resolveScenarioOperatorPanels(builds).map(panel => [panel.operatorId, panel]),
   );
   return builds.flatMap(build => {
+    const casts = build.track.skillCasts.filter(cast => cast.customDefinition !== undefined);
+    if (casts.length === 0) return [];
     const panel = panels.get(build.track.id);
-    if (panel === undefined) throw new Error(`operator '${build.track.id}' has no resolved panel`);
+    if (panel === undefined) throw new Error('missing operator panel: ' + build.track.id);
     return compileOperatorSkillCastPrograms(
       build.track.id,
-      build.track.skillCasts.filter(cast => cast.customDefinition !== undefined),
+      casts,
       build.operatorInstance,
       build.operator,
       index.getCommonAbilityEntityDefinitions?.(),
       panel.attributes,
+      index.actionPrograms,
+      importsForLevel,
     );
   });
 }
@@ -315,7 +325,10 @@ export function compileScenarioRuntimeAssembly(
     );
   }
   const mechanics = compileScenarioMechanics(scenario, options);
-  const globalModifiers = compileGlobalModifiers(scenario.globalConfig);
+  const globalModifiers = compileGlobalModifiers(
+    scenario.globalConfig,
+    options.index.actionPrograms,
+  );
   const mechanicInitializations = mechanics.contributions.flatMap(entry =>
     entry.contribution.kind === 'battleInitializationSequence'
       ? [{ ...entry, contribution: entry.contribution }]
@@ -332,21 +345,31 @@ export function compileScenarioRuntimeAssembly(
     );
   }
   const builds = resolveScenarioBuilds(scenario, options.index);
-  const timeline = compileResolvedScenarioTimeline(
+  const commonDefinitionSources = options.index.getCommonDefinitionSources();
+  const commonDefinitions = options.index.getCommonAbilityEntityDefinitions?.();
+  const compiledCommonDefinitions = compileCommonDefinitionSources(
+    commonDefinitionSources,
+    options.index.actionPrograms,
+  );
+  const importsForLevel = compiledCommonDefinitions.importsForLevel;
+  const timelineBuilds =
     options.liveInputInitialFrame === undefined
       ? builds
-      : builds.map(build => ({
-          ...build,
-          track: { ...build.track, skillCasts: [] },
-        })),
-    options.index.getCommonBuffDefinitions?.(),
-    options.index.getCommonAbilityEntityDefinitions?.(),
-  );
+      : builds.map(build => ({ ...build, track: { ...build.track, skillCasts: [] } }));
+  const timeline = compileResolvedScenarioTimeline(timelineBuilds, commonDefinitions, {
+    programs: options.index.actionPrograms,
+    commonDefinitionSources,
+    compiledCommonDefinitions,
+    importsForLevel,
+  });
   const panels = new Map(
     resolveScenarioOperatorPanels(builds).map(panel => [panel.operatorId, panel]),
   );
   const equipment = new Map(
-    compileResolvedScenarioEquipment(builds).map(entry => [entry.operatorId, entry.contributions]),
+    compileResolvedScenarioEquipment(builds, options.index.actionPrograms).map(entry => [
+      entry.operatorId,
+      entry,
+    ]),
   );
   // 资源和常驻槽位共用同一次完整定义编译；绝不把这些动作安装成虚构的技能块。
   const definitionPrograms = new Map(
@@ -360,8 +383,10 @@ export function compileScenarioRuntimeAssembly(
           operatorId,
           build.operatorInstance,
           build.operator,
-          options.index.getCommonAbilityEntityDefinitions?.(),
+          commonDefinitions,
           panel.attributes,
+          options.index.actionPrograms,
+          importsForLevel,
         ),
       ] as const;
     }),
@@ -398,28 +423,36 @@ export function compileScenarioRuntimeAssembly(
       if (build === undefined || panel === undefined) {
         throw new Error(`timeline operator '${operator.operatorId}' has no resolved build panel`);
       }
-      const equipmentContributions = equipment.get(operator.operatorId) ?? [];
+      const compiledEquipment = equipment.get(operator.operatorId);
+      const equipmentContributions = compiledEquipment?.contributions ?? [];
       const equipmentBuffDefinitions = mergeEquipmentBuffDefinitions(
         operator.operatorId,
         { ...operator.buffDefinitions, ...globalModifiers.buffDefinitions },
         equipmentContributions,
+        compiledEquipment?.buffDefinitions,
       );
       const equipmentInitializationPrograms = equipmentContributions.flatMap(
-        (contribution, contributionIndex) =>
-          contribution.initializationSequence === undefined &&
-          contribution.enableSequence === undefined &&
-          contribution.eventHandlers.length === 0
-            ? []
-            : [
-                {
-                  key: equipmentContributionKey(contribution),
-                  equipmentContributionIndex: contributionIndex,
-                  ...(contribution.enableSequence === undefined
-                    ? {}
-                    : { enableSequence: contribution.enableSequence }),
-                  sequence: contribution.initializationSequence ?? { steps: [] },
-                },
-              ],
+        (contribution, contributionIndex) => {
+          const anchor =
+            contribution.initializationSequence ??
+            contribution.enableSequence ??
+            contribution.eventHandlers[0]?.sequence;
+          if (anchor === undefined) return [];
+          return [
+            {
+              key: equipmentContributionKey(contribution),
+              equipmentContributionIndex: contributionIndex,
+              ...(contribution.enableSequence === undefined
+                ? {}
+                : { enableSequence: contribution.enableSequence }),
+              sequence: contribution.initializationSequence ?? {
+                graph: anchor.graph,
+                entry: null,
+                callSite: `equipment:${equipmentContributionKey(contribution)}:initialization`,
+              },
+            },
+          ];
+        },
       );
       return {
         ...operator,
@@ -529,13 +562,21 @@ function mergeEquipmentBuffDefinitions(
   operatorId: string,
   existing: NonNullable<CombatOperatorProgram['buffDefinitions']>,
   contributions: readonly import('./compileEquipment').CompiledEquipmentContribution[],
+  weaponBuffs: CombatOperatorProgram['buffDefinitions'],
 ): NonNullable<CombatOperatorProgram['buffDefinitions']> {
   const merged = { ...existing };
-  for (const contribution of contributions) {
-    for (const [buffId, definition] of Object.entries(contribution.buffDefinitions ?? {})) {
+  const collections = [
+    { key: 'weapon', definitions: weaponBuffs },
+    ...contributions.map(contribution => ({
+      key: equipmentContributionKey(contribution),
+      definitions: contribution.buffDefinitions,
+    })),
+  ];
+  for (const collection of collections) {
+    for (const [buffId, definition] of Object.entries(collection.definitions ?? {})) {
       if (buffId in merged) {
         throw new Error(
-          `operator '${operatorId}' equipment contribution '${equipmentContributionKey(contribution)}' duplicates Buff definition '${buffId}'`,
+          `operator '${operatorId}' equipment '${collection.key}' duplicates Buff definition '${buffId}'`,
         );
       }
       merged[buffId] = definition;

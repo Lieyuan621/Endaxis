@@ -5,56 +5,93 @@ const definition = {
   slug: 'suit_spellburst',
   iconPath: '/equipment/spellburst/item_equip_t4_suit_spellburst_edc_01.webp',
   modifiers: [
-    {
-      kind: 'damageScale',
-      target: 'heat',
-      slot: 'baseAddition',
-      value: 0.16,
-    },
-    {
-      kind: 'damageScale',
-      target: 'electric',
-      slot: 'baseAddition',
-      value: 0.16,
-    },
-    {
-      kind: 'damageScale',
-      target: 'cryo',
-      slot: 'baseAddition',
-      value: 0.16,
-    },
-    {
-      kind: 'damageScale',
-      target: 'nature',
-      slot: 'baseAddition',
-      value: 0.16,
-    },
+    { kind: 'damageScale', target: 'heat', slot: 'baseAddition', value: 0.16 },
+    { kind: 'damageScale', target: 'electric', slot: 'baseAddition', value: 0.16 },
+    { kind: 'damageScale', target: 'cryo', slot: 'baseAddition', value: 0.16 },
+    { kind: 'damageScale', target: 'nature', slot: 'baseAddition', value: 0.16 },
   ],
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffId: 'buff_equipsuit_spellburst_01',
+              target: 'caster',
+              blackboardAssignments: {
+                phy_spell_up: { kind: 'constant', value: 16 },
+                max_stack: { kind: 'constant', value: 3 },
+                duration: { kind: 'constant', value: 20 },
+              },
+            },
+          },
+          next: null,
+        },
+      },
+    },
+    macros: {},
+  },
+  skillId: 'passive_equipsuit_spellburst01',
   buffDefinitions: {
     buff_equipsuit_spellburst_01: {
       stackingType: 'unlimited',
       priority: 0,
-      maxStackCount: {
-        blackboardKey: 'max_stack',
-      },
+      maxStackCount: { blackboardKey: 'max_stack' },
       triggerIntervalSeconds: 0,
       waitFirstTriggerInterval: true,
       maxTriggerCount: 1,
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        duration: 30,
-        max_stack: 2,
-        phy_spell_up: 0.1,
-      },
+      blackboard: { duration: 30, max_stack: 2, phy_spell_up: 0.1 },
       attributeModifiers: [],
       abilityEventResponses: [
-        {
-          event: 'beforeOutputSpellBurst',
-          priority: 0,
-          sequence: {
-            steps: [
-              {
+        { event: 'beforeOutputSpellBurst', priority: 0, sequence: { $sequence: 'conditional_4' } },
+      ],
+      actionGraph: {
+        main: {
+          nodes: {
+            setGlobalCooldown_1: {
+              action: {
+                kind: 'setGlobalCooldown',
+                parameters: {
+                  target: 'buffOwner',
+                  markerId: 'buff_equipsuit_spellburst_01',
+                  durationSeconds: { kind: 'constant', value: 0.1 },
+                },
+              },
+              next: null,
+            },
+            applyBuff_2: {
+              action: {
+                kind: 'applyBuff',
+                parameters: {
+                  buffId: 'buff_equipsuit_spellburst_01_physpellup',
+                  target: 'buffOwner',
+                  source: 'buffOwner',
+                  inheritSourceSkillCastInfo: true,
+                  asChildBuff: true,
+                  copiedBlackboardAssignments: {
+                    phy_spell_up: 'phy_spell_up',
+                    duration: 'duration',
+                    max_stack: 'max_stack',
+                  },
+                },
+              },
+              next: 'setGlobalCooldown_1',
+            },
+            conditional_3: {
+              action: {
+                kind: 'conditional',
+                parameters: {
+                  condition: { kind: 'eventInflictionElementIn', elements: ['cryo', 'nature'] },
+                },
+                whenTrue: { $sequence: 'applyBuff_2' },
+              },
+              next: null,
+            },
+            conditional_4: {
+              action: {
                 kind: 'conditional',
                 parameters: {
                   condition: {
@@ -66,64 +103,20 @@ const definition = {
                     },
                   },
                 },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'conditional',
-                      parameters: {
-                        condition: {
-                          kind: 'eventInflictionElementIn',
-                          elements: ['cryo', 'nature'],
-                        },
-                      },
-                      whenTrue: {
-                        steps: [
-                          {
-                            kind: 'applyBuff',
-                            parameters: {
-                              buffId: 'buff_equipsuit_spellburst_01_physpellup',
-                              target: 'buffOwner',
-                              source: 'buffOwner',
-                              inheritSourceSkillCastInfo: true,
-                              asChildBuff: true,
-                              copiedBlackboardAssignments: {
-                                phy_spell_up: 'phy_spell_up',
-                                duration: 'duration',
-                                max_stack: 'max_stack',
-                              },
-                            },
-                          },
-                          {
-                            kind: 'setGlobalCooldown',
-                            parameters: {
-                              target: 'buffOwner',
-                              markerId: 'buff_equipsuit_spellburst_01',
-                              durationSeconds: {
-                                kind: 'constant',
-                                value: 0.1,
-                              },
-                            },
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                },
+                whenTrue: { $sequence: 'conditional_3' },
               },
-            ],
+              next: null,
+            },
           },
         },
-      ],
+        macros: {},
+      },
     },
     buff_equipsuit_spellburst_01_physpellup: {
       stackingType: 'stack',
       priority: 0,
-      maxStackCount: {
-        blackboardKey: 'max_stack',
-      },
-      durationSeconds: {
-        blackboardKey: 'duration',
-      },
+      maxStackCount: { blackboardKey: 'max_stack' },
+      durationSeconds: { blackboardKey: 'duration' },
       triggerIntervalSeconds: 0,
       waitFirstTriggerInterval: true,
       maxTriggerCount: 1,
@@ -147,55 +140,22 @@ const definition = {
         charHpBarVfxType: 'Fire',
         iconStyleInSquad: 'Default',
         abnormalColorType: 'Physical',
-        orderPriority: {
-          useDirectoryValue: false,
-          value: 0,
-          category: 'CommonCharBuff',
-        },
+        orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
       },
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        duration: 30,
-        max_stack: 2,
-        phy_spell_up: 0.1,
-      },
+      blackboard: { duration: 30, max_stack: 2, phy_spell_up: 0.1 },
       attributeModifiers: [
         {
           attribute: 'PhysicalAndSpellInflictionEnhance',
           slot: 'baseAddition',
-          value: {
-            blackboardKey: 'phy_spell_up',
-          },
+          value: { blackboardKey: 'phy_spell_up' },
         },
       ],
+      actionGraph: { main: { nodes: {} }, macros: {} },
     },
   },
-  enableSequence: {
-    steps: [
-      {
-        kind: 'applyBuff',
-        parameters: {
-          buffId: 'buff_equipsuit_spellburst_01',
-          target: 'caster',
-          blackboardAssignments: {
-            phy_spell_up: {
-              kind: 'constant',
-              value: 16,
-            },
-            max_stack: {
-              kind: 'constant',
-              value: 3,
-            },
-            duration: {
-              kind: 'constant',
-              value: 20,
-            },
-          },
-        },
-      },
-    ],
-  },
+  enableSequence: { $sequence: 'applyBuff_1' },
 } as const satisfies GearSetDefinition;
 
 export default definition;

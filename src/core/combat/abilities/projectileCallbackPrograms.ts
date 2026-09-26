@@ -1,13 +1,13 @@
 /** 当前战斗共享的固定回调程序目录。分支只保存编号，不复制程序，也不重新编号。 */
-import type { CompiledProjectileCallbackSkillProgram } from '../../compiler/combatProgram';
+import type { CompiledAbilityEntityChildSkillProgram } from '../../compiler/combatProgram';
 import { DamageCalculationSnapshotProgram } from '../damage/damageCalculationSnapshots';
 
 export class ProjectileCallbackPrograms {
-  readonly #ids = new WeakMap<CompiledProjectileCallbackSkillProgram, number>();
-  readonly #programs: CompiledProjectileCallbackSkillProgram[] = [];
+  readonly #ids = new WeakMap<CompiledAbilityEntityChildSkillProgram, number>();
+  readonly #programs: CompiledAbilityEntityChildSkillProgram[] = [];
   readonly #damageSnapshots: DamageCalculationSnapshotProgram[] = [];
 
-  register(program: CompiledProjectileCallbackSkillProgram): number {
+  register(program: CompiledAbilityEntityChildSkillProgram): number {
     const existing = this.#ids.get(program);
     if (existing !== undefined) return existing;
     const id = this.#programs.length;
@@ -17,7 +17,7 @@ export class ProjectileCallbackPrograms {
     return id;
   }
 
-  resolve(id: number): CompiledProjectileCallbackSkillProgram {
+  resolve(id: number): CompiledAbilityEntityChildSkillProgram {
     const program = this.#programs[id];
     if (!Number.isSafeInteger(id) || program === undefined)
       throw new Error(`missing projectile callback program ${id}`);

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { OperatorDefinition } from '../../core/game-data/operatorDefinition';
+
 import { createEmptyScenario } from '../../core/project/createProject';
 import {
   arcane,
@@ -17,6 +18,7 @@ import { projectTimelineEditor } from './timelineEditorViewModel';
 import { arclight } from '../../data/operators/arclight.generated';
 import { applyInitialUltimateEnergyPreset } from './interaction/timelineDocumentCommands';
 import { compileOperatorDefinitionSkills } from '../../core/compiler/compileScenarioTimeline';
+import { ActionGraphDefinitionRepository } from '../../core/compiler/actionGraphDefinitionRepository';
 import { compileScenarioResources } from '../../core/compiler/compileScenarioResources';
 
 it.each([0, 5])(
@@ -46,7 +48,14 @@ it.each([0, 5])(
       'full',
       view.tracks.map(track => track.maxUltimateEnergy),
     );
-    const compiled = compileOperatorDefinitionSkills('owner', build, arclight);
+    const compiled = compileOperatorDefinitionSkills(
+      'owner',
+      build,
+      arclight,
+      {},
+      undefined,
+      new ActionGraphDefinitionRepository(),
+    );
     const maximum = compiled.find(
       skill => skill.skillType === 'ultimate' && skill.costs.length > 0,
     )!.costs[0]!.value;
@@ -73,6 +82,38 @@ it.each([0, 5])(
 );
 
 describe('projectTimelineEditor', () => {
+  it('图干员在时间轴上提供技能库、时长及模拟前命中预览', () => {
+    const scenario = createEmptyScenario('graph-preview', 'Graph preview');
+    scenario.tracks[0] = {
+      id: 'graph-track',
+      operator: {
+        operatorSlug: perlica.slug,
+        level: 90,
+        promoted: true,
+        potential: 5,
+        trustLevel: 4,
+        skillLevels: { basicAttack: 12, battleSkill: 12, comboSkill: 12, ultimate: 12 },
+        talentStates: {},
+      },
+      weapon: null,
+      gears: { armor: null, gloves: null, accessory1: null, accessory2: null },
+      initialState: { ultimateEnergy: 0 },
+      skillCasts: [],
+    };
+    const placed = placeSkillGroup({
+      scenario,
+      trackIndex: 0,
+      operator: perlica,
+      skillGroupKey: 'battleSkill',
+      startFrame: 30,
+      ids: { allocate: () => 'graph-cast' },
+    }).scenario;
+    const view = projectTimelineEditor(placed, { getOperator: () => perlica });
+    expect(view.tracks[0]!.skillLibrary.length).toBeGreaterThan(0);
+    expect(view.tracks[0]!.skillCasts.length).toBeGreaterThan(0);
+    expect(view.tracks[0]!.maxUltimateEnergy).toBeGreaterThan(0);
+  });
+
   it('keeps a cast in place and reports a local issue after its template skill key is edited', () => {
     const scenario = createEmptyScenario('scenario:template-edit', 'Template edit');
     scenario.tracks[0] = {
@@ -103,7 +144,12 @@ describe('projectTimelineEditor', () => {
       skillGroups: [
         {
           ...perlica.skillGroups.find(group => group.key === 'battleSkill')!,
-          skills: { key: 'new-key', timelineBlockFrames: 30, scheduledSequences: [] },
+          skills: {
+            key: 'new-key',
+            timelineBlockFrames: 30,
+            scheduledSequences: [],
+            actionGraph: { main: { nodes: {} }, macros: {} },
+          },
         },
       ],
     };
@@ -415,7 +461,11 @@ describe('projectTimelineEditor', () => {
       project(typhoeus).find(
         entry => entry.placementSkillKey === 'chr_0034_typhoea_combo_skillfloating',
       ),
-    ).toMatchObject({ nameQualifier: 'floating', skillType: 'comboSkill' });
+    ).toMatchObject({
+      nameQualifier: 'floating',
+      skillType: 'comboSkill',
+      skills: [expect.objectContaining({ timelineBlockFrames: 57 })],
+    });
     expect(project(camille).filter(entry => entry.skillGroupKey === 'battleSkill')).toEqual([
       expect.objectContaining({ groupPlacementSkillKeys: ['chr_0033_camille_normal_skill'] }),
       expect.objectContaining({

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { arcane } from '../../data/operators/arcane.generated';
 import { endministrator } from '../../data/operators/endministrator.generated';
 import { zhuangFangyi } from '../../data/operators/zhuang-fangyi.generated';
+
 import type {
   GearDefinition,
   GearSetDefinition,
@@ -51,6 +52,42 @@ function resolvedBuild(
 }
 
 describe('resolveOperatorPanel', () => {
+  it('图武器的面板只读取静态修正，不加载被动程序', () => {
+    const base = resolvedBuild(endministrator);
+    const weapon: WeaponDefinition = {
+      slug: 'native-weapon',
+      rarity: 5,
+      weaponType: endministrator.weaponType,
+      baseAttackAtLevelNodes: [1, 1, 1, 1, 1, 1],
+      traits: [
+        {
+          key: 'native-trait',
+          skillId: 'native-passive-skill',
+          levelCount: 1,
+          modifiers: [{ kind: 'panelStat', stat: 'attackFlat', value: 20 }],
+          enableSequence: { $sequence: 'missing' },
+          actionGraph: { main: { nodes: {} }, macros: {} },
+        },
+      ],
+    };
+    const withWeapon: ResolvedScenarioBuild = {
+      ...base,
+      weapon: {
+        instance: {
+          weaponSlug: weapon.slug,
+          level: 90,
+          tuned: true,
+          potential: 0,
+          traitLevels: [1],
+        },
+        definition: weapon,
+      },
+    };
+    const baseline = resolveOperatorPanel(base);
+    const panel = resolveOperatorPanel(withWeapon);
+    expect(panel.attackBase!.rawValue).toBe(baseline.attackBase!.rawValue + 1);
+    expect(panel.attackBase!.baseFinalAddition).toBe(baseline.attackBase!.baseFinalAddition + 20);
+  });
   it('applies Endministrator potential 4 health from the current native effect table', () => {
     const before = resolveOperatorPanel(resolvedBuild(endministrator, { potential: 3 }));
     const unlocked = resolveOperatorPanel(resolvedBuild(endministrator, { potential: 4 }));

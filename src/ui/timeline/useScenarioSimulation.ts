@@ -9,6 +9,7 @@ import type { ScenarioSimulationRun } from '../../application/simulation/scenari
 import type { ScenarioSimulationPerformanceSample } from '../../application/simulation/scenarioSimulationService';
 import type { ScenarioSimulationService } from '../../application/simulation/scenarioSimulationService';
 import type { ScenarioDocument } from '../../core/project/schema';
+import { sameScenarioExceptGraphPresentation } from '../../core/project/graphPresentation';
 import type { SkillAvailabilityDiagnosticReason } from '../../core/projection/skillAvailabilityDiagnostics';
 import type { SkillExecutionDiagnosticReason } from '../../core/projection/skillExecutionDiagnostics';
 import type { ComboWindowDiagnosticReason } from '../../core/projection/comboWindowDiagnostics';
@@ -112,7 +113,9 @@ export function useScenarioSimulation(
       );
       // 同一方案拖动期间允许发布已经完整算完的旧落点；它仍是一份完整快照。
       // 项目切换、重置或更晚结果已发布时，旧任务不能再覆盖界面。
-      const isCurrent = runId === latestRunId && options.scenario.value === scenario;
+      const isCurrent =
+        runId === latestRunId &&
+        sameScenarioExceptGraphPresentation(options.scenario.value, scenario);
       const returnedToPublishedScenario =
         !isCurrent && publishedState.value?.scenario === options.scenario.value;
       const canPublish =
@@ -121,12 +124,19 @@ export function useScenarioSimulation(
         runId > lastPublishedRunId &&
         !returnedToPublishedScenario;
       if (!canPublish) return false;
-      publishedState.value = Object.freeze({ scenario, run: result });
+      publishedState.value = Object.freeze({
+        scenario: isCurrent ? options.scenario.value : scenario,
+        run: result,
+      });
       lastPublishedRunId = runId;
       stale.value = !isCurrent;
       return isCurrent;
     } catch (caught) {
-      if (runId !== latestRunId || options.scenario.value !== scenario) return false;
+      if (
+        runId !== latestRunId ||
+        !sameScenarioExceptGraphPresentation(options.scenario.value, scenario)
+      )
+        return false;
       // Worker 缓存换代和待算位置替换都会主动结束旧请求。这属于调度流程，不能显示成模拟失败。
       if (isExpectedSimulationAbort(caught)) {
         stale.value = publishedState.value?.scenario !== scenario;
@@ -208,7 +218,15 @@ export function useScenarioSimulation(
 
   const stopWatch = watch(
     () => options.scenario.value,
-    () => scheduleSimulation(),
+    (next, previous) => {
+      if (previous && sameScenarioExceptGraphPresentation(previous, next)) {
+        const published = publishedState.value;
+        if (published && sameScenarioExceptGraphPresentation(published.scenario, next))
+          publishedState.value = Object.freeze({ scenario: next, run: published.run });
+        return;
+      }
+      scheduleSimulation();
+    },
     { immediate: true, flush: 'sync' },
   );
 

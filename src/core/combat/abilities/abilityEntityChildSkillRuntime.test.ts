@@ -1,3 +1,4 @@
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
 import { describe, expect, it, vi } from 'vitest';
 import type { CompiledAbilityEntityChildSkillProgram } from '../../compiler/combatProgram';
 import { ActionBlackboard } from '../actions/actionBlackboard';
@@ -7,6 +8,25 @@ import { AbilityEntityChildSkillPrograms } from './abilityEntityChildSkillProgra
 import { createCallbackSkillHostFactory, EntitySkillHostGroup } from './callbackSkillHost';
 import { CombatClock } from '../time/combatClock';
 import { CombatReceiptCollector } from '../receipt/combatReceipt';
+
+const childSkillGraph = createActionGraphCompilation(
+  {
+    nodes: Object.fromEntries(
+      ['first', 'second'].map(flag => [
+        flag,
+        {
+          action: {
+            kind: 'setContextFlag',
+            parameters: { flag, value: true, target: 'caster' },
+          },
+          next: null,
+        },
+      ]),
+    ),
+  },
+  1,
+  'entity-child',
+).compileAll();
 
 const program = {
   skillId: 'child-skill',
@@ -22,25 +42,11 @@ const program = {
   timelineActions: [
     {
       startFrame: 0,
-      sequence: {
-        steps: [
-          {
-            kind: 'setContextFlag',
-            parameters: { flag: 'first', value: true, target: 'caster' },
-          },
-        ],
-      },
+      sequence: { graph: childSkillGraph, entry: 'first', callSite: 'child:0' },
     },
     {
       startFrame: 2,
-      sequence: {
-        steps: [
-          {
-            kind: 'setContextFlag',
-            parameters: { flag: 'second', value: true, target: 'caster' },
-          },
-        ],
-      },
+      sequence: { graph: childSkillGraph, entry: 'second', callSite: 'child:1' },
     },
   ],
 } satisfies CompiledAbilityEntityChildSkillProgram;
@@ -68,14 +74,33 @@ function dependencies(
   };
 }
 
+const baseProgram = program;
+
 describe('AbilityEntityChildSkillRuntime restore', () => {
   it('从保存进度继续时间轴，不重放开始动作并保留实体黑板共享关系', () => {
+    const graph = childSkillGraph;
+    const currentProgram: CompiledAbilityEntityChildSkillProgram = {
+      ...baseProgram,
+      timelineActions: baseProgram.timelineActions.map((action, index) => ({
+        ...action,
+        sequence: {
+          graph,
+          entry: index === 0 ? 'first' : 'second',
+          callSite: `child:${index}`,
+        },
+      })),
+    };
     const originalEntity = new ActionBlackboard({ parent: 11 });
     const originalExecute = vi.fn(() => true);
     const clock = new CombatClock();
     const original = new AbilityEntityChildSkillRuntime(
-      program,
-      dependencies(originalEntity, originalExecute, undefined, clock),
+      currentProgram,
+      dependencies(
+        originalEntity,
+        originalExecute,
+        new AbilityEntityChildSkillPrograms().register(currentProgram),
+        clock,
+      ),
     );
     original.start();
     expect(originalExecute).toHaveBeenCalledOnce();
@@ -98,11 +123,11 @@ describe('AbilityEntityChildSkillRuntime restore', () => {
     const restoredExecute = vi.fn(() => true);
     const restoredBinding = {
       id: original.runtimeState.programId,
-      program,
+      program: currentProgram,
       damageSnapshots: original.damageSnapshotProgram,
     };
     const restored = new AbilityEntityChildSkillRuntime(
-      program,
+      currentProgram,
       dependencies(restoredEntity, restoredExecute, restoredBinding, clock),
       { state: saved.child },
     );

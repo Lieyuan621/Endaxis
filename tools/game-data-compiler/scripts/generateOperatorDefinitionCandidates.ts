@@ -9,9 +9,9 @@ import { requireArray, requireNonEmptyString, requireRecord } from '../src/sourc
 import { planOperatorDefinition, renderOperatorDefinitionFiles } from './planOperatorDefinition.ts';
 import { optimizeOperatorDefinitionPrograms } from '../src/compiler/optimization/definitionProgramOptimization.ts';
 import {
-  createSharedEntityValueUsageCollector,
-  type SharedEntityValueUsage,
-} from '../src/compiler/optimization/definitionEntityUsageContext.ts';
+  createGraphSharedEntityValueUsageCollector,
+  type GraphSharedEntityValueUsage,
+} from '../src/compiler/optimization/graphValueOptimization.ts';
 import { compileEntityValueConsumers } from './compileEntityValueConsumers.ts';
 import {
   createCommonBuffCollector,
@@ -83,7 +83,7 @@ export interface OperatorDefinitionBatchArguments extends Omit<
 /** 正式单人入口和整批候选共用的无写入步骤，保证同来源、同模式得到相同文本。 */
 export async function renderOperatorDefinitionBatch(
   args: OperatorDefinitionBatchArguments,
-  equipmentUsage?: SharedEntityValueUsage,
+  equipmentUsage?: GraphSharedEntityValueUsage,
 ) {
   // 先完成外部领域并释放其原始数据，再读干员来源，避免两个大批次同时驻留。
   const externalUsage =
@@ -91,7 +91,7 @@ export async function renderOperatorDefinitionBatch(
       ? (equipmentUsage ?? (await compileEntityValueConsumers(args)))
       : undefined;
   const usage = externalUsage
-    ? createSharedEntityValueUsageCollector(externalUsage.commonAbilityEntityDefinitions)
+    ? createGraphSharedEntityValueUsageCollector(externalUsage.commonAbilityEntityDefinitions)
     : undefined;
   if (externalUsage) usage!.addUsage(externalUsage);
   const sources = new OperatorPlanningSources(args);

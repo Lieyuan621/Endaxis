@@ -196,6 +196,7 @@ const damageHits = computed(() =>
     props.buffs,
     props.viz.markers,
     props.attachmentBuffIds ?? new Set(),
+    props.viz.damageBuffs,
   ).map(({ group, row, standalone }) => {
     const entry = group[0]!;
     const buff = findBuffDamageSegment(entry, props.viz.damageBuffs ?? []);

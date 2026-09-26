@@ -1,3 +1,4 @@
+import { ActionGraphDefinitionRepository } from '../core/compiler/actionGraphDefinitionRepository';
 /**
  * 为时间轴页面按项目加载正式游戏定义。
  * 首次进入只读取项目实际引用的干员和装备；打开选择器或导入项目时再扩充为完整目录。
@@ -27,41 +28,6 @@ const gearLoaders = import.meta.glob<DefinitionModule<GearDefinition>>(
 const gearSetLoaders = import.meta.glob<DefinitionModule<GearSetDefinition>>(
   './equipment/generated-gear-sets/*.generated.ts',
 );
-
-const OPERATOR_SLUG_ORDER = [
-  'perlica',
-  'arcane',
-  'zhuang-fangyi',
-  'arclight',
-  'gilberta',
-  'lifeng',
-  'estella',
-  'da-pan',
-  'ember',
-  'akekuri',
-  'fluorite',
-  'endministrator',
-  'last-rite',
-  'chen-qianyu',
-  'rossi',
-  'camille',
-  'pogranichnik',
-  'purrchena',
-  'tangtang',
-  'typhoeus',
-  'laevatain',
-  'liino',
-  'mifu',
-  'yvonne',
-  'snowshine',
-  'wulfgard',
-  'antal',
-  'alesh',
-  'xaihi',
-  'avywenna',
-  'catcher',
-  'ardelia',
-] as const;
 
 export interface ProjectGameDataRepository extends TimelineGameDataRepository {
   /** 加载选择器需要的完整干员和装备目录；重复调用复用同一个任务。 */
@@ -207,12 +173,16 @@ export async function createProjectGameDataRepository(
   ]);
 
   const fixed = {
+    actionPrograms: new ActionGraphDefinitionRepository(),
     revision: generatedSkillSettings.revision,
-    commonBuffDefinitions: {
-      ...common.commonBuffDefinitions,
-      ...contingency.contingencyContractBuffDefinitions,
-      ...consumables.consumableBuffDefinitions,
-    },
+    commonDefinitionSources: [
+      { id: 'common-buffs', buffDefinitions: common.commonBuffDefinitions },
+      {
+        id: 'contingency-contracts',
+        buffDefinitions: contingency.contingencyContractBuffDefinitions,
+      },
+      { id: 'consumables', buffDefinitions: consumables.consumableBuffDefinitions },
+    ],
     enemies: enemies.generatedEnemyDefinitions,
     mechanics: mechanics.contingencyContractMechanicDefinitions,
     consumables: consumables.consumableDefinitions,
@@ -224,23 +194,11 @@ export async function createProjectGameDataRepository(
   const ensureAllDefinitions = (): Promise<void> => {
     if (allDefinitionsTask !== undefined) return allDefinitionsTask;
     allDefinitionsTask = (async () => {
-      const operatorModule = await import('./operators');
-      const operatorBySlug = new Map<string, OperatorDefinition>();
-      for (const value of Object.values(operatorModule)) {
-        if (value !== null && typeof value === 'object') {
-          const definition = value as { readonly slug?: unknown };
-          if (typeof definition.slug !== 'string') continue;
-          operatorBySlug.set(definition.slug, value as OperatorDefinition);
-        }
-      }
+      const { operatorDefinitions } = await import('./operators');
       const equipment = await import('./equipment');
       current = createGameDataRepository({
         ...fixed,
-        operators: OPERATOR_SLUG_ORDER.map(slug => {
-          const definition = operatorBySlug.get(slug);
-          if (definition === undefined) throw new Error(`missing registered operator '${slug}'`);
-          return definition;
-        }),
+        operators: operatorDefinitions,
         weapons: equipment.weaponDefinitions,
         gears: equipment.gearDefinitions,
         gearSets: equipment.gearSetDefinitions,
@@ -254,7 +212,12 @@ export async function createProjectGameDataRepository(
   };
 
   return Object.freeze({
+    actionPrograms: fixed.actionPrograms,
     revision: generatedSkillSettings.revision,
+    getCommonDefinitionSources: () => current.getCommonDefinitionSources?.() ?? [],
+    getCommonBuffSource: (id: string) => current.getCommonBuffSource?.(id) ?? null,
+    getCommonAbilityEntitySource: (id: string) =>
+      current.getCommonAbilityEntitySource?.(id) ?? null,
     getCommonBuffDefinitions: () => current.getCommonBuffDefinitions?.() ?? {},
     getCommonAbilityEntityDefinitions: () => current.getCommonAbilityEntityDefinitions?.() ?? {},
     getOperators: () => current.getOperators(),

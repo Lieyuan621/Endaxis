@@ -4,7 +4,8 @@
  * 干员技能和装备按 ID 引用这些蓝图，模拟器据此创建独立实例、处理叠层与持续时间、
  * 注册事件响应和数值修正；界面则读取同一实例的名称、图标、层数和进度显示配置。
  */
-import { type ActionSequenceDefinition, type ScheduledSequenceDefinition } from './actions.ts';
+import { type ScheduledSequenceDefinition } from './actions.ts';
+import type { ActionGraphReference, ActionGraphResourceDefinition } from './actionGraph.ts';
 import {
   type ActionBlackboardValue,
   type DamageFeature,
@@ -32,6 +33,7 @@ export const BUFF_ABILITY_EVENTS = [
   'abilityEntitySpawned',
   'abilityEntityFinished',
   'beforeTakeDamage',
+  'beforeHitByProjectile',
   'beforeCalculateDamage',
   'beforeDamageAction',
   'beforeOutputDamage',
@@ -46,6 +48,7 @@ export const BUFF_ABILITY_EVENTS = [
   'ownerSwitchToCenter',
   'ownerSwitchToGuard',
   'beforeTakeInfliction',
+  'afterTakeInfliction',
   'takeDamage',
   'takeCriticalDamage',
   'outputDamage',
@@ -86,21 +89,21 @@ export type SkillBuffPresentation = CombatBuffPresentation;
  */
 export interface SkillBuffLifecycleSequences {
   /** Buff 第一次启用时执行一次，早于修正注册。 */
-  start?: ActionSequenceDefinition;
+  start?: ActionGraphReference;
   /** Buff 每次由停用转为启用后执行，晚于修正注册。 */
-  enable?: ActionSequenceDefinition;
+  enable?: ActionGraphReference;
   /** Buff 暂停生效、准备注销修正前执行。 */
-  disable?: ActionSequenceDefinition;
+  disable?: ActionGraphReference;
   /** 同组 Buff 即将增加强化层数前执行。 */
-  beforeEnhance?: ActionSequenceDefinition;
+  beforeEnhance?: ActionGraphReference;
   /** Buff 启用期间按触发间隔到点时执行。 */
-  trigger?: ActionSequenceDefinition;
+  trigger?: ActionGraphReference;
   /** Buff 叠层数发生变化时执行。 */
-  enhanceChanged?: ActionSequenceDefinition;
+  enhanceChanged?: ActionGraphReference;
   /** 一次叠层流程完成后执行。 */
-  afterEnhance?: ActionSequenceDefinition;
+  afterEnhance?: ActionGraphReference;
   /** Buff 正式结束前执行，结束步骤仍能读取当前实例状态。 */
-  finish?: ActionSequenceDefinition;
+  finish?: ActionGraphReference;
 }
 
 /** Buff 启用期间注册在其所有者 AbilitySystem 上的一条同步事件响应。 */
@@ -113,7 +116,7 @@ export interface SkillBuffIgniteEventResponse {
   /** 响应执行后是否立即结束当前 Buff。 */
   finishAfterIgnited: boolean;
   /** 点燃时执行的动作序列。 */
-  sequence: ActionSequenceDefinition;
+  sequence: ActionGraphReference;
 }
 
 /** 原生 ChangeSkillAction 随 DuringBuffEnable 动作结束而撤销的技能槽替换。 */
@@ -129,7 +132,9 @@ export interface SkillBuffSlotReplacement {
 }
 
 /** 可以直接写在干员或装备数据中的 Buff 蓝图。 */
-export type SkillBuffDefinition = Omit<BuffDefinitionProperties, 'damageModifiers'> & {
+type SkillBuffProperties = Omit<BuffDefinitionProperties, 'damageModifiers'> & {
+  /** 有动作入口的 Buff 保存自己的图；纯数值 Buff 可以省略。 */
+  readonly actionGraph?: ActionGraphResourceDefinition;
   /** Buff 启用期间参与伤害计算的条件和数值处理器。 */
   readonly damageModifiers?: readonly SkillBuffDefinitionDamageModifier[];
   /** 可在施加时从该 Buff 已合并的实例黑板解析。 */
@@ -148,7 +153,32 @@ export type SkillBuffDefinition = Omit<BuffDefinitionProperties, 'damageModifier
   presentation?: SkillBuffPresentation;
 };
 
-/** 干员拥有的 Buff 蓝图表；技能步骤只引用稳定 ID，并在施加时提供实例黑板覆盖值。 */
+/** Buff 定义目录；技能步骤只引用稳定 ID，并在施加时提供实例黑板覆盖值。 */
+export type StaticBuffDefinition = Omit<
+  SkillBuffProperties,
+  | 'actionGraph'
+  | 'scheduledSequences'
+  | 'lifecycleSequences'
+  | 'abilityEventResponses'
+  | 'igniteEventResponses'
+  | 'damageModifiers'
+> & {
+  readonly actionGraph?: never;
+  readonly scheduledSequences?: never;
+  readonly lifecycleSequences?: never;
+  readonly abilityEventResponses?: never;
+  readonly igniteEventResponses?: never;
+  readonly damageModifiers?: readonly (Omit<
+    SkillBuffDefinitionDamageModifier,
+    'conditionProgram'
+  > & { readonly conditionProgram?: never })[];
+};
+
+/** 有动作入口就必须带图；纯数值 Buff 不创建空图。 */
+export type SkillBuffDefinition =
+  | (SkillBuffProperties & { readonly actionGraph: ActionGraphResourceDefinition })
+  | StaticBuffDefinition;
+
 export type OperatorBuffDefinitions = Readonly<Record<string, SkillBuffDefinition>>;
 
 /**
@@ -618,7 +648,7 @@ export interface CombatBuffDefinitionDamageModifier {
 /** 干员内联 Buff 使用的伤害修正，可用动作序列计算较复杂的实例条件。 */
 export type SkillBuffDefinitionDamageModifier = CombatBuffDefinitionDamageModifier & {
   /** 以动作序列的最终结果决定是否启用处理器；不能与 `condition` 同时填写。 */
-  readonly conditionProgram?: ActionSequenceDefinition;
+  readonly conditionProgram?: ActionGraphReference;
 };
 
 /** 外部 Buff 文档中的一项完整 Buff 定义。 */

@@ -57,6 +57,10 @@ export function resolveActionOperand(
   read: (key: string) => ActionBlackboardValue | undefined,
 ): number {
   if (operand.kind === 'constant') return operand.value;
+  if (operand.kind === 'valueNode') throw new Error(`unbound data node '${operand.nodeId}'`);
+  // 参数操作数由宏调用宿主在消费前代入；到达这里说明定义越过了校验。
+  if (operand.kind === 'parameter')
+    throw new Error(`macro parameter '${operand.parameter}' outside a macro call host`);
   const value = read(operand.key);
   if (typeof value === 'number') return value;
   if (operand.fallback !== undefined) return operand.fallback;

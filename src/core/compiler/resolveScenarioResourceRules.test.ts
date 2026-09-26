@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { CombatOperatorProgram } from '../combat/runtime/combatRuntimeAssembly';
 import type { ResolvedOperatorPanel } from './resolveOperatorPanel';
-import { resolveScenarioOperatorResourceRules } from './resolveScenarioResourceRules';
+import { createDefaultOperatorInstance } from '../../application/editor/loadoutBuildFactory';
+import { perlica } from '../../data/operators/perlica.generated';
+import { prepareActionGraphIdentities } from '../../../tools/game-data-compiler/src/compiler/optimization/actionGraphProjection';
+import {
+  resolveOperatorMaxUltimateEnergy,
+  resolveScenarioOperatorResourceRules,
+} from './resolveScenarioResourceRules';
 
 function operator(costs: readonly number[]): CombatOperatorProgram {
   return {
@@ -43,6 +49,14 @@ function panel(): ResolvedOperatorPanel {
 }
 
 describe('resolveScenarioOperatorResourceRules', () => {
+  it('图干员的终结技能量预览只读取费用和养成，不读取动作树', () => {
+    const graph = prepareActionGraphIdentities(perlica);
+    const build = createDefaultOperatorInstance(graph);
+    expect(resolveOperatorMaxUltimateEnergy(graph, build)).toBe(
+      resolveOperatorMaxUltimateEnergy(perlica, build),
+    );
+  });
+
   it('uses patched ultimate costs and the resolved panel gain multiplier', () => {
     expect(
       resolveScenarioOperatorResourceRules([operator([68])], [panel()]).get('operator:alpha'),

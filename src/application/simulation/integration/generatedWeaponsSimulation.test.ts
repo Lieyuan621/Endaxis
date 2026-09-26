@@ -17,8 +17,7 @@ const repository = createGameDataRepository({
   revision: 'generated-weapon-production-audit',
   operators: gameDataRepository.getOperators(),
   weapons: candidates,
-  commonBuffDefinitions: gameDataRepository.getCommonBuffDefinitions?.(),
-  commonAbilityEntityDefinitions: gameDataRepository.getCommonAbilityEntityDefinitions?.(),
+  commonDefinitionSources: gameDataRepository.getCommonDefinitionSources?.(),
 });
 
 describe('生成武器的正式模拟门禁', () => {

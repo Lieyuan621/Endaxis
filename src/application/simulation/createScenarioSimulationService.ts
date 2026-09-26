@@ -5,10 +5,13 @@
  * 相同的编译器、运行时规则和资源常量。
  */
 import type { GameDataRepository } from '../../core/game-data/gameDataRepository';
+
 import { skillSettings, skillSettingResources } from '../../data/combat/skillSettings';
 import { ScenarioSimulationService } from './scenarioSimulationService';
 
-export function createScenarioSimulationService(repository: GameDataRepository) {
+export function createScenarioSimulationService(
+  repository: GameDataRepository,
+): ScenarioSimulationService {
   return new ScenarioSimulationService({
     index: repository,
     repositoryRevision: repository.revision,

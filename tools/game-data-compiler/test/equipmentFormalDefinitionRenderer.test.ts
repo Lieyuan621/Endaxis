@@ -28,6 +28,12 @@ describe('单件装备正式定义渲染', () => {
       "import generatedGear0 from './_standalone/gear-a.generated';",
     );
     expect(files.some(file => file.relativePath.endsWith('.audit.json'))).toBe(false);
+    expect(files.find(file => file.relativePath === 'index.generated.ts')?.content).toContain(
+      'readonly GearDefinition[]',
+    );
+    expect(
+      files.find(file => file.relativePath === 'set-b/gear-b.generated.ts')?.content,
+    ).not.toContain('actionGraph');
   });
 
   it('相同定义的输入顺序不影响输出', () => {

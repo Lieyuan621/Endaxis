@@ -11,6 +11,7 @@ import type {
   WeaponDefinition,
 } from '../game-data/equipmentDefinition';
 import type { OperatorDefinition } from '../game-data/operatorDefinition';
+
 import type {
   GearInstanceDocument,
   OperatorInstanceDocument,
@@ -22,8 +23,10 @@ import type {
 
 export type ScenarioBuildIndex = Pick<
   GameDataRepository,
-  'getOperator' | 'getWeapon' | 'getGear' | 'getGearSet'
->;
+  'getWeapon' | 'getGear' | 'getGearSet'
+> & {
+  getOperator(slug: string): OperatorDefinition | null;
+};
 
 export type ResolvedGearSlot = keyof TrackDocument['gears'];
 
@@ -67,10 +70,10 @@ function requireDefinitionIdentity(actual: string, expected: string, path: strin
 }
 
 function resolveWeapon(
-  track: TrackDocument,
-  operator: OperatorDefinition,
+  track: Pick<TrackDocument, 'weapon'>,
+  operator: Pick<OperatorDefinition, 'weaponType'>,
   trackPath: string,
-  index: ScenarioBuildIndex,
+  index: Pick<ScenarioBuildIndex, 'getWeapon'>,
 ): ResolvedScenarioBuild['weapon'] {
   const instance = track.weapon;
   if (instance === null) return null;
@@ -89,9 +92,9 @@ function resolveWeapon(
 }
 
 function resolveGears(
-  track: TrackDocument,
+  track: Pick<TrackDocument, 'gears'>,
   trackPath: string,
-  index: ScenarioBuildIndex,
+  index: Pick<ScenarioBuildIndex, 'getGear'>,
 ): readonly ResolvedGearBuild[] {
   const resolved: ResolvedGearBuild[] = [];
   for (const [slot, expectedSlotType] of GEAR_SLOTS) {
@@ -116,7 +119,7 @@ function resolveGears(
 function resolveActiveGearSets(
   gears: readonly ResolvedGearBuild[],
   trackPath: string,
-  index: ScenarioBuildIndex,
+  index: Pick<ScenarioBuildIndex, 'getGearSet'>,
 ): readonly GearSetDefinition[] {
   const counts = new Map<string, number>();
   for (const { definition } of gears) {

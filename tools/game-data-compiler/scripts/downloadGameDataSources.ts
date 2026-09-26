@@ -132,6 +132,11 @@ export async function downloadGameDataSources(args: DownloadArguments): Promise<
           reason = 'akedb-http-404';
         }
       }
+      // BuffData 的动作与叠层字段只采用 AKEDB 解码。VFS 的同名或补缺文件
+      // 不能进入正式来源快照；缺件留给来源维护者补齐。
+      if (akedb && logicalPath.startsWith('BuffData/')) {
+        throw new Error(`${logicalPath}: AKEDB BuffData is unavailable (${reason})`);
+      }
       const result = await vfsResource(args.vfsBase, logicalPath, args.vfsVersion ?? null);
       return { ...result, ...(reason ? { fallbackReason: reason } : {}) };
     }
@@ -164,26 +169,31 @@ export async function downloadGameDataSources(args: DownloadArguments): Promise<
       for (const logicalPath of catalog.jsonFiles) await save(logicalPath, logicalPath);
       for (const [collection, directory] of Object.entries(catalog.jsonCollections)) {
         const cdnFiles = akedb?.collectionFiles(collection) ?? [];
+        const akedbOnly = collection === 'BuffData' && akedb !== null;
+        if (akedbOnly && cdnFiles.length === 0)
+          throw new Error('BuffData: AKEDB inventory is empty');
         let vfsFiles: string[] = [];
-        let vfsStatus = 'available';
+        let vfsStatus = akedbOnly ? 'not-used' : 'available';
         // 取并集以发现 AKEDB 尚未收录的新文件；同名资源只取 AKEDB，不覆盖或合并字段。
         let rawInventory: ResourceBytes | undefined;
-        try {
-          rawInventory = await vfsResource(
-            args.vfsBase,
-            `${collection}/manifest.json`,
-            args.vfsVersion ?? null,
-          );
-        } catch (error) {
-          const unavailable =
-            error instanceof ResourceHttpError ||
-            error instanceof TypeError ||
-            (error instanceof DOMException && error.name === 'TimeoutError');
-          if (cdnFiles.length === 0 || !unavailable) throw error;
-          vfsStatus = 'unavailable: ' + String(error);
-          process.stderr.write(`${collection}: VFS inventory unavailable; AKEDB coverage only\n`);
+        if (!akedbOnly) {
+          try {
+            rawInventory = await vfsResource(
+              args.vfsBase,
+              `${collection}/manifest.json`,
+              args.vfsVersion ?? null,
+            );
+          } catch (error) {
+            const unavailable =
+              error instanceof ResourceHttpError ||
+              error instanceof TypeError ||
+              (error instanceof DOMException && error.name === 'TimeoutError');
+            if (cdnFiles.length === 0 || !unavailable) throw error;
+            vfsStatus = 'unavailable: ' + String(error);
+            process.stderr.write(`${collection}: VFS inventory unavailable; AKEDB coverage only\n`);
+          }
         }
-        // 坏清单不是网络不可用，必须阻断，不能静默缩小资源集合。
+        // 非 BuffData 的坏清单不是网络不可用，必须阻断，不能静默缩小资源集合。
         if (rawInventory)
           vfsFiles = parseCollectionManifest(parseJson(rawInventory.content), collection);
         const entries = [...new Set([...cdnFiles, ...vfsFiles])].sort();

@@ -2,6 +2,22 @@ import { describe, expect, it } from 'vitest';
 import { parseKnownNativeActionSequenceSource } from '../src/source/actionLeaf.ts';
 import { collectNativeActionNodes } from '../src/source/controlFlow.ts';
 import { compileCombatActionSequenceSource } from '../src/compiler/buffs/buffRuntimeProjection.ts';
+import type { CombatActionProjectionContextSource } from '../src/compiler/combatProjectionCommon.ts';
+import {
+  createActionGraphBuilder,
+  readActionGraphChain,
+} from '../src/compiler/actions/actionGraphBuilder.ts';
+import type { CompiledBuffStepSource } from '../src/compiler/actions/combatActionProjectionTypes.ts';
+
+/** 图编译包装：返回入口同层动作数组，保持旧断言的扁平比较形状。 */
+function projectSequence(
+  source: Parameters<typeof compileCombatActionSequenceSource>[0],
+  context: Omit<CombatActionProjectionContextSource, 'graph'>,
+) {
+  const builder = createActionGraphBuilder<CompiledBuffStepSource>();
+  const entry = compileCombatActionSequenceSource(source, { ...context, graph: builder });
+  return { steps: readActionGraphChain(builder.finish(), entry) };
+}
 import { scalarFixture, targetFixture } from './sourceFixtures.ts';
 
 const meta = { isEnable: true, priorityLevel: 'Default', priorityOffset: 0, serverActionIndex: 1 };
@@ -82,7 +98,7 @@ const branch = (check: unknown, yes: unknown[], no: unknown[] = []) => ({
 const parse = (actions: unknown[]) =>
   parseKnownNativeActionSequenceSource(sequence(actions), 'fixture', {});
 const compile = (actions: unknown[]) =>
-  compileCombatActionSequenceSource(parse(actions), {
+  projectSequence(parse(actions), {
     actionOwnerTarget: 'caster',
     actionSourceTarget: 'caster',
     actionTargetTarget: 'enemy',
@@ -148,24 +164,6 @@ describe('空间失败回调自叶向根消去', () => {
     );
   });
 
-  it('调试日志中的目标设置不把空间输出变成战斗依赖', () => {
-    expect(
-      compile([
-        selectPoint,
-        {
-          ...meta,
-          $type: 'Beyond.Gameplay.Core.DebugPrintAction+Data, Gameplay.Beyond',
-          logType: 'TargetSetting',
-          target: targetFixture('Context', undefined, 'pos'),
-          color: { r: 1, g: 0, b: 0, a: 1 },
-          bbKey: '',
-          identifier: 'selected-point',
-        },
-        teleport(),
-      ]),
-    ).toEqual({ steps: [] });
-  });
-
   it('非空回调中的有效写入不能被持有动作的 spatial 分类吞掉', () => {
     expect(() => compile([teleport(sequence([calculation]))])).toThrow(
       'combat-visible targetPointInvalid callback',
@@ -200,6 +198,24 @@ describe('空间失败回调自叶向根消去', () => {
     expect(() =>
       compile([teleport(sequence([selectPoint, teleport(sequence([]))])), reader]),
     ).toThrow('spatial output pos reaches combat action');
+  });
+
+  it('调试日志中的目标设置不把空间输出变成战斗依赖', () => {
+    expect(
+      compile([
+        selectPoint,
+        {
+          ...meta,
+          $type: 'Beyond.Gameplay.Core.DebugPrintAction+Data, Gameplay.Beyond',
+          logType: 'TargetSetting',
+          target: targetFixture('Context', undefined, 'pos'),
+          color: { r: 1, g: 0, b: 0, a: 1 },
+          bbKey: '',
+          identifier: 'selected-point',
+        },
+        teleport(),
+      ]),
+    ).toEqual({ steps: [] });
   });
 
   it('旧无回调结构等价；未知字段、残缺结构不因空间省略而静默放行', () => {

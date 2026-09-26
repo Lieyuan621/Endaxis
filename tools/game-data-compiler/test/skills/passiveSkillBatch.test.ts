@@ -1,11 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import { compileOperatorUpgradePassiveSkills } from '../../src/domains/operator/passiveSkillDefinition.ts';
-import { compileOperatorPassivePrograms } from '../../../../src/core/compiler/compileOperatorUpgrades';
+import {
+  compileOperatorPassivePrograms,
+  type CompileUpgradeEntry,
+} from '../../../../src/core/compiler/compileOperatorUpgrades';
+import { ActionGraphDefinitionRepository } from '../../../../src/core/compiler/actionGraphDefinitionRepository';
+import { readActionGraphChain } from '../../src/compiler/actions/actionGraphBuilder.ts';
 
 import {
   compilePassiveSkillRequestBatch,
   type PassiveSkillCompileRequestSource,
 } from '../../src/index.ts';
+
+/** 按被编译被动的自身图编译入口；不同被动的图互不共享。 */
+const compileEntry: CompileUpgradeEntry = (entry, level, path, owner) =>
+  new ActionGraphDefinitionRepository()
+    .compile(owner.actionGraph!, level)
+    .compileEntry(entry, path);
 
 describe('公共被动技能批量编译', () => {
   it.each([
@@ -40,15 +51,18 @@ describe('公共被动技能批量编译', () => {
     };
     const batch = compilePassiveSkillRequestBatch([req], { [req.skillId]: raw }, {});
     const result = compileOperatorUpgradePassiveSkills(['effect'], [req], batch.definitions);
-    const listener = result.definitions[0]?.enableSequence.steps.find(
-      step => step.kind === 'listenForCombatEvents',
-    );
-    expect(listener).toBeUndefined();
-    expect(result.definitions[0]?.abilityEventResponses).toEqual([
-      { event, priority: 0, sequence: { steps: [] } },
+    const first = result.definitions[0];
+    expect(
+      Object.values(first?.actionGraph.main.nodes ?? {}).some(
+        node => node.action.kind === 'listenForCombatEvents',
+      ),
+    ).toBe(false);
+    expect(first?.abilityEventResponses).toEqual([
+      { event, priority: 0, sequence: { $sequence: null } },
     ]);
     expect(
-      compileOperatorPassivePrograms([], result.definitions)[0]?.abilityEventResponses?.[0]?.event,
+      compileOperatorPassivePrograms([], result.definitions, undefined, compileEntry)[0]
+        ?.abilityEventResponses?.[0]?.event,
     ).toBe(event);
   });
 
@@ -81,15 +95,14 @@ describe('公共被动技能批量编译', () => {
     };
     const batch = compilePassiveSkillRequestBatch([req], { [req.skillId]: raw }, {});
     const compiled = compileOperatorUpgradePassiveSkills(['effect'], [req], batch.definitions);
-    expect(compiled.definitions[0]?.abilityEventResponses).toEqual([
-      { event: 'addedBuff', priority: 0, sequence: { steps: [] } },
+    const compiledFirst = compiled.definitions[0];
+    expect(compiledFirst?.abilityEventResponses).toEqual([
+      { event: 'addedBuff', priority: 0, sequence: { $sequence: null } },
     ]);
-    expect(JSON.stringify(compiled.definitions[0]?.enableSequence)).not.toContain(
-      'listenForCombatEvents',
-    );
+    expect(JSON.stringify(compiledFirst?.actionGraph)).not.toContain('listenForCombatEvents');
     expect(
-      compileOperatorPassivePrograms([], compiled.definitions)[0]?.abilityEventResponses?.[0]
-        ?.event,
+      compileOperatorPassivePrograms([], compiled.definitions, undefined, compileEntry)[0]
+        ?.abilityEventResponses?.[0]?.event,
     ).toBe('addedBuff');
     const withStartup = {
       ...raw,
@@ -101,12 +114,15 @@ describe('公共被动技能批量编译', () => {
       [req],
       startupBatch.definitions,
     );
-    expect(preserved.definitions[0]?.abilityEventResponses).toEqual([
-      { event: 'addedBuff', priority: 0, sequence: { steps: [] } },
+    const preservedFirst = preserved.definitions[0];
+    expect(preservedFirst?.abilityEventResponses).toEqual([
+      { event: 'addedBuff', priority: 0, sequence: { $sequence: null } },
     ]);
-    expect(preserved.definitions[0]?.enableSequence?.steps.map(step => step.kind)).toEqual([
-      'applyBuff',
-    ]);
+    expect(
+      readActionGraphChain(preservedFirst!.actionGraph.main, preservedFirst!.enableSequence).map(
+        step => step.kind,
+      ),
+    ).toEqual(['applyBuff']);
   });
 
   it('保留全部领域请求，但相同 SkillData 只编译一次', () => {

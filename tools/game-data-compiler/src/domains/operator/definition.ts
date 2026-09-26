@@ -3,7 +3,7 @@ import type {
   ComboSkillPriority,
   OperatorDefinition,
   SkillBuffSlotReplacement,
-  SkillDefinition,
+  SkillDefinition as SkillDefinition,
   SkillGroupDefinition,
   SkillLevelSource,
   SkillType,
@@ -14,6 +14,7 @@ import type {
   SkillPresentationVariantDefinition,
 } from '../../../../../packages/game-data-contract/src/index.ts';
 import type { compileOperatorFoundationSource } from './sourceClosure.ts';
+import { readActionGraphChain } from '../../compiler/actions/actionGraphBuilder.ts';
 import { compileOperatorDefinitionHeaderSource } from './definitionHeader.ts';
 import {
   compileOperatorTalentDefinition,
@@ -987,13 +988,18 @@ export function selectSingleSkillTimelineBlockFrames(
   groups: readonly {
     readonly skillType: SkillType;
     readonly skillKeys: readonly string[];
+    readonly variants?: readonly { readonly skillKeys: readonly string[] }[];
     readonly replacementPlacements: Readonly<Record<string, 'sequence' | 'standard' | 'internal'>>;
   }[],
   runtimeReplacementSkillKeys: ReadonlySet<string>,
 ): void {
+  const groupSkillKeys = (group: (typeof groups)[number]) => [
+    ...group.skillKeys,
+    ...(group.variants ?? []).flatMap(variant => variant.skillKeys),
+  ];
   const routableSkillIds = new Set(
     groups.flatMap(group =>
-      group.skillKeys
+      groupSkillKeys(group)
         .filter(
           key =>
             !runtimeReplacementSkillKeys.has(key) ||
@@ -1006,7 +1012,7 @@ export function selectSingleSkillTimelineBlockFrames(
   const basicAttackSkillIds = new Set(
     groups
       .filter(group => group.skillType === 'basicAttack')
-      .flatMap(group => group.skillKeys.map(key => definitions.get(key)?.key)),
+      .flatMap(group => groupSkillKeys(group).map(key => definitions.get(key)?.key)),
   );
   for (const [key, definition] of definitions) {
     const followUp = definition.timelineBlockFollowUpSkillId;
@@ -1039,27 +1045,31 @@ export function selectSingleSkillTimelineBlockFrames(
       if (definition === undefined) continue;
       const followUp = definition.timelineBlockFollowUpSkillId;
       if (group.skillType === 'basicAttack' && followUp === undefined) continue;
+      const inputTransitions = definition.allowNextSkillTransitions.filter(
+        transition =>
+          transition.startFrame > 0 &&
+          transition.skillIds.some(
+            id =>
+              routableSkillIds.has(id) &&
+              (followUp !== undefined
+                ? id === followUp
+                : !['battleSkill', 'comboSkill', 'ultimate'].includes(group.skillType) ||
+                  basicAttackSkillIds.has(id)),
+          ),
+      );
+      // 预览优先采用无条件窗口。只有条件窗口时，也展示可接续的候选时长，
+      // 不退到远处的兜底结束动作；是否满足条件仍由放置后的实际模拟决定。
+      // 自动 CastSkill 不属于玩家输入窗口，不能据此放开接续或修改模拟。
+      const directTransitions = inputTransitions.filter(transition => transition.direct);
       const firstInputFrame = Math.min(
-        ...definition.allowNextSkillTransitions
-          .filter(
-            transition =>
-              transition.direct &&
-              transition.startFrame > 0 &&
-              transition.skillIds.some(
-                id =>
-                  routableSkillIds.has(id) &&
-                  (followUp !== undefined
-                    ? id === followUp
-                    : !['battleSkill', 'comboSkill', 'ultimate'].includes(group.skillType) ||
-                      basicAttackSkillIds.has(id)),
-              ),
-          )
-          .map(transition => transition.startFrame),
+        ...(directTransitions.length > 0 ? directTransitions : inputTransitions).map(
+          transition => transition.startFrame,
+        ),
       );
       const firstUnconditionalBoundaryFrame = Math.min(
         ...definition.scheduledSequences
           .filter(scheduled =>
-            scheduled.sequence.steps.some(
+            readActionGraphChain(definition.actionGraph.main, scheduled.sequence).some(
               step =>
                 step.kind === 'finishTimeline' || step.kind === 'markCurrentSkillCanInterrupt',
             ),

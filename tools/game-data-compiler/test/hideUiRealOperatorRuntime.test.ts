@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { planOperatorDefinition } from '../scripts/planOperatorDefinition.ts';
 import { ScenarioSimulationService } from '../../../src/application/simulation/scenarioSimulationService';
+import { ActionGraphDefinitionRepository } from '../../../src/core/compiler/actionGraphDefinitionRepository';
 import { createEmptyScenario } from '../../../src/core/project/createProject';
 import { placeSkillGroup } from '../../../src/ui/timeline/interaction/placeSkillGroup';
 import { skillSettings } from '../../../src/data/combat/skillSettings';
@@ -51,6 +52,7 @@ describe.skipIf(!sourceRoot || !globalBuffCatalog)('真实整名 HideUI 转换�
         auditOutput: path.join('tmp/hide-ui-probe/audit', slug),
       });
       const operator = candidate.operator;
+      const commonBuffDefinitions = candidate.commonBuffDefinitions;
       let scenario = createEmptyScenario('hide-ui-real', '真实来源演出区间');
       scenario.battle.durationFrames = 300;
       scenario.enemy.editable.hp = 1e9;
@@ -83,8 +85,12 @@ describe.skipIf(!sourceRoot || !globalBuffCatalog)('真实整名 HideUI 转换�
       }).scenario;
       const result = await new ScenarioSimulationService({
         index: {
+          actionPrograms: new ActionGraphDefinitionRepository(),
+          getCommonDefinitionSources: () => [
+            { id: 'shared', buffDefinitions: commonBuffDefinitions },
+          ],
           getOperator: key => (key === slug ? operator : null),
-          getCommonBuffDefinitions: () => candidate.commonBuffDefinitions,
+          getCommonBuffDefinitions: () => commonBuffDefinitions,
           getWeapon: () => null,
           getGear: () => null,
           getGearSet: () => null,

@@ -6,10 +6,6 @@ import {
 } from '../keyboard/keyboardShortcutRouter';
 import { createInteractionSession } from './interactionSession';
 import { usePopoverInteractionBoundary } from './usePopoverInteractionBoundary';
-import stepPicker from '../timeline/definitions/actions/StepTypePicker.vue?raw';
-import conditionPicker from '../timeline/definitions/actions/CombatConditionTypePicker.vue?raw';
-import equipmentPicker from '../timeline/definitions/equipment/EquipmentContributionTypePicker.vue?raw';
-import buffEditor from '../timeline/definitions/buffs/BuffDefinitionGraphEditor.vue?raw';
 
 describe('interactive popover ownership', () => {
   afterEach(() => vi.unstubAllGlobals());
@@ -50,17 +46,6 @@ describe('interactive popover ownership', () => {
     } finally {
       scope.stop();
     }
-  });
-
-  it('registers all three type picker lifecycles instead of local Escape handlers', () => {
-    for (const source of [stepPicker, conditionPicker, equipmentPicker, buffEditor]) {
-      expect(source).toContain('usePopoverInteractionBoundary(');
-      expect(source).not.toContain('@keydown.esc');
-    }
-    expect(stepPicker).toContain('() => open.value');
-    expect(conditionPicker).toContain("() => emit('close')");
-    expect(equipmentPicker).toContain("() => emit('close')");
-    expect(buffEditor).toContain("() => pendingMode.value === 'lifecycle'");
   });
 
   it('blocks modal graph Delete without requiring focus inside the lifecycle picker', () => {

@@ -10,6 +10,8 @@ import type {
   SkillType,
 } from '../../core/game-data/operatorDefinition';
 
+import { asSkillDefinitions } from '../../core/game-data/operatorSkillDefinitions';
+
 export interface SkillGroupLibraryPlacement {
   readonly entryKey: string;
   readonly variantKey?: string;
@@ -43,10 +45,6 @@ export function layoutSkillGroupPlacement(
   return { offsets, durationFrames };
 }
 
-function asSkills(value: SkillDefinition | readonly SkillDefinition[]): readonly SkillDefinition[] {
-  return Array.isArray(value) ? value : [value as SkillDefinition];
-}
-
 function placeableReplacementSkills(group: SkillGroupDefinition): readonly SkillDefinition[] {
   return [
     ...(group.replacementSkills ?? []),
@@ -56,7 +54,7 @@ function placeableReplacementSkills(group: SkillGroupDefinition): readonly Skill
 
 function skillIndex(group: SkillGroupDefinition): ReadonlyMap<string, SkillDefinition> {
   return new Map([
-    ...asSkills(group.skills).map(skill => [skill.key, skill] as const),
+    ...asSkillDefinitions(group.skills).map(skill => [skill.key, skill] as const),
     ...(group.replacementSkills ?? []).map(skill => [skill.key, skill] as const),
     ...(group.routedReplacementSkills ?? []).map(
       replacement => [replacement.skill.key, replacement.skill] as const,
@@ -65,7 +63,7 @@ function skillIndex(group: SkillGroupDefinition): ReadonlyMap<string, SkillDefin
 }
 
 function resolvePlacementSequence(group: SkillGroupDefinition): readonly SkillDefinition[] {
-  if (group.placementSequenceSkillKeys === undefined) return asSkills(group.skills);
+  if (group.placementSequenceSkillKeys === undefined) return asSkillDefinitions(group.skills);
   const byKey = skillIndex(group);
   return group.placementSequenceSkillKeys.map(skillKey => {
     const skill = byKey.get(skillKey);
@@ -114,7 +112,7 @@ export function listSkillGroupLibraryPlacements(
         : { nameQualifier: group.libraryNameQualifier }),
     },
     ...(group.variants ?? []).map(variant => {
-      const skills = asSkills(variant.skills);
+      const skills = asSkillDefinitions(variant.skills);
       return {
         entryKey: `${group.key}:variant:${variant.key}`,
         variantKey: variant.key,
@@ -175,11 +173,13 @@ export function resolveSkillGroupPlacementSkills(
   }
 
   const defaultSkills =
-    variant === undefined ? resolvePlacementSequence(group) : asSkills(variant.skills);
+    variant === undefined ? resolvePlacementSequence(group) : asSkillDefinitions(variant.skills);
   if (skillKey === undefined) return defaultSkills;
 
   const candidates = [
-    ...(variant === undefined ? asSkills(group.skills) : asSkills(variant.skills)),
+    ...(variant === undefined
+      ? asSkillDefinitions(group.skills)
+      : asSkillDefinitions(variant.skills)),
     ...placeableReplacementSkills(group),
   ];
   const selected = candidates.filter(skill => skill.key === skillKey);

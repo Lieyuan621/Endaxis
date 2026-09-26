@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { RefreshLeft } from '@element-plus/icons-vue';
 import {
   EaButton,
   EaCheckbox,
@@ -32,9 +31,6 @@ interface InspectorConnectionPatch {
 const props = defineProps<{
   cast: SkillCastDocument | null;
   label: string;
-  edited: boolean;
-  diffCount: number;
-  templateDefinition: SkillDefinition | null;
   currentDefinition: SkillDefinition | null;
   skillLevel: number;
   minimumFrame: number;
@@ -48,8 +44,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  editDefinition: [];
-  resetDefinition: [];
   setRandomSeed: [seed: number | null];
   rollRandomSeed: [];
   setStartFrame: [frame: number];
@@ -60,6 +54,7 @@ const emit = defineEmits<{
   removeConnection: [connectionId: string];
   updateConnection: [connectionId: string, patch: InspectorConnectionPatch];
   dissolveGroup: [];
+  editGraph: [];
 }>();
 
 const { t } = useI18n({ useScope: 'global' });
@@ -228,66 +223,13 @@ function commitRandomSeed(value: number | undefined): void {
             </div>
             <small class="field-help">{{ t('timeline.random.castSeedHelp') }}</small>
           </div>
-        </div>
-      </section>
-
-      <section
-        v-if="templateDefinition !== null && currentDefinition !== null"
-        class="section-container"
-      >
-        <div class="panel-tag-mini">{{ t('timeline.skillEditing.section') }}</div>
-        <div class="definition-status definition-status--stacked">
-          <strong>
-            {{
-              edited
-                ? t('timeline.skillEditing.customized')
-                : t('timeline.skillEditing.usesTemplate')
-            }}
-          </strong>
-          <span v-if="edited">{{
-            t('timeline.skillEditing.diffCount', { count: diffCount })
-          }}</span>
-          <div class="definition-actions">
-            <EaButton
-              variant="primary"
-              size="sm"
-              type="button"
-              class="definition-edit"
-              @click="$emit('editDefinition')"
-              :disabled="inputReadOnly"
-            >
-              {{ t('timeline.skillEditing.edit') }}
-            </EaButton>
-            <EaButton
-              size="sm"
-              v-if="edited"
-              type="button"
-              class="definition-reset"
-              @click="$emit('resetDefinition')"
-              :disabled="inputReadOnly"
-            >
-              <RefreshLeft />
-              <span>{{ t('timeline.skillEditing.reset') }}</span>
-            </EaButton>
-          </div>
-        </div>
-      </section>
-
-      <section v-if="edited && templateDefinition === null" class="section-container">
-        <div class="panel-tag-mini">{{ t('timeline.skillEditing.section') }}</div>
-        <div class="definition-status">
-          <span>{{ t('timeline.skillEditing.diffCount', { count: diffCount }) }}</span>
           <EaButton
+            class="attribute-grid__wide"
             size="sm"
-            type="button"
-            class="definition-reset"
-            :title="t('timeline.skillEditing.reset')"
-            @click="$emit('resetDefinition')"
-            :disabled="inputReadOnly"
+            :disabled="inputReadOnly || currentDefinition === null"
+            @click="$emit('editGraph')"
+            >{{ t('actionGraphEditor.open') }}</EaButton
           >
-            <RefreshLeft />
-            <span>{{ t('timeline.skillEditing.reset') }}</span>
-          </EaButton>
         </div>
       </section>
 
@@ -722,61 +664,5 @@ function commitRandomSeed(value: number | undefined): void {
   overflow: hidden;
   color: var(--ea-fg-secondary);
   text-overflow: ellipsis;
-}
-
-.definition-status {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  color: var(--ea-fg-muted);
-  font-size: 11px;
-}
-
-.definition-status--stacked {
-  align-items: stretch;
-  flex-direction: column;
-}
-
-.definition-status--stacked strong {
-  color: var(--ea-fg);
-  font-size: 12px;
-}
-
-.definition-actions {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 6px;
-}
-
-.definition-edit {
-  height: 28px;
-  border: 1px solid var(--ea-gold);
-  border-radius: 2px;
-  background: var(--ea-active-fill);
-  color: var(--ea-fg);
-  cursor: pointer;
-}
-
-.definition-reset {
-  height: 26px;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 0 8px;
-  border: 1px solid var(--ea-border);
-  border-radius: 2px;
-  background: var(--ea-fill-input, #16161a);
-  color: var(--ea-fg);
-  cursor: pointer;
-}
-
-.definition-reset:hover {
-  border-color: var(--ea-gold);
-}
-
-.definition-reset svg {
-  width: 13px;
-  height: 13px;
 }
 </style>

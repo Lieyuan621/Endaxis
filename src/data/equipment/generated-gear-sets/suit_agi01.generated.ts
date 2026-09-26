@@ -4,14 +4,26 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'suit_agi01',
   iconPath: '/equipment/agi01/item_equip_t3_suit_agi01_edc_03.webp',
-  modifiers: [
-    {
-      kind: 'attribute',
-      attribute: 'agility',
-      operation: 'flat',
-      value: 50,
+  modifiers: [{ kind: 'attribute', attribute: 'agility', operation: 'flat', value: 50 }],
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffId: 'buff_equipsuit_agi_phydmg_01',
+              target: 'caster',
+              blackboardAssignments: { phy_dmg_up: { kind: 'constant', value: 0.2 } },
+            },
+          },
+          next: null,
+        },
+      },
     },
-  ],
+    macros: {},
+  },
+  skillId: 'passive_equipsuit_agi_01',
   buffDefinitions: {
     buff_equipsuit_agi_phydmg_01: {
       stackingType: 'unique',
@@ -22,37 +34,18 @@ const definition = {
       maxTriggerCount: 1,
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        phy_dmg_up: 0.05,
-      },
+      blackboard: { phy_dmg_up: 0.05 },
       attributeModifiers: [
         {
           attribute: 'physicalDamageIncrease',
           slot: 'baseAddition',
-          value: {
-            blackboardKey: 'phy_dmg_up',
-          },
+          value: { blackboardKey: 'phy_dmg_up' },
         },
       ],
+      actionGraph: { main: { nodes: {} }, macros: {} },
     },
   },
-  initializationSequence: {
-    steps: [
-      {
-        kind: 'applyBuff',
-        parameters: {
-          buffId: 'buff_equipsuit_agi_phydmg_01',
-          target: 'caster',
-          blackboardAssignments: {
-            phy_dmg_up: {
-              kind: 'constant',
-              value: 0.2,
-            },
-          },
-        },
-      },
-    ],
-  },
+  initializationSequence: { $sequence: 'applyBuff_1' },
 } as const satisfies GearSetDefinition;
 
 export default definition;

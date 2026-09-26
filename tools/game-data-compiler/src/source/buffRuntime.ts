@@ -6,6 +6,7 @@ import {
   type GameplayAttributeModifierSource,
 } from './attributeModifiers.ts';
 import { numericDeclaredBlackboard } from './blackboard.ts';
+import { readHealModifierSide, readModifierSide } from './nativeEnums.ts';
 import {
   parseKnownNativeBuffActionGraphSource,
   type BuffActionGraphSource,
@@ -513,7 +514,7 @@ function parseBuffPoiseModifiers(
       },
     );
     return {
-      enabledSide: requireNonEmptyString(item.enableSide, `${itemPath}.enableSide`),
+      enabledSide: readModifierSide(item.enableSide, `${itemPath}.enableSide`),
       condition: parseNativeSequenceSource(
         item.condition,
         `${itemPath}.condition`,
@@ -588,7 +589,7 @@ function parseBuffHealModifiers(
       },
     );
     return {
-      enabledSide: requireNonEmptyString(item.enableSide, `${itemPath}.enableSide`),
+      enabledSide: readHealModifierSide(item.enableSide, `${itemPath}.enableSide`),
       condition: parseNativeSequenceSource(
         item.condition,
         `${itemPath}.condition`,
@@ -610,7 +611,7 @@ function parseBuffDamageModifiers(
     const item = requireRecord(raw, itemPath);
     requireExactFields(item, new Set(['enableSide', 'condition', 'damageProcessors']), itemPath);
     return {
-      enabledSide: requireNonEmptyString(item.enableSide, `${itemPath}.enableSide`),
+      enabledSide: readModifierSide(item.enableSide, `${itemPath}.enableSide`),
       condition: parseNativeSequenceSource(
         item.condition,
         `${itemPath}.condition`,

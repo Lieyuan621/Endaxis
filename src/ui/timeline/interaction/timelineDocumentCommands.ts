@@ -24,8 +24,6 @@ import {
   getSkillCastPlacementChains,
   resolveDodgeMarkerLastInputFrame,
 } from '../../../core/project/skillCastPlacement';
-import type { SkillDefinition } from '../../../core/game-data/operatorDefinition';
-import { validateSkillDefinition } from '../../../core/game-data/validateSkillDefinition';
 
 export type EditableBattleResourceRule = keyof Pick<
   BattleDocument['resourceRules'],
@@ -759,63 +757,6 @@ export function setSkillCastForcedCritical(
     Object.keys(remainingInputs).length === 0
       ? castWithoutInputs
       : { ...castWithoutInputs, simulationInputs: remainingInputs };
-  const tracks = [...scenario.tracks] as ScenarioDocument['tracks'];
-  tracks[trackIndex] = { ...track, skillCasts };
-  return { ...scenario, tracks };
-}
-
-/**
- * 用完整定义替换一次干员技能释放的模板逻辑。
- * 命令负责最后一道结构校验并复制定义，避免面板绕过项目约束或继续修改已提交状态。
- */
-export function setSkillCastCustomDefinition(
-  scenario: ScenarioDocument,
-  trackIndex: TrackIndex,
-  skillCastId: string,
-  definition: SkillDefinition,
-): ScenarioDocument {
-  const { track, castIndex, cast } = locateSkillCast(scenario, trackIndex, skillCastId);
-  if (cast.source.kind !== 'operatorSkill') {
-    throw new Error(`skill cast '${skillCastId}' is not based on an operator skill template`);
-  }
-  if (definition.key !== cast.source.skillKey) {
-    throw new Error(
-      `custom definition key '${definition.key}' does not match source skill key '${cast.source.skillKey}'`,
-    );
-  }
-  const issues = validateSkillDefinition(definition, 'customDefinition');
-  if (issues.length > 0) {
-    const first = issues[0]!;
-    throw new TypeError(`invalid custom definition at '${first.path}': ${first.message}`);
-  }
-
-  const skillCasts = [...track.skillCasts];
-  skillCasts[castIndex] = { ...cast, customDefinition: structuredClone(definition) };
-  const tracks = [...scenario.tracks] as ScenarioDocument['tracks'];
-  tracks[trackIndex] = { ...track, skillCasts };
-  return { ...scenario, tracks };
-}
-
-/**
- * 为技能编辑器创建独立草稿。草稿来源可以是当前模板或已有完整覆盖；调用方编辑草稿不会改写
- * 游戏数据和场景，只有交给 `setSkillCastCustomDefinition` 后才会形成一次项目变更。
- */
-export function createSkillDefinitionDraft(definition: SkillDefinition): SkillDefinition {
-  return structuredClone(definition);
-}
-
-/** 删除完整自定义定义，使技能块重新使用当前游戏数据中的技能模板。 */
-export function resetSkillCastToTemplate(
-  scenario: ScenarioDocument,
-  trackIndex: TrackIndex,
-  skillCastId: string,
-): ScenarioDocument {
-  const { track, castIndex, cast } = locateSkillCast(scenario, trackIndex, skillCastId);
-  if (cast.customDefinition === undefined) return scenario;
-
-  const { customDefinition: _removed, ...templateCast } = cast;
-  const skillCasts = [...track.skillCasts];
-  skillCasts[castIndex] = templateCast;
   const tracks = [...scenario.tracks] as ScenarioDocument['tracks'];
   tracks[trackIndex] = { ...track, skillCasts };
   return { ...scenario, tracks };

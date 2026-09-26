@@ -1,4 +1,5 @@
 import type { ResolvedCombatStepForKind } from '../../core/compiler/combatProgram';
+
 /**
  * 一条现成的模拟入口：编译场景 → 跑标准战斗环境 → 返回结果。
  * 随机样本等输入由调用方给；环境不支持的东西在跑之前就报错。

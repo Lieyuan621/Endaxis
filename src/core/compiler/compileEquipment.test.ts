@@ -1,3 +1,7 @@
+import { actionSteps } from '../../test/actionProgramMatchers';
+import { rootActionSteps } from './actionProgramInspection';
+
+import { ActionGraphDefinitionRepository } from './actionGraphDefinitionRepository';
 import { describe, expect, it } from 'vitest';
 import type {
   GearDefinition,
@@ -59,9 +63,14 @@ const loneBarge: WeaponDefinition = {
           key: 'after-buff-consumed',
           event: { kind: 'buffConsumed' },
           priority: 4,
-          sequence: {
-            steps: [
-              {
+          sequence: { $sequence: 'after-buff-consumed' },
+        },
+      ],
+      actionGraph: {
+        main: {
+          nodes: {
+            'after-buff-consumed': {
+              action: {
                 kind: 'applyStatus',
                 parameters: {
                   statusKey: 'lone-barge-battle-skill-bonus',
@@ -75,10 +84,12 @@ const loneBarge: WeaponDefinition = {
                   ],
                 },
               },
-            ],
+              next: null,
+            },
           },
         },
-      ],
+        macros: {},
+      },
     },
   ],
 };
@@ -105,17 +116,13 @@ const attributes = { main: 'intellect', secondary: 'will' } as const;
 
 describe('compile equipment contributions', () => {
   it('启用前后两个程序按同一词条等级编译', () => {
-    const sequence = {
-      steps: [
-        {
-          kind: 'changeResource',
-          parameters: {
-            resource: 'sp',
-            amount: [2, 5],
-            recipient: 'team',
-          },
-        },
-      ],
+    const action = {
+      kind: 'changeResource',
+      parameters: {
+        resource: 'sp',
+        amount: [2, 5],
+        recipient: 'team',
+      },
     } as const;
     const [result] = compileWeaponContributions(
       {
@@ -124,29 +131,44 @@ describe('compile equipment contributions', () => {
           {
             key: 'fixture',
             levelCount: 2,
-            enableSequence: sequence,
-            initializationSequence: sequence,
+            enableSequence: { $sequence: 'enable' },
+            initializationSequence: { $sequence: 'init' },
+            actionGraph: {
+              main: {
+                nodes: {
+                  enable: { action, next: null },
+                  init: { action, next: null },
+                },
+              },
+              macros: {},
+            },
           },
         ],
       },
       [2],
       attributes,
+      new ActionGraphDefinitionRepository(),
     );
     for (const field of ['enableSequence', 'initializationSequence'] as const)
-      expect(result?.[field]?.steps[0]).toMatchObject({
+      expect(rootActionSteps(result?.[field]!)[0]).toMatchObject({
         kind: 'changeResource',
         parameters: { amount: 5 },
       });
   });
   it('resolves each weapon trait with its independently selected level', () => {
-    const compiled = compileWeaponContributions(loneBarge, [9, 1, 4], attributes);
+    const compiled = compileWeaponContributions(
+      loneBarge,
+      [9, 1, 4],
+      attributes,
+      new ActionGraphDefinitionRepository(),
+    );
 
     expect(compiled.map(entry => entry.modifiers[0])).toEqual([
       { kind: 'attribute', attribute: 'will', operation: 'flat', value: 156 },
       { kind: 'panelStat', stat: 'attackPercent', value: 0.05 },
       { kind: 'damageBonus', damageTypes: 'electric', value: 0.256 },
     ]);
-    expect(compiled[2]!.eventHandlers[0]!.sequence.steps[0]).toMatchObject({
+    expect(rootActionSteps(compiled[2]!.eventHandlers[0]!.sequence)[0]).toMatchObject({
       kind: 'applyStatus',
       parameters: { modifiers: [{ kind: 'attackPercent', value: 0.32 }] },
     });
@@ -213,24 +235,35 @@ describe('compile equipment contributions', () => {
       buffDefinitions: {
         'buff.hot-work': { stackingType: 'unique' },
       },
-      initializationSequence: {
-        steps: [
-          {
-            kind: 'applyBuff',
-            parameters: { buffId: 'buff.hot-work', target: 'caster' },
+      initializationSequence: { $sequence: 'init' },
+      actionGraph: {
+        main: {
+          nodes: {
+            init: {
+              action: {
+                kind: 'applyBuff',
+                parameters: { buffId: 'buff.hot-work', target: 'caster' },
+              },
+              next: null,
+            },
           },
-        ],
+        },
+        macros: {},
       },
     };
-    const compiled = compileGearSetContribution(set, attributes);
+    const compiled = compileGearSetContribution(
+      set,
+      attributes,
+      new ActionGraphDefinitionRepository(),
+    );
     expect(compiled).toMatchObject({
       source: { kind: 'gearSet', slug: 'hot-work' },
       selectedLevel: 1,
       modifiers: [{ kind: 'panelStat', stat: 'artsIntensity', value: 30 }],
       buffDefinitions: { 'buff.hot-work': { stackingType: 'unique' } },
-      initializationSequence: {
-        steps: [{ kind: 'applyBuff', parameters: { buffId: 'buff.hot-work', target: 'caster' } }],
-      },
+      initializationSequence: actionSteps([
+        { kind: 'applyBuff', parameters: { buffId: 'buff.hot-work', target: 'caster' } },
+      ]),
     });
   });
 
@@ -250,14 +283,20 @@ describe('compile equipment contributions', () => {
             {
               key: 'heal-output',
               event: { kind: 'operatorHealed', role: 'source' },
-              sequence: { steps: [] },
+              sequence: { $sequence: null },
             },
           ],
+          actionGraph: { main: { nodes: {} }, macros: {} },
         },
       ],
     };
 
-    const [compiled] = compileWeaponContributions(definition, [2], attributes);
+    const [compiled] = compileWeaponContributions(
+      definition,
+      [2],
+      attributes,
+      new ActionGraphDefinitionRepository(),
+    );
     expect(compiled!.modifiers).toEqual([
       { kind: 'staticHealingIncrease', target: 'output', value: 0.2 },
     ]);
@@ -275,23 +314,114 @@ describe('compile equipment contributions', () => {
           key: 'runtime',
           levelCount: 3,
           blackboard: { duration: 10, attack_up: [0.1, 0.2, 0.3] },
-          initializationSequence: { steps: [] },
+          initializationSequence: { $sequence: null },
+          actionGraph: { main: { nodes: {} }, macros: {} },
         },
       ],
     };
 
-    expect(compileWeaponContributions(definition, [2], attributes)[0]).toMatchObject({
+    expect(
+      compileWeaponContributions(
+        definition,
+        [2],
+        attributes,
+        new ActionGraphDefinitionRepository(),
+      )[0],
+    ).toMatchObject({
       blackboard: { duration: 10, attack_up: 0.2 },
-      initializationSequence: { steps: [] },
+      initializationSequence: actionSteps([]),
     });
   });
 
   it('fails when build levels cannot map one-to-one to definition traits', () => {
-    expect(() => compileWeaponContributions(loneBarge, [1, 1], attributes)).toThrow(
-      "weapon 'lone-barge' expects 3 trait levels",
-    );
+    expect(() =>
+      compileWeaponContributions(
+        loneBarge,
+        [1, 1],
+        attributes,
+        new ActionGraphDefinitionRepository(),
+      ),
+    ).toThrow("weapon 'lone-barge' expects 3 trait levels");
     expect(() => compileGearContributions(xiranflowArmor, [4], attributes)).toThrow(
       'level must be an integer between 1 and 4',
     );
+  });
+
+  it('does not execute stale program fields on a gear trait', () => {
+    const stale = {
+      ...xiranflowArmor,
+      traits: [
+        {
+          ...xiranflowArmor.traits[0]!,
+          initializationSequence: { $sequence: 'forbidden-gear-action' },
+        },
+      ],
+    } as unknown as GearDefinition;
+    const [contribution] = compileGearContributions(stale, [0], attributes);
+    expect(contribution?.initializationSequence).toBeUndefined();
+    expect(contribution?.modifiers.length).toBeGreaterThan(0);
+  });
+
+  it('compiles weapon and set graph entries while gear remains static', () => {
+    const repository = new ActionGraphDefinitionRepository();
+    const weaponContributions = compileWeaponContributions(
+      loneBarge,
+      [1, 1, 2],
+      attributes,
+      repository,
+    );
+    expect(weaponContributions[0]).toMatchObject({
+      source: { kind: 'weaponTrait', slug: 'lone-barge' },
+    });
+    const weaponEvent = weaponContributions[2]!.eventHandlers[0]!;
+    expect(weaponEvent.sequence).toMatchObject({ graph: expect.any(Object) });
+    expect(rootActionSteps(weaponEvent.sequence)).toMatchObject([
+      {
+        kind: 'applyStatus',
+        parameters: { modifiers: [{ kind: 'attackPercent', value: 0.24 }] },
+      },
+    ]);
+
+    const gearTrait = compileGearContributions(xiranflowArmor, [1], attributes)[0]!;
+    expect(gearTrait.source).toMatchObject({ kind: 'gearTrait', slug: xiranflowArmor.slug });
+
+    const set: GearSetDefinition = {
+      slug: 'graph-set',
+      buffDefinitions: {
+        marker: {
+          stackingType: 'unique',
+          scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'marker-seq' } }],
+          actionGraph: {
+            main: {
+              nodes: {
+                'marker-seq': {
+                  action: { kind: 'dealStagger', parameters: { value: 3 } },
+                  next: null,
+                },
+              },
+            },
+            macros: {},
+          },
+        },
+      },
+      initializationSequence: { $sequence: 'init' },
+      actionGraph: {
+        main: {
+          nodes: {
+            init: {
+              action: { kind: 'applyBuff', parameters: { buffId: 'marker', target: 'caster' } },
+              next: null,
+            },
+          },
+        },
+        macros: {},
+      },
+    };
+    const setContribution = compileGearSetContribution(set, attributes, repository);
+    expect(setContribution.buffDefinitions?.marker?.stackingType).toBe('unique');
+    expect(setContribution.buffDefinitions?.marker?.scheduledSequences?.[0]?.sequence).toEqual(
+      actionSteps([{ kind: 'dealStagger' }]),
+    );
+    expect(setContribution.initializationSequence).toEqual(actionSteps([{ kind: 'applyBuff' }]));
   });
 });

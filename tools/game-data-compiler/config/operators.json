@@ -1,5 +1,8 @@
 {
-  "ignoredRuntimeTemplateSourceFiles": ["CharacterData/chr_0002_endminm.runtime-template.json"],
+  "ignoredRuntimeTemplateSourceFiles": [
+    "CharacterData/chr_0002_endminm.runtime-template.json",
+    "CharacterData/chr_0038_purrche.runtime-template.json"
+  ],
   "simulationNoEffectBuffIds": [],
   "operators": [
     {
@@ -7,7 +10,14 @@
       "exportName": "purrchenaGeneratedSource",
       "gameId": "PURRCHENA",
       "charId": "chr_0038_purrche",
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {

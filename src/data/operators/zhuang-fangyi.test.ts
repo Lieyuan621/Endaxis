@@ -1,8 +1,28 @@
 import { describe, expect, it } from 'vitest';
 import { compileOperatorDefinitionSkills } from '../../core/compiler/compileScenarioTimeline';
+import { ActionGraphDefinitionRepository } from '../../core/compiler/actionGraphDefinitionRepository';
+import type {
+  ActionGraphResourceDefinition,
+  ActionGraphStep,
+} from '../../../packages/game-data-contract/src/actionGraph';
 import type { OperatorInstanceDocument } from '../../core/project/schema';
 import definition from './zhuang-fangyi.generated';
 import { zhuangFangyi } from './zhuang-fangyi.generated';
+
+function graphActionsFrom(
+  resource: ActionGraphResourceDefinition,
+  entry: { readonly $sequence: string | null },
+): readonly ActionGraphStep[] {
+  const actions: ActionGraphStep[] = [];
+  let nodeId = entry.$sequence;
+  while (nodeId) {
+    const node = resource.main.nodes[nodeId];
+    if (!node) break;
+    actions.push(node.action);
+    nodeId = node.next;
+  }
+  return actions;
+}
 
 function buildAtLevel(skillLevel: number): OperatorInstanceDocument {
   return {
@@ -82,14 +102,21 @@ describe('next Zhuang Fangyi definition', () => {
         inheritOriginSkillCooldownProgress: true,
       },
     ]);
-    expect(ultimateBuff?.lifecycleSequences?.enable?.steps).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          kind: 'overrideMultiDashLimit',
-          parameters: { dashCount: { kind: 'constant', value: -1 } },
-        }),
-      ]),
-    );
+    const enable = ultimateBuff?.lifecycleSequences?.enable;
+    const actionGraph = ultimateBuff?.actionGraph;
+    expect(enable).toBeDefined();
+    expect(actionGraph).toBeDefined();
+    if (actionGraph === undefined || enable === undefined)
+      throw new Error('missing ultimate buff action graph');
+    expect(graphActionsFrom(actionGraph, enable).map(action => action.kind)).toEqual([
+      'changePlayerActionMode',
+      'overrideMultiDashLimit',
+      'restrictUltimateEnergyRecovery',
+    ]);
+    expect(graphActionsFrom(actionGraph, enable)[1]).toEqual({
+      kind: 'overrideMultiDashLimit',
+      parameters: { dashCount: { kind: 'constant', value: -1 } },
+    });
   });
 
   it.each(Array.from({ length: 12 }, (_, index) => index + 1))(
@@ -100,6 +127,9 @@ describe('next Zhuang Fangyi definition', () => {
           'zhuang-fangyi-instance',
           buildAtLevel(skillLevel),
           zhuangFangyi,
+          {},
+          undefined,
+          new ActionGraphDefinitionRepository(),
         ),
       ).not.toThrow();
     },

@@ -12,6 +12,7 @@ import {
 import { createEmptyScenario } from '../../../../src/core/project/createProject.ts';
 import { listOperatorSkillDefinitionBindings } from '../../../../src/core/game-data/operatorSkillDefinitions.ts';
 import type { OperatorDefinition } from '../../../../packages/game-data-contract/src/operators.ts';
+
 import type { GameDataRepository } from '../../../../src/core/game-data/gameDataRepository.ts';
 import type { ScenarioDocument } from '../../../../src/core/project/schema.ts';
 
@@ -121,9 +122,21 @@ export function optimizationSimulationFacts(run: ScenarioSimulationRun): unknown
     if (index === undefined) throw new Error(`可见产物仍引用被排除的内部遍历记录 ${original}`);
     return index;
   };
+  // 优化会删除冗余节点，自编号节点身份随之平移；身份字符串本身不是可观察行为。
+  // 按首次出现顺序重编号，保留"同身份/异身份"的相等结构，不抹掉归属合并错误。
+  const identityAliases = new Map<string, string>();
+  const alias = (original: string): string => {
+    let renamed = identityAliases.get(original);
+    if (renamed === undefined) {
+      renamed = `#${identityAliases.size}`;
+      identityAliases.set(original, renamed);
+    }
+    return renamed;
+  };
   const visit = (value: unknown, key?: string): unknown => {
     if (key === 'sequence' && typeof value === 'number') return reindex(value);
     if (key === 'receiptSequences' && Array.isArray(value)) return value.map(reindex);
+    if ((key === 'stepKey' || key === 'hitId') && typeof value === 'string') return alias(value);
     if (Array.isArray(value)) return value.map(item => visit(item));
     if (value === null || typeof value !== 'object') return value;
     // 资源快照中的许可标签是 Set。按普通对象遍历会抹成 {}，漏掉实际回能限制差异。

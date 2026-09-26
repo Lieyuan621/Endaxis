@@ -16,23 +16,62 @@ import { commonBuffDefinitions } from '../../data/buffs/commonDefinitions';
 import { timeDilationRuntimeConfig } from '../../data/combat/timeDilationConfig';
 import { createEmptyProject } from '../project/createProject';
 import {
-  deriveProjectOperatorTemplate,
   getProjectDefinitionLibrary,
   createProjectGameDataRepository,
 } from '../project/projectDefinitionLibrary';
+import { withProjectOperatorTemplate } from '../../test/projectOperatorTemplateFixture';
 import { serializeProjectDocument, parseProjectDocument } from '../project/serialization';
 import { placeSkillGroup } from '../../ui/timeline/interaction/placeSkillGroup';
 import { validateComboSkillConditions } from '../game-data/validateComboSkillConditions';
-import type {
-  ComboSkillConditionDefinition,
-  OperatorDefinition,
-  SkillDefinition,
-} from '../game-data/operatorDefinition';
+import type { OperatorDefinition } from '../game-data/operatorDefinition';
 import { compileScenarioRuntimeAssembly } from './compileScenarioRuntimeAssembly';
 import { compileScenarioEnemy } from './compileScenarioEnemy';
 import { StandardPlayerDamageEnvironment } from '../combat/runtime/standardPlayerDamageEnvironment';
 import { createEnemyCombatVitals } from '../combat/resources/combatVitalsFactory';
 import { CombatRuntimeAssembly } from '../combat/runtime/combatRuntimeAssembly';
+import type { ComboSkillConditionDefinition } from '../../../packages/game-data-contract/src/operators.ts';
+import { ActionGraphDefinitionRepository } from './actionGraphDefinitionRepository';
+import { compileOperatorComboSkillConditions } from './compileOperatorComboSkillConditions';
+
+it('连携条件使用自己的图，不从干员过渡图读取同名入口', () => {
+  const condition: ComboSkillConditionDefinition = {
+    key: 'native-combo',
+    skillKey: 'chr_0004_pelica_combo_skill',
+    event: 'addedBuff',
+    immediately: false,
+    initialValues: null,
+    sequence: { $sequence: 'entry' },
+    actionGraph: {
+      main: {
+        nodes: {
+          entry: { action: { kind: 'dealStagger', parameters: { value: 7 } }, next: null },
+        },
+      },
+      macros: {},
+    },
+  };
+  const operator: OperatorDefinition = {
+    ...perlica,
+    comboSkillConditions: [condition],
+  };
+  const build = {
+    operatorSlug: perlica.slug,
+    level: 90,
+    promoted: true,
+    potential: 0,
+    trustLevel: 4,
+    talentStates: {},
+    skillLevels: { basicAttack: 12, battleSkill: 12, comboSkill: 12, ultimate: 12 },
+  };
+  const compiled = compileOperatorComboSkillConditions(operator, build, {
+    programs: new ActionGraphDefinitionRepository(),
+  });
+  const entry = compiled[0]!.sequence;
+  expect(entry.graph.nodes.get(entry.entry!)?.action).toMatchObject({
+    kind: 'dealStagger',
+    parameters: { value: 7 },
+  });
+});
 
 function template(
   element: 'heat' | 'electric' | 'cryo' | 'nature',
@@ -85,10 +124,12 @@ function template(
       },
     ),
   );
-  const definitions: unknown = projections.map(result => result.definition);
-  expect(validateComboSkillConditions(definitions)).toEqual([]);
+  const rawDefinitions: unknown = projections.map(result => result.definition);
+  expect(validateComboSkillConditions(rawDefinitions)).toEqual([]);
   // 仅在公共严格结构校验后进入正式定义类型；不会将审计 source 一起塞进项目。
-  const comboSkillConditions = definitions as readonly ComboSkillConditionDefinition[];
+  const comboSkillConditions = projections.map(
+    result => result.definition,
+  ) as readonly ComboSkillConditionDefinition[];
   return {
     ...carrier,
     entityBlackboard: blackboards.entityInitialValues,
@@ -100,13 +141,16 @@ function template(
     // 只保留本次链路入口，避免将旧产物其他技能的编辑身份问题混入连携验证。
     skillGroups: carrier.skillGroups
       .filter(group => !actualCombo || group.key === 'battleSkill' || group.key === 'comboSkill')
-      .map(group =>
-        group.key === 'comboSkill'
+      .map(group => {
+        const skills = group.skills;
+        if (Array.isArray(skills)) return group;
+        const single = skills as Exclude<typeof skills, readonly unknown[]>;
+        return group.key === 'comboSkill'
           ? {
               ...group,
               skills: {
-                ...(group.skills as SkillDefinition),
-                cooldownFrames: (group.skills as SkillDefinition).cooldownFrames ?? 300,
+                ...single,
+                cooldownFrames: single.cooldownFrames ?? 300,
                 // 诀真实 CastData.startCdFrame=0；补旧产物遗漏的静态元数据，不改它的动作。
                 costFrame: 0,
                 ...(actualCombo
@@ -129,27 +173,31 @@ function template(
             : {
                 ...group,
                 skills: {
-                  ...(group.skills as SkillDefinition),
+                  ...single,
                   costs: [],
                   costFrame: undefined,
                   cooldownFrames: undefined,
                   timelineBlockFrames: 1,
                   scheduledSequences: [
-                    {
-                      startFrame: 0,
-                      sequence: {
-                        steps: [
-                          {
+                    { startFrame: 0, sequence: { $sequence: 'apply-infliction' } },
+                  ],
+                  actionGraph: {
+                    main: {
+                      nodes: {
+                        'apply-infliction': {
+                          action: {
                             kind: 'applyElementalInfliction',
                             parameters: { element, isExtra: false },
                           },
-                        ],
+                          next: null,
+                        },
                       },
                     },
-                  ],
+                    macros: {},
+                  },
                 },
-              },
-      ),
+              };
+      }),
   };
 }
 
@@ -167,14 +215,16 @@ describe('原生条件经正式项目定义进入实际附着', () => {
         const base = createGameDataRepository({
           revision: 'fixture',
           operators: [carrier],
-          commonBuffDefinitions,
+          commonDefinitionSources: [
+            { id: 'fixture-buffs', buffDefinitions: commonBuffDefinitions },
+          ],
         });
-        const project = deriveProjectOperatorTemplate(createEmptyProject({ createdWith: 'test' }), {
-          id: 'project:operator:native-combo',
-          name: 'native combo fixture',
-          baseTemplateId: carrier.slug,
+        const project = withProjectOperatorTemplate(
+          createEmptyProject({ createdWith: 'test' }),
+          'project:operator:native-combo',
+          'native combo fixture',
           definition,
-        });
+        );
         let scenario = project.scenarios[0]!;
         const persisted =
           getProjectDefinitionLibrary(project).operators['project:operator:native-combo']!

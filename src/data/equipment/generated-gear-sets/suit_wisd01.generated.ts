@@ -4,14 +4,26 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'suit_wisd01',
   iconPath: '/equipment/wisd01/item_equip_t2_suit_wisd01_edc_03.webp',
-  modifiers: [
-    {
-      kind: 'attribute',
-      attribute: 'intellect',
-      operation: 'flat',
-      value: 50,
+  modifiers: [{ kind: 'attribute', attribute: 'intellect', operation: 'flat', value: 50 }],
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffId: 'buff_equipsuit_wisd_spdmg_01',
+              target: 'caster',
+              blackboardAssignments: { spell_dmg_up: { kind: 'constant', value: 0.2 } },
+            },
+          },
+          next: null,
+        },
+      },
     },
-  ],
+    macros: {},
+  },
+  skillId: 'passive_equipsuit_wisd_01',
   buffDefinitions: {
     buff_equipsuit_wisd_spdmg_01: {
       stackingType: 'unique',
@@ -22,58 +34,33 @@ const definition = {
       maxTriggerCount: 1,
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        spell_dmg_up: 0.05,
-      },
+      blackboard: { spell_dmg_up: 0.05 },
       attributeModifiers: [
         {
           attribute: 'heatDamageIncrease',
           slot: 'baseAddition',
-          value: {
-            blackboardKey: 'spell_dmg_up',
-          },
+          value: { blackboardKey: 'spell_dmg_up' },
         },
         {
           attribute: 'electricDamageIncrease',
           slot: 'baseAddition',
-          value: {
-            blackboardKey: 'spell_dmg_up',
-          },
+          value: { blackboardKey: 'spell_dmg_up' },
         },
         {
           attribute: 'natureDamageIncrease',
           slot: 'baseAddition',
-          value: {
-            blackboardKey: 'spell_dmg_up',
-          },
+          value: { blackboardKey: 'spell_dmg_up' },
         },
         {
           attribute: 'cryoDamageIncrease',
           slot: 'baseAddition',
-          value: {
-            blackboardKey: 'spell_dmg_up',
-          },
+          value: { blackboardKey: 'spell_dmg_up' },
         },
       ],
+      actionGraph: { main: { nodes: {} }, macros: {} },
     },
   },
-  initializationSequence: {
-    steps: [
-      {
-        kind: 'applyBuff',
-        parameters: {
-          buffId: 'buff_equipsuit_wisd_spdmg_01',
-          target: 'caster',
-          blackboardAssignments: {
-            spell_dmg_up: {
-              kind: 'constant',
-              value: 0.2,
-            },
-          },
-        },
-      },
-    ],
-  },
+  initializationSequence: { $sequence: 'applyBuff_1' },
 } as const satisfies GearSetDefinition;
 
 export default definition;

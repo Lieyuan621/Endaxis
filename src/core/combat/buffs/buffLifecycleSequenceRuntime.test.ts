@@ -1,5 +1,10 @@
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import type { ActionGraphNode } from '../../../../packages/game-data-contract/src/actionGraph';
 import { describe, expect, it, vi } from 'vitest';
-import type { ResolvedSkillBuffLifecycleSequences } from '../../compiler/combatProgram';
+import type {
+  ResolvedActionSequence,
+  ResolvedSkillBuffLifecycleSequences,
+} from '../../compiler/combatProgram';
 import { LogicalAbilityEntityRuntime } from '../abilities/logicalAbilityEntityRuntime';
 import {
   ProjectileLifecycleRuntime,
@@ -30,12 +35,51 @@ import { attachBuffLifecycleSequences } from './buffLifecycleSequenceRuntime';
 import { BuffOperationExecutor } from './buffOperationExecutor';
 import { CombatBuffContainer, type CombatBuffDefinition } from './combatBuffs';
 
+const compileGraphEntry = (
+  revision: string,
+  entry: string | null,
+  nodes: Record<string, ActionGraphNode>,
+): ResolvedActionSequence => ({
+  graph: createActionGraphCompilation({ nodes }, 1, revision).compileAll(),
+  entry,
+  callSite: revision,
+});
+
+const chainEntry = (
+  revision: string,
+  actions: readonly ActionGraphNode['action'][],
+): ResolvedActionSequence => {
+  const nodes: Record<string, ActionGraphNode> = {};
+  actions.forEach((action, index) => {
+    nodes[`step-${index}`] = {
+      action,
+      next: index + 1 < actions.length ? `step-${index + 1}` : null,
+    };
+  });
+  return compileGraphEntry(revision, actions.length === 0 ? null : 'step-0', nodes);
+};
+
 describe('attachBuffLifecycleSequences', () => {
   it('带伤害条件的 Buff 外壳保留活动 Enable 序列，结束时只清理恢复分支的动作期 Buff', () => {
     const childDefinition: CombatBuffDefinition<never> = {
       id: 'restored-enable-child',
       stackingType: 'unlimited',
     };
+    const graph = createActionGraphCompilation(
+      {
+        nodes: {
+          apply: {
+            action: {
+              kind: 'applyBuff',
+              parameters: { buffId: childDefinition.id, target: 'caster', finishByAction: true },
+            },
+            next: null,
+          },
+        },
+      },
+      1,
+      'buff-enable',
+    ).compileAll();
     const createParentDefinition = (container: CombatBuffContainer<never>) => {
       const target = new BuffDefinitionOperationTarget(container, {
         get: id => (id === childDefinition.id ? childDefinition : undefined),
@@ -47,18 +91,7 @@ describe('attachBuffLifecycleSequences', () => {
           damageModifiers: [{ enabledSide: 'attacker', processors: [] }],
         },
         {
-          enable: {
-            steps: [
-              {
-                kind: 'applyBuff',
-                parameters: {
-                  buffId: childDefinition.id,
-                  target: 'caster',
-                  finishByAction: true,
-                },
-              },
-            ],
-          },
+          enable: { graph, entry: 'apply', callSite: 'enable' },
         },
         () =>
           new BuffOperationExecutor({
@@ -74,7 +107,7 @@ describe('attachBuffLifecycleSequences', () => {
         [],
         [],
         undefined,
-        [{ steps: [] }],
+        [{ graph, entry: null, callSite: 'damageModifier.condition' }],
       );
     };
     const original = new CombatBuffContainer<never>('owner', new CombatAttributeSet<never>());
@@ -120,6 +153,31 @@ describe('attachBuffLifecycleSequences', () => {
   });
 
   it('从切面重绑能力事件订阅并保留响应序列进度', () => {
+    // 原始定义与恢复定义必须共享同一编译入口，恢复按修订、入口与调用位置匹配。
+    const responseSequence = compileGraphEntry('restored-event-response', 'set-always', {
+      'set-always': {
+        action: {
+          kind: 'setContextFlag',
+          parameters: { flag: 'always', value: true, target: 'caster' },
+        },
+        next: 'once',
+      },
+      once: {
+        action: {
+          kind: 'once',
+          parameters: { scopeKey: 'saved-once' },
+          body: { $sequence: 'set-once' },
+        },
+        next: null,
+      },
+      'set-once': {
+        action: {
+          kind: 'setContextFlag',
+          parameters: { flag: 'once', value: true, target: 'caster' },
+        },
+        next: null,
+      },
+    });
     const createDefinition = (
       dispatcher: AbilityEventDispatcher<AbilityResponseEventName, AbilityEventPayloadMap>,
       reached: string[],
@@ -140,26 +198,7 @@ describe('attachBuffLifecycleSequences', () => {
           {
             event: 'addedBuff',
             priority: 3,
-            sequence: {
-              steps: [
-                {
-                  kind: 'setContextFlag',
-                  parameters: { flag: 'always', value: true, target: 'caster' },
-                },
-                {
-                  kind: 'once',
-                  parameters: { scopeKey: 'saved-once' },
-                  body: {
-                    steps: [
-                      {
-                        kind: 'setContextFlag',
-                        parameters: { flag: 'once', value: true, target: 'caster' },
-                      },
-                    ],
-                  },
-                },
-              ],
-            },
+            sequence: responseSequence,
           },
         ],
         (event, priority, handle, subscriptions) =>
@@ -238,7 +277,9 @@ describe('attachBuffLifecycleSequences', () => {
       const dispose = vi.fn();
       const definition = attachBuffLifecycleSequences<never>(
         { id: 'affix', stackingType: 'unique' },
-        { enable: { steps: [{ kind: 'skillAffix', parameters: {} }] } },
+        {
+          enable: chainEntry('affix-enable', [{ kind: 'skillAffix', parameters: {} }]),
+        },
         () =>
           new BuffOperationExecutor({
             sourceId: 'owner',
@@ -331,6 +372,10 @@ describe('attachBuffLifecycleSequences', () => {
           },
         };
       };
+    // 与第一个已迁移用例相同：原始与恢复定义共享同一编译入口。
+    const enableSequence = chainEntry('restored-affix-enable', [
+      { kind: 'skillAffix', parameters: {} },
+    ]);
     const createDefinition = (
       container: CombatBuffContainer<never>,
       dispatcher: AbilityEventDispatcher<AbilityResponseEventName, AbilityEventPayloadMap>,
@@ -343,7 +388,7 @@ describe('attachBuffLifecycleSequences', () => {
     ) =>
       attachBuffLifecycleSequences<never>(
         { id: 'restored-affix', stackingType: 'unique' },
-        { enable: { steps: [{ kind: 'skillAffix', parameters: {} }] } },
+        { enable: enableSequence },
         () =>
           new BuffOperationExecutor({
             sourceId: 'owner',
@@ -567,22 +612,18 @@ describe('attachBuffLifecycleSequences', () => {
     const definition = attachBuffLifecycleSequences<never>(
       { id: 'parent', stackingType: 'unlimited' },
       {
-        enable: {
-          steps: [
-            {
-              kind: 'setContextFlag',
-              parameters: { flag: 'start', value: true, target: 'caster' },
-            },
-          ],
-        },
-        finish: {
-          steps: [
-            {
-              kind: 'setContextFlag',
-              parameters: { flag: 'finish', value: true, target: 'caster' },
-            },
-          ],
-        },
+        enable: chainEntry('parent-enable', [
+          {
+            kind: 'setContextFlag',
+            parameters: { flag: 'start', value: true, target: 'caster' },
+          },
+        ]),
+        finish: chainEntry('parent-finish', [
+          {
+            kind: 'setContextFlag',
+            parameters: { flag: 'finish', value: true, target: 'caster' },
+          },
+        ]),
       },
       () => ({
         execute: (step, context) => {
@@ -647,14 +688,12 @@ describe('attachBuffLifecycleSequences', () => {
           {
             event: 'outputKnockDown',
             priority: 0,
-            sequence: {
-              steps: [
-                {
-                  kind: 'setContextFlag',
-                  parameters: { flag: 'seen', value: true, target: 'caster' },
-                },
-              ],
-            },
+            sequence: chainEntry('knock-response-seen', [
+              {
+                kind: 'setContextFlag',
+                parameters: { flag: 'seen', value: true, target: 'caster' },
+              },
+            ]),
           },
         ],
         undefined,
@@ -750,7 +789,9 @@ describe('attachBuffLifecycleSequences', () => {
       >();
       const definition = attachBuffLifecycleSequences<never>(
         { id: 'affix', stackingType: 'unique' },
-        { enable: { steps: [{ kind: 'skillAffix', parameters: {} }] } },
+        {
+          enable: chainEntry('affix-lifetime-enable', [{ kind: 'skillAffix', parameters: {} }]),
+        },
         () =>
           new BuffOperationExecutor({
             sourceId: 'source',
@@ -949,15 +990,13 @@ describe('attachBuffLifecycleSequences', () => {
     const definition = attachBuffLifecycleSequences<never>(
       { id: 'blocked-affix', stackingType: 'unique' },
       {
-        enable: {
-          steps: [
-            {
-              kind: 'setContextFlag',
-              parameters: { flag: 'failure', value: true, target: 'caster' },
-            },
-            { kind: 'skillAffix', parameters: {} },
-          ],
-        },
+        enable: chainEntry('blocked-affix-enable', [
+          {
+            kind: 'setContextFlag',
+            parameters: { flag: 'failure', value: true, target: 'caster' },
+          },
+          { kind: 'skillAffix', parameters: {} },
+        ]),
       },
       () =>
         new BuffOperationExecutor({
@@ -1010,9 +1049,9 @@ describe('attachBuffLifecycleSequences', () => {
         {
           event: 'beforeCastSkill',
           priority: 0,
-          sequence: {
-            steps: [
-              {
+          sequence: compileGraphEntry('limited-provenance', 'guard', {
+            guard: {
+              action: {
                 kind: 'conditional',
                 parameters: {
                   condition: {
@@ -1024,21 +1063,22 @@ describe('attachBuffLifecycleSequences', () => {
                     value: { kind: 'constant', value: 1 },
                   },
                 },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'setContextFlag',
-                      parameters: {
-                        flag: 'matched',
-                        value: true,
-                        target: 'caster',
-                      },
-                    },
-                  ],
+                whenTrue: { $sequence: 'matched' },
+              },
+              next: null,
+            },
+            matched: {
+              action: {
+                kind: 'setContextFlag',
+                parameters: {
+                  flag: 'matched',
+                  value: true,
+                  target: 'caster',
                 },
               },
-            ],
-          },
+              next: null,
+            },
+          }),
         },
       ],
       (_event, _priority, callback) => {
@@ -1239,20 +1279,24 @@ describe('attachBuffLifecycleSequences', () => {
       },
       evaluate: () => true,
     };
-    const once = {
-      kind: 'once',
-      parameters: { scopeKey: 'enable-once' },
-      body: {
-        steps: [
-          {
+    const sequences: ResolvedSkillBuffLifecycleSequences = {
+      enable: compileGraphEntry('isolated-enable', 'once', {
+        once: {
+          action: {
+            kind: 'once',
+            parameters: { scopeKey: 'enable-once' },
+            body: { $sequence: 'reached' },
+          },
+          next: null,
+        },
+        reached: {
+          action: {
             kind: 'setContextFlag',
             parameters: { flag: 'reached', value: true, target: 'caster' },
           },
-        ],
-      },
-    } as const;
-    const sequences: ResolvedSkillBuffLifecycleSequences = {
-      enable: { steps: [once] },
+          next: null,
+        },
+      }),
     };
     const base: CombatBuffDefinition<never> = {
       id: 'isolated',
@@ -1299,14 +1343,12 @@ describe('attachBuffLifecycleSequences', () => {
     const definition = attachBuffLifecycleSequences<never>(
       { id: 'shared', stackingType: 'unlimited' },
       {
-        start: {
-          steps: [
-            {
-              kind: 'setContextFlag',
-              parameters: { flag: 'started', value: true, target: 'caster' },
-            },
-          ],
-        },
+        start: chainEntry('shared-start', [
+          {
+            kind: 'setContextFlag',
+            parameters: { flag: 'started', value: true, target: 'caster' },
+          },
+        ]),
       },
       buff => executor(buff.sourceId),
     );
@@ -1338,26 +1380,30 @@ describe('attachBuffLifecycleSequences', () => {
     const definition = attachBuffLifecycleSequences<never>(
       { id: 'target-context', stackingType: 'unique' },
       {
-        enable: {
-          steps: [
-            {
+        enable: compileGraphEntry('target-context-enable', 'find', {
+          find: {
+            action: {
               kind: 'findOwnerSpawnedAbilityEntities',
               parameters: { saveToContextKey: 'seals', abilityEntityIds: ['seal'] },
             },
-            {
+            next: 'loop',
+          },
+          loop: {
+            action: {
               kind: 'forEachContextTarget',
               parameters: { contextKey: 'seals' },
-              body: {
-                steps: [
-                  {
-                    kind: 'setContextFlag',
-                    parameters: { flag: 'visited', value: true, target: 'caster' },
-                  },
-                ],
-              },
+              body: { $sequence: 'visit' },
             },
-          ],
-        },
+            next: null,
+          },
+          visit: {
+            action: {
+              kind: 'setContextFlag',
+              parameters: { flag: 'visited', value: true, target: 'caster' },
+            },
+            next: null,
+          },
+        }),
       },
       () => operations,
     );
@@ -1392,14 +1438,12 @@ describe('attachBuffLifecycleSequences', () => {
       [
         {
           startFrame: 2,
-          sequence: {
-            steps: [
-              {
-                kind: 'setContextFlag',
-                parameters: { flag: 'reached', value: true, target: 'caster' },
-              },
-            ],
-          },
+          sequence: chainEntry('scheduled-reached', [
+            {
+              kind: 'setContextFlag',
+              parameters: { flag: 'reached', value: true, target: 'caster' },
+            },
+          ]),
         },
       ],
     );
@@ -1424,6 +1468,17 @@ describe('attachBuffLifecycleSequences', () => {
   });
 
   it('乱序声明的 Buff 局部时间线恢复后仍按声明顺序跨过节点，且不重放已过帧', () => {
+    // 三个调度项共享同一批编译入口，恢复时按修订与调用位置重绑。
+    const scheduledSequence = (flag: string) =>
+      chainEntry(`restored-scheduled-${flag}`, [
+        {
+          kind: 'setContextFlag',
+          parameters: { flag, value: true, target: 'caster' },
+        },
+      ]);
+    const futureSequence = scheduledSequence('future');
+    const earlierFutureSequence = scheduledSequence('earlier-future');
+    const pastSequence = scheduledSequence('past');
     const createDefinition = (reached: string[]) =>
       attachBuffLifecycleSequences<never>(
         { id: 'restored-scheduled', stackingType: 'unique' },
@@ -1442,36 +1497,15 @@ describe('attachBuffLifecycleSequences', () => {
         [
           {
             startFrame: 4,
-            sequence: {
-              steps: [
-                {
-                  kind: 'setContextFlag',
-                  parameters: { flag: 'future', value: true, target: 'caster' },
-                },
-              ],
-            },
+            sequence: futureSequence,
           },
           {
             startFrame: 3,
-            sequence: {
-              steps: [
-                {
-                  kind: 'setContextFlag',
-                  parameters: { flag: 'earlier-future', value: true, target: 'caster' },
-                },
-              ],
-            },
+            sequence: earlierFutureSequence,
           },
           {
             startFrame: 1,
-            sequence: {
-              steps: [
-                {
-                  kind: 'setContextFlag',
-                  parameters: { flag: 'past', value: true, target: 'caster' },
-                },
-              ],
-            },
+            sequence: pastSequence,
           },
         ],
       );
@@ -1521,18 +1555,16 @@ describe('attachBuffLifecycleSequences', () => {
     const definition = attachBuffLifecycleSequences<never>(
       { id: 'persistent-aura', stackingType: 'unlimited' },
       {
-        enable: {
-          steps: [
-            {
-              kind: 'applyBuff',
-              parameters: {
-                buffId: 'aura-child',
-                target: 'enemy',
-                finishByAction: true,
-              },
+        enable: chainEntry('persistent-aura-enable', [
+          {
+            kind: 'applyBuff',
+            parameters: {
+              buffId: 'aura-child',
+              target: 'enemy',
+              finishByAction: true,
             },
-          ],
-        },
+          },
+        ]),
       },
       () => operations,
     );
@@ -1570,9 +1602,9 @@ describe('attachBuffLifecycleSequences', () => {
         {
           event: 'beforeTakeDamage',
           priority: 7,
-          sequence: {
-            steps: [
-              {
+          sequence: compileGraphEntry('damage-listener-response', 'tags', {
+            tags: {
+              action: {
                 kind: 'conditional',
                 parameters: {
                   condition: {
@@ -1581,25 +1613,26 @@ describe('attachBuffLifecycleSequences', () => {
                     tags: ['normalSkill'],
                   },
                 },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'conditional',
-                      parameters: { condition: { kind: 'eventSourceMatchesBuffSource' } },
-                      whenTrue: {
-                        steps: [
-                          {
-                            kind: 'setContextFlag',
-                            parameters: { flag: 'matched', value: true, target: 'caster' },
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                },
+                whenTrue: { $sequence: 'source' },
               },
-            ],
-          },
+              next: null,
+            },
+            source: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'eventSourceMatchesBuffSource' } },
+                whenTrue: { $sequence: 'matched' },
+              },
+              next: null,
+            },
+            matched: {
+              action: {
+                kind: 'setContextFlag',
+                parameters: { flag: 'matched', value: true, target: 'caster' },
+              },
+              next: null,
+            },
+          }),
         },
       ],
       (event, priority, handle) => {
@@ -1666,22 +1699,23 @@ describe('attachBuffLifecycleSequences', () => {
         {
           event: 'poiseZero',
           priority: 0,
-          sequence: {
-            steps: [
-              {
+          sequence: compileGraphEntry('poise-listener-response', 'guard', {
+            guard: {
+              action: {
                 kind: 'conditional',
                 parameters: { condition: { kind: 'eventSourceControlled' } },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'setContextFlag',
-                      parameters: { flag: 'broken', value: true, target: 'caster' },
-                    },
-                  ],
-                },
+                whenTrue: { $sequence: 'broken' },
               },
-            ],
-          },
+              next: null,
+            },
+            broken: {
+              action: {
+                kind: 'setContextFlag',
+                parameters: { flag: 'broken', value: true, target: 'caster' },
+              },
+              next: null,
+            },
+          }),
         },
       ],
       (event, priority, handle) => {
@@ -1728,14 +1762,12 @@ describe('attachBuffLifecycleSequences', () => {
         {
           event: 'afterKillEntity',
           priority: 3,
-          sequence: {
-            steps: [
-              {
-                kind: 'setContextFlag',
-                parameters: { flag: 'extended', value: true, target: 'caster' },
-              },
-            ],
-          },
+          sequence: chainEntry('kill-listener-extended', [
+            {
+              kind: 'setContextFlag',
+              parameters: { flag: 'extended', value: true, target: 'caster' },
+            },
+          ]),
         },
       ],
       (_event, _priority, callback) => {
@@ -1783,14 +1815,12 @@ describe('attachBuffLifecycleSequences', () => {
         {
           event: 'skillSpGained',
           priority: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'setContextFlag',
-                parameters: { flag: 'reached', value: true, target: 'caster' },
-              },
-            ],
-          },
+          sequence: chainEntry('skill-sp-listener-reached', [
+            {
+              kind: 'setContextFlag',
+              parameters: { flag: 'reached', value: true, target: 'caster' },
+            },
+          ]),
         },
       ],
       (_event, _priority, callback) => {
@@ -1842,14 +1872,12 @@ describe('attachBuffLifecycleSequences', () => {
         {
           event: 'beforeTakeDamage',
           priority: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'finishCurrentBuff',
-                parameters: { reason: 'early', finishSource: 'actionSource' },
-              },
-            ],
-          },
+          sequence: chainEntry('self-finishing-listener', [
+            {
+              kind: 'finishCurrentBuff',
+              parameters: { reason: 'early', finishSource: 'actionSource' },
+            },
+          ]),
         },
       ],
       (event, priority, handle) => {
@@ -1913,36 +1941,42 @@ describe('attachBuffLifecycleSequences', () => {
         {
           event: 'beforeCastSkill',
           priority: 0,
-          sequence: {
-            steps: [
-              {
+          sequence: compileGraphEntry('combo-timer-pause', 'guard', {
+            guard: {
+              action: {
                 kind: 'conditional',
                 parameters: {
                   condition: { kind: 'eventSkillIdIn', skillIds: ['native-power-attack'] },
                 },
-                whenTrue: {
-                  steps: [{ kind: 'setCurrentBuffTimePaused', parameters: { paused: true } }],
-                },
+                whenTrue: { $sequence: 'pause' },
               },
-            ],
-          },
+              next: null,
+            },
+            pause: {
+              action: { kind: 'setCurrentBuffTimePaused', parameters: { paused: true } },
+              next: null,
+            },
+          }),
         },
         {
           event: 'finishedBuff',
           priority: 0,
-          sequence: {
-            steps: [
-              {
+          sequence: compileGraphEntry('combo-timer-resume', 'guard', {
+            guard: {
+              action: {
                 kind: 'conditional',
                 parameters: {
                   condition: { kind: 'eventBuffIdMatch', buffIds: ['resume-marker'] },
                 },
-                whenTrue: {
-                  steps: [{ kind: 'setCurrentBuffTimePaused', parameters: { paused: false } }],
-                },
+                whenTrue: { $sequence: 'resume' },
               },
-            ],
-          },
+              next: null,
+            },
+            resume: {
+              action: { kind: 'setCurrentBuffTimePaused', parameters: { paused: false } },
+              next: null,
+            },
+          }),
         },
       ],
       (event, priority, handle) => {
@@ -2012,34 +2046,33 @@ describe('attachBuffLifecycleSequences', () => {
         {
           event: 'addedBuff',
           priority: 0,
-          sequence: {
-            steps: [
-              {
+          sequence: compileGraphEntry('same-priority-first', 'guard', {
+            guard: {
+              action: {
                 kind: 'conditional',
                 parameters: { condition: { kind: 'casterControlled' } },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'setContextFlag',
-                      parameters: { flag: 'first', value: true, target: 'caster' },
-                    },
-                  ],
-                },
+                whenTrue: { $sequence: 'flag' },
               },
-            ],
-          },
+              next: null,
+            },
+            flag: {
+              action: {
+                kind: 'setContextFlag',
+                parameters: { flag: 'first', value: true, target: 'caster' },
+              },
+              next: null,
+            },
+          }),
         },
         {
           event: 'addedBuff',
           priority: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'setContextFlag',
-                parameters: { flag: 'second', value: true, target: 'caster' },
-              },
-            ],
-          },
+          sequence: chainEntry('same-priority-second', [
+            {
+              kind: 'setContextFlag',
+              parameters: { flag: 'second', value: true, target: 'caster' },
+            },
+          ]),
         },
       ],
       (_event, _priority, handle) => {
@@ -2113,31 +2146,35 @@ describe('attachBuffLifecycleSequences', () => {
         ['first', 'second'].map(flag => ({
           event: 'addedBuff' as const,
           priority: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'setContextFlag' as const,
-                parameters: { flag, value: true, target: 'caster' as const },
+          sequence: compileGraphEntry(`finish-during-dispatch-${flag}`, 'set', {
+            set: {
+              action: {
+                kind: 'setContextFlag',
+                parameters: { flag, value: true, target: 'caster' },
               },
-              {
-                kind: 'conditional' as const,
+              next: 'guard',
+            },
+            guard: {
+              action: {
+                kind: 'conditional',
                 parameters: {
                   condition: {
-                    kind: 'probability' as const,
-                    probability: { kind: 'constant' as const, value: 1 },
+                    kind: 'probability',
+                    probability: { kind: 'constant', value: 1 },
                   },
                 },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'setContextFlag' as const,
-                      parameters: { flag: 'nested-later', value: true, target: 'caster' as const },
-                    },
-                  ],
-                },
+                whenTrue: { $sequence: 'nested' },
               },
-            ],
-          },
+              next: null,
+            },
+            nested: {
+              action: {
+                kind: 'setContextFlag',
+                parameters: { flag: 'nested-later', value: true, target: 'caster' },
+              },
+              next: null,
+            },
+          }),
         })),
         (event, priority, handle) =>
           dispatcher.registerAction(event, priority, published => handle(published)),
@@ -2167,23 +2204,33 @@ describe('attachBuffLifecycleSequences', () => {
 
   it('叠层回调使用本次来源，满层仍回调，且不重置实例 once 状态', () => {
     const reached: unknown[] = [];
-    const callback = {
-      steps: [
-        {
-          kind: 'setContextFlag' as const,
-          parameters: { flag: 'callback', value: true, target: 'caster' as const },
-        },
-      ],
-    };
     const definition = attachBuffLifecycleSequences<never>(
       { id: 'layer', stackingType: 'enhanceAndRefresh', maxStackCount: 2 },
       {
-        afterEnhance: {
-          steps: [
-            ...callback.steps,
-            { kind: 'once', parameters: { scopeKey: 'per-buff' }, body: callback },
-          ],
-        },
+        afterEnhance: compileGraphEntry('layer-after-enhance', 'callback', {
+          callback: {
+            action: {
+              kind: 'setContextFlag',
+              parameters: { flag: 'callback', value: true, target: 'caster' },
+            },
+            next: 'once',
+          },
+          once: {
+            action: {
+              kind: 'once',
+              parameters: { scopeKey: 'per-buff' },
+              body: { $sequence: 'body' },
+            },
+            next: null,
+          },
+          body: {
+            action: {
+              kind: 'setContextFlag',
+              parameters: { flag: 'callback', value: true, target: 'caster' },
+            },
+            next: null,
+          },
+        }),
       },
       (buff, sourceId = buff.sourceId) => ({
         execute: (_step, context) => {
@@ -2251,26 +2298,22 @@ describe('attachBuffLifecycleSequences', () => {
           {
             igniteType: 'EndminUlt',
             finishAfterIgnited: true,
-            sequence: {
-              steps: [
-                {
-                  kind: 'setContextFlag',
-                  parameters: { flag: 'reached', value: true, target: 'caster' },
-                },
-              ],
-            },
+            sequence: chainEntry('ignite-reached', [
+              {
+                kind: 'setContextFlag',
+                parameters: { flag: 'reached', value: true, target: 'caster' },
+              },
+            ]),
           },
           {
             igniteType: 'EndminUlt',
             finishAfterIgnited: false,
-            sequence: {
-              steps: [
-                {
-                  kind: 'setContextFlag',
-                  parameters: { flag: 'second-map', value: true, target: 'caster' },
-                },
-              ],
-            },
+            sequence: chainEntry('ignite-second-map', [
+              {
+                kind: 'setContextFlag',
+                parameters: { flag: 'second-map', value: true, target: 'caster' },
+              },
+            ]),
           },
         ],
       );
@@ -2327,11 +2370,9 @@ it('物理后置 Buff 监听使用原始注册口并随启停注销，保留挂�
       {
         event: 'afterOutputPhysicalInfliction',
         priority: 3,
-        sequence: {
-          steps: [
-            { kind: 'setContextFlag', parameters: { flag: 'seen', value: true, target: 'caster' } },
-          ],
-        },
+        sequence: chainEntry('physical-listener-seen', [
+          { kind: 'setContextFlag', parameters: { flag: 'seen', value: true, target: 'caster' } },
+        ]),
       },
     ],
     (event, priority, handle) => {

@@ -4,7 +4,7 @@
  *
  * 组件复刻旧版四槽配装弹窗的布局与统一精锻交互，但只消费父层投影好的 Build；
  * 它不读取存档或旧 store，也不直接写入持久化数据。词条名称、当前数值和逐词条实例编辑均从
- * 当前 GearDefinition 投影；项目级模板编辑保持为另一个明确入口。
+ * 当前 GearDefinition 投影。装备定义编辑待图数据和模拟流程稳定后重新设计。
  */
 import { EaButton, EaDialog, EaDialogActions } from '../../../design-system/index';
 import { computed, ref, watch } from 'vue';
@@ -35,7 +35,6 @@ import GearInstanceDialog from './GearInstanceDialog.vue';
 const props = defineProps<{
   visible: boolean;
   gears: GearSlotsViewModel;
-  customDefinitionSlugs: readonly string[];
   gearSetNames: Readonly<Record<string, string>>;
   gearSetTextSlugs: Readonly<Record<string, string>>;
 }>();
@@ -43,7 +42,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:visible': [visible: boolean];
   update: [slot: LoadoutGearSlot, artificingLevels: readonly number[]];
-  'edit-definition': [slot: LoadoutGearSlot];
 }>();
 
 const { t, locale } = useI18n({ useScope: 'global' });
@@ -288,13 +286,6 @@ const activeSetBonuses = computed(() => {
             <div class="slot-actions">
               <EaButton size="sm" type="button" @click="editingSlot = slot.slot">
                 {{ t('actionLibrary.buttons.editItem') }}
-              </EaButton>
-              <EaButton size="sm" type="button" @click="emit('edit-definition', slot.slot)">
-                {{
-                  customDefinitionSlugs.includes(slot.build.gearSlug)
-                    ? t('timeline.customDefinition.editGear')
-                    : t('timeline.customDefinition.customizeGear')
-                }}
               </EaButton>
             </div>
           </template>

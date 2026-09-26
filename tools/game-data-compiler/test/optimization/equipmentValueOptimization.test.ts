@@ -1,24 +1,26 @@
 /** 用实际装备宿主、事件分发和动作执行器验证运行入口的黑板初值裁剪。 */
 import { describe, expect, it } from 'vitest';
-import type {
-  ActionSequenceDefinition,
-  CombatStepDefinition,
-  CombatStepForKind,
-} from '../../../../packages/game-data-contract/src/actions.ts';
+import type { CombatStepForKind } from '../../../../packages/game-data-contract/src/actions.ts';
 import type { CombatCondition } from '../../../../packages/game-data-contract/src/conditions.ts';
 import type { GearSetDefinition } from '../../../../packages/game-data-contract/src/equipment.ts';
 import { compileGearSetContribution } from '../../../../src/core/compiler/compileEquipment.ts';
+import { ActionGraphDefinitionRepository } from '../../../../src/core/compiler/actionGraphDefinitionRepository.ts';
 import { createNativeEventFixture } from '../../../../src/core/combat/events/nativeEventTestFixture.ts';
 import { ActionBlackboardOperationExecutor } from '../../../../src/core/combat/actions/actionBlackboardOperationExecutor.ts';
 import { resolveActionValueOperand } from '../../../../src/core/combat/actions/actionBlackboard.ts';
 import { CombatActionSequenceRuntime } from '../../../../src/core/combat/actions/combatActionSequenceRuntime.ts';
 import { EquipmentEventRuntime } from '../../../../src/core/combat/abilities/equipmentEventRuntime.ts';
 import { optimizeGearSetDefinitionPrograms } from '../../src/compiler/optimization/equipmentDefinitionOptimization.ts';
+import type {
+  ActionGraphNode,
+  ActionGraphReference,
+  ActionGraphResourceDefinition,
+  ActionGraphStep,
+} from '../../../../packages/game-data-contract/src/actionGraph.ts';
 
-const sequence = (...steps: CombatStepDefinition[]): ActionSequenceDefinition => ({ steps });
 const literal = (value: number) => ({ kind: 'constant' as const, value });
 const board = (key: string) => ({ kind: 'blackboard' as const, key });
-const spend = (key: string): CombatStepDefinition => ({
+const spend = (key: string): ActionGraphStep => ({
   kind: 'changeResourceByActionValue',
   parameters: { resource: 'sp', recipient: 'team', amount: board(key) },
 });
@@ -28,22 +30,44 @@ const gate = (key: string): CombatCondition => ({
   operator: 'greater',
   right: literal(0),
 });
-const scope = (
+const hit = { kind: 'damageTagHit', tag: 'normalSkill', scope: 'operator' } as const;
+
+/** 定义内的平铺动作串链；控制动作体内引用同一节点表。 */
+function chain(
+  nodes: Record<string, ActionGraphNode>,
+  prefix: string,
+  actions: readonly ActionGraphStep[],
+): ActionGraphReference {
+  actions.forEach((action, index) => {
+    nodes[`${prefix}-${index}`] = {
+      action,
+      next: index + 1 < actions.length ? `${prefix}-${index + 1}` : null,
+    };
+  });
+  return { $sequence: actions.length === 0 ? null : `${prefix}-0` };
+}
+
+const scopeBody = (
+  nodes: Record<string, ActionGraphNode>,
+  prefix: string,
   parameters: CombatStepForKind<'withActionBlackboardScope'>['parameters'],
-  ...steps: CombatStepDefinition[]
-): CombatStepDefinition => ({
+  ...steps: ActionGraphStep[]
+): ActionGraphStep => ({
   kind: 'withActionBlackboardScope',
   parameters,
-  body: sequence(...steps),
+  body: chain(nodes, `${prefix}-body`, steps),
 });
-const hit = { kind: 'damageTagHit', tag: 'normalSkill', scope: 'operator' } as const;
 
 /** 与装配器相同：启用/初始化和所有事件响应共享装备宿主的同一黑板。 */
 function executeContribution(definition: GearSetDefinition) {
-  const compiled = compileGearSetContribution(definition, {
-    main: 'agility',
-    secondary: 'intellect',
-  });
+  const compiled = compileGearSetContribution(
+    definition,
+    {
+      main: 'agility',
+      secondary: 'intellect',
+    },
+    new ActionGraphDefinitionRepository(),
+  );
   const native = createNativeEventFixture();
   const amounts: number[] = [];
   const operations = new ActionBlackboardOperationExecutor({
@@ -82,6 +106,7 @@ function executeContribution(definition: GearSetDefinition) {
 
 describe('有运行入口的装备贡献按键裁剪初值', () => {
   it('汇总启用、初始化及每个事件条件和序列；未触发入口仍保留所用键', () => {
+    const nodes: Record<string, ActionGraphNode> = {};
     const input: GearSetDefinition = {
       slug: 'runtime_fixture',
       blackboard: {
@@ -93,22 +118,23 @@ describe('有运行入口的装备贡献按键裁剪初值', () => {
         secondValue: 5,
         unused: 99,
       },
-      enableSequence: sequence(spend('enable')),
-      initializationSequence: sequence(spend('initialize')),
+      enableSequence: chain(nodes, 'enable', [spend('enable')]),
+      initializationSequence: chain(nodes, 'initialize', [spend('initialize')]),
       eventHandlers: [
         {
           key: 'first',
           event: hit,
           condition: gate('firstGate'),
-          sequence: sequence(spend('firstValue')),
+          sequence: chain(nodes, 'first', [spend('firstValue')]),
         },
         {
           key: 'second',
           event: hit,
           condition: gate('secondGate'),
-          sequence: sequence(spend('secondValue')),
+          sequence: chain(nodes, 'second', [spend('secondValue')]),
         },
       ],
+      actionGraph: { main: { nodes }, macros: {} },
     };
     const applied = optimizeGearSetDefinitionPrograms(input);
     expect(applied.report.equipmentValues[0]).toMatchObject({
@@ -134,33 +160,45 @@ describe('有运行入口的装备贡献按键裁剪初值', () => {
   });
 
   it('先删除不可达分支，再删除只有该分支使用的初值；行为入口仍保留', () => {
+    const nodes: Record<string, ActionGraphNode> = {};
+    const body = chain(nodes, 'body', [
+      {
+        kind: 'modifyActionValue',
+        parameters: { key: 'destination', operation: 'assign', value: board('source') },
+      },
+    ]);
     const input: GearSetDefinition = {
       slug: 'unreachable_fixture',
       blackboard: { source: 2, destination: 0 },
-      initializationSequence: sequence({
-        kind: 'conditional',
-        parameters: { condition: { kind: 'constant', value: false } },
-        whenTrue: sequence({
-          kind: 'modifyActionValue',
-          parameters: { key: 'destination', operation: 'assign', value: board('source') },
-        }),
-      }),
+      initializationSequence: chain(nodes, 'init', [
+        {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'constant', value: false } },
+          whenTrue: body,
+        },
+      ]),
+      actionGraph: { main: { nodes }, macros: {} },
     };
     const result = optimizeGearSetDefinitionPrograms(input);
     expect(result.definition.initializationSequence).toBeDefined();
     expect(result.report.after.steps).toBeLessThan(result.report.before.steps);
     expect(result.report.equipmentValues[0]?.removedInitialKeys).toEqual(['source', 'destination']);
+    // 当前因 prune 把删除的 blackboard 以 undefined 重写回定义而失败（已记录为生产缺陷）。
     expect(Object.hasOwn(result.definition, 'blackboard')).toBe(false);
   });
 
   it('只有写入而没有显式后续读取的键也保留旧值，维持 epsilon 赋值结果', () => {
+    const nodes: Record<string, ActionGraphNode> = {};
     const input: GearSetDefinition = {
       slug: 'epsilon_fixture',
       blackboard: { written: 3.000001, unused: 99 },
-      initializationSequence: sequence({
-        kind: 'modifyActionValue',
-        parameters: { key: 'written', operation: 'assign', value: literal(3) },
-      }),
+      initializationSequence: chain(nodes, 'init', [
+        {
+          kind: 'modifyActionValue',
+          parameters: { key: 'written', operation: 'assign', value: literal(3) },
+        },
+      ]),
+      actionGraph: { main: { nodes }, macros: {} },
     };
     const result = optimizeGearSetDefinitionPrograms(input);
     expect(result.definition.blackboard).toEqual({ written: 3.000001 });
@@ -170,11 +208,14 @@ describe('有运行入口的装备贡献按键裁剪初值', () => {
   });
 
   it('父值覆盖子初值，独立实体赋值仍读父板；子板自身数据不参与此次裁剪', () => {
+    const nodes: Record<string, ActionGraphNode> = {};
     const input: GearSetDefinition = {
       slug: 'scope_fixture',
       blackboard: { inherited: 7, assigned: 5, unused: 99 },
-      initializationSequence: sequence(
-        scope(
+      initializationSequence: chain(nodes, 'init', [
+        scopeBody(
+          nodes,
+          'inherited',
           {
             scopeKey: 'inherited',
             initialValues: { inherited: 1, childOnly: 9 },
@@ -182,7 +223,9 @@ describe('有运行入口的装备贡献按键裁剪初值', () => {
           },
           spend('inherited'),
         ),
-        scope(
+        scopeBody(
+          nodes,
+          'isolated',
           {
             scopeKey: 'isolated',
             initialValues: {},
@@ -192,7 +235,8 @@ describe('有运行入口的装备贡献按键裁剪初值', () => {
           },
           spend('childValue'),
         ),
-      ),
+      ]),
+      actionGraph: { main: { nodes }, macros: {} },
     };
     const result = optimizeGearSetDefinitionPrograms(input);
     expect(result.definition.blackboard).toEqual({ inherited: 7, assigned: 5 });
@@ -204,7 +248,24 @@ describe('有运行入口的装备贡献按键裁剪初值', () => {
   });
 
   it('投射物回调中仍有未解析实体传出时，即使包在隔离子作用域里也整板保留', () => {
-    const callback: CombatStepDefinition = {
+    const callbackNodes: Record<string, ActionGraphNode> = {
+      spawn: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            abilityEntityId: 'unresolved',
+            dieWhenSourceDies: false,
+            inheritActionBlackboard: true,
+          },
+        },
+        next: null,
+      },
+    };
+    const callbackGraph: ActionGraphResourceDefinition = {
+      main: { nodes: callbackNodes },
+      macros: {},
+    };
+    const callback: ActionGraphStep = {
       kind: 'launchProjectile',
       parameters: { finish: 1, recycleDelaySeconds: 1 },
       callbacks: [
@@ -215,19 +276,8 @@ describe('有运行入口的装备贡献按键裁剪初值', () => {
             nativeSkillType: 'normalSkill',
             naturalDurationFrames: 0,
             blackboard: {},
-            scheduledSequences: [
-              {
-                startFrame: 0,
-                sequence: sequence({
-                  kind: 'spawnAbilityEntity',
-                  parameters: {
-                    abilityEntityId: 'unresolved',
-                    dieWhenSourceDies: false,
-                    inheritActionBlackboard: true,
-                  },
-                }),
-              },
-            ],
+            scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'spawn' } }],
+            actionGraph: callbackGraph,
             castResource: {
               costFrame: 0,
               cooldownSeconds: 0,
@@ -238,16 +288,24 @@ describe('有运行入口的装备贡献按键裁剪初值', () => {
         },
       ],
     };
-    for (const step of [
-      callback,
-      scope({ scopeKey: 'callback', initialValues: {}, inheritParent: false }, callback),
-    ]) {
+    for (const wrap of [false, true] as const) {
+      const nodes: Record<string, ActionGraphNode> = {};
+      const step = wrap
+        ? scopeBody(
+            nodes,
+            'callback',
+            { scopeKey: 'callback', initialValues: {}, inheritParent: false },
+            callback,
+          )
+        : callback;
       const input: GearSetDefinition = {
         slug: 'callback_fixture',
         blackboard: { captured: 7, possiblyUsedLater: 99 },
-        initializationSequence: sequence(step),
+        initializationSequence: chain(nodes, 'init', [step]),
+        actionGraph: { main: { nodes }, macros: {} },
       };
       const result = optimizeGearSetDefinitionPrograms(input);
+      // 当前因优化管线先重建定义对象、不再保留未触碰黑板的引用身份而失败（已记录为生产缺陷）。
       expect(result.definition.blackboard).toBe(input.blackboard);
       expect(result.report.equipmentValues[0]).toMatchObject({
         removedInitialKeys: [],
@@ -257,6 +315,7 @@ describe('有运行入口的装备贡献按键裁剪初值', () => {
   });
 
   it('Buff 同名初值属于独立实例，只保留施加时从装备板读取的赋值来源', () => {
+    const nodes: Record<string, ActionGraphNode> = {};
     const input: GearSetDefinition = {
       slug: 'buff_fixture',
       blackboard: { duration: 99, transfer: 2 },
@@ -267,14 +326,17 @@ describe('有运行入口的装备贡献按键裁剪初值', () => {
           durationSeconds: { blackboardKey: 'duration' },
         },
       },
-      enableSequence: sequence({
-        kind: 'applyBuff',
-        parameters: {
-          buffId: 'independent_buff',
-          target: 'caster',
-          blackboardAssignments: { received: board('transfer') },
+      enableSequence: chain(nodes, 'enable', [
+        {
+          kind: 'applyBuff',
+          parameters: {
+            buffId: 'independent_buff',
+            target: 'caster',
+            blackboardAssignments: { received: board('transfer') },
+          },
         },
-      }),
+      ]),
+      actionGraph: { main: { nodes }, macros: {} },
     };
     const result = optimizeGearSetDefinitionPrograms(input);
     expect(result.definition.blackboard).toEqual({ transfer: 2 });
@@ -283,13 +345,17 @@ describe('有运行入口的装备贡献按键裁剪初值', () => {
   });
 
   it('不删除现有写入或缺键读取，缺失输入的错误保持可见', () => {
+    const nodes: Record<string, ActionGraphNode> = {};
     const input: GearSetDefinition = {
       slug: 'missing_fixture',
       blackboard: { destination: 0, unused: 99 },
-      initializationSequence: sequence({
-        kind: 'modifyActionValue',
-        parameters: { key: 'destination', operation: 'assign', value: board('missing') },
-      }),
+      initializationSequence: chain(nodes, 'init', [
+        {
+          kind: 'modifyActionValue',
+          parameters: { key: 'destination', operation: 'assign', value: board('missing') },
+        },
+      ]),
+      actionGraph: { main: { nodes }, macros: {} },
     };
     const result = optimizeGearSetDefinitionPrograms(input);
     expect(result.definition.blackboard).toEqual({ destination: 0 });

@@ -1,4 +1,8 @@
 import { projectGameplayTags } from '../combatProjectionCommon.ts';
+import {
+  createActionGraphBuilder,
+  type ActionGraphBuilder,
+} from '../actions/actionGraphBuilder.ts';
 import { mergeIndependentActionSequencesSource } from '../actions/independentActionSequences.ts';
 import { buffHasNoAffixIdentityWriter } from './buffCastIdentityProof.ts';
 import { projectPureDamageModifierCondition } from '../conditions/damageModifierConditionProjection.ts';
@@ -96,7 +100,7 @@ export type {
 } from '../combatProjectionCommon.ts';
 // Start/Enable 没有外部能力事件，Source 是创建者，Target/InputTarget 是持有者。
 // 生命周期执行器以 Buff 来源绑定 caster；不能从不存在的 event 中读取来源或目标。
-const BUFF_LIFECYCLE_CONTEXT: CombatActionProjectionContextSource = {
+const BUFF_LIFECYCLE_CONTEXT: Omit<CombatActionProjectionContextSource, 'graph'> = {
   actionOwnerTarget: 'buffOwner',
   actionSourceTarget: 'caster',
   actionTargetTarget: 'buffOwner',
@@ -104,7 +108,7 @@ const BUFF_LIFECYCLE_CONTEXT: CombatActionProjectionContextSource = {
 
 // Buff.BindAbilityEventEnvironment：205 的输入是新 Buff 施加者，
 // 但监听 Buff 的 ActionSource 始终是该监听器的创建者，不能用物理事件 sourceId 替代。
-const BUFF_BEFORE_ADDED_CONTEXT: CombatActionProjectionContextSource = {
+const BUFF_BEFORE_ADDED_CONTEXT: Omit<CombatActionProjectionContextSource, 'graph'> = {
   actionOwnerTarget: 'buffOwner',
   actionSourceTarget: 'buffSource',
   actionTargetTarget: 'eventSource',
@@ -114,7 +118,7 @@ const BUFF_BEFORE_ADDED_CONTEXT: CombatActionProjectionContextSource = {
 // 伤害与物理异常的受击侧事件都把本次来源作为动作 InputTarget；监听 Buff 自身的
 // ActionSource 仍是创建者。波格兰尼奇据此把终结技附加增益施加给异常来源，并在
 // 连携伤害分支用 SourceFinder(ActionSource) 与 Target 比较来源链。
-const BUFF_BEFORE_TAKE_CONTEXT: CombatActionProjectionContextSource = {
+const BUFF_BEFORE_TAKE_CONTEXT: Omit<CombatActionProjectionContextSource, 'graph'> = {
   actionOwnerTarget: 'buffOwner',
   actionSourceTarget: 'buffSource',
   actionTargetTarget: 'eventSource',
@@ -122,7 +126,7 @@ const BUFF_BEFORE_TAKE_CONTEXT: CombatActionProjectionContextSource = {
 };
 
 // OnIgnite 保留 Buff 的 Owner/Source；点燃者只作为输入 Target，施法信息临时取点燃动作环境。
-const BUFF_IGNITE_CONTEXT: CombatActionProjectionContextSource = {
+const BUFF_IGNITE_CONTEXT: Omit<CombatActionProjectionContextSource, 'graph'> = {
   actionOwnerTarget: 'buffOwner',
   actionSourceTarget: 'caster',
   actionTargetTarget: 'actionInputTarget',
@@ -185,6 +189,9 @@ export function compileBuffRuntimeDefinitionSource(
     | 'staticAbilityEntityTargetGroupKeys'
   > = {},
 ): CompiledBuffDefinitionSource {
+  const graph = createActionGraphBuilder<CompiledBuffStepSource>();
+  const mergeSequences = (sequences: readonly CompiledBuffSequenceSource[]) =>
+    mergeIndependentActionSequencesSource(sequences, 'native-buff-callback', graph.sequence);
   if (source.unsupportedPayloads.length > 0) {
     throw new Error(
       `unsupported Buff payloads: ${source.unsupportedPayloads.map(item => item.field).join(', ')}`,
@@ -402,6 +409,7 @@ export function compileBuffRuntimeDefinitionSource(
     }
   }
   const projectionContextOverrides = {
+    graph,
     gameplayTagRegistry: abilityEntityQueries?.gameplayTagRegistry,
     ...contextOverrides,
     ...(staticEnemyTargetGroupKeys.size === 0 ? {} : { staticEnemyTargetGroupKeys }),
@@ -480,7 +488,7 @@ export function compileBuffRuntimeDefinitionSource(
       extensions,
     );
     const main =
-      sequence.steps.length === 0
+      sequence.$sequence === null
         ? []
         : [{ startFrame: timeline.startFrame, endFrame: timeline.endFrame, sequence }];
     if (animationEndNodes.length === 0) return main;
@@ -498,7 +506,7 @@ export function compileBuffRuntimeDefinitionSource(
       },
       extensions,
     );
-    return onEnd.steps.length === 0
+    return onEnd.$sequence === null
       ? main
       : [...main, { startFrame: animationEndFrame, endFrame: animationEndFrame, sequence: onEnd }];
   });
@@ -553,11 +561,10 @@ export function compileBuffRuntimeDefinitionSource(
       );
       if (skillAffixBody !== null) {
         // 原生动作在序列末尾执行；前序失败时不得提前记录身份或建立监听。
-        target.push({
-          ...compiled,
-          steps: [...compiled.steps, { kind: 'skillAffix', parameters: {} }],
-        });
-      } else if (compiled.steps.length > 0) target.push(compiled);
+        target.push(
+          graph.sequence([...graph.actions(compiled), { kind: 'skillAffix', parameters: {} }]),
+        );
+      } else if (compiled.$sequence !== null) target.push(compiled);
     }
   }
   const effectiveOmittedAbilityEvents = new Set(omittedAbilityEvents);
@@ -581,7 +588,7 @@ export function compileBuffRuntimeDefinitionSource(
         ),
       );
       // 只省略经正常投影已证明没有任何战斗步骤的实体出生监听；未知动作仍由正式路径报错。
-      if (sequences.every(sequence => sequence.steps.length === 0)) {
+      if (sequences.every(sequence => sequence.$sequence === null)) {
         effectiveOmittedAbilityEvents.add(event.event);
       }
     } catch {
@@ -606,7 +613,7 @@ export function compileBuffRuntimeDefinitionSource(
       );
       // Next 只产生 CastNextSkill 中断；严格编译并证明该事件的所有分支在此模型下为空后，
       // 才省略尚未公开的 OnSkillInterrupted 事件，不吞未知条件或动作。
-      if (sequences.every(sequence => sequence.steps.length === 0)) {
+      if (sequences.every(sequence => sequence.$sequence === null)) {
         effectiveOmittedAbilityEvents.add(event.event);
       }
     } catch {
@@ -675,7 +682,7 @@ export function compileBuffRuntimeDefinitionSource(
                   },
           extensions,
         ),
-      isEmptySequence: sequence => sequence.steps.length === 0,
+      isEmptySequence: sequence => sequence.$sequence === null,
     },
   ).map(({ event, priority, sequence }) => ({ event, priority, sequence }));
   for (const qte of comboQteSources) {
@@ -688,23 +695,21 @@ export function compileBuffRuntimeDefinitionSource(
     abilityEventResponses.push({
       event: 'beforeCastSkill',
       priority: 0,
-      sequence: {
-        steps: [
-          {
-            kind: 'conditional',
-            parameters: {
-              condition: {
-                kind: 'all',
-                conditions: [
-                  { kind: 'eventSkillTypeIn', skillTypes: ['comboSkill'] },
-                  { kind: 'eventComboRingQteSucceeded' },
-                ],
-              },
+      sequence: graph.sequence([
+        {
+          kind: 'conditional',
+          parameters: {
+            condition: {
+              kind: 'all',
+              conditions: [
+                { kind: 'eventSkillTypeIn', skillTypes: ['comboSkill'] },
+                { kind: 'eventComboRingQteSucceeded' },
+              ],
             },
-            whenTrue: triggeredAction,
           },
-        ],
-      },
+          whenTrue: triggeredAction,
+        },
+      ]),
     });
   }
   const igniteEventResponses = source.graph.igniteEvents.map(event => ({
@@ -728,7 +733,7 @@ export function compileBuffRuntimeDefinitionSource(
   const blackboard = Object.fromEntries(
     source.graph.declaredBlackboard.map(item => [item.key, item.value]),
   );
-  return {
+  const definition = {
     stackingType: STACKING_TYPES[source.lifecycle.stackingType],
     ...(source.lifecycle.stackingIdentifierType === 'StackingKey'
       ? { stackingKey: source.lifecycle.stackingKey }
@@ -834,6 +839,7 @@ export function compileBuffRuntimeDefinitionSource(
     ...(abilityEventResponses.length === 0 ? {} : { abilityEventResponses }),
     ...(igniteEventResponses.length === 0 ? {} : { igniteEventResponses }),
   };
+  return { ...definition, actionGraph: { main: graph.finish(), macros: {} } };
 }
 
 /**
@@ -887,7 +893,7 @@ function splitDirectSkillAffixSequence(
 
 function compileBuffDamageModifiers(
   source: BuffRuntimeSource,
-  context: Pick<CombatActionProjectionContextSource, 'gameplayTagRegistry'>,
+  context: Pick<CombatActionProjectionContextSource, 'gameplayTagRegistry' | 'graph'>,
 ): {
   readonly damageModifiers?: readonly CompiledBuffDamageModifierSource[];
 } {
@@ -1228,7 +1234,7 @@ function compileDamageModifierCondition(
   modifierIndex: number,
   context: Pick<
     CombatActionProjectionContextSource,
-    'gameplayTagRegistry' | 'fixedBuffOwnerTarget' | 'fixedBuffSourceTarget'
+    'gameplayTagRegistry' | 'fixedBuffOwnerTarget' | 'fixedBuffSourceTarget' | 'graph'
   >,
   side: DamageModifierSide,
 ): Pick<CompiledBuffDamageModifierSource, 'condition' | 'conditionProgram'> {
@@ -1242,29 +1248,32 @@ function compileDamageModifierCondition(
   });
   const path = `damageModifier[${modifierIndex}].condition`;
   try {
-    const condition = projectPureDamageModifierCondition(program, path);
+    const condition = projectPureDamageModifierCondition(context.graph.finish(), program, path);
     return condition === undefined ? {} : { condition };
   } catch (error) {
-    assertSynchronousDamageModifierConditionProgram(program, path, error);
+    assertSynchronousDamageModifierConditionProgram(context.graph, program, path, error);
     return { conditionProgram: program };
   }
 }
 
 function assertSynchronousDamageModifierConditionProgram(
+  graph: ActionGraphBuilder<CompiledBuffStepSource>,
   sequence: CompiledBuffSequenceSource,
   path: string,
   originalError: unknown,
 ): void {
-  for (const [index, step] of sequence.steps.entries()) {
+  for (const [index, step] of graph.actions(sequence).entries()) {
     const stepPath = `${path}.steps[${index}]`;
     if (step.kind === 'conditional') {
       assertSynchronousDamageModifierConditionProgram(
+        graph,
         step.whenTrue,
         `${stepPath}.whenTrue`,
         originalError,
       );
       if (step.whenFalse !== undefined)
         assertSynchronousDamageModifierConditionProgram(
+          graph,
           step.whenFalse,
           `${stepPath}.whenFalse`,
           originalError,
@@ -1305,7 +1314,7 @@ export function compileCombatConditionSequenceSource(
 function compileLinearSequence(
   source: NativeSequenceSource<KnownNativeActionLeafSource>,
   visualOnlyIds: ReadonlySet<string>,
-  context: CombatActionProjectionContextSource = BUFF_ACTION_CONTEXT,
+  context: CombatActionProjectionContextSource,
   extensions: CombatActionProjectionExtensionsSource = {},
 ): CompiledBuffSequenceSource {
   assertSpatialContextWriteIsolation(source);
@@ -1321,7 +1330,7 @@ function compileLinearSequence(
           ),
       )
   ) {
-    return { steps: [] };
+    return { $sequence: null };
   }
   const result = compileActionSequenceProgram(
     source,
@@ -1334,7 +1343,7 @@ function compileLinearSequence(
   );
   // 先按既有固定命中/零空间边界投影，再检查仍被消费的值。
   // 角度可改变原生范围，但被整体省略的选点分支不再是 Next 数值消费者。
-  assertPresentationCalculationIsolation([source], [result]);
+  assertPresentationCalculationIsolation([source], [result], context.graph);
   return result;
 }
 
@@ -1440,6 +1449,7 @@ function createBuffSequenceProjection(
     return { ...compiled, state: nextState };
   };
   return {
+    sequence: context.graph.sequence,
     initialState: () =>
       new Map<string, BuffProjectionTargetGroup>([
         ...[...(context.operatorTargetGroupKeys ?? [])].map(
@@ -1502,7 +1512,7 @@ function createBuffSequenceProjection(
         ...createBuffSequenceProjection(visualOnlyIds, context, extensions),
         initialState: () => state,
       });
-      if (callback.steps.length > 0) {
+      if (callback.$sequence !== null) {
         throw new Error(
           `${node.sourcePath}: combat-visible targetPointInvalid callback requires native trigger projection`,
         );
@@ -1638,11 +1648,11 @@ function createBuffSequenceProjection(
             },
             nestedOptions,
           );
-          if (JSON.stringify(whenTrue.steps) === JSON.stringify(whenFalse.steps)) {
+          if (context.graph.equivalent(whenTrue, whenFalse)) {
             // 随机值只选择投影后完全相同的战斗分支；保留任一分支即可，不能为表现差异
             // 引入一套虚假的战斗随机数语义。分支内部的随机对会递归应用同一证明。
             return {
-              steps: [...whenTrue.steps],
+              steps: [...context.graph.actions(whenTrue)],
               state: partyTargetGroups,
               consumedNodeCount: branchIndex + 1,
             };
@@ -1781,7 +1791,7 @@ function createBuffSequenceProjection(
           initialState: () => partyTargetGroups,
         });
         return {
-          steps: body.steps,
+          steps: context.graph.actions(body),
           state: partyTargetGroups,
           consumedNodeCount: 1,
         };
@@ -1872,7 +1882,7 @@ function createBuffSequenceProjection(
           ...createBuffSequenceProjection(visualOnlyIds, loopContext, extensions),
           initialState: () => partyTargetGroups,
         });
-        if (body.steps.length === 0) {
+        if (body.$sequence === null) {
           // 该直接查询只给匹配的召唤实体挂无图标、无战斗状态的表现 Buff。先完整编译
           // 子树证明零输出，再省略迭代；一旦子 Buff 获得可见战斗语义，此处会继续严格失败。
           return { steps: [], state: partyTargetGroups };
@@ -2064,7 +2074,7 @@ function createBuffSequenceProjection(
           resultIsConsumed: true,
         }),
       }));
-      if (options.every(option => option.sequence.steps.length === 0)) {
+      if (options.every(option => option.sequence.$sequence === null)) {
         return { steps: [], state: targetGroups };
       }
       return {
@@ -2109,7 +2119,7 @@ function createBuffSequenceProjection(
         ...createBuffSequenceProjection(visualOnlyIds, context, extensions),
         initialState: () => partyTargetGroups,
       });
-      if (body.steps.length === 0) {
+      if (body.$sequence === null) {
         // 嵌套空分支、木桩受击表现等可能不能靠直接子节点 family 判断；先由同一公共
         // 投影递归验证整棵子树。若结果完全为空，DoOnce 的已执行状态也没有战斗消费者。
         return { steps: [], state: partyTargetGroups };
@@ -2232,9 +2242,9 @@ function createBuffSequenceProjection(
         steps: groupedParty
           ? [
               {
-                kind: 'forEachContextTarget',
+                kind: 'forEachContextTarget' as const,
                 parameters: { contextKey: target.targetGroupKey },
-                body: { steps: [repeated] },
+                body: context.graph.sequence([repeated]),
               },
             ]
           : [repeated],
@@ -2271,13 +2281,13 @@ function createBuffSequenceProjection(
     },
     canOmitIfElse: node => isCombatInvisibleIfElse(node, context),
     areEquivalentIfElseBranches: (whenTrue, whenFalse) =>
-      JSON.stringify(whenTrue.steps) === JSON.stringify(whenFalse.steps),
+      JSON.stringify(whenTrue) === JSON.stringify(whenFalse),
     canOmitTogglable: node => isCombatInvisibleTogglable(node),
     createConditionalStep: ({ condition, whenTrue, whenFalse, alwaysNext }) => ({
       kind: 'conditional',
       parameters: { condition, ...(alwaysNext ? { alwaysNext: true } : {}) },
-      whenTrue: { steps: [...whenTrue.steps] },
-      ...(whenFalse === undefined ? {} : { whenFalse: { steps: [...whenFalse.steps] } }),
+      whenTrue,
+      ...(whenFalse === undefined ? {} : { whenFalse }),
     }),
     rootFilterError: 'sequence owner/guard root filters are not yet supported',
     unsupportedNodeError: node => `${node.sourcePath}: unsupported Buff runtime action`,
@@ -2652,7 +2662,7 @@ function compileEventListenerNode(
         ),
         initialState: () => targetGroups,
       });
-      if (event === 'skillEnd' && sequence.steps.length !== 0) {
+      if (event === 'skillEnd' && sequence.$sequence !== null) {
         throw new Error(`${sourcePath}: unsupported ability event "OnSkillEnd"`);
       }
       return { key: sourcePath, sequence, omit: event === 'skillEnd' };
@@ -2853,7 +2863,7 @@ function compileBuffOwnerCharacterTypeGate(
     { ...branch.body.whenFalse, actions: naturalActions.slice(1) },
     projection,
   );
-  if (JSON.stringify(pulse.steps) !== JSON.stringify(natural.steps)) {
+  if (!context.graph.equivalent(pulse, natural)) {
     throw new Error(`${branch.sourcePath}: Pulse and Natural character-type branches diverge`);
   }
   return {
@@ -3124,15 +3134,6 @@ function compilePresentation(source: BuffPresentationSource): CompiledBuffPresen
 
 function signed(value: number, negate: boolean): number {
   return negate ? -value : value;
-}
-
-function mergeSequences(
-  sequences: readonly CompiledBuffSequenceSource[],
-): CompiledBuffSequenceSource {
-  // BuffEventAction / IgniteEventAction 的 actions 数组是彼此独立的回调序列：
-  // 单个回调可以按原生返回值短路自身，但失败不能阻止后续回调执行。
-  // 它们仍属于同一 Buff 实例，必须共享 Buff direct blackboard，不能把前一回调的写入丢掉。
-  return mergeIndependentActionSequencesSource(sequences, 'native-buff-callback');
 }
 
 const STACKING_TYPES: Record<BuffStackingTypeSource, BuffStackingType> = {

@@ -11,6 +11,39 @@ const CONDITION_META = {
 } as const;
 
 describe('公共条件叶子 IR', () => {
+  it('原始 SkillData 的技能类型数字枚举与已解码名称一致', () => {
+    const payload = {
+      checkTargetCurSkill: false,
+      skillOwner: targetFixture('Owner'),
+      mustBeforeExclusiveTime: false,
+      attackTypeMask: 'All',
+    };
+    const numeric = parseConditionLeafSource(
+      condition('CheckSkillType', { ...payload, skillTypeList: [2, 6] }),
+      'SkillData.native.condition',
+      {},
+    );
+    const named = parseConditionLeafSource(
+      condition('CheckSkillType', { ...payload, skillTypeList: ['NormalSkill', 'ComboSkill'] }),
+      'SkillData.named.condition',
+      {},
+    );
+    expect(numeric).toEqual(named);
+  });
+  it('原始 SkillData 的伤害分类比较枚举与已解码名称一致', () => {
+    const numeric = parseConditionLeafSource(
+      condition('CheckDamageDecorateMask', { checkType: 2, mask: 256 }),
+      'SkillData.native.condition',
+      {},
+    );
+    const named = parseConditionLeafSource(
+      condition('CheckDamageDecorateMask', { checkType: 'HasAll', mask: 256 }),
+      'SkillData.named.condition',
+      {},
+    );
+    expect(numeric).toMatchObject({ kind: 'damageDecorateMask', checkType: 'HasAll', mask: 256 });
+    expect(numeric).toEqual(named);
+  });
   it('严格保留 OnObtainAtb 的获取类型与方式筛选', () => {
     expect(
       parseConditionLeafSource(

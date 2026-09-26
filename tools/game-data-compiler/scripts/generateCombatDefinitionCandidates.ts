@@ -10,6 +10,7 @@ import {
 } from './generateOperatorDefinitionCandidates.ts';
 import { compileEntityValueConsumers } from './compileEntityValueConsumers.ts';
 import { renderWeaponDefinitionsFromCompiled } from './generateWeaponDefinitions.ts';
+import { formatGeneratedSource } from './formatGeneratedSource.ts';
 import { renderGearDefinitionsFromCompiled } from './generateGearDefinitions.ts';
 import { renderGearSetDefinitionsFromCompiled } from './generateGearSetDefinitions.ts';
 import { renderContingencyContractDefinitionsFromCompiled } from './generateContingencyContractDefinitions.ts';
@@ -127,8 +128,18 @@ export async function generateCombatDefinitionCandidates(args: CombatDefinitionC
     },
   );
   for (const output of outputs) {
-    if (args.check) checkGeneratedDefinitionFiles(output.directory, output.files);
-    else await writeGeneratedDefinitionFiles(output.directory, output.files);
+    const files: RenderedDefinitionFileSource[] = [];
+    for (const file of output.files) {
+      files.push({
+        ...file,
+        content: await formatGeneratedSource(
+          file.content,
+          path.join(output.directory, file.relativePath),
+        ),
+      });
+    }
+    if (args.check) checkGeneratedDefinitionFiles(output.directory, files);
+    else await writeGeneratedDefinitionFiles(output.directory, files);
   }
   return { operators: operators.summary, equipment };
 }

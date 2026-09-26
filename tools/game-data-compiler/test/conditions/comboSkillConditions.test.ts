@@ -8,6 +8,11 @@ import {
 import { compileAbilitySystemBlackboardsSource } from '../../src/compiler/abilities/abilitySystemBlackboards.ts';
 import { parseAbilitySystemBlackboardsSource } from '../../src/source/abilitySystemBlackboards.ts';
 import { scalarFixture, targetFixture } from '../sourceFixtures.ts';
+import { readActionGraphChain } from '../../src/compiler/actions/actionGraphBuilder.ts';
+
+/** 读取编译结果的入口同层动作；图节点留在 result.actionGraph 内。 */
+const chainOf = (result: ReturnType<typeof compilePendingComboConditionSource>) =>
+  readActionGraphChain(result.actionGraph.main, result.sequence);
 
 const context = {
   gameplayTagRegistry: fixtureGameplayTagRegistry,
@@ -44,7 +49,7 @@ describe('公共连携条件来源与 Pending 编译', () => {
       },
     ];
     const source = parse([entry])[0]!;
-    expect(compilePendingComboConditionSource(source, context).sequence.steps[0]).toMatchObject({
+    expect(chainOf(compilePendingComboConditionSource(source, context))[0]).toMatchObject({
       parameters: { condition: { kind: 'casterComboPending' } },
     });
     expect(() =>
@@ -96,7 +101,8 @@ describe('公共连携条件来源与 Pending 编译', () => {
       event: 'beforeTakeInfliction',
       immediately: false,
       initialValues: enabled ? { local: 3 } : null,
-      sequence: { steps: [] },
+      sequence: { $sequence: null },
+      actionGraph: { main: { nodes: {} }, macros: {} },
     });
     expect(result.source.condition).toBe(source);
     expect(result.source.blackboards).toBe(blackboards.source);
@@ -149,16 +155,11 @@ describe('公共连携条件来源与 Pending 编译', () => {
       },
     ];
     const source = parse([value])[0]!;
-    expect(compilePendingComboConditionSource(source, context)).toMatchObject({
-      event: 'beforeTakeInfliction',
-      sequence: {
-        steps: [
-          {
-            parameters: {
-              condition: { kind: 'actionInputTargetObjectTypeMatch', objectTypes: ['enemy'] },
-            },
-          },
-        ],
+    const compiled = compilePendingComboConditionSource(source, context);
+    expect(compiled.event).toBe('beforeTakeInfliction');
+    expect(chainOf(compiled)[0]).toMatchObject({
+      parameters: {
+        condition: { kind: 'actionInputTargetObjectTypeMatch', objectTypes: ['enemy'] },
       },
     });
   });
@@ -177,22 +178,18 @@ describe('公共连携条件来源与 Pending 编译', () => {
         value: scalarFixture(0.4),
       },
     ];
-    expect(compilePendingComboConditionSource(parse([value])[0]!, context)).toMatchObject({
-      sequence: {
-        steps: [
-          {
-            parameters: {
-              condition: {
-                kind: 'healthCompare',
-                target: 'contextTarget',
-                contextKey: 'trigger',
-                valueType: 'ratio',
-                operator: 'less',
-                value: { kind: 'constant', value: 0.4 },
-              },
-            },
-          },
-        ],
+    expect(
+      chainOf(compilePendingComboConditionSource(parse([value])[0]!, context))[0],
+    ).toMatchObject({
+      parameters: {
+        condition: {
+          kind: 'healthCompare',
+          target: 'contextTarget',
+          contextKey: 'trigger',
+          valueType: 'ratio',
+          operator: 'less',
+          value: { kind: 'constant', value: 0.4 },
+        },
       },
     });
   });
@@ -211,21 +208,17 @@ describe('公共连携条件来源与 Pending 编译', () => {
         value: scalarFixture(3),
       },
     ];
-    expect(compilePendingComboConditionSource(parse([value])[0]!, context)).toMatchObject({
-      sequence: {
-        steps: [
-          {
-            parameters: {
-              condition: {
-                kind: 'contextTargetBuffIdStackCompare',
-                contextKey: 'trigger',
-                buffIds: ['buff_physical_no_guard'],
-                operator: 'greaterOrEqual',
-                value: { kind: 'constant', value: 3 },
-              },
-            },
-          },
-        ],
+    expect(
+      chainOf(compilePendingComboConditionSource(parse([value])[0]!, context))[0],
+    ).toMatchObject({
+      parameters: {
+        condition: {
+          kind: 'contextTargetBuffIdStackCompare',
+          contextKey: 'trigger',
+          buffIds: ['buff_physical_no_guard'],
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 3 },
+        },
       },
     });
   });
@@ -248,7 +241,9 @@ describe('公共连携条件来源与 Pending 编译', () => {
   ] as const)('原生事件 %s → %s', (id, event) => {
     const source = parse([record(id)])[0]!;
     const result = compilePendingComboConditionSource(source, context);
-    expect(result).toEqual({ source, event, sequence: { steps: [] } });
+    expect(result.source).toBe(source);
+    expect(result.event).toBe(event);
+    expect(result.sequence).toEqual({ $sequence: null });
     expect(result.source.sourcePath).toBe('bundle.comboSkillConditions[0]');
   });
   it('OnTakeDamage 的 Burst 掩码由公共伤害条件投影为四种可读标签', () => {
@@ -264,20 +259,15 @@ describe('公共连携条件来源与 Pending 编译', () => {
         mask: 62914560,
       },
     ];
-    expect(compilePendingComboConditionSource(parse([value])[0]!, context)).toMatchObject({
-      event: 'takeDamage',
-      sequence: {
-        steps: [
-          {
-            parameters: {
-              condition: {
-                kind: 'eventDamageTagsMatch',
-                match: 'hasAny',
-                tags: ['fireBurst', 'cryoBurst', 'electricBurst', 'natureBurst'],
-              },
-            },
-          },
-        ],
+    const compiled = compilePendingComboConditionSource(parse([value])[0]!, context);
+    expect(compiled.event).toBe('takeDamage');
+    expect(chainOf(compiled)[0]).toMatchObject({
+      parameters: {
+        condition: {
+          kind: 'eventDamageTagsMatch',
+          match: 'hasAny',
+          tags: ['fireBurst', 'cryoBurst', 'electricBurst', 'natureBurst'],
+        },
       },
     });
   });
@@ -310,17 +300,11 @@ describe('公共连携条件来源与 Pending 编译', () => {
         serverActionIndex: 1000,
       },
     ];
-    expect(compilePendingComboConditionSource(parse([value])[0]!, context)).toMatchObject({
-      sequence: {
-        steps: [
-          {
-            kind: 'conditional',
-            parameters: { condition: { kind: 'constant', value: false } },
-            whenTrue: { steps: [] },
-          },
-        ],
-      },
-    });
+    const compiled = compilePendingComboConditionSource(parse([value])[0]!, context);
+    const conditional = chainOf(compiled)[0];
+    if (conditional?.kind !== 'conditional') throw new Error('expected conditional');
+    expect(conditional.parameters.condition).toEqual({ kind: 'constant', value: false });
+    expect(conditional.whenTrue).toEqual({ $sequence: null });
   });
   it.each(['onlyExecuteWhenSourceIsMainChar', 'onlyExecuteWhenSourceIsGuard'] as const)(
     '尚未接通 %s 时严格失败',

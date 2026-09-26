@@ -1,4 +1,5 @@
 import { parseNativeCalculationSource, type NativeCalculationSource } from './calculation.ts';
+import { readModifierSide } from './nativeEnums.ts';
 import {
   nativeActionName,
   requireArray,
@@ -444,7 +445,7 @@ export function parseDamageProcessors(
       );
       return {
         kind: 'damageScale',
-        side: requireNonEmptyString(processor.side, `${processorPath}.side`),
+        side: readModifierSide(processor.side, `${processorPath}.side`),
         zoneName: requireNonEmptyString(processor.zoneName, `${processorPath}.zoneName`),
         addition: parseScalarSource(
           processor.addition,

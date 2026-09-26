@@ -6,23 +6,21 @@ import { createEmptyProject, createEmptyScenario } from './createProject';
 import { validateProjectWithGameData } from './definitionValidation';
 import { parseProjectDocument, serializeProjectDocument } from './serialization';
 import type { GearDefinition, WeaponDefinition } from '../game-data/equipmentDefinition';
+
+import { withProjectOperatorTemplate } from '../../test/projectOperatorTemplateFixture';
 import {
-  allocateProjectTemplateId,
   createProjectGameDataRepository,
   deriveProjectGearTemplate,
   deriveProjectGearSetTemplateInLibrary,
   deriveProjectGearSetTemplate,
   deriveProjectGearTemplateInLibrary,
-  deriveProjectOperatorTemplate,
   deriveProjectWeaponTemplate,
   deriveProjectWeaponTemplateInLibrary,
   getProjectDefinitionLibrary,
   replaceProjectGearTemplateDefinition,
   replaceProjectGearSetTemplateDefinition,
-  replaceProjectOperatorTemplateDefinition,
   replaceProjectWeaponTemplateDefinition,
   switchTrackToCompatibleGearTemplate,
-  switchTrackToCompatibleOperatorTemplate,
   switchTrackToCompatibleWeaponTemplate,
 } from './projectDefinitionLibrary';
 
@@ -39,32 +37,16 @@ function operatorInstance(operatorSlug: string) {
 }
 
 describe('projectDefinitionLibrary', () => {
-  it('allocates template ids from persisted library contents instead of page state', () => {
-    const library = {
-      operators: {
-        'project:operator:2': {} as never,
-        'project:operator:named': {} as never,
-        'project:operator:7': {} as never,
-      },
-      weapons: {},
-      gears: {},
-      gearSets: {},
-    };
-
-    expect(allocateProjectTemplateId(library, 'operator')).toBe('project:operator:8');
-    expect(allocateProjectTemplateId(library, 'weapon')).toBe('project:weapon:1');
-  });
-
-  it('materializes a project operator template with immutable project identity and provenance', () => {
+  it('reads a saved operator template with its project identity and provenance', () => {
     const project = createEmptyProject({
       createdWith: 'test',
     });
-    const next = deriveProjectOperatorTemplate(project, {
-      id: 'project:operator:perlica-copy',
-      name: '自定义佩丽卡',
-      baseTemplateId: perlica.slug,
-      definition: perlica,
-    });
+    const next = withProjectOperatorTemplate(
+      project,
+      'project:operator:perlica-copy',
+      '自定义佩丽卡',
+      perlica,
+    );
 
     const template = getProjectDefinitionLibrary(next).operators['project:operator:perlica-copy']!;
     expect(template.definition.slug).toBe('project:operator:perlica-copy');
@@ -78,12 +60,12 @@ describe('projectDefinitionLibrary', () => {
 
   it('exposes project templates to the same repository used by selectors and compilers', () => {
     const base = createGameDataRepository({ revision: 'definitions:test', operators: [perlica] });
-    const project = deriveProjectOperatorTemplate(createEmptyProject({ createdWith: 'test' }), {
-      id: 'project:operator:perlica-copy',
-      name: '自定义佩丽卡',
-      baseTemplateId: perlica.slug,
-      definition: perlica,
-    });
+    const project = withProjectOperatorTemplate(
+      createEmptyProject({ createdWith: 'test' }),
+      'project:operator:perlica-copy',
+      '自定义佩丽卡',
+      perlica,
+    );
     const repository = createProjectGameDataRepository(base, getProjectDefinitionLibrary(project));
 
     expect(repository.getOperator('project:operator:perlica-copy')?.assetSlug).toBe('perlica');
@@ -333,96 +315,14 @@ describe('projectDefinitionLibrary', () => {
     ).toThrow(/invalid project gear set definition/);
   });
 
-  it('switches a track to a freshly derived compatible template without changing casts', () => {
-    const scenario = createEmptyScenario('scenario', 'Scenario');
-    const battleGroup = perlica.skillGroups.find(group => group.key === 'battleSkill')!;
-    const battleSkill = Array.isArray(battleGroup.skills)
-      ? battleGroup.skills[0]!
-      : battleGroup.skills;
-    scenario.tracks[0] = {
-      id: 'track:1',
-      operator: operatorInstance(perlica.slug),
-      weapon: null,
-      gears: { armor: null, gloves: null, accessory1: null, accessory2: null },
-      initialState: { ultimateEnergy: 0 },
-      skillCasts: [
-        {
-          id: 'cast:1',
-          source: {
-            kind: 'operatorSkill',
-            skillGroupKey: battleGroup.key,
-            skillKey: battleSkill.key,
-          },
-          placement: { startFrame: 30 },
-        },
-      ],
-    };
-    const custom = structuredClone({ ...perlica, slug: 'project:operator:perlica-copy' });
-
-    const next = switchTrackToCompatibleOperatorTemplate(scenario, 0, perlica, custom.slug, custom);
-
-    expect(next.tracks[0]!.operator?.operatorSlug).toBe(custom.slug);
-    expect(next.tracks[0]!.skillCasts).toEqual(scenario.tracks[0]!.skillCasts);
-    expect(next.tracks[0]!.skillCasts).toBe(scenario.tracks[0]!.skillCasts);
-  });
-
-  it('atomically replaces an operator definition only while every placed skill remains valid', () => {
-    const templateId = 'project:operator:replace-guard';
-    let project = deriveProjectOperatorTemplate(createEmptyProject({ createdWith: 'test' }), {
-      id: templateId,
-      name: '干员替换边界',
-      baseTemplateId: perlica.slug,
-      definition: perlica,
-    });
-    const definition = getProjectDefinitionLibrary(project).operators[templateId]!.definition;
-    const battleGroup = definition.skillGroups.find(group => group.key === 'battleSkill')!;
-    const battleSkill = Array.isArray(battleGroup.skills)
-      ? battleGroup.skills[0]!
-      : battleGroup.skills;
-    const scenario = createEmptyScenario('operator-replace', 'Operator replace');
-    scenario.tracks[0] = {
-      id: 'track:operator-replace',
-      operator: operatorInstance(templateId),
-      weapon: null,
-      gears: { armor: null, gloves: null, accessory1: null, accessory2: null },
-      initialState: { ultimateEnergy: 0 },
-      skillCasts: [
-        {
-          id: 'cast:operator-replace',
-          source: {
-            kind: 'operatorSkill',
-            skillGroupKey: battleGroup.key,
-            skillKey: battleSkill.key,
-          },
-          placement: { startFrame: 30 },
-        },
-      ],
-    };
-    project = { ...project, scenarios: [scenario], activeScenarioId: scenario.id };
-
-    const replaced = replaceProjectOperatorTemplateDefinition(project, templateId, {
-      ...definition,
-      displayName: '已修改干员',
-    });
-    expect(getProjectDefinitionLibrary(replaced).operators[templateId]?.name).toBe('已修改干员');
-    expect(replaced.scenarios).toBe(project.scenarios);
-
-    expect(() =>
-      replaceProjectOperatorTemplateDefinition(project, templateId, {
-        ...definition,
-        skillGroups: definition.skillGroups.filter(group => group.key !== battleGroup.key),
-      }),
-    ).toThrow(/cannot preserve cast 'cast:operator-replace'/);
-  });
-
   it('round-trips project templates and resolves their instances through base-data validation', () => {
     const base = createGameDataRepository({ revision: 'definitions:test', operators: [perlica] });
-    let project = deriveProjectOperatorTemplate(createEmptyProject({ createdWith: 'test' }), {
-      id: 'project:operator:persisted',
-      name: '项目干员',
-      baseTemplateId: perlica.slug,
-      definition: perlica,
-    });
+    let project = withProjectOperatorTemplate(
+      createEmptyProject({ createdWith: 'test' }),
+      'project:operator:persisted',
+      '项目干员',
+      perlica,
+    );
     const scenario = project.scenarios[0]!;
     scenario.tracks[0] = {
       id: 'track:project-template',
@@ -434,7 +334,8 @@ describe('projectDefinitionLibrary', () => {
     };
     project = { ...project, scenarios: [scenario] };
 
-    expect(validateProjectWithGameData(project, base).ok).toBe(true);
+    const validation = validateProjectWithGameData(project, base);
+    expect(validation.ok, JSON.stringify(validation)).toBe(true);
     const parsed = parseProjectDocument(serializeProjectDocument(project));
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) return;

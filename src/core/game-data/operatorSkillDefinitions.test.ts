@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { emptyActionGraph } from '../../test/compiledGraphEntry';
 import type { SkillDefinition, SkillGroupDefinition } from './operatorDefinition';
 import { listSkillGroupDefinitionBindings } from './operatorSkillDefinitions';
 
@@ -10,6 +11,7 @@ function skill(key: string): SkillDefinition {
     levelSource: 'battleSkill',
     timelineBlockFrames: 1,
     scheduledSequences: [],
+    actionGraph: emptyActionGraph(),
   };
 }
 

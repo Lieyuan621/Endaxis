@@ -15,7 +15,7 @@ import type {
   OperatorRole,
 } from '../../game-data/operatorDefinition';
 import { resolveActionValueOperand } from './actionBlackboard';
-import { compareCombatNumbers } from '../../../../packages/game-data-contract/src/primitives';
+import { compareCombatNumbers } from '../../mechanics/combatNumbers.ts';
 import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
 import type { ProbabilitySampleSource } from '../random/probabilitySampleSource';
 import type { ResolvedCombatStepParameters } from '../../compiler/combatProgram';

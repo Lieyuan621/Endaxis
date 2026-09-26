@@ -1,5 +1,10 @@
 import { expect, it } from 'vitest';
-import type { CompiledOperatorInitializationProgram } from '../../../compiler/combatProgram';
+import type {
+  CompiledGraphEntry,
+  CompiledOperatorInitializationProgram,
+} from '../../../compiler/combatProgram';
+import { createActionGraphCompilation } from '../../../compiler/compileActionGraph';
+import type { ActionGraphStep } from '../../../../../packages/game-data-contract/src/actionGraph';
 import { ActionBlackboard } from '../../actions/actionBlackboard';
 import { CombatActionSequenceRuntime } from '../../actions/combatActionSequenceRuntime';
 import { createCombatOperationHostState } from '../../state/actionState';
@@ -8,21 +13,36 @@ import { CombatOperationPrograms } from '../../actions/combatOperationPrograms';
 import { CombatSemanticEventRuntime } from '../../events/combatSemanticEventRuntime';
 import { EquipmentEventRuntime } from '../../abilities/equipmentEventRuntime';
 
+const chainEntry = (revision: string, actions: readonly ActionGraphStep[]): CompiledGraphEntry => {
+  const nodes: Record<string, { action: ActionGraphStep; next: string | null }> = {};
+  actions.forEach((action, index) => {
+    nodes[`step-${index}`] = {
+      action,
+      next: index + 1 < actions.length ? `step-${index + 1}` : null,
+    };
+  });
+  return {
+    graph: createActionGraphCompilation({ nodes }, 1, revision).compileAll(),
+    entry: actions.length === 0 ? null : 'step-0',
+    callSite: revision,
+  };
+};
+
+const emptySequence = chainEntry('operator-init-empty', []);
+
 const program: CompiledOperatorInitializationProgram = {
   key: 'potential:init',
   initialBlackboard: { value: 1 },
-  sequence: {
-    steps: [
-      {
-        kind: 'modifyActionValue',
-        parameters: {
-          key: 'value',
-          operation: 'add',
-          value: { kind: 'constant', value: 1 },
-        },
+  sequence: chainEntry('potential-init', [
+    {
+      kind: 'modifyActionValue',
+      parameters: {
+        key: 'value',
+        operation: 'add',
+        value: { kind: 'constant', value: 1 },
       },
-    ],
-  },
+    },
+  ]),
 };
 
 it('恢复直接养成初始化时绑定原序列与动作状态但不重新执行', () => {
@@ -74,8 +94,8 @@ it('恢复装备初始化时继续使用对应贡献的同一块黑板', () => {
   const equipmentProgram: CompiledOperatorInitializationProgram = {
     key: 'equipment:init',
     equipmentContributionIndex: 0,
-    enableSequence: { steps: [] },
-    sequence: { steps: [] },
+    enableSequence: emptySequence,
+    sequence: emptySequence,
   };
   const contribution = {
     source: { kind: 'weaponTrait' as const, slug: 'weapon', traitKey: 'trait' },
@@ -83,7 +103,7 @@ it('恢复装备初始化时继续使用对应贡献的同一块黑板', () => {
     modifiers: [],
     eventHandlers: [],
     blackboard: { value: 3 },
-    enableSequence: { steps: [] },
+    enableSequence: emptySequence,
   };
   const originalEquipment = new EquipmentEventRuntime(
     new CombatSemanticEventRuntime(),

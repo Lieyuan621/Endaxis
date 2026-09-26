@@ -4,13 +4,8 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'suit_attri01',
   iconPath: '/equipment/attri01/item_equip_t4_suit_attri01_edc_04.webp',
-  modifiers: [
-    {
-      kind: 'panelStat',
-      stat: 'attackPercent',
-      value: 0.15,
-    },
-  ],
+  modifiers: [{ kind: 'panelStat', stat: 'attackPercent', value: 0.15 }],
+  skillId: 'passive_equipsuit_attrisuit_01',
   buffDefinitions: {
     buff_equipsuit_attrisuit_01: {
       stackingType: 'unique',
@@ -21,56 +16,45 @@ const definition = {
       maxTriggerCount: 1,
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        atk_up: 0.05,
-        dmg_up: 0.3,
-        max_stack: 2,
-      },
+      blackboard: { atk_up: 0.05, dmg_up: 0.3, max_stack: 2 },
       attributeModifiers: [],
       abilityEventResponses: [
-        {
-          event: 'beforeCastSkill',
-          priority: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'conditional',
+        { event: 'beforeCastSkill', priority: 0, sequence: { $sequence: 'conditional_2' } },
+      ],
+      actionGraph: {
+        main: {
+          nodes: {
+            applyBuff_1: {
+              action: {
+                kind: 'applyBuff',
                 parameters: {
-                  condition: {
-                    kind: 'eventSkillTypeIn',
-                    skillTypes: ['comboSkill'],
-                  },
-                },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'applyBuff',
-                      parameters: {
-                        buffId: 'buff_equipsuit_attrisuitup_01',
-                        target: 'buffOwner',
-                        source: 'buffOwner',
-                        inheritSourceSkillCastInfo: true,
-                        asChildBuff: true,
-                        copiedBlackboardAssignments: {
-                          dmg_up: 'dmg_up',
-                          max_stack: 'max_stack',
-                        },
-                      },
-                    },
-                  ],
+                  buffId: 'buff_equipsuit_attrisuitup_01',
+                  target: 'buffOwner',
+                  source: 'buffOwner',
+                  inheritSourceSkillCastInfo: true,
+                  asChildBuff: true,
+                  copiedBlackboardAssignments: { dmg_up: 'dmg_up', max_stack: 'max_stack' },
                 },
               },
-            ],
+              next: null,
+            },
+            conditional_2: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'eventSkillTypeIn', skillTypes: ['comboSkill'] } },
+                whenTrue: { $sequence: 'applyBuff_1' },
+              },
+              next: null,
+            },
           },
         },
-      ],
+        macros: {},
+      },
     },
     buff_equipsuit_attrisuitup_01: {
       stackingType: 'stack',
       priority: 0,
-      maxStackCount: {
-        blackboardKey: 'max_stack',
-      },
+      maxStackCount: { blackboardKey: 'max_stack' },
       triggerIntervalSeconds: 0,
       waitFirstTriggerInterval: true,
       maxTriggerCount: 1,
@@ -94,85 +78,78 @@ const definition = {
         charHpBarVfxType: 'Fire',
         iconStyleInSquad: 'Default',
         abnormalColorType: 'Physical',
-        orderPriority: {
-          useDirectoryValue: false,
-          value: 0,
-          category: 'CommonCharBuff',
-        },
+        orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
       },
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        dmg_up: 0.05,
-        max_stack: 2,
-        stack: 0,
-      },
+      blackboard: { dmg_up: 0.05, max_stack: 2, stack: 0 },
       attributeModifiers: [],
       abilityEventResponses: [
-        {
-          event: 'beforeCastSkill',
-          priority: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'conditional',
+        { event: 'beforeCastSkill', priority: 0, sequence: { $sequence: 'conditional_5' } },
+      ],
+      actionGraph: {
+        main: {
+          nodes: {
+            finishBuffsById_1: {
+              action: {
+                kind: 'finishBuffsById',
                 parameters: {
-                  condition: {
-                    kind: 'eventSkillTypeIn',
-                    skillTypes: ['battleSkill'],
-                  },
-                },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'readBuffStackCount',
-                      parameters: {
-                        target: 'buffOwner',
-                        outputKey: 'stack',
-                        query: {
-                          kind: 'id',
-                          buffIds: ['buff_equipsuit_attrisuitup_01'],
-                        },
-                      },
-                    },
-                    {
-                      kind: 'modifyActionValue',
-                      parameters: {
-                        key: 'dmg_up',
-                        operation: 'multiply',
-                        value: {
-                          kind: 'blackboard',
-                          key: 'stack',
-                        },
-                      },
-                    },
-                    {
-                      kind: 'applyBuff',
-                      parameters: {
-                        buffId: 'buff_equipsuit_attrisuitup_02',
-                        target: 'buffOwner',
-                        source: 'buffOwner',
-                        inheritSourceSkillCastInfo: true,
-                        copiedBlackboardAssignments: {
-                          dmg_up: 'dmg_up',
-                        },
-                      },
-                    },
-                    {
-                      kind: 'finishBuffsById',
-                      parameters: {
-                        target: 'buffOwner',
-                        buffIds: ['buff_equipsuit_attrisuitup_01'],
-                        reason: 'other',
-                      },
-                    },
-                  ],
+                  target: 'buffOwner',
+                  buffIds: ['buff_equipsuit_attrisuitup_01'],
+                  reason: 'other',
                 },
               },
-            ],
+              next: null,
+            },
+            applyBuff_2: {
+              action: {
+                kind: 'applyBuff',
+                parameters: {
+                  buffId: 'buff_equipsuit_attrisuitup_02',
+                  target: 'buffOwner',
+                  source: 'buffOwner',
+                  inheritSourceSkillCastInfo: true,
+                  copiedBlackboardAssignments: { dmg_up: 'dmg_up' },
+                },
+              },
+              next: 'finishBuffsById_1',
+            },
+            modifyActionValue_3: {
+              action: {
+                kind: 'modifyActionValue',
+                parameters: {
+                  key: 'dmg_up',
+                  operation: 'multiply',
+                  value: { kind: 'blackboard', key: 'stack' },
+                },
+              },
+              next: 'applyBuff_2',
+            },
+            readBuffStackCount_4: {
+              action: {
+                kind: 'readBuffStackCount',
+                parameters: {
+                  target: 'buffOwner',
+                  outputKey: 'stack',
+                  query: { kind: 'id', buffIds: ['buff_equipsuit_attrisuitup_01'] },
+                },
+              },
+              next: 'modifyActionValue_3',
+            },
+            conditional_5: {
+              action: {
+                kind: 'conditional',
+                parameters: {
+                  condition: { kind: 'eventSkillTypeIn', skillTypes: ['battleSkill'] },
+                },
+                whenTrue: { $sequence: 'readBuffStackCount_4' },
+              },
+              next: null,
+            },
           },
         },
-      ],
+        macros: {},
+      },
     },
     buff_equipsuit_attrisuitup_02: {
       stackingType: 'stack',
@@ -183,9 +160,7 @@ const definition = {
       maxTriggerCount: 1,
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        dmg_up: 0.05,
-      },
+      blackboard: { dmg_up: 0.05 },
       attributeModifiers: [],
       damageModifiers: [
         {
@@ -193,14 +168,8 @@ const definition = {
           condition: {
             kind: 'all',
             conditions: [
-              {
-                kind: 'sourceSkillCastMatch',
-              },
-              {
-                kind: 'eventDamageTagsMatch',
-                match: 'hasAll',
-                tags: ['normalSkill'],
-              },
+              { kind: 'sourceSkillCastMatch' },
+              { kind: 'eventDamageTagsMatch', match: 'hasAll', tags: ['normalSkill'] },
             ],
           },
           processors: [
@@ -208,49 +177,42 @@ const definition = {
               kind: 'damageScale',
               side: 'attacker',
               zone: 'normal',
-              addition: {
-                blackboardKey: 'dmg_up',
-              },
+              addition: { blackboardKey: 'dmg_up' },
             },
           ],
         },
       ],
-      lifecycleSequences: {
-        enable: {
-          steps: [
-            {
-              kind: 'skillAffix',
-              parameters: {},
-            },
-          ],
+      lifecycleSequences: { enable: { $sequence: 'skillAffix_1' } },
+      actionGraph: {
+        main: {
+          nodes: { skillAffix_1: { action: { kind: 'skillAffix', parameters: {} }, next: null } },
         },
+        macros: {},
       },
     },
   },
-  enableSequence: {
-    steps: [
-      {
-        kind: 'applyBuff',
-        parameters: {
-          buffId: 'buff_equipsuit_attrisuit_01',
-          target: 'caster',
-          blackboardAssignments: {
-            atk_up: {
-              kind: 'constant',
-              value: 0.15,
-            },
-            dmg_up: {
-              kind: 'constant',
-              value: 0.3,
-            },
-            max_stack: {
-              kind: 'constant',
-              value: 2,
+  enableSequence: { $sequence: 'applyBuff_1' },
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffId: 'buff_equipsuit_attrisuit_01',
+              target: 'caster',
+              blackboardAssignments: {
+                atk_up: { kind: 'constant', value: 0.15 },
+                dmg_up: { kind: 'constant', value: 0.3 },
+                max_stack: { kind: 'constant', value: 2 },
+              },
             },
           },
+          next: null,
         },
       },
-    ],
+    },
+    macros: {},
   },
 } as const satisfies GearSetDefinition;
 

@@ -168,9 +168,7 @@ export function compileBuffLeafNode(
           {
             kind: 'forEachContextTarget',
             parameters: { contextKey: action.owner.targetGroupKey },
-            body: {
-              steps: [{ kind: 'finishCurrentAbilityEntity', parameters: {} }],
-            },
+            body: context.graph.sequence([{ kind: 'finishCurrentAbilityEntity', parameters: {} }]),
           },
         ],
         state: partyTargetGroups,
@@ -199,9 +197,7 @@ export function compileBuffLeafNode(
           {
             kind: 'forEachContextTarget' as const,
             parameters: { contextKey },
-            body: {
-              steps: [{ kind: 'finishCurrentAbilityEntity', parameters: {} }],
-            },
+            body: context.graph.sequence([{ kind: 'finishCurrentAbilityEntity', parameters: {} }]),
           },
         ],
         state: partyTargetGroups,
@@ -247,9 +243,7 @@ export function compileBuffLeafNode(
           {
             kind: 'forEachContextTarget',
             parameters: { contextKey },
-            body: {
-              steps: [{ kind: 'finishCurrentAbilityEntity', parameters: {} }],
-            },
+            body: context.graph.sequence([{ kind: 'finishCurrentAbilityEntity', parameters: {} }]),
           },
         ],
         state: partyTargetGroups,
@@ -269,7 +263,7 @@ export function compileBuffLeafNode(
           {
             kind: 'forEachContextTarget',
             parameters: { contextKey: action.owner.targetGroupKey },
-            body: { steps: [{ kind: 'finishCurrentAbilityEntity', parameters: {} }] },
+            body: context.graph.sequence([{ kind: 'finishCurrentAbilityEntity', parameters: {} }]),
           },
         ],
         state: partyTargetGroups,
@@ -317,7 +311,7 @@ export function compileBuffLeafNode(
           {
             kind: 'forEachContextTarget',
             parameters: { contextKey: target.targetGroupKey },
-            body: { steps: compiled },
+            body: context.graph.sequence(compiled),
           },
         ],
         state: partyTargetGroups,
@@ -344,7 +338,7 @@ export function compileBuffLeafNode(
           {
             kind: 'forEachContextTarget',
             parameters: { contextKey: target.targetGroupKey },
-            body: { steps: compiled },
+            body: context.graph.sequence(compiled),
           },
         ],
         state: partyTargetGroups,
@@ -387,7 +381,7 @@ export function compileBuffLeafNode(
               {
                 kind: 'repeatByActionValue',
                 parameters: { count: repeatCount },
-                body: { steps: compiled },
+                body: context.graph.sequence(compiled),
               },
             ],
       state: partyTargetGroups,
@@ -655,7 +649,7 @@ export function compileBuffLeafNode(
                   value: 0,
                 },
               },
-              whenTrue: { steps: [spawnStep] },
+              whenTrue: context.graph.sequence([spawnStep]),
             },
           ]
         : [spawnStep],
@@ -698,14 +692,12 @@ export function compileBuffLeafNode(
         {
           kind: 'forEachContextTarget',
           parameters: { contextKey: action.targetContextKey },
-          body: {
-            steps: [
-              {
-                kind: 'setAbilityEntityRemainingDuration',
-                parameters: { value: actionValueOperand(action.value) },
-              },
-            ],
-          },
+          body: context.graph.sequence([
+            {
+              kind: 'setAbilityEntityRemainingDuration',
+              parameters: { value: actionValueOperand(action.value) },
+            },
+          ]),
         },
       ],
       state: partyTargetGroups,
@@ -1255,12 +1247,6 @@ export function compileBuffLeafNode(
       ignored.targetGroupKey === '' &&
       action.effectTargets.length === 0 &&
       (context.actionOwnerTarget === 'caster' || context.fixedBuffOwnerTarget === 'caster');
-    const namedCurrentEntityOnlyGlobal =
-      action.useCurveKey &&
-      action.curveKey.length > 0 &&
-      action.ignoreTargets.length === 1 &&
-      ignored?.targetSource === 'Owner' &&
-      context.actionOwnerTarget === 'currentAbilityEntity';
     const namedOwnerSpawnedOnlyGlobal =
       action.useCurveKey &&
       action.curveKey.length > 0 &&
@@ -1272,6 +1258,15 @@ export function compileBuffLeafNode(
         context.fixedBuffOwnerTarget === 'caster' ||
         context.actionSourceTarget === 'caster' ||
         context.fixedBuffSourceTarget === 'caster');
+    // 1.5.3 起实体子技能（如 pograni 终结收尾）用具名曲线做全局慢动作、只忽略当前实体自身。
+    const namedCurrentEntityOnlyGlobal =
+      action.useCurveKey &&
+      action.curveKey.length > 0 &&
+      action.ignoreTargets.length === 1 &&
+      ignored?.targetSource === 'Owner' &&
+      ignored.targetGroupKey === '' &&
+      action.effectTargets.length === 0 &&
+      context.actionOwnerTarget === 'currentAbilityEntity';
     const taggedOwnerSpawnedQuery =
       action.useCurveKey &&
       action.curveKey.length > 0 &&
@@ -1553,10 +1548,10 @@ export function compileBuffLeafNode(
         steps: context.materializedTargetGroupKeys?.has(write.targetGroupKey)
           ? [
               {
-                kind: 'mergeContextTargets',
+                kind: 'mergeContextTargets' as const,
                 parameters: {
                   saveToContextKey: write.targetGroupKey,
-                  sources: [{ kind: 'target', target: 'enemy' }],
+                  sources: [{ kind: 'target' as const, target: 'enemy' as const }],
                 },
               },
             ]
@@ -1651,8 +1646,8 @@ export function compileBuffLeafNode(
                 tags: projectGameplayTags(rawQuery[1], context, node.sourcePath),
               },
             },
-            whenTrue: { steps: [mergeEnemy] },
-            whenFalse: { steps: [clearGroup] },
+            whenTrue: context.graph.sequence([mergeEnemy]),
+            whenFalse: context.graph.sequence([clearGroup]),
           },
         ],
         state: nextGroups,
@@ -1686,8 +1681,8 @@ export function compileBuffLeafNode(
                 value: { kind: 'constant', value: 1 },
               },
             },
-            whenTrue: { steps: [mergeEnemy] },
-            whenFalse: { steps: [clearGroup] },
+            whenTrue: context.graph.sequence([mergeEnemy]),
+            whenFalse: context.graph.sequence([clearGroup]),
           },
         ],
         state: nextGroups,
@@ -2380,10 +2375,10 @@ export function compileBuffLeafNode(
       return {
         steps: [
           {
-            kind: 'findCharacterTeamTargets',
+            kind: 'findCharacterTeamTargets' as const,
             parameters: {
               saveToContextKey: write.targetGroupKey,
-              selection: { kind: 'allOperators' },
+              selection: { kind: 'allOperators' as const },
             },
           },
         ],
@@ -2466,10 +2461,10 @@ export function compileBuffLeafNode(
       return {
         steps: [
           {
-            kind: 'mergeContextTargets',
+            kind: 'mergeContextTargets' as const,
             parameters: {
               saveToContextKey: write.targetGroupKey,
-              sources: [{ kind: 'target', target: 'eventSource' }],
+              sources: [{ kind: 'target' as const, target: 'eventSource' as const }],
             },
           },
         ],

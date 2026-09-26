@@ -4,6 +4,11 @@ import {
   type CompileActionSequenceProgramOptions,
 } from '../../src/compiler/actions/actionSequenceProgram.ts';
 import type { NativeActionNodeSource, NativeSequenceSource } from '../../src/source/controlFlow.ts';
+import {
+  createActionGraphBuilder,
+  readActionGraphChain,
+} from '../../src/compiler/actions/actionGraphBuilder.ts';
+import type { ActionGraphReference } from '../../../../packages/game-data-contract/src/actionGraph.ts';
 
 type Condition = { readonly kind: 'condition' | 'not' | 'all'; readonly value: string };
 type Step =
@@ -11,8 +16,8 @@ type Step =
   | {
       readonly kind: 'conditional';
       readonly condition: Condition;
-      readonly whenTrue: readonly Step[];
-      readonly whenFalse?: readonly Step[];
+      readonly whenTrue: ActionGraphReference;
+      readonly whenFalse?: ActionGraphReference;
       readonly alwaysNext: boolean;
     };
 
@@ -39,13 +44,11 @@ function sequence(
   };
 }
 
-function options(): CompileActionSequenceProgramOptions<
-  string,
-  Condition,
-  Step,
-  readonly string[]
-> {
+function options(
+  builder: ReturnType<typeof createActionGraphBuilder<Step>>,
+): CompileActionSequenceProgramOptions<string, Condition, Step, readonly string[]> {
   return {
+    sequence: builder.sequence,
     initialState: () => [],
     canOmitTerminalCondition: () => true,
     compileCondition: node =>
@@ -70,8 +73,8 @@ function options(): CompileActionSequenceProgramOptions<
     createConditionalStep: input => ({
       kind: 'conditional',
       condition: input.condition,
-      whenTrue: input.whenTrue.steps,
-      ...(input.whenFalse === undefined ? {} : { whenFalse: input.whenFalse.steps }),
+      whenTrue: input.whenTrue,
+      ...(input.whenFalse === undefined ? {} : { whenFalse: input.whenFalse }),
       alwaysNext: input.alwaysNext,
     }),
     rootFilterError: 'root filter unsupported',
@@ -79,16 +82,34 @@ function options(): CompileActionSequenceProgramOptions<
   };
 }
 
+/** 图编译执行：entry 是入口引用，read 按引用读取同层动作。 */
+function run(
+  source: NativeSequenceSource<string>,
+  customize: (
+    base: CompileActionSequenceProgramOptions<string, Condition, Step, readonly string[]>,
+  ) => Partial<
+    CompileActionSequenceProgramOptions<string, Condition, Step, readonly string[]>
+  > = () => ({}),
+) {
+  const builder = createActionGraphBuilder<Step>();
+  const base = options(builder);
+  const entry = compileActionSequenceProgram(source, { ...base, ...customize(base) });
+  return {
+    entry,
+    read: (reference: ActionGraphReference) =>
+      readActionGraphChain(builder.finish(), reference) as readonly Step[],
+  };
+}
+
 describe('公共 Action 序列控制流投影', () => {
   it('根守卫在空子树投影后消去，但被外层消费的返回值不消去', () => {
     const source = { ...sequence([]), onlyExecuteWhenSourceIsGuard: true };
-    expect(compileActionSequenceProgram(source, options())).toEqual({ steps: [] });
-    expect(() =>
-      compileActionSequenceProgram(source, { ...options(), resultIsConsumed: true }),
-    ).toThrow('root filter unsupported');
-    expect(() =>
-      compileActionSequenceProgram({ ...source, actions: [leaf('visible')] }, options()),
-    ).toThrow('root filter unsupported');
+    const empty = run(source);
+    expect(empty.read(empty.entry)).toEqual([]);
+    expect(() => run(source, () => ({ resultIsConsumed: true }))).toThrow(
+      'root filter unsupported',
+    );
+    expect(() => run({ ...source, actions: [leaf('visible')] })).toThrow('root filter unsupported');
   });
 
   const branch = (
@@ -105,65 +126,50 @@ describe('公共 Action 序列控制流投影', () => {
       alwaysNext,
     },
   });
-  function bottomUpOptions() {
-    const base = options();
-    return {
-      ...base,
-      canOmitUnusedCondition: (node: NativeActionNodeSource<string>) =>
-        node.body.kind === 'leaf' && node.body.value === '?unmodeled',
-      compileCondition: (node: NativeActionNodeSource<string>, state: readonly string[]) => {
-        if (node.body.kind === 'leaf' && node.body.value === '?unmodeled')
-          throw new Error('条件未建模');
-        return base.compileCondition(node, state);
-      },
-      compileLeaf: (node: NativeActionNodeSource<string>, state: readonly string[]) =>
-        node.body.kind === 'leaf' && node.body.value === 'visual'
-          ? { steps: [], state }
-          : base.compileLeaf(node, state),
-    };
-  }
+  const bottomUp = (
+    base: CompileActionSequenceProgramOptions<string, Condition, Step, readonly string[]>,
+  ) => ({
+    canOmitUnusedCondition: (node: NativeActionNodeSource<string>) =>
+      node.body.kind === 'leaf' && node.body.value === '?unmodeled',
+    compileCondition: (node: NativeActionNodeSource<string>, state: readonly string[]) => {
+      if (node.body.kind === 'leaf' && node.body.value === '?unmodeled')
+        throw new Error('条件未建模');
+      return base.compileCondition(node, state);
+    },
+    compileLeaf: (node: NativeActionNodeSource<string>, state: readonly string[]) =>
+      node.body.kind === 'leaf' && node.body.value === 'visual'
+        ? { steps: [], state }
+        : base.compileLeaf(node, state),
+  });
   it('嵌套分支自叶子向根清空后，不编译未建模的纯条件，保留后续伤害', () => {
-    expect(
-      compileActionSequenceProgram(
-        sequence([branch([branch([leaf('visual')])]), leaf('damage')]),
-        bottomUpOptions(),
-      ),
-    ).toEqual({ steps: [{ kind: 'leaf', value: 'damage[]' }] });
+    const result = run(sequence([branch([branch([leaf('visual')])]), leaf('damage')]), bottomUp);
+    expect(result.read(result.entry)).toEqual([{ kind: 'leaf', value: 'damage[]' }]);
   });
   it('守卫末端已空时不编译纯条件；有末端行为时仍要求模型', () => {
-    expect(
-      compileActionSequenceProgram(
-        sequence([leaf('?unmodeled'), leaf('visual')]),
-        bottomUpOptions(),
-      ),
-    ).toEqual({ steps: [] });
-    expect(() =>
-      compileActionSequenceProgram(
-        sequence([leaf('?unmodeled'), leaf('damage')]),
-        bottomUpOptions(),
-      ),
-    ).toThrow('条件未建模');
-    expect(() =>
-      compileActionSequenceProgram(sequence([branch([leaf('damage')])]), bottomUpOptions()),
-    ).toThrow('条件未建模');
+    const cleared = run(sequence([leaf('?unmodeled'), leaf('visual')]), bottomUp);
+    expect(cleared.read(cleared.entry)).toEqual([]);
+    expect(() => run(sequence([leaf('?unmodeled'), leaf('damage')]), bottomUp)).toThrow(
+      '条件未建模',
+    );
+    expect(() => run(sequence([branch([leaf('damage')])]), bottomUp)).toThrow('条件未建模');
   });
   it('未知副作用和影响外部返回值的分支不因末端空而省略', () => {
     expect(() =>
-      compileActionSequenceProgram(sequence([branch([leaf('visual')])]), {
-        ...bottomUpOptions(),
+      run(sequence([branch([leaf('visual')])]), base => ({
+        ...bottomUp(base),
         canOmitUnusedCondition: () => false,
-      }),
+      })),
     ).toThrow('条件未建模');
-    expect(() =>
-      compileActionSequenceProgram(sequence([branch([leaf('visual')], false)]), bottomUpOptions()),
-    ).toThrow('stopping IfElse');
+    expect(() => run(sequence([branch([leaf('visual')], false)]), bottomUp)).toThrow(
+      'stopping IfElse',
+    );
   });
   it('没有纯条件证明时保留尾部求值；显式允许才可省略', () => {
-    const configured = options();
     const source = sequence([leaf('?last')]);
-    expect(compileActionSequenceProgram(source, configured).steps).toEqual([]);
-    const { canOmitTerminalCondition: _, ...unproven } = configured;
-    expect(compileActionSequenceProgram(source, unproven).steps).toHaveLength(1);
+    const proven = run(source);
+    expect(proven.read(proven.entry)).toEqual([]);
+    const unproven = run(source, () => ({ canOmitTerminalCondition: undefined }));
+    expect(unproven.read(unproven.entry)).toHaveLength(1);
   });
   it('已经建模的纯条件也不留下空壳分支；副作用条件仍保留', () => {
     const value = branch([leaf('visual')]);
@@ -171,13 +177,13 @@ describe('公共 Action 序列控制流投影', () => {
     const source = sequence([
       { ...value, body: { ...value.body, condition: sequence([leaf('?modeled')]) } },
     ]);
-    expect(compileActionSequenceProgram(source, bottomUpOptions())).toEqual({ steps: [] });
-    expect(
-      compileActionSequenceProgram(source, {
-        ...bottomUpOptions(),
-        canOmitTerminalCondition: () => false,
-      }).steps[0]?.kind,
-    ).toBe('conditional');
+    const cleared = run(source, bottomUp);
+    expect(cleared.read(cleared.entry)).toEqual([]);
+    const kept = run(source, base => ({
+      ...bottomUp(base),
+      canOmitTerminalCondition: () => false,
+    }));
+    expect(kept.read(kept.entry)[0]?.kind).toBe('conditional');
   });
 
   it('纯读取条件的两分支投影等价时不要求建立条件模型', () => {
@@ -187,81 +193,66 @@ describe('公共 Action 序列控制流投影', () => {
       { ...value, body: { ...value.body, whenFalse: sequence([leaf('same')]) } },
       leaf('after'),
     ]);
-    expect(
-      compileActionSequenceProgram(source, {
-        ...bottomUpOptions(),
-        areEquivalentIfElseBranches: (whenTrue, whenFalse) =>
-          JSON.stringify(whenTrue.steps) === JSON.stringify(whenFalse.steps),
-      }),
-    ).toEqual({
-      steps: [
-        { kind: 'leaf', value: 'same[]' },
-        { kind: 'leaf', value: 'after[]' },
-      ],
-    });
+    const result = run(source, base => ({
+      ...bottomUp(base),
+      areEquivalentIfElseBranches: (whenTrue, whenFalse) =>
+        JSON.stringify(whenTrue) === JSON.stringify(whenFalse),
+    }));
+    expect(result.read(result.entry)).toEqual([
+      { kind: 'leaf', value: 'same[]' },
+      { kind: 'leaf', value: 'after[]' },
+    ]);
   });
 
   it('静态预选失败后先投影末端，只有纯读取空分支可消去', () => {
     const failure = new Error('静态预选未支持');
-    const configured = {
-      ...bottomUpOptions(),
+    const configured = (
+      base: CompileActionSequenceProgramOptions<string, Condition, Step, readonly string[]>,
+    ) => ({
+      ...bottomUp(base),
       selectIfElseBranch: (): boolean | undefined => {
         throw failure;
       },
-    };
-    expect(compileActionSequenceProgram(sequence([branch([leaf('visual')])]), configured)).toEqual({
-      steps: [],
     });
+    const cleared = run(sequence([branch([leaf('visual')])]), configured);
+    expect(cleared.read(cleared.entry)).toEqual([]);
+    expect(() => run(sequence([branch([leaf('damage')])]), configured)).toThrow(failure);
     expect(() =>
-      compileActionSequenceProgram(sequence([branch([leaf('damage')])]), configured),
-    ).toThrow(failure);
-    expect(() =>
-      compileActionSequenceProgram(sequence([branch([leaf('visual')])]), {
-        ...configured,
+      run(sequence([branch([leaf('visual')])]), base => ({
+        ...configured(base),
         canOmitUnusedCondition: () => false,
-      }),
+      })),
     ).toThrow(failure);
-    expect(() =>
-      compileActionSequenceProgram(sequence([branch([leaf('visual')], false)]), configured),
-    ).toThrow('stopping IfElse');
+    expect(() => run(sequence([branch([leaf('visual')], false)]), configured)).toThrow(
+      'stopping IfElse',
+    );
   });
 
   it('固定模型证明 IfElse 真值时只编译可达分支并继续后续兄弟', () => {
-    expect(
-      compileActionSequenceProgram(sequence([branch([leaf('reachable')]), leaf('after')]), {
-        ...options(),
-        selectIfElseBranch: () => true,
-      }),
-    ).toEqual({
-      steps: [
-        { kind: 'leaf', value: 'reachable[]' },
-        { kind: 'leaf', value: 'after[]' },
-      ],
-    });
+    const result = run(sequence([branch([leaf('reachable')]), leaf('after')]), () => ({
+      selectIfElseBranch: () => true,
+    }));
+    expect(result.read(result.entry)).toEqual([
+      { kind: 'leaf', value: 'reachable[]' },
+      { kind: 'leaf', value: 'after[]' },
+    ]);
     expect(() =>
-      compileActionSequenceProgram(sequence([branch([leaf('reachable')], false)]), {
-        ...options(),
+      run(sequence([branch([leaf('reachable')], false)]), () => ({
         selectIfElseBranch: () => true,
-      }),
+      })),
     ).toThrow('statically selected stopping IfElse');
   });
 
   it('条件叶子守卫全部剩余兄弟步骤', () => {
-    expect(
-      compileActionSequenceProgram(sequence([leaf('?ready'), leaf('a'), leaf('b')]), options()),
-    ).toEqual({
-      steps: [
-        {
-          kind: 'conditional',
-          condition: { kind: 'condition', value: '?ready' },
-          whenTrue: [
-            { kind: 'leaf', value: 'a[]' },
-            { kind: 'leaf', value: 'b[]' },
-          ],
-          alwaysNext: false,
-        },
-      ],
-    });
+    const result = run(sequence([leaf('?ready'), leaf('a'), leaf('b')]));
+    const [guard] = result.read(result.entry);
+    if (guard?.kind !== 'conditional') throw new Error('expected conditional');
+    expect(guard.condition).toEqual({ kind: 'condition', value: '?ready' });
+    expect(guard.alwaysNext).toBe(false);
+    expect(result.read(guard.whenTrue)).toEqual([
+      { kind: 'leaf', value: 'a[]' },
+      { kind: 'leaf', value: 'b[]' },
+    ]);
   });
 
   it('NotNextCheckAction 只反转下一条件并保持后续短路体', () => {
@@ -270,15 +261,11 @@ describe('公共 Action 序列控制流投影', () => {
       sourcePath: 'not',
       body: { kind: 'negateNextResult' },
     };
-    const result = compileActionSequenceProgram(
-      sequence([negate, leaf('?ready'), leaf('a')]),
-      options(),
-    );
-    expect(result.steps[0]).toMatchObject({
-      kind: 'conditional',
-      condition: { kind: 'not', value: '?ready' },
-      whenTrue: [{ kind: 'leaf', value: 'a[]' }],
-    });
+    const result = run(sequence([negate, leaf('?ready'), leaf('a')]));
+    const [guard] = result.read(result.entry);
+    if (guard?.kind !== 'conditional') throw new Error('expected conditional');
+    expect(guard.condition).toEqual({ kind: 'not', value: '?ready' });
+    expect(result.read(guard.whenTrue)).toEqual([{ kind: 'leaf', value: 'a[]' }]);
   });
 
   it('IfElse 分支继承入口状态，分支写入彼此隔离且不污染后续兄弟', () => {
@@ -293,20 +280,15 @@ describe('公共 Action 序列控制流投影', () => {
         alwaysNext: true,
       },
     };
-    const result = compileActionSequenceProgram(
-      sequence([leaf('save:outer'), branch, leaf('after')]),
-      options(),
-    );
-    expect(result.steps).toEqual([
-      {
-        kind: 'conditional',
-        condition: { kind: 'condition', value: '?branch' },
-        whenTrue: [{ kind: 'leaf', value: 'inside[outer,true]' }],
-        whenFalse: [{ kind: 'leaf', value: 'outside[outer]' }],
-        alwaysNext: true,
-      },
-      { kind: 'leaf', value: 'after[outer]' },
-    ]);
+    const result = run(sequence([leaf('save:outer'), branch, leaf('after')]));
+    const steps = result.read(result.entry);
+    const [guard, after] = steps;
+    if (guard?.kind !== 'conditional') throw new Error('expected conditional');
+    expect(guard.condition).toEqual({ kind: 'condition', value: '?branch' });
+    expect(guard.alwaysNext).toBe(true);
+    expect(result.read(guard.whenTrue)).toEqual([{ kind: 'leaf', value: 'inside[outer,true]' }]);
+    expect(result.read(guard.whenFalse!)).toEqual([{ kind: 'leaf', value: 'outside[outer]' }]);
+    expect(after).toEqual({ kind: 'leaf', value: 'after[outer]' });
   });
 
   it('IfElse 条件序列中的 NotNextCheckAction 只反转紧随条件', () => {
@@ -327,16 +309,13 @@ describe('公共 Action 序列控制流投影', () => {
       },
     };
 
-    const projection = options();
-    const result = compileActionSequenceProgram(sequence([branch]), {
-      ...projection,
+    const result = run(sequence([branch]), () => ({
       negateCondition: condition => ({ kind: 'not' as const, value: `!${condition.value}` }),
-    });
-    expect(result.steps[0]).toMatchObject({
-      kind: 'conditional',
-      condition: { kind: 'all', value: '?has-target&!?already-added' },
-      whenTrue: [{ kind: 'leaf', value: 'gain[]' }],
-    });
+    }));
+    const [guard] = result.read(result.entry);
+    if (guard?.kind !== 'conditional') throw new Error('expected conditional');
+    expect(guard.condition).toEqual({ kind: 'all', value: '?has-target&!?already-added' });
+    expect(result.read(guard.whenTrue)).toEqual([{ kind: 'leaf', value: 'gain[]' }]);
   });
 
   it('允许领域把已证明等价的 ForEach 折叠为集合步骤并继续编译兄弟节点', () => {
@@ -349,27 +328,23 @@ describe('公共 Action 序列控制流投影', () => {
         action: sequence([leaf('inside')]),
       },
     };
-    const projection = options();
-    const result = compileActionSequenceProgram(sequence([loop, leaf('after')]), {
-      ...projection,
+    const result = run(sequence([loop, leaf('after')]), () => ({
       compileForEach: (node, state) => ({
         steps: [{ kind: 'leaf' as const, value: `folded:${node.body.action.actions.length}` }],
         state: [...state, 'loop'],
       }),
-    });
+    }));
 
-    expect(result.steps).toEqual([
+    expect(result.read(result.entry)).toEqual([
       { kind: 'leaf', value: 'folded:1' },
       { kind: 'leaf', value: 'after[loop]' },
     ]);
   });
 
   it('静态假守卫不会编译不可达的后继动作', () => {
-    const projection = options();
-    const result = compileActionSequenceProgram(
+    const result = run(
       sequence([leaf('?stationary-move-input'), leaf('unsupported-direction-write')]),
-      {
-        ...projection,
+      base => ({
         canOmitUnusedCondition: node =>
           node.body.kind === 'leaf' && node.body.value.startsWith('?'),
         evaluateCondition: condition =>
@@ -379,11 +354,11 @@ describe('公共 Action 序列控制流投影', () => {
           if (node.body.value === 'unsupported-direction-write') {
             throw new Error('unreachable direction write was compiled');
           }
-          return projection.compileLeaf(node, state);
+          return base.compileLeaf(node, state);
         },
-      },
+      }),
     );
 
-    expect(result.steps).toEqual([]);
+    expect(result.read(result.entry)).toEqual([]);
   });
 });

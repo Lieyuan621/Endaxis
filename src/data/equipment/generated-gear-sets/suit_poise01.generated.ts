@@ -4,13 +4,34 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'suit_poise01',
   iconPath: '/equipment/poise01/item_equip_t4_suit_poise01_edc_02.webp',
-  modifiers: [
-    {
-      kind: 'panelStat',
-      stat: 'attackPercent',
-      value: 0.08,
+  modifiers: [{ kind: 'panelStat', stat: 'attackPercent', value: 0.08 }],
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffId: 'buff_equipsuit_poisedmg_01',
+              target: 'caster',
+              blackboardAssignments: {
+                atk_up: { kind: 'constant', value: 0.08 },
+                phy_dmg_up: { kind: 'constant', value: 0.08 },
+                duration: { kind: 'constant', value: 15 },
+                max_stack: { kind: 'constant', value: 4 },
+                phy_dmg_up2: { kind: 'constant', value: 0.16 },
+                duration2: { kind: 'constant', value: 10 },
+                stack_cond: { kind: 'constant', value: 4 },
+              },
+            },
+          },
+          next: null,
+        },
+      },
     },
-  ],
+    macros: {},
+  },
+  skillId: 'passive_equipsuit_poisebreak_01',
   buffDefinitions: {
     buff_equipsuit_poisedmg_01: {
       stackingType: 'unlimited',
@@ -29,12 +50,59 @@ const definition = {
       },
       attributeModifiers: [],
       abilityEventResponses: [
-        {
-          event: 'outputBuff',
-          priority: 0,
-          sequence: {
-            steps: [
-              {
+        { event: 'outputBuff', priority: 0, sequence: { $sequence: 'conditional_4' } },
+      ],
+      actionGraph: {
+        main: {
+          nodes: {
+            applyBuff_1: {
+              action: {
+                kind: 'applyBuff',
+                parameters: {
+                  buffId: 'buff_equipsuit_poisedmg_01_attackbuff',
+                  target: 'buffOwner',
+                  source: 'buffOwner',
+                  inheritSourceSkillCastInfo: true,
+                  copiedBlackboardAssignments: {
+                    phy_dmg_up2: 'phy_dmg_up2',
+                    duration: 'duration2',
+                  },
+                },
+              },
+              next: null,
+            },
+            conditional_2: {
+              action: {
+                kind: 'conditional',
+                parameters: {
+                  condition: {
+                    kind: 'buffStackCompare',
+                    target: 'actionInputTarget',
+                    tagQueryType: 'hasAny',
+                    buffTags: ['Skill/Character/Common/NoGuard'],
+                    operator: 'greaterOrEqual',
+                    value: { kind: 'blackboard', key: 'stack_cond' },
+                  },
+                },
+                whenTrue: { $sequence: 'applyBuff_1' },
+              },
+              next: null,
+            },
+            applyBuff_3: {
+              action: {
+                kind: 'applyBuff',
+                parameters: {
+                  buffId: 'buff_equipsuit_poisedmg_01_damagebuff',
+                  target: 'buffOwner',
+                  source: 'buffOwner',
+                  inheritSourceSkillCastInfo: true,
+                  copiedBlackboardAssignments: { phy_dmg_up: 'phy_dmg_up', duration: 'duration' },
+                },
+              },
+              next: 'conditional_2',
+            },
+            conditional_4: {
+              action: {
                 kind: 'conditional',
                 parameters: {
                   condition: {
@@ -43,69 +111,20 @@ const definition = {
                     buffTags: ['Skill/Character/Common/NoGuard'],
                   },
                 },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'applyBuff',
-                      parameters: {
-                        buffId: 'buff_equipsuit_poisedmg_01_damagebuff',
-                        target: 'buffOwner',
-                        source: 'buffOwner',
-                        inheritSourceSkillCastInfo: true,
-                        copiedBlackboardAssignments: {
-                          phy_dmg_up: 'phy_dmg_up',
-                          duration: 'duration',
-                        },
-                      },
-                    },
-                    {
-                      kind: 'conditional',
-                      parameters: {
-                        condition: {
-                          kind: 'buffStackCompare',
-                          target: 'actionInputTarget',
-                          tagQueryType: 'hasAny',
-                          buffTags: ['Skill/Character/Common/NoGuard'],
-                          operator: 'greaterOrEqual',
-                          value: {
-                            kind: 'blackboard',
-                            key: 'stack_cond',
-                          },
-                        },
-                      },
-                      whenTrue: {
-                        steps: [
-                          {
-                            kind: 'applyBuff',
-                            parameters: {
-                              buffId: 'buff_equipsuit_poisedmg_01_attackbuff',
-                              target: 'buffOwner',
-                              source: 'buffOwner',
-                              inheritSourceSkillCastInfo: true,
-                              copiedBlackboardAssignments: {
-                                phy_dmg_up2: 'phy_dmg_up2',
-                                duration: 'duration2',
-                              },
-                            },
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                },
+                whenTrue: { $sequence: 'applyBuff_3' },
               },
-            ],
+              next: null,
+            },
           },
         },
-      ],
+        macros: {},
+      },
     },
     buff_equipsuit_poisedmg_01_attackbuff: {
       stackingType: 'refresh',
       priority: 0,
       maxStackCount: 1,
-      durationSeconds: {
-        blackboardKey: 'duration',
-      },
+      durationSeconds: { blackboardKey: 'duration' },
       presentation: {
         visible: true,
         iconId: 'icon_battle_buff_atk_up',
@@ -126,37 +145,25 @@ const definition = {
         charHpBarVfxType: 'Fire',
         iconStyleInSquad: 'Default',
         abnormalColorType: 'Physical',
-        orderPriority: {
-          useDirectoryValue: false,
-          value: 0,
-          category: 'CommonCharBuff',
-        },
+        orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
       },
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        duration: 6,
-        phy_dmg_up2: 0.2,
-      },
+      blackboard: { duration: 6, phy_dmg_up2: 0.2 },
       attributeModifiers: [
         {
           attribute: 'physicalDamageIncrease',
           slot: 'baseAddition',
-          value: {
-            blackboardKey: 'phy_dmg_up2',
-          },
+          value: { blackboardKey: 'phy_dmg_up2' },
         },
       ],
+      actionGraph: { main: { nodes: {} }, macros: {} },
     },
     buff_equipsuit_poisedmg_01_damagebuff: {
       stackingType: 'enhanceAndRefresh',
       priority: 0,
-      maxStackCount: {
-        blackboardKey: 'max_stack',
-      },
-      durationSeconds: {
-        blackboardKey: 'duration',
-      },
+      maxStackCount: { blackboardKey: 'max_stack' },
+      durationSeconds: { blackboardKey: 'duration' },
       presentation: {
         visible: true,
         iconId: 'icon_battle_buff_atk_up',
@@ -177,71 +184,22 @@ const definition = {
         charHpBarVfxType: 'Fire',
         iconStyleInSquad: 'Default',
         abnormalColorType: 'Physical',
-        orderPriority: {
-          useDirectoryValue: false,
-          value: 0,
-          category: 'CommonCharBuff',
-        },
+        orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
       },
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        duration: 6,
-        max_stack: 4,
-        phy_dmg_up: 0.2,
-      },
+      blackboard: { duration: 6, max_stack: 4, phy_dmg_up: 0.2 },
       attributeModifiers: [
         {
           attribute: 'physicalDamageIncrease',
           slot: 'baseAddition',
-          value: {
-            blackboardKey: 'phy_dmg_up',
-          },
+          value: { blackboardKey: 'phy_dmg_up' },
         },
       ],
+      actionGraph: { main: { nodes: {} }, macros: {} },
     },
   },
-  enableSequence: {
-    steps: [
-      {
-        kind: 'applyBuff',
-        parameters: {
-          buffId: 'buff_equipsuit_poisedmg_01',
-          target: 'caster',
-          blackboardAssignments: {
-            atk_up: {
-              kind: 'constant',
-              value: 0.08,
-            },
-            phy_dmg_up: {
-              kind: 'constant',
-              value: 0.08,
-            },
-            duration: {
-              kind: 'constant',
-              value: 15,
-            },
-            max_stack: {
-              kind: 'constant',
-              value: 4,
-            },
-            phy_dmg_up2: {
-              kind: 'constant',
-              value: 0.16,
-            },
-            duration2: {
-              kind: 'constant',
-              value: 10,
-            },
-            stack_cond: {
-              kind: 'constant',
-              value: 4,
-            },
-          },
-        },
-      },
-    ],
-  },
+  enableSequence: { $sequence: 'applyBuff_1' },
 } as const satisfies GearSetDefinition;
 
 export default definition;

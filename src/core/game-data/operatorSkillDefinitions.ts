@@ -9,7 +9,7 @@ import type {
 export type OperatorSkillDefinitionOrigin =
   'base' | 'variant' | 'replacement' | 'routedReplacement';
 
-/** 一个技能在干员定义树中的位置；只保留来源关系，不解释技能库展示或运行时路由。 */
+/** 一个技能在干员定义中的位置；只保留来源关系，不解释技能库展示或运行时路由。 */
 export interface OperatorSkillDefinitionBinding {
   readonly group: SkillGroupDefinition;
   readonly skill: SkillDefinition;

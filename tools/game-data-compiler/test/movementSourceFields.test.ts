@@ -4,6 +4,22 @@ import {
   parseKnownNativeActionSequenceSource,
 } from '../src/source/actionLeaf.ts';
 import { compileCombatActionSequenceSource } from '../src/compiler/buffs/buffRuntimeProjection.ts';
+import type { CombatActionProjectionContextSource } from '../src/compiler/combatProjectionCommon.ts';
+import {
+  createActionGraphBuilder,
+  readActionGraphChain,
+} from '../src/compiler/actions/actionGraphBuilder.ts';
+import type { CompiledBuffStepSource } from '../src/compiler/actions/combatActionProjectionTypes.ts';
+
+/** 图编译包装：返回入口同层动作数组，保持旧断言的扁平比较形状。 */
+function projectSequence(
+  source: Parameters<typeof compileCombatActionSequenceSource>[0],
+  context: Omit<CombatActionProjectionContextSource, 'graph'>,
+) {
+  const builder = createActionGraphBuilder<CompiledBuffStepSource>();
+  const entry = compileCombatActionSequenceSource(source, { ...context, graph: builder });
+  return { steps: readActionGraphChain(builder.finish(), entry) };
+}
 import { scalarFixture as scalar, targetFixture } from './sourceFixtures.ts';
 import { parseReceiveMoveInputActionSource } from '../src/source/spatialActions.ts';
 
@@ -35,7 +51,7 @@ describe('侧移模式朝向偏移', () => {
       {},
     );
     expect(
-      compileCombatActionSequenceSource(source, {
+      projectSequence(source, {
         actionOwnerTarget: 'caster',
         actionSourceTarget: 'caster',
         actionTargetTarget: 'enemy',
@@ -196,7 +212,7 @@ describe('输入位移与根运动混合', () => {
       { scale: [1, 2] },
     );
     expect(
-      compileCombatActionSequenceSource(parsed, {
+      projectSequence(parsed, {
         actionOwnerTarget: 'caster',
         actionSourceTarget: 'caster',
         actionTargetTarget: 'enemy',
@@ -234,7 +250,7 @@ describe.each(cases)('$name 新版空间字段', ({ create, fields }) => {
       {},
     );
     expect(
-      compileCombatActionSequenceSource(parsed, {
+      projectSequence(parsed, {
         actionOwnerTarget: 'caster',
         actionSourceTarget: 'caster',
         actionTargetTarget: 'enemy',

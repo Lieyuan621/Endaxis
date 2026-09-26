@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { GameDataRepository } from '../game-data/gameDataRepository';
+import { ActionGraphDefinitionRepository } from '../compiler/actionGraphDefinitionRepository';
 import { createEmptyProject } from './createProject';
 import { parseProjectDocument, serializeProjectDocument } from './serialization';
 import { validateProjectWithGameData } from './definitionValidation';
@@ -15,6 +16,8 @@ function createMissingRepository(): GameDataRepository {
     getMechanic: () => null,
     getConsumable: () => null,
     getConsumables: () => [],
+    actionPrograms: new ActionGraphDefinitionRepository(),
+    getCommonDefinitionSources: () => [],
   };
 }
 

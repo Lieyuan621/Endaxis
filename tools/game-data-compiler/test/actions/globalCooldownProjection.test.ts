@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { projectGlobalCooldownTarget } from '../../src/compiler/actions/globalCooldownProjection.ts';
 import { BUFF_ACTION_CONTEXT } from '../../src/compiler/combatProjectionCommon.ts';
+import { withProjectionGraph } from '../support/projectionContext.ts';
 
 describe('全局冷却公共目标投影', () => {
   it.each([
@@ -10,7 +11,11 @@ describe('全局冷却公共目标投影', () => {
     expect(
       projectGlobalCooldownTarget(
         { targetSource: source, targetGroupKey: '' },
-        { ...BUFF_ACTION_CONTEXT, actionTargetTarget: 'enemy', fixedBuffOwnerTarget: 'caster' },
+        withProjectionGraph({
+          ...BUFF_ACTION_CONTEXT,
+          actionTargetTarget: 'enemy',
+          fixedBuffOwnerTarget: 'caster',
+        }),
         'test',
       ),
     ).toBe(expected);
@@ -19,7 +24,7 @@ describe('全局冷却公共目标投影', () => {
     expect(
       projectGlobalCooldownTarget(
         { targetSource: 'Source', targetGroupKey: '' },
-        { ...BUFF_ACTION_CONTEXT, actionSourceTarget: 'buffSource' },
+        withProjectionGraph({ ...BUFF_ACTION_CONTEXT, actionSourceTarget: 'buffSource' }),
         'test',
       ),
     ).toBe('buffSource');
@@ -27,28 +32,28 @@ describe('全局冷却公共目标投影', () => {
       expect(() =>
         projectGlobalCooldownTarget(
           { targetSource: 'Owner', targetGroupKey: '' },
-          { ...BUFF_ACTION_CONTEXT, actionOwnerTarget: owner },
+          withProjectionGraph({ ...BUFF_ACTION_CONTEXT, actionOwnerTarget: owner }),
           'test',
         ),
       ).toThrow('character target');
     expect(() =>
       projectGlobalCooldownTarget(
         { targetSource: 'Owner', targetGroupKey: '' },
-        { ...BUFF_ACTION_CONTEXT, fixedBuffOwnerTarget: 'enemy' },
+        withProjectionGraph({ ...BUFF_ACTION_CONTEXT, fixedBuffOwnerTarget: 'enemy' }),
         'test',
       ),
     ).toThrow('character target');
     expect(() =>
       projectGlobalCooldownTarget(
         { targetSource: 'Owner', targetGroupKey: 'group' },
-        BUFF_ACTION_CONTEXT,
+        withProjectionGraph(BUFF_ACTION_CONTEXT),
         'test',
       ),
     ).toThrow('character target');
     expect(() =>
       projectGlobalCooldownTarget(
         { targetSource: 'Target', targetGroupKey: '' },
-        BUFF_ACTION_CONTEXT,
+        withProjectionGraph(BUFF_ACTION_CONTEXT),
         'test',
       ),
     ).toThrow('character target');

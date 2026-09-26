@@ -1,6 +1,0 @@
-{
-  "extends": "../../tsconfig.node.json",
-  "compilerOptions": { "noEmit": true, "incremental": false },
-  "include": ["./*.ts"],
-  "exclude": []
-}

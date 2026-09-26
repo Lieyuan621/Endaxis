@@ -1,6 +1,12 @@
 import { createTestBuffReference } from '../buffs/buffTestFixtures';
 import { expect, it, vi } from 'vitest';
 import type { AbilityEvent } from '../../../../packages/game-data-contract/src/abilityEvents';
+import type {
+  ActionGraphNode,
+  ActionGraphStep,
+} from '../../../../packages/game-data-contract/src/actionGraph';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import type { ResolvedActionSequence } from '../../compiler/combatProgram';
 import { AbilityEventDispatcher } from '../events/abilityEventDispatcher';
 import { lifecycleAbilityEvent, type AbilityEventPayloadMap } from '../events/combatAbilityEvent';
 import { ActionBlackboard } from '../actions/actionBlackboard';
@@ -8,18 +14,34 @@ import { ActionBlackboardOperationExecutor } from '../actions/actionBlackboardOp
 import { PassiveAbilityEventRuntime } from './passiveAbilityEventRuntime';
 import type { CombatOperationContext } from '../skills/skillRuntime';
 
+const chainSequence = (
+  revision: string,
+  actions: readonly ActionGraphStep[],
+): ResolvedActionSequence => {
+  const nodes: Record<string, ActionGraphNode> = {};
+  actions.forEach((action, index) => {
+    nodes[`step-${index}`] = {
+      action,
+      next: index + 1 < actions.length ? `step-${index + 1}` : null,
+    };
+  });
+  return {
+    graph: createActionGraphCompilation({ nodes }, 1, revision).compileAll(),
+    entry: actions.length === 0 ? null : 'step-0',
+    callSite: revision,
+  };
+};
+
+const changeResourceStep = {
+  kind: 'changeResource' as const,
+  parameters: { resource: 'sp' as const, amount: 1, recipient: 'team' as const },
+};
+
 const responses = [
   {
     event: 'abilityEntityFinished' as const,
     priority: 0,
-    sequence: {
-      steps: [
-        {
-          kind: 'changeResource' as const,
-          parameters: { resource: 'sp' as const, amount: 1, recipient: 'team' as const },
-        },
-      ],
-    },
+    sequence: chainSequence('passive-response', [changeResourceStep]),
   },
 ];
 
@@ -77,11 +99,11 @@ it.each(['dispose', 'ownerPermission'] as const)(
       return true;
     });
     const end = vi.fn();
-    const step = responses[0]!.sequence.steps[0]!;
+    const step = changeResourceStep;
     const host = new PassiveAbilityEventRuntime(
       { execute, end, evaluate: () => true },
       { blackboard: new ActionBlackboard(), canExecuteAction: () => ownerPermitted },
-      [{ ...responses[0]!, sequence: { steps: [step, step] } }],
+      [{ ...responses[0]!, sequence: chainSequence('passive-double', [step, step]) }],
       (event, priority, handle) =>
         dispatcher.registerAction(event, priority, published => handle(published)),
     );
@@ -109,26 +131,22 @@ it('技力与治疗原生响应写入各自的请求量和实际量，不合并�
       {
         event: 'skillSpGained',
         priority: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'storeEventSpGainAmount',
-              parameters: { outputKey: 'sp', realDeltaOutputKey: 'spActual' },
-            },
-          ],
-        },
+        sequence: chainSequence('passive-sp-gain', [
+          {
+            kind: 'storeEventSpGainAmount',
+            parameters: { outputKey: 'sp', realDeltaOutputKey: 'spActual' },
+          },
+        ]),
       },
       {
         event: 'receiveHeal',
         priority: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'storeEventHealValues',
-              parameters: { finalHealOutputKey: 'heal', realHealOutputKey: 'healActual' },
-            },
-          ],
-        },
+        sequence: chainSequence('passive-heal', [
+          {
+            kind: 'storeEventHealValues',
+            parameters: { finalHealOutputKey: 'heal', realHealOutputKey: 'healActual' },
+          },
+        ]),
       },
     ],
     (event, priority, handle) =>

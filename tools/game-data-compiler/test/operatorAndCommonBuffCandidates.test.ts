@@ -16,9 +16,9 @@ import type { SkillDefinition } from '../../../packages/game-data-contract/src/s
 import { avywenna } from '../../../src/data/operators/avywenna.generated.ts';
 import { optimizeCommonBuffDefinitions } from '../src/compiler/optimization/equipmentDefinitionOptimization.ts';
 import {
-  collectSharedEntityValueUsage,
-  type SharedEntityValueUsageInput,
-} from '../src/compiler/optimization/definitionEntityUsageContext.ts';
+  collectGraphSharedEntityValueUsage,
+  type GraphSharedEntityValueUsageInput,
+} from '../src/compiler/optimization/graphValueOptimization.ts';
 import type { OperatorPlanningSources } from '../scripts/operatorPlanningSources.ts';
 
 const {
@@ -58,34 +58,43 @@ const systemRoots = readSystemBuffRoots(
 const guardedBuff: SkillBuffDefinition = {
   stackingType: 'unlimited',
   lifecycleSequences: {
-    enable: {
-      steps: [
-        {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'constant', value: true } },
-          whenTrue: {
-            steps: [
-              {
-                kind: 'modifyActionValue',
-                parameters: {
-                  key: 'live',
-                  operation: 'assign',
-                  value: { kind: 'constant', value: 2 },
-                },
-              },
-            ],
+    enable: { $sequence: 'guard' },
+  },
+  actionGraph: {
+    main: {
+      nodes: {
+        guard: {
+          action: {
+            kind: 'conditional',
+            parameters: { condition: { kind: 'constant', value: true } },
+            whenTrue: { $sequence: 'write' },
           },
+          next: null,
         },
-      ],
+        write: {
+          action: {
+            kind: 'modifyActionValue',
+            parameters: {
+              key: 'live',
+              operation: 'assign',
+              value: { kind: 'constant', value: 2 },
+            },
+          },
+          next: null,
+        },
+      },
     },
+    macros: {},
   },
 };
 
 function planned(slug: string, definitions: OperatorBuffDefinitions = {}) {
+  // 生成管线仍是树侧消费；avywenna 生成产物是图形态，剔除图专属字段后作为树夹具基座。
+  const { dodgeSkill: _dodgeSkill, eventHandlers: _eventHandlers, ...base } = avywenna;
   return {
     activeSkills: [{ key: `${slug}-skill` }],
     operator: {
-      ...avywenna,
+      ...base,
       skillGroups: [],
       talents: [],
       potentials: [],
@@ -100,8 +109,8 @@ function planned(slug: string, definitions: OperatorBuffDefinitions = {}) {
   };
 }
 
-function consumerUsage(overrides: Partial<SharedEntityValueUsageInput> = {}) {
-  return collectSharedEntityValueUsage({
+function consumerUsage(overrides: Partial<GraphSharedEntityValueUsageInput> = {}) {
+  return collectGraphSharedEntityValueUsage({
     operators: [],
     commonBuffDefinitions: {},
     commonAbilityEntityDefinitions: {},
@@ -183,12 +192,12 @@ describe('干员与公共 Buff 共用规划', () => {
       key: 'spawn',
       timelineBlockFrames: 10,
       blackboard: { equipmentValue: 7, changed: 8, unused: 99 },
-      scheduledSequences: [
-        {
-          startFrame: 0,
-          sequence: {
-            steps: [
-              {
+      scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'spawn' } }],
+      actionGraph: {
+        main: {
+          nodes: {
+            spawn: {
+              action: {
                 kind: 'spawnAbilityEntity',
                 parameters: {
                   abilityEntityId: 'fixture',
@@ -196,10 +205,12 @@ describe('干员与公共 Buff 共用规划', () => {
                   inheritActionBlackboard: true,
                 },
               },
-            ],
+              next: null,
+            },
           },
         },
-      ],
+        macros: {},
+      },
     };
     const operator: OperatorDefinition = {
       ...planned('one').operator,
@@ -245,12 +256,12 @@ describe('干员与公共 Buff 共用规划', () => {
         key: 'spawn',
         timelineBlockFrames: 10,
         blackboard: { teammateValue: 7, unused: 99 },
-        scheduledSequences: [
-          {
-            startFrame: 0,
-            sequence: {
-              steps: [
-                {
+        scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'spawn' } }],
+        actionGraph: {
+          main: {
+            nodes: {
+              spawn: {
+                action: {
                   kind: 'spawnAbilityEntity',
                   parameters: {
                     abilityEntityId: 'fixture',
@@ -258,10 +269,12 @@ describe('干员与公共 Buff 共用规划', () => {
                     inheritActionBlackboard: true,
                   },
                 },
-              ],
+                next: null,
+              },
             },
           },
-        ],
+          macros: {},
+        },
       };
       planOperatorDefinition.mockImplementation(({ slug }: { slug: string }) => {
         const result = planned(slug);
@@ -367,11 +380,6 @@ describe('干员与公共 Buff 共用规划', () => {
       expect(compileStandardStumpBuffClosure).toHaveBeenCalledTimes(2);
       const changes = first.commonBuffs!.optimization.programs.flatMap(item => item.changes);
       expect(changes.length > 0).toBe(optimization !== 'off');
-      const content = await fs.readFile(
-        path.join(input.commonBuffOutput, 'commonBuffDefinitions.generated.ts'),
-        'utf8',
-      );
-      expect(content.includes('branch(')).toBe(optimization !== 'apply');
       expect(await fs.readdir(input.commonBuffOutput)).toEqual([
         'commonBuffDefinitions.generated.ts',
         'commonBuffPresentationNames.generated.ts',
@@ -381,32 +389,62 @@ describe('干员与公共 Buff 共用规划', () => {
 
   it('优化后相同的原始定义仍严格冲突，不能先裁剪再合并', async () => {
     const input = await setup();
+    // 优化器剪枝后会以自身分配规则重建节点 id；两份输入收敛到同一优化结果。
+    const guardedNode = {
+      kind: 'conditional' as const,
+      parameters: { condition: { kind: 'constant' as const, value: false } },
+    };
     const first: SkillBuffDefinition = {
       stackingType: 'unlimited',
-      lifecycleSequences: {
-        enable: {
-          steps: [
-            {
-              kind: 'conditional',
-              parameters: { condition: { kind: 'constant', value: false } },
-              whenTrue: guardedBuff.lifecycleSequences!.enable!,
+      lifecycleSequences: { enable: { $sequence: 'conditional_opt1' } },
+      actionGraph: {
+        main: {
+          nodes: {
+            conditional_opt1: {
+              action: { ...guardedNode, whenTrue: { $sequence: 'modifyActionValue_opt2' } },
+              next: null,
             },
-          ],
+            modifyActionValue_opt2: {
+              action: {
+                kind: 'modifyActionValue',
+                parameters: {
+                  key: 'live',
+                  operation: 'assign',
+                  value: { kind: 'constant', value: 2 },
+                },
+              },
+              next: null,
+            },
+          },
         },
+        macros: {},
       },
     };
+    // 两份原始输入只在被剪除的分支内容上不同；优化后收敛为同一结果。
     const second: SkillBuffDefinition = {
-      ...first,
-      lifecycleSequences: {
-        enable: {
-          steps: [
-            {
-              kind: 'conditional',
-              parameters: { condition: { kind: 'constant', value: false } },
-              whenTrue: { steps: [] },
+      stackingType: 'unlimited',
+      lifecycleSequences: { enable: { $sequence: 'conditional_opt1' } },
+      actionGraph: {
+        main: {
+          nodes: {
+            conditional_opt1: {
+              action: { ...guardedNode, whenTrue: { $sequence: 'modifyActionValue_opt2' } },
+              next: null,
             },
-          ],
+            modifyActionValue_opt2: {
+              action: {
+                kind: 'modifyActionValue',
+                parameters: {
+                  key: 'live',
+                  operation: 'assign',
+                  value: { kind: 'constant', value: 3 },
+                },
+              },
+              next: null,
+            },
+          },
         },
+        macros: {},
       },
     };
     expect(optimizeCommonBuffDefinitions({ common: first }, 'apply').definitions).toEqual(
@@ -502,12 +540,12 @@ describe('干员与公共 Buff 共用规划', () => {
         key: 'spawn',
         timelineBlockFrames: 10,
         blackboard: { equipmentValue: 7, mechanicValue: 9, unused: 99 },
-        scheduledSequences: [
-          {
-            startFrame: 0,
-            sequence: {
-              steps: [
-                {
+        scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'spawn' } }],
+        actionGraph: {
+          main: {
+            nodes: {
+              spawn: {
+                action: {
                   kind: 'spawnAbilityEntity',
                   parameters: {
                     abilityEntityId: 'fixture',
@@ -515,10 +553,12 @@ describe('干员与公共 Buff 共用规划', () => {
                     inheritActionBlackboard: true,
                   },
                 },
-              ],
+                next: null,
+              },
             },
           },
-        ],
+          macros: {},
+        },
       };
       const operator: OperatorDefinition = {
         ...planned('one').operator,

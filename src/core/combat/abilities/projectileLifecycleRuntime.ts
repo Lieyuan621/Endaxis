@@ -207,7 +207,7 @@ export class ProjectileLifecycleRuntime implements FrameRuntime {
 
   launch(
     request: ProjectileLaunchData & {
-      readonly callbackPrograms?: readonly import('../../compiler/combatProgram').CompiledProjectileCallbackSkillProgram[];
+      readonly callbackPrograms?: readonly import('../../compiler/combatProgram').CompiledAbilityEntityChildSkillProgram[];
       readonly resolveTickDeltaSeconds: () => number | null;
       readonly reach?: () => void;
       readonly block?: () => void;

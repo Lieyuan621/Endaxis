@@ -13,7 +13,13 @@ import {
 import { projectNativeDamageElement } from './damageElement.ts';
 import { parseBuffFindSettingsSource, readBuffStackNumType } from './buffFindSettings.ts';
 import { readTargetSource } from './targetEnums.ts';
-import { readCompareType } from './conditionEnums.ts';
+import {
+  readAtbObtainMethod,
+  readAtbObtainType,
+  readCompareType,
+  readDamageDecorateMaskCheckType,
+  readSkillType,
+} from './nativeEnums.ts';
 import {
   parseScalarSource,
   parseStringScalarSource,
@@ -575,7 +581,7 @@ export function parseConditionLeafSource(
       return {
         kind: 'currentHpRatio',
         sourceType,
-        comparison: requireNonEmptyString(condition.compareType, `${path}.compareType`),
+        comparison: readCompareType(condition.compareType, `${path}.compareType`),
         value: parseScalarSource(condition.value, `${path}.value`, inheritedBlackboard),
       };
     case 'OrConditionAction':
@@ -584,7 +590,7 @@ export function parseConditionLeafSource(
       return {
         kind: 'floatCompare',
         sourceType,
-        comparison: requireNonEmptyString(condition.compare, `${path}.compare`),
+        comparison: readCompareType(condition.compare, `${path}.compare`),
         left: parseScalarSource(condition.valueA, `${path}.valueA`, inheritedBlackboard),
         right: parseScalarSource(condition.valueB, `${path}.valueB`, inheritedBlackboard),
       };
@@ -707,7 +713,7 @@ export function parseConditionLeafSource(
           `${path}.mustBeforeExclusiveTime`,
         ),
         skillTypes: requireArray(condition.skillTypeList, `${path}.skillTypeList`).map(
-          (item, index) => requireString(item, `${path}.skillTypeList[${index}]`),
+          (item, index) => readSkillType(item, `${path}.skillTypeList[${index}]`),
         ),
         attackTypeMask: parseAttackTypeMaskSource(
           condition.attackTypeMask,
@@ -772,7 +778,7 @@ export function parseConditionLeafSource(
         kind: 'originSkillType',
         sourceType,
         skillTypes: requireArray(condition.skillTypeList, `${path}.skillTypeList`).map(
-          (item, index) => requireString(item, `${path}.skillTypeList[${index}]`),
+          (item, index) => readSkillType(item, `${path}.skillTypeList[${index}]`),
         ),
         attackTypeMask: parseAttackTypeMaskSource(
           condition.attackTypeMask,
@@ -800,11 +806,11 @@ export function parseConditionLeafSource(
         sourceType,
         checkObtainType: requireBoolean(condition.checkObtainType, `${path}.checkObtainType`),
         obtainTypes: requireArray(condition.obtainTypeList, `${path}.obtainTypeList`).map(
-          (item, index) => requireString(item, `${path}.obtainTypeList[${index}]`),
+          (item, index) => readAtbObtainType(item, `${path}.obtainTypeList[${index}]`),
         ),
         checkObtainMethod: requireBoolean(condition.checkObtainMethod, `${path}.checkObtainMethod`),
         obtainMethods: requireArray(condition.obtainMethodList, `${path}.obtainMethodList`).map(
-          (item, index) => requireString(item, `${path}.obtainMethodList[${index}]`),
+          (item, index) => readAtbObtainMethod(item, `${path}.obtainMethodList[${index}]`),
         ),
       };
     case 'CheckTargetsEqual':
@@ -923,7 +929,7 @@ export function parseConditionLeafSource(
       return {
         kind: 'damageDecorateMask',
         sourceType,
-        checkType: requireNonEmptyString(condition.checkType, `${path}.checkType`),
+        checkType: readDamageDecorateMaskCheckType(condition.checkType, `${path}.checkType`),
         mask: requireNonNegativeInteger(condition.mask, `${path}.mask`),
       };
     case 'CheckDamageTag':

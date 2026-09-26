@@ -1,4 +1,1794 @@
 {
+  "actionGraphEditor": {
+    "singleValue": "Single value",
+    "levelValues": "Values by level",
+    "levelIndex": "Level {index}",
+    "addValue": "Add level",
+    "removeValue": "Remove level",
+    "nodeGroups": {
+      "flow": "Flow & events",
+      "damage": "Damage & reactions",
+      "buffs": "Buffs & status",
+      "targets": "Target selection",
+      "entities": "Entities & projectiles",
+      "values": "Variables & values",
+      "resources": "Health & resources",
+      "skills": "Skills & time",
+      "number": "Calculations",
+      "boolean": "Conditions"
+    },
+    "noMatchingNodes": "No matching nodes",
+    "addNode": "Add Node…",
+    "options": {
+      "allOperators": "All operators",
+      "context": "Action context group",
+      "hit": "Hit",
+      "block": "Block",
+      "reach": "Reach",
+      "finish": "Finish",
+      "normalAttackLastCombo": "Final basic attack",
+      "plungingAttack": "Plunging attack",
+      "dashAttack": "Dash attack",
+      "fireBurst": "Heat burst",
+      "electricBurst": "Electric burst",
+      "cryoBurst": "Cryo burst",
+      "natureBurst": "Nature burst",
+      "fireAbnormal": "Heat reaction",
+      "electricAbnormal": "Electric reaction",
+      "cryoAbnormal": "Cryo reaction",
+      "natureAbnormal": "Nature reaction",
+      "canBreakWeakness": "Can break weakness",
+      "knockDown": "Knockdown",
+      "shatter": "Shatter",
+      "dot": "Damage over time",
+      "remainArea": "Persistent area",
+      "talentDamage": "Talent damage",
+      "physicalInfliction": "Physical status",
+      "controlled": "Controlled operator",
+      "guard": "Guard",
+      "roleCaster": "Caster",
+      "defender": "Defender",
+      "vanguard": "Vanguard",
+      "supporter": "Supporter",
+      "striker": "Striker",
+      "mob": "Normal enemy",
+      "elite": "Elite enemy",
+      "boss": "Boss",
+      "basicAttack": "Basic attack",
+      "battleSkill": "Battle skill",
+      "ultimate": "Ultimate",
+      "finisher": "Finisher",
+      "enemy": "Enemy",
+      "caster": "Caster",
+      "Fire": "Heat",
+      "Pulse": "Electric",
+      "Cryst": "Cryo",
+      "Natural": "Nature",
+      "currentAbilityEntity": "Current entity",
+      "heat": "Heat",
+      "cryo": "Cryo",
+      "electric": "Electric",
+      "nature": "Nature",
+      "buffOwner": "Buff owner",
+      "aliveOnly": "Living targets only",
+      "skipAll": "No targets",
+      "always": "Always",
+      "successAndInterrupted": "Succeeded and interrupted",
+      "success": "Succeeded",
+      "interrupted": "Interrupted",
+      "fracture": "Breach",
+      "crush": "Crush",
+      "airborne": "Launch",
+      "electrification": "Electrification",
+      "corrosion": "Corrosion",
+      "physical": "Physical",
+      "true": "True damage",
+      "lifeDrain": "Life drain",
+      "ether": "Ether",
+      "standard": "Attack scaling",
+      "breakingAttack": "Break attack",
+      "attribute": "Attribute",
+      "contextTarget": "Current group target",
+      "buffSource": "Buff source",
+      "controlledOperator": "Controlled operator",
+      "currentTarget": "Current target",
+      "lowestHealthRatioOperator": "Operator with lowest health ratio",
+      "lowestHealthRatioOperatorExceptControlled": "Lowest health ratio excluding controlled",
+      "strength": "Strength",
+      "agility": "Agility",
+      "intellect": "Intellect",
+      "will": "Will",
+      "maxHealth": "Maximum health",
+      "target": "Target",
+      "eventSource": "Event source",
+      "eventTarget": "Event target",
+      "actionInputTarget": "Action input target",
+      "party": "Team",
+      "partyExceptCaster": "Team excluding caster",
+      "partyExceptCasterAndSameCharacterType": "Teammates of other elements",
+      "casterAndControlledOperator": "Caster and controlled operator",
+      "casterAndLowestHealthRatioOperatorExceptCaster": "Caster and lowest-health teammate",
+      "currentCastSkill": "Current cast",
+      "battle": "Battle",
+      "early": "Ended early",
+      "other": "Other",
+      "assign": "Assign",
+      "add": "Add",
+      "multiply": "Multiply",
+      "enhance": "Total stacks",
+      "instance": "Instance count",
+      "hasAny": "Match any",
+      "hasAll": "Match all",
+      "exceptAny": "Exclude if any match",
+      "exceptAll": "Exclude if all match",
+      "absorbed": "Absorbed",
+      "actionSource": "Action source",
+      "actionOwner": "Action owner",
+      "currentBuffSource": "Current Buff source",
+      "reduce": "Reduce",
+      "set": "Set",
+      "baseDurationRatio": "Base cooldown ratio",
+      "absoluteSeconds": "Seconds",
+      "globalScaled": "Global scaled time",
+      "global": "Global",
+      "self": "Self",
+      "entity": "Entity time",
+      "current": "Current value",
+      "gained": "Added value",
+      "divide": "Divide",
+      "floor": "Round down",
+      "ceil": "Round up",
+      "roundToInt": "Round to nearest",
+      "armedNonConverted": "Equipped attributes without conversions",
+      "finalNonConverted": "Final attributes without conversions",
+      "currentHealth": "Current health",
+      "currentPoise": "Current stagger",
+      "absolute": "Absolute value",
+      "maxHealthRatio": "Maximum health ratio",
+      "sp": "SP",
+      "ultimateEnergy": "Ultimate Energy",
+      "team": "Team",
+      "gain": "Gain",
+      "refund": "Refund",
+      "normalAttack": "Basic attack",
+      "powerAttack": "Heavy attack",
+      "default": "Default",
+      "skill": "Skill",
+      "comboSkill": "Combo skill",
+      "infinite": "Persistent",
+      "finishByAction": "Until action ends",
+      "normalSkill": "Battle skill",
+      "ultimateSkill": "Ultimate",
+      "dodge": "Dodge",
+      "passiveSkill": "Passive skill",
+      "attack": "Attack",
+      "attachSkill": "Attached skill",
+      "extraActiveSkill": "Extra active skill",
+      "parent": "Follow outer scope",
+      "execution": "Each execution",
+      "equal": "Equal (=)",
+      "notEqual": "Not equal (≠)",
+      "greater": "Greater than (>)",
+      "greaterOrEqual": "Greater or equal (≥)",
+      "less": "Less than (<)",
+      "lessOrEqual": "Less or equal (≤)",
+      "ratio": "Ratio",
+      "exact": "Exact match"
+    },
+    "optional": "Optional",
+    "unset": "Not set",
+    "enabled": "True",
+    "disabled": "False",
+    "input": "Execute",
+    "next": "Then",
+    "apply": "Apply",
+    "discard": "Discard",
+    "openMacro": "Open Macro",
+    "resourceHelp": "This node uses another resource. Open its graph to edit it.",
+    "branchReadonly": "Branch parameters (read-only)",
+    "branchHelp": "Set execution order with graph connections. Structured branch parameters are not yet editable in this form.",
+    "invalid": "Invalid parameters. Check values and required fields.",
+    "variablePanel": "Variables and Macro Inputs",
+    "searchVariables": "Search variables",
+    "scope": "Variable Scope",
+    "skillScope": "Skill · {name}",
+    "macroScope": "Macro call · {name}",
+    "localScope": "Local Scope · {name}",
+    "currentScopeHelp": "Reads check this call's local variables first, then owner variables. Macros use variables provided by their caller.",
+    "copyScopeHelp": "Outer variables are copied on entry. Local changes here do not update outer local variables.",
+    "independentScopeHelp": "Use the configured initial values without copying outer local variables.",
+    "sharedEntityHelp": "Owner variables are still shared with the outer scope; changes affect other users.",
+    "ownEntityHelp": "Use separate owner variables.",
+    "paramLayer": "Macro input · read-only",
+    "entityLayer": "Owner variable",
+    "localLayer": "Local variable",
+    "variableHelp": "Drag onto the canvas to Get or Set. Ctrl-drag gets; Alt-drag sets. Drop on a value input to read and connect.",
+    "readonlyVariableHelp": "This graph is read-only. Customize it to add Get or Set nodes.",
+    "initial": "Initial value",
+    "unknownInitial": "Provided when executed",
+    "variableReadHelp": "Get nodes read the latest value when their connected action runs. Missing variables without a fallback cause an error.",
+    "entityWriteHelp": "Set updates owner variables, or local variables when no owner variable set exists.",
+    "localWriteHelp": "Set updates local variables in this scope. Same-named variables in other scopes are separate.",
+    "read": "Get",
+    "write": "Set",
+    "scopeUnknown": "Not connected; scope unknown",
+    "searchNodes": "Search nodes",
+    "fields": {
+      "variableKey": {
+        "name": "Variable name",
+        "help": "Choose a variable available in the current scope. Local variables can only be read and written within their own scope."
+      },
+      "key": {
+        "name": "Reference Name",
+        "help": "Name used to reference this action. Leave blank when not needed."
+      },
+      "target": {
+        "name": "Target"
+      },
+      "burstType": {
+        "name": "Burst Element"
+      },
+      "targetContextKey": {
+        "name": "Read target group",
+        "help": "Name of the target group saved earlier to read."
+      },
+      "onActionEndFinishBuffs": {
+        "name": "Finish buffs on action end",
+        "help": "When the action ends, finishes every matching Buff on the selected object by ID."
+      },
+      "nativeExecuteInterval": {
+        "name": "Execute on interval",
+        "help": "Executes immediately, then repeats on the interval; the body is kept until the next execution or host end."
+      },
+      "syncTimeScale": {
+        "name": "Sync source time scale",
+        "help": "Subscribes to the launch source time scale and ignore-global flag until the projectile is recycled."
+      },
+      "hit": {
+        "name": "Hit settings",
+        "help": "First-tick collision settings; omit for no collision callback."
+      },
+      "finishOnHit": { "name": "Finish on hit", "help": "Ends the flight after an accepted hit." },
+      "retryRejectedHit": {
+        "name": "Retry rejected hit",
+        "help": "Retries the collision on the next tick when the filter rejects it."
+      },
+      "onReach": {
+        "name": "Hit on reach",
+        "help": "Hits the launch target directly on reach without the collision faction filter."
+      },
+      "hitTagFilter": {
+        "name": "Hit tag filter",
+        "help": "Tag query the hit object must satisfy."
+      },
+      "finishOnReach": {
+        "name": "Finish on reach",
+        "help": "When off, reaching the target only fires the callback; the projectile still waits for the hit limit or lifetime."
+      },
+      "callbacks": {
+        "name": "Projectile callbacks",
+        "help": "Complete callback skills started when the projectile hits, is blocked, reaches, or finishes."
+      },
+      "saveToContextKey": {
+        "name": "Save to Target Group",
+        "help": "Name the group so later nodes can use these objects."
+      },
+      "sources": {
+        "name": "Sources",
+        "help": "Select sources or target groups in order."
+      },
+      "selection": {
+        "name": "Selection",
+        "help": "Choose the team, controlled operator or member with lowest health ratio."
+      },
+      "count": {
+        "name": "Count"
+      },
+      "abilityEntityIds": {
+        "name": "Entity IDs",
+        "help": "Select these entity types. Omit to allow any type."
+      },
+      "ownerContextKey": {
+        "name": "Owner Group",
+        "help": "Choose the creator from this group. Omit to use the caster."
+      },
+      "maxTargets": {
+        "name": "Target Limit"
+      },
+      "sameSourceSkillCast": {
+        "name": "Same Cast Only"
+      },
+      "saveCountToBlackboardKey": {
+        "name": "Store Count In",
+        "help": "Variable that receives the result count."
+      },
+      "circularOrder": {
+        "name": "Circular Order",
+        "help": "Order results by cycling through team slots."
+      },
+      "sourceContextKey": {
+        "name": "Source Group",
+        "help": "Name of an existing target group."
+      },
+      "index": {
+        "name": "Index",
+        "help": "Object position, starting at 0."
+      },
+      "contextKey": {
+        "name": "Target Group",
+        "help": "Group saved by an earlier query node."
+      },
+      "body": {
+        "name": "Body",
+        "help": "Connect actions to run on each iteration."
+      },
+      "outputKey": {
+        "name": "Store In",
+        "help": "Variable to receive the result for later Get Variable nodes."
+      },
+      "value": {
+        "name": "Value"
+      },
+      "childSkill": {
+        "name": "Entity Skill",
+        "help": "Skill for the entity to run."
+      },
+      "childSkillId": {
+        "name": "Skill ID"
+      },
+      "abilityEntityId": {
+        "name": "Entity ID"
+      },
+      "definition": {
+        "name": "Resource Definition",
+        "help": "Complete resource definition. Edit it in its own graph."
+      },
+      "inheritActionBlackboard": {
+        "name": "Copy Current Variables",
+        "help": "Copy current variables into the new object. Later changes are not synchronized."
+      },
+      "inheritSourceSkillCastInfo": {
+        "name": "Keep Source Cast",
+        "help": "Keep the new effect associated with the cast that created it."
+      },
+      "source": {
+        "name": "Source",
+        "help": "Object producing this effect, used for attribution and source checks."
+      },
+      "overrideDurationSeconds": {
+        "name": "Lifetime Override (s)",
+        "help": "Replace the entity lifetime. Omit to use its original setting."
+      },
+      "dieWhenSourceDies": {
+        "name": "End with Source",
+        "help": "End this object when its source disappears."
+      },
+      "finishByAction": {
+        "name": "End with Action",
+        "help": "End effects created by this action when the action ends."
+      },
+      "blackboardAssignments": {
+        "name": "Initial Numeric Variables",
+        "help": "Assign initial variables using values from the current scope."
+      },
+      "stringBlackboardAssignments": {
+        "name": "Initial Text Variables",
+        "help": "Assign text variables, such as effect IDs, to the new object."
+      },
+      "inverseReaction": {
+        "name": "Reverse Reaction Order",
+        "help": "Swap the element order used to select the reaction."
+      },
+      "element": {
+        "name": "Element"
+      },
+      "isExtra": {
+        "name": "Extra Effect",
+        "help": "Mark this as an extra effect for event conditions."
+      },
+      "eventName": {
+        "name": "Event Name",
+        "help": "Must match the name used by listeners and checks."
+      },
+      "eventParam": {
+        "name": "Event Value",
+        "help": "Numeric value sent with the event."
+      },
+      "skillId": {
+        "name": "Skill ID",
+        "help": "Skill to use, specified directly or through a variable."
+      },
+      "skipApplyCost": {
+        "name": "Skip Cost",
+        "help": "Cast the selected skill without paying its resource cost."
+      },
+      "interruptCurrentSkillOnlyWhenTargetCastable": {
+        "name": "Interrupt Only if Castable",
+        "help": "Keep the current skill if the new skill cannot be cast."
+      },
+      "duration": {
+        "name": "Duration (s)"
+      },
+      "force": {
+        "name": "Force Apply",
+        "help": "Allow this effect to override the target’s current control state."
+      },
+      "targetFilter": {
+        "name": "Target Filter",
+        "help": "Restrict which targets may receive the effect."
+      },
+      "returnWhen": {
+        "name": "Completion Condition",
+        "help": "Choose when the action completes and allows continuation."
+      },
+      "noGuardBuffId": {
+        "name": "Vulnerability Buff",
+        "help": "Buff applied when vulnerability starts."
+      },
+      "noGuardDefinition": {
+        "name": "Vulnerability Definition",
+        "help": "Independent resource defining vulnerability."
+      },
+      "type": {
+        "name": "Type"
+      },
+      "fractureBuffId": {
+        "name": "Breach Buff"
+      },
+      "fractureDefinition": {
+        "name": "Breach Definition"
+      },
+      "crushedBuffId": {
+        "name": "Crush Buff"
+      },
+      "crushedDefinition": {
+        "name": "Crush Definition"
+      },
+      "damageMultiplier": {
+        "name": "Damage Multiplier",
+        "help": "Damage factor. 1 leaves damage unchanged."
+      },
+      "ignoreHitEffect": {
+        "name": "Skip Hit Visuals",
+        "help": "Skip hit visuals without removing damage."
+      },
+      "airborneBuffId": {
+        "name": "Launch Buff"
+      },
+      "airborneDefinition": {
+        "name": "Launch Definition"
+      },
+      "height": {
+        "name": "Launch Height",
+        "help": "In-game launch height. Spatial displacement is not simulated."
+      },
+      "speedFactorMultiplier": {
+        "name": "Speed Multiplier",
+        "help": "In-game movement speed multiplier."
+      },
+      "reaction": {
+        "name": "Arts Reaction"
+      },
+      "durationSeconds": {
+        "name": "Duration (s)"
+      },
+      "durationMultiplier": {
+        "name": "Duration Multiplier",
+        "help": "Factor applied to base duration."
+      },
+      "effectiveness": {
+        "name": "Effect Strength",
+        "help": "Strength factor. 1 uses the original strength."
+      },
+      "damageType": {
+        "name": "Damage Type"
+      },
+      "calculation": {
+        "name": "Damage Formula",
+        "help": "Choose attack scaling, break damage or attribute scaling."
+      },
+      "attackScale": {
+        "name": "Attack Scaling",
+        "help": "Attack factor. 1 means 100% of ATK."
+      },
+      "takeAttackSnapshot": {
+        "name": "Snapshot Attack",
+        "help": "Capture the attack calculation when this damage action is prepared."
+      },
+      "calculationMultiplier": {
+        "name": "Formula Multiplier",
+        "help": "Factor used by the selected base damage formula."
+      },
+      "calculationAttribute": {
+        "name": "Damage Attribute"
+      },
+      "calculationAddition": {
+        "name": "Added Base Damage",
+        "help": "Value added after attribute scaling."
+      },
+      "tags": {
+        "name": "Category Tags",
+        "help": "Categories used by other nodes to filter this effect."
+      },
+      "gameplayTags": {
+        "name": "Effect Tags",
+        "help": "Additional tags for effect conditions."
+      },
+      "features": {
+        "name": "Features",
+        "help": "Set or filter behavioral features of this effect."
+      },
+      "stagger": {
+        "name": "Stagger"
+      },
+      "staggerMultiplier": {
+        "name": "Stagger Multiplier",
+        "help": "Factor applied to base stagger."
+      },
+      "staggerOnlyWhenCasterControlled": {
+        "name": "Stagger Only if Controlled",
+        "help": "Skip this hit’s stagger when the caster is not controlled. Damage still applies."
+      },
+      "attackScalePerStatusStack": {
+        "name": "Scaling per Stack",
+        "help": "Extra attack scaling granted by each status stack."
+      },
+      "instantAttributeModifiers": {
+        "name": "Hit Attribute Modifiers",
+        "help": "Attribute modifiers applied only to this hit."
+      },
+      "instantDamageScaleModifiers": {
+        "name": "Hit Damage Modifiers",
+        "help": "Damage scaling modifiers applied only to this hit."
+      },
+      "valueMultiplier": {
+        "name": "Value Multiplier"
+      },
+      "alwaysNext": {
+        "name": "Always Continue",
+        "help": "Continue even if this action does not succeed."
+      },
+      "attribute": {
+        "name": "Attribute"
+      },
+      "attributeSource": {
+        "name": "Attribute From",
+        "help": "Read the attribute from the source or target."
+      },
+      "multiplier": {
+        "name": "Multiplier"
+      },
+      "addition": {
+        "name": "Addition",
+        "help": "Value added after multiplication."
+      },
+      "amount": {
+        "name": "Amount",
+        "help": "Positive adds and negative removes. For healing, the base heal amount."
+      },
+      "buffId": {
+        "name": "Buff ID"
+      },
+      "iconDurationSource": {
+        "name": "Icon Timer Source",
+        "help": "Timer shown by the icon. Does not change the Buff lifetime."
+      },
+      "copiedBlackboardAssignments": {
+        "name": "Copy Variables",
+        "help": "Map destination variable names to current variable names."
+      },
+      "keywordEnhancements": {
+        "name": "Keyword Enhancements",
+        "help": "Set keyword enhancements on this effect."
+      },
+      "onActionEndBuffs": {
+        "name": "Buffs on End",
+        "help": "Follow-up Buffs applied to the same targets when this action ends."
+      },
+      "inheritToNextSkillIds": {
+        "name": "Allowed Successor Skills",
+        "help": "Skills allowed to keep this Buff when continuing."
+      },
+      "asChildBuff": {
+        "name": "End with Parent Buff",
+        "help": "Make the new Buff a child that ends with the current Buff."
+      },
+      "lifetimeOwner": {
+        "name": "Lifetime Owner",
+        "help": "Object whose end also ends this effect."
+      },
+      "globalBuffId": {
+        "name": "Team Buff ID"
+      },
+      "reason": {
+        "name": "End Reason"
+      },
+      "globalBuffIds": {
+        "name": "Team Buff IDs"
+      },
+      "items": {
+        "name": "Read Items",
+        "help": "Values to read and variables to store them in, in order."
+      },
+      "query": {
+        "name": "Buff Filter",
+        "help": "Select Buffs by ID or tag."
+      },
+      "desiredKey": {
+        "name": "Variable to Read",
+        "help": "Variable name inside the target Buff."
+      },
+      "buffIds": {
+        "name": "Buff IDs",
+        "help": "Match any Buff in this list."
+      },
+      "operation": {
+        "name": "Operation"
+      },
+      "countType": {
+        "name": "Count Mode",
+        "help": "Count stacks or separate Buff instances."
+      },
+      "tagQueryType": {
+        "name": "Tag Match Mode",
+        "help": "Choose any, all or exclusion matching."
+      },
+      "buffTags": {
+        "name": "Buff Tags",
+        "help": "Only process Buffs matching these tags."
+      },
+      "finishSource": {
+        "name": "End Source",
+        "help": "Object credited with ending this Buff."
+      },
+      "paused": {
+        "name": "Pause Timer",
+        "help": "Enable to pause the Buff countdown; disable to resume."
+      },
+      "igniteType": {
+        "name": "Activation Type",
+        "help": "Must match the activation response configured on the Buff."
+      },
+      "skill": {
+        "name": "Skill Filter",
+        "help": "Select skills by type or ID to change their cooldown."
+      },
+      "basis": {
+        "name": "Value Unit",
+        "help": "Use seconds or a fraction of the base cooldown."
+      },
+      "finishWithNextSkillIfNotInherited": {
+        "name": "End with Next Skill if Not Carried",
+        "help": "End this Buff with the next skill if it was not carried over."
+      },
+      "allowedRecoveryTags": {
+        "name": "Allowed Recovery Tags",
+        "help": "Allow Ultimate Energy recovery with these tags."
+      },
+      "clearUltimateEnergyOnEnd": {
+        "name": "Clear Energy on End"
+      },
+      "markerId": {
+        "name": "Marker Name",
+        "help": "Use the same name when creating and checking the marker."
+      },
+      "autoFinishByAction": {
+        "name": "Remove with Action",
+        "help": "Remove the marker when this action ends."
+      },
+      "timeDomain": {
+        "name": "Clock",
+        "help": "Choose global time or the object’s own time."
+      },
+      "scope": {
+        "name": "Scope"
+      },
+      "slot": {
+        "name": "Override Group",
+        "help": "Time effects in the same group compete by priority."
+      },
+      "priority": {
+        "name": "Priority",
+        "help": "Priority used when effects in the same group compete."
+      },
+      "curve": {
+        "name": "Time Scale Curve",
+        "help": "Map elapsed time to time scale."
+      },
+      "ignoredTargets": {
+        "name": "Excluded Operators",
+        "help": "Operators excluded from this global time effect."
+      },
+      "ignoredAbilityEntityTargets": {
+        "name": "Excluded Entities",
+        "help": "Entities excluded from this global time effect."
+      },
+      "influenceSkillCooldownSeconds": {
+        "name": "Cooldown Adjustment (s)",
+        "help": "Additional cooldown time affected during this time effect."
+      },
+      "targets": {
+        "name": "Operator Targets"
+      },
+      "abilityEntityTargets": {
+        "name": "Entity Targets"
+      },
+      "ignoreSlotCheck": {
+        "name": "Ignore Group Priority",
+        "help": "Apply without checking priorities of existing effects in the group."
+      },
+      "targetScale": {
+        "name": "Time Scale",
+        "help": "1 is normal speed and 0 pauses time."
+      },
+      "onlyBlockInput": {
+        "name": "Block Input Only",
+        "help": "Block player input without hiding the UI."
+      },
+      "ignore": {
+        "name": "Ignore Global Time Scale"
+      },
+      "revertOnEnd": {
+        "name": "Restore on End"
+      },
+      "realDeltaOutputKey": {
+        "name": "Store Actual Change In",
+        "help": "Store the actual resource increase or decrease."
+      },
+      "finalHealOutputKey": {
+        "name": "Store Healing In",
+        "help": "Store healing before subtracting overhealing."
+      },
+      "realHealOutputKey": {
+        "name": "Store Actual Healing In",
+        "help": "Store the actual increase in health."
+      },
+      "left": {
+        "name": "Left Value"
+      },
+      "right": {
+        "name": "Right Value"
+      },
+      "stage": {
+        "name": "Attribute Stage",
+        "help": "Choose equipped or final attributes, excluding conversions."
+      },
+      "useFloor": {
+        "name": "Round Down",
+        "help": "Round the attribute down before calculating."
+      },
+      "divisor": {
+        "name": "Divisor",
+        "help": "Divide the attribute by this value first."
+      },
+      "base": {
+        "name": "Base Value",
+        "help": "Fixed value added after scaling."
+      },
+      "targetKey": {
+        "name": "Result Variable"
+      },
+      "property": {
+        "name": "Property",
+        "help": "Choose current health or stagger."
+      },
+      "mode": {
+        "name": "Value Mode",
+        "help": "Use an absolute health value or maximum health ratio."
+      },
+      "resource": {
+        "name": "Resource"
+      },
+      "coefficient": {
+        "name": "Coefficient",
+        "help": "Factor applied to the amount. 1 leaves it unchanged."
+      },
+      "recipient": {
+        "name": "Recipient",
+        "help": "Apply the resource change to the caster or team."
+      },
+      "spGainKind": {
+        "name": "SP Gain Kind",
+        "help": "Distinguish gains from refunds."
+      },
+      "spGainSource": {
+        "name": "SP Source",
+        "help": "Identify basic attack, heavy attack or other skill recovery."
+      },
+      "isPercentValue": {
+        "name": "Fraction of Maximum Energy",
+        "help": "Interpret the value as a fraction of maximum Ultimate Energy."
+      },
+      "ultimateRecoveryTag": {
+        "name": "Energy Recovery Tag",
+        "help": "Tag checked by energy recovery restrictions."
+      },
+      "ignoreUltimateEnergyGainMultiplier": {
+        "name": "Ignore Energy Recovery Efficiency",
+        "help": "Skip the target’s energy recovery multiplier."
+      },
+      "canRecoverWhenOverdraft": {
+        "name": "Recover while Overdrawn",
+        "help": "Allow stamina recovery to clear overdraft."
+      },
+      "factor": {
+        "name": "Recovery Factor",
+        "help": "Factor used for finisher SP recovery."
+      },
+      "statusKey": {
+        "name": "Status"
+      },
+      "durationFrames": {
+        "name": "Duration (frames)",
+        "help": "Frames to last. Omit for no time limit."
+      },
+      "stacks": {
+        "name": "Stacks"
+      },
+      "maxStacks": {
+        "name": "Stack Limit"
+      },
+      "modifiers": {
+        "name": "Modifiers",
+        "help": "Bonuses or penalties granted per stack."
+      },
+      "destinationFrame": {
+        "name": "Destination Frame",
+        "help": "Frame to jump to when the condition passes."
+      },
+      "condition": {
+        "name": "Condition",
+        "help": "Connect a condition result to decide whether to execute."
+      },
+      "skillIds": {
+        "name": "Skills"
+      },
+      "whenTrue": {
+        "name": "True"
+      },
+      "whenFalse": {
+        "name": "False"
+      },
+      "choice": {
+        "name": "Selection Value",
+        "help": "Compare this value against each case in order."
+      },
+      "options": {
+        "name": "Cases",
+        "help": "Case values and their execution outputs."
+      },
+      "nativeChanneling": {
+        "name": "Channel Settings",
+        "help": "Configure repeat checks and target requirements."
+      },
+      "nativeTickInterval": {
+        "name": "Repeat Interval",
+        "help": "Execute immediately, then repeat at the configured interval."
+      },
+      "finish": {
+        "name": "Finish Condition",
+        "help": "Configure projectile arrival or timeout."
+      },
+      "recycleDelaySeconds": {
+        "name": "Recycle Delay (s)",
+        "help": "Seconds to retain the object after it finishes."
+      },
+      "delaySeconds": {
+        "name": "Delay (s)",
+        "help": "Seconds to wait before running the follow-up effect."
+      },
+      "callback": {
+        "name": "Finish Skill",
+        "help": "Skill to start when the timer ends."
+      },
+      "flag": {
+        "name": "Flag"
+      },
+      "nextSkillKey": {
+        "name": "Next Combo Skill",
+        "help": "Combo skill allowed by this window."
+      },
+      "nextSkillKeyFromSlot": {
+        "name": "Use Current Combo Form",
+        "help": "Use the current skill in the combo group."
+      },
+      "earlyDurationSeconds": {
+        "name": "Early Prompt (s)",
+        "help": "Time when the prompt is visible but input does not yet succeed."
+      },
+      "activeDurationSeconds": {
+        "name": "Valid Input (s)",
+        "help": "Duration in which combo input succeeds."
+      },
+      "skillGroupKey": {
+        "name": "Skill Group"
+      },
+      "targetSkillKey": {
+        "name": "Replacement Skill"
+      },
+      "inheritOriginSkillCooldownProgress": {
+        "name": "Keep Cooldown Progress",
+        "help": "Transfer the previous skill’s cooldown progress to the new skill."
+      },
+      "lifetime": {
+        "name": "Lifetime",
+        "help": "Choose whether the change persists or ends with the action."
+      },
+      "revertedSkillKey": {
+        "name": "Restore Skill",
+        "help": "Skill to restore on end. Omit to restore the previous skill."
+      },
+      "dashCount": {
+        "name": "Consecutive Dodges",
+        "help": "Allowed dodge count. Negative means unlimited."
+      },
+      "modeId": {
+        "name": "Action Mode"
+      },
+      "nativeSkillType": {
+        "name": "Skill Type",
+        "help": "New category, without replacing the skill itself."
+      },
+      "responses": {
+        "name": "Event Responses",
+        "help": "Events to listen for and actions to run."
+      },
+      "macroId": {
+        "name": "Macro"
+      },
+      "arguments": {
+        "name": "Macro Inputs",
+        "help": "Values supplied to the macro’s input parameters."
+      },
+      "scopeKey": {
+        "name": "Shared Identifier",
+        "help": "Identifier shared by a once gate or variable scope within this cast."
+      },
+      "shareParentBlackboard": {
+        "name": "Share Outer Variables",
+        "help": "Inner reads and writes use the outer variables directly."
+      },
+      "initialValues": {
+        "name": "Local Initial Values",
+        "help": "Initial values for variables in this scope."
+      },
+      "inheritParent": {
+        "name": "Copy Outer Variables",
+        "help": "Copy outer values on entry, overriding matching initial values. No later synchronization."
+      },
+      "entityInitialValues": {
+        "name": "Owner Initial Values",
+        "help": "Initial variables held by the projectile or other owner."
+      },
+      "entityAssignments": {
+        "name": "Owner Assignments",
+        "help": "Compute owner variables from outer values when creating the object."
+      },
+      "nodeId": {
+        "name": "Referenced Node",
+        "help": "Value or condition node in the same graph."
+      },
+      "characterTypes": {
+        "name": "Element Types",
+        "help": "Pass for any listed element type."
+      },
+      "roles": {
+        "name": "Roles",
+        "help": "Pass for any listed role."
+      },
+      "ranks": {
+        "name": "Enemy Ranks",
+        "help": "Pass for any listed enemy rank."
+      },
+      "operator": {
+        "name": "Comparison"
+      },
+      "branchKey": {
+        "name": "Skill Branch",
+        "help": "Build branch to check."
+      },
+      "valueType": {
+        "name": "Health Unit",
+        "help": "Use absolute health or current health ratio."
+      },
+      "returnValueIfMissing": {
+        "name": "Result without Stagger System",
+        "help": "Result to use if the target has no stagger system."
+      },
+      "probability": {
+        "name": "Probability",
+        "help": "Value from 0 to 1. 0.25 means 25%."
+      },
+      "objectTypes": {
+        "name": "Object Types"
+      },
+      "other": {
+        "name": "Other Object",
+        "help": "Object whose identity is compared with the input target."
+      },
+      "minimumStacks": {
+        "name": "Minimum Stacks"
+      },
+      "match": {
+        "name": "Match Mode",
+        "help": "Choose all, any or exclusion matching."
+      },
+      "damageTypes": {
+        "name": "Damage Types",
+        "help": "Pass if event damage has a listed type."
+      },
+      "elements": {
+        "name": "Elements",
+        "help": "Match any selected element."
+      },
+      "types": {
+        "name": "Physical Status Types",
+        "help": "Select launch, knockdown, crush or breach."
+      },
+      "skillTypes": {
+        "name": "Skill Types",
+        "help": "Skill categories to match."
+      },
+      "parentContextKey": {
+        "name": "Group to Check",
+        "help": "Group to check for the event target."
+      },
+      "child": {
+        "name": "Object to Find",
+        "help": "Object to find in the group."
+      },
+      "buffIdOutputKey": {
+        "name": "Store Buff ID In",
+        "help": "Store the event Buff ID in a text variable when the check passes."
+      },
+      "gainKinds": {
+        "name": "Recovery Kinds",
+        "help": "Select gains or refunds. Omit for either."
+      },
+      "overHealKey": {
+        "name": "Store Overhealing In",
+        "help": "Store healing that exceeds missing health."
+      },
+      "finalHealKey": {
+        "name": "Store Healing In",
+        "help": "Store healing before subtracting overhealing."
+      },
+      "realHealKey": {
+        "name": "Store Actual Healing In",
+        "help": "Store actual health restored."
+      },
+      "minimumLevel": {
+        "name": "Minimum Level"
+      },
+      "conditions": {
+        "name": "Conditions",
+        "help": "Conditions to check in order."
+      },
+      "fallback": {
+        "name": "Fallback",
+        "help": "Value to use if the variable is missing. Omit to report an error."
+      },
+      "parameter": {
+        "name": "Parameter",
+        "help": "Input supplied by the macro caller."
+      }
+    },
+    "help": "Help",
+    "result": "Result",
+    "categories": { "action": "Action", "boolean": "Condition", "number": "Value" },
+    "nodes": {
+      "outputKnockDown": {
+        "name": "Notify Knockdown",
+        "help": "Trigger responses to a successful knockdown. Does not apply knockdown."
+      },
+      "outputAirborne": {
+        "name": "Notify Launch",
+        "help": "Trigger responses to a successful launch. Does not apply launch."
+      },
+      "triggerSpellBurst": {
+        "name": "Trigger Arts Burst",
+        "help": "Trigger an Arts Burst of the selected element."
+      },
+      "mergeContextTargets": {
+        "name": "Merge Target Groups",
+        "help": "Combine objects or groups into a target group for later nodes."
+      },
+      "findCharacterTeamTargets": {
+        "name": "Select Team Members",
+        "help": "Select team members and save them as a target group."
+      },
+      "createSpatialPointTargets": {
+        "name": "Create Points",
+        "help": "Create points for effects that need multiple destinations. Positions are not simulated."
+      },
+      "findOwnerSpawnedAbilityEntities": {
+        "name": "Find Spawned Entities",
+        "help": "Find active projectiles or entities created by the specified owner and save them as a group."
+      },
+      "pickContextTarget": {
+        "name": "Get Target by Index",
+        "help": "Pick one object from a target group by index and save it to another group."
+      },
+      "forEachContextTarget": {
+        "name": "For Each Target",
+        "help": "Run the body for each object in the group. Current target refers to that object."
+      },
+      "readAbilityEntityRemainingDuration": {
+        "name": "Get Entity Time Remaining",
+        "help": "Store the current entity’s remaining lifetime in a variable, in seconds."
+      },
+      "setAbilityEntityRemainingDuration": {
+        "name": "Set Entity Time Remaining",
+        "help": "Set how many seconds the current entity has left."
+      },
+      "finishCurrentAbilityEntity": {
+        "name": "End Current Entity",
+        "help": "End the projectile or entity selected as the current target."
+      },
+      "finishActionOwnerAbilityEntity": {
+        "name": "End Owning Entity",
+        "help": "End the entity running this action, regardless of the selected loop target."
+      },
+      "finishCurrentAbilityEntityWhenSourceDies": {
+        "name": "End Entity if Source Is Gone",
+        "help": "End the current entity if its source is no longer alive."
+      },
+      "startCurrentAbilityEntityChildSkill": {
+        "name": "Start Entity Skill",
+        "help": "Run a skill on the current entity."
+      },
+      "startCurrentAbilityEntityChildSkillById": {
+        "name": "Start Named Entity Skill",
+        "help": "Run a skill registered on the current entity."
+      },
+      "spawnAbilityEntity": {
+        "name": "Spawn Entity",
+        "help": "Create a projectile or effect entity with initial variables, lifetime and starting skill."
+      },
+      "applyElementalInfliction": {
+        "name": "Apply Arts Infliction",
+        "help": "Apply one stack of the selected element and trigger its infliction or reaction effects."
+      },
+      "triggerCustomAbilityEvent": {
+        "name": "Send Custom Event",
+        "help": "Send a named event to matching listeners. Use the same name on both ends."
+      },
+      "castSkillDuringAction": {
+        "name": "Cast Skill",
+        "help": "Request a skill cast, with options for cost and interruption."
+      },
+      "applyKnockDown": {
+        "name": "Apply Knockdown",
+        "help": "Apply knockdown with the selected duration and requirements."
+      },
+      "applyPhysicalInfliction": {
+        "name": "Apply Physical Status",
+        "help": "Apply launch, crush or breach and resolve its effect against the target’s vulnerability."
+      },
+      "applyElementalReaction": {
+        "name": "Apply Arts Reaction",
+        "help": "Apply a lasting Arts reaction to the target."
+      },
+      "consumeElementalReaction": {
+        "name": "Remove Arts Reaction",
+        "help": "End the selected Arts reaction on the target."
+      },
+      "dealDamage": {
+        "name": "Deal Damage",
+        "help": "Deal one hit. Set its scaling through the inputs and optionally add stagger."
+      },
+      "dealFixedDamage": {
+        "name": "Deal Fixed Base Damage",
+        "help": "Use a fixed base damage value before applicable damage modifiers."
+      },
+      "dealStagger": {
+        "name": "Deal Stagger",
+        "help": "Increase stagger without dealing health damage."
+      },
+      "heal": {
+        "name": "Heal",
+        "help": "Restore health using a fixed amount or attribute scaling."
+      },
+      "applyBuff": {
+        "name": "Apply Buff",
+        "help": "Add a Buff to the target with a count, duration and initial variables."
+      },
+      "createGlobalBuff": {
+        "name": "Create Team Buff",
+        "help": "Create a team-wide Buff that applies effects to team members."
+      },
+      "finishParentGlobalBuff": {
+        "name": "End Parent Team Buff",
+        "help": "End the team Buff owning this Buff and its member effects."
+      },
+      "finishGlobalBuffsById": {
+        "name": "End Team Buffs",
+        "help": "End all team Buffs with the selected IDs."
+      },
+      "readSkillSettingData": {
+        "name": "Read Skill Values",
+        "help": "Read values from the skill settings and store them in variables."
+      },
+      "readBuffBlackboard": {
+        "name": "Get Buff Variable",
+        "help": "Find a Buff on the target and copy one of its numeric variables."
+      },
+      "readEventBuffBlackboard": {
+        "name": "Get Event Buff Variable",
+        "help": "Read a variable from the Buff that triggered this event. Use in a Buff event response."
+      },
+      "readCurrentBuffRemainingDuration": {
+        "name": "Get Current Buff Time Remaining",
+        "help": "Store remaining seconds for the current Buff. An unlimited Buff returns 0."
+      },
+      "readBuffRemainingDuration": {
+        "name": "Get Buff Time Remaining",
+        "help": "Read remaining seconds from the first matching Buff. Unlimited duration returns 0."
+      },
+      "setCurrentBuffRemainingDuration": {
+        "name": "Change Buff Time Remaining",
+        "help": "Set, add to or multiply the current Buff’s remaining seconds."
+      },
+      "refreshCurrentBuffAttributeModifiers": {
+        "name": "Refresh Buff Attributes",
+        "help": "Recalculate this Buff’s attribute modifiers after changing its variables."
+      },
+      "skillAffix": {
+        "name": "Track Current Skill",
+        "help": "Associate this effect with the skill being processed and track its end."
+      },
+      "readBuffStackCount": {
+        "name": "Count Buffs",
+        "help": "Count matching Buff stacks or instances and store the result."
+      },
+      "finishBuffsByTag": {
+        "name": "End Buffs by Tag",
+        "help": "Remove matching tagged Buffs, optionally limiting the count."
+      },
+      "finishBuffsById": {
+        "name": "End Buffs by ID",
+        "help": "Remove selected Buffs, optionally limiting the count."
+      },
+      "finishCurrentBuff": {
+        "name": "End Current Buff",
+        "help": "End the Buff running this effect."
+      },
+      "setCurrentBuffTimePaused": {
+        "name": "Pause Buff Timer",
+        "help": "Pause the remaining-duration countdown, or resume it."
+      },
+      "igniteBuffs": {
+        "name": "Activate Buff Response",
+        "help": "Trigger matching activation responses in the target’s Buffs."
+      },
+      "adjustSkillCooldown": {
+        "name": "Change Skill Cooldown",
+        "help": "Reduce, increase or set the selected skill’s remaining cooldown."
+      },
+      "holdBuffsById": {
+        "name": "Hold Buffs",
+        "help": "Prevent selected Buffs from ending while this action is active."
+      },
+      "inheritBuffById": {
+        "name": "Carry Buff to Next Skill",
+        "help": "Keep the same Buff for an allowed next skill, without resetting time or stacks."
+      },
+      "restrictUltimateEnergyRecovery": {
+        "name": "Restrict Ultimate Energy Recovery",
+        "help": "Allow only selected recovery types, with an option to clear energy on end."
+      },
+      "setGlobalCooldown": {
+        "name": "Set Global Cooldown",
+        "help": "Set a named character cooldown. Setting it again refreshes the timer."
+      },
+      "createTimedMarker": {
+        "name": "Add Timed Marker",
+        "help": "Add a timed marker to the target for condition nodes to check."
+      },
+      "createAbilityEntityTimedMarker": {
+        "name": "Add Entity Marker",
+        "help": "Add a timed marker to the current entity."
+      },
+      "startTimeDilation": {
+        "name": "Change Time Scale",
+        "help": "Change time scale globally or for selected objects. 1 is normal; 0 pauses time."
+      },
+      "startUltimateTimeDilation": {
+        "name": "Ultimate Time Dilation",
+        "help": "Slow global time while this action is active, excluding the caster."
+      },
+      "hideUi": {
+        "name": "Hide UI or Block Input",
+        "help": "Hide the game UI or only block player input while the action is active."
+      },
+      "setIgnoreGlobalTimeScale": {
+        "name": "Ignore Global Time Scale",
+        "help": "Exclude selected entities from global time dilation, or restore it."
+      },
+      "storeCurrentTimelineFrame": {
+        "name": "Get Skill Frame",
+        "help": "Store the current skill frame in a variable."
+      },
+      "storeEventSpGainAmount": {
+        "name": "Get Event SP Recovery",
+        "help": "Read requested and actual SP recovery from the current recovery event."
+      },
+      "storeEventHealValues": {
+        "name": "Get Event Healing",
+        "help": "Read calculated healing and actual health restored from the current event."
+      },
+      "storeShieldValue": {
+        "name": "Get Shield Value",
+        "help": "Read the target’s shield or the shield added by the current event."
+      },
+      "modifyActionValue": {
+        "name": "Set Variable",
+        "help": "Set, add to or multiply a variable in the current scope."
+      },
+      "calculateActionValue": {
+        "name": "Calculate and Store",
+        "help": "Calculate a result from two inputs and store it in a variable."
+      },
+      "storeSourceAttributeValue": {
+        "name": "Get Source Attribute",
+        "help": "Read a source attribute, scale and offset it, then store the result."
+      },
+      "storeEntityPropertyValue": {
+        "name": "Get Health or Stagger",
+        "help": "Read health or stagger, scale it and store the result."
+      },
+      "setHealthFloor": {
+        "name": "Set Health Floor",
+        "help": "Limit how low the target’s health can fall while this action is active."
+      },
+      "changeResource": {
+        "name": "Change Resource",
+        "help": "Add or spend resources such as SP or Ultimate Energy. Positive adds; negative spends."
+      },
+      "changeResourceByActionValue": {
+        "name": "Change Resource by Value",
+        "help": "Add or spend resources using a value input."
+      },
+      "recoverDashEnergy": {
+        "name": "Restore Dodge Stamina",
+        "help": "Restore shared dodge stamina. Stamina does not prevent dodging in this tool."
+      },
+      "recordPerfectDodge": {
+        "name": "Trigger Perfect Dodge",
+        "help": "Record a successful perfect dodge and trigger its responses."
+      },
+      "gainSquadUltimateEnergyFromSkillCost": {
+        "name": "Recover Team Energy from Cost",
+        "help": "Recover Ultimate Energy for the team based on this skill’s cost."
+      },
+      "gainFinisherSp": {
+        "name": "Recover Finisher SP",
+        "help": "Recover SP using the finisher recovery factor."
+      },
+      "applyStatus": {
+        "name": "Apply Status",
+        "help": "Add a status or increase its stacks."
+      },
+      "consumeStatus": {
+        "name": "Consume Status Stacks",
+        "help": "Remove stacks from the selected status."
+      },
+      "jumpTimeline": {
+        "name": "Jump on Skill Timeline",
+        "help": "Advance to the selected frame when the condition is true. No condition means immediate."
+      },
+      "finishTimeline": {
+        "name": "End Current Skill",
+        "help": "End the skill currently running."
+      },
+      "reachSkillOperableBoundary": {
+        "name": "Allow Next Skill",
+        "help": "Allow the selected next skills from this point onward."
+      },
+      "markCurrentSkillCanDash": {
+        "name": "Allow Dodge Cancel",
+        "help": "Allow a dodge to interrupt the current skill from this point."
+      },
+      "markCurrentSkillCanInterrupt": {
+        "name": "Allow Skill Interruption",
+        "help": "Mark the current skill as interruptible."
+      },
+      "conditional": {
+        "name": "Branch",
+        "help": "Follow True when the condition passes, otherwise False. Wire each branch to its actions."
+      },
+      "switch": {
+        "name": "Switch on Value",
+        "help": "Compare the input against cases in order and run the matching branch."
+      },
+      "repeatEachTick": {
+        "name": "Repeat over Time",
+        "help": "Repeat the body at the configured interval while the action is active."
+      },
+      "repeatByActionValue": {
+        "name": "Repeat by Count",
+        "help": "Run the body the specified number of times."
+      },
+      "launchProjectile": {
+        "name": "Launch projectile",
+        "help": "Launch a projectile and choose the skills to run when it hits, is blocked, arrives or finishes."
+      },
+      "findUnfinishedProjectileTargets": {
+        "name": "Find unfinished projectiles",
+        "help": "Finds projectiles that have not finished yet and stores them as a target group."
+      },
+      "setContextFlag": {
+        "name": "Set Flag",
+        "help": "Set a flag for condition nodes in the current action context."
+      },
+      "openComboWindow": {
+        "name": "Open Combo Window",
+        "help": "Allow the selected operator to use the next combo skill during its window."
+      },
+      "showComboRingQte": {
+        "name": "Set Combo Timing",
+        "help": "Set the prompt and valid input periods for a timed combo."
+      },
+      "changeSkillSlot": {
+        "name": "Change Skill Form",
+        "help": "Replace the skill used by future casts of a group, without changing a cast already running."
+      },
+      "overrideBasicAttackMapping": {
+        "name": "Override Basic Attack",
+        "help": "Use the selected skill for basic attack input while this action is active."
+      },
+      "overrideMultiDashLimit": {
+        "name": "Set Consecutive Dodge Limit",
+        "help": "Set consecutive dodge count. A negative value means unlimited."
+      },
+      "changePlayerActionMode": {
+        "name": "Change Action Mode",
+        "help": "Change the mode used to select skills for subsequent inputs."
+      },
+      "changeNativeSkillType": {
+        "name": "Change Skill Type",
+        "help": "Change a skill’s category, such as basic attack or combo, without replacing it."
+      },
+      "setCharacterPassiveUiValue": {
+        "name": "Update Passive Display",
+        "help": "Update the value shown by the operator’s special icon, without changing combat effects."
+      },
+      "inheritSkillCastInfoForBasicAttack": {
+        "name": "Inherit Source for Basic Attacks",
+        "help": "While this Buff is active, subsequent basic attacks use its source skill identity."
+      },
+      "listenForCombatEvents": {
+        "name": "Listen for Combat Events",
+        "help": "Run matching responses when events occur while this action is active."
+      },
+      "callMacro": {
+        "name": "Call Macro",
+        "help": "Run a macro in this resource. Supply its inputs and continue from its outputs."
+      },
+      "callResource": {
+        "name": "Call Resource",
+        "help": "Run an entry in another skill, Buff or entity resource."
+      },
+      "once": {
+        "name": "Do Once",
+        "help": "During one cast, only the first call with this shared identifier runs the body."
+      },
+      "withActionBlackboardScope": {
+        "name": "Local Variable Scope",
+        "help": "Run actions with local variables. Copy outer values or choose to share them."
+      },
+      "conditionNode": {
+        "name": "Condition Reference",
+        "help": "Use another condition node in this graph."
+      },
+      "valueNode": {
+        "name": "Value Reference",
+        "help": "Use another value node in this graph."
+      },
+      "constant": {
+        "name": "Constant",
+        "help": "Provide a fixed value."
+      },
+      "blackboard": {
+        "name": "Get Variable",
+        "help": "Read a variable in the current scope. Connect it to a value input."
+      },
+      "parameter": {
+        "name": "Get Macro Input",
+        "help": "Read an input supplied by the macro caller. Macro inputs cannot be assigned."
+      },
+      "combatActive": {
+        "name": "In Combat?",
+        "help": "Check whether combat is active."
+      },
+      "singleEnemyPresent": {
+        "name": "Single Enemy?",
+        "help": "Check whether a single enemy is present."
+      },
+      "casterControlled": {
+        "name": "Caster Controlled?",
+        "help": "Check whether the caster is the controlled operator."
+      },
+      "characterTypeIn": {
+        "name": "Element Type Matches?",
+        "help": "Check the target’s element type against the list."
+      },
+      "operatorRoleIn": {
+        "name": "Role Matches?",
+        "help": "Check the operator’s role against the list."
+      },
+      "enemyRankIn": {
+        "name": "Enemy Rank Matches?",
+        "help": "Check the enemy’s rank against the list."
+      },
+      "enemySuperArmorCompare": {
+        "name": "Compare Enemy Super Armor",
+        "help": "Compare the enemy’s super armor with the input."
+      },
+      "cameraToTargetAngleCompare": {
+        "name": "Compare View Angle",
+        "help": "Compare view and target directions. Spatial orientation is not simulated."
+      },
+      "skillBranchEnabled": {
+        "name": "Skill Branch Enabled?",
+        "help": "Check whether the build enables this skill branch."
+      },
+      "targetStaggered": {
+        "name": "Target Staggered?",
+        "help": "Check whether the target is currently staggered."
+      },
+      "healthCompare": {
+        "name": "Compare Health",
+        "help": "Compare current health or health ratio."
+      },
+      "poiseCompare": {
+        "name": "Compare Stagger",
+        "help": "Compare the target’s current stagger value."
+      },
+      "contextFlagEquals": {
+        "name": "Flag Equals?",
+        "help": "Check whether a flag equals the selected value."
+      },
+      "actionValueCompare": {
+        "name": "Compare Values",
+        "help": "Compare two inputs and return True or False."
+      },
+      "buffBlackboardValueCompare": {
+        "name": "Read and Compare Buff Variable",
+        "help": "Store a Buff variable, then compare it. Returns False if no Buff is found."
+      },
+      "probability": {
+        "name": "Probability Check",
+        "help": "Pass with the supplied probability. 0 never passes; 1 always passes."
+      },
+      "eventProjectilePerfectDodgeCooldownEquals": {
+        "name": "Projectile Dodge Cooldown?",
+        "help": "Check perfect dodge cooldown on the event projectile."
+      },
+      "eventProjectileIgnoreImmuneLevelCompare": {
+        "name": "Compare Projectile Immunity Bypass",
+        "help": "Compare the event projectile’s immunity bypass level."
+      },
+      "contextTargetCountCompare": {
+        "name": "Compare Target Count",
+        "help": "Count objects in a target group and compare, optionally storing the count."
+      },
+      "contextTargetObjectTypeMatch": {
+        "name": "Target Group Type Matches?",
+        "help": "Pass if any object in the group has a listed type."
+      },
+      "actionInputTargetObjectTypeMatch": {
+        "name": "Input Target Type Matches?",
+        "help": "Check the type of the target received by this action."
+      },
+      "actionInputTargetIdentityMatch": {
+        "name": "Input Target Matches?",
+        "help": "Compare the input target’s identity with the selected object."
+      },
+      "contextTargetIdentityMatch": {
+        "name": "First Target Matches?",
+        "help": "Compare the first object in the group with the selected object."
+      },
+      "contextTargetEntityTagMatch": {
+        "name": "First Target Tags Match?",
+        "help": "Check tags on the first object in the group."
+      },
+      "contextTargetBuffStackCompare": {
+        "name": "Compare First Target Buff Stacks",
+        "help": "Count tagged Buff stacks on the first target. An empty group fails."
+      },
+      "contextTargetBuffIdStackCompare": {
+        "name": "Compare First Target Named Buff",
+        "help": "Count selected Buff stacks on the first target. An empty group fails."
+      },
+      "abilityEntityRemainingDurationCompare": {
+        "name": "Compare Entity Time Remaining",
+        "help": "Compare remaining seconds on the current entity and optionally store the value."
+      },
+      "statusActive": {
+        "name": "Status Active?",
+        "help": "Check that the status exists with enough stacks."
+      },
+      "currentBuffStackCompare": {
+        "name": "Compare Current Buff Stacks",
+        "help": "Compare stacks on the Buff running this effect."
+      },
+      "buffStackCompare": {
+        "name": "Compare Tagged Buff Stacks",
+        "help": "Sum matching Buff stacks on the target and compare."
+      },
+      "buffTagIdCountCompare": {
+        "name": "Compare Buff Type Count",
+        "help": "Count distinct matching Buff types, not stacks or duplicate instances."
+      },
+      "entityTagMatch": {
+        "name": "Entity Tags Match?",
+        "help": "Check the target’s own tags, rather than its Buff tags."
+      },
+      "buffIdStackCompare": {
+        "name": "Compare Named Buff Stacks",
+        "help": "Sum stacks of the listed Buffs and compare."
+      },
+      "globalCooldownPresent": {
+        "name": "Global Cooldown Active?",
+        "help": "Check whether the named global cooldown is still active."
+      },
+      "casterComboPending": {
+        "name": "Combo Pending?",
+        "help": "Check for a pending combo. Other cast requirements may still fail."
+      },
+      "eventComboRingQteSucceeded": {
+        "name": "Combo Timing Succeeded?",
+        "help": "Check whether this combo input was within the valid timing window."
+      },
+      "timedMarkerPresent": {
+        "name": "Timed Marker Present?",
+        "help": "Check for an active named marker on the target."
+      },
+      "abilityEntityTimedMarkerPresent": {
+        "name": "Entity Marker Present?",
+        "help": "Check the current entity or selected entity group for an active marker."
+      },
+      "eventDamageTagsMatch": {
+        "name": "Event Damage Categories Match?",
+        "help": "Check damage categories such as basic attack or battle skill in a damage event."
+      },
+      "eventDamageGameplayTagsMatch": {
+        "name": "Event Damage Tags Match?",
+        "help": "Check effect tags carried by the event damage."
+      },
+      "eventDamageFeaturesMatch": {
+        "name": "Event Damage Features Match?",
+        "help": "Check features of the event damage."
+      },
+      "eventDamageTypeIn": {
+        "name": "Event Damage Type Matches?",
+        "help": "Check the event damage’s physical or Arts type."
+      },
+      "eventInflictionElementIn": {
+        "name": "Event Infliction Element Matches?",
+        "help": "Check the element applied by the event."
+      },
+      "eventPhysicalInflictionTypeIn": {
+        "name": "Event Physical Status Matches?",
+        "help": "Check the type of physical status being applied."
+      },
+      "eventSkillTypeIn": {
+        "name": "Event Skill Type Matches?",
+        "help": "Check the type of the skill being cast in this event."
+      },
+      "eventCustomAbilityNameMatch": {
+        "name": "Custom Event Name Matches?",
+        "help": "Check a custom event’s name and optionally store its value."
+      },
+      "currentSkillTypeIn": {
+        "name": "Current Skill Type Matches?",
+        "help": "Check the type of the skill the target is currently casting."
+      },
+      "originSkillTypeIn": {
+        "name": "Source Skill Type Matches?",
+        "help": "Check the type of the skill that caused this event."
+      },
+      "contextTargetContains": {
+        "name": "Group Contains Event Target?",
+        "help": "Check whether the event target belongs to the selected group."
+      },
+      "eventSkillIdIn": {
+        "name": "Event Skill in List?",
+        "help": "Check whether the event skill is in the list."
+      },
+      "eventSkillCastMatchesBuffSource": {
+        "name": "Cast Matches Buff Source?",
+        "help": "Check whether the event and Buff source belong to the same cast."
+      },
+      "eventBuffIdMatch": {
+        "name": "Event Buff in List?",
+        "help": "Check whether the newly applied event Buff is in the list."
+      },
+      "eventBuffEndedEarly": {
+        "name": "Buff Ended Early?",
+        "help": "Check whether the event Buff ended before its timer expired."
+      },
+      "eventBuffTagsMatch": {
+        "name": "Event Buff Tags Match?",
+        "help": "Check tags on the newly applied event Buff."
+      },
+      "eventTargetBuffCountCompare": {
+        "name": "Compare Event Target Buff Count",
+        "help": "Count matching Buff instances on the event target, not stacks."
+      },
+      "eventHealTagsMatch": {
+        "name": "Event Healing Tags Match?",
+        "help": "Check tags carried by the healing event."
+      },
+      "eventSpGainMatch": {
+        "name": "Event SP Recovery Matches?",
+        "help": "Check the source and kind of SP recovery."
+      },
+      "eventConsumedBuffLayerCompare": {
+        "name": "Compare Consumed Buff Stacks",
+        "help": "Compare actual Buff stacks consumed by this event and optionally store them."
+      },
+      "eventSourceTargetMatch": {
+        "name": "Event Source Matches Target?",
+        "help": "Compare the current event’s source and target."
+      },
+      "eventActionOwnerTargetMatch": {
+        "name": "Owner Matches Event Target?",
+        "help": "Compare the object running this effect with the event target."
+      },
+      "eventOverheal": {
+        "name": "Overhealing?",
+        "help": "Check whether healing exceeds missing health. Optionally store requested, actual and excess healing."
+      },
+      "eventSourceMatchesBuffSource": {
+        "name": "Event Source Matches Buff Source?",
+        "help": "Compare the event source with the current Buff’s source."
+      },
+      "eventSourceMatchesBuffSourceEntitySource": {
+        "name": "Event Source Is Summoner?",
+        "help": "If the Buff came from an entity, compare the event source with that entity’s source."
+      },
+      "eventSourceControlled": {
+        "name": "Event Source Controlled?",
+        "help": "Check whether the event source is the controlled operator."
+      },
+      "buffSourceMatchesOwner": {
+        "name": "Buff Source Is Owner?",
+        "help": "Check whether this Buff’s source and owner are the same object."
+      },
+      "ownerSpawnedAbilityEntityPresent": {
+        "name": "Spawned Entity Present?",
+        "help": "Check whether the caster has an active matching entity."
+      },
+      "elementalInflictionPresent": {
+        "name": "Arts Infliction Present?",
+        "help": "Check for enough stacks of the selected Arts infliction."
+      },
+      "elementalReactionActive": {
+        "name": "Arts Reaction Active?",
+        "help": "Check that the selected reaction is active at the required level."
+      },
+      "not": {
+        "name": "NOT",
+        "help": "Invert True and False."
+      },
+      "all": {
+        "name": "AND",
+        "help": "Check conditions in order. Stop at the first False; return True only if all pass."
+      },
+      "any": {
+        "name": "OR",
+        "help": "Check conditions in order. Stop and return True at the first passing condition."
+      },
+      "deckAttributeCompare": {
+        "name": "Compare Build Attributes",
+        "help": "Compare two operator attributes from the build."
+      }
+    },
+    "open": "Edit skill graph",
+    "scenarioChanged": "The current scenario has changed. Close and reopen the graph editor."
+  },
   "inheritance": {
     "boundary": "Inheritance boundary",
     "collapseHistory": "Collapse history",
@@ -1206,7 +2996,6 @@
       "valueTypes": { "boolean": "Boolean", "number": "Number", "string": "Text" },
       "booleanValues": { "true": "True", "false": "False" },
       "buffId": "Buff identity",
-      "inlineBuffDefinition": "Inline Buff definition",
       "buffStackingType": "Stacking policy",
       "buffStackingKey": "Stacking group key",
       "buffIconPath": "Icon path",
@@ -1451,7 +3240,6 @@
         "buffIconPath": "Path to an icon asset loadable by Endaxis. It only affects presentation, not Buff identity, stacking, or combat calculations.",
         "buffApplyTags": "GameplayTags supplied by the active Buff instance. Select readable paths; both projects and simulation store the same strings.",
         "buffExtendTags": "Native GameplayTags used by extension operations to match this Buff. They are separate from Buff identity IDs.",
-        "inlineBuffDefinition": "The apply step carries the definition. The blueprint is fixed when an instance is created; later stacking, refresh, or extension does not replace it.",
         "buffLifecycle": "Configure ordered steps at selected Buff lifecycle phases. Enabling any phase automatically inherits the originating skill cast so the steps can use the same combat operations.",
         "attackScale": "Multiplier applied to Attack. The UI shows percent; per-level data only changes at the current skill level.",
         "extraInfliction": "Extra infliction does not occupy the normal elemental attachment slot; stacking and reactions are handled by the elemental system.",
@@ -1610,7 +3398,7 @@
         "outputKnockDown": "Outputs one knockdown fact and synchronously triggers listeners without changing dummy position or control state.",
         "applyKnockDown": "Root knockdown preserves guard breaking, status buffs, immunity and events. Standard scenario integration is pending; simulation is not yet supported.",
         "heal": "Heals an operator from the caster's primary attribute and records raw, actual, and overhealing even at full health.",
-        "applyBuff": "Creates a Buff instance from the definition embedded in this step and may override initial blackboard values.",
+        "applyBuff": "Creates a Buff instance by looking up its ID in the owning object’s definitions and sets its initial blackboard values.",
         "createGlobalBuff": "Creates a battle-level GlobalBuff parent and projects its child Buffs onto every member of the fixed party.",
         "finishParentGlobalBuff": "Finishes the exact GlobalBuff parent linked to this child and all party mirrors in that layer.",
         "finishGlobalBuffsById": "Finishes every active GlobalBuff parent with an explicitly named native ID and all of its party mirrors.",
@@ -1635,8 +3423,6 @@
         "createTimedMarker": "Creates a timed marker on a target; markers with the same ID may coexist.",
         "setGlobalCooldown": "Sets a battle-wide cooldown for a character. Reusing the same character and ID refreshes its remaining time. Independent of ordinary markers, character time dilation and action lifetime.",
         "createAbilityEntityTimedMarker": "Creates a timed marker on the current ability entity's local clock.",
-        "findUnfinishedProjectileTargets": "Finds unfinished projectiles and saves the current results to a named target group for subsequent actions.",
-        "launchProjectile": "Launches a projectile with hit, reach and finish callbacks. All callbacks belong to the same projectile and retain the originating cast identity.",
         "storeCurrentTimelineFrame": "Stores the host skill or ability entity child skill's current local execute frame in the action blackboard.",
         "storeEventSpGainAmount": "Stores the actual SP amount carried by the current SP-gained event in the action blackboard.",
         "storeEventHealValues": "Stores the raw, actual, and overheal values carried by the current healing event in the action blackboard.",
@@ -1749,8 +3535,6 @@
         "inheritBuffById": "Inherit Buff by ID",
         "withActionBlackboardScope": "Use isolated action blackboard",
         "repeatByActionValue": "Repeat by action value",
-        "findUnfinishedProjectileTargets": "Find unfinished projectiles",
-        "launchProjectile": "Launch projectile",
         "overrideBasicAttackMapping": "Override basic attack mapping",
         "changeSkillSlot": "Change skill-slot variant",
         "spawnAbilityEntity": "Spawn ability entity",

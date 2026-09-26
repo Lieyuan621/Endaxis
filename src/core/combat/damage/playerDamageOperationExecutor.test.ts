@@ -703,30 +703,31 @@ describe('PlayerDamageOperationExecutor', () => {
       },
       branchContext,
     );
-    const branchSequence = branchRuntime.createSequence({
-      steps: [
-        {
-          kind: 'switch',
-          parameters: { choice: { kind: 'blackboard', key: 'choice' }, alwaysNext: false },
-          options: [
-            { value: { kind: 'constant', value: 0 }, sequence: { steps: [] } },
-            {
-              value: { kind: 'constant', value: 1 },
-              sequence: {
-                steps: [
-                  {
-                    kind: 'conditional',
-                    parameters: { condition: { kind: 'combatActive' } },
-                    whenTrue: { steps: [] },
-                    whenFalse: { steps: [snapshotStep] },
-                  },
-                ],
-              },
-            },
-          ],
+    const branchSequence = branchRuntime.createSequence(
+      compileGraphEntry('damage-snapshot-branch', 'switch-0', {
+        'switch-0': {
+          action: {
+            kind: 'switch',
+            parameters: { choice: { kind: 'blackboard', key: 'choice' }, alwaysNext: false },
+            options: [
+              { value: { kind: 'constant', value: 0 }, sequence: { $sequence: null } },
+              { value: { kind: 'constant', value: 1 }, sequence: { $sequence: 'case-1-0' } },
+            ],
+          },
+          next: null,
         },
-      ],
-    });
+        'case-1-0': {
+          action: {
+            kind: 'conditional',
+            parameters: { condition: { kind: 'combatActive' } },
+            whenTrue: { $sequence: null },
+            whenFalse: { $sequence: 'false-0' },
+          },
+          next: null,
+        },
+        'false-0': { action: snapshotStep, next: null },
+      }),
+    );
     runtimeAttack = 200;
     branchSequence.reset({});
     expect(branchContext.damageCalculationSnapshots.size).toBe(1);
@@ -1284,3 +1285,4 @@ describe('PlayerDamageOperationExecutor', () => {
   });
 });
 import { DamageCalculationSnapshots } from './damageCalculationSnapshots';
+import { compileGraphEntry } from '../../../test/compiledGraphEntry';

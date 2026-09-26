@@ -41,6 +41,7 @@ export type CompiledOperatorActiveSkillRuntimeDefinitionSource = Readonly<
       >
     >
 > & {
+  readonly actionGraph: import('../../../../../packages/game-data-contract/src/actionGraph.ts').ActionGraphResourceDefinition;
   /** 仅供整名技能组装配；生成最终 OperatorDefinition 前必须移除。 */
   readonly allowNextSkillTransitions: CompiledActiveSkillRuntimeProjectionSource['allowNextSkillTransitions'];
   readonly inputWindows?: SkillDefinition['inputWindows'];
@@ -56,7 +57,7 @@ export function compileOperatorActiveSkillRuntimeDefinitionSource(input: {
   readonly value: unknown;
   readonly sourcePath: string;
   readonly patch: SkillPatchSource | null;
-  readonly context: CombatActionProjectionContextSource;
+  readonly context: Omit<CombatActionProjectionContextSource, 'graph'>;
   readonly visualOnlyIds?: ReadonlySet<string>;
   readonly extensions?: CombatActionProjectionExtensionsSource;
 }): CompiledOperatorActiveSkillRuntimeDefinitionSource {
@@ -77,6 +78,7 @@ export function compileOperatorActiveSkillRuntimeDefinitionSource(input: {
     `${input.sourcePath}.castData.startCdFrame`,
   );
   const definition: CompiledOperatorActiveSkillRuntimeDefinitionSource = {
+    actionGraph: runtime.actionGraph,
     key: input.key,
     blackboard: Object.fromEntries(
       Object.entries(runtime.blackboard).map(([key, values]) => [key, collapse(values)]),
@@ -145,7 +147,7 @@ export function renderOperatorActiveSkillRuntimeDefinitionSource(input: {
   const renderedDefinition = renderTypeScriptData(definition);
   return {
     relativePath: `${input.operatorSlug}.${input.definition.key}.runtime.generated.ts`,
-    content: `/** 由 tools/game-data-compiler 从完整主动 SkillData 动作图生成；不要手工编辑。 */\nimport type {\n  OperatorBuffDefinitions,\n  SkillDefinition,\n} from '../../../../core/game-data/operatorDefinition';\n\n// prettier-ignore\nexport const supplementalBuffDefinitions = ${renderedBuffs} as const satisfies OperatorBuffDefinitions;\n\n// prettier-ignore\nexport default ${renderedDefinition} as const satisfies SkillDefinition;\n`,
+    content: `/** 由 tools/game-data-compiler 从完整主动 SkillData 动作图生成；不要手工编辑。 */\nimport type {\n  OperatorBuffDefinitions,\n  SkillDefinition,\n} from '../../../../core/game-data/operatorDefinition';\n\nexport const supplementalBuffDefinitions = ${renderedBuffs} as const satisfies OperatorBuffDefinitions;\n\nexport default ${renderedDefinition} as const satisfies SkillDefinition;\n`,
   };
 }
 

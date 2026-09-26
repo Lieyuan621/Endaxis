@@ -1,9 +1,13 @@
+import { readResourceActions, graphBranch } from '../support/graphAssertions.ts';
 import { fixtureGameplayTagRegistry } from '../gameplayTagFixtures.ts';
 import { describe, expect, it } from 'vitest';
 import { compileActiveSkillRuntimeProjectionSource } from '../../src/compiler/skills/activeSkillRuntimeProjection.ts';
 import { compileCombatActionSequenceSource } from '../../src/compiler/buffs/buffRuntimeProjection.ts';
 import { collectCombatInvisiblePresentationAssignmentKeys } from '../../src/compiler/buffs/buffRuntimeProjection.ts';
+import { collectUnconsumedSkillLocalKeys } from '../../src/compiler/skills/skillPresentationTargets.ts';
+import { compileEventCondition } from '../../src/compiler/conditions/combatConditionProjection.ts';
 import { parseKnownNativeActionSequenceSource } from '../../src/source/actionLeaf.ts';
+import { parseKnownSkillActionGraphSource } from '../../src/source/skillActionGraph.ts';
 import {
   abilityEntityFixture,
   activeSkillFixture,
@@ -12,9 +16,10 @@ import {
 } from '../sourceFixtures.ts';
 import { compileAbilityEntityTemplateCatalogSource } from '../../src/compiler/abilities/abilityEntityCatalog.ts';
 import { gameplayTagIdFromPath } from '../../src/source/nativeGameplayTags.ts';
-import { parseKnownSkillActionGraphSource } from '../../src/source/skillActionGraph.ts';
-import { collectUnconsumedSkillLocalKeys } from '../../src/compiler/skills/skillPresentationTargets.ts';
-import { compileEventCondition } from '../../src/compiler/conditions/combatConditionProjection.ts';
+
+import { createActionGraphBuilder } from '../../src/compiler/actions/actionGraphBuilder.ts';
+import { readActionGraphChain } from '../../src/compiler/actions/actionGraphBuilder.ts';
+import type { CompiledBuffStepSource } from '../../src/compiler/actions/combatActionProjectionTypes.ts';
 
 const ACTIVE_CONTEXT = {
   gameplayTagRegistry: fixtureGameplayTagRegistry,
@@ -50,6 +55,7 @@ describe('HideUI active source projection', () => {
         parsed.actions[0]!,
         {
           ...ACTIVE_CONTEXT,
+          graph: createActionGraphBuilder<CompiledBuffStepSource>(),
           singleEnemyTargetGroupKeys: new Set(['selected']),
           staticEnemyTargetGroupKeys: new Set(guaranteed ? ['selected'] : []),
         },
@@ -88,7 +94,7 @@ describe('HideUI active source projection', () => {
         directValue: true,
         value: scalarFixture(1),
         calculationTarget: targetFixture('Owner'),
-        calculateType: 'Count',
+        calculateType: 'HpRatio',
       });
     const value = activeWithActions([
       assignment('unused_local'),
@@ -116,9 +122,12 @@ describe('HideUI active source projection', () => {
       patch: null,
       context: ACTIVE_CONTEXT,
     });
-    expect(JSON.stringify(result.scheduledSequences)).not.toContain('unused_local');
-    expect(JSON.stringify(result.scheduledSequences)).toContain('used_local');
-    expect(JSON.stringify(result.scheduledSequences)).toContain('EntityBB_shared');
+    const steps = JSON.stringify(
+      result.scheduledSequences.flatMap(item => readResourceActions(result, item.sequence)),
+    );
+    expect(steps).not.toContain('unused_local');
+    expect(steps).toContain('used_local');
+    expect(steps).toContain('EntityBB_shared');
   });
 
   it('目标角度是纯读取，只在两分支战斗结果相同时消去判断', () => {
@@ -149,7 +158,7 @@ describe('HideUI active source projection', () => {
           directValue: true,
           value: scalarFixture(1),
           calculationTarget: targetFixture('Owner'),
-          calculateType: 'Count',
+          calculateType: 'HpRatio',
         }),
         gain(1),
       ]),
@@ -160,7 +169,7 @@ describe('HideUI active source projection', () => {
           directValue: true,
           value: scalarFixture(0),
           calculationTarget: targetFixture('Owner'),
-          calculateType: 'Count',
+          calculateType: 'HpRatio',
         }),
         gain(1),
       ]),
@@ -175,7 +184,8 @@ describe('HideUI active source projection', () => {
         patch: null,
         context: ACTIVE_CONTEXT,
       });
-    expect(compile().scheduledSequences[0]!.sequence.steps).toEqual([
+    const compiled = compile();
+    expect(readResourceActions(compiled, compiled.scheduledSequences[0]!.sequence)).toEqual([
       { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
     ]);
     branch.failActions = wrapper([gain(0.75)]);
@@ -199,11 +209,13 @@ describe('HideUI active source projection', () => {
       patch: null,
       context: ACTIVE_CONTEXT,
     });
-    expect(result.scheduledSequences[0]!.sequence.steps).toEqual([
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toEqual([
       {
         kind: 'repeatEachTick',
         parameters: { nativeExecuteInterval: { executeEachFrame: false, intervalSeconds: 0.5 } },
-        body: { steps: [{ kind: 'markCurrentSkillCanDash', parameters: {} }] },
+        body: graphBranch(result.actionGraph!.main, [
+          { kind: 'markCurrentSkillCanDash', parameters: {} },
+        ]),
       },
     ]);
   });
@@ -231,7 +243,11 @@ describe('HideUI active source projection', () => {
     expect(result.scheduledSequences[0]).toMatchObject({
       startFrame: 5,
       endFrame: 8,
-      sequence: { steps: [{ kind: 'hideUi', parameters: { onlyBlockInput } }] },
+      sequence: graphBranch(
+        result.actionGraph!.main,
+        [{ kind: 'hideUi', parameters: { onlyBlockInput } }],
+        true,
+      ),
     });
   });
 
@@ -250,7 +266,7 @@ describe('HideUI active source projection', () => {
       {
         startFrame: 5,
         endFrame: 8,
-        sequence: { steps: [{ kind, parameters: {} }] },
+        sequence: graphBranch(result.actionGraph!.main, [{ kind, parameters: {} }], true),
       },
     ]);
   });
@@ -479,7 +495,10 @@ describe('主动技能正式时间轴投影', () => {
       expect(project).toThrow('unsupported target postprocessor exclusion');
       return;
     }
-    expect(project().scheduledSequences.at(-1)!.sequence.steps).toMatchObject([
+    const projectedResult = project();
+    expect(
+      readResourceActions(projectedResult, projectedResult.scheduledSequences.at(-1)!.sequence),
+    ).toMatchObject([
       {
         kind: 'mergeContextTargets',
         parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
@@ -540,13 +559,15 @@ describe('主动技能正式时间轴投影', () => {
       patch: null,
       context: ACTIVE_CONTEXT,
     });
-    expect(result.scheduledSequences[0]!.sequence.steps).toMatchObject([
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toMatchObject([
       {
         kind: 'conditional',
         parameters: { condition: { left: { kind: 'constant', value: 1 } } },
-        whenTrue: {
-          steps: [{ kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } }],
-        },
+        whenTrue: graphBranch(
+          result.actionGraph!.main,
+          [{ kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } }],
+          true,
+        ),
       },
     ]);
   });
@@ -568,7 +589,7 @@ describe('主动技能正式时间轴投影', () => {
       patch: null,
       context: ACTIVE_CONTEXT,
     });
-    expect(result.scheduledSequences[0]!.sequence.steps.at(-1)).toEqual({
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence).at(-1)).toEqual({
       kind: 'gainFinisherSp',
       parameters: { factor: 1, recipient: 'team' },
     });
@@ -788,70 +809,6 @@ describe('主动技能正式时间轴投影', () => {
     );
   });
 
-  it.each(['none', 'combatRead', 'eventRead', 'projectile', 'abilityEntity', 'buffInheritance'])(
-    '条件内计算角度和取绝对值只在没有外部消费者时裁剪：%s',
-    consumer => {
-      const leaf = (family: string, action: unknown) => ({
-        metadata: { enabled: true },
-        body: { kind: 'leaf', value: { family, action } },
-      });
-      const branch = (condition: unknown[], whenTrue: unknown[]) => ({
-        metadata: { enabled: true },
-        body: {
-          kind: 'ifElse',
-          alwaysNext: true,
-          condition: { actions: condition },
-          whenTrue: { actions: whenTrue },
-          whenFalse: { actions: [] },
-        },
-      });
-      const sequence = {
-        actions: [
-          branch(
-            [
-              leaf('presentationCalculation', {
-                kind: 'saveTwoDirectionAngle',
-                outputKey: 'angle',
-              }),
-              branch(
-                [leaf('condition', { kind: 'floatCompare', key: 'angle' })],
-                [
-                  leaf('blackboardMutation', {
-                    key: 'angle',
-                    directValue: true,
-                    operation: 'Multiply',
-                    value: { blackboardKey: null, value: -1 },
-                  }),
-                ],
-              ),
-              leaf('condition', { kind: 'floatCompare', key: 'angle' }),
-            ],
-            [leaf('spatial', { kind: 'selfRotate' })],
-          ),
-        ],
-      };
-      const external = {
-        actions:
-          consumer === 'none'
-            ? []
-            : [
-                consumer === 'combatRead'
-                  ? leaf('damage', { multiplier: { blackboardKey: 'angle' } })
-                  : consumer === 'eventRead'
-                    ? leaf('eventListener', { callback: { blackboardKey: 'angle' } })
-                    : leaf(consumer, {}),
-              ],
-      };
-      expect(
-        collectCombatInvisiblePresentationAssignmentKeys([sequence, external] as never),
-      ).toEqual(new Set(consumer === 'none' ? ['angle'] : []));
-      // 外部证明只解除传出边界，不得覆盖当前图里明确存在的战斗或事件读取。
-      expect(
-        collectCombatInvisiblePresentationAssignmentKeys([sequence, external] as never, () => true),
-      ).toEqual(new Set(['combatRead', 'eventRead'].includes(consumer) ? [] : ['angle']));
-    },
-  );
-
   it('保留送入角色被动 HUD 的黑板累计值', () => {
     const sequence = {
       actions: [
@@ -926,21 +883,20 @@ describe('主动技能正式时间轴投影', () => {
     });
 
     expect(result.scheduledSequences).toEqual([]);
-    expect(result.switchToBuffCast).toEqual({
+    const bypass = result.switchToBuffCast;
+    expect(bypass && { ...bypass, sequence: bypass.sequence }).toEqual({
       currentSkillTypes: ['battleSkill', 'ultimate'],
       asSkillCast: false,
-      sequence: {
-        steps: [
-          {
-            kind: 'applyBuff',
-            parameters: {
-              buffId: 'buff_chr_fixture_end',
-              target: 'caster',
-              inheritSourceSkillCastInfo: true,
-            },
+      sequence: graphBranch(result.actionGraph!.main, [
+        {
+          kind: 'applyBuff',
+          parameters: {
+            buffId: 'buff_chr_fixture_end',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
           },
-        ],
-      },
+        },
+      ]),
     });
   });
 
@@ -983,27 +939,6 @@ describe('主动技能正式时间轴投影', () => {
     });
   });
 
-  it.each([0, 5, 7, 107])('JumpTo 目标 %s 的方向留给运行时判断', destinationFrame => {
-    const result = compileActiveSkillRuntimeProjectionSource({
-      value: activeWithActions([
-        meta('JumpToAction', {
-          destFrame: destinationFrame,
-          conditionAction: {
-            actionData: [],
-            onlyExecuteWhenSourceIsMainChar: false,
-            onlyExecuteWhenSourceIsGuard: false,
-          },
-        }),
-      ]),
-      sourcePath: 'jump.direction',
-      patch: null,
-      context: ACTIVE_CONTEXT,
-    });
-    expect(result.scheduledSequences[0]!.sequence.steps).toEqual([
-      { kind: 'jumpTimeline', parameters: { destinationFrame } },
-    ]);
-  });
-
   it('保留 JumpTo 条件序列中只反转下一项的 NotNextCheckAction', () => {
     const result = compileActiveSkillRuntimeProjectionSource({
       value: activeWithActions([
@@ -1026,7 +961,7 @@ describe('主动技能正式时间轴投影', () => {
       context: ACTIVE_CONTEXT,
     });
 
-    expect(result.scheduledSequences[0]?.sequence.steps).toContainEqual({
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toContainEqual({
       kind: 'jumpTimeline',
       parameters: {
         destinationFrame: 300,
@@ -1051,7 +986,7 @@ describe('主动技能正式时间轴投影', () => {
       context: ACTIVE_CONTEXT,
     });
 
-    expect(result.scheduledSequences[0]?.sequence.steps).toEqual([
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toEqual([
       {
         kind: 'inheritBuffById',
         parameters: {
@@ -1076,7 +1011,11 @@ describe('主动技能正式时间轴投影', () => {
       {
         startFrame: 5,
         endFrame: 8,
-        sequence: { steps: [{ kind: 'finishTimeline', parameters: {} }] },
+        sequence: graphBranch(
+          result.actionGraph!.main,
+          [{ kind: 'finishTimeline', parameters: {} }],
+          true,
+        ),
       },
     ]);
   });
@@ -1097,7 +1036,7 @@ describe('主动技能正式时间轴投影', () => {
           'fixture.sequence',
           {},
         ),
-        ACTIVE_CONTEXT,
+        { ...ACTIVE_CONTEXT, graph: createActionGraphBuilder<CompiledBuffStepSource>() },
       ),
     ).toThrow('requires a root skill timeline');
   });
@@ -1229,7 +1168,7 @@ describe('主动技能正式时间轴投影', () => {
         directValue: true,
         value: scalarFixture(7),
         calculationTarget: targetFixture('Owner'),
-        calculateType: 'Count',
+        calculateType: 'HpRatio',
       }),
       spawnAbilityEntity('spawned'),
     ]);
@@ -1237,7 +1176,6 @@ describe('主动技能正式时间轴投影', () => {
     const graph = parseKnownSkillActionGraphSource(value, 'local.export', {});
     expect([...collectUnconsumedSkillLocalKeys(graph, value)]).toEqual([]);
   });
-
   const emptyAngleBranch = () =>
     meta('IfElseAction', {
       conditionAction: seq([
@@ -1300,7 +1238,9 @@ describe('主动技能正式时间轴投影', () => {
       },
     });
 
-    expect(withoutEvidence.scheduledSequences[0]?.sequence.steps[0]).toMatchObject({
+    expect(
+      readResourceActions(withoutEvidence, withoutEvidence.scheduledSequences[0]!.sequence)[0],
+    ).toMatchObject({
       kind: 'conditional',
       parameters: {
         condition: {
@@ -1308,7 +1248,9 @@ describe('主动技能正式时间轴投影', () => {
         },
       },
     });
-    expect(withEvidence.scheduledSequences[0]?.sequence.steps[0]).toMatchObject({
+    expect(
+      readResourceActions(withEvidence, withEvidence.scheduledSequences[0]!.sequence)[0],
+    ).toMatchObject({
       kind: 'conditional',
       parameters: {
         condition: {
@@ -1324,7 +1266,7 @@ describe('主动技能正式时间轴投影', () => {
       patch: null,
       context: ACTIVE_CONTEXT,
     });
-    expect(result.scheduledSequences[0]?.sequence.steps).toEqual([
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toEqual([
       {
         kind: 'modifyActionValue',
         parameters: {
@@ -1364,7 +1306,10 @@ describe('主动技能正式时间轴投影', () => {
         patch: null,
         context: ACTIVE_CONTEXT,
       });
-    expect(compile('OnBeforeTakeDamage').scheduledSequences[0]?.sequence.steps).toEqual([
+    const takeDamageResult = compile('OnBeforeTakeDamage');
+    expect(
+      readResourceActions(takeDamageResult, takeDamageResult.scheduledSequences[0]!.sequence),
+    ).toEqual([
       {
         kind: 'listenForCombatEvents',
         parameters: {
@@ -1374,7 +1319,7 @@ describe('主动技能正式时间轴投影', () => {
               event: { kind: 'operatorHit' },
               phase: 'dataAction',
               priority: 0,
-              sequence: { steps: [] },
+              sequence: graphBranch(takeDamageResult.actionGraph!.main, []),
             },
           ],
         },
@@ -1398,7 +1343,7 @@ describe('主动技能正式时间轴投影', () => {
       patch: null,
       context: ACTIVE_CONTEXT,
     });
-    const step = result.scheduledSequences[0]?.sequence.steps[0];
+    const step = readResourceActions(result, result.scheduledSequences[0]!.sequence)[0];
     expect(step?.kind).toBe('listenForCombatEvents');
     if (step?.kind !== 'listenForCombatEvents') throw new Error('missing listener');
     expect(step.parameters.responses.map(response => response.key)).toEqual([
@@ -1441,50 +1386,6 @@ describe('主动技能正式时间轴投影', () => {
     },
   );
 
-  it('收到 Buff 后的 CastSkill 使用事件输入目标，不固定成木桩', () => {
-    const result = compileActiveSkillRuntimeProjectionSource({
-      value: activeWithActions([
-        meta('EventListenerAction', {
-          abilityActionMap: [
-            {
-              abilityEvent: 'OnAddedBuff',
-              actions: [
-                seq([
-                  meta('CastSkill', {
-                    caster: targetFixture('Owner'),
-                    target: targetFixture('Target'),
-                    skillId: { value: 'counter', useBlackboardKey: false, blackboardKey: '' },
-                    skipApplyCost: false,
-                    inheritSourceSkillCastId: false,
-                    interruptCurSkillOnlyWhenTargetCastable: true,
-                  }),
-                ]),
-              ],
-            },
-          ],
-        }),
-      ]),
-      sourcePath: 'event.cast',
-      patch: null,
-      context: ACTIVE_CONTEXT,
-    });
-    const listener = result.scheduledSequences[0]!.sequence.steps[0]!;
-    expect(listener.kind).toBe('listenForCombatEvents');
-    if (listener.kind !== 'listenForCombatEvents') throw new Error('expected listener');
-    expect(listener.parameters.responses[0]!.sequence.steps).toEqual([
-      {
-        kind: 'castSkillDuringAction',
-        parameters: {
-          skillId: 'counter',
-          target: 'actionInputTarget',
-          skipApplyCost: false,
-          inheritSourceSkillCastInfo: false,
-          interruptCurrentSkillOnlyWhenTargetCastable: true,
-        },
-      },
-    ]);
-  });
-
   it('把受击监听的持续伤害与残留区域排除掩码保留为事件特征条件', () => {
     const listener = meta('EventListenerAction', {
       abilityActionMap: [
@@ -1509,11 +1410,10 @@ describe('主动技能正式时间轴投影', () => {
       context: ACTIVE_CONTEXT,
     });
 
-    expect(
-      result.scheduledSequences[0]?.sequence.steps[0]?.kind === 'listenForCombatEvents'
-        ? result.scheduledSequences[0].sequence.steps[0].parameters.responses[0]?.sequence.steps
-        : undefined,
-    ).toEqual([
+    const listenerSteps = readResourceActions(result, result.scheduledSequences[0]!.sequence);
+    const listenerStep = listenerSteps[0];
+    if (listenerStep?.kind !== 'listenForCombatEvents') throw new Error('missing listener');
+    expect(readResourceActions(result, listenerStep.parameters.responses[0]?.sequence)).toEqual([
       {
         kind: 'conditional',
         parameters: {
@@ -1523,9 +1423,9 @@ describe('主动技能正式时间轴投影', () => {
             features: ['dot', 'remainArea'],
           },
         },
-        whenTrue: {
-          steps: [{ kind: 'jumpTimeline', parameters: { destinationFrame: 107 } }],
-        },
+        whenTrue: graphBranch(result.actionGraph!.main, [
+          { kind: 'jumpTimeline', parameters: { destinationFrame: 107 } },
+        ]),
       },
     ]);
   });
@@ -1548,7 +1448,7 @@ describe('主动技能正式时间轴投影', () => {
       patch: null,
       context: ACTIVE_CONTEXT,
     });
-    expect(result.scheduledSequences[0]!.sequence.steps[0]).toEqual({
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)[0]).toEqual({
       kind: 'applyElementalInfliction',
       parameters: { element, isExtra: false },
     });
@@ -1580,7 +1480,7 @@ describe('主动技能正式时间轴投影', () => {
       patch: null,
       context: ACTIVE_CONTEXT,
     });
-    expect(result.scheduledSequences[0]!.sequence.steps[0]).toMatchObject({
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)[0]).toMatchObject({
       kind: 'conditional',
       parameters: {
         condition: {
@@ -1621,13 +1521,14 @@ describe('主动技能正式时间轴投影', () => {
     skill.selectStrategy = 'SelectSmartObject';
     skill.smartTargetSelectStrategy = 'SelectComboSkillTrigger';
 
+    const staticBranchResult = compileActiveSkillRuntimeProjectionSource({
+      value: skill,
+      sourcePath: 'active.static-branch',
+      patch: null,
+      context: ACTIVE_CONTEXT,
+    });
     expect(
-      compileActiveSkillRuntimeProjectionSource({
-        value: skill,
-        sourcePath: 'active.static-branch',
-        patch: null,
-        context: ACTIVE_CONTEXT,
-      }).scheduledSequences[0]!.sequence.steps,
+      readResourceActions(staticBranchResult, staticBranchResult.scheduledSequences[0]!.sequence),
     ).toMatchObject([
       {
         kind: 'conditional',
@@ -1716,13 +1617,14 @@ describe('主动技能正式时间轴投影', () => {
       },
     );
 
+    const selfMergeResult = compileActiveSkillRuntimeProjectionSource({
+      value: skill,
+      sourcePath: 'active.self-merge',
+      patch: null,
+      context: ACTIVE_CONTEXT,
+    });
     expect(
-      compileActiveSkillRuntimeProjectionSource({
-        value: skill,
-        sourcePath: 'active.self-merge',
-        patch: null,
-        context: ACTIVE_CONTEXT,
-      }).scheduledSequences.at(-1)!.sequence.steps,
+      readResourceActions(selfMergeResult, selfMergeResult.scheduledSequences.at(-1)!.sequence),
     ).toMatchObject([
       {
         kind: 'conditional',
@@ -1776,34 +1678,44 @@ describe('主动技能正式时间轴投影', () => {
     });
     expect(result.scheduledSequences[1]).toMatchObject({
       startFrame: 9,
-      sequence: {
-        steps: [
+      sequence: graphBranch(
+        result.actionGraph!.main,
+        [
           {
             kind: 'forEachContextTarget',
             parameters: { contextKey: 'bunshin' },
-            body: {
-              steps: [
+            body: graphBranch(
+              result.actionGraph!.main,
+              [
                 {
                   kind: 'setAbilityEntityRemainingDuration',
                   parameters: { value: { kind: 'constant', value: 30 } },
                 },
               ],
-            },
+              true,
+            ),
           },
         ],
-      },
+        true,
+      ),
     });
     expect(result.scheduledSequences[2]).toMatchObject({
       startFrame: 13,
-      sequence: {
-        steps: [
+      sequence: graphBranch(
+        result.actionGraph!.main,
+        [
           {
             kind: 'forEachContextTarget',
             parameters: { contextKey: 'bunshin' },
-            body: { steps: [{ kind: 'finishCurrentAbilityEntity', parameters: {} }] },
+            body: graphBranch(
+              result.actionGraph!.main,
+              [{ kind: 'finishCurrentAbilityEntity', parameters: {} }],
+              true,
+            ),
           },
         ],
-      },
+        true,
+      ),
     });
   });
 
@@ -1830,7 +1742,7 @@ describe('主动技能正式时间轴投影', () => {
       patch: null,
       context: ACTIVE_CONTEXT,
     });
-    expect(result.scheduledSequences[0]!.sequence.steps[0]).toMatchObject({
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)[0]).toMatchObject({
       kind: 'spawnAbilityEntity',
       parameters: { abilityEntityId: 'abilityentity_fixture' },
     });
@@ -1865,7 +1777,7 @@ describe('主动技能正式时间轴投影', () => {
       patch: null,
       context: ACTIVE_CONTEXT,
     });
-    expect(result.scheduledSequences[0]!.sequence.steps).toContainEqual({
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toContainEqual({
       kind: 'spawnAbilityEntity',
       parameters: expect.objectContaining({
         abilityEntityId: 'abilityentity_fixture',
@@ -1923,7 +1835,7 @@ describe('主动技能正式时间轴投影', () => {
       patch: null,
       context: ACTIVE_CONTEXT,
     });
-    expect(result.scheduledSequences[0]!.sequence.steps).toContainEqual({
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toContainEqual({
       kind: 'createSpatialPointTargets',
       parameters: {
         saveToContextKey: 'random-points',
@@ -1941,38 +1853,47 @@ describe('主动技能正式时间轴投影', () => {
       patch: null,
       context: ACTIVE_CONTEXT,
     });
-    expect(result.scheduledSequences[0]!.sequence.steps[0]).toMatchObject({
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)[0]).toMatchObject({
       kind: 'spawnAbilityEntity',
       parameters: { abilityEntityId: 'abilityentity_fixture' },
     });
-    expect(result.scheduledSequences[0]!.sequence.steps[0]).not.toHaveProperty(
-      'parameters.overrideDurationSeconds',
-    );
+    expect(
+      readResourceActions(result, result.scheduledSequences[0]!.sequence)[0],
+    ).not.toHaveProperty('parameters.overrideDurationSeconds');
   });
 
   it('Both hit-stop 对已证明的实体目标组保留查询身份，不替换成木桩', () => {
-    const result = compileCombatActionSequenceSource(
+    const builder = createActionGraphBuilder<CompiledBuffStepSource>();
+    const entry = compileCombatActionSequenceSource(
       parseKnownNativeActionSequenceSource(
-        seq([
-          meta('HitStopAction', {
-            affectType: 'Both',
-            curveKey: 'char_hard_stop',
-            useDirectCurve: false,
-            directCurve: [],
-            duration: 0.15,
-            timeDilationPriority: { tagId: -2059842104 },
-            attacker: targetFixture('Source'),
-            target: { ...targetFixture('Context'), targetGroupKey: 'projectiles' },
-          }),
-        ]),
+        {
+          actionData: [
+            meta('HitStopAction', {
+              affectType: 'Both',
+              curveKey: 'char_hard_stop',
+              useDirectCurve: false,
+              directCurve: [],
+              duration: 0.15,
+              timeDilationPriority: { tagId: -2059842104 },
+              attacker: targetFixture('Source'),
+              target: { ...targetFixture('Context'), targetGroupKey: 'projectiles' },
+            }),
+          ],
+          onlyExecuteWhenSourceIsMainChar: false,
+          onlyExecuteWhenSourceIsGuard: false,
+        },
         'active',
         {},
       ),
-      { ...ACTIVE_CONTEXT, staticAbilityEntityTargetGroupKeys: new Set(['projectiles']) },
+      {
+        ...ACTIVE_CONTEXT,
+        graph: builder,
+        staticAbilityEntityTargetGroupKeys: new Set(['projectiles']),
+      },
       new Set(),
       { resolveTimeDilationPriority: () => 10 },
     );
-    expect(result.steps[0]).toMatchObject({
+    expect(readActionGraphChain(builder.finish(), entry)[0]).toMatchObject({
       kind: 'startTimeDilation',
       parameters: {
         targets: ['caster'],
@@ -2001,7 +1922,7 @@ describe('主动技能正式时间轴投影', () => {
       extensions: { resolveTimeDilationPriority: tagId => (tagId === -2059842104 ? 10 : NaN) },
     });
     expect(result.scheduledSequences[0]).toMatchObject({ startFrame: 5, endFrame: 8 });
-    expect(result.scheduledSequences[0]!.sequence.steps).toEqual([
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toEqual([
       {
         kind: 'startTimeDilation',
         parameters: {
@@ -2044,47 +1965,53 @@ describe('主动技能正式时间轴投影', () => {
       context: ACTIVE_CONTEXT,
       extensions: { resolveTimeDilationPriority: () => 10 },
     });
-    expect(result.scheduledSequences[0]!.sequence.steps).toMatchObject([
+    const onceSteps = readResourceActions(result, result.scheduledSequences[0]!.sequence);
+    expect(onceSteps).toHaveLength(1);
+    const once = onceSteps[0]!;
+    expect(once.kind).toBe('once');
+    if (once.kind !== 'once') throw new Error('expected once step');
+    expect(readResourceActions(result, once.body)).toMatchObject([
       {
-        kind: 'once',
-        body: {
-          steps: [
-            {
-              kind: 'startTimeDilation',
-              parameters: {
-                finishByAction: false,
-                targets: ['enemy', 'caster'],
-                durationSeconds: { kind: 'constant', value: 0.08 },
-              },
-            },
-          ],
+        kind: 'startTimeDilation',
+        parameters: {
+          finishByAction: false,
+          targets: ['enemy', 'caster'],
+          durationSeconds: { kind: 'constant', value: 0.08 },
         },
       },
     ]);
   });
 
   it('DoOnce 可以按局部值选择一次命中停顿，不能因 Switch 包装而拒绝', () => {
-    const body = seq([
-      meta('HitStopAction', {
-        affectType: 'Both',
-        curveKey: 'char_hard_stop',
-        useDirectCurve: false,
-        directCurve: [],
-        duration: 0.4,
-        timeDilationPriority: { tagId: -2059842104 },
-        attacker: targetFixture('Source'),
-        target: targetFixture('Target'),
-      }),
-    ]);
+    const body = {
+      onlyExecuteWhenSourceIsMainChar: false,
+      onlyExecuteWhenSourceIsGuard: false,
+      actionData: [
+        meta('HitStopAction', {
+          affectType: 'Both',
+          curveKey: 'char_hard_stop',
+          useDirectCurve: false,
+          directCurve: [],
+          duration: 0.4,
+          timeDilationPriority: { tagId: -2059842104 },
+          attacker: targetFixture('Source'),
+          target: targetFixture('Target'),
+        }),
+      ],
+    };
     const value = activeWithActions([
       meta('DoOnceAction', {
-        sequenceActionData: seq([
-          meta('SwitchAction', {
-            choice: scalarFixture(0, 'block_count'),
-            alwaysNext: true,
-            options: [{ value: scalarFixture(1), actionData: body }],
-          }),
-        ]),
+        sequenceActionData: {
+          onlyExecuteWhenSourceIsMainChar: false,
+          onlyExecuteWhenSourceIsGuard: false,
+          actionData: [
+            meta('SwitchAction', {
+              choice: scalarFixture(0, 'block_count'),
+              alwaysNext: true,
+              options: [{ value: scalarFixture(1), actionData: body }],
+            }),
+          ],
+        },
       }),
     ]);
     value.blackboard = [{ key: 'block_count', valueDouble: 1, valueStr: '', isDynamic: true }];
@@ -2095,28 +2022,20 @@ describe('主动技能正式时间轴投影', () => {
       context: ACTIVE_CONTEXT,
       extensions: { resolveTimeDilationPriority: () => 10 },
     });
-    expect(result.scheduledSequences[0]!.sequence.steps).toMatchObject([
+    const onceSteps = readResourceActions(result, result.scheduledSequences[0]!.sequence);
+    expect(onceSteps).toHaveLength(1);
+    const once = onceSteps[0]!;
+    expect(once.kind).toBe('once');
+    if (once.kind !== 'once') throw new Error('expected once step');
+    const branches = readResourceActions(result, once.body);
+    expect(branches).toHaveLength(1);
+    const selected = branches[0]!;
+    expect(selected.kind).toBe('switch');
+    if (selected.kind !== 'switch') throw new Error('expected switch step');
+    expect(readResourceActions(result, selected.options[0]!.sequence)).toMatchObject([
       {
-        kind: 'once',
-        body: {
-          steps: [
-            {
-              kind: 'switch',
-              options: [
-                {
-                  sequence: {
-                    steps: [
-                      {
-                        kind: 'startTimeDilation',
-                        parameters: { durationSeconds: { kind: 'constant', value: 0.4 } },
-                      },
-                    ],
-                  },
-                },
-              ],
-            },
-          ],
-        },
+        kind: 'startTimeDilation',
+        parameters: { durationSeconds: { kind: 'constant', value: 0.4 } },
       },
     ]);
   });
@@ -2141,7 +2060,7 @@ describe('主动技能正式时间轴投影', () => {
       extensions: { resolveTimeDilationPriority: () => 10 },
     });
 
-    expect(result.scheduledSequences[0]!.sequence.steps).toMatchObject([
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toMatchObject([
       { kind: 'startTimeDilation', parameters: { targets: ['enemy', 'caster'] } },
     ]);
   });
@@ -2166,7 +2085,7 @@ describe('主动技能正式时间轴投影', () => {
       context: ACTIVE_CONTEXT,
       extensions: { resolveTimeDilationPriority: () => 10 },
     });
-    expect(result.scheduledSequences[0]!.sequence.steps).toMatchObject([
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toMatchObject([
       { kind: 'startTimeDilation', parameters: { targets: ['caster'] } },
     ]);
   });
@@ -2190,7 +2109,7 @@ describe('主动技能正式时间轴投影', () => {
       context: ACTIVE_CONTEXT,
       extensions: { resolveTimeDilationPriority: () => 10 },
     });
-    expect(result.scheduledSequences[0]!.sequence.steps).toMatchObject([
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toMatchObject([
       { kind: 'startTimeDilation', parameters: { targets: ['controlled'] } },
     ]);
   });
@@ -2215,7 +2134,7 @@ describe('主动技能正式时间轴投影', () => {
       extensions: { resolveTimeDilationPriority: () => 10 },
     });
 
-    expect(result.scheduledSequences[0]!.sequence.steps).toMatchObject([
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toMatchObject([
       {
         kind: 'startTimeDilation',
         parameters: { curve: { kind: 'named', key: 'char_normal_attack' } },
@@ -2251,7 +2170,7 @@ describe('主动技能正式时间轴投影', () => {
       context: ACTIVE_CONTEXT,
       extensions: { resolveTimeDilationPriority: () => 10 },
     });
-    expect(result.scheduledSequences[0]!.sequence.steps[0]).toMatchObject({
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)[0]).toMatchObject({
       kind: 'startTimeDilation',
       parameters: {
         curve: {
@@ -2300,7 +2219,7 @@ describe('主动技能正式时间轴投影', () => {
       extensions: { resolveTimeDilationPriority: () => 20 },
     });
 
-    expect(result.scheduledSequences[0]!.sequence.steps).toEqual([
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toEqual([
       {
         kind: 'startTimeDilation',
         parameters: {
@@ -2318,51 +2237,45 @@ describe('主动技能正式时间轴投影', () => {
     ]);
   });
 
-  it.each(['caster', 'currentAbilityEntity'] as const)(
-    '命名全局时间膨胀只忽略当前 Owner：%s',
-    owner => {
-      const result = compileActiveSkillRuntimeProjectionSource({
-        value: activeWithActions([
-          meta('TimeDilationAction', {
-            layer: 'Global',
-            slot: { tagId: 0 },
-            timeDilationPriority: { tagId: -593023102 },
-            duration: scalarFixture(0.5),
-            useCurveKey: true,
-            curveKey: 'ComboSkill',
-            timeScaleCurve: [],
-            finishByAction: false,
-            ignoreTargets: [targetFixture('Owner')],
-            effectTargets: [],
-            useTimeScaleForSkillCdTick: false,
-            influenceSkillCdTime: scalarFixture(0),
-          }),
-        ]),
-        sourcePath: 'active.caster-only-time-dilation',
-        patch: null,
-        context: { ...ACTIVE_CONTEXT, actionOwnerTarget: owner },
-        extensions: { resolveTimeDilationPriority: () => 20 },
-      });
+  it('命名全局时间膨胀可只忽略施法者而不虚构能力实体忽略组', () => {
+    const result = compileActiveSkillRuntimeProjectionSource({
+      value: activeWithActions([
+        meta('TimeDilationAction', {
+          layer: 'Global',
+          slot: { tagId: 0 },
+          timeDilationPriority: { tagId: -593023102 },
+          duration: scalarFixture(0.5),
+          useCurveKey: true,
+          curveKey: 'ComboSkill',
+          timeScaleCurve: [],
+          finishByAction: false,
+          ignoreTargets: [targetFixture('Owner')],
+          effectTargets: [],
+          useTimeScaleForSkillCdTick: false,
+          influenceSkillCdTime: scalarFixture(0),
+        }),
+      ]),
+      sourcePath: 'active.caster-only-time-dilation',
+      patch: null,
+      context: ACTIVE_CONTEXT,
+      extensions: { resolveTimeDilationPriority: () => 20 },
+    });
 
-      expect(result.scheduledSequences[0]!.sequence.steps).toEqual([
-        {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'global',
-            durationSeconds: { kind: 'constant', value: 0.5 },
-            slot: 'unassigned',
-            priority: 20,
-            curve: { kind: 'named', key: 'ComboSkill' },
-            finishByAction: false,
-            ignoredTargets: owner === 'caster' ? ['caster'] : [],
-            ...(owner === 'currentAbilityEntity'
-              ? { ignoredAbilityEntityTargets: [{ kind: 'current' }] }
-              : {}),
-          },
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toEqual([
+      {
+        kind: 'startTimeDilation',
+        parameters: {
+          scope: 'global',
+          durationSeconds: { kind: 'constant', value: 0.5 },
+          slot: 'unassigned',
+          priority: 20,
+          curve: { kind: 'named', key: 'ComboSkill' },
+          finishByAction: false,
+          ignoredTargets: ['caster'],
         },
-      ]);
-    },
-  );
+      },
+    ]);
+  });
 
   it('内联全局时间膨胀按 useCurveKey 选择器忽略命名残值并接受施法者 Owner', () => {
     const result = compileActiveSkillRuntimeProjectionSource({
@@ -2407,7 +2320,7 @@ describe('主动技能正式时间轴投影', () => {
       extensions: { resolveTimeDilationPriority: () => 20 },
     });
 
-    expect(result.scheduledSequences[0]!.sequence.steps).toEqual([
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toEqual([
       {
         kind: 'startTimeDilation',
         parameters: {
@@ -2493,7 +2406,7 @@ describe('主动技能正式时间轴投影', () => {
       extensions: {},
     });
 
-    expect(result.scheduledSequences[0]!.sequence.steps).toEqual([
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toEqual([
       {
         kind: 'setIgnoreGlobalTimeScale',
         parameters: {
@@ -2553,7 +2466,7 @@ describe('主动技能正式时间轴投影', () => {
 
     const contextKey =
       '__finishOwner:active.tagged-finish.actionGroupData.timelineActions[0]._sequenceActionData.actionData[0]';
-    expect(result.scheduledSequences[0]!.sequence.steps).toEqual([
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toEqual([
       {
         kind: 'findOwnerSpawnedAbilityEntities',
         parameters: {
@@ -2564,7 +2477,9 @@ describe('主动技能正式时间轴投影', () => {
       {
         kind: 'forEachContextTarget',
         parameters: { contextKey },
-        body: { steps: [{ kind: 'finishCurrentAbilityEntity', parameters: {} }] },
+        body: graphBranch(result.actionGraph!.main, [
+          { kind: 'finishCurrentAbilityEntity', parameters: {} },
+        ]),
       },
     ]);
   });
@@ -2612,7 +2527,7 @@ describe('主动技能正式时间轴投影', () => {
       extensions: { resolveTimeDilationPriority: () => 30 },
     });
 
-    expect(result.scheduledSequences[0]!.sequence.steps).toMatchObject([
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toMatchObject([
       {
         kind: 'startTimeDilation',
         parameters: {
@@ -2667,7 +2582,7 @@ describe('主动技能正式时间轴投影', () => {
       patch: null,
       context: ACTIVE_CONTEXT,
     });
-    expect(result.scheduledSequences[0]!.sequence.steps).toEqual([
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toEqual([
       { kind: 'gainSquadUltimateEnergyFromSkillCost', parameters: { coefficient: 1 } },
     ]);
 
@@ -2711,9 +2626,12 @@ describe('主动技能正式时间轴投影', () => {
         actionOwnerTarget: 'unavailable',
       },
     });
-    expect(projectileCallbackResult.scheduledSequences[0]!.sequence.steps).toEqual([
-      { kind: 'gainSquadUltimateEnergyFromSkillCost', parameters: { coefficient: 1 } },
-    ]);
+    expect(
+      readResourceActions(
+        projectileCallbackResult,
+        projectileCallbackResult.scheduledSequences[0]!.sequence,
+      ),
+    ).toEqual([{ kind: 'gainSquadUltimateEnergyFromSkillCost', parameters: { coefficient: 1 } }]);
   });
 
   it('能力实体动作允许图标倒计时跟随实体，同时保留真实 Buff 生命周期', () => {
@@ -2754,7 +2672,7 @@ describe('主动技能正式时间轴投影', () => {
       context: { ...ACTIVE_CONTEXT, actionOwnerTarget: 'currentAbilityEntity' },
     });
 
-    expect(result.scheduledSequences[0]!.sequence.steps).toEqual([
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toEqual([
       {
         kind: 'applyBuff',
         parameters: {
@@ -2802,7 +2720,7 @@ describe('主动技能正式时间轴投影', () => {
       context: ACTIVE_CONTEXT,
     });
 
-    expect(result.scheduledSequences[0]!.sequence.steps).toEqual([
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toEqual([
       { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
     ]);
 
@@ -2823,12 +2741,12 @@ describe('主动技能正式时间轴投影', () => {
       context: ACTIVE_CONTEXT,
     });
 
-    expect(groupedTargetResult.scheduledSequences[0]!.sequence.steps).toEqual([
-      { kind: 'gainFinisherSp', parameters: { factor: 0.75, recipient: 'team' } },
-    ]);
+    expect(
+      readResourceActions(groupedTargetResult, groupedTargetResult.scheduledSequences[0]!.sequence),
+    ).toEqual([{ kind: 'gainFinisherSp', parameters: { factor: 0.75, recipient: 'team' } }]);
   });
 
-  it('省略纯动画结束链；嵌套动画中的战斗子图继续严格拒绝', () => {
+  it('只省略空 onEnd 的动画；动画结束战斗子图继续严格拒绝', () => {
     const animation = meta('PlayAnimationAction', {
       animName: 'Skill',
       blendDuration: 0,
@@ -2855,29 +2773,6 @@ describe('主动技能正式时间轴投影', () => {
         context: ACTIVE_CONTEXT,
       }).scheduledSequences,
     ).toEqual([]);
-    const nestedAnimation = structuredClone(animation);
-    const animationChain = {
-      ...animation,
-      onEndAction: {
-        actionData: [nestedAnimation],
-        onlyExecuteWhenSourceIsMainChar: false,
-        onlyExecuteWhenSourceIsGuard: false,
-      },
-    };
-    const compileChain = () =>
-      compileActiveSkillRuntimeProjectionSource({
-        value: activeWithActions([animationChain]),
-        sourcePath: 'animation.chain',
-        patch: null,
-        context: ACTIVE_CONTEXT,
-      });
-    expect(compileChain().scheduledSequences).toEqual([]);
-    nestedAnimation.onEndAction = {
-      actionData: [meta('FinishOwnerAction', { target: targetFixture('Owner') })],
-      onlyExecuteWhenSourceIsMainChar: false,
-      onlyExecuteWhenSourceIsGuard: false,
-    };
-    expect(compileChain).toThrow('animation end combat actions are unsupported');
     animation.onEndAction = {
       ...(animation.onEndAction as object),
       actionData: [

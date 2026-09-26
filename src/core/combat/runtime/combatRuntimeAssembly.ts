@@ -1,5 +1,6 @@
-import { bindProjectileCallbackLifecycle } from '../abilities/projectileCallbackRuntime';
+import { isEmptyActionProgram } from '../../compiler/actionProgramInspection';
 import { hasUnmodeledIncomingAttackTrigger } from '../skills/comboConditionCheckability';
+import { bindProjectileCallbackLifecycle } from '../abilities/projectileCallbackRuntime';
 import {
   finishAbilitySkillSlotReplacement,
   replaceAbilitySkillSlot,
@@ -686,7 +687,7 @@ export class CombatRuntimeAssembly {
   readonly combatOperationPrograms: CombatOperationPrograms;
   /** 普通技能恢复时按固定身份复用已编译程序和伤害快照槽位。 */
   readonly combatSkillPrograms: CombatSkillPrograms;
-  /** 投射物按自身实体时钟推进；来源同步关系保存在时间状态中，寿命不归来源技能所有。 */
+  /** syncTimeScale=false 的投射物 duration-finish 使用全局战斗时间，且不归技能寿命所有。 */
   readonly #abilityEntityInstanceIds: AbilityEntityInstanceIdAllocator;
   readonly projectileLifetimes: ProjectileLifecycleRuntime;
   /** 战斗级父实例与队员子 Buff 镜像的唯一目录。 */
@@ -1816,7 +1817,7 @@ export class CombatRuntimeAssembly {
             initialization.enableSequence === undefined &&
             operator.equipmentContributions?.[initialization.equipmentContributionIndex]
               ?.initializationSequence === undefined &&
-            initialization.sequence.steps.length === 0
+            isEmptyActionProgram(initialization.sequence)
           )
             continue;
           initializationSequence.executeInstant({});

@@ -6,7 +6,23 @@ import {
 } from '../src/index.ts';
 import { compileCombatActionSequenceSource } from '../src/compiler/buffs/buffRuntimeProjection.ts';
 import { isStaticExplicitBadFactionEnemyTargetGroup } from '../src/compiler/combatProjectionCommon.ts';
+import type { CombatActionProjectionContextSource } from '../src/compiler/combatProjectionCommon.ts';
+import {
+  createActionGraphBuilder,
+  readActionGraphChain,
+} from '../src/compiler/actions/actionGraphBuilder.ts';
+import type { CompiledBuffStepSource } from '../src/compiler/actions/combatActionProjectionTypes.ts';
 import { scalarFixture, targetFixture } from './sourceFixtures.ts';
+
+/** 图编译包装：返回入口同层动作数组，保持旧断言的扁平比较形状。 */
+function projectSequence(
+  source: Parameters<typeof compileCombatActionSequenceSource>[0],
+  context: Omit<CombatActionProjectionContextSource, 'graph'>,
+) {
+  const builder = createActionGraphBuilder<CompiledBuffStepSource>();
+  const entry = compileCombatActionSequenceSource(source, { ...context, graph: builder });
+  return { steps: readActionGraphChain(builder.finish(), entry) };
+}
 
 const META = {
   isEnable: true,
@@ -149,14 +165,14 @@ describe('公共 Action 叶子分派', () => {
         {},
       );
       expect(
-        compileCombatActionSequenceSource(sequence, {
+        projectSequence(sequence, {
           actionOwnerTarget: 'caster',
           actionSourceTarget: 'caster',
           actionTargetTarget: 'enemy',
         }),
       ).toEqual({ steps: [] });
       expect(() =>
-        compileCombatActionSequenceSource(
+        projectSequence(
           parseKnownNativeActionSequenceSource(
             {
               actionData: [rayCastEffectFixture({ useFaction: true, autoSetTargetFaction: false })],
@@ -191,7 +207,7 @@ describe('公共 Action 叶子分派', () => {
       {},
     );
     expect(() =>
-      compileCombatActionSequenceSource(source, {
+      projectSequence(source, {
         actionOwnerTarget: 'caster',
         actionSourceTarget: 'caster',
         actionTargetTarget: 'enemy',
@@ -210,7 +226,7 @@ describe('公共 Action 叶子分派', () => {
       {},
     );
     expect(() =>
-      compileCombatActionSequenceSource(source, {
+      projectSequence(source, {
         actionOwnerTarget: 'currentAbilityEntity',
         actionSourceTarget: 'caster',
         actionTargetTarget: 'enemy',
@@ -245,7 +261,7 @@ describe('公共 Action 叶子分派', () => {
       {},
     );
     expect(
-      compileCombatActionSequenceSource(sequence, {
+      projectSequence(sequence, {
         actionOwnerTarget: 'buffOwner',
         actionSourceTarget: 'caster',
         actionTargetTarget: 'enemy',
@@ -532,7 +548,7 @@ describe('公共 Action 叶子分派', () => {
       },
     });
     expect(
-      compileCombatActionSequenceSource(
+      projectSequence(
         parseKnownNativeActionSequenceSource(sequence([action]), 'fixture.saveAtb', {}),
         {
           actionOwnerTarget: 'unavailable',
@@ -572,7 +588,7 @@ describe('公共 Action 叶子分派', () => {
       },
     });
     expect(
-      compileCombatActionSequenceSource(
+      projectSequence(
         parseKnownNativeActionSequenceSource(sequence([action]), 'fixture.saveShield', {}),
         {
           actionOwnerTarget: 'buffOwner',
@@ -627,7 +643,7 @@ describe('公共 Action 叶子分派', () => {
       action: { kind: 'voiceInterrupt' },
     });
     expect(
-      compileCombatActionSequenceSource(
+      projectSequence(
         parseKnownNativeActionSequenceSource(sequence([action]), 'fixture.voiceInterrupt', {}),
         {
           actionOwnerTarget: 'unavailable',
@@ -778,7 +794,7 @@ describe('公共 Action 叶子分派', () => {
       action: { kind: 'blockMoveInterruptSkill' },
     });
     expect(
-      compileCombatActionSequenceSource(
+      projectSequence(
         parseKnownNativeActionSequenceSource(
           sequence([
             {
@@ -1435,7 +1451,7 @@ describe('公共 Action 叶子分派', () => {
       ...overrides,
     });
     const compile = (action: Record<string, unknown>) =>
-      compileCombatActionSequenceSource(
+      projectSequence(
         parseKnownNativeActionSequenceSource(sequence([action]), 'fixture.castSkill', {}),
         {
           actionOwnerTarget: 'unavailable',
@@ -1572,7 +1588,7 @@ describe('公共 Action 叶子分派', () => {
     ).toThrow('combo Pending blackboard assignments are unsupported');
 
     expect(
-      compileCombatActionSequenceSource(
+      projectSequence(
         parseKnownNativeActionSequenceSource(sequence([action]), 'fixture.contextComboPending', {}),
         { actionOwnerTarget: 'caster', actionSourceTarget: 'caster', actionTargetTarget: 'enemy' },
       ),
@@ -1593,7 +1609,7 @@ describe('公共 Action 叶子分派', () => {
       target: targetFixture('Context', undefined, 'smart_target'),
     };
     expect(
-      compileCombatActionSequenceSource(
+      projectSequence(
         parseKnownNativeActionSequenceSource(
           sequence([fixedCasterPending]),
           'fixture.fixedCasterComboPending',
@@ -1658,7 +1674,7 @@ describe('公共 Action 叶子分派', () => {
       },
     });
     expect(
-      compileCombatActionSequenceSource(
+      projectSequence(
         parseKnownNativeActionSequenceSource(
           sequence([action]),
           'fixture.clearProjectileSequence',
@@ -1672,7 +1688,7 @@ describe('公共 Action 叶子分派', () => {
       ),
     ).toEqual({ steps: [] });
     expect(() =>
-      compileCombatActionSequenceSource(
+      projectSequence(
         parseKnownNativeActionSequenceSource(
           sequence([{ ...action, finishAction: 'CastSkill' }]),
           'fixture.clearProjectileFinishCallback',
@@ -1716,7 +1732,7 @@ describe('公共 Action 叶子分派', () => {
       },
     });
     expect(
-      compileCombatActionSequenceSource(parsed, {
+      projectSequence(parsed, {
         actionOwnerTarget: 'caster',
         actionSourceTarget: 'caster',
         actionTargetTarget: 'enemy',
@@ -1749,7 +1765,7 @@ describe('公共 Action 叶子分派', () => {
       {},
     );
     expect(
-      compileCombatActionSequenceSource(presentation, {
+      projectSequence(presentation, {
         actionOwnerTarget: 'caster',
         actionSourceTarget: 'caster',
         actionTargetTarget: 'enemy',
@@ -1789,7 +1805,7 @@ describe('公共 Action 叶子分派', () => {
       },
     };
     expect(() =>
-      compileCombatActionSequenceSource(
+      projectSequence(
         { ...combat, actions: [combatListener] },
         {
           actionOwnerTarget: 'caster',
@@ -1843,7 +1859,7 @@ describe('公共 Action 叶子分派', () => {
       { AnimScale: [1] },
     );
     expect(
-      compileCombatActionSequenceSource(parsed, {
+      projectSequence(parsed, {
         actionOwnerTarget: 'caster',
         actionSourceTarget: 'caster',
         actionTargetTarget: 'enemy',
@@ -1851,7 +1867,7 @@ describe('公共 Action 叶子分派', () => {
       }),
     ).toEqual({ steps: [] });
     expect(() =>
-      compileCombatActionSequenceSource(parsed, {
+      projectSequence(parsed, {
         actionOwnerTarget: 'caster',
         actionSourceTarget: 'caster',
         actionTargetTarget: 'enemy',
@@ -1895,7 +1911,7 @@ describe('公共 Action 叶子分派', () => {
       },
     });
     expect(
-      compileCombatActionSequenceSource(parsed, {
+      projectSequence(parsed, {
         actionOwnerTarget: 'caster',
         actionSourceTarget: 'caster',
         actionTargetTarget: 'enemy',
@@ -1947,7 +1963,7 @@ describe('公共 Action 叶子分派', () => {
       {},
     );
     expect(
-      compileCombatActionSequenceSource(parsed, {
+      projectSequence(parsed, {
         actionOwnerTarget: 'caster',
         actionSourceTarget: 'caster',
         actionTargetTarget: 'enemy',
@@ -2047,7 +2063,7 @@ describe('公共 Action 叶子分派', () => {
       {},
     );
     expect(
-      compileCombatActionSequenceSource(parsed, {
+      projectSequence(parsed, {
         actionOwnerTarget: 'caster',
         actionSourceTarget: 'caster',
         actionTargetTarget: 'enemy',
@@ -2055,7 +2071,7 @@ describe('公共 Action 叶子分派', () => {
       }),
     ).toEqual({ steps: [] });
     expect(() =>
-      compileCombatActionSequenceSource(parsed, {
+      projectSequence(parsed, {
         actionOwnerTarget: 'caster',
         actionSourceTarget: 'caster',
         actionTargetTarget: 'enemy',

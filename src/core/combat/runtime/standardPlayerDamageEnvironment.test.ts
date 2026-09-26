@@ -610,9 +610,15 @@ import {
 import { unityComboConditionFixture } from '../../../../tools/game-data-compiler/test/unityComboConditionFixture.ts';
 import { elementalAttachments } from '../../../data/buffs/elementalAttachments';
 import { skillSettings } from '../../../data/combat/skillSettings';
-import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
-import { compileActionSequence } from '../../compiler/compileSkill';
-import type { ActionSequenceDefinition } from '../../game-data/operatorDefinition';
+import type {
+  ResolvedActionSequence,
+  ResolvedCombatStepForKind,
+} from '../../compiler/combatProgram';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import type {
+  ActionGraphNode,
+  ActionGraphStep,
+} from '../../../../packages/game-data-contract/src/actionGraph';
 import { validateSkillDefinition } from '../../game-data/validateSkillDefinition';
 import { TargetContextOperationExecutor } from '../abilities/targetContextOperationExecutor';
 import { ActionBlackboard } from '../actions/actionBlackboard';
@@ -644,6 +650,41 @@ import type {
 } from './combatRuntimeAssembly';
 import { CombatRuntimeAssembly } from './combatRuntimeAssembly';
 import { StandardPlayerDamageEnvironment } from './standardPlayerDamageEnvironment';
+
+const compileGraphEntry = (
+  revision: string,
+  entry: string | null,
+  nodes: Record<string, ActionGraphNode>,
+): ResolvedActionSequence => ({
+  graph: createActionGraphCompilation({ nodes }, 1, revision).compileAll(),
+  entry,
+  callSite: revision,
+});
+
+const chainEntry = (
+  revision: string,
+  actions: readonly ActionGraphStep[],
+): ResolvedActionSequence => {
+  const nodes: Record<string, ActionGraphNode> = {};
+  actions.forEach((action, index) => {
+    nodes[`step-${index}`] = {
+      action,
+      next: index + 1 < actions.length ? `step-${index + 1}` : null,
+    };
+  });
+  return compileGraphEntry(revision, actions.length === 0 ? null : 'step-0', nodes);
+};
+
+/** 工具编译器直接输出图定义和入口引用；测试编译同一资源图，不自写转换。 */
+const compileDomainSequence = (
+  revision: string,
+  compiled: ReturnType<typeof compilePendingComboConditionSource>,
+): ResolvedActionSequence => {
+  const compilation = createActionGraphCompilation(compiled.actionGraph, 1, revision);
+  const entry = compilation.compileEntry(compiled.sequence, revision);
+  compilation.compileAll();
+  return entry;
+};
 
 it('发布链的连携准入不因完整事件收窄而放开增强/普通结束通知', () => {
   const environment = createEnvironment();
@@ -696,18 +737,13 @@ it.each([
           waitFirstTriggerInterval: true,
           maxTriggerCount: 1,
           lifecycleSequences: {
-            trigger: compileActionSequence(
+            trigger: chainEntry(`spell-burst-trigger-${idPart}`, [
+              { kind: 'triggerSpellBurst', parameters: { burstType } },
               {
-                steps: [
-                  { kind: 'triggerSpellBurst', parameters: { burstType } },
-                  {
-                    kind: 'dealDamage',
-                    parameters: { damageType: element, attackScale: 1, tags: [tag] },
-                  },
-                ],
+                kind: 'dealDamage',
+                parameters: { damageType: element, attackScale: 1, tags: [tag] },
               },
-              1,
-            ),
+            ]),
           },
         },
       },
@@ -1261,7 +1297,9 @@ it.each(['criticalRate', 'criticalDamageIncrease'] as const)(
       ),
       'critical.damage',
     );
-    const sequence = runtime.createSequence(compileActionSequence({ steps: [projected] }, 1));
+    const sequence = runtime.createSequence(
+      chainEntry(`critical-projected-${attribute}`, [projected as ActionGraphStep]),
+    );
     sequence.executeInstant({});
     expect(samples).toHaveBeenCalledTimes(attribute === 'criticalRate' ? 0 : 1);
     executor.execute(damageStep);
@@ -1443,28 +1481,23 @@ it('技能编译保留即时 Atk 修正，只影响当前命中且每次读取�
   const environment = createEnvironment();
   const executor = environment.runtimeOptions.createOperationExecutor(context);
   const blackboard = new ActionBlackboard({ bonus: 0.5 });
-  const compiled = compileActionSequence(
+  const compiled = chainEntry('instant-atk-modifier', [
     {
-      steps: [
-        {
-          kind: 'dealDamage',
-          parameters: {
-            ...damageStep.parameters,
-            instantAttributeModifiers: [
-              {
-                targetSide: 'attacker',
-                attribute: 'Atk',
-                slot: 'baseMultiplier',
-                value: { kind: 'blackboard', key: 'bonus' },
-                attributeTiming: 'runtime',
-              },
-            ],
+      kind: 'dealDamage',
+      parameters: {
+        ...damageStep.parameters,
+        instantAttributeModifiers: [
+          {
+            targetSide: 'attacker',
+            attribute: 'Atk',
+            slot: 'baseMultiplier',
+            value: { kind: 'blackboard', key: 'bonus' },
+            attributeTiming: 'runtime',
           },
-        },
-      ],
+        ],
+      },
     },
-    1,
-  );
+  ]);
   const runtime = new CombatActionSequenceRuntime(executor, { blackboard });
   const sequence = runtime.createSequence(compiled);
   sequence.executeInstant({});
@@ -1743,7 +1776,7 @@ describe('StandardPlayerDamageEnvironment', () => {
             event: compiled.event,
             immediately: source.immediately,
             initialValues: { consumed_type: 0, consumed_layer: 0 },
-            sequence: compileActionSequence(compiled.sequence as ActionSequenceDefinition, 1),
+            sequence: compileDomainSequence(`combo-condition-${index}`, compiled),
           };
         });
         const pending: string[] = [];
@@ -1793,14 +1826,12 @@ describe('StandardPlayerDamageEnvironment', () => {
                   timelineActions: [
                     {
                       startFrame: 0,
-                      sequence: {
-                        steps: [
-                          {
-                            kind: 'applyElementalInfliction',
-                            parameters: { element, isExtra: false },
-                          },
-                        ],
-                      },
+                      sequence: chainEntry(`combo-infliction-${element}`, [
+                        {
+                          kind: 'applyElementalInfliction',
+                          parameters: { element, isExtra: false },
+                        },
+                      ]),
                     },
                   ],
                 },
@@ -1914,7 +1945,7 @@ describe('StandardPlayerDamageEnvironment', () => {
             sourceId: 'owner',
             entityBlackboard: entity,
             initialValues: { consumed_type: 0, consumed_layer: 0 },
-            sequence: compileActionSequence(compiled.sequence as ActionSequenceDefinition, 1),
+            sequence: compileDomainSequence(`combo-condition-${index}`, compiled),
             operations,
             isOwnerAlive: () => true,
             isOwnerSilenced: () => false,
@@ -1991,9 +2022,9 @@ describe('StandardPlayerDamageEnvironment', () => {
           entityBlackboard: entity,
           initialValues: {},
           operations,
-          sequence: {
-            steps: [
-              {
+          sequence: compileGraphEntry('infliction-phase-combo', 'step-0', {
+            'step-0': {
+              action: {
                 kind: 'conditional',
                 parameters: {
                   condition: {
@@ -2002,10 +2033,11 @@ describe('StandardPlayerDamageEnvironment', () => {
                     outputKey: 'EntityBB_type',
                   },
                 },
-                whenTrue: { steps: [] },
+                whenTrue: { $sequence: null },
               },
-            ],
-          },
+              next: null,
+            },
+          }),
           isOwnerAlive: () => true,
           isOwnerSilenced: () => false,
           currentComboCooldown: () => ({ oneReady: true, maxPassedTime: 0, startCdFrame: 0 }),
@@ -2318,27 +2350,28 @@ describe('StandardPlayerDamageEnvironment', () => {
         damageModifiers: [
           {
             enabledSide: 'attacker',
-            conditionProgram: {
-              steps: [
-                {
+            conditionProgram: compileGraphEntry('affixed-modifier-condition', 'step-0', {
+              'step-0': {
+                action: {
                   kind: 'conditional',
                   parameters: { condition: { kind: 'eventSkillCastMatchesBuffSource' } },
-                  whenTrue: {
-                    steps: [
-                      {
-                        kind: 'calculateActionValue',
-                        parameters: {
-                          key: 'real_imbue_scale',
-                          operation: 'multiply',
-                          left: { kind: 'blackboard', key: 'imbue_scale' },
-                          right: { kind: 'constant', value: 1.5 },
-                        },
-                      },
-                    ],
+                  whenTrue: { $sequence: 'scale-imbue' },
+                },
+                next: null,
+              },
+              'scale-imbue': {
+                action: {
+                  kind: 'calculateActionValue',
+                  parameters: {
+                    key: 'real_imbue_scale',
+                    operation: 'multiply',
+                    left: { kind: 'blackboard', key: 'imbue_scale' },
+                    right: { kind: 'constant', value: 1.5 },
                   },
                 },
-              ],
-            },
+                next: null,
+              },
+            }),
             processors: [
               {
                 kind: 'damageScale',
@@ -3345,24 +3378,22 @@ describe('StandardPlayerDamageEnvironment', () => {
       sourceId: 'operator',
       entityBlackboard: new ActionBlackboard(),
       initialValues: null,
-      sequence: compileActionSequence(
-        {
-          steps: [
-            {
-              kind: 'conditional',
-              parameters: {
-                condition: {
-                  kind: 'eventDamageTagsMatch',
-                  match: 'hasAny',
-                  tags: ['cryoBurst'],
-                },
+      sequence: compileGraphEntry('take-damage-combo', 'step-0', {
+        'step-0': {
+          action: {
+            kind: 'conditional',
+            parameters: {
+              condition: {
+                kind: 'eventDamageTagsMatch',
+                match: 'hasAny',
+                tags: ['cryoBurst'],
               },
-              whenTrue: { steps: [] },
             },
-          ],
+            whenTrue: { $sequence: null },
+          },
+          next: null,
         },
-        1,
-      ),
+      }),
       operations: new EventContextConditionExecutor({
         execute: () => {
           throw new Error('unexpected combo condition operation');
@@ -3403,18 +3434,16 @@ describe('StandardPlayerDamageEnvironment', () => {
       sourceId: 'operator',
       entityBlackboard: new ActionBlackboard(),
       initialValues: null,
-      sequence: compileActionSequence(
-        {
-          steps: [
-            {
-              kind: 'conditional',
-              parameters: { condition: { kind: 'eventSourceControlled' } },
-              whenTrue: { steps: [] },
-            },
-          ],
+      sequence: compileGraphEntry('before-take-damage-combo', 'step-0', {
+        'step-0': {
+          action: {
+            kind: 'conditional',
+            parameters: { condition: { kind: 'eventSourceControlled' } },
+            whenTrue: { $sequence: null },
+          },
+          next: null,
         },
-        1,
-      ),
+      }),
       operations: new EventContextConditionExecutor(
         {
           execute: () => {
@@ -3465,24 +3494,22 @@ describe('StandardPlayerDamageEnvironment', () => {
       sourceId: 'operator',
       entityBlackboard: new ActionBlackboard(),
       initialValues: null,
-      sequence: compileActionSequence(
-        {
-          steps: [
-            {
-              kind: 'conditional',
-              parameters: {
-                condition: {
-                  kind: 'eventBuffTagsMatch',
-                  match: 'hasAny',
-                  buffTags: ['Skill/Character/Common/SpellBurst'],
-                },
+      sequence: compileGraphEntry('added-buff-combo', 'step-0', {
+        'step-0': {
+          action: {
+            kind: 'conditional',
+            parameters: {
+              condition: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/SpellBurst'],
               },
-              whenTrue: { steps: [] },
             },
-          ],
+            whenTrue: { $sequence: null },
+          },
+          next: null,
         },
-        1,
-      ),
+      }),
       operations: new EventContextConditionExecutor({
         execute: () => {
           throw new Error('unexpected combo condition operation');

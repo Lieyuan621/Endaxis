@@ -1,150 +1,166 @@
 /** 由 tools/game-data-compiler 整名生成；不要手工编辑。 */
-import type { OperatorDefinition, SkillDefinition } from '../../core/game-data/operatorDefinition';
-import {
-  branch,
-  repeatEachTick,
-  scheduled,
-  sequence,
-  step,
-  withSkillBlackboard,
-} from './definitionHelpers';
 
-export const aleshChr_0024_deepfin_attack1: SkillDefinition = withSkillBlackboard(
-  {
-    key: 'chr_0024_deepfin_attack1',
-    timelineBlockFrames: 12,
-    naturalDurationFrames: 130,
-    exclusiveFrame: 25,
-    offsetRecordFrame: 7,
-    inputWindows: {
-      commandMappings: [
-        {
-          startFrame: 7,
-          endFrame: 25,
-          input: 'basicAttack',
-          targetSkillId: 'chr_0024_deepfin_attack2',
+import type { ActionGraphResourceDefinition } from '../../../packages/game-data-contract/src/actionGraph';
+import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills';
+import type { SkillBuffDefinition } from '../../../packages/game-data-contract/src/buffs';
+import type { ComboSkillConditionDefinition } from '../../../packages/game-data-contract/src/operators';
+import type { OperatorDefinition } from '../../../packages/game-data-contract/src/operators';
+export const aleshChr_0024_deepfin_attack1ActionGraph = {
+  main: {
+    nodes: {
+      changeResourceByActionValue_1: {
+        action: {
+          kind: 'changeResourceByActionValue',
+          parameters: {
+            resource: 'sp',
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            coefficient: { kind: 'constant', value: 1 },
+            recipient: 'team',
+            spGainKind: 'gain',
+            spGainSource: 'normalAttack',
+          },
         },
-      ],
-      allowedNextSkills: [{ startFrame: 12, endFrame: 25, skillIds: ['chr_0024_deepfin_attack2'] }],
+        next: null,
+      },
+      startTimeDilation_2: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.06 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'char_normal_attack' },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
+        },
+        next: 'changeResourceByActionValue_1',
+      },
+      conditional_3: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' }, alwaysNext: true },
+          whenTrue: { $sequence: 'startTimeDilation_2' },
+        },
+        next: null,
+      },
+      dealDamage_4: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            tags: ['normalAttack'],
+          },
+        },
+        next: 'conditional_3',
+      },
+      reachSkillOperableBoundary_5: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0024_deepfin_attack2'] },
+        },
+        next: null,
+      },
     },
-    costFrame: 9,
-    scheduledSequences: [
-      scheduled(
-        7,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'physical',
-              attackScale: { kind: 'blackboard', key: 'atk_scale' },
-              tags: ['normalAttack'],
-            },
-            'chr_0024_deepfin_attack1:/scheduledSequences/0/sequence/steps/0',
-          ),
-          branch(
-            { kind: 'casterControlled' },
-            sequence(
-              step('startTimeDilation', {
-                scope: 'entity',
-                durationSeconds: { kind: 'constant', value: 0.06 },
-                slot: 'TimeDilation/Layer/Entity/HitStop',
-                priority: 10,
-                curve: { kind: 'named', key: 'char_normal_attack' },
-                finishByAction: false,
-                targets: ['enemy', 'caster'],
-              }),
-              step('changeResourceByActionValue', {
-                resource: 'sp',
-                amount: { kind: 'blackboard', key: 'atb' },
-                coefficient: { kind: 'constant', value: 1 },
-                recipient: 'team',
-                spGainKind: 'gain',
-                spGainSource: 'normalAttack',
-              }),
-            ),
-            undefined,
-            { alwaysNext: true },
-          ),
-        ),
-        8,
-      ),
-      scheduled(
-        12,
-        sequence(step('reachSkillOperableBoundary', { skillIds: ['chr_0024_deepfin_attack2'] })),
-        25,
-      ),
-    ],
-    timelineContinuationSkillId: 'chr_0024_deepfin_attack2',
-    skillType: 'basicAttack',
-    levelSource: 'basicAttack',
-    nativeSkillType: 'attack',
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+    },
   },
-  { atb: 0, atk_scale: [0.18, 0.19, 0.21, 0.23, 0.25, 0.26, 0.28, 0.3, 0.32, 0.34, 0.36, 0.39] },
-);
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
 
-export const aleshChr_0024_deepfin_attack2: SkillDefinition = withSkillBlackboard(
-  {
-    key: 'chr_0024_deepfin_attack2',
-    timelineBlockFrames: 10,
-    naturalDurationFrames: 128,
-    exclusiveFrame: 25,
-    offsetRecordFrame: 5,
-    inputWindows: {
-      commandMappings: [
-        {
-          startFrame: 6,
-          endFrame: 25,
-          input: 'basicAttack',
-          targetSkillId: 'chr_0024_deepfin_attack3',
+export const aleshChr_0024_deepfin_attack1: SkillDefinition = {
+  actionGraph: aleshChr_0024_deepfin_attack1ActionGraph,
+  key: 'chr_0024_deepfin_attack1',
+  blackboard: {
+    atb: 0,
+    atk_scale: [0.18, 0.19, 0.21, 0.23, 0.25, 0.26, 0.28, 0.3, 0.32, 0.34, 0.36, 0.39],
+  },
+  timelineBlockFrames: 12,
+  naturalDurationFrames: 130,
+  exclusiveFrame: 25,
+  offsetRecordFrame: 7,
+  inputWindows: {
+    commandMappings: [
+      {
+        startFrame: 7,
+        endFrame: 25,
+        input: 'basicAttack',
+        targetSkillId: 'chr_0024_deepfin_attack2',
+      },
+    ],
+    allowedNextSkills: [{ startFrame: 12, endFrame: 25, skillIds: ['chr_0024_deepfin_attack2'] }],
+  },
+  costFrame: 9,
+  scheduledSequences: [
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'dealDamage_4' } },
+    { startFrame: 12, endFrame: 25, sequence: { $sequence: 'reachSkillOperableBoundary_5' } },
+  ],
+  timelineContinuationSkillId: 'chr_0024_deepfin_attack2',
+  skillType: 'basicAttack',
+  levelSource: 'basicAttack',
+  nativeSkillType: 'attack',
+};
+
+export const aleshChr_0024_deepfin_attack2ActionGraph = {
+  main: {
+    nodes: {
+      changeResourceByActionValue_1: {
+        action: {
+          kind: 'changeResourceByActionValue',
+          parameters: {
+            resource: 'sp',
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            coefficient: { kind: 'constant', value: 1 },
+            recipient: 'team',
+            spGainKind: 'gain',
+            spGainSource: 'normalAttack',
+          },
         },
-      ],
-      allowedNextSkills: [{ startFrame: 10, endFrame: 25, skillIds: ['chr_0024_deepfin_attack3'] }],
-    },
-    costFrame: 8,
-    scheduledSequences: [
-      scheduled(
-        5,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'physical',
-              attackScale: { kind: 'blackboard', key: 'atk_scale' },
-              tags: ['normalAttack'],
-            },
-            'chr_0024_deepfin_attack2:/scheduledSequences/0/sequence/steps/0',
-          ),
-          branch(
-            { kind: 'casterControlled' },
-            sequence(
-              step('startTimeDilation', {
-                scope: 'entity',
-                durationSeconds: { kind: 'constant', value: 0.03 },
-                slot: 'TimeDilation/Layer/Entity/HitStop',
-                priority: 10,
-                curve: { kind: 'named', key: 'char_normal_attack' },
-                finishByAction: false,
-                targets: ['enemy', 'caster'],
-              }),
-              step('changeResourceByActionValue', {
-                resource: 'sp',
-                amount: { kind: 'blackboard', key: 'atb' },
-                coefficient: { kind: 'constant', value: 1 },
-                recipient: 'team',
-                spGainKind: 'gain',
-                spGainSource: 'normalAttack',
-              }),
-            ),
-            undefined,
-            { alwaysNext: true },
-          ),
-        ),
-        11,
-      ),
-      scheduled(
-        5,
-        sequence(
-          step('startTimeDilation', {
+        next: null,
+      },
+      startTimeDilation_2: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.03 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'char_normal_attack' },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
+        },
+        next: 'changeResourceByActionValue_1',
+      },
+      conditional_3: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' }, alwaysNext: true },
+          whenTrue: { $sequence: 'startTimeDilation_2' },
+        },
+        next: null,
+      },
+      dealDamage_4: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            tags: ['normalAttack'],
+          },
+        },
+        next: 'conditional_3',
+      },
+      startTimeDilation_5: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
             scope: 'entity',
             durationSeconds: { kind: 'constant', value: 0.06 },
             slot: 'TimeDilation/Layer/Entity/HitStop',
@@ -152,48 +168,68 @@ export const aleshChr_0024_deepfin_attack2: SkillDefinition = withSkillBlackboar
             curve: { kind: 'named', key: 'char_hard_stop' },
             finishByAction: false,
             targets: ['enemy', 'caster'],
-          }),
-        ),
-        8,
-      ),
-      scheduled(
-        10,
-        sequence(step('reachSkillOperableBoundary', { skillIds: ['chr_0024_deepfin_attack3'] })),
-        25,
-      ),
-    ],
-    timelineContinuationSkillId: 'chr_0024_deepfin_attack3',
-    skillType: 'basicAttack',
-    levelSource: 'basicAttack',
-    nativeSkillType: 'attack',
-  },
-  { atb: 0, atk_scale: [0.1, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.21, 0.23] },
-);
-
-export const aleshChr_0024_deepfin_attack3: SkillDefinition = withSkillBlackboard(
-  {
-    key: 'chr_0024_deepfin_attack3',
-    timelineBlockFrames: 16,
-    naturalDurationFrames: 145,
-    exclusiveFrame: 29,
-    offsetRecordFrame: 13,
-    inputWindows: {
-      commandMappings: [
-        {
-          startFrame: 13,
-          endFrame: 31,
-          input: 'basicAttack',
-          targetSkillId: 'chr_0024_deepfin_attack4',
+          },
         },
-      ],
-      allowedNextSkills: [{ startFrame: 16, endFrame: 31, skillIds: ['chr_0024_deepfin_attack4'] }],
+        next: null,
+      },
+      reachSkillOperableBoundary_7: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0024_deepfin_attack3'] },
+        },
+        next: null,
+      },
     },
-    costFrame: 12,
-    scheduledSequences: [
-      scheduled(
-        13,
-        sequence(
-          step('startTimeDilation', {
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const aleshChr_0024_deepfin_attack2: SkillDefinition = {
+  key: 'chr_0024_deepfin_attack2',
+  blackboard: {
+    atb: 0,
+    atk_scale: [0.1, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.21, 0.23],
+  },
+  timelineBlockFrames: 10,
+  naturalDurationFrames: 128,
+  exclusiveFrame: 25,
+  offsetRecordFrame: 5,
+  inputWindows: {
+    commandMappings: [
+      {
+        startFrame: 6,
+        endFrame: 25,
+        input: 'basicAttack',
+        targetSkillId: 'chr_0024_deepfin_attack3',
+      },
+    ],
+    allowedNextSkills: [{ startFrame: 10, endFrame: 25, skillIds: ['chr_0024_deepfin_attack3'] }],
+  },
+  costFrame: 8,
+  scheduledSequences: [
+    { startFrame: 5, endFrame: 11, sequence: { $sequence: 'dealDamage_4' } },
+    { startFrame: 5, endFrame: 8, sequence: { $sequence: 'startTimeDilation_5' } },
+    { startFrame: 10, endFrame: 25, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
+  ],
+  timelineContinuationSkillId: 'chr_0024_deepfin_attack3',
+  skillType: 'basicAttack',
+  levelSource: 'basicAttack',
+  nativeSkillType: 'attack',
+  actionGraph: aleshChr_0024_deepfin_attack2ActionGraph,
+};
+
+export const aleshChr_0024_deepfin_attack3ActionGraph = {
+  main: {
+    nodes: {
+      startTimeDilation_1: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
             scope: 'entity',
             durationSeconds: { kind: 'constant', value: 0.12 },
             slot: 'TimeDilation/Layer/Entity/HitStop',
@@ -201,320 +237,401 @@ export const aleshChr_0024_deepfin_attack3: SkillDefinition = withSkillBlackboar
             curve: { kind: 'named', key: 'char_hard_stop' },
             finishByAction: false,
             targets: ['enemy', 'caster'],
-          }),
-        ),
-        14,
-      ),
-      scheduled(
-        13,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'physical',
-              attackScale: { kind: 'blackboard', key: 'atk_scale' },
-              tags: ['normalAttack'],
-            },
-            'chr_0024_deepfin_attack3:/scheduledSequences/1/sequence/steps/0',
-          ),
-          branch(
-            { kind: 'casterControlled' },
-            sequence(
-              step('changeResourceByActionValue', {
-                resource: 'sp',
-                amount: { kind: 'blackboard', key: 'atb' },
-                coefficient: { kind: 'constant', value: 1 },
-                recipient: 'team',
-                spGainKind: 'gain',
-                spGainSource: 'normalAttack',
-              }),
-            ),
-            undefined,
-            { alwaysNext: true },
-          ),
-        ),
-        14,
-      ),
-      scheduled(
-        16,
-        sequence(step('reachSkillOperableBoundary', { skillIds: ['chr_0024_deepfin_attack4'] })),
-        31,
-      ),
-    ],
-    timelineContinuationSkillId: 'chr_0024_deepfin_attack4',
-    skillType: 'basicAttack',
-    levelSource: 'basicAttack',
-    nativeSkillType: 'attack',
-  },
-  { atb: 0, atk_scale: [0.28, 0.3, 0.33, 0.36, 0.39, 0.41, 0.44, 0.47, 0.5, 0.53, 0.57, 0.62] },
-);
-
-export const aleshChr_0024_deepfin_attack4: SkillDefinition = withSkillBlackboard(
-  {
-    key: 'chr_0024_deepfin_attack4',
-    timelineBlockFrames: 22,
-    naturalDurationFrames: 90,
-    exclusiveFrame: 30,
-    offsetRecordFrame: 15,
-    inputWindows: {
-      commandMappings: [
-        {
-          startFrame: 15,
-          endFrame: 33,
-          input: 'basicAttack',
-          targetSkillId: 'chr_0024_deepfin_attack5',
+          },
         },
-      ],
-      allowedNextSkills: [{ startFrame: 22, endFrame: 33, skillIds: ['chr_0024_deepfin_attack5'] }],
-    },
-    costFrame: 8,
-    scheduledSequences: [
-      scheduled(
-        15,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'physical',
-              attackScale: { kind: 'blackboard', key: 'atk_scale' },
-              tags: ['normalAttack'],
-            },
-            'chr_0024_deepfin_attack4:/scheduledSequences/0/sequence/steps/0',
-          ),
-          branch(
-            { kind: 'casterControlled' },
-            sequence(
-              step('startTimeDilation', {
-                scope: 'entity',
-                durationSeconds: { kind: 'constant', value: 0.12 },
-                slot: 'TimeDilation/Layer/Entity/HitStop',
-                priority: 10,
-                curve: { kind: 'named', key: 'char_hard_stop' },
-                finishByAction: false,
-                targets: ['enemy', 'caster'],
-              }),
-              step('changeResourceByActionValue', {
-                resource: 'sp',
-                amount: { kind: 'blackboard', key: 'atb' },
-                coefficient: { kind: 'constant', value: 0.5 },
-                recipient: 'team',
-                spGainKind: 'gain',
-                spGainSource: 'normalAttack',
-              }),
-            ),
-            undefined,
-            { alwaysNext: true },
-          ),
-        ),
-        16,
-      ),
-      scheduled(
-        22,
-        sequence(step('reachSkillOperableBoundary', { skillIds: ['chr_0024_deepfin_attack5'] })),
-        33,
-      ),
-    ],
-    timelineContinuationSkillId: 'chr_0024_deepfin_attack5',
-    skillType: 'basicAttack',
-    levelSource: 'basicAttack',
-    nativeSkillType: 'attack',
-  },
-  { atb: 0, atk_scale: [0.28, 0.3, 0.33, 0.36, 0.39, 0.41, 0.44, 0.47, 0.5, 0.53, 0.57, 0.62] },
-);
-
-export const aleshChr_0024_deepfin_attack5: SkillDefinition = withSkillBlackboard(
-  {
-    key: 'chr_0024_deepfin_attack5',
-    timelineBlockFrames: 31,
-    naturalDurationFrames: 104,
-    exclusiveFrame: 40,
-    offsetRecordFrame: 18,
-    inputWindows: {
-      commandMappings: [
-        {
-          startFrame: 14,
-          endFrame: 40,
-          input: 'basicAttack',
-          targetSkillId: 'chr_0024_deepfin_attack1',
+        next: null,
+      },
+      changeResourceByActionValue_3: {
+        action: {
+          kind: 'changeResourceByActionValue',
+          parameters: {
+            resource: 'sp',
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            coefficient: { kind: 'constant', value: 1 },
+            recipient: 'team',
+            spGainKind: 'gain',
+            spGainSource: 'normalAttack',
+          },
         },
-      ],
-      allowedNextSkills: [{ startFrame: 31, endFrame: 40, skillIds: ['chr_0024_deepfin_attack1'] }],
+        next: null,
+      },
+      conditional_4: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' }, alwaysNext: true },
+          whenTrue: { $sequence: 'changeResourceByActionValue_3' },
+        },
+        next: null,
+      },
+      dealDamage_5: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            tags: ['normalAttack'],
+          },
+        },
+        next: 'conditional_4',
+      },
+      reachSkillOperableBoundary_6: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0024_deepfin_attack4'] },
+        },
+        next: null,
+      },
     },
-    costFrame: 12,
-    scheduledSequences: [
-      scheduled(
-        18,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'physical',
-              attackScale: { kind: 'blackboard', key: 'atk_scale' },
-              tags: ['normalAttack', 'normalAttackLastCombo'],
-              stagger: { kind: 'blackboard', key: 'poise' },
-              staggerOnlyWhenCasterControlled: true,
-            },
-            'chr_0024_deepfin_attack5:/scheduledSequences/0/sequence/steps/0',
-          ),
-          branch(
-            { kind: 'casterControlled' },
-            sequence(
-              step('startTimeDilation', {
-                scope: 'entity',
-                durationSeconds: { kind: 'constant', value: 0.2 },
-                slot: 'TimeDilation/Layer/Entity/HitStop',
-                priority: 10,
-                curve: { kind: 'named', key: 'char_hard_zero' },
-                finishByAction: false,
-                targets: ['enemy', 'caster'],
-              }),
-            ),
-            undefined,
-            { alwaysNext: true },
-          ),
-        ),
-        19,
-      ),
-      scheduled(
-        19,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'physical',
-              attackScale: { kind: 'blackboard', key: 'atk_scale' },
-              tags: ['normalAttack'],
-              stagger: { kind: 'constant', value: 0 },
-              staggerOnlyWhenCasterControlled: true,
-            },
-            'chr_0024_deepfin_attack5:/scheduledSequences/1/sequence/steps/0',
-          ),
-          branch(
-            { kind: 'casterControlled' },
-            sequence(
-              step('startTimeDilation', {
-                scope: 'entity',
-                durationSeconds: { kind: 'constant', value: 0.2 },
-                slot: 'TimeDilation/Layer/Entity/HitStop',
-                priority: 10,
-                curve: { kind: 'named', key: 'char_hard_stop' },
-                finishByAction: false,
-                targets: ['enemy', 'caster'],
-              }),
-              step('changeResourceByActionValue', {
-                resource: 'sp',
-                amount: { kind: 'blackboard', key: 'atb' },
-                coefficient: { kind: 'constant', value: 1 },
-                recipient: 'team',
-                spGainKind: 'gain',
-                spGainSource: 'normalAttack',
-              }),
-            ),
-            undefined,
-            { alwaysNext: true },
-          ),
-        ),
-        20,
-      ),
-      scheduled(
-        31,
-        sequence(step('reachSkillOperableBoundary', { skillIds: ['chr_0024_deepfin_attack1'] })),
-        40,
-      ),
-    ],
-    timelineContinuationSkillId: 'chr_0024_deepfin_attack1',
-    skillType: 'basicAttack',
-    levelSource: 'basicAttack',
-    nativeSkillType: 'attack',
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+    },
   },
-  {
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const aleshChr_0024_deepfin_attack3: SkillDefinition = {
+  key: 'chr_0024_deepfin_attack3',
+  blackboard: {
+    atb: 0,
+    atk_scale: [0.28, 0.3, 0.33, 0.36, 0.39, 0.41, 0.44, 0.47, 0.5, 0.53, 0.57, 0.62],
+  },
+  timelineBlockFrames: 16,
+  naturalDurationFrames: 145,
+  exclusiveFrame: 29,
+  offsetRecordFrame: 13,
+  inputWindows: {
+    commandMappings: [
+      {
+        startFrame: 13,
+        endFrame: 31,
+        input: 'basicAttack',
+        targetSkillId: 'chr_0024_deepfin_attack4',
+      },
+    ],
+    allowedNextSkills: [{ startFrame: 16, endFrame: 31, skillIds: ['chr_0024_deepfin_attack4'] }],
+  },
+  costFrame: 12,
+  scheduledSequences: [
+    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'startTimeDilation_1' } },
+    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'dealDamage_5' } },
+    { startFrame: 16, endFrame: 31, sequence: { $sequence: 'reachSkillOperableBoundary_6' } },
+  ],
+  timelineContinuationSkillId: 'chr_0024_deepfin_attack4',
+  skillType: 'basicAttack',
+  levelSource: 'basicAttack',
+  nativeSkillType: 'attack',
+  actionGraph: aleshChr_0024_deepfin_attack3ActionGraph,
+};
+
+export const aleshChr_0024_deepfin_attack4ActionGraph = {
+  main: {
+    nodes: {
+      changeResourceByActionValue_1: {
+        action: {
+          kind: 'changeResourceByActionValue',
+          parameters: {
+            resource: 'sp',
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            coefficient: { kind: 'constant', value: 0.5 },
+            recipient: 'team',
+            spGainKind: 'gain',
+            spGainSource: 'normalAttack',
+          },
+        },
+        next: null,
+      },
+      startTimeDilation_2: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.12 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
+        },
+        next: 'changeResourceByActionValue_1',
+      },
+      conditional_3: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' }, alwaysNext: true },
+          whenTrue: { $sequence: 'startTimeDilation_2' },
+        },
+        next: null,
+      },
+      dealDamage_4: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            tags: ['normalAttack'],
+          },
+        },
+        next: 'conditional_3',
+      },
+      reachSkillOperableBoundary_5: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0024_deepfin_attack5'] },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const aleshChr_0024_deepfin_attack4: SkillDefinition = {
+  actionGraph: aleshChr_0024_deepfin_attack4ActionGraph,
+  key: 'chr_0024_deepfin_attack4',
+  blackboard: {
+    atb: 0,
+    atk_scale: [0.28, 0.3, 0.33, 0.36, 0.39, 0.41, 0.44, 0.47, 0.5, 0.53, 0.57, 0.62],
+  },
+  timelineBlockFrames: 22,
+  naturalDurationFrames: 90,
+  exclusiveFrame: 30,
+  offsetRecordFrame: 15,
+  inputWindows: {
+    commandMappings: [
+      {
+        startFrame: 15,
+        endFrame: 33,
+        input: 'basicAttack',
+        targetSkillId: 'chr_0024_deepfin_attack5',
+      },
+    ],
+    allowedNextSkills: [{ startFrame: 22, endFrame: 33, skillIds: ['chr_0024_deepfin_attack5'] }],
+  },
+  costFrame: 8,
+  scheduledSequences: [
+    { startFrame: 15, endFrame: 16, sequence: { $sequence: 'dealDamage_4' } },
+    { startFrame: 22, endFrame: 33, sequence: { $sequence: 'reachSkillOperableBoundary_5' } },
+  ],
+  timelineContinuationSkillId: 'chr_0024_deepfin_attack5',
+  skillType: 'basicAttack',
+  levelSource: 'basicAttack',
+  nativeSkillType: 'attack',
+};
+
+export const aleshChr_0024_deepfin_attack5ActionGraph = {
+  main: {
+    nodes: {
+      startTimeDilation_1: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.2 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_zero' },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
+        },
+        next: null,
+      },
+      conditional_2: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' }, alwaysNext: true },
+          whenTrue: { $sequence: 'startTimeDilation_1' },
+        },
+        next: null,
+      },
+      dealDamage_3: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+            tags: ['normalAttack', 'normalAttackLastCombo'],
+            stagger: { kind: 'valueNode', nodeId: 'data_3' },
+            staggerOnlyWhenCasterControlled: true,
+          },
+        },
+        next: 'conditional_2',
+      },
+      changeResourceByActionValue_4: {
+        action: {
+          kind: 'changeResourceByActionValue',
+          parameters: {
+            resource: 'sp',
+            amount: { kind: 'valueNode', nodeId: 'data_4' },
+            coefficient: { kind: 'constant', value: 1 },
+            recipient: 'team',
+            spGainKind: 'gain',
+            spGainSource: 'normalAttack',
+          },
+        },
+        next: null,
+      },
+      startTimeDilation_5: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.2 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
+        },
+        next: 'changeResourceByActionValue_4',
+      },
+      conditional_6: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' }, alwaysNext: true },
+          whenTrue: { $sequence: 'startTimeDilation_5' },
+        },
+        next: null,
+      },
+      dealDamage_7: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_6' },
+            tags: ['normalAttack'],
+            stagger: { kind: 'constant', value: 0 },
+            staggerOnlyWhenCasterControlled: true,
+          },
+        },
+        next: 'conditional_6',
+      },
+      reachSkillOperableBoundary_8: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0024_deepfin_attack1'] },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_5: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const aleshChr_0024_deepfin_attack5: SkillDefinition = {
+  actionGraph: aleshChr_0024_deepfin_attack5ActionGraph,
+  key: 'chr_0024_deepfin_attack5',
+  blackboard: {
     atb: 19,
     atk_scale: [0.28, 0.3, 0.33, 0.36, 0.39, 0.41, 0.44, 0.47, 0.5, 0.53, 0.57, 0.62],
     poise: 17,
     atk_scale_display: [0.55, 0.61, 0.66, 0.72, 0.77, 0.83, 0.88, 0.94, 0.99, 1.06, 1.14, 1.24],
   },
-);
+  timelineBlockFrames: 31,
+  naturalDurationFrames: 104,
+  exclusiveFrame: 40,
+  offsetRecordFrame: 18,
+  inputWindows: {
+    commandMappings: [
+      {
+        startFrame: 14,
+        endFrame: 40,
+        input: 'basicAttack',
+        targetSkillId: 'chr_0024_deepfin_attack1',
+      },
+    ],
+    allowedNextSkills: [{ startFrame: 31, endFrame: 40, skillIds: ['chr_0024_deepfin_attack1'] }],
+  },
+  costFrame: 12,
+  scheduledSequences: [
+    { startFrame: 18, endFrame: 19, sequence: { $sequence: 'dealDamage_3' } },
+    { startFrame: 19, endFrame: 20, sequence: { $sequence: 'dealDamage_7' } },
+    { startFrame: 31, endFrame: 40, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
+  ],
+  timelineContinuationSkillId: 'chr_0024_deepfin_attack1',
+  skillType: 'basicAttack',
+  levelSource: 'basicAttack',
+  nativeSkillType: 'attack',
+};
 
-export const aleshChr_0024_deepfin_power_attack: SkillDefinition = withSkillBlackboard(
-  {
-    key: 'chr_0024_deepfin_power_attack',
-    timelineBlockFrames: 47,
-    naturalDurationFrames: 113,
-    exclusiveFrame: 75,
-    offsetRecordFrame: 0,
-    inputWindows: {
-      allowedNextSkills: [
-        {
-          startFrame: 47,
-          endFrame: 75,
-          skillIds: ['chr_0024_deepfin_normal_skill', 'chr_0024_deepfin_combo_skill'],
+export const aleshChr_0024_deepfin_power_attackActionGraph = {
+  main: {
+    nodes: {
+      changeResourceByActionValue_1: {
+        action: {
+          kind: 'changeResourceByActionValue',
+          parameters: {
+            resource: 'sp',
+            amount: { kind: 'constant', value: 0 },
+            coefficient: { kind: 'constant', value: 1 },
+            recipient: 'team',
+            spGainKind: 'gain',
+            spGainSource: 'default',
+          },
         },
-      ],
-    },
-    costFrame: 4,
-    scheduledSequences: [
-      scheduled(
-        13,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'physical',
-              attackScale: { kind: 'blackboard', key: 'atk_scale1' },
-              calculation: 'breakingAttack',
-              calculationMultiplier: 1,
-              tags: ['normalAttack', 'powerAttack'],
-            },
-            'chr_0024_deepfin_power_attack:/scheduledSequences/0/sequence/steps/0',
-          ),
-          branch(
-            { kind: 'casterControlled' },
-            sequence(
-              step('startTimeDilation', {
-                scope: 'entity',
-                durationSeconds: { kind: 'constant', value: 0.2 },
-                slot: 'TimeDilation/Layer/Entity/HitStop',
-                priority: 10,
-                curve: { kind: 'named', key: 'char_hard_zero' },
-                finishByAction: false,
-                targets: ['enemy', 'caster'],
-              }),
-              step('changeResourceByActionValue', {
-                resource: 'sp',
-                amount: { kind: 'constant', value: 0 },
-                coefficient: { kind: 'constant', value: 1 },
-                recipient: 'team',
-                spGainKind: 'gain',
-                spGainSource: 'default',
-              }),
-            ),
-            undefined,
-            { alwaysNext: true },
-          ),
-        ),
-        15,
-      ),
-      scheduled(
-        47,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'physical',
-              attackScale: { kind: 'blackboard', key: 'atk_scale2' },
-              calculation: 'breakingAttack',
-              calculationMultiplier: 1,
-              tags: ['normalAttack', 'powerAttack'],
-            },
-            'chr_0024_deepfin_power_attack:/scheduledSequences/1/sequence/steps/0',
-          ),
-          branch(
-            { kind: 'casterControlled' },
-            sequence(step('gainFinisherSp', { factor: 1, recipient: 'team' })),
-            undefined,
-            { alwaysNext: true },
-          ),
-          step('startTimeDilation', {
+        next: null,
+      },
+      startTimeDilation_2: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.2 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_zero' },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
+        },
+        next: 'changeResourceByActionValue_1',
+      },
+      conditional_3: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' }, alwaysNext: true },
+          whenTrue: { $sequence: 'startTimeDilation_2' },
+        },
+        next: null,
+      },
+      dealDamage_4: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+            calculation: 'breakingAttack',
+            calculationMultiplier: 1,
+            tags: ['normalAttack', 'powerAttack'],
+          },
+        },
+        next: 'conditional_3',
+      },
+      gainFinisherSp_5: {
+        action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+        next: null,
+      },
+      startTimeDilation_6: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
             scope: 'entity',
             durationSeconds: { kind: 'constant', value: 0.3 },
             slot: 'TimeDilation/Layer/Entity/HitStop',
@@ -522,449 +639,582 @@ export const aleshChr_0024_deepfin_power_attack: SkillDefinition = withSkillBlac
             curve: { kind: 'named', key: 'char_hard_stop' },
             finishByAction: false,
             targets: ['enemy', 'caster'],
-          }),
-        ),
-        49,
-      ),
-      scheduled(
-        13,
-        sequence(
-          branch(
-            { kind: 'casterControlled' },
-            sequence(
-              step('startTimeDilation', {
-                scope: 'entity',
-                durationSeconds: { kind: 'constant', value: 0.12 },
-                slot: 'TimeDilation/Layer/Entity/HitStop',
-                priority: 10,
-                curve: { kind: 'named', key: 'char_hard_stop' },
-                finishByAction: false,
-                targets: ['caster'],
-              }),
-            ),
-          ),
-        ),
-        15,
-      ),
-      scheduled(
-        0,
-        sequence(
-          step('applyBuff', {
+          },
+        },
+        next: null,
+      },
+      conditional_7: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' }, alwaysNext: true },
+          whenTrue: { $sequence: 'gainFinisherSp_5' },
+        },
+        next: 'startTimeDilation_6',
+      },
+      dealDamage_8: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+            calculation: 'breakingAttack',
+            calculationMultiplier: 1,
+            tags: ['normalAttack', 'powerAttack'],
+          },
+        },
+        next: 'conditional_7',
+      },
+      startTimeDilation_9: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.12 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+            finishByAction: false,
+            targets: ['caster'],
+          },
+        },
+        next: null,
+      },
+      applyBuff_12: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
             buffId: 'buff_common_full_immune_medium',
             target: 'caster',
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
-          }),
-        ),
-        75,
-      ),
-      scheduled(
-        0,
-        sequence(
-          step('applyBuff', {
+          },
+        },
+        next: null,
+      },
+      applyBuff_13: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
             buffId: 'buff_common_power_attack_disable_cast_skill',
             target: 'caster',
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
-          }),
-        ),
-        47,
-      ),
-    ],
-    skillType: 'finisher',
-    levelSource: 'basicAttack',
-    nativeSkillType: 'breakingAttack',
+          },
+        },
+        next: null,
+      },
+      conditional_opt1: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+          whenTrue: { $sequence: 'startTimeDilation_9' },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale1' } },
+      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
+      data_5: { type: 'boolean', expression: { kind: 'casterControlled' } },
+    },
   },
-  {
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const aleshChr_0024_deepfin_power_attack: SkillDefinition = {
+  key: 'chr_0024_deepfin_power_attack',
+  blackboard: {
     atk_scale1: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
     atk_scale2: [3.2, 3.52, 3.84, 4.16, 4.48, 4.8, 5.12, 5.44, 5.76, 6.16, 6.64, 7.2],
   },
-);
-
-export const aleshChr_0024_deepfin_plunging_attack_end: SkillDefinition = withSkillBlackboard(
-  {
-    key: 'chr_0024_deepfin_plunging_attack_end',
-    timelineBlockFrames: 21,
-    naturalDurationFrames: 92,
-    exclusiveFrame: 20,
-    offsetRecordFrame: 0,
-    costFrame: 0,
-    scheduledSequences: [
-      scheduled(
-        1,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'physical',
-              attackScale: { kind: 'blackboard', key: 'atk_scale' },
-              tags: ['normalAttack', 'plungingAttack'],
-            },
-            'chr_0024_deepfin_plunging_attack_end:/scheduledSequences/0/sequence/steps/0',
-          ),
-          branch(
-            { kind: 'casterControlled' },
-            sequence(
-              step('changeResourceByActionValue', {
-                resource: 'sp',
-                amount: { kind: 'blackboard', key: 'atb' },
-                coefficient: { kind: 'constant', value: 1 },
-                recipient: 'team',
-                spGainKind: 'gain',
-                spGainSource: 'normalAttack',
-              }),
-            ),
-            undefined,
-            { alwaysNext: true },
-          ),
-        ),
-        6,
-      ),
+  timelineBlockFrames: 47,
+  naturalDurationFrames: 113,
+  exclusiveFrame: 75,
+  offsetRecordFrame: 0,
+  inputWindows: {
+    allowedNextSkills: [
+      {
+        startFrame: 47,
+        endFrame: 75,
+        skillIds: ['chr_0024_deepfin_normal_skill', 'chr_0024_deepfin_combo_skill'],
+      },
     ],
-    skillType: 'plungingAttack',
-    levelSource: 'basicAttack',
-    nativeSkillType: 'attack',
   },
-  { atb: 0, atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8] },
-);
+  costFrame: 4,
+  scheduledSequences: [
+    { startFrame: 13, endFrame: 15, sequence: { $sequence: 'dealDamage_4' } },
+    { startFrame: 47, endFrame: 49, sequence: { $sequence: 'dealDamage_8' } },
+    { startFrame: 13, endFrame: 15, sequence: { $sequence: 'conditional_opt1' } },
+    { startFrame: 0, endFrame: 75, sequence: { $sequence: 'applyBuff_12' } },
+    { startFrame: 0, endFrame: 47, sequence: { $sequence: 'applyBuff_13' } },
+  ],
+  skillType: 'finisher',
+  levelSource: 'basicAttack',
+  nativeSkillType: 'breakingAttack',
+  actionGraph: aleshChr_0024_deepfin_power_attackActionGraph,
+};
 
-export const aleshChr_0024_deepfin_normal_skill: SkillDefinition = withSkillBlackboard(
-  {
-    key: 'chr_0024_deepfin_normal_skill',
-    timelineBlockFrames: 51,
-    naturalDurationFrames: 126,
-    exclusiveFrame: 50,
-    offsetRecordFrame: 0,
-    costFrame: 0,
-    scheduledSequences: [
-      scheduled(
-        0,
-        sequence(
-          step('findCharacterTeamTargets', {
-            saveToContextKey: 'mainchar',
-            selection: { kind: 'controlledOperator' },
-          }),
-        ),
-        7,
-      ),
-      scheduled(
-        27,
-        sequence(
-          repeatEachTick(
-            sequence(
-              step('readBuffStackCount', {
-                target: 'enemy',
-                outputKey: 'num_1',
-                query: {
-                  kind: 'tag',
-                  tagQueryType: 'hasAny',
-                  buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
-                },
-              }),
-              branch(
-                {
-                  kind: 'actionValueCompare',
-                  left: { kind: 'blackboard', key: 'num_1', fallback: 0 },
-                  operator: 'greater',
-                  right: { kind: 'blackboard', key: 'num', fallback: 0 },
-                },
-                sequence(
-                  step('modifyActionValue', {
-                    key: 'num',
-                    operation: 'assign',
-                    value: { kind: 'blackboard', key: 'num_1' },
-                  }),
-                ),
-                undefined,
-                { alwaysNext: true },
-              ),
-            ),
-            {
-              nativeChanneling: {
-                executeEachFrame: true,
-                triggerIntervalSeconds: 0.033,
-                maxCountPerTarget: 1,
-                targetTriggerIntervalSeconds: 0.033,
-              },
-            },
-          ),
-        ),
-        28,
-      ),
-      scheduled(
-        27,
-        sequence(
-          branch(
-            {
-              kind: 'actionValueCompare',
-              left: { kind: 'blackboard', key: 'potential_1', fallback: 0 },
-              operator: 'equal',
-              right: { kind: 'constant', value: 1 },
-            },
-            sequence(
-              step('calculateActionValue', {
-                key: 'atb_1',
-                operation: 'add',
-                left: { kind: 'blackboard', key: 'atb_1' },
-                right: { kind: 'blackboard', key: 'potential_1_atb' },
-              }),
-              step('calculateActionValue', {
-                key: 'atb_2',
-                operation: 'add',
-                left: { kind: 'blackboard', key: 'atb_2' },
-                right: { kind: 'blackboard', key: 'potential_1_atb' },
-              }),
-              step('calculateActionValue', {
-                key: 'atb_3',
-                operation: 'add',
-                left: { kind: 'blackboard', key: 'atb_3' },
-                right: { kind: 'blackboard', key: 'potential_1_atb' },
-              }),
-              step('calculateActionValue', {
-                key: 'atb_4',
-                operation: 'add',
-                left: { kind: 'blackboard', key: 'atb_4' },
-                right: { kind: 'blackboard', key: 'potential_1_atb' },
-              }),
-              {
-                kind: 'switch',
-                parameters: { choice: { kind: 'blackboard', key: 'num' }, alwaysNext: true },
-                options: [
-                  {
-                    value: { kind: 'constant', value: 1 },
-                    sequence: sequence(
-                      step('changeResourceByActionValue', {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'atb_1' },
-                        coefficient: { kind: 'constant', value: 1 },
-                        recipient: 'team',
-                        spGainKind: 'gain',
-                        spGainSource: 'skill',
-                      }),
-                    ),
-                  },
-                  {
-                    value: { kind: 'constant', value: 2 },
-                    sequence: sequence(
-                      step('changeResourceByActionValue', {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'atb_2' },
-                        coefficient: { kind: 'constant', value: 1 },
-                        recipient: 'team',
-                        spGainKind: 'gain',
-                        spGainSource: 'skill',
-                      }),
-                    ),
-                  },
-                  {
-                    value: { kind: 'constant', value: 3 },
-                    sequence: sequence(
-                      step('changeResourceByActionValue', {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'atb_3' },
-                        coefficient: { kind: 'constant', value: 1 },
-                        recipient: 'team',
-                        spGainKind: 'gain',
-                        spGainSource: 'skill',
-                      }),
-                    ),
-                  },
-                  {
-                    value: { kind: 'constant', value: 4 },
-                    sequence: sequence(
-                      step('changeResourceByActionValue', {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'atb_4' },
-                        coefficient: { kind: 'constant', value: 1 },
-                        recipient: 'team',
-                        spGainKind: 'gain',
-                        spGainSource: 'skill',
-                      }),
-                    ),
-                  },
-                ],
-              },
-            ),
-            sequence({
-              kind: 'switch',
-              parameters: { choice: { kind: 'blackboard', key: 'num' }, alwaysNext: true },
-              options: [
-                {
-                  value: { kind: 'constant', value: 1 },
-                  sequence: sequence(
-                    step('changeResourceByActionValue', {
-                      resource: 'sp',
-                      amount: { kind: 'blackboard', key: 'atb_1' },
-                      coefficient: { kind: 'constant', value: 1 },
-                      recipient: 'team',
-                      spGainKind: 'gain',
-                      spGainSource: 'skill',
-                    }),
-                  ),
-                },
-                {
-                  value: { kind: 'constant', value: 2 },
-                  sequence: sequence(
-                    step('changeResourceByActionValue', {
-                      resource: 'sp',
-                      amount: { kind: 'blackboard', key: 'atb_2' },
-                      coefficient: { kind: 'constant', value: 1 },
-                      recipient: 'team',
-                      spGainKind: 'gain',
-                      spGainSource: 'skill',
-                    }),
-                  ),
-                },
-                {
-                  value: { kind: 'constant', value: 3 },
-                  sequence: sequence(
-                    step('changeResourceByActionValue', {
-                      resource: 'sp',
-                      amount: { kind: 'blackboard', key: 'atb_3' },
-                      coefficient: { kind: 'constant', value: 1 },
-                      recipient: 'team',
-                      spGainKind: 'gain',
-                      spGainSource: 'skill',
-                    }),
-                  ),
-                },
-                {
-                  value: { kind: 'constant', value: 4 },
-                  sequence: sequence(
-                    step('changeResourceByActionValue', {
-                      resource: 'sp',
-                      amount: { kind: 'blackboard', key: 'atb_4' },
-                      coefficient: { kind: 'constant', value: 1 },
-                      recipient: 'team',
-                      spGainKind: 'gain',
-                      spGainSource: 'skill',
-                    }),
-                  ),
-                },
-              ],
-            }),
-            { alwaysNext: true },
-          ),
-        ),
-        28,
-      ),
-      scheduled(
-        27,
-        sequence(
-          repeatEachTick(
-            sequence(
-              step(
-                'dealDamage',
-                {
-                  damageType: 'physical',
-                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                  tags: ['normalSkill'],
-                  features: ['canBreakWeakness'],
-                  stagger: { kind: 'blackboard', key: 'poise' },
-                },
-                'chr_0024_deepfin_normal_skill:/scheduledSequences/3/sequence/steps/0/body/steps/0',
-              ),
-              step('startTimeDilation', {
-                scope: 'entity',
-                durationSeconds: { kind: 'constant', value: 0.3 },
-                slot: 'TimeDilation/Layer/Entity/HitStop',
-                priority: 10,
-                curve: { kind: 'named', key: 'char_hard_stop' },
-                finishByAction: false,
-                targets: ['enemy', 'caster'],
-              }),
-            ),
-            {
-              nativeChanneling: {
-                executeEachFrame: true,
-                triggerIntervalSeconds: 0.033,
-                maxCountPerTarget: 1,
-                targetTriggerIntervalSeconds: 0.033,
-              },
-            },
-          ),
-        ),
-        28,
-      ),
-      scheduled(27, sequence(step('gainSquadUltimateEnergyFromSkillCost', { coefficient: 1 })), 28),
-      scheduled(
-        27,
-        sequence(
-          repeatEachTick(
-            sequence(
-              branch(
-                {
-                  kind: 'buffStackCompare',
-                  target: 'enemy',
-                  tagQueryType: 'hasAny',
-                  buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
-                  operator: 'greaterOrEqual',
-                  value: { kind: 'constant', value: 1 },
-                },
-                sequence(
-                  step('readBuffStackCount', {
-                    target: 'enemy',
-                    outputKey: 'count',
-                    query: {
-                      kind: 'tag',
-                      tagQueryType: 'hasAny',
-                      buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
-                    },
-                  }),
-                  branch(
-                    {
-                      kind: 'buffStackCompare',
-                      target: 'enemy',
-                      tagQueryType: 'hasAny',
-                      buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
-                      operator: 'greaterOrEqual',
-                      value: { kind: 'blackboard', key: 'count' },
-                    },
-                    sequence(
-                      step('finishBuffsByTag', {
-                        target: 'enemy',
-                        tagQueryType: 'hasAny',
-                        buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
-                        reason: 'early',
-                        count: { kind: 'blackboard', key: 'count' },
-                      }),
-                      step('applyBuff', {
-                        buffId: 'buff_common_cryst_cryst_frozen_triggered',
-                        target: 'enemy',
-                        inheritSourceSkillCastInfo: true,
-                        blackboardAssignments: {
-                          consumed_type: { kind: 'constant', value: 2 },
-                          consumed_layer: { kind: 'blackboard', key: 'count' },
-                          count: { kind: 'blackboard', key: 'count' },
-                        },
-                      }),
-                    ),
-                  ),
-                ),
-                undefined,
-                { alwaysNext: true },
-              ),
-            ),
-            {
-              nativeChanneling: {
-                executeEachFrame: true,
-                triggerIntervalSeconds: 0.033,
-                maxCountPerTarget: 1,
-                targetTriggerIntervalSeconds: 0.033,
-              },
-            },
-          ),
-        ),
-        28,
-      ),
-    ],
-    smartTarget: 'enemy',
-    costs: [{ resource: 'sp', value: 100 }],
-    skillType: 'battleSkill',
-    levelSource: 'battleSkill',
-    nativeSkillType: 'normalSkill',
+export const aleshChr_0024_deepfin_plunging_attack_endActionGraph = {
+  main: {
+    nodes: {
+      changeResourceByActionValue_1: {
+        action: {
+          kind: 'changeResourceByActionValue',
+          parameters: {
+            resource: 'sp',
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            coefficient: { kind: 'constant', value: 1 },
+            recipient: 'team',
+            spGainKind: 'gain',
+            spGainSource: 'normalAttack',
+          },
+        },
+        next: null,
+      },
+      conditional_2: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' }, alwaysNext: true },
+          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
+        },
+        next: null,
+      },
+      dealDamage_3: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            tags: ['normalAttack', 'plungingAttack'],
+          },
+        },
+        next: 'conditional_2',
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+    },
   },
-  {
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const aleshChr_0024_deepfin_plunging_attack_end: SkillDefinition = {
+  actionGraph: aleshChr_0024_deepfin_plunging_attack_endActionGraph,
+  key: 'chr_0024_deepfin_plunging_attack_end',
+  blackboard: {
+    atb: 0,
+    atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
+  },
+  timelineBlockFrames: 21,
+  naturalDurationFrames: 92,
+  exclusiveFrame: 20,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [{ startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_3' } }],
+  skillType: 'plungingAttack',
+  levelSource: 'basicAttack',
+  nativeSkillType: 'attack',
+};
+
+export const aleshChr_0024_deepfin_normal_skillActionGraph = {
+  main: {
+    nodes: {
+      findCharacterTeamTargets_1: {
+        action: {
+          kind: 'findCharacterTeamTargets',
+          parameters: { saveToContextKey: 'mainchar', selection: { kind: 'controlledOperator' } },
+        },
+        next: null,
+      },
+      modifyActionValue_2: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'num',
+            operation: 'assign',
+            value: { kind: 'valueNode', nodeId: 'data_1' },
+          },
+        },
+        next: null,
+      },
+      conditional_3: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' }, alwaysNext: true },
+          whenTrue: { $sequence: 'modifyActionValue_2' },
+        },
+        next: null,
+      },
+      readBuffStackCount_4: {
+        action: {
+          kind: 'readBuffStackCount',
+          parameters: {
+            target: 'enemy',
+            outputKey: 'num_1',
+            query: {
+              kind: 'tag',
+              tagQueryType: 'hasAny',
+              buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
+            },
+          },
+        },
+        next: 'conditional_3',
+      },
+      repeatEachTick_5: {
+        action: {
+          kind: 'repeatEachTick',
+          parameters: {
+            nativeChanneling: {
+              executeEachFrame: true,
+              triggerIntervalSeconds: 0.033,
+              maxCountPerTarget: 1,
+              targetTriggerIntervalSeconds: 0.033,
+            },
+          },
+          body: { $sequence: 'readBuffStackCount_4' },
+        },
+        next: null,
+      },
+      changeResourceByActionValue_13: {
+        action: {
+          kind: 'changeResourceByActionValue',
+          parameters: {
+            resource: 'sp',
+            amount: { kind: 'valueNode', nodeId: 'data_5' },
+            coefficient: { kind: 'constant', value: 1 },
+            recipient: 'team',
+            spGainKind: 'gain',
+            spGainSource: 'skill',
+          },
+        },
+        next: null,
+      },
+      changeResourceByActionValue_12: {
+        action: {
+          kind: 'changeResourceByActionValue',
+          parameters: {
+            resource: 'sp',
+            amount: { kind: 'valueNode', nodeId: 'data_6' },
+            coefficient: { kind: 'constant', value: 1 },
+            recipient: 'team',
+            spGainKind: 'gain',
+            spGainSource: 'skill',
+          },
+        },
+        next: null,
+      },
+      changeResourceByActionValue_11: {
+        action: {
+          kind: 'changeResourceByActionValue',
+          parameters: {
+            resource: 'sp',
+            amount: { kind: 'valueNode', nodeId: 'data_7' },
+            coefficient: { kind: 'constant', value: 1 },
+            recipient: 'team',
+            spGainKind: 'gain',
+            spGainSource: 'skill',
+          },
+        },
+        next: null,
+      },
+      changeResourceByActionValue_10: {
+        action: {
+          kind: 'changeResourceByActionValue',
+          parameters: {
+            resource: 'sp',
+            amount: { kind: 'valueNode', nodeId: 'data_8' },
+            coefficient: { kind: 'constant', value: 1 },
+            recipient: 'team',
+            spGainKind: 'gain',
+            spGainSource: 'skill',
+          },
+        },
+        next: null,
+      },
+      switch_19: {
+        action: {
+          kind: 'switch',
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_9' }, alwaysNext: true },
+          options: [
+            {
+              value: { kind: 'constant', value: 1 },
+              sequence: { $sequence: 'changeResourceByActionValue_10' },
+            },
+            {
+              value: { kind: 'constant', value: 2 },
+              sequence: { $sequence: 'changeResourceByActionValue_11' },
+            },
+            {
+              value: { kind: 'constant', value: 3 },
+              sequence: { $sequence: 'changeResourceByActionValue_12' },
+            },
+            {
+              value: { kind: 'constant', value: 4 },
+              sequence: { $sequence: 'changeResourceByActionValue_13' },
+            },
+          ],
+        },
+        next: null,
+      },
+      calculateActionValue_15: {
+        action: {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'atb_4',
+            operation: 'add',
+            left: { kind: 'valueNode', nodeId: 'data_10' },
+            right: { kind: 'valueNode', nodeId: 'data_11' },
+          },
+        },
+        next: 'switch_19',
+      },
+      calculateActionValue_16: {
+        action: {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'atb_3',
+            operation: 'add',
+            left: { kind: 'valueNode', nodeId: 'data_12' },
+            right: { kind: 'valueNode', nodeId: 'data_13' },
+          },
+        },
+        next: 'calculateActionValue_15',
+      },
+      calculateActionValue_17: {
+        action: {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'atb_2',
+            operation: 'add',
+            left: { kind: 'valueNode', nodeId: 'data_14' },
+            right: { kind: 'valueNode', nodeId: 'data_15' },
+          },
+        },
+        next: 'calculateActionValue_16',
+      },
+      calculateActionValue_18: {
+        action: {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'atb_1',
+            operation: 'add',
+            left: { kind: 'valueNode', nodeId: 'data_16' },
+            right: { kind: 'valueNode', nodeId: 'data_17' },
+          },
+        },
+        next: 'calculateActionValue_17',
+      },
+      conditional_20: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_19' }, alwaysNext: true },
+          whenTrue: { $sequence: 'calculateActionValue_18' },
+          whenFalse: { $sequence: 'switch_19' },
+        },
+        next: null,
+      },
+      startTimeDilation_21: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.3 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
+        },
+        next: null,
+      },
+      dealDamage_22: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_20' },
+            tags: ['normalSkill'],
+            features: ['canBreakWeakness'],
+            stagger: { kind: 'valueNode', nodeId: 'data_21' },
+          },
+        },
+        next: 'startTimeDilation_21',
+      },
+      repeatEachTick_23: {
+        action: {
+          kind: 'repeatEachTick',
+          parameters: {
+            nativeChanneling: {
+              executeEachFrame: true,
+              triggerIntervalSeconds: 0.033,
+              maxCountPerTarget: 1,
+              targetTriggerIntervalSeconds: 0.033,
+            },
+          },
+          body: { $sequence: 'dealDamage_22' },
+        },
+        next: null,
+      },
+      gainSquadUltimateEnergyFromSkillCost_24: {
+        action: { kind: 'gainSquadUltimateEnergyFromSkillCost', parameters: { coefficient: 1 } },
+        next: null,
+      },
+      applyBuff_25: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffId: 'buff_common_cryst_cryst_frozen_triggered',
+            target: 'enemy',
+            inheritSourceSkillCastInfo: true,
+            blackboardAssignments: {
+              consumed_type: { kind: 'constant', value: 2 },
+              consumed_layer: { kind: 'valueNode', nodeId: 'data_22' },
+              count: { kind: 'valueNode', nodeId: 'data_23' },
+            },
+          },
+        },
+        next: null,
+      },
+      finishBuffsByTag_26: {
+        action: {
+          kind: 'finishBuffsByTag',
+          parameters: {
+            target: 'enemy',
+            tagQueryType: 'hasAny',
+            buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
+            reason: 'early',
+            count: { kind: 'valueNode', nodeId: 'data_24' },
+          },
+        },
+        next: 'applyBuff_25',
+      },
+      conditional_27: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_26' } },
+          whenTrue: { $sequence: 'finishBuffsByTag_26' },
+        },
+        next: null,
+      },
+      readBuffStackCount_28: {
+        action: {
+          kind: 'readBuffStackCount',
+          parameters: {
+            target: 'enemy',
+            outputKey: 'count',
+            query: {
+              kind: 'tag',
+              tagQueryType: 'hasAny',
+              buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
+            },
+          },
+        },
+        next: 'conditional_27',
+      },
+      conditional_29: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_27' }, alwaysNext: true },
+          whenTrue: { $sequence: 'readBuffStackCount_28' },
+        },
+        next: null,
+      },
+      repeatEachTick_30: {
+        action: {
+          kind: 'repeatEachTick',
+          parameters: {
+            nativeChanneling: {
+              executeEachFrame: true,
+              triggerIntervalSeconds: 0.033,
+              maxCountPerTarget: 1,
+              targetTriggerIntervalSeconds: 0.033,
+            },
+          },
+          body: { $sequence: 'conditional_29' },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'num_1' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'num_1', fallback: 0 } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'num', fallback: 0 } },
+      data_4: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_2' },
+          operator: 'greater',
+          right: { kind: 'valueNode', nodeId: 'data_3' },
+        },
+      },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atb_4' } },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atb_3' } },
+      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'atb_2' } },
+      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'atb_1' } },
+      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'num' } },
+      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'atb_4' } },
+      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'potential_1_atb' } },
+      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'atb_3' } },
+      data_13: { type: 'number', expression: { kind: 'blackboard', key: 'potential_1_atb' } },
+      data_14: { type: 'number', expression: { kind: 'blackboard', key: 'atb_2' } },
+      data_15: { type: 'number', expression: { kind: 'blackboard', key: 'potential_1_atb' } },
+      data_16: { type: 'number', expression: { kind: 'blackboard', key: 'atb_1' } },
+      data_17: { type: 'number', expression: { kind: 'blackboard', key: 'potential_1_atb' } },
+      data_18: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'potential_1', fallback: 0 },
+      },
+      data_19: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_18' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+      data_20: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_21: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_22: { type: 'number', expression: { kind: 'blackboard', key: 'count' } },
+      data_23: { type: 'number', expression: { kind: 'blackboard', key: 'count' } },
+      data_24: { type: 'number', expression: { kind: 'blackboard', key: 'count' } },
+      data_25: { type: 'number', expression: { kind: 'blackboard', key: 'count' } },
+      data_26: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffStackCompare',
+          target: 'enemy',
+          tagQueryType: 'hasAny',
+          buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
+          operator: 'greaterOrEqual',
+          value: { kind: 'valueNode', nodeId: 'data_25' },
+        },
+      },
+      data_27: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffStackCompare',
+          target: 'enemy',
+          tagQueryType: 'hasAny',
+          buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+        },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const aleshChr_0024_deepfin_normal_skill: SkillDefinition = {
+  key: 'chr_0024_deepfin_normal_skill',
+  blackboard: {
     atb_1: [10, 10, 10, 10, 10, 10, 10, 10, 10, 15, 15, 15],
     atb_2: [20, 20, 20, 20, 20, 20, 20, 20, 20, 25, 25, 25],
     atb_3: [30, 30, 30, 30, 30, 30, 30, 30, 30, 35, 35, 35],
@@ -977,290 +1227,346 @@ export const aleshChr_0024_deepfin_normal_skill: SkillDefinition = withSkillBlac
     potential_1: 0,
     potential_1_atb: 0,
   },
-);
-
-export const aleshChr_0024_deepfin_combo_skill: SkillDefinition = withSkillBlackboard(
-  {
-    key: 'chr_0024_deepfin_combo_skill',
-    timelineBlockFrames: 131,
-    naturalDurationFrames: 213,
-    exclusiveFrame: 130,
-    offsetRecordFrame: 0,
-    inputWindows: {
-      allowedNextSkills: [
-        { startFrame: 39, endFrame: 65, skillIds: ['chr_0024_deepfin_normal_skill'] },
-        { startFrame: 94, endFrame: 120, skillIds: ['chr_0024_deepfin_normal_skill'] },
-        { startFrame: 120, endFrame: 130, skillIds: ['chr_0024_deepfin_normal_skill'] },
-      ],
+  timelineBlockFrames: 51,
+  naturalDurationFrames: 126,
+  exclusiveFrame: 50,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 7, sequence: { $sequence: 'findCharacterTeamTargets_1' } },
+    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'repeatEachTick_5' } },
+    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'conditional_20' } },
+    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'repeatEachTick_23' } },
+    {
+      startFrame: 27,
+      endFrame: 28,
+      sequence: { $sequence: 'gainSquadUltimateEnergyFromSkillCost_24' },
     },
-    costFrame: 0,
-    scheduledSequences: [
-      scheduled(
-        0,
-        sequence(
-          step('findCharacterTeamTargets', {
-            saveToContextKey: 'mainchar',
-            selection: { kind: 'controlledOperator' },
-          }),
-        ),
-        1,
-      ),
-      scheduled(
-        0,
-        sequence(
-          step('applyBuff', {
+    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'repeatEachTick_30' } },
+  ],
+  smartTarget: 'enemy',
+  costs: [{ resource: 'sp', value: 100 }],
+  skillType: 'battleSkill',
+  levelSource: 'battleSkill',
+  nativeSkillType: 'normalSkill',
+  actionGraph: aleshChr_0024_deepfin_normal_skillActionGraph,
+};
+
+export const aleshChr_0024_deepfin_combo_skillActionGraph = {
+  main: {
+    nodes: {
+      findCharacterTeamTargets_1: {
+        action: {
+          kind: 'findCharacterTeamTargets',
+          parameters: { saveToContextKey: 'mainchar', selection: { kind: 'controlledOperator' } },
+        },
+        next: null,
+      },
+      applyBuff_2: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
             buffId: 'buff_chr_0024_deepfin_combo_camera',
             target: 'caster',
             inheritSourceSkillCastInfo: true,
-          }),
-        ),
-        23,
-      ),
-      scheduled(
-        38,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'physical',
-              attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
-              tags: ['comboSkill'],
-              features: ['canBreakWeakness'],
-              stagger: { kind: 'blackboard', key: 'poise' },
-            },
-            'chr_0024_deepfin_combo_skill:/scheduledSequences/2/sequence/steps/0',
-          ),
-        ),
-        41,
-      ),
-      scheduled(
-        93,
-        sequence(
-          step('changeResourceByActionValue', {
+          },
+        },
+        next: null,
+      },
+      dealDamage_3: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+            tags: ['comboSkill'],
+            features: ['canBreakWeakness'],
+            stagger: { kind: 'valueNode', nodeId: 'data_2' },
+          },
+        },
+        next: null,
+      },
+      dealDamage_4: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            tags: ['comboSkill'],
+            features: ['canBreakWeakness'],
+            stagger: { kind: 'valueNode', nodeId: 'data_4' },
+          },
+        },
+        next: null,
+      },
+      changeResourceByActionValue_5: {
+        action: {
+          kind: 'changeResourceByActionValue',
+          parameters: {
             resource: 'sp',
-            amount: { kind: 'blackboard', key: 'atb_sp' },
+            amount: { kind: 'valueNode', nodeId: 'data_5' },
             coefficient: { kind: 'constant', value: 1 },
             recipient: 'team',
             spGainKind: 'gain',
             spGainSource: 'default',
-          }),
-          step(
-            'dealDamage',
-            {
-              damageType: 'physical',
-              attackScale: { kind: 'blackboard', key: 'atk_scale_2ex' },
-              tags: ['comboSkill'],
-              features: ['canBreakWeakness'],
-              stagger: { kind: 'blackboard', key: 'poise' },
-            },
-            'chr_0024_deepfin_combo_skill:/scheduledSequences/3/sequence/steps/1',
-          ),
-        ),
-        96,
-      ),
-      scheduled(
-        38,
-        sequence(
-          step('changeResourceByActionValue', {
+          },
+        },
+        next: 'dealDamage_4',
+      },
+      startTimeDilation_7: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.3 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'deepfin_combo2' },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
+        },
+        next: null,
+      },
+      startTimeDilation_6: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.95 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'deepfin_combo2' },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
+        },
+        next: null,
+      },
+      conditional_8: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' }, alwaysNext: true },
+          whenTrue: { $sequence: 'startTimeDilation_6' },
+          whenFalse: { $sequence: 'startTimeDilation_7' },
+        },
+        next: null,
+      },
+      changeResourceByActionValue_9: {
+        action: {
+          kind: 'changeResourceByActionValue',
+          parameters: {
             resource: 'ultimateEnergy',
-            amount: { kind: 'blackboard', key: 'usp_normal' },
+            amount: { kind: 'valueNode', nodeId: 'data_7' },
             coefficient: { kind: 'constant', value: 1 },
             recipient: 'caster',
-          }),
-          branch(
-            { kind: 'casterControlled' },
-            sequence(
-              step('startTimeDilation', {
-                scope: 'entity',
-                durationSeconds: { kind: 'constant', value: 0.95 },
-                slot: 'TimeDilation/Layer/Entity/HitStop',
-                priority: 10,
-                curve: { kind: 'named', key: 'deepfin_combo2' },
-                finishByAction: false,
-                targets: ['enemy', 'caster'],
-              }),
-            ),
-            sequence(
-              step('startTimeDilation', {
-                scope: 'entity',
-                durationSeconds: { kind: 'constant', value: 0.3 },
-                slot: 'TimeDilation/Layer/Entity/HitStop',
-                priority: 10,
-                curve: { kind: 'named', key: 'deepfin_combo2' },
-                finishByAction: false,
-                targets: ['enemy', 'caster'],
-              }),
-            ),
-            { alwaysNext: true },
-          ),
-        ),
-        43,
-      ),
-      scheduled(
-        93,
-        sequence(
-          step('changeResourceByActionValue', {
-            resource: 'ultimateEnergy',
-            amount: { kind: 'blackboard', key: 'usp_normal' },
-            coefficient: { kind: 'constant', value: 1 },
-            recipient: 'caster',
-          }),
-          branch(
-            { kind: 'casterControlled' },
-            sequence(
-              step('startTimeDilation', {
-                scope: 'entity',
-                durationSeconds: { kind: 'constant', value: 0.95 },
-                slot: 'TimeDilation/Layer/Entity/HitStop',
-                priority: 10,
-                curve: { kind: 'named', key: 'deepfin_combo2' },
-                finishByAction: false,
-                targets: ['enemy', 'caster'],
-              }),
-            ),
-            sequence(
-              step('startTimeDilation', {
-                scope: 'entity',
-                durationSeconds: { kind: 'constant', value: 0.3 },
-                slot: 'TimeDilation/Layer/Entity/HitStop',
-                priority: 10,
-                curve: { kind: 'named', key: 'deepfin_combo2' },
-                finishByAction: false,
-                targets: ['enemy', 'caster'],
-              }),
-            ),
-            { alwaysNext: true },
-          ),
-        ),
-        98,
-      ),
-      scheduled(
-        22,
-        sequence(
-          step('changeResourceByActionValue', {
+          },
+        },
+        next: 'conditional_8',
+      },
+      dealDamage_14: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_8' },
+            tags: ['comboSkill'],
+          },
+        },
+        next: null,
+      },
+      changeResourceByActionValue_15: {
+        action: {
+          kind: 'changeResourceByActionValue',
+          parameters: {
             resource: 'sp',
-            amount: { kind: 'blackboard', key: 'atb' },
+            amount: { kind: 'valueNode', nodeId: 'data_9' },
             coefficient: { kind: 'constant', value: 1 },
             recipient: 'team',
             spGainKind: 'gain',
             spGainSource: 'skill',
-          }),
-          step(
-            'dealDamage',
-            {
-              damageType: 'physical',
-              attackScale: { kind: 'blackboard', key: 'atk_scale_1' },
-              tags: ['comboSkill'],
-            },
-            'chr_0024_deepfin_combo_skill:/scheduledSequences/6/sequence/steps/1',
-          ),
-        ),
-        24,
-      ),
-      scheduled(64, sequence(step('jumpTimeline', { destinationFrame: 120 })), 66),
-      scheduled(
-        77,
-        sequence(
-          step('changeResourceByActionValue', {
+          },
+        },
+        next: 'dealDamage_14',
+      },
+      jumpTimeline_16: {
+        action: { kind: 'jumpTimeline', parameters: { destinationFrame: 120 } },
+        next: null,
+      },
+      dealDamage_17: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_10' },
+            tags: ['comboSkill'],
+          },
+        },
+        next: null,
+      },
+      changeResourceByActionValue_18: {
+        action: {
+          kind: 'changeResourceByActionValue',
+          parameters: {
             resource: 'sp',
-            amount: { kind: 'blackboard', key: 'atb' },
+            amount: { kind: 'valueNode', nodeId: 'data_11' },
             coefficient: { kind: 'constant', value: 1 },
             recipient: 'team',
             spGainKind: 'gain',
             spGainSource: 'skill',
-          }),
-          step(
-            'dealDamage',
-            {
-              damageType: 'physical',
-              attackScale: { kind: 'blackboard', key: 'atk_scale_1ex' },
-              tags: ['comboSkill'],
-            },
-            'chr_0024_deepfin_combo_skill:/scheduledSequences/8/sequence/steps/1',
-          ),
-        ),
-        79,
-      ),
-      scheduled(
-        10,
-        sequence(
-          step('calculateActionValue', {
-            key: 'prob_max',
-            operation: 'add',
-            left: { kind: 'blackboard', key: 'prob' },
-            right: { kind: 'blackboard', key: 'prob_max' },
-          }),
-          step('calculateActionValue', {
-            key: 'prob_add',
-            operation: 'divide',
-            left: { kind: 'blackboard', key: 'prob_add' },
-            right: { kind: 'blackboard', key: 'rate' },
-          }),
-          step('storeSourceAttributeValue', {
+          },
+        },
+        next: 'dealDamage_17',
+      },
+      jumpTimeline_20: {
+        action: { kind: 'jumpTimeline', parameters: { destinationFrame: 65 } },
+        next: null,
+      },
+      conditional_22: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' } },
+          whenTrue: { $sequence: 'jumpTimeline_20' },
+        },
+        next: null,
+      },
+      conditional_21: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_15' } },
+          whenTrue: { $sequence: 'jumpTimeline_20' },
+        },
+        next: null,
+      },
+      conditional_23: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_18' }, alwaysNext: true },
+          whenTrue: { $sequence: 'conditional_21' },
+          whenFalse: { $sequence: 'conditional_22' },
+        },
+        next: null,
+      },
+      storeSourceAttributeValue_24: {
+        action: {
+          kind: 'storeSourceAttributeValue',
+          parameters: {
             attribute: { kind: 'secondary' },
             stage: 'finalNonConverted',
             useFloor: false,
             divisor: { kind: 'constant', value: 1 },
-            multiplier: { kind: 'blackboard', key: 'prob_add' },
-            base: { kind: 'blackboard', key: 'prob' },
+            multiplier: { kind: 'valueNode', nodeId: 'data_19' },
+            base: { kind: 'valueNode', nodeId: 'data_20' },
             targetKey: 'prob',
-          }),
-          branch(
-            {
-              kind: 'actionValueCompare',
-              left: { kind: 'blackboard', key: 'prob', fallback: 0 },
-              operator: 'lessOrEqual',
-              right: { kind: 'blackboard', key: 'prob_max', fallback: 0 },
-            },
-            sequence(
-              branch(
-                { kind: 'probability', probability: { kind: 'blackboard', key: 'prob' } },
-                sequence(step('jumpTimeline', { destinationFrame: 65 })),
-              ),
-            ),
-            sequence(
-              branch(
-                { kind: 'probability', probability: { kind: 'blackboard', key: 'prob_max' } },
-                sequence(step('jumpTimeline', { destinationFrame: 65 })),
-              ),
-            ),
-            { alwaysNext: true },
-          ),
-        ),
-        11,
-      ),
-      scheduled(
-        93,
-        sequence(
-          branch(
-            {
-              kind: 'actionValueCompare',
-              left: { kind: 'blackboard', key: 'potential_3', fallback: 0 },
-              operator: 'greaterOrEqual',
-              right: { kind: 'constant', value: 1 },
-            },
-            sequence(
-              step('applyBuff', {
-                buffId: 'buff_chr_0024_deepfin_potential_3',
-                target: 'party',
-                inheritSourceSkillCastInfo: true,
-                copiedBlackboardAssignments: { atk_up: 'atk_up', duration: 'Duration' },
-              }),
-            ),
-            undefined,
-            { alwaysNext: true },
-          ),
-        ),
-        96,
-      ),
-    ],
-    smartTarget: 'trigger',
-    cooldownFrames: [270, 270, 270, 270, 270, 270, 270, 270, 270, 270, 270, 240],
-    skillType: 'comboSkill',
-    levelSource: 'comboSkill',
-    nativeSkillType: 'comboSkill',
+          },
+        },
+        next: 'conditional_23',
+      },
+      calculateActionValue_25: {
+        action: {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'prob_add',
+            operation: 'divide',
+            left: { kind: 'valueNode', nodeId: 'data_21' },
+            right: { kind: 'valueNode', nodeId: 'data_22' },
+          },
+        },
+        next: 'storeSourceAttributeValue_24',
+      },
+      calculateActionValue_26: {
+        action: {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'prob_max',
+            operation: 'add',
+            left: { kind: 'valueNode', nodeId: 'data_23' },
+            right: { kind: 'valueNode', nodeId: 'data_24' },
+          },
+        },
+        next: 'calculateActionValue_25',
+      },
+      applyBuff_27: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffId: 'buff_chr_0024_deepfin_potential_3',
+            target: 'party',
+            inheritSourceSkillCastInfo: true,
+            copiedBlackboardAssignments: { atk_up: 'atk_up', duration: 'Duration' },
+          },
+        },
+        next: null,
+      },
+      conditional_28: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_26' }, alwaysNext: true },
+          whenTrue: { $sequence: 'applyBuff_27' },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2ex' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atb_sp' } },
+      data_6: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'usp_normal' } },
+      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1' } },
+      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1ex' } },
+      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'prob_max' } },
+      data_13: {
+        type: 'boolean',
+        expression: { kind: 'probability', probability: { kind: 'valueNode', nodeId: 'data_12' } },
+      },
+      data_14: { type: 'number', expression: { kind: 'blackboard', key: 'prob' } },
+      data_15: {
+        type: 'boolean',
+        expression: { kind: 'probability', probability: { kind: 'valueNode', nodeId: 'data_14' } },
+      },
+      data_16: { type: 'number', expression: { kind: 'blackboard', key: 'prob', fallback: 0 } },
+      data_17: { type: 'number', expression: { kind: 'blackboard', key: 'prob_max', fallback: 0 } },
+      data_18: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_16' },
+          operator: 'lessOrEqual',
+          right: { kind: 'valueNode', nodeId: 'data_17' },
+        },
+      },
+      data_19: { type: 'number', expression: { kind: 'blackboard', key: 'prob_add' } },
+      data_20: { type: 'number', expression: { kind: 'blackboard', key: 'prob' } },
+      data_21: { type: 'number', expression: { kind: 'blackboard', key: 'prob_add' } },
+      data_22: { type: 'number', expression: { kind: 'blackboard', key: 'rate' } },
+      data_23: { type: 'number', expression: { kind: 'blackboard', key: 'prob' } },
+      data_24: { type: 'number', expression: { kind: 'blackboard', key: 'prob_max' } },
+      data_25: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'potential_3', fallback: 0 },
+      },
+      data_26: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_25' },
+          operator: 'greaterOrEqual',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+    },
   },
-  {
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const aleshChr_0024_deepfin_combo_skill: SkillDefinition = {
+  key: 'chr_0024_deepfin_combo_skill',
+  blackboard: {
     atb: [10, 10, 10, 10, 10, 12, 12, 12, 12, 13, 13, 15],
     atb_sp: 10,
     atk_scale_1: [0.33, 0.37, 0.4, 0.43, 0.47, 0.5, 0.53, 0.57, 0.6, 0.64, 0.69, 0.75],
@@ -1277,42 +1583,46 @@ export const aleshChr_0024_deepfin_combo_skill: SkillDefinition = withSkillBlack
     rate: 10,
     usp_normal: 10,
   },
-);
+  timelineBlockFrames: 131,
+  naturalDurationFrames: 213,
+  exclusiveFrame: 130,
+  offsetRecordFrame: 0,
+  inputWindows: {
+    allowedNextSkills: [
+      { startFrame: 39, endFrame: 65, skillIds: ['chr_0024_deepfin_normal_skill'] },
+      { startFrame: 94, endFrame: 120, skillIds: ['chr_0024_deepfin_normal_skill'] },
+      { startFrame: 120, endFrame: 130, skillIds: ['chr_0024_deepfin_normal_skill'] },
+    ],
+  },
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'findCharacterTeamTargets_1' } },
+    { startFrame: 0, endFrame: 23, sequence: { $sequence: 'applyBuff_2' } },
+    { startFrame: 38, endFrame: 41, sequence: { $sequence: 'dealDamage_3' } },
+    { startFrame: 93, endFrame: 96, sequence: { $sequence: 'changeResourceByActionValue_5' } },
+    { startFrame: 38, endFrame: 43, sequence: { $sequence: 'changeResourceByActionValue_9' } },
+    { startFrame: 93, endFrame: 98, sequence: { $sequence: 'changeResourceByActionValue_9' } },
+    { startFrame: 22, endFrame: 24, sequence: { $sequence: 'changeResourceByActionValue_15' } },
+    { startFrame: 64, endFrame: 66, sequence: { $sequence: 'jumpTimeline_16' } },
+    { startFrame: 77, endFrame: 79, sequence: { $sequence: 'changeResourceByActionValue_18' } },
+    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'calculateActionValue_26' } },
+    { startFrame: 93, endFrame: 96, sequence: { $sequence: 'conditional_28' } },
+  ],
+  smartTarget: 'trigger',
+  cooldownFrames: [270, 270, 270, 270, 270, 270, 270, 270, 270, 270, 270, 240],
+  skillType: 'comboSkill',
+  levelSource: 'comboSkill',
+  nativeSkillType: 'comboSkill',
+  actionGraph: aleshChr_0024_deepfin_combo_skillActionGraph,
+};
 
-export const aleshChr_0024_deepfin_ultimate_skill: SkillDefinition = withSkillBlackboard(
-  {
-    key: 'chr_0024_deepfin_ultimate_skill',
-    timelineBlockFrames: 96,
-    naturalDurationFrames: 180,
-    exclusiveFrame: 110,
-    offsetRecordFrame: 0,
-    inputWindows: {
-      commandMappings: [
-        {
-          startFrame: 87,
-          endFrame: 113,
-          input: 'basicAttack',
-          targetSkillId: 'chr_0024_deepfin_attack1',
-        },
-      ],
-      allowedNextSkills: [
-        {
-          startFrame: 96,
-          endFrame: 113,
-          skillIds: [
-            'chr_0024_deepfin_attack1',
-            'chr_0024_deepfin_normal_skill',
-            'chr_0024_deepfin_combo_skill',
-          ],
-        },
-      ],
-    },
-    costFrame: 0,
-    scheduledSequences: [
-      scheduled(
-        0,
-        sequence(
-          step('startTimeDilation', {
+export const aleshChr_0024_deepfin_ultimate_skillActionGraph = {
+  main: {
+    nodes: {
+      startTimeDilation_1: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
             scope: 'entity',
             durationSeconds: { kind: 'constant', value: 1 },
             slot: 'TimeDilation/Layer/Entity/HitStop',
@@ -1320,179 +1630,235 @@ export const aleshChr_0024_deepfin_ultimate_skill: SkillDefinition = withSkillBl
             curve: { kind: 'named', key: 'RESETto1' },
             finishByAction: false,
             targets: ['caster'],
-          }),
-        ),
-        3,
-      ),
-      scheduled(
-        90,
-        sequence(
-          step('applyElementalInfliction', { element: 'cryo', isExtra: false }),
-          repeatEachTick(
-            sequence(
-              branch(
-                {
-                  kind: 'all',
-                  conditions: [
-                    {
-                      kind: 'actionValueCompare',
-                      left: { kind: 'blackboard', key: 'potential_5', fallback: 0 },
-                      operator: 'greaterOrEqual',
-                      right: { kind: 'constant', value: 1 },
-                    },
-                    {
-                      kind: 'healthCompare',
-                      target: 'enemy',
-                      valueType: 'ratio',
-                      operator: 'lessOrEqual',
-                      value: { kind: 'blackboard', key: 'hp_tar' },
-                    },
-                  ],
-                },
-                sequence(
-                  step('calculateActionValue', {
-                    key: 'atk_scale',
-                    operation: 'multiply',
-                    left: { kind: 'blackboard', key: 'atk_scale' },
-                    right: { kind: 'blackboard', key: 'atk_up' },
-                  }),
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['ultimateSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'blackboard', key: 'poise' },
-                    },
-                    'chr_0024_deepfin_ultimate_skill:/scheduledSequences/1/sequence/steps/1/body/steps/0/whenTrue/steps/1',
-                  ),
-                ),
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['ultimateSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'blackboard', key: 'poise' },
-                    },
-                    'chr_0024_deepfin_ultimate_skill:/scheduledSequences/1/sequence/steps/1/body/steps/0/whenFalse/steps/0',
-                  ),
-                ),
-                { alwaysNext: true },
-              ),
-            ),
-            {
-              nativeChanneling: {
-                executeEachFrame: true,
-                triggerIntervalSeconds: 0.033,
-                maxCountPerTarget: 1,
-                targetTriggerIntervalSeconds: 0.033,
-              },
-            },
-          ),
-        ),
-        93,
-      ),
-      scheduled(
-        91,
-        sequence(
-          step('modifyActionValue', {
-            key: 'atb_up',
+          },
+        },
+        next: null,
+      },
+      dealDamage_4: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'cryo',
+            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+            tags: ['ultimateSkill'],
+            features: ['canBreakWeakness'],
+            stagger: { kind: 'valueNode', nodeId: 'data_2' },
+          },
+        },
+        next: null,
+      },
+      calculateActionValue_3: {
+        action: {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'atk_scale',
             operation: 'multiply',
-            value: { kind: 'blackboard', key: 'kill_num' },
-          }),
-          step('modifyActionValue', {
+            left: { kind: 'valueNode', nodeId: 'data_3' },
+            right: { kind: 'valueNode', nodeId: 'data_4' },
+          },
+        },
+        next: 'dealDamage_4',
+      },
+      conditional_5: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' }, alwaysNext: true },
+          whenTrue: { $sequence: 'calculateActionValue_3' },
+          whenFalse: { $sequence: 'dealDamage_4' },
+        },
+        next: null,
+      },
+      repeatEachTick_6: {
+        action: {
+          kind: 'repeatEachTick',
+          parameters: {
+            nativeChanneling: {
+              executeEachFrame: true,
+              triggerIntervalSeconds: 0.033,
+              maxCountPerTarget: 1,
+              targetTriggerIntervalSeconds: 0.033,
+            },
+          },
+          body: { $sequence: 'conditional_5' },
+        },
+        next: null,
+      },
+      applyElementalInfliction_7: {
+        action: {
+          kind: 'applyElementalInfliction',
+          parameters: { element: 'cryo', isExtra: false },
+        },
+        next: 'repeatEachTick_6',
+      },
+      changeResourceByActionValue_9: {
+        action: {
+          kind: 'changeResourceByActionValue',
+          parameters: {
+            resource: 'sp',
+            amount: { kind: 'valueNode', nodeId: 'data_10' },
+            coefficient: { kind: 'constant', value: 1 },
+            recipient: 'team',
+            spGainKind: 'gain',
+            spGainSource: 'skill',
+          },
+        },
+        next: null,
+      },
+      changeResourceByActionValue_8: {
+        action: {
+          kind: 'changeResourceByActionValue',
+          parameters: {
+            resource: 'sp',
+            amount: { kind: 'valueNode', nodeId: 'data_11' },
+            coefficient: { kind: 'constant', value: 1 },
+            recipient: 'team',
+            spGainKind: 'gain',
+            spGainSource: 'skill',
+          },
+        },
+        next: null,
+      },
+      conditional_10: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' }, alwaysNext: true },
+          whenTrue: { $sequence: 'changeResourceByActionValue_8' },
+          whenFalse: { $sequence: 'changeResourceByActionValue_9' },
+        },
+        next: null,
+      },
+      modifyActionValue_11: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
             key: 'atb_up',
             operation: 'add',
-            value: { kind: 'blackboard', key: 'atb' },
-          }),
-          branch(
-            {
-              kind: 'actionValueCompare',
-              left: { kind: 'blackboard', key: 'atb_up', fallback: 0 },
-              operator: 'lessOrEqual',
-              right: { kind: 'constant', value: 100 },
-            },
-            sequence(
-              step('changeResourceByActionValue', {
-                resource: 'sp',
-                amount: { kind: 'blackboard', key: 'atb_up' },
-                coefficient: { kind: 'constant', value: 1 },
-                recipient: 'team',
-                spGainKind: 'gain',
-                spGainSource: 'skill',
-              }),
-            ),
-            sequence(
-              step('changeResourceByActionValue', {
-                resource: 'sp',
-                amount: { kind: 'blackboard', key: 'atb_max' },
-                coefficient: { kind: 'constant', value: 1 },
-                recipient: 'team',
-                spGainKind: 'gain',
-                spGainSource: 'skill',
-              }),
-            ),
-            { alwaysNext: true },
-          ),
-        ),
-        94,
-      ),
-      scheduled(
-        90,
-        sequence(
-          branch(
-            { kind: 'casterControlled' },
-            sequence(
-              step('startTimeDilation', {
-                scope: 'entity',
-                durationSeconds: { kind: 'constant', value: 0.4 },
-                slot: 'TimeDilation/Layer/Entity/HitStop',
-                priority: 10,
-                curve: { kind: 'named', key: 'deepfin_ult' },
-                finishByAction: false,
-                targets: ['enemy', 'caster'],
-              }),
-            ),
-          ),
-        ),
-        93,
-      ),
-      scheduled(
-        0,
-        sequence(
-          step('applyBuff', {
+            value: { kind: 'valueNode', nodeId: 'data_14' },
+          },
+        },
+        next: 'conditional_10',
+      },
+      modifyActionValue_12: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'atb_up',
+            operation: 'multiply',
+            value: { kind: 'valueNode', nodeId: 'data_15' },
+          },
+        },
+        next: 'modifyActionValue_11',
+      },
+      startTimeDilation_13: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.4 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'deepfin_ult' },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
+        },
+        next: null,
+      },
+      conditional_14: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_16' } },
+          whenTrue: { $sequence: 'startTimeDilation_13' },
+        },
+        next: null,
+      },
+      applyBuff_15: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
             buffId: 'buff_common_damage_immune_ult_skill',
             target: 'caster',
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
-          }),
-        ),
-        110,
-      ),
-      scheduled(0, sequence(step('hideUi', { onlyBlockInput: false })), 77),
-      scheduled(
-        0,
-        sequence(
-          step('startUltimateTimeDilation', {
+          },
+        },
+        next: null,
+      },
+      hideUi_16: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
+      startUltimateTimeDilation_17: {
+        action: {
+          kind: 'startUltimateTimeDilation',
+          parameters: {
             priority: 100,
             targetScale: { kind: 'constant', value: 0 },
             ignoredTargets: [],
-          }),
-        ),
-        77,
-      ),
-    ],
-    cooldownFrames: 600,
-    costs: [{ resource: 'ultimateEnergy', value: 100 }],
-    skillType: 'ultimate',
-    levelSource: 'ultimate',
-    nativeSkillType: 'ultimateSkill',
+          },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_up' } },
+      data_5: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'potential_5', fallback: 0 },
+      },
+      data_6: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_5' },
+          operator: 'greaterOrEqual',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'hp_tar' } },
+      data_8: {
+        type: 'boolean',
+        expression: {
+          kind: 'healthCompare',
+          target: 'enemy',
+          valueType: 'ratio',
+          operator: 'lessOrEqual',
+          value: { kind: 'valueNode', nodeId: 'data_7' },
+        },
+      },
+      data_9: {
+        type: 'boolean',
+        expression: {
+          kind: 'all',
+          conditions: [
+            { kind: 'conditionNode', nodeId: 'data_6' },
+            { kind: 'conditionNode', nodeId: 'data_8' },
+          ],
+        },
+      },
+      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'atb_max' } },
+      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'atb_up' } },
+      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'atb_up', fallback: 0 } },
+      data_13: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_12' },
+          operator: 'lessOrEqual',
+          right: { kind: 'constant', value: 100 },
+        },
+      },
+      data_14: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_15: { type: 'number', expression: { kind: 'blackboard', key: 'kill_num' } },
+      data_16: { type: 'boolean', expression: { kind: 'casterControlled' } },
+    },
   },
-  {
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const aleshChr_0024_deepfin_ultimate_skill: SkillDefinition = {
+  key: 'chr_0024_deepfin_ultimate_skill',
+  blackboard: {
     atb: [20, 20, 20, 20, 20, 20, 20, 20, 20, 25, 25, 25],
     atb_max: 100,
     atb_up: [12, 12, 12, 12, 12, 12, 12, 12, 12, 15, 15, 15],
@@ -1503,22 +1869,465 @@ export const aleshChr_0024_deepfin_ultimate_skill: SkillDefinition = withSkillBl
     poise: 20,
     potential_5: 0,
   },
-);
-
-export const aleshCommon_character_perfect_dodge: SkillDefinition = withSkillBlackboard(
-  {
-    key: 'common_character_perfect_dodge',
-    timelineBlockFrames: 16,
-    naturalDurationFrames: 15,
-    exclusiveFrame: 15,
-    offsetRecordFrame: 0,
-    costFrame: 0,
-    scheduledSequences: [],
-    skillType: 'dodge',
-    nativeSkillType: 'dodge',
+  timelineBlockFrames: 96,
+  naturalDurationFrames: 180,
+  exclusiveFrame: 110,
+  offsetRecordFrame: 0,
+  inputWindows: {
+    commandMappings: [
+      {
+        startFrame: 87,
+        endFrame: 113,
+        input: 'basicAttack',
+        targetSkillId: 'chr_0024_deepfin_attack1',
+      },
+    ],
+    allowedNextSkills: [
+      {
+        startFrame: 96,
+        endFrame: 113,
+        skillIds: [
+          'chr_0024_deepfin_attack1',
+          'chr_0024_deepfin_normal_skill',
+          'chr_0024_deepfin_combo_skill',
+        ],
+      },
+    ],
   },
-  {},
-);
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_1' } },
+    { startFrame: 90, endFrame: 93, sequence: { $sequence: 'applyElementalInfliction_7' } },
+    { startFrame: 91, endFrame: 94, sequence: { $sequence: 'modifyActionValue_12' } },
+    { startFrame: 90, endFrame: 93, sequence: { $sequence: 'conditional_14' } },
+    { startFrame: 0, endFrame: 110, sequence: { $sequence: 'applyBuff_15' } },
+    { startFrame: 0, endFrame: 77, sequence: { $sequence: 'hideUi_16' } },
+    { startFrame: 0, endFrame: 77, sequence: { $sequence: 'startUltimateTimeDilation_17' } },
+  ],
+  cooldownFrames: 600,
+  costs: [{ resource: 'ultimateEnergy', value: 100 }],
+  skillType: 'ultimate',
+  levelSource: 'ultimate',
+  nativeSkillType: 'ultimateSkill',
+  actionGraph: aleshChr_0024_deepfin_ultimate_skillActionGraph,
+};
+
+export const aleshCommon_character_perfect_dodgeActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const aleshCommon_character_perfect_dodge: SkillDefinition = {
+  actionGraph: aleshCommon_character_perfect_dodgeActionGraph,
+  key: 'common_character_perfect_dodge',
+  blackboard: {},
+  timelineBlockFrames: 16,
+  naturalDurationFrames: 15,
+  exclusiveFrame: 15,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [],
+  skillType: 'dodge',
+  nativeSkillType: 'dodge',
+};
+
+const aleshComboCondition1ActionGraph = {
+  main: {
+    nodes: {
+      conditional_1: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+          whenTrue: { $sequence: null },
+        },
+        next: null,
+      },
+      conditional_2: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          whenTrue: { $sequence: 'conditional_1' },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: {
+          kind: 'eventBuffTagsMatch',
+          match: 'hasAny',
+          buffTags: ['Skill/Character/Common/SpellStatus'],
+        },
+      },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'actionInputTargetObjectTypeMatch', objectTypes: ['enemy'] },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const aleshComboCondition1: ComboSkillConditionDefinition = {
+  key: 'native-combo:0',
+  skillKey: 'chr_0024_deepfin_combo_skill',
+  event: 'buffEndsEarly',
+  immediately: false,
+  initialValues: null,
+  sequence: { $sequence: 'conditional_2' },
+  actionGraph: aleshComboCondition1ActionGraph,
+};
+
+const aleshComboCondition2ActionGraph = {
+  main: {
+    nodes: {
+      conditional_1: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+          whenTrue: { $sequence: null },
+        },
+        next: null,
+      },
+      conditional_2: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          whenTrue: { $sequence: 'conditional_1' },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_common_originum_frozen'] },
+      },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'actionInputTargetObjectTypeMatch', objectTypes: ['enemy'] },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const aleshComboCondition2: ComboSkillConditionDefinition = {
+  key: 'native-combo:1',
+  skillKey: 'chr_0024_deepfin_combo_skill',
+  event: 'buffEndsEarly',
+  immediately: false,
+  initialValues: null,
+  sequence: { $sequence: 'conditional_2' },
+  actionGraph: aleshComboCondition2ActionGraph,
+};
+
+const aleshBuff1ActionGraph = {
+  main: {
+    nodes: {
+      startTimeDilation_1: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'global',
+            durationSeconds: { kind: 'constant', value: 0.63 },
+            slot: 'unassigned',
+            priority: 30,
+            curve: { kind: 'named', key: 'ComboSkill' },
+            finishByAction: false,
+            ignoredTargets: ['caster'],
+            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            influenceSkillCooldownSeconds: { kind: 'constant', value: 0.3 },
+          },
+        },
+        next: null,
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const aleshBuff1: SkillBuffDefinition = {
+  stackingType: 'unlimited',
+  priority: 0,
+  maxStackCount: 2,
+  durationSeconds: 1,
+  applyTags: [],
+  extendTags: [],
+  blackboard: { CD: 0, count: 0, owner_mainchar_alpha: 0, owner_mainchar_distance: 0, usp: 10 },
+  attributeModifiers: [],
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 16, sequence: { $sequence: 'startTimeDilation_1' } },
+  ],
+  actionGraph: aleshBuff1ActionGraph,
+};
+
+const aleshBuff2ActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const aleshBuff2: SkillBuffDefinition = {
+  stackingType: 'refresh',
+  priority: 0,
+  maxStackCount: 1,
+  durationSeconds: { blackboardKey: 'duration' },
+  presentation: {
+    visible: true,
+    iconId: 'icon_battle_buff_atk_up',
+    iconPath: '/icons/icon_battle_buff_atk_up.webp',
+    showInHeadBarCommon: false,
+    showInHeadBarAttached: false,
+    showInSquadIcon: true,
+    onlyShowForMainCharacter: false,
+    blinkInMainCharHpBar: false,
+    showProgressInHpBar: false,
+    showProgressInNormalSkillButton: false,
+    useWeakProgressInNormalSkillButton: false,
+    showProgressInUltimateSkillButton: false,
+    forceRaiseIconEvent: false,
+    showWarningBackground: false,
+    playStrongInAnimation: false,
+    hasCharHpBarVfxType: false,
+    charHpBarVfxType: 'Fire',
+    iconStyleInSquad: 'Default',
+    abnormalColorType: 'Physical',
+    orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
+  },
+  applyTags: [],
+  extendTags: [],
+  blackboard: { atk_up: 0.15, duration: 0 },
+  attributeModifiers: [
+    { attribute: 'Atk', slot: 'baseMultiplier', value: { blackboardKey: 'atk_up' } },
+  ],
+  actionGraph: aleshBuff2ActionGraph,
+};
+
+const aleshBuff3ActionGraph = {
+  main: {
+    nodes: {
+      createTimedMarker_1: {
+        action: {
+          kind: 'createTimedMarker',
+          parameters: {
+            target: 'caster',
+            markerId: 'talent',
+            durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
+            autoFinishByAction: false,
+          },
+        },
+        next: null,
+      },
+      changeResourceByActionValue_2: {
+        action: {
+          kind: 'changeResourceByActionValue',
+          parameters: {
+            resource: 'ultimateEnergy',
+            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            coefficient: { kind: 'constant', value: 1 },
+            recipient: 'caster',
+          },
+        },
+        next: 'createTimedMarker_1',
+      },
+      conditional_3: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          whenTrue: { $sequence: 'changeResourceByActionValue_2' },
+        },
+        next: null,
+      },
+      conditional_4: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+          whenTrue: { $sequence: 'conditional_3' },
+        },
+        next: null,
+      },
+      conditional_7: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+          whenTrue: { $sequence: 'changeResourceByActionValue_2' },
+        },
+        next: null,
+      },
+      conditional_8: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+          whenTrue: { $sequence: 'conditional_7' },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'CD' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_3: {
+        type: 'boolean',
+        expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_common_originum_frozen'] },
+      },
+      data_4: {
+        type: 'boolean',
+        expression: { kind: 'timedMarkerPresent', target: 'caster', markerId: 'talent' },
+      },
+      data_5: {
+        type: 'boolean',
+        expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+      },
+      data_6: {
+        type: 'boolean',
+        expression: {
+          kind: 'eventBuffTagsMatch',
+          match: 'hasAny',
+          buffTags: ['Skill/Character/Common/SpellStatus/Frozen'],
+        },
+      },
+      data_7: {
+        type: 'boolean',
+        expression: { kind: 'timedMarkerPresent', target: 'caster', markerId: 'talent' },
+      },
+      data_8: {
+        type: 'boolean',
+        expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const aleshBuff3: SkillBuffDefinition = {
+  stackingType: 'unlimited',
+  priority: 0,
+  maxStackCount: 2,
+  applyTags: [],
+  extendTags: [],
+  blackboard: { CD: 0, count: 0, usp: 10 },
+  attributeModifiers: [],
+  abilityEventResponses: [
+    { event: 'outputBuff', priority: 0, sequence: { $sequence: 'conditional_4' } },
+    { event: 'outputBuff', priority: 0, sequence: { $sequence: 'conditional_8' } },
+  ],
+  actionGraph: aleshBuff3ActionGraph,
+};
+
+const aleshBuff4ActionGraph = {
+  main: {
+    nodes: {
+      applyBuff_1: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffId: 'buff_chr_0024_deepfin_talent_1',
+            target: 'partyExceptCaster',
+            finishByAction: true,
+            blackboardAssignments: {
+              usp: { kind: 'valueNode', nodeId: 'data_1' },
+              CD: { kind: 'valueNode', nodeId: 'data_2' },
+            },
+          },
+        },
+        next: null,
+      },
+      createTimedMarker_2: {
+        action: {
+          kind: 'createTimedMarker',
+          parameters: {
+            target: 'caster',
+            markerId: 'talent',
+            durationSeconds: { kind: 'valueNode', nodeId: 'data_3' },
+            autoFinishByAction: false,
+          },
+        },
+        next: null,
+      },
+      changeResourceByActionValue_3: {
+        action: {
+          kind: 'changeResourceByActionValue',
+          parameters: {
+            resource: 'ultimateEnergy',
+            amount: { kind: 'valueNode', nodeId: 'data_4' },
+            coefficient: { kind: 'constant', value: 1 },
+            recipient: 'caster',
+          },
+        },
+        next: 'createTimedMarker_2',
+      },
+      calculateActionValue_4: {
+        action: {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'usp_final',
+            operation: 'add',
+            left: { kind: 'valueNode', nodeId: 'data_5' },
+            right: { kind: 'valueNode', nodeId: 'data_6' },
+          },
+        },
+        next: 'changeResourceByActionValue_3',
+      },
+      conditional_5: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+          whenTrue: { $sequence: 'calculateActionValue_4' },
+        },
+        next: null,
+      },
+      conditional_6: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
+          whenTrue: { $sequence: 'conditional_5' },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'CD' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'CD' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'usp_final' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'usp_self' } },
+      data_7: {
+        type: 'boolean',
+        expression: {
+          kind: 'eventBuffTagsMatch',
+          match: 'hasAny',
+          buffTags: ['Skill/Character/Common/SpellStatus/Frozen'],
+        },
+      },
+      data_8: {
+        type: 'boolean',
+        expression: { kind: 'timedMarkerPresent', target: 'caster', markerId: 'talent' },
+      },
+      data_9: {
+        type: 'boolean',
+        expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const aleshBuff4: SkillBuffDefinition = {
+  stackingType: 'unlimited',
+  priority: 0,
+  maxStackCount: 2,
+  applyTags: [],
+  extendTags: [],
+  blackboard: { CD: 3, count: 0, usp: 10, usp_final: 0, usp_self: 12 },
+  attributeModifiers: [],
+  lifecycleSequences: { enable: { $sequence: 'applyBuff_1' } },
+  abilityEventResponses: [
+    { event: 'outputBuff', priority: 0, sequence: { $sequence: 'conditional_6' } },
+  ],
+  actionGraph: aleshBuff4ActionGraph,
+};
 
 export const alesh: OperatorDefinition = {
   slug: 'alesh',
@@ -1615,60 +2424,17 @@ export const alesh: OperatorDefinition = {
     comboSkill: { kind: 'skillSlot', skillSlotKey: 'comboSkill' },
     ultimate: { kind: 'skillSlot', skillSlotKey: 'ultimate' },
   },
-  comboSkillConditions: [
-    {
-      key: 'native-combo:0',
-      skillKey: 'chr_0024_deepfin_combo_skill',
-      event: 'buffEndsEarly',
-      immediately: false,
-      initialValues: null,
-      sequence: sequence(
-        branch(
-          { kind: 'actionInputTargetObjectTypeMatch', objectTypes: ['enemy'] },
-          sequence(
-            branch(
-              {
-                kind: 'eventBuffTagsMatch',
-                match: 'hasAny',
-                buffTags: ['Skill/Character/Common/SpellStatus'],
-              },
-              sequence(),
-            ),
-          ),
-        ),
-      ),
-    },
-    {
-      key: 'native-combo:1',
-      skillKey: 'chr_0024_deepfin_combo_skill',
-      event: 'buffEndsEarly',
-      immediately: false,
-      initialValues: null,
-      sequence: sequence(
-        branch(
-          { kind: 'actionInputTargetObjectTypeMatch', objectTypes: ['enemy'] },
-          sequence(
-            branch(
-              { kind: 'eventBuffIdMatch', buffIds: ['buff_common_originum_frozen'] },
-              sequence(),
-            ),
-          ),
-        ),
-      ),
-    },
-  ],
+  comboSkillConditions: [aleshComboCondition1, aleshComboCondition2],
   comboSkillPriority: 'default',
   talents: [
     {
       levels: 2,
-      initializationSequence: sequence(
-        step('applyBuff', {
+      attachedBuffs: [
+        {
           buffId: 'buff_chr_0024_deepfin_talent_1_auro',
-          target: 'caster',
-          inheritSourceSkillCastInfo: false,
           blackboardAssignments: { usp: [3, 4], usp_self: [6, 8] },
-        }),
-      ),
+        },
+      ],
     },
     {
       levels: 2,
@@ -1789,211 +2555,10 @@ export const alesh: OperatorDefinition = {
     },
   ],
   buffDefinitions: {
-    buff_chr_0024_deepfin_combo_camera: {
-      stackingType: 'unlimited',
-      priority: 0,
-      maxStackCount: 2,
-      durationSeconds: 1,
-      applyTags: [],
-      extendTags: [],
-      blackboard: { CD: 0, count: 0, owner_mainchar_alpha: 0, owner_mainchar_distance: 0, usp: 10 },
-      attributeModifiers: [],
-      scheduledSequences: [
-        scheduled(
-          0,
-          sequence(
-            step('startTimeDilation', {
-              scope: 'global',
-              durationSeconds: { kind: 'constant', value: 0.63 },
-              slot: 'unassigned',
-              priority: 30,
-              curve: { kind: 'named', key: 'ComboSkill' },
-              finishByAction: false,
-              ignoredTargets: ['caster'],
-              ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
-              influenceSkillCooldownSeconds: { kind: 'constant', value: 0.3 },
-            }),
-          ),
-          16,
-        ),
-      ],
-    },
-    buff_chr_0024_deepfin_potential_3: {
-      stackingType: 'refresh',
-      priority: 0,
-      maxStackCount: 1,
-      durationSeconds: { blackboardKey: 'duration' },
-      presentation: {
-        visible: true,
-        iconId: 'icon_battle_buff_atk_up',
-        iconPath: '/icons/icon_battle_buff_atk_up.webp',
-        showInHeadBarCommon: false,
-        showInHeadBarAttached: false,
-        showInSquadIcon: true,
-        onlyShowForMainCharacter: false,
-        blinkInMainCharHpBar: false,
-        showProgressInHpBar: false,
-        showProgressInNormalSkillButton: false,
-        useWeakProgressInNormalSkillButton: false,
-        showProgressInUltimateSkillButton: false,
-        forceRaiseIconEvent: false,
-        showWarningBackground: false,
-        playStrongInAnimation: false,
-        hasCharHpBarVfxType: false,
-        charHpBarVfxType: 'Fire',
-        iconStyleInSquad: 'Default',
-        abnormalColorType: 'Physical',
-        orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
-      },
-      applyTags: [],
-      extendTags: [],
-      blackboard: { atk_up: 0.15, duration: 0 },
-      attributeModifiers: [
-        { attribute: 'Atk', slot: 'baseMultiplier', value: { blackboardKey: 'atk_up' } },
-      ],
-    },
-    buff_chr_0024_deepfin_talent_1: {
-      stackingType: 'unlimited',
-      priority: 0,
-      maxStackCount: 2,
-      applyTags: [],
-      extendTags: [],
-      blackboard: { CD: 0, count: 0, usp: 10 },
-      attributeModifiers: [],
-      abilityEventResponses: [
-        {
-          event: 'outputBuff',
-          priority: 0,
-          sequence: sequence(
-            branch(
-              {
-                kind: 'not',
-                condition: { kind: 'timedMarkerPresent', target: 'caster', markerId: 'talent' },
-              },
-              sequence(
-                branch(
-                  { kind: 'eventBuffIdMatch', buffIds: ['buff_common_originum_frozen'] },
-                  sequence(
-                    step('changeResourceByActionValue', {
-                      resource: 'ultimateEnergy',
-                      amount: { kind: 'blackboard', key: 'usp' },
-                      coefficient: { kind: 'constant', value: 1 },
-                      recipient: 'caster',
-                    }),
-                    step('createTimedMarker', {
-                      target: 'caster',
-                      markerId: 'talent',
-                      durationSeconds: { kind: 'blackboard', key: 'CD' },
-                      autoFinishByAction: false,
-                    }),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        },
-        {
-          event: 'outputBuff',
-          priority: 0,
-          sequence: sequence(
-            branch(
-              {
-                kind: 'not',
-                condition: { kind: 'timedMarkerPresent', target: 'caster', markerId: 'talent' },
-              },
-              sequence(
-                branch(
-                  {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/SpellStatus/Frozen'],
-                  },
-                  sequence(
-                    step('changeResourceByActionValue', {
-                      resource: 'ultimateEnergy',
-                      amount: { kind: 'blackboard', key: 'usp' },
-                      coefficient: { kind: 'constant', value: 1 },
-                      recipient: 'caster',
-                    }),
-                    step('createTimedMarker', {
-                      target: 'caster',
-                      markerId: 'talent',
-                      durationSeconds: { kind: 'blackboard', key: 'CD' },
-                      autoFinishByAction: false,
-                    }),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        },
-      ],
-    },
-    buff_chr_0024_deepfin_talent_1_auro: {
-      stackingType: 'unlimited',
-      priority: 0,
-      maxStackCount: 2,
-      applyTags: [],
-      extendTags: [],
-      blackboard: { CD: 3, count: 0, usp: 10, usp_final: 0, usp_self: 12 },
-      attributeModifiers: [],
-      lifecycleSequences: {
-        enable: sequence(
-          step('applyBuff', {
-            buffId: 'buff_chr_0024_deepfin_talent_1',
-            target: 'partyExceptCaster',
-            finishByAction: true,
-            blackboardAssignments: {
-              usp: { kind: 'blackboard', key: 'usp' },
-              CD: { kind: 'blackboard', key: 'CD' },
-            },
-          }),
-        ),
-      },
-      abilityEventResponses: [
-        {
-          event: 'outputBuff',
-          priority: 0,
-          sequence: sequence(
-            branch(
-              {
-                kind: 'not',
-                condition: { kind: 'timedMarkerPresent', target: 'caster', markerId: 'talent' },
-              },
-              sequence(
-                branch(
-                  {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/SpellStatus/Frozen'],
-                  },
-                  sequence(
-                    step('calculateActionValue', {
-                      key: 'usp_final',
-                      operation: 'add',
-                      left: { kind: 'blackboard', key: 'usp' },
-                      right: { kind: 'blackboard', key: 'usp_self' },
-                    }),
-                    step('changeResourceByActionValue', {
-                      resource: 'ultimateEnergy',
-                      amount: { kind: 'blackboard', key: 'usp_final' },
-                      coefficient: { kind: 'constant', value: 1 },
-                      recipient: 'caster',
-                    }),
-                    step('createTimedMarker', {
-                      target: 'caster',
-                      markerId: 'talent',
-                      durationSeconds: { kind: 'blackboard', key: 'CD' },
-                      autoFinishByAction: false,
-                    }),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        },
-      ],
-    },
+    buff_chr_0024_deepfin_combo_camera: aleshBuff1,
+    buff_chr_0024_deepfin_potential_3: aleshBuff2,
+    buff_chr_0024_deepfin_talent_1: aleshBuff3,
+    buff_chr_0024_deepfin_talent_1_auro: aleshBuff4,
   },
   abilityEntityDefinitions: {},
   conversionSupport: { completeness: 'complete', missingCapabilities: [] },

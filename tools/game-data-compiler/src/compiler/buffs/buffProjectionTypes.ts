@@ -64,6 +64,7 @@ export type CompiledBuffDefinitionSource = Pick<
   | 'affixSkillCastIdentity'
 > &
   Required<Pick<SkillBuffDefinition, 'maxStackCount' | 'applyTags' | 'extendTags'>> & {
+    readonly actionGraph: import('../../../../../packages/game-data-contract/src/actionGraph.ts').ActionGraphResourceDefinition;
     readonly priority: BuffPriority;
     /** 默认时钟由省略字段表达；开启时间膨胀时才输出 global/self。 */
     readonly timeClock?: Extract<SkillBuffDefinition['timeClock'], 'global' | 'self'>;

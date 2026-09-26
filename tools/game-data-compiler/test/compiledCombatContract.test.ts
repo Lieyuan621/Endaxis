@@ -7,7 +7,8 @@ import type {
 import type { CompiledBuildModifierDefinitionSource } from '../src/compiler/build/formalBuildDefinition.ts';
 import type {
   GameplayTag,
-  ActionSequenceDefinition,
+  ActionGraphReference,
+  ActionGraphStep,
   CombatCondition,
   CombatStepDefinition,
   CombatStepParameters,
@@ -81,13 +82,19 @@ import type { OperatorActiveSkillTypeSource } from '../src/domains/operator/acti
 import type { ProjectedDamageElementSource } from '../src/source/damageElement.ts';
 import type { CompiledOperatorProgressionEntrySource } from '../src/domains/operator/progressionEffects.ts';
 
+/** 公共投影中实际携带 parameters 的动作种类；callMacro/callResource 是图引用节点，不属于契约动作参数域。 */
+type ProjectedCombatKind = Extract<
+  CompiledBuffStepSource,
+  { readonly parameters: unknown }
+>['kind'];
+
 type IncompatibleParameters = {
-  [K in CompiledBuffStepSource['kind']]: [ProjectedParameters<K>] extends [never]
+  [K in ProjectedCombatKind]: [ProjectedParameters<K>] extends [never]
     ? K
     : ProjectedParameters<K> extends CombatStepParameters[K]
       ? never
       : K;
-}[CompiledBuffStepSource['kind']];
+}[ProjectedCombatKind];
 
 it('构筑修正独立于配装入口，编译输出保留显式公式槽', () => {
   expectTypeOf<EquipmentModifierDefinition>().toEqualTypeOf<BuildModifierDefinition>();
@@ -241,13 +248,16 @@ it('公共 Buff、动作与武器装配输出是独立契约的子集', () => {
   expectTypeOf<CompiledBuffHealModifierSource>().toExtend<HealModifierDefinition>();
   expectTypeOf<CompiledBuffPoiseModifierSource>().toExtend<PoiseModifierDefinition>();
   expectTypeOf<CompiledBuffConditionSource>().toExtend<CombatCondition>();
-  expectTypeOf<CompiledBuffStepSource>().toExtend<CombatStepDefinition>();
-  expectTypeOf<CompiledBuffSequenceSource>().toExtend<ActionSequenceDefinition>();
+  expectTypeOf<CompiledBuffStepSource>().toExtend<ActionGraphStep>();
+  expectTypeOf<
+    Extract<CompiledBuffStepSource, { readonly parameters: unknown }>
+  >().toExtend<CombatStepDefinition>();
+  expectTypeOf<CompiledBuffSequenceSource>().toExtend<ActionGraphReference>();
   expectTypeOf<CompiledBuffDefinitionSource>().toExtend<SkillBuffDefinition>();
   expectTypeOf<CompiledWeaponRuntimeDefinitionSource>().toExtend<WeaponDefinition>();
 });
 
-type ProjectedParameters<K extends CompiledBuffStepSource['kind']> = Extract<
+type ProjectedParameters<K extends ProjectedCombatKind> = Extract<
   CompiledBuffStepSource,
   { kind: K }
 >['parameters'];

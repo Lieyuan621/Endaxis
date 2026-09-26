@@ -56,9 +56,11 @@ describe('contingencyContractAdapter', () => {
     );
 
     expect(compiled.contributions).toHaveLength(1);
-    expect(compiled.contributions[0]?.contribution).toMatchObject({
-      kind: 'battleInitializationSequence',
-      sequence: { steps: [{ kind: 'createGlobalBuff' }] },
-    });
+    const contribution = compiled.contributions[0]?.contribution;
+    expect(contribution).toMatchObject({ kind: 'battleInitializationSequence' });
+    if (contribution?.kind !== 'battleInitializationSequence') throw new Error('unexpected kind');
+    if (contribution.sequence.entry === null) throw new Error('missing graph entry');
+    const entryNode = contribution.sequence.graph.nodes.get(contribution.sequence.entry);
+    expect(entryNode?.action).toMatchObject({ kind: 'createGlobalBuff' });
   });
 });

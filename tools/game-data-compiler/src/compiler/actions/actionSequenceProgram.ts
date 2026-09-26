@@ -1,12 +1,11 @@
+import type { ActionGraphReference } from '../../../../../packages/game-data-contract/src/actionGraph.ts';
 import type {
   NativeActionBodySourceMap,
   NativeActionNodeSource,
   NativeSequenceSource,
 } from '../../source/controlFlow.ts';
 
-export interface CompiledActionSequenceProgram<TStep> {
-  readonly steps: readonly TStep[];
-}
+export type CompiledActionSequenceProgram = ActionGraphReference;
 
 export interface CompiledActionNodeProgram<TStep, TState> {
   readonly steps: readonly TStep[];
@@ -15,6 +14,8 @@ export interface CompiledActionNodeProgram<TStep, TState> {
 }
 
 export interface CompileActionSequenceProgramOptions<TLeaf, TCondition, TStep, TState> {
+  /** 所有分支写入调用方所属资源的同一个图构建器。 */
+  readonly sequence: (actions: readonly TStep[]) => ActionGraphReference;
   readonly initialState: () => TState;
   /** 先投影回调，再决定持有动作是否仍有效；不默认回调发生，也不泄漏其局部编译状态。 */
   readonly compileActionWithCallback?: (
@@ -119,8 +120,8 @@ export interface CompileActionSequenceProgramOptions<TLeaf, TCondition, TStep, T
   ) => boolean | undefined;
   /** 两分支投影完全等价且条件纯读取时，可直接保留任一分支，不必为不可见输入建立运行模型。 */
   readonly areEquivalentIfElseBranches?: (
-    whenTrue: CompiledActionSequenceProgram<TStep>,
-    whenFalse: CompiledActionSequenceProgram<TStep>,
+    whenTrue: readonly TStep[],
+    whenFalse: readonly TStep[],
   ) => boolean;
   /** 领域证明条件与子动作均不进入其可见模型时，允许省略整个原生动态开关。 */
   readonly canOmitTogglable?: (
@@ -130,8 +131,8 @@ export interface CompileActionSequenceProgramOptions<TLeaf, TCondition, TStep, T
   ) => boolean;
   readonly createConditionalStep: (input: {
     readonly condition: TCondition;
-    readonly whenTrue: CompiledActionSequenceProgram<TStep>;
-    readonly whenFalse?: CompiledActionSequenceProgram<TStep>;
+    readonly whenTrue: ActionGraphReference;
+    readonly whenFalse?: ActionGraphReference;
     readonly alwaysNext: boolean;
   }) => TStep;
   readonly rootFilterError: string;
@@ -147,8 +148,10 @@ export interface CompileActionSequenceProgramOptions<TLeaf, TCondition, TStep, T
 export function compileActionSequenceProgram<TLeaf, TCondition, TStep, TState>(
   source: NativeSequenceSource<TLeaf>,
   options: CompileActionSequenceProgramOptions<TLeaf, TCondition, TStep, TState>,
-): CompiledActionSequenceProgram<TStep> {
-  return compileActionSequenceProgramFromState(source, options, options.initialState());
+): ActionGraphReference {
+  return options.sequence(
+    compileActionSequenceProgramFromState(source, options, options.initialState()),
+  );
 }
 
 /** 嵌套控制流继承父序列在分支入口已经建立的编译期事实，但分支写入仍不反向污染父级。 */
@@ -156,7 +159,7 @@ function compileActionSequenceProgramFromState<TLeaf, TCondition, TStep, TState>
   source: NativeSequenceSource<TLeaf>,
   options: CompileActionSequenceProgramOptions<TLeaf, TCondition, TStep, TState>,
   state: TState,
-): CompiledActionSequenceProgram<TStep> {
+): TStep[] {
   const steps = compileActionNodePrograms(
     source.actions.filter(node => node.metadata.enabled),
     options,
@@ -170,7 +173,7 @@ function compileActionSequenceProgramFromState<TLeaf, TCondition, TStep, TState>
   ) {
     throw new Error(options.rootFilterError);
   }
-  return { steps };
+  return steps;
 }
 
 /** 已完成事件专用前缀解析时，从剩余节点继续使用同一公共控制流。 */
@@ -214,7 +217,7 @@ export function compileActionNodePrograms<TLeaf, TCondition, TStep, TState>(
       : [
           options.createConditionalStep({
             condition: options.negateCondition(condition),
-            whenTrue: { steps: body },
+            whenTrue: options.sequence(body),
             alwaysNext: false,
           }),
         ];
@@ -252,7 +255,7 @@ export function compileActionNodePrograms<TLeaf, TCondition, TStep, TState>(
       : [
           options.createConditionalStep({
             condition,
-            whenTrue: { steps: body },
+            whenTrue: options.sequence(body),
             alwaysNext: false,
           }),
         ];
@@ -287,7 +290,7 @@ export function compileActionNodePrograms<TLeaf, TCondition, TStep, TState>(
           selectedBranch ? 'whenTrue' : 'whenFalse',
         ) ?? state,
       );
-      return [...selected.steps, ...compileActionNodePrograms(rest, options, state)];
+      return [...selected, ...compileActionNodePrograms(rest, options, state)];
     }
     if (!first!.body.alwaysNext) {
       throw new Error(`${first!.sourcePath}: stopping IfElse is unsupported`);
@@ -313,9 +316,9 @@ export function compileActionNodePrograms<TLeaf, TCondition, TStep, TState>(
       conditionsArePureReads &&
       options.areEquivalentIfElseBranches?.(whenTrue, whenFalse) === true
     ) {
-      return [...whenTrue.steps, ...compileActionNodePrograms(rest, options, state)];
+      return [...whenTrue, ...compileActionNodePrograms(rest, options, state)];
     }
-    if (whenTrue.steps.length === 0 && whenFalse.steps.length === 0 && conditionsArePureReads) {
+    if (whenTrue.length === 0 && whenFalse.length === 0 && conditionsArePureReads) {
       return compileActionNodePrograms(rest, options, state);
     }
     if (selectionFailure !== undefined) throw selectionFailure.error;
@@ -350,8 +353,8 @@ export function compileActionNodePrograms<TLeaf, TCondition, TStep, TState>(
     }
     // 已支持条件也不能留下空壳 branch；没有来源级证明时，用投影后的副作用信息补判。
     if (
-      whenTrue.steps.length === 0 &&
-      whenFalse.steps.length === 0 &&
+      whenTrue.length === 0 &&
+      whenFalse.length === 0 &&
       branchConditions.every(condition => options.canOmitTerminalCondition?.(condition) === true)
     ) {
       return compileActionNodePrograms(rest, options, state);
@@ -359,8 +362,8 @@ export function compileActionNodePrograms<TLeaf, TCondition, TStep, TState>(
     return [
       options.createConditionalStep({
         condition: options.combineConditions(branchConditions),
-        whenTrue,
-        ...(whenFalse.steps.length === 0 ? {} : { whenFalse }),
+        whenTrue: options.sequence(whenTrue),
+        ...(whenFalse.length === 0 ? {} : { whenFalse: options.sequence(whenFalse) }),
         alwaysNext: true,
       }),
       ...compileActionNodePrograms(rest, options, state),

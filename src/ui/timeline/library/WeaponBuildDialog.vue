@@ -21,7 +21,6 @@ import {
   type WeaponTraitLevelBounds,
 } from '../../progression';
 import { GameRichTextRenderer } from '../../presentation';
-import type { WeaponDefinition } from '../../../core/game-data/equipmentDefinition';
 import type { WeaponInstanceChanges } from './loadoutBuildCommands';
 import type { WeaponInstanceViewModel } from './loadoutBuildViewModel';
 import { DEFAULT_WEAPON_ICON_PATH } from '../../gameAssetPaths';
@@ -38,13 +37,11 @@ type WeaponTraitKey = 'skill1' | 'skill2' | 'skill3';
 const props = defineProps<{
   visible: boolean;
   weapon: WeaponInstanceViewModel | null;
-  customDefinition?: WeaponDefinition;
 }>();
 
 const emit = defineEmits<{
   'update:visible': [visible: boolean];
   change: [changes: WeaponInstanceChanges];
-  'edit-definition': [];
 }>();
 
 const { t, locale } = useI18n({ useScope: 'global' });
@@ -262,13 +259,6 @@ function maxOut(): void {
                   @click="toggleTuning"
                 >
                   {{ tuningLabel() }}
-                </EaButton>
-                <EaButton size="sm" type="button" @click="emit('edit-definition')">
-                  {{
-                    customDefinition === undefined
-                      ? t('timeline.customDefinition.customizeWeapon')
-                      : t('timeline.customDefinition.editWeapon')
-                  }}
                 </EaButton>
               </div>
               <div class="row">

@@ -1,5 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
+import type { CompiledGraphEntry, ResolvedCombatOperationStep } from '../../compiler/combatProgram';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import type { ActionGraphStep } from '../../../../packages/game-data-contract/src/actionGraph';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { CombatOperationPrograms } from '../actions/combatOperationPrograms';
 import { StateStepper } from '../runtime/stateStepper';
@@ -28,6 +30,16 @@ const childMetadata = {
     cost: { resource: 'ultimateEnergy' as const, value: 0, availabilityThreshold: 0 },
   },
 };
+
+const stepEntry = (revision: string, action: ActionGraphStep): CompiledGraphEntry => ({
+  graph: createActionGraphCompilation(
+    { nodes: { 'step-0': { action, next: null } } },
+    1,
+    revision,
+  ).compileAll(),
+  entry: 'step-0',
+  callSite: revision,
+});
 
 describe('AbilityEntityOperationExecutor', () => {
   let clock: CombatClock;
@@ -75,19 +87,15 @@ describe('AbilityEntityOperationExecutor', () => {
               {
                 startFrame: 0,
                 endFrame: 10,
-                sequence: {
-                  steps: [
-                    {
-                      kind: 'spawnAbilityEntity',
-                      parameters: {
-                        abilityEntityId: 'owned',
-                        dieWhenSourceDies: false,
-                        finishByAction: true,
-                        definition: { lifetime: { kind: 'limited', durationSeconds: 10 } },
-                      },
-                    },
-                  ],
-                },
+                sequence: stepEntry('child-spawn-owned', {
+                  kind: 'spawnAbilityEntity',
+                  parameters: {
+                    abilityEntityId: 'owned',
+                    dieWhenSourceDies: false,
+                    finishByAction: true,
+                    definition: { lifetime: { kind: 'limited', durationSeconds: 10 } },
+                  },
+                }),
               },
             ],
           },
@@ -126,25 +134,17 @@ describe('AbilityEntityOperationExecutor', () => {
         timelineActions: [
           {
             startFrame: 0,
-            sequence: {
-              steps: [
-                {
-                  kind: 'setContextFlag' as const,
-                  parameters: { flag: 'first', value: true, target: 'caster' as const },
-                },
-              ],
-            },
+            sequence: stepEntry('restored-child-first', {
+              kind: 'setContextFlag',
+              parameters: { flag: 'first', value: true, target: 'caster' },
+            }),
           },
           {
             startFrame: 2,
-            sequence: {
-              steps: [
-                {
-                  kind: 'setContextFlag' as const,
-                  parameters: { flag: 'second', value: true, target: 'caster' as const },
-                },
-              ],
-            },
+            sequence: stepEntry('restored-child-second', {
+              kind: 'setContextFlag',
+              parameters: { flag: 'second', value: true, target: 'caster' },
+            }),
           },
         ],
       },
@@ -962,18 +962,14 @@ describe('AbilityEntityOperationExecutor', () => {
               timelineActions: [
                 {
                   startFrame: 2,
-                  sequence: {
-                    steps: [
-                      {
-                        kind: 'modifyActionValue',
-                        parameters: {
-                          key: 'result',
-                          operation: 'assign',
-                          value: { kind: 'blackboard', key: 'inherited' },
-                        },
-                      },
-                    ],
-                  },
+                  sequence: stepEntry('embedded-child-timeline', {
+                    kind: 'modifyActionValue',
+                    parameters: {
+                      key: 'result',
+                      operation: 'assign',
+                      value: { kind: 'blackboard', key: 'inherited' },
+                    },
+                  }),
                 },
               ],
             },
@@ -1024,14 +1020,10 @@ describe('AbilityEntityOperationExecutor', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'setContextFlag' as const,
-                parameters: { flag, value: true, target: 'caster' as const },
-              },
-            ],
-          },
+          sequence: stepEntry(`named-child-${skillId}`, {
+            kind: 'setContextFlag',
+            parameters: { flag, value: true, target: 'caster' },
+          }),
         },
       ],
     });
@@ -1094,31 +1086,24 @@ describe('AbilityEntityOperationExecutor', () => {
                 {
                   startFrame: 1,
                   endFrame: 2,
-                  sequence: {
-                    steps: [{ kind: 'jumpTimeline', parameters: { destinationFrame: 5 } }],
-                  },
+                  sequence: stepEntry('jump-child-jump', {
+                    kind: 'jumpTimeline',
+                    parameters: { destinationFrame: 5 },
+                  }),
                 },
                 {
                   startFrame: 3,
-                  sequence: {
-                    steps: [
-                      {
-                        kind: 'setContextFlag',
-                        parameters: { flag: 'skipped', value: true, target: 'caster' },
-                      },
-                    ],
-                  },
+                  sequence: stepEntry('jump-child-skipped', {
+                    kind: 'setContextFlag',
+                    parameters: { flag: 'skipped', value: true, target: 'caster' },
+                  }),
                 },
                 {
                   startFrame: 5,
-                  sequence: {
-                    steps: [
-                      {
-                        kind: 'setContextFlag',
-                        parameters: { flag: 'destination', value: true, target: 'caster' },
-                      },
-                    ],
-                  },
+                  sequence: stepEntry('jump-child-destination', {
+                    kind: 'setContextFlag',
+                    parameters: { flag: 'destination', value: true, target: 'caster' },
+                  }),
                 },
               ],
             },
@@ -1173,18 +1158,17 @@ describe('AbilityEntityOperationExecutor', () => {
               timelineActions: [
                 {
                   startFrame: 1,
-                  sequence: { steps: [{ kind: 'finishTimeline', parameters: {} }] },
+                  sequence: stepEntry('finish-child-finish', {
+                    kind: 'finishTimeline',
+                    parameters: {},
+                  }),
                 },
                 {
                   startFrame: 2,
-                  sequence: {
-                    steps: [
-                      {
-                        kind: 'setContextFlag',
-                        parameters: { flag: 'must-not-run', value: true, target: 'caster' },
-                      },
-                    ],
-                  },
+                  sequence: stepEntry('finish-child-must-not-run', {
+                    kind: 'setContextFlag',
+                    parameters: { flag: 'must-not-run', value: true, target: 'caster' },
+                  }),
                 },
               ],
             },
@@ -1223,9 +1207,10 @@ describe('AbilityEntityOperationExecutor', () => {
               timelineActions: [
                 {
                   startFrame: 1,
-                  sequence: {
-                    steps: [{ kind: 'finishCurrentAbilityEntity', parameters: {} }],
-                  },
+                  sequence: stepEntry('self-finishing-host-finish', {
+                    kind: 'finishCurrentAbilityEntity',
+                    parameters: {},
+                  }),
                 },
               ],
             },
@@ -1275,14 +1260,10 @@ describe('AbilityEntityOperationExecutor', () => {
               timelineActions: [
                 {
                   startFrame: 1,
-                  sequence: {
-                    steps: [
-                      {
-                        kind: 'setContextFlag',
-                        parameters: { flag: 'hidden-child', value: true, target: 'caster' },
-                      },
-                    ],
-                  },
+                  sequence: stepEntry('hidden-child-start', {
+                    kind: 'setContextFlag',
+                    parameters: { flag: 'hidden-child', value: true, target: 'caster' },
+                  }),
                 },
               ],
             },

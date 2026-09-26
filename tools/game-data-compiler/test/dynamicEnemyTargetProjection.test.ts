@@ -5,7 +5,10 @@ import { compileActiveSkillRuntimeProjectionSource } from '../src/compiler/skill
 import { collectCompiledBuffApplications } from '../src/compiler/references/compiledReferences.ts';
 import type { CombatActionProjectionContextSource } from '../src/compiler/combatProjectionCommon.ts';
 import { parseKnownNativeActionSequenceSource } from '../src/source/actionLeaf.ts';
-import { compileActionSequence } from '../../../src/core/compiler/compileSkill.ts';
+import { createActionGraphBuilder } from '../src/compiler/actions/actionGraphBuilder.ts';
+import { readActionGraphChain } from '../src/compiler/actions/actionGraphBuilder.ts';
+import type { CompiledBuffStepSource } from '../src/compiler/actions/combatActionProjectionTypes.ts';
+import { compileGraphSequence } from './support/graphSequence.ts';
 import { CombatActionSequenceRuntime } from '../../../src/core/combat/actions/combatActionSequenceRuntime.ts';
 import { ActionBlackboard } from '../../../src/core/combat/actions/actionBlackboard.ts';
 import { RuntimeTargetContext } from '../../../src/core/combat/abilities/runtimeTargetContext.ts';
@@ -87,16 +90,24 @@ function project(kind: 'forEach' | 'applyBuff', group: string, abilityEntityEven
           action: sequence([applyBuff('Target')]),
         }
       : applyBuff('Context', group);
-  const context: CombatActionProjectionContextSource = {
+  const context: Omit<CombatActionProjectionContextSource, 'graph'> = {
     gameplayTagRegistry: fixtureGameplayTagRegistry,
     actionOwnerTarget: abilityEntityEvent ? 'currentAbilityEntity' : 'caster',
     actionSourceTarget: 'caster',
     actionTargetTarget: abilityEntityEvent ? 'eventSource' : 'enemy',
   };
-  return compileCombatActionSequenceSource(
+  const builder = createActionGraphBuilder<CompiledBuffStepSource>();
+  const entry = compileCombatActionSequenceSource(
     parseKnownNativeActionSequenceSource(sequence([query, consumer]), 'test.sequence', {}),
-    context,
+    { ...context, graph: builder },
   );
+  const graph = builder.finish();
+  return {
+    entry,
+    graph,
+    steps: readActionGraphChain(graph, entry),
+    compiled: () => compileGraphSequence(entry, graph),
+  };
 }
 
 describe('动态敌人集合的投影', () => {
@@ -107,11 +118,14 @@ describe('动态敌人集合的投影', () => {
     ['applyBuff', 'another_group', true],
   ] as const)('%s 保留 %s 的零次或一次执行（实体事件=%s）', (kind, group, entityEvent) => {
     const projected = project(kind, group, entityEvent);
-    expect(projected.steps[1]).toMatchObject({
+    const loopStep = projected.steps[1]!;
+    if (loopStep.kind !== 'forEachContextTarget')
+      throw new Error('expected a forEachContextTarget step');
+    expect(loopStep).toMatchObject({
       kind: 'forEachContextTarget',
       parameters: { contextKey: group },
     });
-    expect(projected.steps[1]!.parameters).not.toHaveProperty('target');
+    expect(loopStep.parameters).not.toHaveProperty('target');
     // 生命周期闭包需要知道被创建 Buff 的宿主种类；外层循环继续负责零次或一次执行。
     expect(collectCompiledBuffApplications(projected)).toEqual([
       { buffId: 'test_buff', target: 'enemy' },
@@ -140,7 +154,7 @@ describe('动态敌人集合的投影', () => {
       blackboard: new ActionBlackboard(),
       targetContext: targets,
     });
-    const compiled = runtime.createSequence(compileActionSequence(projected, 1));
+    const compiled = runtime.createSequence(projected.compiled());
 
     // 同一个查询连续经历空、命中、再次清空，后一次不能复用旧目标。
     for (const expectedMatch of [false, true, false]) {
@@ -266,7 +280,9 @@ describe('跨时间段的目标组读写', () => {
         { blackboard: new ActionBlackboard(), targetContext: targets },
       );
       for (const scheduled of projected.scheduledSequences) {
-        runtime.createSequence(compileActionSequence(scheduled.sequence, 1)).executeInstant({});
+        runtime
+          .createSequence(compileGraphSequence(scheduled.sequence, projected.actionGraph))
+          .executeInstant({});
       }
       expect(applications).toEqual([controlled ? 'caster' : 'enemy']);
       if (controlled) expect(() => targets.get(group)).toThrow('target context group');

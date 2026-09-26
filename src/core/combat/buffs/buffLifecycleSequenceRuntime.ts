@@ -20,7 +20,7 @@ import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import { runtimeTargetFromEntityId } from '../../game-data/logicalAbilityEntity';
 import type { SkillBuffSlotReplacement } from '../../game-data/operatorDefinition';
 import { RuntimeTargetContext } from '../abilities/runtimeTargetContext';
-import type { ActionSequence } from '../actions/actionSequence';
+import type { CombatActionExecution as ActionSequence } from '../actions/actionGraphExecution';
 import { CombatActionSequenceRuntime } from '../actions/combatActionSequenceRuntime';
 import type { CombatExecutionContext } from '../actions/combatStep';
 import {

@@ -4,7 +4,13 @@ import { parseNativeSequenceSource, collectNativeActionNodes } from '../src/sour
 import { parseKnownNativeActionLeafSource } from '../src/source/actionLeaf.ts';
 import { compileCombatActionSequenceSource } from '../src/compiler/buffs/buffRuntimeProjection.ts';
 import { scalarFixture, targetFixture } from './sourceFixtures.ts';
-import { compileActionSequence } from '../../../src/core/compiler/compileSkill';
+import {
+  createActionGraphBuilder,
+  readActionGraphChain,
+} from '../src/compiler/actions/actionGraphBuilder.ts';
+import type { CompiledBuffStepSource } from '../src/compiler/actions/combatActionProjectionTypes.ts';
+import type { CombatActionProjectionContextSource } from '../src/compiler/combatProjectionCommon.ts';
+import { compileGraphSequence } from './support/graphSequence.ts';
 import { CombatActionSequenceRuntime } from '../../../src/core/combat/actions/combatActionSequenceRuntime';
 import { ActionBlackboard } from '../../../src/core/combat/actions/actionBlackboard';
 
@@ -140,15 +146,27 @@ function parse(raw: unknown) {
   );
 }
 
+/** 编译解析后的原生序列为图；steps 是入口同层动作，分支需按引用显式读取。 */
+function compile(
+  source: ReturnType<typeof parse>,
+  ctx: Omit<CombatActionProjectionContextSource, 'graph'> = context,
+) {
+  const builder = createActionGraphBuilder<CompiledBuffStepSource>();
+  const entry = compileCombatActionSequenceSource(source, { ...ctx, graph: builder });
+  const graph = builder.finish();
+  return {
+    entry,
+    graph,
+    steps: readActionGraphChain(graph, entry),
+    compiled: () => compileGraphSequence(entry, graph),
+  };
+}
+
 describe('DoOnce 技能资源回复的窄投影', () => {
   it.each(['Atb', 'UltimateSp'])('主控限制只作用于技力而非终结技能量：%s', costType => {
-    const compiled = compileActionSequence(
-      compileCombatActionSequenceSource(
-        parse(sequence([{ ...gain, costType, atbOnlyMainChar: true }])),
-        context,
-      ),
-      1,
-    );
+    const compiled = compile(
+      parse(sequence([{ ...gain, costType, atbOnlyMainChar: true }])),
+    ).compiled();
     let calls = 0;
     const runtime = new CombatActionSequenceRuntime(
       {
@@ -165,10 +183,7 @@ describe('DoOnce 技能资源回复的窄投影', () => {
   });
 
   it('转换结果经正式编译执行：重复命中不重复回复，新施法重新获得机会', () => {
-    const compiled = compileActionSequence(
-      compileCombatActionSequenceSource(parse(sequence([once(), once()])), context),
-      1,
-    );
+    const compiled = compile(parse(sequence([once(), once()]))).compiled();
     let calls = 0;
     const makeRuntime = () =>
       new CombatActionSequenceRuntime(
@@ -200,93 +215,75 @@ describe('DoOnce 技能资源回复的窄投影', () => {
       'DoOnceAction',
       'ObtainCostAction',
     ]);
-    const compiled = compileCombatActionSequenceSource(source, context);
-    expect(compiled.steps).toMatchObject(
-      [0, 1].map(index => ({
-        kind: 'once',
-        parameters: { scopeKey: `skill.sequence.actionData[${index}]` },
-        body: {
-          steps: [
-            {
-              kind: 'changeResourceByActionValue',
-              parameters: {
-                resource: 'sp',
-                amount: { kind: 'blackboard', key: 'atb' },
-                spGainSource: 'normalAttack',
-              },
-            },
-          ],
+    const compiled = compile(source);
+    expect(compiled.steps).toHaveLength(2);
+    compiled.steps.forEach((step, index) => {
+      if (step.kind !== 'once') throw new Error('expected once');
+      expect(step.parameters.scopeKey).toBe(`skill.sequence.actionData[${index}]`);
+      expect(readActionGraphChain(compiled.graph, step.body)).toMatchObject([
+        {
+          kind: 'changeResourceByActionValue',
+          parameters: {
+            resource: 'sp',
+            amount: { kind: 'blackboard', key: 'atb' },
+            spGainSource: 'normalAttack',
+          },
         },
-      })),
-    );
+      ]);
+    });
   });
 
   it('直接子树只有严格纯表现动作时省略 DoOnce 及其私有状态', () => {
-    expect(
-      compileCombatActionSequenceSource(parse(sequence([once([presentation])])), context),
-    ).toEqual({ steps: [] });
+    const compiled = compile(parse(sequence([once([presentation])])));
+    expect(compiled.entry.$sequence).toBeNull();
+    expect(compiled.steps).toEqual([]);
   });
 
   it('递归投影为空的表现分支也省略 DoOnce 及其私有状态', () => {
-    expect(
-      compileCombatActionSequenceSource(
-        parse(sequence([once([presentation, emptyPresentationBranch])])),
-        context,
-      ),
-    ).toEqual({ steps: [] });
+    const compiled = compile(parse(sequence([once([presentation, emptyPresentationBranch])])));
+    expect(compiled.entry.$sequence).toBeNull();
+    expect(compiled.steps).toEqual([]);
   });
 
   it('保留一次性回能 Buff，按静态木桩证据省略相邻 InterruptAction', () => {
-    expect(
-      compileCombatActionSequenceSource(parse(sequence([once([applyBuff, interrupt])])), context)
-        .steps[0],
-    ).toMatchObject({
-      kind: 'once',
-      body: {
-        steps: [
-          {
-            kind: 'gainSquadUltimateEnergyFromSkillCost',
-            parameters: { coefficient: 1 },
-          },
-        ],
+    const compiled = compile(parse(sequence([once([applyBuff, interrupt])])));
+    const step = compiled.steps[0];
+    if (step?.kind !== 'once') throw new Error('expected once');
+    expect(readActionGraphChain(compiled.graph, step.body)).toMatchObject([
+      {
+        kind: 'gainSquadUltimateEnergyFromSkillCost',
+        parameters: { coefficient: 1 },
       },
-    });
+    ]);
   });
 
   it('保留 DoOnce 内的纯条件前缀，并让它短路一次性资源动作', () => {
-    expect(
-      compileCombatActionSequenceSource(parse(sequence([once([positivePotential, gain])])), context)
-        .steps[0],
-    ).toMatchObject({
-      kind: 'once',
-      body: {
-        steps: [
-          {
-            kind: 'conditional',
-            parameters: {
-              condition: {
-                kind: 'actionValueCompare',
-                operator: 'greater',
-                left: { kind: 'blackboard', key: 'potential' },
-                right: { kind: 'constant', value: 0 },
-              },
-            },
-            whenTrue: { steps: [{ kind: 'changeResourceByActionValue' }] },
-          },
-        ],
-      },
+    const compiled = compile(parse(sequence([once([positivePotential, gain])])));
+    const step = compiled.steps[0];
+    if (step?.kind !== 'once') throw new Error('expected once');
+    const body = readActionGraphChain(compiled.graph, step.body);
+    const guard = body[0];
+    if (guard?.kind !== 'conditional') throw new Error('expected conditional');
+    expect(guard.parameters.condition).toMatchObject({
+      kind: 'actionValueCompare',
+      operator: 'greater',
+      left: { kind: 'blackboard', key: 'potential' },
+      right: { kind: 'constant', value: 0 },
     });
+    expect(readActionGraphChain(compiled.graph, guard.whenTrue).map(item => item.kind)).toEqual([
+      'changeResourceByActionValue',
+    ]);
   });
 
   it('未知生命周期、子角色守卫及非资源子动作仍阻断', () => {
     expect(() =>
-      compileCombatActionSequenceSource(parse(sequence([once()])), {
+      compile(parse(sequence([once()])), {
         ...context,
         timelineRange: undefined,
       }),
     ).toThrow();
     expect(() =>
-      compileCombatActionSequenceSource(
+      compile(
         parse(
           sequence([
             {
@@ -295,12 +292,9 @@ describe('DoOnce 技能资源回复的窄投影', () => {
             },
           ]),
         ),
-        context,
       ),
     ).toThrow();
-    expect(() =>
-      compileCombatActionSequenceSource(parse(sequence([once([once()])])), context),
-    ).toThrow();
+    expect(() => compile(parse(sequence([once([once()])])))).toThrow();
   });
 
   it('未知字段不会被控制流读取器吞掉', () => {
@@ -316,34 +310,38 @@ describe('TickIntervalAction 调度投影', () => {
       tickInterval: 0.1,
       actionOnTick: sequence([storeCurrentSkillFrame]),
     };
-    expect(
-      compileCombatActionSequenceSource(parse(sequence([eachFrame])), context).steps[0],
-    ).toMatchObject({
+    const compiled = compile(parse(sequence([eachFrame])));
+    const step = compiled.steps[0];
+    expect(step).toMatchObject({
       kind: 'repeatEachTick',
       parameters: {
         nativeTickInterval: { executeEachFrame: true, intervalSeconds: 0.1 },
       },
-      body: {
-        steps: [{ kind: 'storeCurrentTimelineFrame', parameters: { outputKey: 'music_loop' } }],
-      },
     });
+    if (step?.kind !== 'repeatEachTick') throw new Error('expected repeatEachTick');
+    expect(readActionGraphChain(compiled.graph, step.body)).toEqual([
+      { kind: 'storeCurrentTimelineFrame', parameters: { outputKey: 'music_loop' } },
+    ]);
   });
 
   it('保留直接周期和原生首次即时/单次追赶模式', () => {
-    expect(
-      compileCombatActionSequenceSource(parse(sequence([tickInterval])), context).steps[0],
-    ).toMatchObject({
+    const compiled = compile(parse(sequence([tickInterval])));
+    const step = compiled.steps[0];
+    expect(step).toMatchObject({
       kind: 'repeatEachTick',
       parameters: {
         nativeTickInterval: { executeEachFrame: false, intervalSeconds: 0.07 },
       },
-      body: { steps: [{ kind: 'changeResourceByActionValue' }] },
     });
+    if (step?.kind !== 'repeatEachTick') throw new Error('expected repeatEachTick');
+    expect(readActionGraphChain(compiled.graph, step.body).map(item => item.kind)).toEqual([
+      'changeResourceByActionValue',
+    ]);
   });
 
   it('动态周期和未知宿主区间继续阻断', () => {
     expect(() =>
-      compileCombatActionSequenceSource(
+      compile(
         parse(
           sequence([
             {
@@ -353,11 +351,10 @@ describe('TickIntervalAction 调度投影', () => {
             },
           ]),
         ),
-        context,
       ),
     ).toThrow('unsupported Buff runtime action');
     expect(() =>
-      compileCombatActionSequenceSource(parse(sequence([tickInterval])), {
+      compile(parse(sequence([tickInterval])), {
         ...context,
         timelineRange: undefined,
       }),
@@ -367,9 +364,9 @@ describe('TickIntervalAction 调度投影', () => {
 
 describe('ChannelingAction 单目标身份投影', () => {
   it('以主动技能 Owner 为目标时，子动作 Target 保留为施术者而非敌人', () => {
-    expect(
-      compileCombatActionSequenceSource(parse(sequence([casterChanneling])), context).steps[0],
-    ).toMatchObject({
+    const compiled = compile(parse(sequence([casterChanneling])));
+    const step = compiled.steps[0];
+    expect(step).toMatchObject({
       kind: 'repeatEachTick',
       parameters: {
         nativeChanneling: {
@@ -379,15 +376,14 @@ describe('ChannelingAction 单目标身份投影', () => {
           targetTriggerIntervalSeconds: 0,
         },
       },
-      body: {
-        steps: [
-          {
-            kind: 'applyBuff',
-            parameters: { buffId: 'buff_common_obtain_ultimate_sp', target: 'caster' },
-          },
-        ],
-      },
     });
+    if (step?.kind !== 'repeatEachTick') throw new Error('expected repeatEachTick');
+    expect(readActionGraphChain(compiled.graph, step.body)).toMatchObject([
+      {
+        kind: 'applyBuff',
+        parameters: { buffId: 'buff_common_obtain_ultimate_sp', target: 'caster' },
+      },
+    ]);
   });
 
   it('V2 以主动技能 Target 为扫描输入时，tick 子动作仍指向唯一敌人', () => {
@@ -405,9 +401,8 @@ describe('ChannelingAction 单目标身份投影', () => {
       actionOnTick: sequence([interrupt]),
     };
 
-    expect(
-      compileCombatActionSequenceSource(parse(sequence([enemyChanneling])), context).steps[0],
-    ).toMatchObject({
+    const step = compile(parse(sequence([enemyChanneling]))).steps[0];
+    expect(step).toMatchObject({
       kind: 'repeatEachTick',
       parameters: {
         nativeChanneling: {
@@ -430,19 +425,14 @@ describe('ChannelingAction 单目标身份投影', () => {
       staticEnemyTargetGroupKeys: new Set(['myTar']),
     };
 
-    expect(
-      compileCombatActionSequenceSource(parse(sequence([groupedEnemyChanneling])), groupedContext)
-        .steps[0],
-    ).toMatchObject({
-      kind: 'repeatEachTick',
-      body: {
-        steps: [
-          {
-            kind: 'applyBuff',
-            parameters: { buffId: 'buff_common_obtain_ultimate_sp', target: 'enemy' },
-          },
-        ],
+    const compiled = compile(parse(sequence([groupedEnemyChanneling])), groupedContext);
+    const step = compiled.steps[0];
+    if (step?.kind !== 'repeatEachTick') throw new Error('expected repeatEachTick');
+    expect(readActionGraphChain(compiled.graph, step.body)).toMatchObject([
+      {
+        kind: 'applyBuff',
+        parameters: { buffId: 'buff_common_obtain_ultimate_sp', target: 'enemy' },
       },
-    });
+    ]);
   });
 });

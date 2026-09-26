@@ -5,6 +5,7 @@
  * Worker 收到后恢复为只读查询仓库，避免在第二个 JavaScript 运行环境中再次加载全部生成数据。
  */
 import type {
+  CommonDefinitionSource,
   GameDataRepository,
   MechanicDefinitionRef,
 } from '../../core/game-data/gameDataRepository';
@@ -14,20 +15,16 @@ import type {
   WeaponDefinition,
 } from '../../core/game-data/equipmentDefinition';
 import type { EnemyDefinition } from '../../core/game-data/enemyDefinition';
-import type {
-  OperatorAbilityEntityDefinitions,
-  OperatorBuffDefinitions,
-  OperatorDefinition,
-} from '../../core/game-data/operatorDefinition';
+import type { OperatorDefinition } from '../../core/game-data/operatorDefinition';
 import type { ScenarioDocument } from '../../core/project/schema';
 import type { ConsumableDefinition } from '../../core/game-data/consumableDefinition';
+import { createGameDataRepository } from '../../data/createGameDataRepository';
 
 /** 可通过 Worker 消息传输、足以编译一个场景的纯数据。 */
 export interface ScenarioSimulationGameData {
   readonly revision: string;
   readonly selectionKey: string;
-  readonly commonBuffDefinitions: OperatorBuffDefinitions;
-  readonly commonAbilityEntityDefinitions: OperatorAbilityEntityDefinitions;
+  readonly commonDefinitionSources: readonly CommonDefinitionSource[];
   readonly operators: readonly OperatorDefinition[];
   readonly weapons: readonly WeaponDefinition[];
   readonly gears: readonly GearDefinition[];
@@ -114,11 +111,24 @@ export function captureScenarioSimulationGameData(
     addDefinition(mechanics, id, requireDefinition(repository.getMechanic(id), 'mechanic', id));
   }
 
+  const commonDefinitionSources = repository.getCommonDefinitionSources?.();
+  if (
+    commonDefinitionSources === undefined &&
+    [...operators.values()].some(operator => 'actionGraph' in operator)
+  ) {
+    throw new Error('graph scenario requires common definition sources');
+  }
+
   return {
     revision: repository.revision,
     selectionKey: scenarioSimulationGameDataSelectionKey(scenario),
-    commonBuffDefinitions: repository.getCommonBuffDefinitions?.() ?? {},
-    commonAbilityEntityDefinitions: repository.getCommonAbilityEntityDefinitions?.() ?? {},
+    commonDefinitionSources: commonDefinitionSources ?? [
+      {
+        id: 'shared',
+        buffDefinitions: repository.getCommonBuffDefinitions?.() ?? {},
+        abilityEntityDefinitions: repository.getCommonAbilityEntityDefinitions?.() ?? {},
+      },
+    ],
     operators: [...operators.values()],
     weapons: [...weapons.values()],
     gears: [...gears.values()],
@@ -129,32 +139,19 @@ export function captureScenarioSimulationGameData(
   };
 }
 
-function indexBy<T>(values: readonly T[], identity: (value: T) => string): ReadonlyMap<string, T> {
-  return new Map(values.map(value => [identity(value), value]));
-}
-
 /** 在 Worker 内把纯数据包恢复成编译器使用的查询端口。 */
 export function restoreScenarioSimulationGameData(
   data: ScenarioSimulationGameData,
 ): GameDataRepository {
-  const operators = indexBy(data.operators, value => value.slug);
-  const weapons = indexBy(data.weapons, value => value.slug);
-  const gears = indexBy(data.gears, value => value.slug);
-  const gearSets = indexBy(data.gearSets, value => value.slug);
-  const enemies = indexBy(data.enemies, value => value.id);
-  const mechanics = indexBy(data.mechanics, value => value.id);
-  const consumables = indexBy(data.consumables, value => value.id);
-  return Object.freeze({
+  return createGameDataRepository({
     revision: data.revision,
-    getCommonBuffDefinitions: () => data.commonBuffDefinitions,
-    getCommonAbilityEntityDefinitions: () => data.commonAbilityEntityDefinitions,
-    getOperator: (id: string) => operators.get(id) ?? null,
-    getWeapon: (id: string) => weapons.get(id) ?? null,
-    getGear: (id: string) => gears.get(id) ?? null,
-    getGearSet: (id: string) => gearSets.get(id) ?? null,
-    getEnemy: (id: string) => enemies.get(id) ?? null,
-    getMechanic: (id: string) => mechanics.get(id) ?? null,
-    getConsumable: (id: string) => consumables.get(id) ?? null,
-    getConsumables: () => data.consumables,
+    commonDefinitionSources: data.commonDefinitionSources,
+    operators: data.operators,
+    weapons: data.weapons,
+    gears: data.gears,
+    gearSets: data.gearSets,
+    enemies: data.enemies,
+    mechanics: data.mechanics,
+    consumables: data.consumables,
   });
 }

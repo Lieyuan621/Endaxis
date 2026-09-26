@@ -27,6 +27,21 @@ function fixture(overrides: Record<string, unknown> = {}) {
     timelineBlockFrames: 1,
     allowNextSkillTransitions: [],
     scheduledSequences: [],
+    actionGraph: {
+      main: {
+        nodes: {
+          route: {
+            action: {
+              key: 'route',
+              kind: 'applyBuff',
+              parameters: { buffId: 'routing', target: 'caster', inheritSourceSkillCastInfo: true },
+            },
+            next: null,
+          },
+        },
+      },
+      macros: {},
+    },
     switchToBuffCast: {
       asSkillCast: false,
       condition: {
@@ -36,15 +51,7 @@ function fixture(overrides: Record<string, unknown> = {}) {
         operator: 'greaterOrEqual',
         value: 1,
       },
-      sequence: {
-        steps: [
-          {
-            key: 'route',
-            kind: 'applyBuff',
-            parameters: { buffId: 'routing', target: 'caster', inheritSourceSkillCastInfo: true },
-          },
-        ],
-      },
+      sequence: { $sequence: 'route' },
     },
   };
   const skills = [

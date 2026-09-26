@@ -119,7 +119,9 @@ it.each([true, false])('守墓人之赠重击增伤要求受益者为主控（�
       e =>
         e.event === 'DamageApplied' &&
         e.data?.castId === 'last-rite:basicAttack4' &&
-        e.data?.stepKey === 'chr_0026_lastrite_attack4:/scheduledSequences/2/sequence/steps/0',
+        String(e.data?.stepKey).includes(
+          'chr_0026_lastrite_attack4:scheduledSequences[2].sequence',
+        ),
     );
     expect(hits).toHaveLength(1);
     scales.push(Number(hits[0]!.data?.damageScaleMultiplier));
@@ -424,7 +426,7 @@ it.each([true, false])('赛希连携天赋要求命中前已有寒冷（预附�
       e.event === 'DamageApplied' &&
       e.data?.castId === 'xaihi:comboSkill' &&
       e.data?.skillType === 'comboSkill' &&
-      String(e.data?.stepKey).startsWith('chr_0011_seraph_combo_skill:'),
+      String(e.data?.stepKey).includes('launchProjectile'),
   );
   expect(hits).toHaveLength(1);
   const buffs = result.receiptEntries.filter(

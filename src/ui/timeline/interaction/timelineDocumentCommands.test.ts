@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import type { ScenarioDocument, SkillCastDocument } from '../../../core/project/schema';
-import type { SkillDefinition } from '../../../core/game-data/operatorDefinition';
 import {
   addControlSwitch,
   addCycleBoundary,
@@ -17,20 +16,17 @@ import {
   removeExternalEventMarker,
   removeDodgeMarker,
   clearSimulationRangeBoundary,
-  createSkillDefinitionDraft,
   createSkillCastGroup,
   dissolveSkillCastGroups,
   moveSkillCast,
   moveSkillCasts,
   removeSkillCast,
   removeSkillCasts,
-  resetSkillCastToTemplate,
   setSkillCastColor,
   setSkillCastDisabled,
   setSkillCastForcedCritical,
   setSkillCastLocked,
   setSkillCastRandomSeed,
-  setSkillCastCustomDefinition,
   setUnifiedInitialUltimateEnergy,
   updateDodgeMarker,
   setGlobalOperatorStatModifiers,
@@ -649,69 +645,6 @@ describe('moveSkillCast', () => {
     expect(cleared.tracks[0]!.skillCasts[0]!.simulationInputs).toBeUndefined();
   });
 
-  it('stores an independent complete custom definition and can return to the template', () => {
-    const original = scenario();
-    const definition: SkillDefinition = {
-      key: 'skill',
-      timelineBlockFrames: 45,
-      scheduledSequences: [{ startFrame: 0, sequence: { steps: [] } }],
-    };
-
-    const customized = setSkillCastCustomDefinition(original, 0, 'cast:1', definition);
-    const stored = customized.tracks[0]!.skillCasts[0]!.customDefinition!;
-    expect(stored).toEqual(definition);
-    expect(stored).not.toBe(definition);
-
-    const mutableSequence = definition.scheduledSequences[0] as { startFrame: number };
-    mutableSequence.startFrame = 9;
-    expect(stored.scheduledSequences[0]!.startFrame).toBe(0);
-
-    const reset = resetSkillCastToTemplate(customized, 0, 'cast:1');
-    expect(reset.tracks[0]!.skillCasts[0]!.customDefinition).toBeUndefined();
-    expect(resetSkillCastToTemplate(reset, 0, 'cast:1')).toBe(reset);
-  });
-
-  it('creates an isolated editor draft before the definition is committed', () => {
-    const definition: SkillDefinition = {
-      key: 'skill',
-      timelineBlockFrames: 30,
-      scheduledSequences: [{ startFrame: 0, sequence: { steps: [] } }],
-    };
-
-    const draft = createSkillDefinitionDraft(definition);
-    (draft.scheduledSequences[0] as { startFrame: number }).startFrame = 12;
-
-    expect(definition.scheduledSequences[0]!.startFrame).toBe(0);
-    expect(draft.scheduledSequences[0]!.startFrame).toBe(12);
-  });
-
-  it('rejects a custom definition that cannot replace the referenced template', () => {
-    const original = scenario();
-    const wrongDefinition: SkillDefinition = {
-      key: 'other',
-      timelineBlockFrames: 30,
-      scheduledSequences: [],
-    };
-
-    expect(() => setSkillCastCustomDefinition(original, 0, 'cast:1', wrongDefinition)).toThrow(
-      'does not match source skill key',
-    );
-  });
-
-  it('rejects an invalid custom definition before changing the scenario', () => {
-    const original = scenario();
-    const invalidDefinition = {
-      key: 'skill',
-      timelineBlockFrames: -1,
-      scheduledSequences: [],
-    } as unknown as SkillDefinition;
-
-    expect(() => setSkillCastCustomDefinition(original, 0, 'cast:1', invalidDefinition)).toThrow(
-      "invalid custom definition at 'customDefinition.timelineBlockFrames'",
-    );
-    expect(original.tracks[0]!.skillCasts[0]!.customDefinition).toBeUndefined();
-  });
-
   it('removes the cast and every connection that points to it', () => {
     const original = scenario();
     original.connections = [
@@ -988,7 +921,10 @@ describe('global Buff selection commands', () => {
           id: 'scenario:custom-global:1',
           name: 'Custom',
           enabled: false,
-          definition: { stackingType: 'unlimited' as const },
+          definition: {
+            stackingType: 'unlimited' as const,
+            actionGraph: { main: { nodes: {} }, macros: {} },
+          },
         },
       ],
     };

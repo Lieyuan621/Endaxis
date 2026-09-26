@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { compileOperatorBuffDefinitions } from '../../compiler/compileSkill';
-import type { CompiledSkillProgram } from '../../compiler/combatProgram';
+import type { ResolvedActionSequence, CompiledSkillProgram } from '../../compiler/combatProgram';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import type {
+  ActionGraphNode,
+  ActionGraphStep,
+} from '../../../../packages/game-data-contract/src/actionGraph';
 import { GameplayTagPredefine } from '../tags/gameplayTagPredefine';
 import { GAMEPLAY_TAG_PREDEFINE } from '../../../data/combat/gameplayTagPredefine.generated';
 import { gameplayTagRegistry } from '../../../data/combat/gameplayTagCatalog';
@@ -17,6 +21,30 @@ import type { BuffDefinitionOperationTarget } from '../buffs/buffDefinitionOpera
 import { knockDownAbilityEvent } from '../events/combatAbilityEvent';
 
 const DOWN_TAG = 'Status/Immobilized/KnockDown';
+
+const compileGraphEntry = (
+  revision: string,
+  entry: string | null,
+  nodes: Record<string, ActionGraphNode>,
+): ResolvedActionSequence => ({
+  graph: createActionGraphCompilation({ nodes }, 1, revision).compileAll(),
+  entry,
+  callSite: revision,
+});
+
+const chainEntry = (
+  revision: string,
+  actions: readonly ActionGraphStep[],
+): ResolvedActionSequence => {
+  const nodes: Record<string, ActionGraphNode> = {};
+  actions.forEach((action, index) => {
+    nodes[`step-${index}`] = {
+      action,
+      next: index + 1 < actions.length ? `step-${index + 1}` : null,
+    };
+  });
+  return compileGraphEntry(revision, actions.length === 0 ? null : 'step-0', nodes);
+};
 const enemy: CombatEnemyProgram = {
   source: { kind: 'custom', level: 90 },
   rank: 'mob',
@@ -69,21 +97,21 @@ function setup(
     parameters: { buffId, target: 'caster' as const, inheritSourceSkillCastInfo: true },
   });
   // 使用契约编译和真实 Buff 生命周期；这是流程夹具，不冒充原生物理 Buff 的数值。
-  const buffDefinitions = compileOperatorBuffDefinitions({
-    buff_physical_no_guard: { stackingType: 'refresh', durationSeconds: 9 },
-    buff_physical_knockdown: { stackingType: 'refresh', durationSeconds: 9 },
+  const buffDefinitions = {
+    buff_physical_no_guard: { stackingType: 'refresh' as const, durationSeconds: 9 },
+    buff_physical_knockdown: { stackingType: 'refresh' as const, durationSeconds: 9 },
     listener: {
-      stackingType: 'unique',
+      stackingType: 'unique' as const,
       abilityEventResponses: [
         {
           event: listenerEvent,
           priority: 0,
-          sequence: { steps: [apply('talent-result')] },
+          sequence: chainEntry(`knockdown-listener-${listenerEvent}`, [apply('talent-result')]),
         },
       ],
     },
-    'talent-result': { stackingType: 'unique' },
-  });
+    'talent-result': { stackingType: 'unique' as const },
+  };
   const program: CompiledSkillProgram = {
     operatorId: 'operator',
     skillId: 'down',
@@ -96,8 +124,9 @@ function setup(
     timelineActions: [
       {
         startFrame: 0,
-        sequence: {
-          steps: Array.from({ length: requests }, () => ({
+        sequence: chainEntry(
+          `knockdown-requests-${requests}`,
+          Array.from({ length: requests }, () => ({
             kind: 'applyKnockDown' as const,
             parameters: {
               target: 'enemy' as const,
@@ -108,7 +137,7 @@ function setup(
               returnWhen: 'always' as const,
             },
           })),
-        },
+        ),
       },
     ],
   };
@@ -160,7 +189,7 @@ function setup(
           {
             key: 'listener',
             initialBlackboard: {},
-            enableSequence: { steps: [apply('listener')] },
+            enableSequence: chainEntry('knockdown-listener-passive', [apply('listener')]),
           },
         ],
       },

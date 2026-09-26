@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { compileOperatorDefinitionSkills } from '../../core/compiler/compileScenarioTimeline';
+import { ActionGraphDefinitionRepository } from '../../core/compiler/actionGraphDefinitionRepository';
 import type { OperatorInstanceDocument } from '../../core/project/schema';
 import { camille as camilleGeneratedOperator } from './camille.generated';
 
@@ -48,6 +49,9 @@ describe('camille generated operator', () => {
       'camille',
       build,
       camilleGeneratedOperator,
+      {},
+      undefined,
+      new ActionGraphDefinitionRepository(),
     ).find(skill => skill.skillId === 'chr_0033_camille_normal_skill_2');
 
     expect(program).toMatchObject({
@@ -77,6 +81,9 @@ describe('camille generated operator', () => {
       'camille',
       build,
       camilleGeneratedOperator,
+      {},
+      undefined,
+      new ActionGraphDefinitionRepository(),
     ).find(skill => skill.skillId === 'chr_0033_camille_normal_skill_2')!;
 
     expect(program.initialBlackboard.atk_scale_2_4).toBeCloseTo(2.28 * 1.3);

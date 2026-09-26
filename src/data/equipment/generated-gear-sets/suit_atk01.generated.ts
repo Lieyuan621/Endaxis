@@ -5,25 +5,33 @@ const definition = {
   slug: 'suit_atk01',
   iconPath: '/equipment/atk01/item_equip_t3_suit_atk01_edc_04.webp',
   modifiers: [
-    {
-      kind: 'damageScale',
-      target: 'battleSkill',
-      slot: 'baseAddition',
-      value: 0.24,
-    },
-    {
-      kind: 'damageScale',
-      target: 'comboSkill',
-      slot: 'baseAddition',
-      value: 0.24,
-    },
-    {
-      kind: 'damageScale',
-      target: 'ultimate',
-      slot: 'baseAddition',
-      value: 0.24,
-    },
+    { kind: 'damageScale', target: 'battleSkill', slot: 'baseAddition', value: 0.24 },
+    { kind: 'damageScale', target: 'comboSkill', slot: 'baseAddition', value: 0.24 },
+    { kind: 'damageScale', target: 'ultimate', slot: 'baseAddition', value: 0.24 },
   ],
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffId: 'buff_equipsuit_atk_01',
+              target: 'caster',
+              blackboardAssignments: {
+                dmg_up: { kind: 'constant', value: 0.24 },
+                atk_up: { kind: 'constant', value: 0.05 },
+                duration: { kind: 'constant', value: 15 },
+              },
+            },
+          },
+          next: null,
+        },
+      },
+    },
+    macros: {},
+  },
+  skillId: 'passive_equipsuit_atk_01',
   buffDefinitions: {
     buff_equipsuit_atk_01: {
       stackingType: 'unique',
@@ -34,124 +42,91 @@ const definition = {
       maxTriggerCount: 1,
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        atk_up: 0.05,
-        dmg_up: 0.2,
-        duration: 15,
-      },
+      blackboard: { atk_up: 0.05, dmg_up: 0.2, duration: 15 },
       attributeModifiers: [],
       abilityEventResponses: [
-        {
-          event: 'beforeCastSkill',
-          priority: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventSkillTypeIn',
-                    skillTypes: ['battleSkill'],
-                  },
-                },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'applyBuff',
-                      parameters: {
-                        buffId: 'buff_equipsuit_atk_01_normalskill',
-                        target: 'buffOwner',
-                        source: 'buffOwner',
-                        inheritSourceSkillCastInfo: true,
-                        copiedBlackboardAssignments: {
-                          atk_up: 'atk_up',
-                          duration: 'duration',
-                        },
-                      },
-                    },
-                  ],
-                },
-              },
-            ],
-          },
-        },
-        {
-          event: 'beforeCastSkill',
-          priority: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventSkillTypeIn',
-                    skillTypes: ['comboSkill'],
-                  },
-                },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'applyBuff',
-                      parameters: {
-                        buffId: 'buff_equipsuit_atk_01_comboskill',
-                        target: 'buffOwner',
-                        source: 'buffOwner',
-                        inheritSourceSkillCastInfo: true,
-                        copiedBlackboardAssignments: {
-                          atk_up: 'atk_up',
-                          duration: 'duration',
-                        },
-                      },
-                    },
-                  ],
-                },
-              },
-            ],
-          },
-        },
-        {
-          event: 'beforeCastSkill',
-          priority: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventSkillTypeIn',
-                    skillTypes: ['ultimate'],
-                  },
-                },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'applyBuff',
-                      parameters: {
-                        buffId: 'buff_equipsuit_atk_01_ultimateskill',
-                        target: 'buffOwner',
-                        source: 'buffOwner',
-                        inheritSourceSkillCastInfo: true,
-                        copiedBlackboardAssignments: {
-                          atk_up: 'atk_up',
-                          duration: 'duration',
-                        },
-                      },
-                    },
-                  ],
-                },
-              },
-            ],
-          },
-        },
+        { event: 'beforeCastSkill', priority: 0, sequence: { $sequence: 'conditional_2' } },
+        { event: 'beforeCastSkill', priority: 0, sequence: { $sequence: 'conditional_4' } },
+        { event: 'beforeCastSkill', priority: 0, sequence: { $sequence: 'conditional_6' } },
       ],
+      actionGraph: {
+        main: {
+          nodes: {
+            applyBuff_1: {
+              action: {
+                kind: 'applyBuff',
+                parameters: {
+                  buffId: 'buff_equipsuit_atk_01_normalskill',
+                  target: 'buffOwner',
+                  source: 'buffOwner',
+                  inheritSourceSkillCastInfo: true,
+                  copiedBlackboardAssignments: { atk_up: 'atk_up', duration: 'duration' },
+                },
+              },
+              next: null,
+            },
+            conditional_2: {
+              action: {
+                kind: 'conditional',
+                parameters: {
+                  condition: { kind: 'eventSkillTypeIn', skillTypes: ['battleSkill'] },
+                },
+                whenTrue: { $sequence: 'applyBuff_1' },
+              },
+              next: null,
+            },
+            applyBuff_3: {
+              action: {
+                kind: 'applyBuff',
+                parameters: {
+                  buffId: 'buff_equipsuit_atk_01_comboskill',
+                  target: 'buffOwner',
+                  source: 'buffOwner',
+                  inheritSourceSkillCastInfo: true,
+                  copiedBlackboardAssignments: { atk_up: 'atk_up', duration: 'duration' },
+                },
+              },
+              next: null,
+            },
+            conditional_4: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'eventSkillTypeIn', skillTypes: ['comboSkill'] } },
+                whenTrue: { $sequence: 'applyBuff_3' },
+              },
+              next: null,
+            },
+            applyBuff_5: {
+              action: {
+                kind: 'applyBuff',
+                parameters: {
+                  buffId: 'buff_equipsuit_atk_01_ultimateskill',
+                  target: 'buffOwner',
+                  source: 'buffOwner',
+                  inheritSourceSkillCastInfo: true,
+                  copiedBlackboardAssignments: { atk_up: 'atk_up', duration: 'duration' },
+                },
+              },
+              next: null,
+            },
+            conditional_6: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'eventSkillTypeIn', skillTypes: ['ultimate'] } },
+                whenTrue: { $sequence: 'applyBuff_5' },
+              },
+              next: null,
+            },
+          },
+        },
+        macros: {},
+      },
     },
     buff_equipsuit_atk_01_comboskill: {
       stackingType: 'refresh',
       priority: 0,
       maxStackCount: 0,
-      durationSeconds: {
-        blackboardKey: 'duration',
-      },
+      durationSeconds: { blackboardKey: 'duration' },
       triggerIntervalSeconds: 0,
       waitFirstTriggerInterval: true,
       maxTriggerCount: 1,
@@ -175,35 +150,21 @@ const definition = {
         charHpBarVfxType: 'Fire',
         iconStyleInSquad: 'Default',
         abnormalColorType: 'Physical',
-        orderPriority: {
-          useDirectoryValue: false,
-          value: 0,
-          category: 'CommonCharBuff',
-        },
+        orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
       },
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        atk_up: 0,
-        duration: 0,
-      },
+      blackboard: { atk_up: 0, duration: 0 },
       attributeModifiers: [
-        {
-          attribute: 'Atk',
-          slot: 'baseMultiplier',
-          value: {
-            blackboardKey: 'atk_up',
-          },
-        },
+        { attribute: 'Atk', slot: 'baseMultiplier', value: { blackboardKey: 'atk_up' } },
       ],
+      actionGraph: { main: { nodes: {} }, macros: {} },
     },
     buff_equipsuit_atk_01_normalskill: {
       stackingType: 'refresh',
       priority: 0,
       maxStackCount: 0,
-      durationSeconds: {
-        blackboardKey: 'duration',
-      },
+      durationSeconds: { blackboardKey: 'duration' },
       triggerIntervalSeconds: 0,
       waitFirstTriggerInterval: true,
       maxTriggerCount: 1,
@@ -227,35 +188,21 @@ const definition = {
         charHpBarVfxType: 'Fire',
         iconStyleInSquad: 'Default',
         abnormalColorType: 'Physical',
-        orderPriority: {
-          useDirectoryValue: false,
-          value: 0,
-          category: 'CommonCharBuff',
-        },
+        orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
       },
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        atk_up: 0,
-        duration: 0,
-      },
+      blackboard: { atk_up: 0, duration: 0 },
       attributeModifiers: [
-        {
-          attribute: 'Atk',
-          slot: 'baseMultiplier',
-          value: {
-            blackboardKey: 'atk_up',
-          },
-        },
+        { attribute: 'Atk', slot: 'baseMultiplier', value: { blackboardKey: 'atk_up' } },
       ],
+      actionGraph: { main: { nodes: {} }, macros: {} },
     },
     buff_equipsuit_atk_01_ultimateskill: {
       stackingType: 'refresh',
       priority: 0,
       maxStackCount: 0,
-      durationSeconds: {
-        blackboardKey: 'duration',
-      },
+      durationSeconds: { blackboardKey: 'duration' },
       triggerIntervalSeconds: 0,
       waitFirstTriggerInterval: true,
       maxTriggerCount: 1,
@@ -279,54 +226,18 @@ const definition = {
         charHpBarVfxType: 'Fire',
         iconStyleInSquad: 'Default',
         abnormalColorType: 'Physical',
-        orderPriority: {
-          useDirectoryValue: false,
-          value: 0,
-          category: 'CommonCharBuff',
-        },
+        orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
       },
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        atk_up: 0,
-        duration: 0,
-      },
+      blackboard: { atk_up: 0, duration: 0 },
       attributeModifiers: [
-        {
-          attribute: 'Atk',
-          slot: 'baseMultiplier',
-          value: {
-            blackboardKey: 'atk_up',
-          },
-        },
+        { attribute: 'Atk', slot: 'baseMultiplier', value: { blackboardKey: 'atk_up' } },
       ],
+      actionGraph: { main: { nodes: {} }, macros: {} },
     },
   },
-  enableSequence: {
-    steps: [
-      {
-        kind: 'applyBuff',
-        parameters: {
-          buffId: 'buff_equipsuit_atk_01',
-          target: 'caster',
-          blackboardAssignments: {
-            dmg_up: {
-              kind: 'constant',
-              value: 0.24,
-            },
-            atk_up: {
-              kind: 'constant',
-              value: 0.05,
-            },
-            duration: {
-              kind: 'constant',
-              value: 15,
-            },
-          },
-        },
-      },
-    ],
-  },
+  enableSequence: { $sequence: 'applyBuff_1' },
 } as const satisfies GearSetDefinition;
 
 export default definition;

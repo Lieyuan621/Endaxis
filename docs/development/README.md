@@ -64,6 +64,6 @@ npm run preview
 ## 常见阻塞
 
 - TypeScript 直接执行参数不被识别：检查 Node 版本，不要删掉脚本参数绕过。
-- Inspector 缓存缺失：通过正常 Vite 或 `npm run type-check` 入口准备，见 [Inspector 工具](../../tools/inspector-schema/README.md)。
-- 游戏来源下载或 Unity 导出失败：检查本轮报告与来源版本，不能复制旧产物补缺。
+- 节点字段与契约不一致：按[节点描述工具](../../tools/editor/README.md)重新生成并检查差异，不手改生成文件。
+- 游戏来源下载或 Unity 导出失败：检查生成报告与来源版本，不能复制旧产物补缺。
 - 页面与预期不一致：先确认当前端口、工作树和已发布结果，再检查缓存与运行错误。

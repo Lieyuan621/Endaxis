@@ -1,4 +1,7 @@
+import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import { describe, expect, it } from 'vitest';
+import type { ActionGraphReference } from '../../../packages/game-data-contract/src/actionGraph';
+import { ActionGraphDefinitionRepository } from '../../core/compiler/actionGraphDefinitionRepository';
 import { ExplicitCriticalSampleSource } from '../../core/combat/random/criticalSampleSource';
 import { createEmptyScenario } from '../../core/project/createProject';
 import { perlica, perlica as perlicaFormalOperator } from '../../data/operators/perlica.generated';
@@ -13,18 +16,124 @@ import { rossi as rossiGeneratedOperator } from '../../data/operators/rossi.gene
 import { camille as camilleGeneratedOperator } from '../../data/operators/camille.generated';
 import { chenQianyu as chenQianyuGeneratedOperator } from '../../data/operators/chen-qianyu.generated';
 import { estella as estellaGeneratedOperator } from '../../data/operators/estella.generated';
-import { getSkill } from '../../data/operators/testUtils';
+import type {
+  ActionGraphNode,
+  ActionGraphStep,
+} from '../../../packages/game-data-contract/src/actionGraph';
+import type { ScheduledSequenceDefinition } from '../../core/game-data/operatorDefinition';
+
+/** 一段按帧排程的线性步骤链；节点归属由下面的辅助函数显式铺入技能图。 */
+interface FixtureSequence {
+  readonly startFrame: number;
+  readonly steps: readonly ActionGraphStep[];
+}
+
+/** 把线性步骤链铺成图节点并返回排程与节点表。 */
+function projectGraphSequences(sequences: readonly FixtureSequence[]): {
+  readonly scheduledSequences: readonly ScheduledSequenceDefinition[];
+  readonly nodes: Readonly<Record<string, ActionGraphNode>>;
+} {
+  const nodes: Record<string, ActionGraphNode> = {};
+  const scheduledSequences = sequences.map((fixture, sequenceIndex) => {
+    const prefix = `fixture-${sequenceIndex}`;
+    fixture.steps.forEach((action, index) => {
+      nodes[`${prefix}-${index}`] = {
+        action,
+        next: index + 1 < fixture.steps.length ? `${prefix}-${index + 1}` : null,
+      };
+    });
+    return {
+      startFrame: fixture.startFrame,
+      sequence: { $sequence: fixture.steps.length === 0 ? null : `${prefix}-0` },
+    };
+  });
+  return { scheduledSequences, nodes };
+}
+
+/** 单图夹具技能：调用处显式给出每段排程的步骤列表。 */
+function graphFixtureSkill(
+  fixture: Omit<SkillDefinition, 'scheduledSequences' | 'actionGraph'> & {
+    readonly sequences: readonly FixtureSequence[];
+  },
+): SkillDefinition {
+  const { sequences, ...fields } = fixture;
+  const projected = projectGraphSequences(sequences);
+  return {
+    ...fields,
+    scheduledSequences: projected.scheduledSequences,
+    actionGraph: { main: { nodes: projected.nodes }, macros: {} },
+  };
+}
+
+function findSkill(operator: OperatorDefinition, key: string) {
+  const skill = operator.skillGroups
+    .flatMap(group => (Array.isArray(group.skills) ? group.skills : [group.skills]))
+    .find(candidate => candidate.key === key);
+  if (!skill) throw new Error(`missing skill: ${key}`);
+  return skill;
+}
+const estellaBattleSkill = findSkill(estellaGeneratedOperator, 'chr_0021_whiten_normal_skill');
+
+/** 把夹具步骤链作为新节点并入已有图技能的主图，排程置于最前。 */
+function prependGraphSequences(
+  skill: SkillDefinition,
+  sequences: readonly FixtureSequence[],
+): SkillDefinition {
+  const projected = projectGraphSequences(sequences);
+  return {
+    ...skill,
+    scheduledSequences: [...projected.scheduledSequences, ...skill.scheduledSequences],
+    actionGraph: {
+      main: {
+        nodes: { ...skill.actionGraph.main.nodes, ...projected.nodes },
+        ...(skill.actionGraph.main.dataNodes === undefined
+          ? {}
+          : { dataNodes: skill.actionGraph.main.dataNodes }),
+      },
+      macros: skill.actionGraph.macros,
+    },
+  };
+}
+
+/** 沿图入口可达的动作中是否出现指定文本；迁移期夹具用它按内容定位子程序。 */
+function graphProgramContains(
+  skill: SkillDefinition,
+  reference: ActionGraphReference,
+  text: string,
+): boolean {
+  const nodes = skill.actionGraph.main.nodes;
+  const stack = reference.$sequence === null ? [] : [reference.$sequence];
+  const seen = new Set<string>();
+  const pushReferences = (value: unknown) => {
+    if (Array.isArray(value)) {
+      value.forEach(pushReferences);
+      return;
+    }
+    if (value === null || typeof value !== 'object') return;
+    const record = value as Record<string, unknown>;
+    if (typeof record.$sequence === 'string') stack.push(record.$sequence);
+    else Object.values(record).forEach(pushReferences);
+  };
+  while (stack.length > 0) {
+    const name = stack.pop()!;
+    if (seen.has(name)) continue;
+    seen.add(name);
+    const node = nodes[name];
+    if (node === undefined) continue;
+    if (JSON.stringify(node.action).includes(text)) return true;
+    if (node.next !== null) stack.push(node.next);
+    pushReferences(node.action);
+  }
+  return false;
+}
 import { mifu as mifuGeneratedOperator } from '../../data/operators/mifu.generated';
 import { akekuri } from '../../data/operators/akekuri.generated';
 import { commonBuffDefinitions } from '../../data/buffs/commonDefinitions';
 import { elementalAttachments } from '../../data/buffs/elementalAttachments';
-import { scheduled, sequence, step, branch } from '../../data/operators/definitionHelpers';
 import { placeSkillGroup } from '../../ui/timeline/interaction/placeSkillGroup';
 import { StandardPlayerDamageCompatibilityError } from '../../core/combat/runtime/standardPlayerDamageCompatibility';
 import { runStandardPlayerDamageScenarioSimulation } from './runStandardPlayerDamageScenarioSimulation';
 import type { OperatorDefinition } from '../../core/game-data/operatorDefinition';
-
-const estellaBattleSkill = getSkill(estellaGeneratedOperator, 'chr_0021_whiten_normal_skill');
 import { MechanicAdapterRegistry } from '../../core/mechanics/mechanicCompiler';
 import { projectBuffTimelineViz } from '../../core/projection/buffTimelineViz';
 import { findBuffDamageSegment } from '../../ui/timeline/results/enemyBuffDamageHits';
@@ -58,14 +167,20 @@ function createPerlicaScenario() {
   return scenario;
 }
 
+function standardIndex() {
+  return {
+    actionPrograms: new ActionGraphDefinitionRepository(),
+    getCommonDefinitionSources: () => [{ id: 'shared', buffDefinitions: commonBuffDefinitions }],
+    getOperator: (slug: string) => (slug === perlica.slug ? perlica : null),
+    getWeapon: () => null,
+    getGear: () => null,
+    getGearSet: () => null,
+  };
+}
+
 function standardOptions() {
   return {
-    index: {
-      getOperator: (slug: string) => (slug === perlica.slug ? perlica : null),
-      getWeapon: () => null,
-      getGear: () => null,
-      getGearSet: () => null,
-    },
+    index: standardIndex(),
     resources: {
       sharedSpGain: { baseGainEfficiency: 1 },
       spRecoveryPauseDuration: 1.5,
@@ -75,15 +190,115 @@ function standardOptions() {
   };
 }
 
+it('标准伤害模拟入口直接执行图干员并得到预期回执', () => {
+  const graphEntrySkill = graphFixtureSkill({
+    key: 'graph-standard-entry',
+    skillType: 'battleSkill',
+    levelSource: 'battleSkill',
+    timelineBlockFrames: 1,
+    sequences: [{ startFrame: 0, steps: [{ kind: 'dealStagger', parameters: { value: 1 } }] }],
+  });
+  const definition: OperatorDefinition = {
+    ...perlica,
+    talents: [],
+    potentials: [],
+    comboSkillConditions: [],
+    skillGroups: [
+      {
+        key: 'battleSkill',
+        skillType: 'battleSkill',
+        levelSource: 'battleSkill',
+        skills: graphEntrySkill,
+      },
+    ],
+  };
+  const scenario = placeSkillGroup({
+    scenario: createPerlicaScenario(),
+    trackIndex: 0,
+    operator: definition,
+    skillGroupKey: 'battleSkill',
+    startFrame: 1,
+    ids: { allocate: kind => `${kind}:graph-standard` },
+  }).scenario;
+  scenario.tracks[0]!.initialState.maxUltimateEnergyOverride = 100;
+  const input = {
+    endFrame: 4,
+    criticalSamples: new ExplicitCriticalSampleSource([]),
+    resolveNonRandomRuntimeSnapshot: () => ({
+      runtimeExtensionMultiplier: 1,
+      appliesIgniteDamageMultiplier: false,
+      appliesPhysicalInflictionDamageMultiplier: false,
+    }),
+  };
+  const graph = runStandardPlayerDamageScenarioSimulation({
+    ...input,
+    scenario,
+    options: {
+      ...standardOptions(),
+      index: { ...standardOptions().index, getOperator: () => definition },
+    },
+  });
+  expect(graph.receiptEntries.some(entry => entry.event === 'SkillInputProcessed')).toBe(true);
+  expect(graph.enemyVitals.finalPoise).toBeLessThan(graph.enemyVitals.initialPoise);
+});
+
 describe('标准入口普通倒地装配', () => {
   function fixture(observeGetUp = false) {
+    const projectedDownSkill = graphFixtureSkill({
+      key: 'battleSkill',
+      skillType: 'battleSkill',
+      levelSource: 'battleSkill',
+      timelineBlockFrames: 1,
+      sequences: [
+        {
+          startFrame: 0,
+          steps: [
+            ...Array.from({ length: 2 }, () => ({
+              kind: 'applyKnockDown' as const,
+              parameters: {
+                target: 'enemy' as const,
+                duration: { kind: 'constant' as const, value: 0.1 },
+                force: false,
+                isExtra: false,
+                targetFilter: 'aliveOnly' as const,
+                returnWhen: 'always' as const,
+              },
+            })),
+            ...(observeGetUp
+              ? [
+                  {
+                    kind: 'conditional' as const,
+                    parameters: {
+                      condition: {
+                        kind: 'entityTagMatch' as const,
+                        target: 'enemy' as const,
+                        tagQueryType: 'hasAny' as const,
+                        tags: ['Status/Immobilized/Getup'],
+                      },
+                    },
+                    whenTrue: { $sequence: null },
+                  },
+                ]
+              : []),
+          ],
+        },
+      ],
+    });
     const definition: OperatorDefinition = {
       ...perlica,
       talents: [],
       potentials: [],
       buffDefinitions: {
-        buff_physical_no_guard: { stackingType: 'refresh', durationSeconds: 2 },
-        buff_physical_knockdown: { stackingType: 'refresh', durationSeconds: 2 },
+        buff_physical_no_guard: {
+          stackingType: 'refresh',
+          durationSeconds: 2,
+          actionGraph: { main: { nodes: {} }, macros: {} },
+        },
+        buff_physical_knockdown: {
+          stackingType: 'refresh',
+          durationSeconds: 2,
+          actionGraph: { main: { nodes: {} }, macros: {} },
+        },
       },
       skillGroups: [
         ...perlica.skillGroups.filter(group => group.key !== 'battleSkill'),
@@ -91,42 +306,7 @@ describe('标准入口普通倒地装配', () => {
           key: 'battleSkill',
           skillType: 'battleSkill',
           levelSource: 'battleSkill',
-          skills: {
-            key: 'battleSkill',
-            skillType: 'battleSkill',
-            levelSource: 'battleSkill',
-            timelineBlockFrames: 1,
-            scheduledSequences: [
-              scheduled(
-                0,
-                sequence(
-                  ...Array.from({ length: 2 }, () =>
-                    step('applyKnockDown', {
-                      target: 'enemy',
-                      duration: { kind: 'constant', value: 0.1 },
-                      force: false,
-                      isExtra: false,
-                      targetFilter: 'aliveOnly',
-                      returnWhen: 'always',
-                    }),
-                  ),
-                  ...(observeGetUp
-                    ? [
-                        branch(
-                          {
-                            kind: 'entityTagMatch',
-                            target: 'enemy',
-                            tagQueryType: 'hasAny',
-                            tags: ['Status/Immobilized/Getup'],
-                          },
-                          sequence(),
-                        ),
-                      ]
-                    : []),
-                ),
-              ),
-            ],
-          },
+          skills: projectedDownSkill,
         },
       ],
     };
@@ -151,7 +331,14 @@ describe('标准入口普通倒地装配', () => {
         resolveNonRandomRuntimeSnapshot: () => {
           throw new Error('控制夹具不应结算伤害');
         },
-        options: { ...options, index: { ...options.index, getOperator: () => definition } },
+        options: {
+          ...options,
+          index: {
+            ...options.index,
+            getCommonDefinitionSources: () => [],
+            getOperator: () => definition,
+          },
+        },
       });
   }
   it('经项目编译、标准预检与正式入口执行首次破防和再次倒地', () => {
@@ -846,24 +1033,19 @@ function createGeneratedMifuBattleChainScenario() {
         ? group
         : {
             ...group,
-            skills: {
-              ...baseSkill,
-              scheduledSequences: [
-                scheduled(
-                  0,
-                  sequence(
-                    ...Array.from({ length: 3 }, () =>
-                      step('applyBuff', {
-                        buffId: 'buff_physical_no_guard',
-                        target: 'enemy',
-                        inheritSourceSkillCastInfo: true,
-                      }),
-                    ),
-                  ),
-                ),
-                ...baseSkill.scheduledSequences,
-              ],
-            },
+            skills: prependGraphSequences(baseSkill, [
+              {
+                startFrame: 0,
+                steps: Array.from({ length: 3 }, () => ({
+                  kind: 'applyBuff' as const,
+                  parameters: {
+                    buffId: 'buff_physical_no_guard',
+                    target: 'enemy' as const,
+                    inheritSourceSkillCastInfo: true,
+                  },
+                })),
+              },
+            ]),
           },
     ),
   };
@@ -917,6 +1099,7 @@ function runGeneratedLifengScenario(talentLevel: number) {
     options: {
       ...standardOptions(),
       index: {
+        ...standardOptions().index,
         getOperator: slug =>
           slug === lifengGeneratedOperator.slug ? lifengGeneratedOperator : null,
         getWeapon: () => null,
@@ -961,6 +1144,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
         ...standardOptions(),
         index: {
           ...standardOptions().index,
+          ...standardOptions().index,
           getCommonBuffDefinitions: () => commonBuffDefinitions,
         },
       },
@@ -991,31 +1175,45 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       // sequence and feed it the native shatter Buff identity through Estella's own output event;
       // this avoids inventing an entity-blackboard initializer or changing event ownership.
       const refundSequence = estellaBattleSkill.scheduledSequences.find(
-        scheduledSequence =>
+        (scheduledSequence: ScheduledSequenceDefinition) =>
           scheduledSequence.startFrame === 21 &&
-          JSON.stringify(scheduledSequence.sequence).includes(
+          graphProgramContains(
+            estellaBattleSkill,
+            scheduledSequence.sequence,
             'buff_chr_0021_whiten_talent_0_active',
           ),
       );
       if (refundSequence === undefined) throw new Error('missing Estella talent refund sequence');
-      const talentTriggerAndConsumptionSkill = {
-        ...estellaBattleSkill,
-        scheduledSequences: [
-          scheduled(
-            0,
-            sequence(
-              step('applyBuff', {
+      const projectedTrigger = projectGraphSequences([
+        {
+          startFrame: 0,
+          steps: [
+            {
+              kind: 'applyBuff',
+              parameters: {
                 buffId: 'buff_common_cryst_triggered_physical_break',
                 target: 'enemy',
                 inheritSourceSkillCastInfo: true,
                 blackboardAssignments: {
                   atk_scale: { kind: 'constant', value: 0 },
                 },
-              }),
-            ),
-          ),
-          refundSequence,
-        ],
+              },
+            },
+          ],
+        },
+      ]);
+      const talentTriggerAndConsumptionSkill = {
+        ...estellaBattleSkill,
+        scheduledSequences: [...projectedTrigger.scheduledSequences, refundSequence],
+        actionGraph: {
+          main: {
+            nodes: { ...estellaBattleSkill.actionGraph.main.nodes, ...projectedTrigger.nodes },
+            ...(estellaBattleSkill.actionGraph.main.dataNodes === undefined
+              ? {}
+              : { dataNodes: estellaBattleSkill.actionGraph.main.dataNodes }),
+          },
+          macros: estellaBattleSkill.actionGraph.macros,
+        },
       };
       const estellaForTalentTest = {
         ...estellaGeneratedOperator,
@@ -1079,6 +1277,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
         options: {
           ...standardOptions(),
           index: {
+            ...standardOptions().index,
             getCommonBuffDefinitions: () => commonBuffDefinitions,
             getOperator: slug =>
               slug === estellaGeneratedOperator.slug ? estellaForTalentTest : null,
@@ -1154,6 +1353,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
         options: {
           ...standardOptions(),
           index: {
+            ...standardOptions().index,
             getOperator: slug =>
               slug === chenQianyuGeneratedOperator.slug ? chenQianyuGeneratedOperator : null,
             getWeapon: () => null,
@@ -1266,6 +1466,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
         options: {
           ...standardOptions(),
           index: {
+            ...standardOptions().index,
             getCommonBuffDefinitions: () => commonBuffDefinitions,
             getOperator: slug =>
               slug === rossiGeneratedOperator.slug
@@ -1302,9 +1503,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       const hits = entries.filter(
         entry =>
           entry.event === 'DamageApplied' &&
-          String(entry.data?.stepKey).includes(
-            'buff_chr_0028_wulfa_normal_bleed:/lifecycleSequences/trigger',
-          ),
+          entry.data?.buffId === 'buff_chr_0028_wulfa_normal_bleed',
       );
       expect(hits.filter(entry => entry.frame < 200)).toEqual([]);
       const segments = projectBuffTimelineViz(entries, 1100);
@@ -1369,6 +1568,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       options: {
         ...standardOptions(),
         index: {
+          ...standardOptions().index,
           getCommonBuffDefinitions: () => commonBuffDefinitions,
           getOperator: slug =>
             slug === rossiGeneratedOperator.slug ? rossiGeneratedOperator : null,
@@ -1463,6 +1663,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
         options: {
           ...standardOptions(),
           index: {
+            ...standardOptions().index,
             getCommonBuffDefinitions: () => commonBuffDefinitions,
             getOperator: slug =>
               slug === rossiGeneratedOperator.slug
@@ -1544,6 +1745,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       options: {
         ...standardOptions(),
         index: {
+          ...standardOptions().index,
           getCommonBuffDefinitions: () => commonBuffDefinitions,
           getOperator: slug =>
             slug === rossiGeneratedOperator.slug ? rossiGeneratedOperator : null,
@@ -1563,7 +1765,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
     expect(delayedDamage.every(entry => entry.sourceId === 'track:rossi')).toBe(true);
     expect(
       delayedDamage.filter(entry =>
-        String(entry.data?.stepKey).includes('/lifecycleSequences/trigger'),
+        String(entry.data?.stepKey).includes('.lifecycleSequences.trigger'),
       ),
     ).toHaveLength(3);
     expect(
@@ -1617,6 +1819,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       options: {
         ...standardOptions(),
         index: {
+          ...standardOptions().index,
           getCommonBuffDefinitions: () => commonBuffDefinitions,
           getOperator: slug =>
             slug === rossiGeneratedOperator.slug ? rossiGeneratedOperator : null,
@@ -1631,7 +1834,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       entry =>
         entry.event === 'DamageApplied' &&
         entry.sourceId === 'track:rossi' &&
-        String(entry.data?.stepKey).startsWith('chr_0028_wulfa_ultimate_skill:'),
+        String(entry.data?.stepKey).includes('chr_0028_wulfa_ultimate_skill:'),
     );
     // 原生固定段 12..36 各一次，两个 channeling 段各一次；条件分支只走一侧。
     expect(directHits).toHaveLength(27);
@@ -1679,6 +1882,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       options: {
         ...standardOptions(),
         index: {
+          ...standardOptions().index,
           getCommonBuffDefinitions: () => commonBuffDefinitions,
           getOperator: slug =>
             slug === camilleGeneratedOperator.slug ? camilleGeneratedOperator : null,
@@ -1693,11 +1897,13 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       entry =>
         entry.event === 'DamageApplied' &&
         entry.sourceId === 'track:camille' &&
-        String(entry.data?.stepKey).startsWith('chr_0033_camille_ultimate_skill:'),
+        String(entry.data?.stepKey).includes('chr_0033_camille_ultimate_skill:'),
     );
     expect(directHits).toHaveLength(9);
     expect(
-      directHits.filter(entry => String(entry.data?.stepKey).includes('/scheduledSequences/3/')),
+      directHits.filter(entry =>
+        String(entry.data?.stepKey).includes('scheduledSequences[3].sequence'),
+      ),
     ).toHaveLength(7);
   });
 
@@ -1756,6 +1962,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
         options: {
           ...standardOptions(),
           index: {
+            ...standardOptions().index,
             getCommonBuffDefinitions: () => commonBuffDefinitions,
             getOperator: slug =>
               slug === rossiGeneratedOperator.slug ? rossiGeneratedOperator : null,
@@ -1841,29 +2048,29 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
           ? group
           : {
               ...group,
-              skills: {
-                ...firstStage,
-                scheduledSequences: [
-                  scheduled(
-                    0,
-                    sequence(
-                      ...Array.from({ length: 3 }, () =>
-                        step('applyBuff', {
-                          buffId: 'buff_physical_no_guard',
-                          target: 'enemy',
-                          inheritSourceSkillCastInfo: true,
-                        }),
-                      ),
-                      step('applyBuff', {
+              skills: prependGraphSequences(firstStage, [
+                {
+                  startFrame: 0,
+                  steps: [
+                    ...Array.from({ length: 3 }, (): ActionGraphStep => ({
+                      kind: 'applyBuff',
+                      parameters: {
+                        buffId: 'buff_physical_no_guard',
+                        target: 'enemy',
+                        inheritSourceSkillCastInfo: true,
+                      },
+                    })),
+                    {
+                      kind: 'applyBuff',
+                      parameters: {
                         buffId: 'buff_common_energy_shard_attached_fire',
                         target: 'enemy',
                         inheritSourceSkillCastInfo: true,
-                      }),
-                    ),
-                  ),
-                  ...firstStage.scheduledSequences,
-                ],
-              },
+                      },
+                    },
+                  ],
+                },
+              ]),
             },
       ),
     };
@@ -1914,6 +2121,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       options: {
         ...standardOptions(),
         index: {
+          ...standardOptions().index,
           getCommonBuffDefinitions: () => commonBuffDefinitions,
           getOperator: slug => (slug === preparedRossi.slug ? preparedRossi : null),
           getWeapon: () => null,
@@ -2001,6 +2209,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
         options: {
           ...standardOptions(),
           index: {
+            ...standardOptions().index,
             getCommonBuffDefinitions: () => commonBuffDefinitions,
             getOperator: slug =>
               slug === rossiGeneratedOperator.slug ? rossiGeneratedOperator : null,
@@ -2039,6 +2248,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       options: {
         ...standardOptions(),
         index: {
+          ...standardOptions().index,
           getOperator: slug =>
             slug === tangtangGeneratedOperator.slug ? tangtangGeneratedOperator : null,
           getWeapon: () => null,
@@ -2089,6 +2299,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
         options: {
           ...standardOptions(),
           index: {
+            ...standardOptions().index,
             getOperator: slug =>
               slug === tangtangGeneratedOperator.slug ? tangtangGeneratedOperator : null,
             getWeapon: () => null,
@@ -2124,6 +2335,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
         options: {
           ...standardOptions(),
           index: {
+            ...standardOptions().index,
             getCommonBuffDefinitions: () => commonBuffDefinitions,
             getOperator: slug => {
               if (slug === tangtangGeneratedOperator.slug) return tangtangGeneratedOperator;
@@ -2176,6 +2388,13 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       }),
     );
     expect(tangtangDamage(triggered)).toHaveLength(tangtangDamage(baseline).length);
+    // 图身份：末段跟进伤害定位到实体子技能图内的具体节点，升级后换用另一节点。
+    expect(tangtangDamage(baseline).at(-1)?.stepKey).toContain(
+      '/childSkill/actionGraph/main/nodes/dealDamage_3/action',
+    );
+    expect(tangtangDamage(triggered).at(-1)?.stepKey).toContain(
+      '/childSkill/actionGraph/main/nodes/dealDamage_5/action',
+    );
     expect(tangtangDamage(triggered).at(-1)?.value).toBeGreaterThan(
       tangtangDamage(baseline).at(-1)?.value as number,
     );
@@ -2196,6 +2415,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
         options: {
           ...standardOptions(),
           index: {
+            ...standardOptions().index,
             getCommonBuffDefinitions: () => commonBuffDefinitions,
             getOperator: slug =>
               slug === gilbertaGeneratedOperator.slug ? gilbertaGeneratedOperator : null,
@@ -2228,6 +2448,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       options: {
         ...standardOptions(),
         index: {
+          ...standardOptions().index,
           getCommonBuffDefinitions: () => commonBuffDefinitions,
           getOperator: slug => (slug === mifuGeneratedOperator.slug ? mifuGeneratedOperator : null),
           getWeapon: () => null,
@@ -2267,8 +2488,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
         event: 'DamageApplied',
         sourceId: 'track:mifu',
         data: expect.objectContaining({
-          stepKey:
-            'chr_0031_mifu_ultimate_skill:/scheduledSequences/3/sequence/steps/0/whenTrue/steps/0',
+          stepKey: expect.stringContaining('chr_0031_mifu_ultimate_skill:scheduledSequences[3]'),
           expectedDamage: 0,
         }),
       }),
@@ -2289,6 +2509,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       options: {
         ...standardOptions(),
         index: {
+          ...standardOptions().index,
           getCommonBuffDefinitions: () => commonBuffDefinitions,
           getOperator: slug => (slug === fixture.operator.slug ? fixture.operator : null),
           getWeapon: () => null,
@@ -2346,6 +2567,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       options: {
         ...standardOptions(),
         index: {
+          ...standardOptions().index,
           getCommonBuffDefinitions: () => commonBuffDefinitions,
           getOperator: slug =>
             slug === lastRiteGeneratedOperator.slug ? lastRiteGeneratedOperator : null,
@@ -2383,6 +2605,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       options: {
         ...standardOptions(),
         index: {
+          ...standardOptions().index,
           getCommonBuffDefinitions: () => commonBuffDefinitions,
           getOperator: slug =>
             slug === endministratorGeneratedOperator.slug ? endministratorGeneratedOperator : null,
@@ -2415,7 +2638,9 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
     expect(damageEntries).toContainEqual(
       expect.objectContaining({
         data: expect.objectContaining({
-          stepKey: expect.stringContaining('buff_common_originum_frozen:'),
+          stepKey: expect.stringContaining(
+            'buff_common_originum_frozen\\".igniteEventResponses[0].sequence',
+          ),
         }),
       }),
     );
@@ -2435,6 +2660,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       options: {
         ...standardOptions(),
         index: {
+          ...standardOptions().index,
           getCommonBuffDefinitions: () => commonBuffDefinitions,
           getOperator: slug =>
             slug === endministratorGeneratedOperator.slug ? endministratorGeneratedOperator : null,
@@ -2472,6 +2698,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
         options: {
           ...standardOptions(),
           index: {
+            ...standardOptions().index,
             getCommonBuffDefinitions: () => commonBuffDefinitions,
             getOperator: slug =>
               slug === endministratorGeneratedOperator.slug
@@ -2522,6 +2749,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
         options: {
           ...standardOptions(),
           index: {
+            ...standardOptions().index,
             getCommonBuffDefinitions: () => commonBuffDefinitions,
             getOperator: slug =>
               slug === endministratorGeneratedOperator.slug
@@ -2561,6 +2789,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       options: {
         ...standardOptions(),
         index: {
+          ...standardOptions().index,
           getOperator: slug =>
             slug === arclightGeneratedOperator.slug ? arclightGeneratedOperator : null,
           getWeapon: () => null,
@@ -2607,6 +2836,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       options: {
         ...standardOptions(),
         index: {
+          ...standardOptions().index,
           getOperator: slug =>
             slug === arclightGeneratedOperator.slug ? arclightGeneratedOperator : null,
           getWeapon: () => null,
@@ -2659,6 +2889,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       options: {
         ...standardOptions(),
         index: {
+          ...standardOptions().index,
           getOperator: slug =>
             slug === lifengGeneratedOperator.slug ? lifengGeneratedOperator : null,
           getWeapon: () => null,
@@ -2683,7 +2914,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       expect.objectContaining({
         data: expect.objectContaining({
           stepKey:
-            'buff_chr_0015_lifeng_talent_2:/abilityEventResponses/0/sequence/steps/0/whenTrue/steps/4',
+            '["buffDefinitions.\\"buff_chr_0015_lifeng_talent_2\\".abilityEventResponses[0].sequence/%5Bnull%2C%22conditional_9%22%5D:0","[null,\\"dealDamage_3\\"]"]',
         }),
       }),
     );
@@ -2722,6 +2953,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
         options: {
           ...standardOptions(),
           index: {
+            ...standardOptions().index,
             getCommonBuffDefinitions: () => commonBuffDefinitions,
             getOperator: slug =>
               [akekuri, perlicaGeneratedOperator].find(operator => operator.slug === slug) ?? null,
@@ -2770,6 +3002,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       options: {
         ...standardOptions(),
         index: {
+          ...standardOptions().index,
           getCommonBuffDefinitions: () => commonBuffDefinitions,
           getOperator: slug => definitions.find(operator => operator.slug === slug) ?? null,
           getWeapon: () => null,
@@ -2781,17 +3014,17 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
 
     expect(
       result.receiptEntries
-        .filter(
-          entry =>
-            entry.event === 'SkillStarted' && ['track:0', 'track:1'].includes(entry.sourceId ?? ''),
-        )
+        .filter(entry => entry.event === 'SkillStarted')
         .map(entry => [entry.sourceId, entry.data?.skillId]),
     ).toEqual([
       ['track:0', 'chr_0007_ikut_attack5'],
       ['track:1', 'chr_0004_pelica_combo_skill'],
       ['track:1', 'chr_0004_pelica_normal_skill'],
       ['track:1', 'chr_0004_pelica_ultimate_skill'],
+      // 终结技的范围实体子技能作为能力实体自己的施放上报。
+      ['ability-entity:1', 'chr_0004_pelica_ultimate_skill_abilityrange'],
       ['track:1', 'chr_0004_pelica_ultimate_skill'],
+      ['ability-entity:2', 'chr_0004_pelica_ultimate_skill_abilityrange'],
     ]);
     expect(result.receiptEntries).toContainEqual(
       expect.objectContaining({ event: 'ComboWindowOpened', sourceId: 'track:1' }),
@@ -2873,6 +3106,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       options: {
         ...standardOptions(),
         index: {
+          ...standardOptions().index,
           getOperator: slug => (slug === perlicaFormalOperator.slug ? perlicaFormalOperator : null),
           getWeapon: () => null,
           getGear: () => null,
@@ -2884,16 +3118,26 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
 
     expect(
       result.receiptEntries
-        .filter(entry => entry.event === 'SkillStarted' && entry.sourceId === 'track:0')
+        .filter(entry => entry.event === 'SkillStarted')
         .map(entry => entry.data?.skillId),
     ).toEqual([
+      // 统一投射物生命周期把命中/实体回调技能作为真实施放上报。
       'chr_0004_pelica_attack1',
+      'chr_0004_pelica_attack1_projhit',
       'chr_0004_pelica_attack2',
+      'chr_0004_pelica_attack2_projhit',
+      'chr_0004_pelica_attack2_projhit',
       'chr_0004_pelica_attack3',
+      'chr_0004_pelica_attack3_projhit',
+      'chr_0004_pelica_attack3_projhit',
+      'chr_0004_pelica_attack3_projhit',
       'chr_0004_pelica_attack4',
+      'chr_0004_pelica_attack4_projhit',
       'chr_0004_pelica_combo_skill',
+      'chr_0004_pelica_combo_skill_projhit',
       'chr_0004_pelica_normal_skill',
       'chr_0004_pelica_ultimate_skill',
+      'chr_0004_pelica_ultimate_skill_abilityrange',
       'chr_0004_pelica_plunging_attack_end',
       'chr_0004_pelica_power_attack',
     ]);
@@ -3016,8 +3260,9 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
         options: {
           ...base,
           index: {
+            ...standardOptions().index,
             ...base.index,
-            getCommonBuffDefinitions: gameDataRepository.getCommonBuffDefinitions,
+            getCommonDefinitionSources: gameDataRepository.getCommonDefinitionSources,
             getMechanic: gameDataRepository.getMechanic,
           },
           mechanicAdapters: new MechanicAdapterRegistry([contingencyContractMechanicAdapter]),
@@ -3054,6 +3299,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       options: {
         ...base,
         index: {
+          ...standardOptions().index,
           ...base.index,
           getMechanic: gameDataRepository.getMechanic,
         },
@@ -3105,10 +3351,11 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
         options: {
           ...base,
           index: {
+            ...standardOptions().index,
             ...base.index,
             getOperator: slug =>
               slug === perlicaGeneratedOperator.slug ? perlicaGeneratedOperator : null,
-            getCommonBuffDefinitions: gameDataRepository.getCommonBuffDefinitions,
+            getCommonDefinitionSources: gameDataRepository.getCommonDefinitionSources,
             getMechanic: gameDataRepository.getMechanic,
           },
           mechanicAdapters: new MechanicAdapterRegistry([contingencyContractMechanicAdapter]),
@@ -3165,8 +3412,9 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
         options: {
           ...base,
           index: {
+            ...standardOptions().index,
             ...base.index,
-            getCommonBuffDefinitions: gameDataRepository.getCommonBuffDefinitions,
+            getCommonDefinitionSources: gameDataRepository.getCommonDefinitionSources,
             getMechanic: gameDataRepository.getMechanic,
           },
           mechanicAdapters: new MechanicAdapterRegistry([contingencyContractMechanicAdapter]),
@@ -3232,8 +3480,9 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
         options: {
           ...base,
           index: {
+            ...standardOptions().index,
             ...base.index,
-            getCommonBuffDefinitions: gameDataRepository.getCommonBuffDefinitions,
+            getCommonDefinitionSources: gameDataRepository.getCommonDefinitionSources,
             getMechanic: gameDataRepository.getMechanic,
             getOperator: slug => definitions.find(operator => operator.slug === slug) ?? null,
           },

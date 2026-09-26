@@ -7,7 +7,10 @@ import { parseKnownNativeActionLeafSource } from '../src/source/actionLeaf.ts';
 import { parseNativeSequenceSource } from '../src/source/controlFlow.ts';
 import { compileCombatActionSequenceSource } from '../src/compiler/buffs/buffRuntimeProjection.ts';
 import { scalarFixture, targetFixture } from './sourceFixtures.ts';
-import { compileActionSequence } from '../../../src/core/compiler/compileSkill';
+import { createActionGraphBuilder } from '../src/compiler/actions/actionGraphBuilder.ts';
+import { readActionGraphChain } from '../src/compiler/actions/actionGraphBuilder.ts';
+import type { CompiledBuffStepSource } from '../src/compiler/actions/combatActionProjectionTypes.ts';
+import { compileFlatSteps, compileGraphSequence } from './support/graphSequence.ts';
 import { BuffOperationExecutor } from '../../../src/core/combat/buffs/buffOperationExecutor';
 import { CombatBuffContainer } from '../../../src/core/combat/buffs/combatBuffs';
 import { CombatAttributeSet } from '../../../src/core/combat/attributes/combatAttributes';
@@ -53,9 +56,10 @@ const rawRead = (target = 'Owner') => ({
 });
 function project(
   actions: unknown[],
-  projectionContext: CombatActionProjectionContextSource = context,
+  projectionContext: Omit<CombatActionProjectionContextSource, 'graph'> = context,
 ) {
-  return compileCombatActionSequenceSource(
+  const builder = createActionGraphBuilder<CompiledBuffStepSource>();
+  const entry = compileCombatActionSequenceSource(
     parseNativeSequenceSource(
       {
         actionData: actions,
@@ -66,8 +70,15 @@ function project(
       {},
       (value, path) => parseKnownNativeActionLeafSource(value, path, {}),
     ),
-    projectionContext,
+    { ...projectionContext, graph: builder },
   );
+  const graph = builder.finish();
+  return {
+    entry,
+    graph,
+    steps: readActionGraphChain(graph, entry),
+    compiled: () => compileGraphSequence(entry, graph),
+  };
 }
 function createTarget() {
   return new CombatBuffContainer(
@@ -112,7 +123,7 @@ describe('公共 Buff 环境读取：来源到正式执行器', () => {
       blackboard,
       buffOwnerId: 'enemy',
     });
-    const sequence = runtime.createSequence(compileActionSequence(projected, 1));
+    const sequence = runtime.createSequence(projected.compiled());
     sequence.reset({});
     expect(sequence.tryExecute({})).toBe(false);
     expect(blackboard.getNumber('lastType')).toBe(7);
@@ -155,6 +166,7 @@ describe('公共 Buff 环境读取：来源到正式执行器', () => {
           actionOwnerTarget: 'caster',
           actionTargetTarget: 'enemy',
           staticEnemyTargetGroupKeys: new Set(['smart_target']),
+          graph: createActionGraphBuilder<CompiledBuffStepSource>(),
         },
       ),
     ).toEqual([
@@ -212,21 +224,19 @@ describe('公共 Buff 环境读取：来源到正式执行器', () => {
     const run = () =>
       runtime
         .createSequence(
-          compileActionSequence(
-            {
-              steps: [
-                ...projected.steps,
-                {
-                  kind: 'changeResourceByActionValue',
-                  parameters: {
-                    resource: 'sp',
-                    recipient: 'caster',
-                    amount: { kind: 'constant', value: 1 },
-                  },
+          compileFlatSteps(
+            [
+              ...projected.steps,
+              {
+                kind: 'changeResourceByActionValue',
+                parameters: {
+                  resource: 'sp',
+                  recipient: 'caster',
+                  amount: { kind: 'constant', value: 1 },
                 },
-              ],
-            },
-            1,
+              },
+            ],
+            projected.graph,
           ),
         )
         .executeInstant({});
@@ -289,7 +299,7 @@ describe('公共 Buff 环境读取：来源到正式执行器', () => {
       blackboard,
       buffOwnerId: 'enemy',
     });
-    const program = compileActionSequence(project([rawRead(target)]), 1);
+    const program = project([rawRead(target)]).compiled();
     const run = () => runtime.createSequence(program).executeInstant({});
     expect(run()).toBe(true);
     expect(blackboard.getNumber('copied')).toBe(2);
@@ -318,21 +328,20 @@ describe('公共 Buff 环境读取：来源到正式执行器', () => {
       blackboard: new ActionBlackboard(),
       buffOwnerId: 'enemy',
     });
-    const program = compileActionSequence(
-      {
-        steps: [
-          ...project([rawRead()]).steps,
-          {
-            kind: 'changeResourceByActionValue',
-            parameters: {
-              resource: 'sp',
-              recipient: 'caster',
-              amount: { kind: 'constant', value: 1 },
-            },
+    const projected = project([rawRead()]);
+    const program = compileFlatSteps(
+      [
+        ...projected.steps,
+        {
+          kind: 'changeResourceByActionValue',
+          parameters: {
+            resource: 'sp',
+            recipient: 'caster',
+            amount: { kind: 'constant', value: 1 },
           },
-        ],
-      },
-      1,
+        },
+      ],
+      projected.graph,
     );
     expect(runtime.createSequence(program).executeInstant({})).toBe(false);
     expect(execute).not.toHaveBeenCalled();
@@ -356,12 +365,10 @@ describe('当前 Buff 时间暂停投影', () => {
   });
 
   it('保留 PauseBuffTime 的暂停与恢复状态', () => {
-    expect(project([rawPause(true), rawPause(false)])).toEqual({
-      steps: [
-        { kind: 'setCurrentBuffTimePaused', parameters: { paused: true } },
-        { kind: 'setCurrentBuffTimePaused', parameters: { paused: false } },
-      ],
-    });
+    expect(project([rawPause(true), rawPause(false)]).steps).toEqual([
+      { kind: 'setCurrentBuffTimePaused', parameters: { paused: true } },
+      { kind: 'setCurrentBuffTimePaused', parameters: { paused: false } },
+    ]);
   });
 
   it('拒绝在没有当前 Buff 实例的主动技能上下文执行', () => {

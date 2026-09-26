@@ -63,6 +63,24 @@ it('retains damage without any visible Buff or icon metadata', () => {
   expect(positions).toEqual([{ group: [entry], row: 3, standalone: true }]);
 });
 
+it('uses icon metadata to retain hidden Buff damage even when the input contains only hits', () => {
+  const entry: CombatReceiptEntry = {
+    ...hit(1, 1),
+    producedBy: { kind: 'buff', ownerId: 'enemy', instanceId: 1 },
+    data: {
+      ...hit(1, 1).data,
+      castId: 'cast',
+      hitId: 'hit',
+      stepKey: 'damage',
+      skillType: 'comboSkill',
+    },
+  };
+  const metadata = [{ ...buff(1, 0, 20), iconPath: '/icons/airborne.webp' }];
+  expect(layoutEnemyDamageHits([entry], [], [], new Set(), metadata)).toEqual([
+    { group: [entry], row: 3, standalone: true },
+  ]);
+});
+
 it('shares a burst and an explicitly visible attachment hit without counting a receipt twice', () => {
   const a = hit(1, 1);
   const burst = { ...hit(2, 1), data: { ...hit(2, 1).data, spellBurstType: 'Fire' } };

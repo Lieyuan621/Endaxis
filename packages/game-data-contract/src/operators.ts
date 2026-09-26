@@ -17,7 +17,8 @@ import {
   type SkillLevelSource,
 } from './primitives.ts';
 import { type BuildCondition, type CombatCondition } from './conditions.ts';
-import { type ActionSequenceDefinition, type CombatEventTrigger } from './actions.ts';
+import type { ActionGraphReference, ActionGraphResourceDefinition } from './actionGraph.ts';
+import { type CombatEventTrigger } from './actions.ts';
 import {
   type ComboSkillPriority,
   type OperatorAbilityEntityDefinitions,
@@ -36,12 +37,6 @@ export const OPERATOR_PASSIVE_ABILITY_EVENTS = [
 ] as const;
 /** 干员被动可以监听的一种能力事件。 */
 export type OperatorPassiveAbilityEvent = (typeof OPERATOR_PASSIVE_ABILITY_EVENTS)[number];
-/** 判断外部值是否是受支持的干员被动事件名。 */
-export function isOperatorPassiveAbilityEvent(
-  event: unknown,
-): event is OperatorPassiveAbilityEvent {
-  return (OPERATOR_PASSIVE_ABILITY_EVENTS as readonly unknown[]).includes(event);
-}
 
 /** 干员各等级四维、基础攻击与基础生命的成长定义表。 */
 export type AttributeGrowthDefinition = Record<OperatorAttribute, readonly number[]> & {
@@ -351,7 +346,7 @@ export interface UpgradeEventHandlerDefinition {
   /** 监听器实例的原生常量黑板；数组按当前养成等级解析。 */
   blackboard?: Readonly<Record<string, LevelValues>>;
   /** 事件触发后执行的动作序列。 */
-  sequence: ActionSequenceDefinition;
+  sequence: ActionGraphReference;
 }
 
 /**
@@ -359,6 +354,8 @@ export interface UpgradeEventHandlerDefinition {
  * 它复用技能步骤协议，但不属于技能库，也不能被时间轴输入释放。
  */
 export interface OperatorPassiveSkillDefinition {
+  /** 正式被动程序的局部主图与宏；不借用干员总图。 */
+  readonly actionGraph: ActionGraphResourceDefinition;
   /** 被动技能在干员定义中的唯一名称。 */
   key: string;
   /** 角色基础被动跟随其所属原生技能组；养成附加被动不设置该字段。 */
@@ -366,13 +363,15 @@ export interface OperatorPassiveSkillDefinition {
   /** 被动启用序列读取的初始黑板；数组按所属技能或当前养成等级解析。 */
   blackboard?: Readonly<Record<string, LevelValues>>;
   /** 原生被动 Skill.Enable 时执行的有序行为。 */
-  enableSequence: ActionSequenceDefinition;
+  enableSequence: ActionGraphReference;
   /** 被动 Skill 的原生事件响应；与启用程序共享被动黑板。 */
   abilityEventResponses?: readonly AbilityEventResponse<OperatorPassiveAbilityEvent>[];
 }
 
 /** 一个天赋槽或潜能槽的等级、修正和被动能力。 */
 export interface OperatorUpgradeDefinition {
+  /** 初始化及养成事件响应的所属图；纯属性/附着 Buff 配置不需要程序图。 */
+  readonly actionGraph?: ActionGraphResourceDefinition;
   /** 这一天赋或潜能可以选择的等级数量。 */
   levels: number;
   /**
@@ -388,7 +387,12 @@ export interface OperatorUpgradeDefinition {
   /** 启用后注册的战斗事件响应。 */
   eventHandlers?: readonly UpgradeEventHandlerDefinition[];
   /** 养成启用后直接安装的初始化行为；不是技能，也不进入可释放技能集合。 */
-  initializationSequence?: ActionSequenceDefinition;
+  initializationSequence?: ActionGraphReference;
+  /** 原生 CharMiscFeature 直接附着的 Buff；数值按这一天赋或潜能的等级解析。 */
+  attachedBuffs?: readonly {
+    readonly buffId: string;
+    readonly blackboardAssignments?: Readonly<Record<string, LevelValues>>;
+  }[];
   /** 仅在这个养成项启用时安装；每个被动在一场战斗中只启用一次。 */
   passiveSkills?: readonly OperatorPassiveSkillDefinition[];
 }
@@ -406,7 +410,7 @@ export interface OperatorEventHandlerDefinition {
   /** 要监听的构筑事件。 */
   event: OperatorEvent;
   /** 事件发生后执行的动作序列。 */
-  sequence: ActionSequenceDefinition;
+  sequence: ActionGraphReference;
 }
 
 /** 由静态构筑条件派生、在本场战斗创建技能实例前写入的原生实体黑板值。 */
@@ -489,6 +493,8 @@ export type OperatorPassiveUiDefinition =
 
 /** 原生角色常驻条件；独立于技能块，也不复用旧手写语义连携规则。 */
 export interface ComboSkillConditionDefinition {
+  /** 当前条件的独立程序图。 */
+  readonly actionGraph: ActionGraphResourceDefinition;
   /** 条件在此干员定义中的唯一名称。 */
   key: string;
   /** 原生角色模板注册该条件时绑定的具体连携技能；展示分组不得参与运行语义。 */
@@ -500,7 +506,7 @@ export interface ComboSkillConditionDefinition {
   /** 模板字面初值，不是等级数组；null 为禁用，{} 为启用空板，每条注册独立复制。 */
   initialValues: Readonly<Record<string, number | string | null>> | null;
   /** 判断事件是否满足连携条件的动作序列。 */
-  sequence: ActionSequenceDefinition;
+  sequence: ActionGraphReference;
 }
 
 /** 一名干员可用于构筑和战斗模拟的完整定义。 */

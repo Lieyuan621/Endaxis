@@ -1,15 +1,23 @@
+import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
+import { actionSteps } from '../../test/actionProgramMatchers';
+import { createTestBuffReference } from '../combat/buffs/buffTestFixtures';
+
+import { createActionGraphCompilation } from './compileActionGraph';
+import type { ActionGraphNode } from '../../../packages/game-data-contract/src/actionGraph';
+import { ActionGraphDefinitionRepository } from './actionGraphDefinitionRepository';
 import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 import {
   CombatRuntimeAssembly,
   type CombatOperationExecutorContext,
   type EnemyBuffRuntime,
+  type OperatorBuffRuntime,
   type CombatRuntimeAssemblyOptions,
   type CombatRuntimeEnvironmentOptions,
   type CombatRuntimeScenarioOptions,
 } from '../combat/runtime/combatRuntimeAssembly';
 import type { CombatOperationExecutor } from '../combat/skills/skillRuntime';
 import type { CompiledSkillProgram } from './combatProgram';
-import type { OperatorDefinition, SkillDefinition } from '../game-data/operatorDefinition';
+import type { OperatorDefinition } from '../game-data/operatorDefinition';
 import { createEmptyScenario } from '../project/createProject';
 import type { ScenarioDocument } from '../project/schema';
 import { perlica } from '../../data/operators/perlica.generated';
@@ -20,10 +28,40 @@ import type {
 } from '../game-data/equipmentDefinition';
 import { placeSkillGroup } from '../../ui/timeline/interaction/placeSkillGroup';
 import {
+  compileScenarioCustomSkillCastPrograms,
   compileOperatorEntityBlackboardInitialValues,
   compileScenarioRuntimeAssembly,
   type CompileScenarioRuntimeAssemblyOptions,
 } from './compileScenarioRuntimeAssembly';
+
+it('逐帧自定义技能在图干员上保留技能块身份和覆盖黑板', () => {
+  const placed = placeSkillGroup({
+    scenario: createScenario(),
+    trackIndex: 0,
+    operator: perlica,
+    skillGroupKey: 'battleSkill',
+    startFrame: 30,
+    ids: { allocate: () => 'cast:custom-graph' },
+  }).scenario;
+  const group = perlica.skillGroups.find(value => value.key === 'battleSkill')!;
+  const skill = Array.isArray(group.skills) ? group.skills[0]! : group.skills;
+  placed.tracks[0]!.skillCasts[0]!.customDefinition = {
+    ...skill,
+    blackboard: { ...skill.blackboard, custom_marker: 42 },
+  };
+  const graphScenario: ScenarioDocument = placed;
+  const programs = compileScenarioCustomSkillCastPrograms(graphScenario, {
+    getOperator: () => perlica,
+    getWeapon: () => null,
+    getGear: () => null,
+    getGearSet: () => null,
+    getCommonDefinitionSources: () => [],
+    actionPrograms: new ActionGraphDefinitionRepository(),
+  });
+  expect(programs).toHaveLength(1);
+  expect(programs[0]!.castId).toBe('cast:custom-graph');
+  expect(programs[0]!.program.initialBlackboard.custom_marker).toBe(42);
+});
 
 it('场景输入与环境端口互不重叠，完整装配选项由两者组成', () => {
   expectTypeOf<keyof CombatRuntimeScenarioOptions>().toEqualTypeOf<
@@ -107,6 +145,8 @@ function options(): CompileScenarioRuntimeAssemblyOptions {
       getWeapon: () => null,
       getGear: () => null,
       getGearSet: () => null,
+      getCommonDefinitionSources: () => [],
+      actionPrograms: new ActionGraphDefinitionRepository(),
     },
     resources: {
       sharedSpGain: { baseGainEfficiency: 1 },
@@ -209,8 +249,9 @@ describe('compileScenarioRuntimeAssembly', () => {
         slot.key === 'comboSkill' ? { ...slot, replacementSkillKeys: ['replacement'] } : slot,
       ),
       skillGroups: perlica.skillGroups.map(group => {
-        if (group.key !== 'comboSkill') return group;
-        const base = group.skills as SkillDefinition;
+        const skills = group.skills;
+        if (group.key !== 'comboSkill' || Array.isArray(skills)) return group;
+        const base = skills as Exclude<typeof skills, readonly unknown[]>;
         return {
           ...group,
           skills: { ...base, cooldownFrames: [60, 90] },
@@ -250,9 +291,12 @@ describe('compileScenarioRuntimeAssembly', () => {
       ids: { allocate: kind => `${kind}:custom` },
     }).scenario;
     const cast = scenario.tracks[0]!.skillCasts[0]!;
-    const base = perlica.skillGroups.find(group => group.key === 'comboSkill')!
-      .skills as SkillDefinition;
-    cast.customDefinition = { ...base, cooldownFrames: 123 };
+    const skills = perlica.skillGroups.find(group => group.key === 'comboSkill')!.skills;
+    if (Array.isArray(skills)) throw new Error('expected one combo skill');
+    cast.customDefinition = {
+      ...(skills as Exclude<typeof skills, readonly unknown[]>),
+      cooldownFrames: 123,
+    };
     const compiled = compileScenarioRuntimeAssembly(scenario, options());
     expect(compiled.operators[0]!.skillCasts![0]!.program.cooldownFrames).toBe(123);
     expect(
@@ -276,6 +320,26 @@ describe('compileScenarioRuntimeAssembly', () => {
           }),
         },
       });
+      const probeNodes: Record<string, ActionGraphNode> = {
+        'step-0': {
+          action: {
+            kind: 'dealDamage',
+            parameters: { damageType: 'physical', attackScale: 1, tags: [] },
+          },
+          next: 'step-1',
+        },
+        'step-1': {
+          action: {
+            kind: 'modifyActionValue',
+            parameters: {
+              key: 'EntityBB_type',
+              operation: 'assign',
+              value: { kind: 'constant', value: 3 },
+            },
+          },
+          next: null,
+        },
+      };
       const program: CompiledSkillProgram = {
         operatorId: 'track:0',
         skillGroupKey: 'battleSkill',
@@ -289,20 +353,9 @@ describe('compileScenarioRuntimeAssembly', () => {
           {
             startFrame: 0,
             sequence: {
-              steps: [
-                {
-                  kind: 'dealDamage',
-                  parameters: { damageType: 'physical', attackScale: 1, tags: [] },
-                },
-                {
-                  kind: 'modifyActionValue',
-                  parameters: {
-                    key: 'EntityBB_type',
-                    operation: 'assign',
-                    value: { kind: 'constant', value: 3 },
-                  },
-                },
-              ],
+              graph: createActionGraphCompilation({ nodes: probeNodes }, 1, 'probe').compileAll(),
+              entry: 'step-0',
+              callSite: 'probe',
             },
           },
         ],
@@ -766,15 +819,28 @@ describe('compileScenarioRuntimeAssembly', () => {
     const gearSet: GearSetDefinition = {
       slug: 'runtime-set',
       buffDefinitions: { 'buff.runtime-set': { stackingType: 'unique' } },
-      enableSequence: {
-        steps: [
-          { kind: 'changeResource', parameters: { resource: 'sp', amount: 2, recipient: 'team' } },
-        ],
-      },
-      initializationSequence: {
-        steps: [
-          { kind: 'applyBuff', parameters: { buffId: 'buff.runtime-set', target: 'caster' } },
-        ],
+      enableSequence: { $sequence: 'enable' },
+      initializationSequence: { $sequence: 'init' },
+      actionGraph: {
+        main: {
+          nodes: {
+            enable: {
+              action: {
+                kind: 'changeResource',
+                parameters: { resource: 'sp', amount: 2, recipient: 'team' },
+              },
+              next: null,
+            },
+            init: {
+              action: {
+                kind: 'applyBuff',
+                parameters: { buffId: 'buff.runtime-set', target: 'caster' },
+              },
+              next: null,
+            },
+          },
+        },
+        macros: {},
       },
     };
     scenario.tracks[0]!.gears = {
@@ -801,14 +867,10 @@ describe('compileScenarioRuntimeAssembly', () => {
     expect(compiled.operators[0]!.initializationPrograms?.at(-1)).toMatchObject({
       key: 'gear-set:runtime-set',
       equipmentContributionIndex: compiled.operators[0]!.equipmentContributions!.length - 1,
-      enableSequence: {
-        steps: [
-          { kind: 'changeResource', parameters: { resource: 'sp', amount: 2, recipient: 'team' } },
-        ],
-      },
-      sequence: {
-        steps: [{ kind: 'applyBuff', parameters: { buffId: 'buff.runtime-set' } }],
-      },
+      enableSequence: actionSteps([
+        { kind: 'changeResource', parameters: { resource: 'sp', amount: 2, recipient: 'team' } },
+      ]),
+      sequence: actionSteps([{ kind: 'applyBuff', parameters: { buffId: 'buff.runtime-set' } }]),
     });
   });
 
@@ -844,4 +906,154 @@ describe('compileScenarioRuntimeAssembly', () => {
       'scenario.tracks[0].initialState.ultimateEnergy exceeds its maximum',
     );
   });
+});
+
+it('assembles a graph operator through the normal runtime assembly entry', () => {
+  const scenario = createScenario();
+  const placed = placeSkillGroup({
+    scenario,
+    trackIndex: 0,
+    operator: perlica,
+    skillGroupKey: 'battleSkill',
+    startFrame: 30,
+    ids: { allocate: () => 'cast:graph' },
+  }).scenario;
+  const weapon: WeaponDefinition = {
+    slug: 'graph-runtime-weapon',
+    rarity: 6,
+    weaponType: perlica.weaponType,
+    baseAttackAtLevelNodes: [1, 2, 3, 4, 5, 6],
+    traits: [
+      {
+        key: 'setup',
+        levelCount: 1,
+        initializationSequence: { $sequence: 'init' },
+        actionGraph: {
+          main: {
+            nodes: {
+              init: { action: { kind: 'dealStagger', parameters: { value: 2 } }, next: null },
+            },
+          },
+          macros: {},
+        },
+      },
+    ],
+  };
+  placed.tracks[0]!.weapon = {
+    weaponSlug: weapon.slug,
+    level: 90,
+    tuned: true,
+    potential: 0,
+    traitLevels: [1],
+  };
+  const baseOptions = options();
+  const compiled = compileScenarioRuntimeAssembly(placed, {
+    ...baseOptions,
+    index: {
+      ...baseOptions.index,
+      getWeapon: slug => (slug === weapon.slug ? weapon : null),
+    },
+  });
+  expect(compiled.operators[0]!.skillCasts?.map(cast => cast.castId)).toEqual(['cast:graph']);
+  const sequence = compiled.operators[0]!.skillCasts![0]!.program.timelineActions[0]!.sequence;
+  expect('steps' in sequence).toBe(false);
+  expect(
+    'steps' in compiled.operators[0]!.equipmentContributions![0]!.initializationSequence!,
+  ).toBe(false);
+  const graphRuntime = new CombatRuntimeAssembly(compiled);
+  graphRuntime.advanceFrames(90);
+  expect(graphRuntime.receipt.entries.some(entry => entry.event === 'SkillStarted')).toBe(true);
+  expect(graphRuntime.resources.snapshot()).toBeDefined();
+});
+
+it('无干员总图时，完整运行时使用独立技能和声明式附着 Buff', () => {
+  const appliedBuffs: string[] = [];
+  const placed = placeSkillGroup({
+    scenario: createScenario(),
+    trackIndex: 0,
+    operator: perlica,
+    skillGroupKey: 'battleSkill',
+    startFrame: 30,
+    ids: { allocate: () => 'cast:independent' },
+  }).scenario;
+  placed.tracks[0]!.initialState = {
+    ...placed.tracks[0]!.initialState,
+    maxUltimateEnergyOverride: 300,
+  };
+  placed.tracks[0]!.operator!.talentStates = { 0: 2 };
+  const sourceGroup = perlica.skillGroups.find(group => group.key === 'battleSkill')!;
+  if (Array.isArray(sourceGroup.skills)) throw new Error('expected one battle skill');
+  const skill = sourceGroup.skills as SkillDefinition;
+  const operator: OperatorDefinition = {
+    ...perlica,
+    skillGroups: [sourceGroup],
+    skillSlots: perlica.skillSlots!.filter(slot => slot.key === 'battleSkill'),
+    buffDefinitions: { 'native-buff': { stackingType: 'unique' as const } },
+    abilityEntityDefinitions: {},
+    comboSkillConditions: [],
+    passiveSkills: [],
+    eventHandlers: [],
+    talents: [{ levels: 2, attachedBuffs: [{ buffId: 'native-buff' }] }],
+    potentials: [],
+    dodgeSkill: undefined,
+    entityBlackboardInitializers: [],
+  };
+  const base = options();
+  const compiled = compileScenarioRuntimeAssembly(placed as unknown as ScenarioDocument, {
+    ...base,
+    index: {
+      ...base.index,
+      getOperator: slug => (slug === perlica.slug ? operator : null),
+      getCommonDefinitionSources: () => [],
+      actionPrograms: new ActionGraphDefinitionRepository(),
+    },
+    environment: {
+      ...base.environment,
+      createOperatorBuffRuntime: ownerId =>
+        ({
+          ownerId,
+          advanceFrame: () => undefined,
+          apply: buff => {
+            appliedBuffs.push(buff.buffId);
+            return true;
+          },
+          applyScoped: buff => {
+            appliedBuffs.push(buff.buffId);
+            return {
+              isRecycled: false,
+              reference: createTestBuffReference(),
+              finish: () => true,
+            };
+          },
+          getCountByIds: () => 0,
+          findFirstByIds: () => undefined,
+          finishByIds: () => 0,
+          holdByIds: () => ({ release() {} }),
+          getCountByTags: () => 0,
+          matchesEntityTags: () => false,
+          findFirstByTags: () => undefined,
+          finishByTags: () => 0,
+        }) satisfies OperatorBuffRuntime,
+    },
+  });
+  const sequence = compiled.operators[0]!.skillCasts![0]!.program.timelineActions[0]!.sequence;
+  expect('steps' in sequence).toBe(false);
+  expect('steps' in compiled.operators[0]!.initializationPrograms![0]!.sequence).toBe(false);
+  expect(compiled.operators[0]!.skills).toHaveLength(0);
+  const runtime = new CombatRuntimeAssembly(compiled);
+  runtime.advanceFrames(60);
+  expect(appliedBuffs).toContain('native-buff');
+  expect(runtime.receipt.entries.length).toBeGreaterThan(0);
+  const graphScenario = placed as unknown as ScenarioDocument;
+  graphScenario.tracks[0]!.skillCasts[0]!.customDefinition = {
+    ...skill,
+    blackboard: { ...skill.blackboard, custom_marker: 42 },
+  };
+  const custom = compileScenarioCustomSkillCastPrograms(graphScenario, {
+    ...base.index,
+    getOperator: slug => (slug === perlica.slug ? operator : null),
+    getCommonDefinitionSources: () => [],
+    actionPrograms: new ActionGraphDefinitionRepository(),
+  });
+  expect(custom[0]!.program.initialBlackboard.custom_marker).toBe(42);
 });

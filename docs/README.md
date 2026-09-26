@@ -13,10 +13,11 @@
 | 核对暴击、概率事件、种子与随机模式   | [概率事件与随机模式](architecture/randomness.md)                                |
 | 修改保存、恢复和分支试算             | [战斗切面](architecture/checkpoints.md)                                         |
 | 修改状态条、来源图或伤害分析         | [结果与来源](architecture/results.md)                                           |
+| 理解动作图、变量与宏                 | [动作图](architecture/action-graphs.md)                                         |
 | 修改定义类型、编译或资源加载         | [游戏数据](architecture/game-data.md)                                           |
 | 修改公共控件或面板样式               | [界面开发](development/ui.md)                                                   |
 | 更新游戏版本的数据和素材             | [游戏数据编译器](../tools/game-data-compiler/README.md)                         |
 | 转换和审计旧时间轴                   | [旧轴工具](../tools/legacy-timeline/README.md)                                  |
-| 检查定义编辑器的自动字段             | [Inspector 工具](../tools/inspector-schema/README.md)                           |
+| 检查定义编辑器的自动字段             | [节点描述工具](../tools/editor/README.md)                                       |
 | 测量模拟性能或检查切面一致性         | [性能工具](../tools/performance/README.md)                                      |
 | 修改代码或文档的组织方式             | [代码规范](development/code-style.md)、[文档维护](development/documentation.md) |

@@ -33,6 +33,7 @@ import { normalizeDurationBarColorPrefs } from './results/durationBarColor';
 import { useI18n } from 'vue-i18n';
 import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import { ScenarioEditConstraintError } from '../../application/editor/scenarioEditConstraints';
+import { replaceSkillCastDefinition } from '../../application/editor/skillGraphCommands';
 import { createInheritedScenario } from '../../application/editor/scenarioInheritance';
 import { getSkillCastPlacementAnchor } from '../../core/project/skillCastPlacement';
 import { EaButton, EaNumberInput, EaSelect, type EaSelectValue } from '@/design-system';
@@ -122,7 +123,6 @@ import {
 } from '../../application/simulation/adaptiveTimelineSimulationService';
 import { createEditorSimulationService } from '../../application/simulation/editorSimulationService';
 import { WorkerScenarioSimulationService } from '../../application/simulation/workerScenarioSimulationService';
-import { useProjectDefinitionWorkspaces } from './definitions/useProjectDefinitionWorkspaces';
 import { useScenarioSimulation } from './useScenarioSimulation';
 import { formatSkillBlockWarnings } from './skillBlockWarnings';
 import { projectCombatHudSnapshot } from '../../core/projection/combatHudSnapshot';
@@ -193,18 +193,8 @@ import { projectOpenFailureMessage } from './projectOpenFailureMessage';
 import { formatLegacyConversionReport } from './legacyConversionReport';
 import type { ProjectGameDataRepository } from '../../data/projectGameDataRepository';
 import { captureScenarioSimulationGameData } from '../../application/simulation/scenarioSimulationGameData';
-import { diffSkillDefinition } from '../../core/game-data/diffSkillDefinition';
 import { resolveSkillTemplateDefinition } from '../../core/compiler/resolveSkillDefinition';
-import type {
-  OperatorDefinition,
-  SkillDefinition,
-  SkillType,
-} from '../../core/game-data/operatorDefinition';
-import type {
-  GearDefinition,
-  GearSetDefinition,
-  WeaponDefinition,
-} from '../../core/game-data/equipmentDefinition';
+import type { SkillDefinition, SkillType } from '../../core/game-data/operatorDefinition';
 import {
   getIconAssetPath,
   getOperatorAvatarPath,
@@ -287,8 +277,6 @@ import {
   setSkillCastColor,
   setSkillCastRandomSeed,
   setSkillCastForcedCritical,
-  setSkillCastCustomDefinition,
-  resetSkillCastToTemplate,
   updateBattleResourceRule,
   setBattleDurationFrames,
   setBattlePrepFrames,
@@ -431,22 +419,10 @@ function defineLazyDialog<T extends Component>(load: () => Promise<{ default: T 
   });
 }
 
-const loadGearDefinitionWorkspaceDialog = () =>
-  import('./definitions/equipment/GearDefinitionWorkspaceDialog.vue');
-const loadGearSetDefinitionWorkspaceDialog = () =>
-  import('./definitions/equipment/GearSetDefinitionWorkspaceDialog.vue');
-const loadOperatorDefinitionWorkspaceDialog = () =>
-  import('./definitions/operators/OperatorDefinitionWorkspaceDialog.vue');
-const loadWeaponDefinitionWorkspaceDialog = () =>
-  import('./definitions/equipment/WeaponDefinitionWorkspaceDialog.vue');
-const GearDefinitionWorkspaceDialog = defineLazyDialog(loadGearDefinitionWorkspaceDialog);
-const GearSetDefinitionWorkspaceDialog = defineLazyDialog(loadGearSetDefinitionWorkspaceDialog);
-const OperatorDefinitionWorkspaceDialog = defineLazyDialog(loadOperatorDefinitionWorkspaceDialog);
-const WeaponDefinitionWorkspaceDialog = defineLazyDialog(loadWeaponDefinitionWorkspaceDialog);
-const SkillDefinitionEditorDialog = defineLazyDialog(
-  () => import('./definitions/skills/SkillDefinitionEditorDialog.vue'),
-);
 const GearSelectionDialog = defineLazyDialog(() => import('./library/GearSelectionDialog.vue'));
+const SkillGraphEditorDialog = defineLazyDialog(
+  () => import('../action-graph/SkillGraphEditorDialog.vue'),
+);
 const GearLoadoutBuildDialog = defineLazyDialog(
   () => import('./library/GearLoadoutBuildDialog.vue'),
 );
@@ -633,7 +609,6 @@ const selectedTrack = computed<TrackIndex>({
 });
 const actionSelection = computed(() => timelineSelection.value.actions);
 const selectedCastId = computed(() => actionSelection.value.primaryId);
-const showSkillDefinitionEditor = ref(false);
 const showDamageAnalysis = ref(false);
 const showExportDialog = ref(false);
 const showReceiveDialog = ref(false);
@@ -1159,11 +1134,6 @@ async function acceptOpenedProject(
   project: EndaxisProjectDocument,
   convertedLegacyProject = false,
 ): Promise<void> {
-  showSkillDefinitionEditor.value = false;
-  showOperatorDefinitionWorkspace.value = false;
-  showWeaponDefinitionWorkspace.value = false;
-  gearDefinitionWorkspaceSlot.value = null;
-  gearSetDefinitionWorkspaceId.value = null;
   resetSimulationPublication();
   projectSession.replaceProject(project);
   selectedTrack.value = 0;
@@ -1627,101 +1597,13 @@ const dodgeMarkerDiagnosticsById = computed(
       ]),
     ),
 );
-const {
-  showOperatorDefinitionWorkspace,
-  showWeaponDefinitionWorkspace,
-  gearDefinitionWorkspaceSlot,
-  gearSetDefinitionWorkspaceId,
-  selectedOperatorBaseDefinition,
-  selectedOperatorCustomDefinition,
-  selectedWeaponBaseDefinition,
-  selectedWeaponCustomDefinition,
-  selectedGearBaseDefinition,
-  selectedGearCustomDefinition,
-  selectedGearSetCustomDefinition,
-  selectedGearSetBaseDefinition,
-  openOperatorDefinitionWorkspace: openOperatorDefinitionWorkspaceNow,
-  saveOperatorDefinition,
-  resetOperatorDefinition,
-  openWeaponDefinitionWorkspace: openWeaponDefinitionWorkspaceNow,
-  saveWeaponDefinition,
-  resetWeaponDefinition,
-  openGearDefinitionWorkspace: openGearDefinitionWorkspaceNow,
-  saveGearDefinition,
-  resetGearDefinition,
-  openGearSetDefinitionWorkspace: openGearSetDefinitionWorkspaceNow,
-  saveGearSetDefinition,
-  resetGearSetDefinition,
-} = useProjectDefinitionWorkspaces({
-  projectSession,
-  gameDataRepository,
-  scenario,
-  selectedTrack,
-  selectedLoadoutModel,
-  projectDefinitionLibrary,
-  names: {
-    operator: slug => getOperatorGameName(slug, locale.value),
-    weapon: slug => getWeaponGameName(slug, locale.value),
-    gear: slug => getGearPieceGameName(slug, locale.value),
-    gearSet: slug => getGearSetGameName(slug, locale.value),
-  },
-  beforeOpen: kind => {
-    if (kind === 'operator') showOperatorBuildDialog.value = false;
-    else if (kind === 'weapon') showWeaponBuildDialog.value = false;
-    else showGearBuildDialog.value = false;
-  },
-  onDefinitionChange: refreshSimulationAfterDefinitionChange,
-  ensureGameData: ensureAllGameData,
-  reportError: message => {
-    ElMessage.error(message);
-  },
+const selectedOperatorCustomDefinition = computed(() => {
+  const slug = selectedLoadoutModel.value.operator?.operatorSlug;
+  return slug === undefined
+    ? undefined
+    : projectDefinitionLibrary.value.operators[slug]?.definition;
 });
 
-let definitionWorkspaceOpening = false;
-async function openLoadedDefinitionWorkspace(
-  load: () => Promise<unknown>,
-  open: () => void | Promise<void>,
-): Promise<void> {
-  if (definitionWorkspaceOpening) return;
-  definitionWorkspaceOpening = true;
-  const loading = ElLoading.service({ lock: true, text: t('timeline.loading') });
-  try {
-    await load();
-    await open();
-    await nextTick();
-  } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : String(error));
-  } finally {
-    loading.close();
-    definitionWorkspaceOpening = false;
-  }
-}
-
-function openOperatorDefinitionWorkspace(): Promise<void> {
-  return openLoadedDefinitionWorkspace(
-    () => Promise.all([loadOperatorDefinitionWorkspaceDialog(), ensureAllGameData()]),
-    openOperatorDefinitionWorkspaceNow,
-  );
-}
-
-function openWeaponDefinitionWorkspace(): Promise<void> {
-  return openLoadedDefinitionWorkspace(
-    () => Promise.all([loadWeaponDefinitionWorkspaceDialog(), ensureAllGameData()]),
-    openWeaponDefinitionWorkspaceNow,
-  );
-}
-
-function openGearDefinitionWorkspace(slot: TrackGearSlot): Promise<void> {
-  return openLoadedDefinitionWorkspace(loadGearDefinitionWorkspaceDialog, () =>
-    openGearDefinitionWorkspaceNow(slot),
-  );
-}
-
-function openGearSetDefinitionWorkspace(definition: GearDefinition): Promise<void> {
-  return openLoadedDefinitionWorkspace(loadGearSetDefinitionWorkspaceDialog, () =>
-    openGearSetDefinitionWorkspaceNow(definition),
-  );
-}
 const selectedLibraryInspectorModel = computed(() => {
   const entry = selectedLibraryEntry.value;
   if (entry === null) {
@@ -1733,7 +1615,6 @@ const selectedLibraryInspectorModel = computed(() => {
       level: 1,
       durationFrames: 0,
       segments: [] as readonly string[],
-      customOperatorDefinition: false,
     };
   }
   return {
@@ -1744,35 +1625,8 @@ const selectedLibraryInspectorModel = computed(() => {
     level: entry.level,
     durationFrames: selectedLibrarySkillDurationFrames(),
     segments: skillSegments(entry).map(segment => segment.label),
-    customOperatorDefinition: selectedOperatorCustomDefinition.value !== undefined,
   };
 });
-const selectedOperatorRequiredSkillReferences = computed(() => {
-  projectRevision.value;
-  const slug = selectedLoadoutModel.value.operator?.operatorSlug;
-  if (slug === undefined) return [];
-  return projectSession.snapshot.project.scenarios.flatMap(projectScenario =>
-    projectScenario.tracks.flatMap(track => {
-      if (track?.operator?.operatorSlug !== slug) return [];
-      return track.skillCasts.flatMap(cast =>
-        cast.source.kind === 'operatorSkill'
-          ? [
-              {
-                skillGroupKey: cast.source.skillGroupKey,
-                skillKey: cast.source.skillKey,
-                castId: cast.id,
-              },
-            ]
-          : [],
-      );
-    }),
-  );
-});
-const selectedOperatorDefinitionSkillLevel = computed(() =>
-  Math.max(1, ...Object.values(selectedLoadoutModel.value.operator?.skillLevels ?? {})),
-);
-const customGearDefinitionSlugs = computed(() => Object.keys(projectDefinitionLibrary.value.gears));
-const gearSetIds = computed(() => editorGameDataRepository.getGearSets().map(value => value.slug));
 const gearSetNames = computed<Readonly<Record<string, string>>>(() =>
   Object.fromEntries(
     editorGameDataRepository
@@ -1852,10 +1706,6 @@ const selectedCastModel = computed(() => {
           // 模板内部 key 可自由编辑；失配由技能块原地诊断，不删除时间轴内容。
         }
       }
-      const diffCount =
-        cast.customDefinition === undefined || template === null
-          ? 0
-          : diffSkillDefinition(template, cast.customDefinition).length;
       const source = cast.source;
       const skillLevel =
         source.kind === 'operatorSkill'
@@ -1870,9 +1720,6 @@ const selectedCastModel = computed(() => {
         cast,
         skillType: castModel.skillType,
         label: timelineCastLabel(castModel, trackModel),
-        edited: cast.customDefinition !== undefined,
-        diffCount,
-        templateDefinition: template,
         currentDefinition: cast.customDefinition ?? template,
         skillLevel,
       };
@@ -1880,6 +1727,50 @@ const selectedCastModel = computed(() => {
   }
   return null;
 });
+const skillGraphEditorTarget = shallowRef<{
+  readonly custom: boolean;
+  readonly presentation?: import('../../core/project/graphPresentation').SkillGraphPresentation;
+  readonly scenarioId: string;
+  readonly castId: string;
+  readonly label: string;
+  readonly definition: SkillDefinition;
+} | null>(null);
+
+function openSkillGraphEditor(): void {
+  const selected = selectedCastModel.value;
+  if (selected?.currentDefinition == null || isHistoricalSkillInput(selected.cast.id)) return;
+  skillGraphEditorTarget.value = {
+    custom: selected.cast.customDefinition !== undefined,
+    scenarioId: scenario.value.id,
+    castId: selected.cast.id,
+    label: selected.label,
+    definition: toRaw(selected.currentDefinition),
+    presentation: selected.cast.presentation?.graph,
+  };
+}
+
+function saveSkillGraphDefinition(
+  definition: SkillDefinition,
+  presentation: import('../../core/project/graphPresentation').SkillGraphPresentation,
+  createCustom: boolean,
+): void {
+  const target = skillGraphEditorTarget.value;
+  if (target === null || target.scenarioId !== scenario.value.id)
+    throw new Error(t('actionGraphEditor.scenarioChanged'));
+  // 保留命令的异常，让编辑器展示原因并保留草稿；不能把拒绝保存当作成功关闭。
+  const changed = scenarioSession.commit(
+    'editSkillGraph',
+    replaceSkillCastDefinition(
+      editorGameDataRepository,
+      target.castId,
+      definition,
+      target.definition,
+      presentation,
+      createCustom,
+    ),
+  );
+  if (changed && definition !== target.definition) refreshSimulationAfterDefinitionChange();
+}
 const selectedExternalEventMarker = computed(() => {
   if (selectedMarker.value?.kind !== 'externalEvent') return null;
   return (
@@ -2001,33 +1892,6 @@ const selectedCastConnections = computed(() => {
         toPort: connectionPort(connection.to.port, 'left'),
       } as const;
     });
-});
-const commonAbilityEntityDefinitions =
-  gameDataRepository.getCommonAbilityEntityDefinitions?.() ?? {};
-const commonBuffDefinitions = gameDataRepository.getCommonBuffDefinitions?.() ?? {};
-const selectedCastAbilityEntityIds = computed(() => {
-  const selected = selectedCastModel.value;
-  if (selected === null) return Object.keys(commonAbilityEntityDefinitions).sort();
-  const track = scenario.value.tracks[selected.trackIndex];
-  const operator =
-    track?.operator === null || track?.operator === undefined
-      ? null
-      : editorGameDataRepository.getOperator(track.operator.operatorSlug);
-  return Object.keys({
-    ...commonAbilityEntityDefinitions,
-    ...(operator?.abilityEntityDefinitions ?? {}),
-  }).sort();
-});
-const selectedCastBuffIds = computed(() => {
-  const selected = selectedCastModel.value;
-  const common = editorGameDataRepository.getCommonBuffDefinitions?.() ?? {};
-  if (selected === null) return Object.keys(common).sort();
-  const track = scenario.value.tracks[selected.trackIndex];
-  const operator =
-    track?.operator === null || track?.operator === undefined
-      ? null
-      : editorGameDataRepository.getOperator(track.operator.operatorSlug);
-  return Object.keys({ ...common, ...(operator?.buffDefinitions ?? {}) }).sort();
 });
 const compatibleSkillCastReceiptIds = computed(() =>
   matchingPublishedSkillCastIds(scenario.value, publishedSimulation.value?.scenario),
@@ -2533,6 +2397,7 @@ function castActualDurationPending(castId: string, definitionDurationFrames: num
   return (
     definitionDurationFrames > 0 &&
     skillCastActualStartFrames.value.has(castId) &&
+    !publishedSkillCastInterruptionFrames.value.has(castId) &&
     !skillCastActualDurationFrames.value.has(castId)
   );
 }
@@ -5252,6 +5117,7 @@ function resetScenario(mode: TimelineResetMode): void {
 }
 
 function resetTransientScenarioUi(): void {
+  skillGraphEditorTarget.value = null;
   // 丢弃旧方案的拖动预览，不能让取消回调把旧草稿写回已切换的方案。
   discardCastMove();
   interactionSession.cancel();
@@ -5272,11 +5138,6 @@ function resetTransientScenarioUi(): void {
   showDamageAnalysis.value = false;
   showExportDialog.value = false;
   showSmallImageExport.value = false;
-  showSkillDefinitionEditor.value = false;
-  showOperatorDefinitionWorkspace.value = false;
-  showWeaponDefinitionWorkspace.value = false;
-  gearDefinitionWorkspaceSlot.value = null;
-  gearSetDefinitionWorkspaceId.value = null;
   operatorDialogTrack.value = null;
   weaponDialogTrack.value = null;
   gearDialogTarget.value = null;
@@ -5961,28 +5822,6 @@ function setSelectedCastColor(color: string | null): void {
   commitScenario('setSkillCastColor', current =>
     setSkillCastColor(current, selected.trackIndex, selected.cast.id, color),
   );
-}
-
-function resetSelectedCastDefinition(): void {
-  const selected = selectedCastModel.value;
-  if (selected === null || !selected.edited) return;
-  commitScenario('resetSkillCastToTemplate', current =>
-    resetSkillCastToTemplate(current, selected.trackIndex, selected.cast.id),
-  );
-  showSkillDefinitionEditor.value = false;
-}
-
-/**
- * 保存技能逻辑编辑：把完整草稿交给统一命令入口做最后校验后写入场景。
- * 校验失败时命令抛错，场景保持不变。
- */
-function saveSelectedCastDefinition(draft: SkillDefinition): void {
-  const selected = selectedCastModel.value;
-  if (selected === null) return;
-  commitScenario('setSkillCastCustomDefinition', current =>
-    setSkillCastCustomDefinition(current, selected.trackIndex, selected.cast.id, draft),
-  );
-  showSkillDefinitionEditor.value = false;
 }
 
 function setPanelDialogVisible(visible: boolean): void {
@@ -7365,9 +7204,6 @@ function setPanelDialogVisible(visible: boolean): void {
         :cast="selectedCastModel?.cast ?? null"
         :input-read-only="selectedCastId !== null && isHistoricalSkillInput(selectedCastId)"
         :label="selectedCastModel?.label ?? ''"
-        :edited="selectedCastModel?.edited ?? false"
-        :diff-count="selectedCastModel?.diffCount ?? 0"
-        :template-definition="selectedCastModel?.templateDefinition ?? null"
         :current-definition="selectedCastModel?.currentDefinition ?? null"
         :skill-level="selectedCastModel?.skillLevel ?? 1"
         :minimum-frame="-scenario.battle.prepFrames"
@@ -7381,8 +7217,7 @@ function setPanelDialogVisible(visible: boolean): void {
         "
         :grouped="selectedCastId !== null && groupedSkillCastIds.has(selectedCastId)"
         @dissolve-group="dissolveSelectedSkillCastGroups"
-        @edit-definition="showSkillDefinitionEditor = true"
-        @reset-definition="resetSelectedCastDefinition"
+        @edit-graph="openSkillGraphEditor"
         @set-random-seed="setSelectedCastRandomSeed"
         @roll-random-seed="rollSelectedCastRandomSeed"
         @set-start-frame="setSelectedCastStartFrame"
@@ -7443,8 +7278,6 @@ function setPanelDialogVisible(visible: boolean): void {
         :level="selectedLibraryInspectorModel.level"
         :duration-frames="selectedLibraryInspectorModel.durationFrames"
         :segments="selectedLibraryInspectorModel.segments"
-        :custom-operator-definition="selectedLibraryInspectorModel.customOperatorDefinition"
-        @edit-operator-definition="openOperatorDefinitionWorkspace"
       />
       <SimulationPerformanceAudit
         v-else-if="tool === 'performance'"
@@ -7655,27 +7488,21 @@ function setPanelDialogVisible(visible: boolean): void {
     @clear="clearGear"
     @change-refine-tier="changeGearRefineTier"
   />
+  <SkillGraphEditorDialog
+    v-if="skillGraphEditorTarget !== null"
+    :definition="skillGraphEditorTarget.definition"
+    :custom="skillGraphEditorTarget.custom"
+    :label="skillGraphEditorTarget.label"
+    :presentation="skillGraphEditorTarget.presentation"
+    :save-definition="saveSkillGraphDefinition"
+    @close="skillGraphEditorTarget = null"
+  />
   <WeaponBuildDialog
     v-if="showWeaponBuildDialog"
     :visible="showWeaponBuildDialog"
     :weapon="selectedLoadoutModel.weapon"
-    :custom-definition="selectedWeaponCustomDefinition"
     @update:visible="showWeaponBuildDialog = $event"
     @change="updateWeaponBuild"
-    @edit-definition="openWeaponDefinitionWorkspace"
-  />
-  <WeaponDefinitionWorkspaceDialog
-    v-if="
-      showWeaponDefinitionWorkspace &&
-      selectedWeaponBaseDefinition &&
-      selectedWeaponCustomDefinition
-    "
-    :visible="showWeaponDefinitionWorkspace"
-    :base-definition="selectedWeaponBaseDefinition"
-    :custom-definition="selectedWeaponCustomDefinition"
-    @update:visible="showWeaponDefinitionWorkspace = $event"
-    @save="saveWeaponDefinition"
-    @reset="resetWeaponDefinition"
   />
   <OperatorBuildDialog
     v-if="showOperatorBuildDialog"
@@ -7685,59 +7512,15 @@ function setPanelDialogVisible(visible: boolean): void {
     :build-attributes="operatorBuildPanel?.attributes ?? null"
     @update:visible="showOperatorBuildDialog = $event"
     @change="updateOperatorBuild"
-    @edit-definition="openOperatorDefinitionWorkspace"
-  />
-  <OperatorDefinitionWorkspaceDialog
-    v-if="showOperatorDefinitionWorkspace && selectedOperatorBaseDefinition"
-    :visible="showOperatorDefinitionWorkspace"
-    :base-definition="selectedOperatorBaseDefinition"
-    :custom-definition="selectedOperatorCustomDefinition"
-    :common-ability-entity-definitions="commonAbilityEntityDefinitions"
-    :common-buff-definitions="commonBuffDefinitions"
-    :skill-level="selectedOperatorDefinitionSkillLevel"
-    :required-skill-references="selectedOperatorRequiredSkillReferences"
-    @update:visible="showOperatorDefinitionWorkspace = $event"
-    @save="saveOperatorDefinition"
-    @reset="resetOperatorDefinition"
   />
   <GearLoadoutBuildDialog
     v-if="showGearBuildDialog"
     :visible="showGearBuildDialog"
     :gears="selectedLoadoutModel.gears"
-    :custom-definition-slugs="customGearDefinitionSlugs"
     :gear-set-names="gearSetNames"
     :gear-set-text-slugs="gearSetTextSlugs"
     @update:visible="showGearBuildDialog = $event"
     @update="updateGearBuild"
-    @edit-definition="openGearDefinitionWorkspace"
-  />
-  <GearDefinitionWorkspaceDialog
-    v-if="
-      gearDefinitionWorkspaceSlot !== null &&
-      selectedGearBaseDefinition &&
-      selectedGearCustomDefinition
-    "
-    :visible="gearDefinitionWorkspaceSlot !== null"
-    :base-definition="selectedGearBaseDefinition"
-    :custom-definition="selectedGearCustomDefinition"
-    :gear-set-ids="gearSetIds"
-    @update:visible="gearDefinitionWorkspaceSlot = $event ? gearDefinitionWorkspaceSlot : null"
-    @save="saveGearDefinition"
-    @reset="resetGearDefinition"
-    @edit-gear-set="openGearSetDefinitionWorkspace"
-  />
-  <GearSetDefinitionWorkspaceDialog
-    v-if="
-      gearSetDefinitionWorkspaceId !== null &&
-      selectedGearSetBaseDefinition &&
-      selectedGearSetCustomDefinition
-    "
-    :visible="gearSetDefinitionWorkspaceId !== null"
-    :base-definition="selectedGearSetBaseDefinition"
-    :custom-definition="selectedGearSetCustomDefinition"
-    @update:visible="gearSetDefinitionWorkspaceId = $event ? gearSetDefinitionWorkspaceId : null"
-    @save="saveGearSetDefinition"
-    @reset="resetGearSetDefinition"
   />
   <OperatorPanelDialog
     v-if="panelDialogTrack !== null"
@@ -7747,19 +7530,6 @@ function setPanelDialogVisible(visible: boolean): void {
     :operator-name="panelDialogOperatorName"
     :weapons="capturePublishedEquipmentSources(editorGameDataRepository.getWeapons())"
     @update:visible="setPanelDialogVisible"
-  />
-  <SkillDefinitionEditorDialog
-    v-if="showSkillDefinitionEditor"
-    :visible="showSkillDefinitionEditor"
-    :title="selectedCastModel?.label ?? ''"
-    :template-definition="selectedCastModel?.templateDefinition ?? null"
-    :custom-definition="selectedCastModel?.cast.customDefinition"
-    :skill-level="selectedCastModel?.skillLevel ?? 1"
-    :ability-entity-ids="selectedCastAbilityEntityIds"
-    :buff-ids="selectedCastBuffIds"
-    @update:visible="showSkillDefinitionEditor = $event"
-    @save="saveSelectedCastDefinition"
-    @reset="resetSelectedCastDefinition"
   />
   <TimelineHitDetailDialog
     :object-icon="publishedObjectIcon"

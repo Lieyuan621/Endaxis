@@ -279,6 +279,32 @@ describe('从无产物工作树重建装备候选', () => {
 });
 
 describe('本地来源快照重新核验', () => {
+  it('拒绝把离线 VFS BuffData 当作正式混合快照输入', async () => {
+    const { sourceRoot, catalog, ledger, ledgerPath } = await setup();
+    const logicalPath = 'BuffData/buff_vfs.json';
+    await json(path.join(sourceRoot, logicalPath), {});
+    ledger.entries.push({
+      logicalPath,
+      provider: 'vfs-index-browser',
+      version: 'unknown',
+      byteLength: 2,
+      sha256: hash('{}'),
+      fallbackReason: 'not-in-akedb-index',
+    } as (typeof ledger.entries)[number]);
+    ledger.entries.sort((a, b) => a.logicalPath.localeCompare(b.logicalPath));
+    ledger.snapshotSha256 = hash(
+      ledger.entries.map(e => `${e.logicalPath}\0${e.sha256}\n`).join(''),
+    );
+    (ledger.inventories as unknown[]).push({ collection: 'BuffData', files: 1, vfs: 'available' });
+    await json(ledgerPath, ledger);
+    await expect(
+      verifyGameDataSnapshot(sourceRoot, {
+        ...catalog,
+        jsonCollections: { ...catalog.jsonCollections, BuffData: 'BuffData' },
+      }),
+    ).rejects.toThrow('BuffData must come from AKEDB');
+  });
+
   it('核对所有字节/条目/整批哈希，同时保留缺失集合与混源证据边界', async () => {
     const { sourceRoot, catalog } = await setup();
     expect(await verifyGameDataSnapshot(sourceRoot, catalog)).toMatchObject({

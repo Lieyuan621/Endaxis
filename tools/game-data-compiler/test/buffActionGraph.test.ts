@@ -8,6 +8,16 @@ import {
 import { targetFixture } from './sourceFixtures.ts';
 
 describe('Buff 公共动作图', () => {
+  it('原始 Buff 生命周期数字事件与已解码名称具有同一身份', () => {
+    const parse = (buffEvent: number | string) =>
+      parseReferenceAwareBuffActionGraphSource(
+        buffFixture({ buffEventAction: [{ buffEvent, actions: [] }] }),
+        'buff_fixture.json',
+        {},
+      );
+    expect(parse(5).buffEvents).toEqual(parse('DuringBuffEnable').buffEvents);
+    expect(() => parse(4)).toThrow('unknown native enum 4');
+  });
   it('保留时间时钟、数值能力事件和其中的动态子技能引用', () => {
     const parsed = parseReferenceAwareBuffActionGraphSource(
       buffFixture({

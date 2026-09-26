@@ -22,6 +22,15 @@ import {
 import type { TargetReferenceSource } from './target.ts';
 import { parseScalarSource } from './scalar.ts';
 import { parseAdvancedDirectionSource } from './spatial.ts';
+import {
+  readAuraBuffSource,
+  readAuraFaction,
+  readAuraFilterObjectType,
+  readAuraShape,
+  readAuraTargetType,
+  readAuraType,
+  readIconDurationSource,
+} from './nativeEnums.ts';
 
 export interface GlobalPartyAuraBuffInputSource {
   readonly buffId: string;
@@ -82,7 +91,6 @@ const ACTION_FIELDS = new Set([
   'priorityOffset',
   'serverActionIndex',
   'auraDebugName',
-  'm_auraTypeWarning',
   'auraType',
   'auraRoot',
   'fixedWhenStart',
@@ -119,7 +127,11 @@ function parseAuraRecord(value: unknown, path: string): Record<string, unknown> 
   const hasInfluenceFilters = INFLUENCE_FILTER_FIELDS.some(field => field in action);
   requireExactFields(
     action,
-    new Set([...ACTION_FIELDS, ...(hasInfluenceFilters ? INFLUENCE_FILTER_FIELDS : [])]),
+    new Set([
+      ...ACTION_FIELDS,
+      ...('m_auraTypeWarning' in action ? ['m_auraTypeWarning'] : []),
+      ...(hasInfluenceFilters ? INFLUENCE_FILTER_FIELDS : []),
+    ]),
     path,
   );
   if (hasInfluenceFilters) {
@@ -150,16 +162,17 @@ export function parseGlobalPartyAuraActionSource(
   path: string,
 ): GlobalPartyAuraActionSource {
   const action = parseAuraRecord(value, path);
-  requireExpected(action.auraType, 'GlobalAura', `${path}.auraType`);
+  requireExpected(
+    readAuraType(action.auraType, `${path}.auraType`),
+    'GlobalAura',
+    `${path}.auraType`,
+  );
   const root = parseTargetReferenceSource(action.auraRoot, `${path}.auraRoot`);
   if (root.targetSource !== 'Owner' || root.targetGroupKey !== '') {
     throw new Error(`${path}.auraRoot: expected plain Owner`);
   }
   const fixedWhenStart = requireBoolean(action.fixedWhenStart, `${path}.fixedWhenStart`);
-  const targetObjectType = requireNonEmptyString(
-    action.targetObjectType,
-    `${path}.targetObjectType`,
-  );
+  const targetObjectType = readAuraTargetType(action.targetObjectType, `${path}.targetObjectType`);
   const target =
     targetObjectType === 'Character'
       ? 'party'
@@ -186,7 +199,7 @@ export function parseGlobalPartyAuraActionSource(
   // max=1 的限次在可见 Buff/治疗结果上等价；字段仍严格要求为布尔值。
   requireBoolean(action.limitInfluenceCountPerTarget, `${path}.limitInfluenceCountPerTarget`);
   requireExpected(action.maxInfluenceCountPerTarget, 1, `${path}.maxInfluenceCountPerTarget`);
-  const buffSource = requireNonEmptyString(action.buffSource, `${path}.buffSource`);
+  const buffSource = readAuraBuffSource(action.buffSource, `${path}.buffSource`);
   if (buffSource !== 'ActionOwner' && buffSource !== 'ActionSource') {
     throw new Error(`${path}.buffSource: unsupported value ${JSON.stringify(buffSource)}`);
   }
@@ -399,7 +412,11 @@ function parseFixedEnemyFilter(filter: Record<string, unknown>, path: string): v
   requireExpected(filter.factionTarget, 'Anti', `${path}.factionTarget`);
   requireExpected(filter.targetFactionType, 'Bad', `${path}.targetFactionType`);
   requireExpected(filter.filterObjectType, false, `${path}.filterObjectType`);
-  requireExpected(filter.objectType, 'All', `${path}.objectType`);
+  requireExpected(
+    readAuraFilterObjectType(filter.objectType, `${path}.objectType`),
+    'All',
+    `${path}.objectType`,
+  );
   requireExpected(filter.filterSlot, false, `${path}.filterSlot`);
   requireExpected(filter.slotIndex, 0, `${path}.slotIndex`);
   requireExpected(filter.filterGameplayTag, false, `${path}.filterGameplayTag`);
@@ -429,7 +446,11 @@ function parseFixedGoodAllFilter(filter: Record<string, unknown>, path: string):
   requireExpected(filter.factionTarget, 'Anti', `${path}.factionTarget`);
   requireExpected(filter.targetFactionType, 'Good', `${path}.targetFactionType`);
   requireExpected(filter.filterObjectType, false, `${path}.filterObjectType`);
-  requireExpected(filter.objectType, 'All', `${path}.objectType`);
+  requireExpected(
+    readAuraFilterObjectType(filter.objectType, `${path}.objectType`),
+    'All',
+    `${path}.objectType`,
+  );
   requireExpected(filter.filterSlot, false, `${path}.filterSlot`);
   requireExpected(filter.slotIndex, 0, `${path}.slotIndex`);
   requireExpected(filter.filterGameplayTag, false, `${path}.filterGameplayTag`);
@@ -603,7 +624,7 @@ export function parseAuraReferenceActionSource(
   path: string,
 ): AuraReferenceActionSource {
   const action = parseAuraRecord(value, path);
-  requireNonEmptyString(action.auraType, `${path}.auraType`);
+  readAuraType(action.auraType, `${path}.auraType`);
   const buffs = parseAuraBuffInputs(action.buffInput, `${path}.buffInput`, false);
   const exitBuffs = parseAuraExitAction(
     action.actionWhenExitAura,
@@ -670,7 +691,11 @@ function parseGlobalFilter(value: unknown, path: string, expectedFaction: string
   // Fixed stump simulation has no dead operator/enemy candidates, so this filter is inert.
   requireBoolean(filter.checkAlive, `${path}.checkAlive`);
   requireExpected(filter.autoSetTargetFaction, true, `${path}.autoSetTargetFaction`);
-  requireExpected(filter.factionTarget, expectedFaction, `${path}.factionTarget`);
+  requireExpected(
+    readAuraFaction(filter.factionTarget, `${path}.factionTarget`),
+    expectedFaction,
+    `${path}.factionTarget`,
+  );
   const factionType = filter.targetFactionType;
   const expectedFactionType = expectedFaction === 'Anti' ? 'Bad' : 'Good';
   if (factionType !== 0 && factionType !== expectedFactionType) {
@@ -679,7 +704,11 @@ function parseGlobalFilter(value: unknown, path: string, expectedFaction: string
     );
   }
   requireExpected(filter.filterObjectType, false, `${path}.filterObjectType`);
-  requireExpected(filter.objectType, 'All', `${path}.objectType`);
+  requireExpected(
+    readAuraFilterObjectType(filter.objectType, `${path}.objectType`),
+    'All',
+    `${path}.objectType`,
+  );
   requireExpected(filter.filterSlot, false, `${path}.filterSlot`);
   requireExpected(filter.slotIndex, 0, `${path}.slotIndex`);
   requireExpected(filter.filterGameplayTag, false, `${path}.filterGameplayTag`);
@@ -711,7 +740,7 @@ export function parseFiniteRangedShape(value: unknown, path: string): string[] {
     ]),
     path,
   );
-  const shapeType = requireString(shape._shape, `${path}._shape`);
+  const shapeType = readAuraShape(shape._shape, `${path}._shape`);
   if (shapeType !== 'Box' && shapeType !== 'Sphere' && shapeType !== 'Capsule') {
     throw new Error(`${path}._shape: unsupported value ${JSON.stringify(shapeType)}`);
   }
@@ -781,29 +810,29 @@ function parseIconDurationSource(
   requireExactFields(
     source,
     new Set([
-      'm_abilityEntityTypeInfo',
-      'm_timedMarkerInfo',
+      ...('m_abilityEntityTypeInfo' in source ? ['m_abilityEntityTypeInfo'] : []),
+      ...('m_timedMarkerInfo' in source ? ['m_timedMarkerInfo'] : []),
       'durationSourceType',
       'timedMarkerId',
     ]),
     path,
   );
-  requireString(source.m_abilityEntityTypeInfo, `${path}.m_abilityEntityTypeInfo`);
-  requireString(source.m_timedMarkerInfo, `${path}.m_timedMarkerInfo`);
-  if (
-    source.durationSourceType !== 'AbilityEntity' &&
-    source.durationSourceType !== 'TimedMarker'
-  ) {
-    throw new Error(`${path}.durationSourceType: unsupported value`);
-  }
+  if ('m_abilityEntityTypeInfo' in source)
+    requireString(source.m_abilityEntityTypeInfo, `${path}.m_abilityEntityTypeInfo`);
+  if ('m_timedMarkerInfo' in source)
+    requireString(source.m_timedMarkerInfo, `${path}.m_timedMarkerInfo`);
+  const durationSourceType = readIconDurationSource(
+    source.durationSourceType,
+    `${path}.durationSourceType`,
+  );
   const timedMarkerId = requireString(source.timedMarkerId, `${path}.timedMarkerId`);
   // overrideBuffIconDuration=false 时原生不会读取这份编辑器配置；导出样本可能保留
   // TimedMarker + 空 id 的默认组合。字段形状仍校验，但仅对启用分支施加语义约束。
-  if (active && source.durationSourceType === 'TimedMarker' && timedMarkerId.length === 0)
+  if (active && durationSourceType === 'TimedMarker' && timedMarkerId.length === 0)
     throw new Error(`${path}.timedMarkerId: expected non-empty TimedMarker id`);
-  if (active && source.durationSourceType === 'AbilityEntity' && timedMarkerId.length > 0)
+  if (active && durationSourceType === 'AbilityEntity' && timedMarkerId.length > 0)
     throw new Error(`${path}.timedMarkerId: expected empty AbilityEntity marker id`);
-  return { durationSourceType: source.durationSourceType, timedMarkerId };
+  return { durationSourceType, timedMarkerId };
 }
 
 function parseEmptySequence(value: unknown, path: string): void {

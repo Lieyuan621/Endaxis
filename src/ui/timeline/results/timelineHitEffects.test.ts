@@ -9,7 +9,9 @@ import {
   projectTimelineHitActualFrames,
   projectTimelineHitDetailEntries,
 } from './timelineHitEffects';
-import { projectCastHitMarkers } from './timelineHitProjection';
+import { projectCastGraphHitMarkers } from './timelineHitProjection';
+import { perlica } from '../../../data/operators/perlica.generated';
+import { prepareActionGraphIdentities } from '../../../../tools/game-data-compiler/src/compiler/optimization/actionGraphProjection';
 
 function baseDamage(): Record<string, number | boolean | string | null> {
   return {
@@ -191,22 +193,32 @@ function scenarioWithCast(): ScenarioDocument {
               scheduledSequences: [
                 {
                   startFrame: 10,
-                  sequence: {
-                    steps: [
-                      {
+                  sequence: { $sequence: 'step-0' },
+                },
+              ],
+              actionGraph: {
+                main: {
+                  nodes: {
+                    'step-0': {
+                      action: {
                         kind: 'dealDamage',
                         parameters: { damageType: 'electric', attackScale: 1, tags: [] },
                         key: 'step:damage',
                       },
-                      {
+                      next: 'step-1',
+                    },
+                    'step-1': {
+                      action: {
                         kind: 'dealDamage',
                         parameters: { damageType: 'physical', attackScale: 1, tags: [] },
                         key: 'step:secondary',
                       },
-                    ],
+                      next: null,
+                    },
                   },
                 },
-              ],
+                macros: {},
+              },
             },
           },
         ],
@@ -256,7 +268,11 @@ function scenarioWithCast(): ScenarioDocument {
 function markersForCast(scenario: ScenarioDocument, castId: string) {
   const cast = scenario.tracks.flatMap(track => track?.skillCasts ?? []).find(c => c.id === castId);
   if (cast === undefined || cast.customDefinition === undefined) return [];
-  return projectCastHitMarkers(cast, cast.customDefinition);
+  return projectCastGraphHitMarkers(
+    cast,
+    cast.customDefinition,
+    prepareActionGraphIdentities(perlica),
+  );
 }
 
 function damageEntry(

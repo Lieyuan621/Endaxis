@@ -1,9 +1,7 @@
+import type { SkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
 import { describe, expect, it } from 'vitest';
 
-import type {
-  OperatorDefinition,
-  SkillDefinition,
-} from '../../../core/game-data/operatorDefinition';
+import type { OperatorDefinition } from '../../../core/game-data/operatorDefinition';
 import { listOperatorSkillDefinitionBindings } from '../../../core/game-data/operatorSkillDefinitions';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import { elementalAttachments } from '../../../data/buffs/elementalAttachments';

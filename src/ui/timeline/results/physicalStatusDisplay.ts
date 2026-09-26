@@ -6,7 +6,7 @@
  * 击飞、倒地与碎甲另外保留真实持续段，猛击只保留瞬时标记。
  */
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
-import type { PhysicalInflictionType } from '../../../core/game-data/operatorDefinition';
+import type { PhysicalInflictionType } from '../../../../packages/game-data-contract/src/primitives';
 import {
   projectBuffIconTimelineMetadata,
   type BuffTimelineSegment,

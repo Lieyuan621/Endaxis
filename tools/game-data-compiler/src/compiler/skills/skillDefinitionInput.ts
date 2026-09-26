@@ -173,7 +173,7 @@ export function compileStrictSwitchToBuffCastSource(
     ...(requiresCurrentSkillNotInterruptible ? { requiresCurrentSkillNotInterruptible: true } : {}),
     ...(projectedCondition === undefined ? {} : { condition: projectedCondition }),
     asSkillCast,
-    sequence: { steps },
+    sequence: context.graph.sequence(steps),
   };
 }
 

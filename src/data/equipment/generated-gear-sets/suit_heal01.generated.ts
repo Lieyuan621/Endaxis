@@ -4,23 +4,36 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'suit_heal01',
   iconPath: '/equipment/heal01/item_equip_t4_suit_heal01_edc_03.webp',
-  modifiers: [
-    {
-      kind: 'staticHealingIncrease',
-      target: 'output',
-      value: 0.2,
+  modifiers: [{ kind: 'staticHealingIncrease', target: 'output', value: 0.2 }],
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffId: 'buff_equipsuit_healup_01',
+              target: 'caster',
+              blackboardAssignments: {
+                dmg_taken_down: { kind: 'constant', value: 0.85 },
+                dmg_taken_down2: { kind: 'constant', value: 0.7 },
+                duration: { kind: 'constant', value: 10 },
+              },
+            },
+          },
+          next: null,
+        },
+      },
     },
-  ],
+    macros: {},
+  },
+  skillId: 'passive_equipsuit_healup_01',
   buffDefinitions: {
     buff_common_dmgtk_down_equip_1: {
       stackingType: 'highPriority',
-      priority: {
-        blackboardKey: 'priority',
-      },
+      priority: { blackboardKey: 'priority' },
       maxStackCount: 1,
-      durationSeconds: {
-        blackboardKey: 'duration',
-      },
+      durationSeconds: { blackboardKey: 'duration' },
       triggerIntervalSeconds: 0,
       waitFirstTriggerInterval: true,
       maxTriggerCount: 0,
@@ -44,63 +57,44 @@ const definition = {
         charHpBarVfxType: 'Fire',
         iconStyleInSquad: 'LifeTime',
         abnormalColorType: 'Physical',
-        orderPriority: {
-          useDirectoryValue: false,
-          value: 0,
-          category: 'CommonCharBuff',
-        },
+        orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
       },
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        duration: 0,
-        priority: 0,
-        value: 0,
-      },
+      blackboard: { duration: 0, priority: 0, value: 0 },
       attributeModifiers: [
         {
           attribute: 'PhysicalDamageTakenScalar',
           slot: 'baseFinalMultiplier',
-          value: {
-            blackboardKey: 'value',
-          },
+          value: { blackboardKey: 'value' },
         },
         {
           attribute: 'FireDamageTakenScalar',
           slot: 'baseFinalMultiplier',
-          value: {
-            blackboardKey: 'value',
-          },
+          value: { blackboardKey: 'value' },
         },
         {
           attribute: 'PulseDamageTakenScalar',
           slot: 'baseFinalMultiplier',
-          value: {
-            blackboardKey: 'value',
-          },
+          value: { blackboardKey: 'value' },
         },
         {
           attribute: 'CrystDamageTakenScalar',
           slot: 'baseFinalMultiplier',
-          value: {
-            blackboardKey: 'value',
-          },
+          value: { blackboardKey: 'value' },
         },
         {
           attribute: 'EtherDamageTakenScalar',
           slot: 'baseFinalMultiplier',
-          value: {
-            blackboardKey: 'value',
-          },
+          value: { blackboardKey: 'value' },
         },
         {
           attribute: 'NaturalDamageTakenScalar',
           slot: 'baseFinalMultiplier',
-          value: {
-            blackboardKey: 'value',
-          },
+          value: { blackboardKey: 'value' },
         },
       ],
+      actionGraph: { main: { nodes: {} }, macros: {} },
     },
     buff_equipsuit_healup_01: {
       stackingType: 'unlimited',
@@ -111,123 +105,67 @@ const definition = {
       maxTriggerCount: 1,
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        dmg_taken_down: -0.2,
-        dmg_taken_down2: -0.4,
-        duration: 0,
-      },
+      blackboard: { dmg_taken_down: -0.2, dmg_taken_down2: -0.4, duration: 0 },
       attributeModifiers: [],
       abilityEventResponses: [
-        {
-          event: 'outputHeal',
-          priority: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventOverheal',
-                  },
-                },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'applyBuff',
-                      parameters: {
-                        buffId: 'buff_common_dmgtk_down_equip_1',
-                        target: 'eventTarget',
-                        source: 'buffOwner',
-                        inheritSourceSkillCastInfo: true,
-                        asChildBuff: true,
-                        blackboardAssignments: {
-                          priority: {
-                            kind: 'constant',
-                            value: 1,
-                          },
-                        },
-                        copiedBlackboardAssignments: {
-                          value: 'dmg_taken_down2',
-                          duration: 'duration',
-                        },
-                      },
-                    },
-                  ],
-                },
-              },
-            ],
-          },
-        },
-        {
-          event: 'outputHeal',
-          priority: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'not',
-                    condition: {
-                      kind: 'eventOverheal',
-                    },
-                  },
-                },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'applyBuff',
-                      parameters: {
-                        buffId: 'buff_common_dmgtk_down_equip_1',
-                        target: 'eventTarget',
-                        source: 'buffOwner',
-                        inheritSourceSkillCastInfo: true,
-                        blackboardAssignments: {
-                          priority: {
-                            kind: 'constant',
-                            value: 0,
-                          },
-                        },
-                        copiedBlackboardAssignments: {
-                          value: 'dmg_taken_down',
-                          duration: 'duration',
-                        },
-                      },
-                    },
-                  ],
-                },
-              },
-            ],
-          },
-        },
+        { event: 'outputHeal', priority: 0, sequence: { $sequence: 'conditional_2' } },
+        { event: 'outputHeal', priority: 0, sequence: { $sequence: 'conditional_4' } },
       ],
+      actionGraph: {
+        main: {
+          nodes: {
+            applyBuff_1: {
+              action: {
+                kind: 'applyBuff',
+                parameters: {
+                  buffId: 'buff_common_dmgtk_down_equip_1',
+                  target: 'eventTarget',
+                  source: 'buffOwner',
+                  inheritSourceSkillCastInfo: true,
+                  asChildBuff: true,
+                  blackboardAssignments: { priority: { kind: 'constant', value: 1 } },
+                  copiedBlackboardAssignments: { value: 'dmg_taken_down2', duration: 'duration' },
+                },
+              },
+              next: null,
+            },
+            conditional_2: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'eventOverheal' } },
+                whenTrue: { $sequence: 'applyBuff_1' },
+              },
+              next: null,
+            },
+            applyBuff_3: {
+              action: {
+                kind: 'applyBuff',
+                parameters: {
+                  buffId: 'buff_common_dmgtk_down_equip_1',
+                  target: 'eventTarget',
+                  source: 'buffOwner',
+                  inheritSourceSkillCastInfo: true,
+                  blackboardAssignments: { priority: { kind: 'constant', value: 0 } },
+                  copiedBlackboardAssignments: { value: 'dmg_taken_down', duration: 'duration' },
+                },
+              },
+              next: null,
+            },
+            conditional_4: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'not', condition: { kind: 'eventOverheal' } } },
+                whenTrue: { $sequence: 'applyBuff_3' },
+              },
+              next: null,
+            },
+          },
+        },
+        macros: {},
+      },
     },
   },
-  enableSequence: {
-    steps: [
-      {
-        kind: 'applyBuff',
-        parameters: {
-          buffId: 'buff_equipsuit_healup_01',
-          target: 'caster',
-          blackboardAssignments: {
-            dmg_taken_down: {
-              kind: 'constant',
-              value: 0.85,
-            },
-            dmg_taken_down2: {
-              kind: 'constant',
-              value: 0.7,
-            },
-            duration: {
-              kind: 'constant',
-              value: 10,
-            },
-          },
-        },
-      },
-    ],
-  },
+  enableSequence: { $sequence: 'applyBuff_1' },
 } as const satisfies GearSetDefinition;
 
 export default definition;

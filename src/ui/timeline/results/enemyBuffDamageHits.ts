@@ -1,7 +1,7 @@
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
 import {
   findBuffTimelineSegmentForDamage,
-  projectBuffTimelineViz,
+  projectBuffIconTimelineMetadata,
   type BuffTimelineSegment,
 } from '../../../core/projection/buffTimelineViz';
 import {
@@ -11,7 +11,7 @@ import {
 
 export function groupEnemyBuffDamageHits(
   entries: readonly CombatReceiptEntry[],
-  visibleBuffSegments: readonly BuffTimelineSegment[] = projectBuffTimelineViz(
+  visibleBuffSegments: readonly BuffTimelineSegment[] = projectBuffIconTimelineMetadata(
     entries,
     entries.reduce((maximum, entry) => Math.max(maximum, entry.frame), 0),
   ),

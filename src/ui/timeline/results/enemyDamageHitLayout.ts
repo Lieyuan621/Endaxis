@@ -1,5 +1,8 @@
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
-import type { BuffTimelineSegment } from '../../../core/projection/buffTimelineViz';
+import {
+  projectBuffIconTimelineMetadata,
+  type BuffTimelineSegment,
+} from '../../../core/projection/buffTimelineViz';
 import type { EnemyEffectMarker } from '../../../core/projection/enemyEffectViz';
 import { groupEnemyBurstDamageHits } from './enemyBurstDamageGroups';
 import { findBuffDamageSegment, groupEnemyBuffDamageHits } from './enemyBuffDamageHits';
@@ -11,6 +14,10 @@ export function layoutEnemyDamageHits(
   buffs: readonly BuffTimelineSegment[],
   markers: readonly EnemyEffectMarker[],
   attachmentIds: ReadonlySet<string>,
+  damageBuffs: readonly BuffTimelineSegment[] = projectBuffIconTimelineMetadata(
+    entries,
+    entries.reduce((maximum, entry) => Math.max(maximum, entry.frame), 0),
+  ),
 ) {
   const rows = layoutEnemyStatusRows(buffs, markers, attachmentIds);
   const candidates = [
@@ -19,7 +26,7 @@ export function layoutEnemyDamageHits(
       row: rows.attachmentRow,
       standalone: false,
     })),
-    ...groupEnemyBuffDamageHits(entries, buffs).map(group => {
+    ...groupEnemyBuffDamageHits(entries, damageBuffs).map(group => {
       const segment = findBuffDamageSegment(group[0]!, buffs);
       const row = segment === undefined ? undefined : rows.lanes.get(segment);
       // 没有可见持续条的伤害仍有独立入口，不受 Buff 图标和头顶栏开关影响。

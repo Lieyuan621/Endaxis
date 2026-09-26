@@ -46,13 +46,17 @@ interface RuntimeGear {
 
 type RuntimeGearSet = Pick<
   import('../../../packages/game-data-contract/src/equipment.ts').GearSetDefinition,
-  'slug' | 'enableSequence' | 'initializationSequence' | 'buffDefinitions'
+  'slug' | 'enableSequence' | 'initializationSequence' | 'buffDefinitions' | 'actionGraph'
 >;
 
 function installationSteps(gearSet: RuntimeGearSet) {
   return [
-    ...(gearSet.enableSequence?.steps ?? []),
-    ...(gearSet.initializationSequence?.steps ?? []),
+    ...(gearSet.enableSequence === undefined
+      ? []
+      : readActionGraphChain(gearSet.actionGraph!.main, gearSet.enableSequence)),
+    ...(gearSet.initializationSequence === undefined
+      ? []
+      : readActionGraphChain(gearSet.actionGraph!.main, gearSet.initializationSequence)),
   ];
 }
 
@@ -122,7 +126,9 @@ export async function auditCandidateEquipment(args: AuditArguments) {
     );
     const repository = repositoryModule.createGameDataRepository({
       revision: 'candidate-weapon-simulation-audit',
-      commonBuffDefinitions: commonBuffModule.commonBuffDefinitions,
+      commonDefinitionSources: [
+        { id: 'common-buffs', buffDefinitions: commonBuffModule.commonBuffDefinitions },
+      ],
       operators,
       weapons,
       gears,
@@ -266,7 +272,9 @@ export async function auditCandidateEquipment(args: AuditArguments) {
         createRepositoryWithoutGearSet: (gearSetSlug: string) =>
           repositoryModule.createGameDataRepository({
             revision: `candidate-equipment-without:${gearSetSlug}`,
-            commonBuffDefinitions: commonBuffModule.commonBuffDefinitions,
+            commonDefinitionSources: [
+              { id: 'common-buffs', buffDefinitions: commonBuffModule.commonBuffDefinitions },
+            ],
             operators,
             weapons,
             gears: gears.map(gear =>
@@ -280,7 +288,9 @@ export async function auditCandidateEquipment(args: AuditArguments) {
         createRepositoryWithoutGearSetRuntime: (gearSetSlug: string) =>
           repositoryModule.createGameDataRepository({
             revision: `candidate-equipment-static-only:${gearSetSlug}`,
-            commonBuffDefinitions: commonBuffModule.commonBuffDefinitions,
+            commonDefinitionSources: [
+              { id: 'common-buffs', buffDefinitions: commonBuffModule.commonBuffDefinitions },
+            ],
             operators,
             weapons,
             gears,
@@ -639,3 +649,4 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const result = await auditCandidateEquipment(parseArguments(process.argv.slice(2)));
   console.log(JSON.stringify(result, null, 2));
 }
+import { readActionGraphChain } from '../src/compiler/actions/actionGraphBuilder.ts';

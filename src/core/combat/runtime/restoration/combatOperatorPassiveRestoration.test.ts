@@ -11,27 +11,26 @@ import { CombatSemanticEventRuntime } from '../../events/combatSemanticEventRunt
 import { PassiveAbilityEventRuntime } from '../../abilities/passiveAbilityEventRuntime';
 import type { CombatOperationExecutor } from '../../skills/skillRuntime';
 import { CombatOperationPrograms } from '../../actions/combatOperationPrograms';
+import { chainEntry } from '../../../../test/compiledGraphEntry';
 
 const program: CompiledOperatorPassiveProgram = {
   key: 'passive',
   initialBlackboard: { count: 0 },
-  enableSequence: { steps: [] },
+  enableSequence: chainEntry('passive-enable', []),
   abilityEventResponses: [
     {
       event: 'abilityEntityFinished',
       priority: 0,
-      sequence: {
-        steps: [
-          {
-            kind: 'modifyActionValue',
-            parameters: {
-              key: 'count',
-              operation: 'add',
-              value: { kind: 'constant', value: 1 },
-            },
+      sequence: chainEntry('passive-count', [
+        {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'count',
+            operation: 'add',
+            value: { kind: 'constant', value: 1 },
           },
-        ],
-      },
+        },
+      ]),
     },
   ],
 };

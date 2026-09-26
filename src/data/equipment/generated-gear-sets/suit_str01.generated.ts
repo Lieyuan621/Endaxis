@@ -4,14 +4,8 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'suit_str01',
   iconPath: '/equipment/str01/item_equip_t3_suit_str01_edc_01.webp',
-  modifiers: [
-    {
-      kind: 'attribute',
-      attribute: 'strength',
-      operation: 'flat',
-      value: 50,
-    },
-  ],
+  modifiers: [{ kind: 'attribute', attribute: 'strength', operation: 'flat', value: 50 }],
+  skillId: 'passive_equipsuit_str_01',
 } as const satisfies GearSetDefinition;
 
 export default definition;

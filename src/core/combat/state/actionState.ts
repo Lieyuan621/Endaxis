@@ -14,22 +14,15 @@ import {
 import { type RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import { type SkillCastInheritanceRegistration } from './environmentState';
 
-/** 黑板作用域动作当前创建的子序列；尚未执行或已经重置时 body 为 null。 */
-export interface ActionBlackboardScopeState {
-  body: {
-    readonly blackboard: ActionBlackboardState;
-    readonly sequence: ActionSequenceState;
-  } | null;
-}
-
 /** 一个技能或 Buff 动作宿主的作用域数据。 */
 export interface ActionScopeState {
+  nextGraphInvocationId: number;
   readonly executedOnce: Set<string>;
   readonly blackboards: Map<ActionBlackboardState, Map<string, ActionBlackboardState>>;
 }
 
 export function createActionScopeState(): ActionScopeState {
-  return { executedOnce: new Set(), blackboards: new Map() };
+  return { executedOnce: new Set(), blackboards: new Map(), nextGraphInvocationId: 1 };
 }
 
 /** 分支动作当前选中的程序下标；null 表示尚未选择。 */
@@ -43,37 +36,36 @@ export function createBranchActionState(): BranchActionState {
 
 /** 重复动作的计时和触发次数。 */
 export interface RepeatedActionState {
-  /** ExecuteInterval 当前保留的子序列；切面只保存数据，恢复后重新绑定执行器。 */
-  body: ActionSequenceState | null;
   skipInitialTick: boolean;
   timerSeconds: number;
   scanCount: number;
   targetTriggerCount: number;
   lastTargetTriggerSeconds: number;
+  /** ExecuteInterval 当前保留的子序列；切面只保存数据，恢复后重新绑定执行器。 */
+  body: ActionSequenceState | null;
 }
 
 export function createRepeatedActionState(): RepeatedActionState {
   return {
-    body: null,
     skipInitialTick: false,
     timerSeconds: 0,
     scanCount: 0,
     targetTriggerCount: 0,
     lastTargetTriggerSeconds: 0,
+    body: null,
   };
 }
 
 /** 目标循环当前运行的子序列和目标。 */
-export interface TargetLoopState {
+export interface TargetLoopState<Execution = ActionSequenceState> {
   readonly activeBodies: number[];
-  readonly bodies: Map<
-    number,
-    { readonly target: RuntimeTargetRef; readonly sequence: ActionSequenceState }
-  >;
+  readonly bodies: Map<number, { readonly target: RuntimeTargetRef; readonly sequence: Execution }>;
   nextBodyId: number;
 }
 
-export function createTargetLoopState(): TargetLoopState {
+export function createTargetLoopState<
+  Execution = ActionSequenceState,
+>(): TargetLoopState<Execution> {
   return { activeBodies: [], bodies: new Map(), nextBodyId: 1 };
 }
 
@@ -182,23 +174,49 @@ export interface ActionStepState {
   executionPermitted: boolean;
 }
 
-/** 数组顺序与不可变程序中的步骤顺序一致，不持有步骤对象。 */
-export interface ActionSequenceState {
-  readonly entries: ActionStepState[];
-  /** 与 entries 同下标；保存实际步骤数据的引用，不复制一份镜像。 */
-  readonly steps: (ActionStepData | null)[];
+export type ActionSequenceState = ActionGraphExecutionState;
+
+/** 一个图入口的执行数据；程序在切面外共享，节点数据只在到达或 Reset 时建立。 */
+export interface ActionGraphExecutionState {
+  readonly revision: string;
+  readonly entry: string | null;
+  /** 当前宿主内的调用实例身份；分配器随宿主切面保存，恢复复用此身份。 */
+  readonly invocation: string;
+  /** 静态调用位置，与逐目标等动态调用实例分开；缺省 once/父层黑板身份取此值。 */
+  readonly callSite: string;
+  closed: boolean;
+  readonly nodes: Map<
+    string,
+    {
+      readonly lifecycle: ActionStepState;
+      readonly data: ActionGraphNodeData;
+    }
+  >;
 }
 
-export function createActionSequenceState(stepCount: number): ActionSequenceState {
-  return {
-    steps: Array.from({ length: stepCount }, () => null),
-    entries: Array.from({ length: stepCount }, () => ({
-      state: COMBAT_STEP_STATE.pending,
-      executeResult: false,
-      executionPermitted: false,
-    })),
-  };
-}
+/** 图控制状态中的子项是实际调用帧，不包含子程序定义或执行器。 */
+export type ActionGraphNodeData =
+  | { readonly kind: 'graphMacro'; body: ActionGraphExecutionState | null }
+  | {
+      readonly kind: 'graphListener';
+      readonly listener: CombatEventListenerState<ActionGraphExecutionState>;
+    }
+  | { readonly kind: 'graphTargets'; readonly loop: TargetLoopState<ActionGraphExecutionState> }
+  | GraphLeafStepData
+  | { readonly kind: 'repeat'; readonly repetition: RepeatedActionState }
+  | {
+      readonly kind: 'graphScope';
+      body: {
+        readonly blackboard: ActionBlackboardState;
+        readonly execution: ActionGraphExecutionState;
+      } | null;
+    }
+  | {
+      readonly kind: 'graphBranch';
+      readonly selection: BranchActionState;
+      readonly branches: Map<number, ActionGraphExecutionState>;
+    }
+  | { readonly kind: 'graphGuard'; body: ActionGraphExecutionState | null };
 
 /** 当前动作持有的登记。结束动作时按编号解除，不保存回调。 */
 export interface ActionRegistrationState {
@@ -211,7 +229,8 @@ export interface ActionBuffReferencesState {
   readonly references: BuffReference[];
 }
 
-export type ActionStepData =
+/** 叶子操作的登记与句柄数据，图执行器按调用实例持有，不含子程序状态。 */
+export type OperationStepData =
   | { readonly kind: 'playerActionMode'; readonly activation: ActionRegistrationState }
   | { readonly kind: 'basicAttackMapping'; readonly activation: ActionRegistrationState }
   | { readonly kind: 'multiDashLimit'; readonly activation: ActionRegistrationState }
@@ -220,18 +239,15 @@ export type ActionStepData =
   | { readonly kind: 'actionDurationBuffs'; readonly buffs: ActionBuffReferencesState }
   | { readonly kind: 'inheritedBuff'; readonly buffs: ActionBuffReferencesState }
   | { readonly kind: 'buffHold'; readonly buffs: ActionBuffReferencesState }
-  | { readonly kind: 'stateless' }
-  | { readonly kind: 'sequence'; readonly sequence: ActionSequenceState }
-  | {
-      readonly kind: 'branch';
-      readonly selection: BranchActionState;
-      readonly branches: readonly ActionSequenceState[];
-    }
-  | { readonly kind: 'repeat'; readonly repetition: RepeatedActionState }
-  | { readonly kind: 'targets'; readonly loop: TargetLoopState }
-  | { readonly kind: 'blackboardScope'; readonly scope: ActionBlackboardScopeState }
-  | { readonly kind: 'listener'; readonly listener: CombatEventListenerState }
-  | { readonly kind: 'jump'; readonly jump: TimelineJumpState };
+  | { readonly kind: 'stateless' };
+
+export type GraphLeafStepData =
+  OperationStepData | { readonly kind: 'jump'; readonly jump: TimelineJumpState };
+
+export type ActionStepData =
+  | GraphLeafStepData
+  | { readonly kind: 'graph'; readonly graph: ActionGraphExecutionState }
+  | { readonly kind: 'repeat'; readonly repetition: RepeatedActionState };
 
 /**
  * 时间轴调度进度。活动项与进入中的项只保存程序数组下标，不保存动作对象。
@@ -258,15 +274,15 @@ export function createTimelineActionState(): TimelineActionState {
 }
 
 /** 调度器和按开始帧排序的序列数据；未迁移步骤仍会拒绝恢复绑定。 */
-export interface TimelineRuntimeState {
+export interface TimelineRuntimeState<Execution = ActionSequenceState> {
   readonly scheduling: ReturnType<typeof createTimelineActionState>;
-  readonly sequences: readonly ActionSequenceState[];
+  readonly sequences: readonly Execution[];
 }
 
 /** 监听动作已安装的响应序列和稳定订阅引用。 */
-export interface CombatEventListenerState {
+export interface CombatEventListenerState<Execution = ActionSequenceState> {
   readonly responses: {
-    readonly sequence: ActionSequenceState;
+    readonly sequence: Execution;
     readonly subscriptions: readonly AbilityEventSubscriptionReference[];
   }[];
 }

@@ -3,6 +3,64 @@ import { describe, expect, it } from 'vitest';
 import { compileGlobalModifiers } from './compileGlobalModifiers';
 
 describe('compileGlobalModifiers', () => {
+  it('rejects tree programs, missing graph entries and invalid action parameters at the save boundary', () => {
+    const definition = {
+      stackingType: 'unlimited',
+      lifecycleSequences: { start: { $sequence: 'set' } },
+      actionGraph: {
+        main: {
+          nodes: {
+            set: {
+              action: {
+                kind: 'modifyActionValue',
+                parameters: {
+                  key: 'count',
+                  operation: 'assign',
+                  value: { kind: 'constant', value: 1 },
+                },
+              },
+              next: null,
+            },
+          },
+        },
+        macros: {},
+      },
+    };
+    const validate = (definition: unknown) => {
+      const issues: { path: string; message: string }[] = [];
+      validateGlobalConfig(
+        {
+          modifiers: [],
+          customBuffs: [
+            { id: 'scenario:custom-global:test', name: 'Test', enabled: true, definition },
+          ],
+        },
+        'globalConfig',
+        issues,
+      );
+      return issues;
+    };
+    expect(validate(definition)).toEqual([]);
+    expect(validate({ ...definition, lifecycleSequences: { start: { steps: [] } } })).not.toEqual(
+      [],
+    );
+    expect(
+      validate({ ...definition, lifecycleSequences: { start: { $sequence: 'missing' } } }).some(
+        issue => issue.message.includes('missing'),
+      ),
+    ).toBe(true);
+    expect(
+      validate({
+        ...definition,
+        actionGraph: {
+          main: { nodes: { invalid: { action: { kind: 'unknown' }, next: null } } },
+          macros: {},
+        },
+      }),
+    ).not.toEqual([]);
+    expect(validate({ stackingType: 'unlimited' })).not.toEqual([]);
+  });
+
   it('does not create an initialization action for empty configuration', () => {
     expect(compileGlobalModifiers({ modifiers: [] })).toEqual({
       buffDefinitions: {},
@@ -19,6 +77,7 @@ describe('compileGlobalModifiers', () => {
         name: 'Custom',
         enabled,
         definition: {
+          actionGraph: { main: { nodes: {} }, macros: {} },
           stackingType: 'unlimited' as const,
           attributeModifiers: [
             { attribute: 'criticalRate' as const, slot: 'baseAddition' as const, value: 0.1 },

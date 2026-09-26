@@ -5,7 +5,6 @@
 import type { EndaxisProjectDocument, TrackDocument } from '../project/schema';
 import type { ValidationIssue } from '../project/validation';
 import type { GearDefinition, GearSlotType, WeaponDefinition } from './equipmentDefinition';
-import type { GameDataRepository } from './gameDataRepository';
 import type { OperatorDefinition } from './operatorDefinition';
 import { listSkillGroupDefinitionBindings } from './operatorSkillDefinitions';
 
@@ -16,9 +15,11 @@ type BuildDefinitionIndex = {
     | (Pick<OperatorDefinition, 'slug' | 'weaponType'> &
         Partial<Pick<OperatorDefinition, 'skillGroups'>>)
     | null;
-  getWeapon(slug: string): WeaponDefinition | null;
-  getGear(slug: string): GearDefinition | null;
-  getGearSet: GameDataRepository['getGearSet'];
+  getWeapon(slug: string): Pick<WeaponDefinition, 'slug' | 'weaponType' | 'traits'> | null;
+  getGear(
+    slug: string,
+  ): Pick<GearDefinition, 'slug' | 'slotType' | 'traits' | 'gearSetSlug'> | null;
+  getGearSet(slug: string): { readonly slug: string } | null;
 };
 
 const trackGearSlotTypes = {

@@ -42,6 +42,7 @@ describe('套装来源全量发现，不依赖已发布身份名单', () => {
       compileEquipmentSuitRuntimeBatchSource(shared.definitions, shared.runtimeDependencies, {}),
     );
     expect(result.definitions.map(d => d.slug)).toEqual(['suit_fixture_new', 'suit_fixture_old']);
+    expect(result.definitions.map(d => d.skillId)).toEqual(['passive_fixture', 'passive_fixture']);
   });
 
   it('逐项收集错误，坏的新条目不会被跳过或遮住后续有效条目', () => {

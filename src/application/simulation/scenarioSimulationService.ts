@@ -1,4 +1,5 @@
 import type { ResolvedCombatStepForKind } from '../../core/compiler/combatProgram';
+
 import {
   compileCombatInputSchedule,
   compileFixedCombatInputSchedule,

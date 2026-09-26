@@ -190,7 +190,7 @@ describe('GameplayTagPredefine 公共转换', () => {
     await generateGameplayTagPredefine(input, deep, 'fixture', fixtureGameplayTagCatalog);
     expect(await fs.readFile(deep, 'utf8')).toBe(await fs.readFile(shallow, 'utf8'));
     expect(await fs.readFile(deep, 'utf8')).toContain(
-      '"../../../packages/game-data-contract/src/gameplayTags.ts"',
+      "'../../../packages/game-data-contract/src/gameplayTags.ts'",
     );
   });
 });

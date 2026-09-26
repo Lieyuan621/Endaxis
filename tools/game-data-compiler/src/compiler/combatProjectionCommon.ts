@@ -88,6 +88,10 @@ export function isPlainOwnerTarget(target: TargetReferenceSource): boolean {
 
 /** 原生动作身份由宿主及事件方向共同投影，不能把物理事件来源一律当作 ActionSource。 */
 export interface CombatActionProjectionContextSource {
+  /** 当前独立资源的节点容器；进入分支复用，进入另一个原生资源必须重新创建。 */
+  readonly graph: import('./actions/actionGraphBuilder.ts').ActionGraphBuilder<
+    import('./actions/combatActionProjectionTypes.ts').CompiledBuffStepSource
+  >;
   /** 完整 Buff 施加链已证明只会解析到纯表现 Buff 的动态 ID 黑板键。 */
   readonly combatInvisibleDynamicBuffBlackboardKeys?: ReadonlySet<string>;
   /** 仅基础攻击组装配保留 AllowNextSkillAction，用于按实际条件分支发布技能块边界。 */
@@ -103,8 +107,6 @@ export interface CombatActionProjectionContextSource {
   /** 接收侧 Buff 事件保留监听器创建者；其他路径沿用已审计的宿主投影。 */
   readonly actionSourceTarget: 'caster' | 'buffSource';
   /** 主动命中可显式绑定 enemy；不伪造 Buff 事件。接收侧 Target 是事件施加者。 */
-  /** 调用方已证明施法输入来自友方角色；不改变输入目标的运行时绑定方式。 */
-  readonly actionInputIsOperator?: boolean;
   readonly actionTargetTarget:
     | 'caster'
     | 'actionInputTarget'
@@ -135,8 +137,6 @@ export interface CombatActionProjectionContextSource {
   readonly fixedBuffSourceTarget?: 'caster' | 'enemy' | 'currentAbilityEntity';
   /** 已由同一主动技能动作图证明会命中唯一木桩的命名目标组。 */
   readonly staticEnemyTargetGroupKeys?: ReadonlySet<string>;
-  /** 当前时间线之前的写入仅产生干员；数量和具体成员仍从运行时 Context 读取。 */
-  readonly operatorTargetGroupKeys?: ReadonlySet<string>;
   /** 事件宿主可证明的命名 Context 身份；例如连携检查中的 trigger 就是事件发布者。 */
   readonly contextTargetGroupTargets?: ReadonlyMap<
     string,
@@ -146,6 +146,8 @@ export interface CombatActionProjectionContextSource {
   readonly staticEmptyTargetGroupKeys?: ReadonlySet<string>;
   /** 运行时可为空、但任一成员都已证明只能是唯一木桩的命名目标组。 */
   readonly singleEnemyTargetGroupKeys?: ReadonlySet<string>;
+  /** 当前时间线之前的写入仅产生干员；数量和具体成员仍从运行时 Context 读取。 */
+  readonly operatorTargetGroupKeys?: ReadonlySet<string>;
   /** 跨时间段可证明只含固定敌人或固定空间点的 Context；仅用于零空间锚点，不代表实体身份。 */
   readonly staticZeroSpaceTargetGroupKeys?: ReadonlySet<string>;
   /** 同名 Context 的每次写入都至多产生一个敌人或 FixedPoint；成员身份可变且集合可为空。 */
@@ -193,6 +195,8 @@ export interface CombatActionProjectionContextSource {
    * 定义没有 affix 写入，且当前回调保留普通来源编号，不能把普通来源冒充非零 affix。
    */
   readonly actionEnvironmentSkillCastInfoIsSourceCast?: boolean;
+  /** 调用方已证明施法输入来自友方角色；不改变输入目标的运行时绑定方式。 */
+  readonly actionInputIsOperator?: boolean;
 }
 
 /** 领域宿主可显式补入公共动作叶子的已审计投影；未提供时仍严格失败。 */
@@ -228,7 +232,7 @@ export interface CombatActionProjectionExtensionsSource {
   ) => readonly CompiledBuffStepSource[];
 }
 
-export const BUFF_ACTION_CONTEXT: CombatActionProjectionContextSource = {
+export const BUFF_ACTION_CONTEXT: Omit<CombatActionProjectionContextSource, 'graph'> = {
   actionOwnerTarget: 'buffOwner',
   actionSourceTarget: 'caster',
   actionTargetTarget: 'eventTarget',

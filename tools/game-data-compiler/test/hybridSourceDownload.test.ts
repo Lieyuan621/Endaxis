@@ -132,6 +132,59 @@ describe('AKEDB 优先、VFS 补缺', () => {
     ).toBe(true);
   });
 
+  it('BuffData 只使用 AKEDB 清单和文件，不查询 VFS 补缺', async () => {
+    const { args, bodies, index, record, requests } = await setup();
+    await fs.writeFile(
+      args.sourceCatalog,
+      JSON.stringify({ tableCfg: [], jsonCollections: { BuffData: 'BuffData' }, jsonFiles: [] }),
+    );
+    const buff = JSON.stringify({ id: 'buff_akedb', stackingSettings: { usePriorityKey: false } });
+    (index.datasets.json.files as Record<string, ReturnType<typeof record>>)[
+      'BuffData/buff_akedb.json'
+    ] = record(buff);
+    bodies['/asset-sync-index.json'] = JSON.stringify(index);
+    bodies['/public/Json/BuffData/buff_akedb.json'] = buff;
+    bodies['/api/endaxis-data/BuffData/manifest.json'] = JSON.stringify([
+      { contentFile: 'buff_akedb.json' },
+      { contentFile: 'buff_vfs_only.json' },
+    ]);
+    await downloadGameDataSources(args);
+    const ledger = JSON.parse(
+      await fs.readFile(path.join(args.output, 'source-provenance.json'), 'utf8'),
+    );
+    expect(ledger.entries).toEqual([
+      expect.objectContaining({ logicalPath: 'BuffData/buff_akedb.json', provider: 'akedb' }),
+    ]);
+    expect(ledger.inventories).toEqual([{ collection: 'BuffData', vfs: 'not-used', files: 1 }]);
+    expect(requests.some(url => url.pathname.includes('/api/endaxis-data/BuffData/'))).toBe(false);
+  });
+
+  it.each(['not-in-index', 'http-404'] as const)(
+    'BuffData 在 AKEDB %s 时明确失败，不退到 VFS',
+    async missing => {
+      const { args, bodies, index, record, requests } = await setup();
+      await fs.writeFile(
+        args.sourceCatalog,
+        JSON.stringify({ tableCfg: [], jsonCollections: {}, jsonFiles: ['BuffData/missing.json'] }),
+      );
+      const buff = JSON.stringify({ id: 'missing' });
+      if (missing === 'http-404') {
+        (index.datasets.json.files as Record<string, ReturnType<typeof record>>)[
+          'BuffData/missing.json'
+        ] = record(buff);
+        bodies['/asset-sync-index.json'] = JSON.stringify(index);
+        bodies['/public/Json/BuffData/missing.json'] = 404;
+      }
+      bodies['/api/endaxis-data/BuffData/missing.json'] = buff;
+      await expect(
+        downloadGameDataSources({ ...args, jsonFile: 'BuffData/missing.json' }),
+      ).rejects.toThrow('AKEDB BuffData is unavailable');
+      expect(requests.some(url => url.pathname === '/api/endaxis-data/BuffData/missing.json')).toBe(
+        false,
+      );
+    },
+  );
+
   it('已收录资源返回 404 时补取 VFS，但不改写内容', async () => {
     const { args, bodies } = await setup();
     bodies['/public/Json/SkillData/a.json'] = 404;

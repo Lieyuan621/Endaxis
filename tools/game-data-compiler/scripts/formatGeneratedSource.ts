@@ -4,7 +4,10 @@ import { format, resolveConfig } from 'prettier';
 
 /** 生成与校验使用同一份仓库格式，避免正式发布后再手工排版。 */
 export async function formatGeneratedSource(content: string, output: string): Promise<string> {
-  const options = await resolveConfig(output);
+  // 候选可以位于仓库外，仍使用编译器所属仓库的规范，不能随输出目录变化。
+  const options = await resolveConfig(
+    path.resolve(import.meta.dirname, '../../../.prettierrc.json'),
+  );
   return format(content, { ...options, filepath: output });
 }
 

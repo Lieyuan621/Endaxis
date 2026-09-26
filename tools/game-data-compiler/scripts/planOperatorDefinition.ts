@@ -29,6 +29,7 @@ import {
 } from './generateOperatorActiveSkillRuntime.ts';
 import { compilePassiveSkillRequestBatch } from '../src/compiler/skills/passiveSkillBatch.ts';
 import { compilePassiveSkillSource } from '../src/compiler/skills/passiveSkillDefinition.ts';
+import { readActionGraphChain } from '../src/compiler/actions/actionGraphBuilder.ts';
 import { GameplayTagRegistry } from '../src/source/nativeGameplayTags.ts';
 import { collectNativeActionNodes } from '../src/source/controlFlow.ts';
 import { prepareSkillDefinitionInputSource } from '../src/compiler/skills/skillDefinitionInput.ts';
@@ -954,7 +955,9 @@ export function planRoutedSkills(
     }
     const route = wrapper.switchToBuffCast;
     const condition = route?.condition;
-    const routeStep = route?.sequence.steps[0];
+    const routeSteps =
+      route === undefined ? [] : readActionGraphChain(wrapper.actionGraph.main, route.sequence);
+    const routeStep = routeSteps[0];
     const activationBuffId = requireNonEmptyString(
       config.activationBuffId === undefined
         ? condition?.kind === 'buffIdStackCompare'
@@ -975,7 +978,7 @@ export function planRoutedSkills(
       throw new Error(`${path}.costResource: expected sp`);
     if (
       route?.asSkillCast !== false ||
-      route.sequence.steps.length !== 1 ||
+      routeSteps.length !== 1 ||
       condition?.kind !== 'buffIdStackCompare' ||
       condition.target !== 'caster' ||
       condition.operator !== 'greaterOrEqual' ||

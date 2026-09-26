@@ -71,7 +71,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:visible': [visible: boolean];
   change: [changes: OperatorInstanceChanges];
-  'edit-definition': [];
 }>();
 
 const { t, locale } = useI18n({ useScope: 'global' });
@@ -342,13 +341,6 @@ function maxOut(): void {
                   @click="togglePromotion"
                 >
                   {{ promotionLabel() }}
-                </EaButton>
-                <EaButton size="sm" type="button" @click="emit('edit-definition')">
-                  {{
-                    customDefinition === undefined
-                      ? t('timeline.customDefinition.customizeOperator')
-                      : t('timeline.customDefinition.editOperator')
-                  }}
                 </EaButton>
               </div>
               <div v-if="potentialCount > 0" class="row">

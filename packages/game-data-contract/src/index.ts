@@ -18,3 +18,5 @@ export * from './consumables.ts';
 export * from './buildModifiers.ts';
 export * from './modifiers.ts';
 export type { ContingencyContractTagDefinition } from './mechanics.ts';
+
+export * from './actionGraph.ts';

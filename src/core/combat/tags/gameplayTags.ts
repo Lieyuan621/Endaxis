@@ -1,12 +1,10 @@
 import {
-  assertGameplayTag,
   type GameplayTag,
   type GameplayTagQueryType,
 } from '../../../../packages/game-data-contract/src/gameplayTags.ts';
-export {
-  assertGameplayTag,
-  GAMEPLAY_TAG_QUERY_TYPES,
-} from '../../../../packages/game-data-contract/src/gameplayTags.ts';
+import { assertGameplayTag } from '../../game-data/definitionGuards.ts';
+export { GAMEPLAY_TAG_QUERY_TYPES } from '../../../../packages/game-data-contract/src/gameplayTags.ts';
+export { assertGameplayTag } from '../../game-data/definitionGuards.ts';
 export type {
   GameplayTag,
   GameplayTagQueryType,

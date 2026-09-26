@@ -7,6 +7,7 @@ import type {
   SkillLibraryNameQualifier,
   SkillType,
 } from '../../core/game-data/operatorDefinition';
+
 import type {
   DefinitionActionSource,
   ScenarioDocument,
@@ -21,7 +22,10 @@ import {
   projectOperatorSupport,
   type OperatorSupportViewModel,
 } from './library/operatorSupportViewModel';
-import { projectCastHitMarkers, type TimelineHitMarker } from './results/timelineHitProjection';
+import {
+  projectCastGraphHitMarkers,
+  type TimelineHitMarker,
+} from './results/timelineHitProjection';
 import { listSkillGroupLibraryPlacements } from '../../application/editor/skillGroupPlacement';
 import { orderTimelineSkillLibrary } from './library/skillLibraryOrder';
 import { resolveSkillCastStartFrames } from '../../core/project/skillCastPlacement';
@@ -101,8 +105,7 @@ function projectSkillCast(
   skillCast: SkillCastDocument,
   resolved: ResolvedSkillDefinition | null,
   resolutionIssue: string | undefined,
-  abilityEntityDefinitions?: OperatorDefinition['abilityEntityDefinitions'],
-  buffDefinitions?: OperatorDefinition['buffDefinitions'],
+  hitMarkers: readonly TimelineHitMarker[] = [],
 ): TimelineSkillCastViewModel {
   const skillType = resolved?.definition.skillType ?? resolved?.group.skillType ?? null;
   return {
@@ -115,15 +118,7 @@ function projectSkillCast(
     ...(resolved?.definition.enhancementStateBuffId === undefined
       ? {}
       : { enhancementStateBuffId: resolved.definition.enhancementStateBuffId }),
-    hitMarkers:
-      resolved !== null
-        ? projectCastHitMarkers(
-            skillCast,
-            resolved.definition,
-            abilityEntityDefinitions,
-            buffDefinitions,
-          )
-        : [],
+    hitMarkers,
     disabled: skillCast.presentation?.disabled ?? false,
     locked: skillCast.presentation?.locked ?? false,
     edited: skillCast.customDefinition !== undefined,
@@ -194,22 +189,18 @@ function projectTrack(
 
   const skillCasts = track.skillCasts.map(skillCast => {
     let resolved: ResolvedSkillDefinition | null = null;
+    let hitMarkers: readonly TimelineHitMarker[] = [];
     let resolutionIssue: string | undefined;
     if (operator !== null && operatorInstance !== null) {
       try {
         resolved = resolveEffectiveSkillDefinition(skillCast, operator);
+        hitMarkers = projectCastGraphHitMarkers(skillCast, resolved.definition, operator);
       } catch (error) {
         resolutionIssue = error instanceof Error ? error.message : String(error);
         issues.push(`cast '${skillCast.id}': ${resolutionIssue}`);
       }
     }
-    return projectSkillCast(
-      skillCast,
-      resolved,
-      resolutionIssue,
-      operator?.abilityEntityDefinitions,
-      operator?.buffDefinitions,
-    );
+    return projectSkillCast(skillCast, resolved, resolutionIssue, hitMarkers);
   });
   const durations = new Map(skillCasts.map(cast => [cast.id, cast.durationFrames]));
   const startFrames = resolveSkillCastStartFrames(

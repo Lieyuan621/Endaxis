@@ -15,6 +15,8 @@ import { projectAbilityEvent } from './abilityEventProjection.ts';
 import type { CombatActionProjectionExtensionsSource } from '../combatProjectionCommon.ts';
 import type { CombatActionProjectionContextSource } from '../combatProjectionCommon.ts';
 import { projectGameplayTags } from '../combatProjectionCommon.ts';
+import { createActionGraphBuilder } from '../actions/actionGraphBuilder.ts';
+import type { CompiledBuffStepSource } from '../actions/combatActionProjectionTypes.ts';
 
 /** 只接入现有零空间运行时可表示的模板寿命；子技能身份来自 Spawn 动作，不从模板名称推导。 */
 export function compileAbilityEntityDefinitionSource(
@@ -146,6 +148,7 @@ function compileAbilityEntityPassiveSkill(
   extensions?: CombatActionProjectionExtensionsSource,
   abilityEntityQueries?: CombatActionProjectionContextSource['abilityEntityQueries'],
 ): AbilityEntityPassiveSkillDefinition {
+  const graph = createActionGraphBuilder<CompiledBuffStepSource>();
   const sourcePath = `SkillData.${skillId}`;
   const compiled = compilePassiveSkillSource(value, sourcePath, null);
   const skill = compiled.skill;
@@ -183,6 +186,7 @@ function compileAbilityEntityPassiveSkill(
     };
   });
   const context = {
+    graph,
     gameplayTagRegistry,
     abilityEntityQueries,
     actionOwnerTarget: 'currentAbilityEntity' as const,
@@ -218,10 +222,12 @@ function compileAbilityEntityPassiveSkill(
       });
     }
   }
+  const enableSequence = graph.sequence(enableSteps);
   return {
+    actionGraph: { main: graph.finish(), macros: {} },
     key: skillId,
     ...(Object.keys(blackboard).length === 0 ? {} : { blackboard }),
-    enableSequence: { steps: enableSteps },
+    enableSequence,
     ...(abilityEventResponses.length === 0 ? {} : { abilityEventResponses }),
   };
 }

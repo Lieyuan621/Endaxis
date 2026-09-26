@@ -11,7 +11,8 @@ import {
 import { listOperatorSkillDefinitionBindings } from './operatorSkillDefinitions';
 import { validateComboSkillConditions } from './validateComboSkillConditions';
 import { OPERATOR_PROGRESSION_SLOTS } from './operatorProgressionSlots';
-import { isOperatorPassiveAbilityEvent } from '../../../packages/game-data-contract/src/operators';
+import { isOperatorPassiveAbilityEvent } from './definitionGuards.ts';
+
 import {
   validateLevelValuesDefinition,
   validateSkillDefinition,
@@ -19,7 +20,8 @@ import {
 } from './validateSkillDefinition';
 import {
   validateAbilityEntityDefinition,
-  validateActionSequenceDefinition,
+  validateActionGraphActions,
+  validateActionGraphReferenceDefinition,
 } from './validation/actionPrograms';
 
 function push(issues: SkillDefinitionValidationIssue[], path: string, message: string): void {
@@ -31,7 +33,15 @@ function validatePassiveSkill(
   path: string,
   issues: SkillDefinitionValidationIssue[],
 ): void {
+  if ('buffDefinitions' in passive)
+    push(
+      issues,
+      `${path}.buffDefinitions`,
+      'skills may reference Buffs but cannot own their definitions',
+    );
   if (passive.key.length === 0) push(issues, `${path}.key`, 'expected a non-empty string');
+  if (passive.actionGraph !== undefined)
+    issues.push(...validateActionGraphActions(passive.actionGraph, `${path}.actionGraph`));
   for (const [key, values] of Object.entries(passive.blackboard ?? {})) {
     if (key.length === 0) push(issues, `${path}.blackboard`, 'expected a non-empty blackboard key');
     issues.push(
@@ -39,7 +49,7 @@ function validatePassiveSkill(
     );
   }
   issues.push(
-    ...validateActionSequenceDefinition(passive.enableSequence, `${path}.enableSequence`),
+    ...validateActionGraphReferenceDefinition(passive.enableSequence, `${path}.enableSequence`),
   );
   if (passive.abilityEventResponses !== undefined) {
     if (!Array.isArray(passive.abilityEventResponses))
@@ -56,7 +66,7 @@ function validatePassiveSkill(
         if (!Number.isInteger(response.priority))
           push(issues, `${responsePath}.priority`, 'expected an integer');
         issues.push(
-          ...validateActionSequenceDefinition(response.sequence, `${responsePath}.sequence`),
+          ...validateActionGraphReferenceDefinition(response.sequence, `${responsePath}.sequence`),
         );
       });
   }
@@ -67,6 +77,7 @@ function validatePassiveSkill(
  *
  * 不可信 JSON 的形状仍由项目加载校验负责；这里检查跨根集合、全部技能执行定义以及根级行为程序，
  * 供项目模板命令和编辑器共同调用，避免两处各维护一份“看起来像”的干员校验。
+ * 程序一律按图形态校验：入口必须是所属资源图内的引用，节点动作在各自图内逐一检查。
  */
 export function validateOperatorDefinition(
   definition: OperatorDefinition,
@@ -202,6 +213,7 @@ export function validateOperatorDefinition(
     ...validateComboSkillConditions(
       definition.comboSkillConditions,
       `${path}.comboSkillConditions`,
+      validateActionGraphReferenceDefinition,
     ),
   );
   const comboSkillKeys = new Set(
@@ -232,7 +244,9 @@ export function validateOperatorDefinition(
   (definition.eventHandlers ?? []).forEach((handler, index) => {
     const handlerPath = `${path}.eventHandlers[${index}]`;
     if (handler.key.length === 0) push(issues, `${handlerPath}.key`, 'expected a non-empty string');
-    issues.push(...validateActionSequenceDefinition(handler.sequence, `${handlerPath}.sequence`));
+    issues.push(
+      ...validateActionGraphReferenceDefinition(handler.sequence, `${handlerPath}.sequence`),
+    );
   });
   for (const collection of ['talents', 'potentials'] as const) {
     const count = OPERATOR_PROGRESSION_SLOTS[collection];
@@ -251,13 +265,34 @@ export function validateOperatorDefinition(
           push(issues, `${modifierPath}.blackboardKey`, 'expected a non-empty blackboard key');
         issues.push(...validateLevelValuesDefinition(modifier.value, `${modifierPath}.value`));
       });
+      if (upgrade.actionGraph !== undefined)
+        issues.push(
+          ...validateActionGraphActions(upgrade.actionGraph, `${upgradePath}.actionGraph`),
+        );
       if (upgrade.initializationSequence !== undefined)
         issues.push(
-          ...validateActionSequenceDefinition(
+          ...validateActionGraphReferenceDefinition(
             upgrade.initializationSequence,
             `${upgradePath}.initializationSequence`,
           ),
         );
+      if (upgrade.initializationSequence !== undefined && (upgrade.attachedBuffs?.length ?? 0) > 0)
+        push(issues, upgradePath, 'cannot mix initializationSequence with attachedBuffs');
+      if (upgrade.attachedBuffs !== undefined && !Array.isArray(upgrade.attachedBuffs)) {
+        push(issues, `${upgradePath}.attachedBuffs`, 'expected an array');
+      } else {
+        (upgrade.attachedBuffs ?? []).forEach((installation, installationIndex) => {
+          const installationPath = `${upgradePath}.attachedBuffs[${installationIndex}]`;
+          if (typeof installation.buffId !== 'string' || !installation.buffId)
+            push(issues, `${installationPath}.buffId`, 'expected a non-empty Buff ID');
+          for (const [key, value] of Object.entries(installation.blackboardAssignments ?? {})) {
+            const valuePath = `${installationPath}.blackboardAssignments.${key}`;
+            issues.push(...validateLevelValuesDefinition(value, valuePath));
+            if (Array.isArray(value) && value.length !== upgrade.levels)
+              push(issues, valuePath, `expected ${upgrade.levels} level values`);
+          }
+        });
+      }
       (upgrade.passiveSkills ?? []).forEach((passive, passiveIndex) =>
         validatePassiveSkill(passive, `${upgradePath}.passiveSkills[${passiveIndex}]`, issues),
       );
@@ -271,7 +306,7 @@ export function validateOperatorDefinition(
             ),
           );
         issues.push(
-          ...validateActionSequenceDefinition(handler.sequence, `${handlerPath}.sequence`),
+          ...validateActionGraphReferenceDefinition(handler.sequence, `${handlerPath}.sequence`),
         );
       });
     });

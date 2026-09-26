@@ -7,12 +7,20 @@ export function hasUnmodeledIncomingAttackTrigger(
 ): boolean {
   return programs.some(program => {
     if (program.skillKey !== skillKey || program.event !== 'takeDamage') return false;
-    let sequence = program.sequence;
+    const { graph } = program.sequence;
+    let entry = program.sequence.entry;
     let requiresControlledTarget = false;
-    while (sequence.steps.length === 1) {
-      const step = sequence.steps[0]!;
-      if (step.kind !== 'conditional' || step.whenFalse || step.parameters.alwaysNext) return false;
-      const condition = step.parameters.condition;
+    while (entry !== null) {
+      const node = graph.nodes.get(entry);
+      if (node === undefined || node.next !== null) return false;
+      const { action } = node;
+      if (
+        action.kind !== 'conditional' ||
+        action.whenFalse !== undefined ||
+        action.parameters.alwaysNext
+      )
+        return false;
+      const condition = action.parameters.condition;
       switch (condition.kind) {
         case 'contextTargetIdentityMatch':
           if (
@@ -30,14 +38,18 @@ export function hasUnmodeledIncomingAttackTrigger(
         case 'eventDamageFeaturesMatch':
           break;
         case 'actionInputTargetObjectTypeMatch':
-          if (condition.objectTypes.length !== 1 || condition.objectTypes[0] !== 'enemy')
+          if (
+            condition.objectTypes === 'all' ||
+            condition.objectTypes.length !== 1 ||
+            condition.objectTypes[0] !== 'enemy'
+          )
             return false;
           break;
         default:
           return false;
       }
-      sequence = step.whenTrue;
+      entry = action.whenTrue.$sequence;
     }
-    return sequence.steps.length === 0 && requiresControlledTarget;
+    return requiresControlledTarget;
   });
 }

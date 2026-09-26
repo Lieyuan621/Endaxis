@@ -1,6 +1,8 @@
 import { expect, it } from 'vitest';
 import { compileScript, compileStyle, compileTemplate, parse } from '@vue/compiler-sfc';
-import source from './TimelineActionBlock.vue?raw';
+import rawSource from './TimelineActionBlock.vue?raw';
+
+const source = rawSource.replace(/\r\n/g, '\n');
 
 it('matches main label visibility and exposes selection semantics', () => {
   expect(source).toContain('if (props.pxPerFrame * PROJECT_FPS >= 30) return props.label;');

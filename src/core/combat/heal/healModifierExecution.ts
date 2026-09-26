@@ -6,7 +6,7 @@ import type {
   HealModifierSide,
   HealProcessTiming,
 } from '../../../../packages/game-data-contract/src/modifiers.ts';
-import { compareCombatNumbers } from '../../../../packages/game-data-contract/src/primitives';
+import { compareCombatNumbers } from '../../mechanics/combatNumbers.ts';
 import type { HealCalculationContext } from './healModifiers';
 
 export function applyHealModifier(

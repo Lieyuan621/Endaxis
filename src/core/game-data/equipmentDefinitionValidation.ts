@@ -1,3 +1,9 @@
+import { validateActionGraphOwner } from '../action-graph/actionGraphValidation';
+import type {
+  ActionGraphDefinition,
+  ActionGraphResourceDefinition,
+} from '../../../packages/game-data-contract/src/actionGraph';
+import { validateBuffDefinition } from './validation/buffApplication';
 /**
  * 武器、装备与套装定义的严格结构校验。
  *
@@ -24,7 +30,12 @@ import {
   type SkillDefinitionValidationIssue,
 } from './validateSkillDefinition';
 import {
-  validateActionSequenceDefinition,
+  type ActionGraphContextEntry,
+  validateActionGraphActions,
+  validateActionGraphContexts,
+  validateActionGraphReference,
+  validateActionGraphReferenceDefinition,
+  validateScheduledSequence,
   validateCombatEventTriggerDefinition,
 } from './validation/actionPrograms';
 
@@ -224,54 +235,45 @@ function validateContribution(
   if (Object.hasOwn(record, 'initializationBlackboard')) {
     push(issues, `${path}.initializationBlackboard`, 'use the shared contribution blackboard');
   }
-  if (record.modifiers !== undefined) {
-    if (!Array.isArray(record.modifiers)) {
-      push(issues, `${path}.modifiers`, 'expected an array');
-    } else {
-      record.modifiers.forEach((modifier, index) =>
-        validateModifier(modifier, `${path}.modifiers[${index}]`, levelCount, issues),
-      );
-    }
-  }
-
-  if (record.buffDefinitions !== undefined) {
-    const definitions = asRecord(record.buffDefinitions, `${path}.buffDefinitions`, issues);
-    if (definitions !== null) {
-      for (const [buffId, definition] of Object.entries(definitions)) {
-        issues.push(
-          ...validateActionSequenceDefinition(
-            {
-              steps: [
-                {
-                  kind: 'applyBuff',
-                  parameters: {
-                    buffId,
-                    target: 'caster',
-                    definition,
-                    inheritSourceSkillCastInfo: true,
-                  },
-                },
-              ],
-            },
-            `${path}.buffDefinitions.${buffId}`,
-          ),
-        );
-      }
-    }
-  }
+  validateContributionModifiers(record, path, levelCount, issues);
+  const validateProgram = validateActionGraphReferenceDefinition;
 
   if (record.enableSequence !== undefined) {
-    issues.push(
-      ...validateActionSequenceDefinition(record.enableSequence, `${path}.enableSequence`),
-    );
+    issues.push(...validateProgram(record.enableSequence, `${path}.enableSequence`));
   }
   if (record.initializationSequence !== undefined) {
     issues.push(
-      ...validateActionSequenceDefinition(
-        record.initializationSequence,
-        `${path}.initializationSequence`,
-      ),
+      ...validateProgram(record.initializationSequence, `${path}.initializationSequence`),
     );
+  }
+
+  // 贡献自己的图：扁平校验节点动作，再沿实际入口检查实体上下文。
+  if (record.actionGraph !== undefined) {
+    issues.push(...validateActionGraphActions(record.actionGraph, `${path}.actionGraph`));
+    const entries: ActionGraphContextEntry[] = [];
+    if (record.enableSequence !== undefined)
+      entries.push({
+        reference: record.enableSequence,
+        path: `${path}.enableSequence`,
+        currentTargetAvailable: false,
+      });
+    if (record.initializationSequence !== undefined)
+      entries.push({
+        reference: record.initializationSequence,
+        path: `${path}.initializationSequence`,
+        currentTargetAvailable: false,
+      });
+    if (Array.isArray(record.eventHandlers))
+      record.eventHandlers.forEach((handler, index) => {
+        const handlerRecord = asRecord(handler, `${path}.eventHandlers[${index}]`, []);
+        if (handlerRecord === null) return;
+        entries.push({
+          reference: handlerRecord.sequence,
+          path: `${path}.eventHandlers[${index}].sequence`,
+          currentTargetAvailable: false,
+        });
+      });
+    validateActionGraphContexts(record.actionGraph, `${path}.actionGraph`, entries, issues);
   }
 
   if (record.blackboard !== undefined) {
@@ -328,10 +330,25 @@ function validateContribution(
         'blackboard belongs to the equipment contribution, not its event handler',
       );
     }
-    issues.push(
-      ...validateActionSequenceDefinition(handlerRecord.sequence, `${handlerPath}.sequence`),
-    );
+    issues.push(...validateProgram(handlerRecord.sequence, `${handlerPath}.sequence`));
   });
+}
+
+function validateContributionModifiers(
+  record: Record<string, unknown>,
+  path: string,
+  levelCount: number,
+  issues: EquipmentDefinitionValidationIssue[],
+): void {
+  if (record.modifiers !== undefined) {
+    if (!Array.isArray(record.modifiers)) {
+      push(issues, `${path}.modifiers`, 'expected an array');
+    } else {
+      record.modifiers.forEach((modifier, index) =>
+        validateModifier(modifier, `${path}.modifiers[${index}]`, levelCount, issues),
+      );
+    }
+  }
 }
 
 function validateTraits(
@@ -354,11 +371,37 @@ function validateTraits(
       if (keys.has(key)) push(issues, `${traitPath}.key`, `duplicate trait key '${key}'`);
       keys.add(key);
     }
+    if (record.skillId !== undefined) {
+      if (requireDisplay || typeof record.skillId !== 'string' || record.skillId.length === 0) {
+        push(issues, `${traitPath}.skillId`, 'expected a weapon passive SkillData ID');
+      }
+    }
     const levelCount = requirePositiveInteger(record, 'levelCount', traitPath, issues);
     if (levelCount !== null) {
-      validateContribution(record, traitPath, levelCount, issues);
       if (requireDisplay) {
+        validateContributionModifiers(record, traitPath, levelCount, issues);
         validateTraitDisplay(record.display, `${traitPath}.display`, levelCount, issues);
+        for (const field of [
+          'actionGraph',
+          'initializationBlackboard',
+          'eventHandlers',
+          'buffDefinitions',
+          'blackboard',
+          'enableSequence',
+          'initializationSequence',
+        ]) {
+          if (Object.hasOwn(record, field)) {
+            push(issues, `${traitPath}.${field}`, 'gear traits only contain static modifiers');
+          }
+        }
+      } else {
+        if ('buffDefinitions' in record)
+          push(
+            issues,
+            `${traitPath}.buffDefinitions`,
+            'skills may reference Buffs but cannot own their definitions',
+          );
+        validateContribution(record, traitPath, levelCount, issues);
       }
     }
   });
@@ -389,6 +432,8 @@ export function validateWeaponDefinition(
     });
   }
   validateTraits(record.traits, `${path}.traits`, issues, false);
+  validateOwnedBuffs(record, path, issues);
+  validateOwnedGraphs(record, path, issues);
   return issues;
 }
 
@@ -400,6 +445,9 @@ export function validateGearDefinition(
   const issues: EquipmentDefinitionValidationIssue[] = [];
   const record = asRecord(value, path, issues);
   if (record === null) return issues;
+  if (Object.hasOwn(record, 'actionGraph')) {
+    push(issues, `${path}.actionGraph`, 'gear does not own an action graph');
+  }
   requireString(record, 'slug', path, issues);
   requireEnum(record, 'slotType', gearSlotTypes, path, issues);
   const levelRequirement = requireFiniteNumber(record, 'levelRequirement', path, issues);
@@ -429,6 +477,48 @@ export function validateGearSetDefinition(
   const record = asRecord(value, path, issues);
   if (record === null) return issues;
   requireString(record, 'slug', path, issues);
+  if (record.skillId !== undefined && (typeof record.skillId !== 'string' || !record.skillId)) {
+    push(issues, `${path}.skillId`, 'expected a passive SkillData ID');
+  }
   validateContribution(record, path, 1, issues);
+  validateOwnedBuffs(record, path, issues);
+  validateOwnedGraphs(record, path, issues);
   return issues;
+}
+
+function validateOwnedGraphs(
+  record: Record<string, unknown>,
+  path: string,
+  issues: EquipmentDefinitionValidationIssue[],
+): void {
+  try {
+    validateActionGraphOwner(
+      record as { actionGraph?: ActionGraphDefinition | ActionGraphResourceDefinition },
+      path,
+    );
+  } catch (error) {
+    push(issues, path, error instanceof Error ? error.message : 'invalid action graph');
+  }
+}
+
+function validateOwnedBuffs(
+  record: Record<string, unknown>,
+  path: string,
+  issues: EquipmentDefinitionValidationIssue[],
+): void {
+  if (record.buffDefinitions === undefined) return;
+  const definitions = asRecord(record.buffDefinitions, `${path}.buffDefinitions`, issues);
+  if (definitions === null) return;
+  for (const [id, value] of Object.entries(definitions)) {
+    const buffPath = `${path}.buffDefinitions.${id}`;
+    const definition = asRecord(value, buffPath, issues);
+    if (definition === null) continue;
+    validateBuffDefinition(definition, id, buffPath, issues, {
+      action: validateActionGraphReference,
+      scheduled: validateScheduledSequence,
+      graph: (value, path, out) => out.push(...validateActionGraphActions(value, path)),
+      contexts: (value, path, entries, out) =>
+        validateActionGraphContexts(value, path, entries, out),
+    });
+  }
 }

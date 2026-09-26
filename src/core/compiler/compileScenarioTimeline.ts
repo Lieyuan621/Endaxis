@@ -1,3 +1,9 @@
+import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
+import type { ActionGraphResourceDefinition } from '../../../packages/game-data-contract/src/actionGraph';
+import type {
+  ActionGraphDefinitionRepository,
+  ImportedAbilityEntityDefinitions,
+} from './actionGraphDefinitionRepository';
 /**
  * 把项目中的干员轨道和技能释放位置编译为战斗运行时可直接装配的程序与输入。
  *
@@ -11,15 +17,16 @@ import type {
   CombatSkillCastProgram,
 } from '../combat/runtime/combatRuntimeAssembly';
 import type { ScheduledSkillInput } from '../combat/state/environmentState';
-import type { GameDataRepository } from '../game-data/gameDataRepository';
+import type { CommonDefinitionSource } from '../game-data/gameDataRepository';
 import type {
   OperatorAttribute,
-  OperatorBuffDefinitions,
   OperatorDefinition,
-  SkillDefinition,
   SkillType,
 } from '../game-data/operatorDefinition';
-import { listSkillGroupDefinitionBindings } from '../game-data/operatorSkillDefinitions';
+import {
+  listOperatorSkillDefinitionBindings,
+  listSkillGroupDefinitionBindings,
+} from '../game-data/operatorSkillDefinitions';
 import { resolveUniquePlayerActionForSkill } from '../game-data/resolvePlayerActionRoute';
 import type {
   OperatorInstanceDocument,
@@ -28,6 +35,8 @@ import type {
 } from '../project/schema';
 import { getSkillCastPlacementChains } from '../project/skillCastPlacement';
 import type { CompiledSkillProgram, CompiledSkillSlotGroup } from './combatProgram';
+import { createIndependentAbilityEntityImportResolver } from './compileCommonAbilityEntityImports';
+import { compileCommonDefinitionSources } from './compileCommonDefinitionSources';
 import { compileOperatorComboSkillConditions } from './compileOperatorComboSkillConditions';
 import {
   applyOperatorUpgradeSkillPatches,
@@ -37,7 +46,7 @@ import {
   compileOperatorUpgradeEventPrograms,
   resolveActiveOperatorUpgrades,
 } from './compileOperatorUpgrades';
-import { compileOperatorBuffResources, compileSkill } from './compileSkill';
+import { compileIndependentBuffResource, compileSkill } from './compileSkill';
 import { resolveOperatorPanel } from './resolveOperatorPanel';
 import type { ResolvedScenarioBuild } from './resolveScenarioBuilds';
 import {
@@ -51,6 +60,58 @@ interface SkillCompilationBinding {
   readonly level: number;
   readonly executionSkillGroupKey?: string;
   readonly executionSkillId?: string;
+}
+
+function graphSpawnsEntity(graph: ActionGraphResourceDefinition): boolean {
+  const pending: object[] = [graph];
+  const visited = new WeakSet<object>();
+  while (pending.length) {
+    const value = pending.pop()!;
+    if (visited.has(value)) continue;
+    visited.add(value);
+    if ('kind' in value && value.kind === 'spawnAbilityEntity') return true;
+    // 外部回调、实体子技能和 Buff 自有图也可能生成实体，必须带上其依赖目录。
+    for (const child of Object.values(value))
+      if (child !== null && typeof child === 'object') pending.push(child);
+  }
+  return false;
+}
+
+function createOperatorSkillCompiler(
+  abilityEntityDefinitions: OperatorDefinition['abilityEntityDefinitions'],
+  programs: ActionGraphDefinitionRepository,
+  importsForLevel?: (level: number) => ImportedAbilityEntityDefinitions,
+  localEntitiesForLevelOverride?: (level: number) => ImportedAbilityEntityDefinitions,
+) {
+  const skillImportsByLevel = new Map<number, ImportedAbilityEntityDefinitions>();
+  const localEntitiesForLevel =
+    localEntitiesForLevelOverride ??
+    createIndependentAbilityEntityImportResolver(
+      abilityEntityDefinitions ?? {},
+      programs,
+      importsForLevel,
+    );
+  const resolveSkillImports = (level: number): ImportedAbilityEntityDefinitions => {
+    const cached = skillImportsByLevel.get(level);
+    if (cached) return cached;
+    const imports = { ...importsForLevel?.(level), ...localEntitiesForLevel(level) };
+    skillImportsByLevel.set(level, imports);
+    return imports;
+  };
+  return (input: {
+    operatorId: string;
+    skillGroupKey: string;
+    skillType: SkillType;
+    skillLevel: number;
+    skill: SkillDefinition;
+  }): CompiledSkillProgram =>
+    compileSkill({
+      ...input,
+      programs,
+      importedAbilityEntityDefinitions: graphSpawnsEntity(input.skill.actionGraph)
+        ? resolveSkillImports(input.skillLevel)
+        : importsForLevel?.(input.skillLevel),
+    });
 }
 
 /** 只解析本次操作身份及参数；固定技能定义的编译与输入帧无关。 */
@@ -87,14 +148,16 @@ export interface CompiledScenarioTimeline {
   readonly skillInputGroups?: readonly SkillInputGroup[];
 }
 
-type OperatorIndex = Pick<GameDataRepository, 'getOperator'> &
-  Partial<
-    Pick<GameDataRepository, 'getCommonBuffDefinitions' | 'getCommonAbilityEntityDefinitions'>
-  >;
+interface GraphOperatorIndex {
+  readonly actionPrograms: ActionGraphDefinitionRepository;
+  getOperator(slug: string): OperatorDefinition | null;
+  getCommonAbilityEntityDefinitions?(): OperatorDefinition['abilityEntityDefinitions'];
+  getCommonDefinitionSources(): readonly CommonDefinitionSource[];
+}
 
 function requireOperator(
   build: OperatorInstanceDocument,
-  index: OperatorIndex,
+  index: GraphOperatorIndex,
 ): OperatorDefinition {
   const operator = index.getOperator(build.operatorSlug);
   if (operator === null) {
@@ -111,12 +174,18 @@ function requireSkillLevel(build: OperatorInstanceDocument, levelSource: string)
   return level;
 }
 
-function requireDefinitionSkillType(skill: SkillDefinition, path: string): SkillType {
+function requireDefinitionSkillType(
+  skill: Pick<SkillDefinition, 'skillType'>,
+  path: string,
+): SkillType {
   if (skill.skillType === undefined) throw new Error(`${path} has no per-skill combat type`);
   return skill.skillType;
 }
 
-function requireDefinitionLevelSource(skill: SkillDefinition, operatorSlug: string) {
+function requireDefinitionLevelSource(
+  skill: Pick<SkillDefinition, 'levelSource' | 'key'>,
+  operatorSlug: string,
+) {
   if (skill.levelSource === undefined) {
     throw new Error(
       `operator '${operatorSlug}' skill '${skill.key}' has no per-skill level source`,
@@ -131,12 +200,23 @@ function compileCastSkillPrograms(
   cast: SkillCastDocument,
   resolved: ResolvedSkillDefinition,
   level: number,
-  abilityEntityDefinitions: OperatorDefinition['abilityEntityDefinitions'],
+  compileDefinition: ReturnType<typeof createOperatorSkillCompiler>,
+  operator?: OperatorDefinition,
+  build?: OperatorInstanceDocument,
 ): readonly CombatSkillCastProgram[] {
   const definition = resolved.definition;
   const routed = resolved.group.routedReplacementSkills?.find(
     replacement => replacement.skill.key === definition.key,
   );
+  // 换入释放用执行体图编译动作程序（节点身份前缀为 executionSkillKey），
+  // 包装器只保留释放身份、费用与冷却；二者在生成数据中图内容一致。
+  // 执行体缺失（如自定义干员的滞后元数据）时回退到包装器自身的图。
+  const executionDefinition =
+    routed === undefined || operator === undefined || build === undefined
+      ? undefined
+      : listOperatorSkillDefinitionBindings(operator)
+          .map(binding => binding.skill)
+          .find(skill => skill.key === routed.executionSkillKey);
   const definitions: SkillCompilationBinding[] = [
     {
       skill: definition,
@@ -154,22 +234,54 @@ function compileCastSkillPrograms(
     },
   ];
   return definitions.map(
-    ({ skill, skillType, level: definitionLevel, executionSkillGroupKey, executionSkillId }) => ({
-      castId: cast.id,
-      program: {
-        ...compileSkill({
-          operatorId: trackId,
-          skillGroupKey: resolved.group.key,
-          skillType,
-          skillLevel: definitionLevel,
-          skill,
-          abilityEntityDefinitions,
-        }),
-        ...(executionSkillGroupKey === undefined
-          ? {}
-          : { executionSkillGroupKey, executionSkillId }),
-      },
-    }),
+    ({ skill, skillType, level: definitionLevel, executionSkillGroupKey, executionSkillId }) => {
+      const wrapperProgram = compileDefinition({
+        operatorId: trackId,
+        skillGroupKey: resolved.group.key,
+        skillType,
+        skillLevel: definitionLevel,
+        skill,
+      });
+      if (executionSkillId === undefined || executionDefinition === undefined) {
+        return {
+          castId: cast.id,
+          program: {
+            ...wrapperProgram,
+            ...(executionSkillGroupKey === undefined
+              ? {}
+              : { executionSkillGroupKey, executionSkillId }),
+          },
+        };
+      }
+      const bodyProgram = compileDefinition({
+        operatorId: trackId,
+        skillGroupKey: executionSkillGroupKey!,
+        skillType: requireDefinitionSkillType(
+          executionDefinition,
+          `operator '${operator!.slug}' skill '${executionDefinition.key}'`,
+        ),
+        skillLevel: requireSkillLevel(build!, routed!.levelSource),
+        skill: executionDefinition,
+      });
+      return {
+        castId: cast.id,
+        program: {
+          ...bodyProgram,
+          skillId: wrapperProgram.skillId,
+          skillGroupKey: wrapperProgram.skillGroupKey,
+          skillType: wrapperProgram.skillType,
+          costs: wrapperProgram.costs,
+          ...(wrapperProgram.costFrame === undefined
+            ? {}
+            : { costFrame: wrapperProgram.costFrame }),
+          ...(wrapperProgram.cooldownFrames === undefined
+            ? {}
+            : { cooldownFrames: wrapperProgram.cooldownFrames }),
+          executionSkillGroupKey,
+          executionSkillId,
+        },
+      };
+    },
   );
 }
 
@@ -179,8 +291,17 @@ function compileCastBindings(
   build: OperatorInstanceDocument,
   operator: OperatorDefinition,
   abilityEntityDefinitions: OperatorDefinition['abilityEntityDefinitions'],
-  buildAttributes?: Readonly<Record<OperatorAttribute, number>>,
+  buildAttributes: Readonly<Record<OperatorAttribute, number>> | undefined,
+  programs: ActionGraphDefinitionRepository,
+  importsForLevel?: (level: number) => ImportedAbilityEntityDefinitions,
+  localEntitiesForLevel?: (level: number) => ImportedAbilityEntityDefinitions,
 ): readonly CombatSkillCastProgram[] {
+  const compileDefinition = createOperatorSkillCompiler(
+    abilityEntityDefinitions,
+    programs,
+    importsForLevel,
+    localEntitiesForLevel,
+  );
   const bindings = casts.flatMap(cast => {
     if (cast.presentation?.disabled) return [];
     if (cast.source.kind === 'custom') {
@@ -194,7 +315,9 @@ function compileCastBindings(
       cast,
       resolved,
       requireSkillLevel(build, resolved.levelSource),
-      abilityEntityDefinitions,
+      compileDefinition,
+      operator,
+      build,
     );
   });
   const patched = applyOperatorUpgradeSkillPatches(
@@ -213,36 +336,48 @@ export function compileOperatorSkillCastPrograms(
   casts: readonly SkillCastDocument[],
   build: OperatorInstanceDocument,
   operator: OperatorDefinition,
-  commonAbilityEntityDefinitions: OperatorDefinition['abilityEntityDefinitions'] = {},
-  buildAttributes?: Readonly<Record<OperatorAttribute, number>>,
+  commonAbilityEntityDefinitions: OperatorDefinition['abilityEntityDefinitions'],
+  buildAttributes: Readonly<Record<OperatorAttribute, number>> | undefined,
+  programs: ActionGraphDefinitionRepository,
+  imports?:
+    ImportedAbilityEntityDefinitions | ((level: number) => ImportedAbilityEntityDefinitions),
 ): readonly CombatSkillCastProgram[] {
-  const duplicateIds = Object.keys(operator.abilityEntityDefinitions ?? {}).filter(
-    id => id in commonAbilityEntityDefinitions,
-  );
-  if (duplicateIds.length > 0) {
-    throw new Error(
-      `operator '${operator.slug}' duplicates shared AbilityEntity definitions: ${duplicateIds.join(', ')}`,
-    );
-  }
+  rejectDuplicateEntities(operator, commonAbilityEntityDefinitions);
   return compileCastBindings(
     trackId,
     casts,
     build,
     operator,
-    { ...commonAbilityEntityDefinitions, ...operator.abilityEntityDefinitions },
+    operator.abilityEntityDefinitions,
     buildAttributes,
+    programs,
+    typeof imports === 'function' ? imports : imports === undefined ? undefined : () => imports,
   );
 }
 
-function compileSkillSlotGroups(operator: OperatorDefinition): readonly CompiledSkillSlotGroup[] {
-  if (operator.skillSlots === undefined || operator.playerActionRoutes === undefined) {
+function rejectDuplicateEntities(
+  operator: OperatorDefinition,
+  common: OperatorDefinition['abilityEntityDefinitions'],
+): void {
+  const duplicates = Object.keys(operator.abilityEntityDefinitions ?? {}).filter(id =>
+    Object.hasOwn(common ?? {}, id),
+  );
+  if (duplicates.length)
+    throw new Error(
+      `operator '${operator.slug}' duplicates shared AbilityEntity definitions: ${duplicates.join(', ')}`,
+    );
+}
+
+function compileSkillSlotGroups(
+  operator: Pick<OperatorDefinition, 'slug' | 'skillSlots' | 'playerActionRoutes'>,
+): readonly CompiledSkillSlotGroup[] {
+  if (operator.skillSlots === undefined || operator.playerActionRoutes === undefined)
     throw new Error(
       `operator '${operator.slug}' has no imported CharacterData player-action routing`,
     );
-  }
-  const playerActionRoutes = operator.playerActionRoutes;
+  const routes = operator.playerActionRoutes;
   return operator.skillSlots.map(slot => {
-    const routes = Object.entries(playerActionRoutes).filter(
+    const matching = Object.entries(routes).filter(
       (
         entry,
       ): entry is [
@@ -253,14 +388,13 @@ function compileSkillSlotGroups(operator: OperatorDefinition): readonly Compiled
         >,
       ] => entry[1]?.kind === 'skillSlot' && entry[1].skillSlotKey === slot.key,
     );
-    if (routes.length !== 1) {
+    if (matching.length !== 1)
       throw new Error(
         `operator '${operator.slug}' skill slot '${slot.key}' must have exactly one player action route`,
       );
-    }
     return {
       skillGroupKey: slot.key,
-      input: routes[0]![0],
+      input: matching[0]![0],
       baseSkillKey: slot.baseSkillKey,
       ...(slot.stableSkillKeys === undefined ? {} : { stableInputSkillKeys: slot.stableSkillKeys }),
       replacementSkillKeys: slot.replacementSkillKeys,
@@ -268,80 +402,56 @@ function compileSkillSlotGroups(operator: OperatorDefinition): readonly Compiled
   });
 }
 
-/**
- * 编译干员定义中的全部技能（已应用养成补丁，不带 castId）。
- * 资源规则等与放置无关的解析使用这份名单；放置绑定由 `compileCastSkillPrograms` 单独产生。
- */
+/** Compile every owned skill once; placement identities are attached separately. */
 export function compileOperatorDefinitionSkills(
   trackId: string,
   build: OperatorInstanceDocument,
   operator: OperatorDefinition,
-  commonAbilityEntityDefinitions: OperatorDefinition['abilityEntityDefinitions'] = {},
-  buildAttributes?: Readonly<Record<OperatorAttribute, number>>,
+  commonAbilityEntityDefinitions: OperatorDefinition['abilityEntityDefinitions'],
+  buildAttributes: Readonly<Record<OperatorAttribute, number>> | undefined,
+  programs: ActionGraphDefinitionRepository,
+  imports?:
+    ImportedAbilityEntityDefinitions | ((level: number) => ImportedAbilityEntityDefinitions),
 ): readonly CompiledSkillProgram[] {
-  const duplicateAbilityEntityIds = [
-    ...Object.keys(operator.abilityEntityDefinitions ?? {}),
-  ].filter(id => id in commonAbilityEntityDefinitions);
-  if (duplicateAbilityEntityIds.length > 0) {
-    throw new Error(
-      `operator '${operator.slug}' duplicates shared AbilityEntity definitions: ${[...new Set(duplicateAbilityEntityIds)].join(', ')}`,
-    );
-  }
-  const abilityEntityDefinitions = {
-    ...commonAbilityEntityDefinitions,
-    ...operator.abilityEntityDefinitions,
-  };
-  const skills = operator.skillGroups.flatMap(group => {
-    const definitions: SkillCompilationBinding[] = listSkillGroupDefinitionBindings(group).map(
-      ({ skill, routedReplacement }) => ({
-        skill,
+  rejectDuplicateEntities(operator, commonAbilityEntityDefinitions);
+  const compile = createOperatorSkillCompiler(
+    operator.abilityEntityDefinitions,
+    programs,
+    typeof imports === 'function' ? imports : imports === undefined ? undefined : () => imports,
+  );
+  const skills = operator.skillGroups.flatMap(group =>
+    listSkillGroupDefinitionBindings(group).map(({ skill, routedReplacement }) => ({
+      ...compile({
+        operatorId: trackId,
+        skillGroupKey: group.key,
         skillType: requireDefinitionSkillType(
           skill,
           `operator '${operator.slug}' skill '${skill.key}'`,
         ),
-        level: requireSkillLevel(build, requireDefinitionLevelSource(skill, operator.slug)),
-        ...(routedReplacement === undefined
-          ? {}
-          : {
-              executionSkillGroupKey: routedReplacement.executionSkillGroupKey,
-              executionSkillId: routedReplacement.executionSkillKey,
-            }),
+        skillLevel: requireSkillLevel(build, requireDefinitionLevelSource(skill, operator.slug)),
+        skill,
       }),
-    );
-    return definitions.map(
-      ({ skill, skillType, level, executionSkillGroupKey, executionSkillId }) => ({
-        ...compileSkill({
-          operatorId: trackId,
-          skillGroupKey: group.key,
-          skillType,
-          skillLevel: level,
-          skill,
-          abilityEntityDefinitions,
-        }),
-        ...(executionSkillGroupKey === undefined
-          ? {}
-          : { executionSkillGroupKey, executionSkillId }),
-      }),
-    );
-  });
-  const runtimeSkills =
-    operator.dodgeSkill === undefined
-      ? []
-      : [
-          compileSkill({
-            operatorId: trackId,
-            skillGroupKey: 'dodge',
-            skillType: 'dodge',
-            skillLevel: 1,
-            skill: operator.dodgeSkill,
-            abilityEntityDefinitions,
+      ...(routedReplacement === undefined
+        ? {}
+        : {
+            executionSkillGroupKey: routedReplacement.executionSkillGroupKey,
+            executionSkillId: routedReplacement.executionSkillKey,
           }),
-        ];
-  return applyOperatorUpgradeSkillPatches(
-    [...skills, ...runtimeSkills],
-    resolveActiveOperatorUpgrades(build, operator),
-    { buildAttributes },
+    })),
   );
+  if (operator.dodgeSkill !== undefined)
+    skills.push(
+      compile({
+        operatorId: trackId,
+        skillGroupKey: 'dodge',
+        skillType: 'dodge',
+        skillLevel: 1,
+        skill: operator.dodgeSkill,
+      }),
+    );
+  return applyOperatorUpgradeSkillPatches(skills, resolveActiveOperatorUpgrades(build, operator), {
+    buildAttributes,
+  });
 }
 
 interface ResolvedTimelineTrack {
@@ -351,104 +461,105 @@ interface ResolvedTimelineTrack {
   readonly buildAttributes?: Readonly<Record<OperatorAttribute, number>>;
 }
 
+export interface GraphScenarioContext {
+  readonly programs: ActionGraphDefinitionRepository;
+  readonly commonDefinitionSources: readonly CommonDefinitionSource[];
+  readonly compiledCommonDefinitions?: ReturnType<typeof compileCommonDefinitionSources>;
+  readonly importsForLevel?: (level: number) => ImportedAbilityEntityDefinitions;
+}
+
 function compileResolvedTimelineTracks(
   tracks: readonly ResolvedTimelineTrack[],
-  commonBuffDefinitions?: OperatorBuffDefinitions,
-  commonAbilityEntityDefinitions: OperatorDefinition['abilityEntityDefinitions'] = {},
+  commonAbilityEntityDefinitions: OperatorDefinition['abilityEntityDefinitions'],
+  context: GraphScenarioContext,
 ): CompiledScenarioTimeline {
+  const common =
+    context.compiledCommonDefinitions ??
+    compileCommonDefinitionSources(context.commonDefinitionSources, context.programs);
+  const importsForLevel = context.importsForLevel ?? common.importsForLevel;
   const operators: CombatOperatorProgram[] = [];
   const pendingInputs: (ScheduledSkillInput & { readonly order: number })[] = [];
   const skillInputGroups: SkillInputGroup[] = [];
   let order = 0;
-  const compiledCommonBuffResources = compileOperatorBuffResources(
-    commonBuffDefinitions,
-    commonAbilityEntityDefinitions,
-  );
-  const compiledCommonBuffDefinitions = compiledCommonBuffResources.buffDefinitions;
-
   for (const { track, operatorInstance, operator, buildAttributes } of tracks) {
-    const duplicateAbilityEntityIds = [
-      ...Object.keys(operator.abilityEntityDefinitions ?? {}),
-    ].filter(id => id in commonAbilityEntityDefinitions);
-    if (duplicateAbilityEntityIds.length > 0) {
-      throw new Error(
-        `operator '${operator.slug}' duplicates shared AbilityEntity definitions: ${[...new Set(duplicateAbilityEntityIds)].join(', ')}`,
-      );
-    }
-    const abilityEntityDefinitions = {
-      ...commonAbilityEntityDefinitions,
-      ...operator.abilityEntityDefinitions,
-    };
-    const activeUpgrades = resolveActiveOperatorUpgrades(operatorInstance, operator);
+    rejectDuplicateEntities(operator, commonAbilityEntityDefinitions);
+    const localEntities = createIndependentAbilityEntityImportResolver(
+      operator.abilityEntityDefinitions ?? {},
+      context.programs,
+      importsForLevel,
+    );
+    const imports = (level: number) => ({ ...importsForLevel(level), ...localEntities(level) });
     const skillCasts = compileCastBindings(
       track.id,
       track.skillCasts,
       operatorInstance,
       operator,
-      abilityEntityDefinitions,
+      operator.abilityEntityDefinitions,
       buildAttributes,
+      context.programs,
+      importsForLevel,
+      localEntities,
     );
-    const anchorFrameByCastId = new Map<string, number>();
+    const anchors = new Map<string, number>();
     for (const chain of getSkillCastPlacementChains(track.skillCasts)) {
-      const anchorFrame = chain.anchor.placement.startFrame;
-      if (anchorFrame === undefined)
+      const frame = chain.anchor.placement.startFrame;
+      if (frame === undefined)
         throw new Error(`skill input chain '${chain.anchor.id}' has no anchor frame`);
-      chain.casts.forEach(cast => anchorFrameByCastId.set(cast.id, anchorFrame));
+      chain.casts.forEach(cast => anchors.set(cast.id, frame));
       const enabled = chain.casts.filter(cast => !cast.presentation?.disabled);
-      if (chain.casts.length > 1 && enabled.length > 0) {
+      if (chain.casts.length > 1 && enabled.length)
         skillInputGroups.push({
           anchorCastId: chain.anchor.id,
           castIds: enabled.map(cast => cast.id),
         });
-      }
     }
     for (const cast of track.skillCasts) {
       const declarationOrder = order++;
       if (cast.presentation?.disabled) continue;
-      if (cast.source.kind === 'custom') {
-        throw new Error(
-          `skill cast '${cast.id}' is a presentation-only custom action without a SkillDefinition`,
-        );
-      }
       pendingInputs.push({
-        // 后段此处仅保留最早可能开始的锚点帧，正式执行由连续组排程决定。
-        ...compileSkillCastPlayerInput(track.id, cast, operator, anchorFrameByCastId.get(cast.id)!),
+        ...compileSkillCastPlayerInput(track.id, cast, operator, anchors.get(cast.id)!),
         order: declarationOrder,
       });
     }
-    // 干员只要有构筑就进入运行时（技能列表可能为空），资源规则与面板解析依赖这份名单。
-    const compiledOperatorBuffResources = compileOperatorBuffResources(
-      operator.buffDefinitions,
-      abilityEntityDefinitions,
+    const ownedBuffs = Object.fromEntries(
+      Object.entries(operator.buffDefinitions ?? {}).map(([id, definition]) => [
+        id,
+        compileIndependentBuffResource(definition, id, context.programs, imports(0)),
+      ]),
     );
-    const compiledOperatorBuffDefinitions = compiledOperatorBuffResources.buffDefinitions;
-    const duplicateBuffIds = Object.keys(compiledOperatorBuffDefinitions).filter(
-      buffId => buffId in compiledCommonBuffDefinitions,
+    const duplicateBuffs = Object.keys(ownedBuffs).filter(id =>
+      Object.hasOwn(common.buffDefinitions, id),
     );
-    if (duplicateBuffIds.length > 0) {
+    if (duplicateBuffs.length)
       throw new Error(
-        `operator '${operator.slug}' duplicates shared Buff definitions: ${duplicateBuffIds.join(', ')}`,
+        `operator '${operator.slug}' duplicates shared Buff definitions: ${duplicateBuffs.join(', ')}`,
       );
-    }
-    const buffDefinitions = {
-      ...compiledCommonBuffDefinitions,
-      ...compiledOperatorBuffDefinitions,
-    };
-    const buffAbilityEntityDefinitions = {
-      ...compiledCommonBuffResources.abilityEntityDefinitions,
-      ...compiledOperatorBuffResources.abilityEntityDefinitions,
+    const active = resolveActiveOperatorUpgrades(operatorInstance, operator);
+    const compileUpgrade: import('./compileOperatorUpgrades').CompileUpgradeEntry = (
+      entry,
+      level,
+      path,
+      owner,
+    ) => {
+      if (owner.actionGraph === undefined)
+        throw new Error(`${path}: upgrade program requires its owning action graph`);
+      return context.programs
+        .compile(owner.actionGraph, level, undefined, imports(level))
+        .compileEntry(entry, path);
     };
     operators.push({
       operatorId: track.id,
       operatorRole: operator.role,
-      ...(Object.keys(buffDefinitions).length === 0 ? {} : { buffDefinitions }),
-      ...(Object.keys(buffAbilityEntityDefinitions).length === 0
-        ? {}
-        : { abilityEntityDefinitions: buffAbilityEntityDefinitions }),
+      buffDefinitions: { ...common.buffDefinitions, ...ownedBuffs },
+      abilityEntityDefinitions: { ...common.abilityEntityDefinitions, ...localEntities(0) },
       ...(operator.comboSkillConditions === undefined
         ? {}
         : {
-            comboConditionPrograms: compileOperatorComboSkillConditions(operator, operatorInstance),
+            comboConditionPrograms: compileOperatorComboSkillConditions(
+              operator,
+              operatorInstance,
+              { programs: context.programs, importsForLevel: imports },
+            ),
             comboConditionPriority: operator.comboSkillPriority ?? 'default',
           }),
       skillSlotGroups: compileSkillSlotGroups(operator),
@@ -458,56 +569,51 @@ function compileResolvedTimelineTracks(
       ...(operator.playerActionModes === undefined
         ? {}
         : { playerActionModes: operator.playerActionModes }),
-      initializationPrograms: compileOperatorInitializationPrograms(activeUpgrades),
+      initializationPrograms: compileOperatorInitializationPrograms(active, compileUpgrade),
       passivePrograms: compileOperatorPassivePrograms(
-        activeUpgrades,
-        operator.passiveSkills,
+        active,
+        operator.passiveSkills ?? [],
         operatorInstance.skillLevels,
+        compileUpgrade,
       ),
-      upgradeEventPrograms: compileOperatorUpgradeEventPrograms(activeUpgrades),
-      reactionModifiers: compileOperatorReactionModifiers(activeUpgrades),
+      upgradeEventPrograms: compileOperatorUpgradeEventPrograms(active, compileUpgrade),
+      reactionModifiers: compileOperatorReactionModifiers(active),
       skills: [],
-      ...(skillCasts.length === 0 ? {} : { skillCasts }),
+      ...(skillCasts.length ? { skillCasts } : {}),
     });
   }
-
-  pendingInputs.sort((left, right) => left.frame - right.frame || left.order - right.order);
+  pendingInputs.sort((a, b) => a.frame - b.frame || a.order - b.order);
   return {
     operators,
     inputs: pendingInputs.map(({ order, ...input }) => ({
       ...input,
-      ...(skillInputGroups.length === 0 ? {} : { declarationOrder: order }),
+      ...(skillInputGroups.length ? { declarationOrder: order } : {}),
     })),
-    ...(skillInputGroups.length === 0 ? {} : { skillInputGroups }),
+    ...(skillInputGroups.length ? { skillInputGroups } : {}),
   };
 }
 
-/** 使用 Build Resolver 的共享结果编译每个技能释放的程序和时间轴输入。 */
 export function compileResolvedScenarioTimeline(
   builds: readonly ResolvedScenarioBuild[],
-  commonBuffDefinitions?: OperatorBuffDefinitions,
-  commonAbilityEntityDefinitions?: OperatorDefinition['abilityEntityDefinitions'],
+  commonAbilityEntityDefinitions: OperatorDefinition['abilityEntityDefinitions'],
+  context: GraphScenarioContext,
 ): CompiledScenarioTimeline {
-  const tracks = builds.map(build => ({
-    track: build.track,
-    operatorInstance: build.operatorInstance,
-    operator: build.operator,
-    buildAttributes: resolveOperatorPanel(build).attributes,
-  }));
   return compileResolvedTimelineTracks(
-    tracks,
-    commonBuffDefinitions,
+    builds.map(build => ({
+      track: build.track,
+      operatorInstance: build.operatorInstance,
+      operator: build.operator,
+      buildAttributes: resolveOperatorPanel(build).attributes,
+    })),
     commonAbilityEntityDefinitions,
+    context,
   );
 }
 
-/**
- * 按轨道序号和轨道内声明顺序收集实际帧输入，再稳定地按帧排序。
- * 同帧顺序会影响资源扣费和事件处理，因此不得按干员或技能身份二次排序。
- */
+/** Inputs retain declaration order within each frame. */
 export function compileScenarioTimeline(
   scenario: ScenarioDocument,
-  index: OperatorIndex,
+  index: GraphOperatorIndex,
 ): CompiledScenarioTimeline {
   const tracks: ResolvedTimelineTrack[] = [];
   const seenOperatorIds = new Set<string>();
@@ -528,9 +634,8 @@ export function compileScenarioTimeline(
     const operator = requireOperator(operatorInstance, index);
     tracks.push({ track, operatorInstance, operator });
   });
-  return compileResolvedTimelineTracks(
-    tracks,
-    index.getCommonBuffDefinitions?.(),
-    index.getCommonAbilityEntityDefinitions?.(),
-  );
+  return compileResolvedTimelineTracks(tracks, index.getCommonAbilityEntityDefinitions?.(), {
+    programs: index.actionPrograms,
+    commonDefinitionSources: index.getCommonDefinitionSources(),
+  });
 }

@@ -12,10 +12,10 @@ import { LogicalAbilityEntityRuntime } from '../../../../src/core/combat/abiliti
 import { RuntimeTargetContext } from '../../../../src/core/combat/abilities/runtimeTargetContext.ts';
 import {
   analyzeConditionUsage,
-  analyzeSequenceUsage,
   analyzeStepUsage,
 } from '../../src/compiler/optimization/definitionUsageAnalysis.ts';
-import { pruneUnusedSkillValues } from '../../src/compiler/optimization/skillValueOptimization.ts';
+import { analyzeGraphSequenceUsage } from '../../src/compiler/optimization/graphSequenceOptimization.ts';
+import { pruneUnusedGraphSkillValues } from '../../src/compiler/optimization/graphValueOptimization.ts';
 
 describe('黑板用途的读取对象', () => {
   it('可中断标记有运行时作用，但不读写黑板，也不阻止无用值裁剪', () => {
@@ -235,9 +235,13 @@ describe('黑板用途的读取对象', () => {
       key: 'fixture',
       timelineBlockFrames: 1,
       blackboard: { slot: 99 },
-      scheduledSequences: [{ startFrame: 0, sequence: { steps: [query] } }],
+      scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'entry' } }],
+      actionGraph: {
+        main: { nodes: { entry: { action: query, next: null } } },
+        macros: {},
+      },
     };
-    const result = pruneUnusedSkillValues(input);
+    const result = pruneUnusedGraphSkillValues(input);
     expect(result.report.removedInitialKeys).toEqual(['slot']);
     const usage = analyzeStepUsage(query);
     expect(usage.reads.size).toBe(0);
@@ -286,9 +290,9 @@ describe('黑板用途的读取对象', () => {
   });
 
   it('Buff 查询与事件实例的外部读随嵌套条件合并，保留实际目标和筛选条件', () => {
-    const usage = analyzeSequenceUsage({
-      steps: [
-        {
+    const nodes = {
+      read: {
+        action: {
           kind: 'readBuffBlackboard',
           parameters: {
             target: 'enemy',
@@ -297,7 +301,10 @@ describe('黑板用途的读取对象', () => {
             outputKey: 'copied',
           },
         },
-        {
+        next: 'guard',
+      },
+      guard: {
+        action: {
           kind: 'conditional',
           parameters: {
             condition: {
@@ -310,17 +317,19 @@ describe('黑板用途的读取对象', () => {
               value: { kind: 'blackboard', key: 'threshold' },
             },
           },
-          whenTrue: {
-            steps: [
-              {
-                kind: 'readEventBuffBlackboard',
-                parameters: { desiredKey: 'eventValue', outputKey: 'eventCopy' },
-              },
-            ],
-          },
+          whenTrue: { $sequence: 'nested' },
         },
-      ],
-    });
+        next: null,
+      },
+      nested: {
+        action: {
+          kind: 'readEventBuffBlackboard',
+          parameters: { desiredKey: 'eventValue', outputKey: 'eventCopy' },
+        },
+        next: null,
+      },
+    } as const;
+    const usage = analyzeGraphSequenceUsage({ nodes }, { $sequence: 'read' });
     expect(usage.reads).toEqual(new Set(['copied', 'threshold', 'compared', 'eventCopy']));
     expect(usage.writes).toEqual(new Set(['copied', 'compared', 'eventCopy']));
     expect(usage.externalReads).toEqual([

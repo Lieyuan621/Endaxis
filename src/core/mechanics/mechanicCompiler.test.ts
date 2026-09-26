@@ -6,6 +6,7 @@ import {
   MechanicAdapterRegistry,
   type MechanicAdapter,
 } from './mechanicCompiler';
+import { chainEntry } from '../../test/compiledGraphEntry';
 
 const definition: MechanicDefinitionRef = {
   id: 'seasonTower:test',
@@ -39,18 +40,16 @@ function adapter(overrides: Partial<MechanicAdapter> = {}): MechanicAdapter {
         kind: 'combatEventSequence',
         event: 'outputDamage',
         priority: 10,
-        sequence: {
-          steps: [
-            {
-              kind: 'changeResource',
-              parameters: {
-                resource: 'sp',
-                amount: input.parameters.stacks as number,
-                recipient: 'team',
-              },
+        sequence: chainEntry('mechanic-output-damage', [
+          {
+            kind: 'changeResource',
+            parameters: {
+              resource: 'sp',
+              amount: input.parameters.stacks as number,
+              recipient: 'team',
             },
-          ],
-        },
+          },
+        ]),
       },
     ],
     ...overrides,
@@ -142,12 +141,12 @@ describe('compileMechanics', () => {
         {
           kind: 'gameLevelEventSequence',
           event: { kind: 'spellInflictionStarted' },
-          sequence: { steps: [] },
+          sequence: chainEntry('mechanic-spell-infliction-1', []),
         },
         {
           kind: 'gameLevelEventSequence',
           event: { kind: 'spellInflictionStarted' },
-          sequence: { steps: [] },
+          sequence: chainEntry('mechanic-spell-infliction-2', []),
         },
       ],
     });
@@ -168,7 +167,7 @@ describe('compileMechanics', () => {
             kind: 'combatEventSequence',
             event: 'outputDamage',
             priority: 1,
-            sequence: { steps: [], callback: () => undefined },
+            sequence: { $sequence: null, callback: () => undefined },
           },
         ] as never,
     });

@@ -2,15 +2,44 @@ import { bindProjectileCallbackLifecycle } from './projectileCallbackRuntime';
 import { createTestBuffReference } from '../buffs/buffTestFixtures';
 import { describe, expect, it } from 'vitest';
 import type { ResolvedActionSequence } from '../../compiler/combatProgram';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import type {
+  ActionGraphDefinition,
+  ActionGraphNode,
+  ActionGraphStep,
+} from '../../../../packages/game-data-contract/src/actionGraph';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { CombatActionSequenceRuntime } from '../actions/combatActionSequenceRuntime';
 import { COMBAT_FRAME_INTERVAL } from '../time/combatClock';
 import { ProjectileLifecycleRuntime } from './projectileLifecycleRuntime';
 import type { CombatOperationExecutor } from '../skills/skillRuntime';
-import { compileActionSequence } from '../../compiler/compileSkill';
 import { createCallbackSkillHostFactory, type CallbackSkillHostFactory } from './callbackSkillHost';
 import { CombatClock } from '../time/combatClock';
 import { CombatReceiptCollector } from '../receipt/combatReceipt';
+
+const compileGraphEntry = (
+  revision: string,
+  entry: string | null,
+  nodes: ActionGraphDefinition['nodes'],
+): ResolvedActionSequence => ({
+  graph: createActionGraphCompilation({ nodes }, 1, revision).compileAll(),
+  entry,
+  callSite: revision,
+});
+
+const chainSequence = (
+  revision: string,
+  actions: readonly ActionGraphStep[],
+): ResolvedActionSequence => {
+  const nodes: Record<string, ActionGraphNode> = {};
+  actions.forEach((action, index) => {
+    nodes[`step-${index}`] = {
+      action,
+      next: index + 1 < actions.length ? `step-${index + 1}` : null,
+    };
+  });
+  return compileGraphEntry(revision, actions.length === 0 ? null : 'step-0', nodes);
+};
 
 // Each isolated fixture advances its clock after the Battle pass, as CombatSimulation does.
 const createTestHost: CallbackSkillHostFactory = (program, context, operations) => {
@@ -59,65 +88,81 @@ const probe = {
   parameters: { flag: 'probe', value: true, target: 'caster' },
 } as const;
 
-function delayedProbe(): ResolvedActionSequence {
-  return {
-    steps: [
-      {
-        kind: 'withActionBlackboardScope',
-        parameters: {
-          scopeKey: 'projectile',
-          lifetime: 'execution',
-          initialValues: {},
-          inheritParent: true,
-          entityInitialValues: { EntityBB_seed: 4 },
-          entityAssignments: {
-            EntityBB_snapshot: { kind: 'blackboard', key: 'launchValue' },
-            EntityBB_sourceSnapshot: { kind: 'blackboard', key: 'EntityBB_source', fallback: 0 },
-          },
-        },
-        body: {
-          steps: [
-            {
-              kind: 'launchProjectile',
-              parameters: { finish: 3, recycleDelaySeconds: 0 },
-              callbacks: [
-                {
-                  event: 'finish',
-                  skill: {
-                    skillId: 'callback',
-                    nativeSkillType: 'normalSkill',
-                    naturalDurationFrames: 1,
-                    castResource: zeroCastResource,
-                    initialBlackboard: {},
-                    timelineActions: [
-                      {
-                        startFrame: 0,
-                        endFrame: 0,
-                        sequence: {
-                          steps: [
-                            {
-                              kind: 'withActionBlackboardScope',
-                              parameters: {
-                                scopeKey: 'callback',
-                                lifetime: 'execution',
-                                initialValues: { local: 2 },
-                                inheritParent: true,
-                              },
-                              body: { steps: [probe] },
-                            },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                },
-              ],
-            },
-          ],
+const delayedProbeNodes = (): ActionGraphDefinition['nodes'] => ({
+  launch: {
+    action: {
+      kind: 'withActionBlackboardScope',
+      parameters: {
+        scopeKey: 'projectile',
+        lifetime: 'execution',
+        initialValues: {},
+        inheritParent: true,
+        entityInitialValues: { EntityBB_seed: 4 },
+        entityAssignments: {
+          EntityBB_snapshot: { kind: 'blackboard', key: 'launchValue' },
+          EntityBB_sourceSnapshot: { kind: 'blackboard', key: 'EntityBB_source', fallback: 0 },
         },
       },
-    ],
-  };
+      body: { $sequence: 'schedule' },
+    },
+    next: null,
+  },
+  schedule: {
+    action: {
+      kind: 'launchProjectile',
+      parameters: { finish: 3, recycleDelaySeconds: 0 },
+      callbacks: [
+        {
+          event: 'finish',
+          skill: {
+            skillId: 'callback',
+            nativeSkillType: 'normalSkill',
+            naturalDurationFrames: 1,
+            castResource: zeroCastResource,
+            blackboard: {},
+            scheduledSequences: [
+              {
+                startFrame: 0,
+                endFrame: 0,
+                sequence: { $sequence: 'callback-scope' },
+              },
+            ],
+            actionGraph: {
+              main: {
+                nodes: {
+                  'callback-scope': {
+                    action: {
+                      kind: 'withActionBlackboardScope',
+                      parameters: {
+                        scopeKey: 'callback',
+                        lifetime: 'execution',
+                        initialValues: { local: 2 },
+                        inheritParent: true,
+                      },
+                      body: { $sequence: 'probe' },
+                    },
+                    next: null,
+                  },
+                  probe: {
+                    action: probe,
+                    next: null,
+                  },
+                },
+              },
+              macros: {},
+            },
+          },
+        },
+      ],
+    },
+    next: null,
+  },
+});
+
+const delayedProbeEntry = compileGraphEntry('delayed-probe', 'launch', delayedProbeNodes());
+
+function delayedProbe(): ResolvedActionSequence {
+  return delayedProbeEntry;
 }
 
 describe('projectile callback action lifecycle', () => {
@@ -191,13 +236,14 @@ describe('projectile callback action lifecycle', () => {
         castResource: zeroCastResource,
         initialBlackboard: {},
         timelineActions: [
-          { startFrame: 0, endFrame: 20, sequence: { steps: [probe] } },
+          { startFrame: 0, endFrame: 20, sequence: chainSequence('callback-probe', [probe]) },
           {
             startFrame: 1,
             endFrame: 2,
-            sequence: {
-              steps: [{ kind: 'jumpTimeline', parameters: { destinationFrame: 6 } }, probe],
-            },
+            sequence: chainSequence('callback-jump', [
+              { kind: 'jumpTimeline', parameters: { destinationFrame: 6 } },
+              probe,
+            ]),
           },
         ],
       },
@@ -237,11 +283,13 @@ describe('projectile callback action lifecycle', () => {
         castResource: zeroCastResource,
         initialBlackboard: {},
         timelineActions: [
-          { startFrame: 0, endFrame: 10, sequence: { steps: [probe] } },
+          { startFrame: 0, endFrame: 10, sequence: chainSequence('callback-probe-late', [probe]) },
           {
             startFrame: 5,
             endFrame: 10,
-            sequence: { steps: [{ ...probe, parameters: { ...probe.parameters, flag: 'late' } }] },
+            sequence: chainSequence('callback-late', [
+              { ...probe, parameters: { ...probe.parameters, flag: 'late' } },
+            ]),
           },
         ],
       },
@@ -326,58 +374,68 @@ describe('projectile callback action lifecycle', () => {
       'source',
     );
     const parent = runtime.createSequence(
-      compileActionSequence(
-        {
-          steps: [
-            {
-              kind: 'launchProjectile',
-              parameters: { finish: 1, recycleDelaySeconds: 100 },
-              callbacks: [
-                {
-                  event: 'finish',
-                  skill: {
-                    skillId: 'callback',
-                    nativeSkillType: 'normalSkill',
-                    naturalDurationFrames: 3,
-                    castResource: {
-                      costFrame: 0,
-                      cooldownSeconds: 0,
-                      maxChargeTime: 1,
-                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+      compileGraphEntry('fixture-callback-intervals', 'launch', {
+        launch: {
+          action: {
+            kind: 'launchProjectile',
+            parameters: { finish: 1, recycleDelaySeconds: 100 },
+            callbacks: [
+              {
+                event: 'finish',
+                skill: {
+                  skillId: 'callback',
+                  nativeSkillType: 'normalSkill',
+                  naturalDurationFrames: 3,
+                  castResource: {
+                    costFrame: 0,
+                    cooldownSeconds: 0,
+                    maxChargeTime: 1,
+                    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                  },
+                  blackboard: { value: 1 },
+                  scheduledSequences: [
+                    {
+                      startFrame: 0,
+                      endFrame: 1,
+                      sequence: { $sequence: 'write' },
                     },
-                    blackboard: { value: 1 },
-                    scheduledSequences: [
-                      {
-                        startFrame: 0,
-                        endFrame: 1,
-                        sequence: {
-                          steps: [{ ...probe, parameters: { ...probe.parameters, flag: 'write' } }],
+                    {
+                      startFrame: 0,
+                      endFrame: 3,
+                      sequence: { $sequence: 'long' },
+                    },
+                    {
+                      startFrame: 2,
+                      endFrame: 4,
+                      sequence: { $sequence: 'read' },
+                    },
+                  ],
+                  actionGraph: {
+                    main: {
+                      nodes: {
+                        write: {
+                          action: { ...probe, parameters: { ...probe.parameters, flag: 'write' } },
+                          next: null,
+                        },
+                        long: {
+                          action: { ...probe, parameters: { ...probe.parameters, flag: 'long' } },
+                          next: null,
+                        },
+                        read: {
+                          action: { ...probe, parameters: { ...probe.parameters, flag: 'read' } },
+                          next: null,
                         },
                       },
-                      {
-                        startFrame: 0,
-                        endFrame: 3,
-                        sequence: {
-                          steps: [{ ...probe, parameters: { ...probe.parameters, flag: 'long' } }],
-                        },
-                      },
-                      {
-                        startFrame: 2,
-                        endFrame: 4,
-                        sequence: {
-                          steps: [{ ...probe, parameters: { ...probe.parameters, flag: 'read' } }],
-                        },
-                      },
-                    ],
+                    },
+                    macros: {},
                   },
                 },
-              ],
-            },
-          ],
+              },
+            ],
+          },
+          next: null,
         },
-        1,
-        'fixture',
-      ),
+      }),
     );
     parent.executeInstant({});
     source.assignDynamic('seed', 99);
@@ -442,27 +500,40 @@ describe('projectile callback action lifecycle', () => {
       undefined,
       'source',
     );
-    const parent = runtime.createSequence({
-      steps: [
-        {
-          kind: 'launchProjectile',
-          parameters: { finish: 1, recycleDelaySeconds: 1 },
-          callbacks: [
-            {
-              event: 'finish',
-              skill: {
-                skillId: 'callback',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: zeroCastResource,
-                initialBlackboard: {},
-                timelineActions: [{ startFrame: 0, endFrame: 0, sequence: { steps: [probe] } }],
+    const parent = runtime.createSequence(
+      compileGraphEntry('zero-length-callback', 'launch', {
+        launch: {
+          action: {
+            kind: 'launchProjectile',
+            parameters: { finish: 1, recycleDelaySeconds: 1 },
+            callbacks: [
+              {
+                event: 'finish',
+                skill: {
+                  skillId: 'callback',
+                  nativeSkillType: 'normalSkill',
+                  naturalDurationFrames: 1,
+                  castResource: zeroCastResource,
+                  blackboard: {},
+                  scheduledSequences: [
+                    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'probe' } },
+                  ],
+                  actionGraph: {
+                    main: {
+                      nodes: {
+                        probe: { action: probe, next: null },
+                      },
+                    },
+                    macros: {},
+                  },
+                },
               },
-            },
-          ],
+            ],
+          },
+          next: null,
         },
-      ],
-    });
+      }),
+    );
     parent.executeInstant({});
     parent.end({});
     expect(trace).toEqual([]);
@@ -513,17 +584,19 @@ describe('projectile callback action lifecycle', () => {
       undefined,
       'source',
     );
-    const branched: ResolvedActionSequence = {
-      steps: [
-        {
+    const branched: ResolvedActionSequence = compileGraphEntry('branched-callback', 'branch', {
+      ...delayedProbeNodes(),
+      branch: {
+        action: {
           kind: 'conditional',
           parameters: {
             condition: { kind: 'probability', probability: { kind: 'constant', value: 1 } },
           },
-          whenTrue: delayedProbe(),
+          whenTrue: { $sequence: 'launch' },
         },
-      ],
-    };
+        next: null,
+      },
+    });
 
     runtime.createSequence(branched).executeInstant({});
     expect(scheduler.activeCount).toBe(0);

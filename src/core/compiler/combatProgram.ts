@@ -76,6 +76,7 @@ export type ResolvedSkillBuffDefinition = Omit<
   | 'abilityEventResponses'
   | 'igniteEventResponses'
   | 'damageModifiers'
+  | 'actionGraph'
 > & {
   readonly damageModifiers?: readonly (Omit<
     NonNullable<SkillBuffDefinition['damageModifiers']>[number],
@@ -92,8 +93,6 @@ export interface CompiledSkillActionProgram {
   readonly initialBlackboard: Readonly<Record<string, number>>;
   readonly timelineActions: readonly CompiledTimelineAction[];
 }
-
-export interface CompiledProjectileCallbackSkillProgram extends CompiledAbilityEntityChildSkillProgram {}
 
 /** 按引用等级编译的实体技能，包括施放设置与动作程序。 */
 export interface CompiledAbilityEntityChildSkillProgram extends CompiledSkillActionProgram {
@@ -227,8 +226,7 @@ export interface ResolvedCombatStepParameters {
           addition?: never;
         }
     );
-  applyBuff: Omit<CombatStepParameters['applyBuff'], 'definition' | 'blackboardAssignments'> & {
-    readonly definition?: ResolvedSkillBuffDefinition;
+  applyBuff: Omit<CombatStepParameters['applyBuff'], 'blackboardAssignments'> & {
     readonly blackboardAssignments?: Readonly<Record<string, ActionValueOperand>>;
   };
   createGlobalBuff: Omit<CombatStepParameters['createGlobalBuff'], 'definition'> & {
@@ -376,7 +374,7 @@ type ResolvedCombatStepNode<K extends CombatStepKind> = {
               ? {
                   readonly callbacks: readonly {
                     readonly event: 'hit' | 'block' | 'reach' | 'finish';
-                    readonly skill: CompiledProjectileCallbackSkillProgram;
+                    readonly skill: CompiledAbilityEntityChildSkillProgram;
                   }[];
                 }
               : K extends 'forEachContextTarget'
@@ -508,10 +506,14 @@ export function isCombatOperationStep(
   return COMBAT_STEP_EXECUTION_ROUTES[step.kind] === 'operation';
 }
 
-/** 已解析且严格保持声明顺序的同步操作序列。 */
-export interface ResolvedActionSequence {
-  readonly steps: readonly ResolvedCombatStep[];
+/** 图入口与只读程序共享；宿主保存引用，不能在此展开或复制节点。 */
+export interface CompiledGraphEntry {
+  readonly graph: import('./compileActionGraph').CompiledActionGraph;
+  readonly entry: string | null;
+  readonly callSite: string;
 }
+
+export type ResolvedActionSequence = CompiledGraphEntry;
 
 /** 构筑编译出的常驻被动程序；由战斗装配层启用，不进入时间轴技能集合。 */
 export interface CompiledOperatorPassiveProgram {

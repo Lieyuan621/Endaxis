@@ -4,6 +4,7 @@ import {
   compileOperatorProgressionEffectBundles,
   parseOperatorProgressionEffectBundles,
 } from '../src/index.ts';
+import { compileOperatorPotentialDefinition } from '../src/domains/operator/progressionDefinition.ts';
 
 describe('干员天赋与潜能效果来源', () => {
   it.each([0, 1, 2, 3])('两种活动修正共用有效操作检查：%s', modifyType => {
@@ -119,6 +120,30 @@ describe('干员天赋与潜能效果来源', () => {
       parse([entry(5, { attachSkill: { blackboard: [], skillId: 'residual', skillPath: '' } })]),
     ).toThrow('inactive payload is not empty');
   });
+});
+
+it('原生直接附着 Buff 转成养成数据，不生成干员动作序列', () => {
+  const bundles = compileOperatorProgressionEffectBundles(
+    parse([entry(5, { attachBuff: { buffId: 'buff', blackboard: [blackboard('duration', 10)] } })]),
+  );
+  const source = {
+    talentNodes: [],
+    potential: { unlocks: [{ level: 1, effectId: 'effect' }] },
+    compiledEffectBundles: bundles,
+  } as unknown as Parameters<typeof compileOperatorPotentialDefinition>[0];
+  const definition = compileOperatorPotentialDefinition(
+    source,
+    { level: 1 },
+    {
+      skills: [],
+      skillGroups: [],
+      costResources: new Map(),
+    },
+  );
+  expect(definition.attachedBuffs).toEqual([
+    { buffId: 'buff', blackboardAssignments: { duration: 10 } },
+  ]);
+  expect(definition.initializationSequence).toBeUndefined();
 });
 
 function parse(dataList: unknown[]) {

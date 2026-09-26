@@ -1,7 +1,7 @@
 import type { MechanicDefinitionRef } from '../../core/game-data/gameDataRepository';
 import type { MechanicAdapter, MechanicAdapterInput } from '../../core/mechanics/mechanicCompiler';
 import type { MechanicContribution } from '../../core/mechanics/mechanicContribution';
-import { compileActionSequence } from '../../core/compiler/compileSkill';
+import { ActionGraphDefinitionRepository } from '../../core/compiler/actionGraphDefinitionRepository';
 import {
   contingencyContractDefinitionRevision,
   contingencyContractBlockedTagReasons,
@@ -11,6 +11,8 @@ import {
 } from './generated/contingencyContractDefinitions.generated';
 
 export const CONTINGENCY_CONTRACT_MECHANIC_PREFIX = 'contingency-contract:tag:';
+
+const programs = new ActionGraphDefinitionRepository();
 
 const planByMechanicId = new Map(
   contingencyContractInitializationPlans.map(plan => [
@@ -82,11 +84,9 @@ export const contingencyContractMechanicAdapter: MechanicAdapter = Object.freeze
     return [
       {
         kind: 'battleInitializationSequence',
-        sequence: compileActionSequence(
-          plan.sequence,
-          0,
-          `ContingencyContract.${plan.tagId}.initialization`,
-        ),
+        sequence: programs
+          .compile(plan.actionGraph, 0)
+          .compileEntry(plan.sequence, `ContingencyContract.${plan.tagId}.initialization`),
       },
     ];
   },

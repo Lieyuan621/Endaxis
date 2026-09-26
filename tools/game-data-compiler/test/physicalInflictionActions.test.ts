@@ -1,3 +1,4 @@
+import { withProjectionGraph } from './support/projectionContext.ts';
 import { fixtureGameplayTagRegistry } from './gameplayTagFixtures.ts';
 import { describe, expect, it } from 'vitest';
 import {
@@ -12,6 +13,27 @@ import {
   parseReferenceAwareActionLeafSource,
 } from '../src/source/referenceGraph.ts';
 import { compileCombatActionSequenceSource } from '../src/compiler/buffs/buffRuntimeProjection.ts';
+import type { CombatActionProjectionContextSource } from '../src/compiler/combatProjectionCommon.ts';
+import {
+  createActionGraphBuilder,
+  readActionGraphChain,
+} from '../src/compiler/actions/actionGraphBuilder.ts';
+import type { CompiledBuffStepSource } from '../src/compiler/actions/combatActionProjectionTypes.ts';
+
+/** 图编译包装：返回入口同层动作数组，保持旧断言的扁平比较形状。 */
+function projectSequence(
+  source: Parameters<typeof compileCombatActionSequenceSource>[0],
+  context: Omit<CombatActionProjectionContextSource, 'graph'>,
+  visualOnlyIds?: ReadonlySet<string>,
+) {
+  const builder = createActionGraphBuilder<CompiledBuffStepSource>();
+  const entry = compileCombatActionSequenceSource(
+    source,
+    { ...context, graph: builder },
+    visualOnlyIds,
+  );
+  return { steps: readActionGraphChain(builder.finish(), entry) };
+}
 import { scalarFixture, targetFixture } from './sourceFixtures.ts';
 import { projectKnockDownAction } from '../src/compiler/actions/knockDownProjection.ts';
 import { collectCompiledBuffApplications } from '../src/compiler/references/compiledReferences.ts';
@@ -232,7 +254,7 @@ describe('击倒来源与隐式引用', () => {
       (value, path) => parseKnownNativeActionLeafSource(value, path, {}),
     );
     expect(
-      compileCombatActionSequenceSource(
+      projectSequence(
         source,
         {
           gameplayTagRegistry: fixtureGameplayTagRegistry,
@@ -260,18 +282,20 @@ describe('击倒来源与隐式引用', () => {
     });
   });
 
-  const context = {
-    actionOwnerTarget: 'caster',
-    actionSourceTarget: 'caster',
-    actionTargetTarget: 'enemy',
-    staticEnemyTargetGroupKeys: new Set(['targets']),
-  } as const;
+  function createContext(): CombatActionProjectionContextSource {
+    return withProjectionGraph({
+      actionOwnerTarget: 'caster',
+      actionSourceTarget: 'caster',
+      actionTargetTarget: 'enemy',
+      staticEnemyTargetGroupKeys: new Set(['targets']),
+    });
+  }
   it('编译后的根动作仍保留隐式 Buff 依赖及敌方归属', () => {
     const project = (overrides: Record<string, unknown>) =>
       projectKnockDownAction(
         parseKnockDownActionSource(knockDown(overrides), 'fixture', {}),
         'fixture',
-        context,
+        createContext(),
       );
     expect(collectCompiledBuffApplications([project({})])).toEqual([
       { buffId: 'buff_physical_knockdown', target: 'enemy' },
@@ -297,7 +321,7 @@ describe('击倒来源与隐式引用', () => {
         {},
       ),
       'fixture',
-      context,
+      createContext(),
     );
     expect(result.parameters).toMatchObject({
       returnWhen: projected,
@@ -310,7 +334,7 @@ describe('击倒来源与隐式引用', () => {
       projectKnockDownAction(
         parseKnockDownActionSource(knockDown({ deadOption: 'OnlyDead' }), 'fixture', {}),
         'fixture',
-        context,
+        createContext(),
       ).parameters.targetFilter,
     ).toBe('skipAll');
   });
@@ -318,7 +342,7 @@ describe('击倒来源与隐式引用', () => {
     const action = parseKnockDownActionSource(knockDown(), 'fixture', {});
     expect(() =>
       projectKnockDownAction(action, 'fixture', {
-        ...context,
+        ...createContext(),
         staticEnemyTargetGroupKeys: new Set(),
       }),
     ).toThrow('source/target');
@@ -326,22 +350,24 @@ describe('击倒来源与隐式引用', () => {
       projectKnockDownAction(
         parseKnockDownActionSource(knockDown({ source: targetFixture('Owner') }), 'fixture', {}),
         'fixture',
-        { ...context, actionOwnerTarget: 'buffOwner' },
+        { ...createContext(), actionOwnerTarget: 'buffOwner' },
       ),
     ).toThrow('source/target');
-    expect(() => projectKnockDownAction({ ...action, isExtra: true }, 'fixture', context)).toThrow(
-      'extra knock-down',
-    );
+    expect(() =>
+      projectKnockDownAction({ ...action, isExtra: true }, 'fixture', createContext()),
+    ).toThrow('extra knock-down');
   });
 });
 
 describe('断裂与猛击公共物理异常链', () => {
-  const context = {
-    actionOwnerTarget: 'caster',
-    actionSourceTarget: 'caster',
-    actionTargetTarget: 'enemy',
-    staticEnemyTargetGroupKeys: new Set(['targets']),
-  } as const;
+  function createContext(): CombatActionProjectionContextSource {
+    return withProjectionGraph({
+      actionOwnerTarget: 'caster',
+      actionSourceTarget: 'caster',
+      actionTargetTarget: 'enemy',
+      staticEnemyTargetGroupKeys: new Set(['targets']),
+    });
+  }
 
   it.each(['fracture', 'crush'] as const)('严格读取并投影 %s 的公共 Buff 身份', kind => {
     const source = parsePhysicalInflictionActionSource(physical(kind), 'fixture', {}, kind);
@@ -352,7 +378,7 @@ describe('断裂与猛击公共物理异常链', () => {
       totalTime: { value: 3 },
       isExtra: false,
     });
-    const projected = projectPhysicalInflictionAction(source, 'fixture', context);
+    const projected = projectPhysicalInflictionAction(source, 'fixture', createContext());
     expect(collectCompiledBuffApplications([projected])).toEqual([
       { buffId: 'buff_physical_no_guard', target: 'enemy' },
       {
@@ -377,7 +403,7 @@ describe('断裂与猛击公共物理异常链', () => {
         'crush',
       ),
       'fixture',
-      context,
+      createContext(),
     );
     expect(projected.parameters).toMatchObject({
       type: 'crush',
@@ -392,6 +418,8 @@ describe('断裂与猛击公共物理异常链', () => {
       extendTags: [],
       blackboard: {},
       attributeModifiers: [],
+      /** 物理异常夹具 Buff 无动作，但仍是正式资源形状。 */
+      actionGraph: { main: { nodes: {} }, macros: {} },
     });
     const hydrate = createPhysicalInflictionDefinitionHydrator({
       buff_physical_no_guard: definition(10),
@@ -410,7 +438,7 @@ describe('断裂与猛击公共物理异常链', () => {
       {},
       'fracture',
     );
-    expect(() => projectPhysicalInflictionAction(dead, 'fixture', context)).toThrow(
+    expect(() => projectPhysicalInflictionAction(dead, 'fixture', createContext())).toThrow(
       'dead-only physical infliction',
     );
     const source = parsePhysicalInflictionActionSource(
@@ -421,7 +449,7 @@ describe('断裂与猛击公共物理异常链', () => {
     );
     expect(() =>
       projectPhysicalInflictionAction(source, 'fixture', {
-        ...context,
+        ...createContext(),
         staticEnemyTargetGroupKeys: new Set(),
       }),
     ).toThrow('attacker/target');
@@ -429,12 +457,14 @@ describe('断裂与猛击公共物理异常链', () => {
 });
 
 describe('浮空公共物理异常链', () => {
-  const context = {
-    actionOwnerTarget: 'caster',
-    actionSourceTarget: 'caster',
-    actionTargetTarget: 'enemy',
-    staticEnemyTargetGroupKeys: new Set(['targets']),
-  } as const;
+  function createContext(): CombatActionProjectionContextSource {
+    return withProjectionGraph({
+      actionOwnerTarget: 'caster',
+      actionSourceTarget: 'caster',
+      actionTargetTarget: 'enemy',
+      staticEnemyTargetGroupKeys: new Set(['targets']),
+    });
+  }
 
   it('严格保留控制参数并投影破防、状态 Buff 与返回策略', () => {
     const source = parseAirborneActionSource(
@@ -451,7 +481,7 @@ describe('浮空公共物理异常链', () => {
       speedFactorMultiplier: 3,
       airborneEffect: { moveType: 'FollowTarget' },
     });
-    const projected = projectPhysicalInflictionAction(source, 'fixture', context);
+    const projected = projectPhysicalInflictionAction(source, 'fixture', createContext());
     expect(projected.parameters).toMatchObject({
       type: 'airborne',
       duration: { kind: 'blackboard', key: 'airborne_duration' },
@@ -474,7 +504,7 @@ describe('浮空公共物理异常链', () => {
     const projected = projectPhysicalInflictionAction(
       parseAirborneActionSource(airborne({ deadOption: 'OnlyDead' }), 'fixture', {}),
       'fixture',
-      context,
+      createContext(),
     );
     expect(projected.parameters).toMatchObject({ targetFilter: 'skipAll', returnWhen: 'always' });
   });

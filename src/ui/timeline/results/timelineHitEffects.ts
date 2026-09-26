@@ -13,7 +13,7 @@ import {
 import type { ScenarioDocument } from '../../../core/project/schema';
 import {
   findBuffTimelineSegmentForDamage,
-  projectBuffTimelineViz,
+  projectBuffIconTimelineMetadata,
 } from '../../../core/projection/buffTimelineViz';
 import type { TimelineHitMarker } from './timelineHitProjection';
 import { CombatObjectOrigins } from '../../../core/projection/combatObjectOrigins';
@@ -70,7 +70,7 @@ function excludeStandaloneEffectDamage(
   entries: readonly CombatReceiptEntry[],
 ): readonly CombatReceiptEntry[] {
   const endFrame = entries.reduce((maximum, entry) => Math.max(maximum, entry.frame), 0);
-  const segments = projectBuffTimelineViz(entries, endFrame);
+  const segments = projectBuffIconTimelineMetadata(entries, endFrame);
   return entries.filter(
     entry =>
       (!isBuffDamageReceipt(entry) ||

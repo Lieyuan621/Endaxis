@@ -21,7 +21,6 @@ import {
   type ProjectedTargetGroup,
   type CombatActionProjectionContextSource,
   type CombatActionProjectionExtensionsSource,
-  BUFF_ACTION_CONTEXT,
   requireActionOwnerProjection,
   isPartyExceptOwnerInstantSearch,
   isControlledOperatorInstantSearch,
@@ -103,7 +102,7 @@ export function compileActionNode(
   node: NativeActionNodeSource<KnownNativeActionLeafSource>,
   visualOnlyIds: ReadonlySet<string>,
   partyTargetGroups: ReadonlyMap<string, ProjectedTargetGroup> = new Map(),
-  context: CombatActionProjectionContextSource = BUFF_ACTION_CONTEXT,
+  context: CombatActionProjectionContextSource,
   extensions: CombatActionProjectionExtensionsSource = {},
 ): CompiledBuffStepSource[] {
   if (node.body.kind !== 'leaf') {
@@ -808,7 +807,7 @@ export function compileActionNode(
             {
               kind: 'forEachContextTarget',
               parameters: { contextKey: action.owner.targetGroupKey },
-              body: { steps },
+              body: context.graph.sequence(steps),
             },
           ]
         : steps;
@@ -1161,7 +1160,7 @@ export function compileActionNode(
             value: consumedLayers,
           },
         },
-        whenTrue: { steps: body },
+        whenTrue: context.graph.sequence(body),
       },
     ];
   }
@@ -1752,7 +1751,7 @@ export function compileActionNode(
           {
             kind: 'conditional',
             parameters: { condition: { kind: 'casterControlled' } },
-            whenTrue: { steps: [operation] },
+            whenTrue: context.graph.sequence([operation]),
           },
         ]
       : [operation];
@@ -1853,23 +1852,21 @@ export function compileActionNode(
         {
           kind: 'forEachContextTarget',
           parameters: { contextKey: action.target.targetGroupKey },
-          body: {
-            steps: [
-              {
-                kind: 'createAbilityEntityTimedMarker',
-                parameters: {
-                  markerId:
-                    action.marker.blackboardKey === null
-                      ? action.marker.value
-                      : { blackboardKey: action.marker.blackboardKey },
-                  durationSeconds: actionValueOperand(action.duration),
-                  autoFinishByAction: action.autoFinishByAction,
-                  // 原生 false 使用全局缩放时间，不乘实体自身倍率。
-                  timeDomain: action.useTimeDilationDeltaTime ? 'self' : 'global',
-                },
+          body: context.graph.sequence([
+            {
+              kind: 'createAbilityEntityTimedMarker',
+              parameters: {
+                markerId:
+                  action.marker.blackboardKey === null
+                    ? action.marker.value
+                    : { blackboardKey: action.marker.blackboardKey },
+                durationSeconds: actionValueOperand(action.duration),
+                autoFinishByAction: action.autoFinishByAction,
+                // 原生 false 使用全局缩放时间，不乘实体自身倍率。
+                timeDomain: action.useTimeDilationDeltaTime ? 'self' : 'global',
               },
-            ],
-          },
+            },
+          ]),
         },
       ];
     }
@@ -2303,7 +2300,7 @@ function compileBuffApplication(
   visualOnlyIds: ReadonlySet<string>,
   sourcePath: string,
   partyTargetGroups: ReadonlyMap<string, ProjectedTargetGroup> = new Map(),
-  context: CombatActionProjectionContextSource = BUFF_ACTION_CONTEXT,
+  context: CombatActionProjectionContextSource,
 ): CompiledBuffStepSource[] {
   const contextTargetGroupKey = action.target.targetGroupKey ?? '';
   const contextTargetGroup = partyTargetGroups.get(contextTargetGroupKey);
@@ -2549,7 +2546,7 @@ function compileBuffApplication(
     {
       kind: 'forEachContextTarget',
       parameters: { contextKey: contextTargetGroupKey },
-      body: { steps },
+      body: context.graph.sequence(steps),
     },
   ];
 }

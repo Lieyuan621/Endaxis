@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { createNativeEventFixture } from '../events/nativeEventTestFixture';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import type {
+  ActionGraphNode,
+  ActionGraphStep,
+} from '../../../../packages/game-data-contract/src/actionGraph';
 import type { CompiledOperatorUpgradeEventProgram } from '../../compiler/combatProgram';
 import { OperatorUpgradeEventRuntime } from './operatorUpgradeEventRuntime';
 import type { CombatOperationExecutor } from '../skills/skillRuntime';
@@ -7,27 +12,37 @@ import { CombatSemanticEventRuntime } from '../events/combatSemanticEventRuntime
 import { AbilityEventDispatcher } from '../events/abilityEventDispatcher';
 import type { AbilityEventPayloadMap } from '../events/combatAbilityEvent';
 
+const chainSequence = (
+  revision: string,
+  actions: readonly ActionGraphStep[],
+): CompiledOperatorUpgradeEventProgram['sequence'] => {
+  const nodes: Record<string, ActionGraphNode> = {};
+  actions.forEach((action, index) => {
+    nodes[`step-${index}`] = {
+      action,
+      next: index + 1 < actions.length ? `step-${index + 1}` : null,
+    };
+  });
+  return {
+    graph: createActionGraphCompilation({ nodes }, 1, revision).compileAll(),
+    entry: actions.length === 0 ? null : 'step-0',
+    callSite: revision,
+  };
+};
+
 const PROGRAM: CompiledOperatorUpgradeEventProgram = {
   key: 'potential:attackAfterSpGain:0',
   event: { kind: 'spGained' },
   initialBlackboard: {},
-  sequence: {
-    steps: [
-      {
-        kind: 'applyBuff',
-        parameters: {
-          buffId: 'attack-up',
-          target: 'caster',
-          definition: {
-            stackingType: 'enhanceAndRefresh',
-            maxStackCount: 2,
-            durationSeconds: 5,
-            attributeModifiers: [{ attribute: 'Atk', slot: 'baseMultiplier', value: 0.2 }],
-          },
-        },
+  sequence: chainSequence('potential:attackAfterSpGain:0', [
+    {
+      kind: 'applyBuff',
+      parameters: {
+        buffId: 'attack-up',
+        target: 'caster',
       },
-    ],
-  },
+    },
+  ]),
 };
 
 describe('OperatorUpgradeEventRuntime', () => {
@@ -155,19 +170,17 @@ describe('OperatorUpgradeEventRuntime', () => {
       key: 'talent:consumed-infliction:0',
       event: { kind: 'elementalAttachmentConsumed' },
       initialBlackboard: { crystal_up: 0.04 },
-      sequence: {
-        steps: [
-          {
-            kind: 'calculateActionValue',
-            parameters: {
-              key: 'result',
-              operation: 'multiply',
-              left: { kind: 'blackboard', key: 'infliction_num' },
-              right: { kind: 'constant', value: 0.04 },
-            },
+      sequence: chainSequence('talent:consumed-infliction:0', [
+        {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'result',
+            operation: 'multiply',
+            left: { kind: 'blackboard', key: 'infliction_num' },
+            right: { kind: 'constant', value: 0.04 },
           },
-        ],
-      },
+        },
+      ]),
     };
     new OperatorUpgradeEventRuntime(events, 'operator:last-rite', [program], () => ({
       execute: (_step, context) => {
@@ -196,18 +209,16 @@ describe('OperatorUpgradeEventRuntime', () => {
       key: 'talent:no-guard-consumed:0',
       event: { kind: 'buffConsumed', buffIds: ['buff_physical_no_guard'] },
       initialBlackboard: { dmg_up: 0.06 },
-      sequence: {
-        steps: [
-          {
-            kind: 'applyBuff',
-            parameters: {
-              buffId: 'physical-up',
-              target: 'caster',
-              count: { kind: 'blackboard', key: 'consumedLayer' },
-            },
+      sequence: chainSequence('talent:no-guard-consumed:0', [
+        {
+          kind: 'applyBuff',
+          parameters: {
+            buffId: 'physical-up',
+            target: 'caster',
+            count: { kind: 'blackboard', key: 'consumedLayer' },
           },
-        ],
-      },
+        },
+      ]),
     };
     new OperatorUpgradeEventRuntime(events, 'operator:dapan', [program], () => ({
       execute: (_step, context) => {

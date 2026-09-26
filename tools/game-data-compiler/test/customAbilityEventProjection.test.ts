@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { compileActionNode } from '../src/compiler/actions/combatActionLeafProjection.ts';
 import { BUFF_ACTION_CONTEXT } from '../src/compiler/combatProjectionCommon.ts';
+import { withProjectionGraph } from './support/projectionContext.ts';
 import { parseKnownNativeActionLeafSource } from '../src/source/actionLeaf.ts';
 import { scalarFixture, targetFixture } from './sourceFixtures.ts';
 
@@ -42,7 +43,7 @@ describe('custom ability event projection', () => {
         },
         new Set(),
         new Map(),
-        BUFF_ACTION_CONTEXT,
+        withProjectionGraph(BUFF_ACTION_CONTEXT),
       ),
     ).toEqual([
       {

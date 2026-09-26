@@ -14,11 +14,14 @@ import type {
 } from '../game-data/operatorDefinition';
 import { DEFAULT_TRUST_ATTRIBUTE_BONUS } from '../game-data/operatorDefinition';
 import type { OperatorInstanceDocument } from '../project/schema';
-import type { CompiledEquipmentContribution, ResolvedEquipmentModifier } from './compileEquipment';
+import type {
+  CompiledEquipmentModifierContribution,
+  ResolvedEquipmentModifier,
+} from './compileEquipment';
 import type { OperatorPanelContributionSource } from '../combat/state/foundationState';
 export type { OperatorPanelContributionSource } from '../combat/state/foundationState';
 import { resolveActiveOperatorUpgrades } from './compileOperatorUpgrades';
-import { compileResolvedScenarioEquipment } from './compileScenarioEquipment';
+import { compileResolvedScenarioEquipmentModifiers } from './compileScenarioEquipment';
 import type { ResolvedScenarioBuild } from './resolveScenarioBuilds';
 import {
   MAIN_ATTRIBUTE_ATTACK_FACTOR,
@@ -238,7 +241,7 @@ function resolveUpgradeBasePanelStat(
 }
 
 function applyEquipmentContribution(
-  contribution: CompiledEquipmentContribution,
+  contribution: CompiledEquipmentModifierContribution,
   values: MutablePanelValues,
   receipt: OperatorPanelContributionReceipt[],
   combatModifiers: ResolvedOperatorCombatModifier[],
@@ -416,7 +419,7 @@ export function resolveOperatorPanel(build: ResolvedScenarioBuild): ResolvedOper
     });
   }
 
-  const equipment = compileResolvedScenarioEquipment([build])[0]!;
+  const equipment = compileResolvedScenarioEquipmentModifiers([build])[0]!;
   for (const contribution of equipment.contributions) {
     applyEquipmentContribution(contribution, values, receipt, combatModifiers);
   }

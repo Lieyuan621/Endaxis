@@ -1,10 +1,18 @@
+import { renderCommonBuffDefinitionsSource } from '../src/domains/operator/definitionSourceRenderer.ts';
+import { createActionGraphBuilder } from '../src/compiler/actions/actionGraphBuilder.ts';
+import { validateActionGraphOwner } from '../../../src/core/action-graph/actionGraphValidation.ts';
+import { renderGraphValue } from '../src/compiler/optimization/actionGraphSourceRenderer.ts';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { pathToFileURL } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 import { format, resolveConfig } from 'prettier';
-import type { ActionSequenceDefinition } from '../../../packages/game-data-contract/src/actions.ts';
+import type {
+  ActionGraphReference,
+  ActionGraphResourceDefinition,
+  ActionGraphStep,
+} from '../../../packages/game-data-contract/src/actionGraph.ts';
 import type { CompiledBuffDefinitionSource } from '../src/compiler/buffs/buffProjectionTypes.ts';
 import { compileGlobalBuffTemplate } from '../src/compiler/buffs/globalBuffProjection.ts';
 import { compileStandardStumpBuffClosure } from '../src/compiler/buffs/standardStumpBuffClosure.ts';
@@ -49,7 +57,8 @@ export interface ContingencyContractSimulationScope {
 
 export interface ContingencyContractInitializationPlan {
   readonly tagId: number;
-  readonly sequence: ActionSequenceDefinition;
+  readonly sequence: ActionGraphReference;
+  readonly actionGraph: ActionGraphResourceDefinition;
 }
 
 export interface ContingencyContractEnemyMaxHealthPlan {
@@ -206,7 +215,8 @@ export function compileContingencyContractDefinitionsFromFiles(
   }
 
   for (const tag of catalog.tags.filter(tag => scope.supportedTagIds.has(tag.tagId))) {
-    const steps: ActionSequenceDefinition['steps'][number][] = [];
+    const graph = createActionGraphBuilder();
+    const steps: ActionGraphStep[] = [];
     for (const [termIndex, term] of tag.terms.entries()) {
       if (term.kind === 'reduceChallengeTime') {
         throw new Error(`supported tag ${tag.tagId} contains a challenge-time-only term`);
@@ -261,7 +271,8 @@ export function compileContingencyContractDefinitionsFromFiles(
             },
       );
     }
-    plans.push({ tagId: tag.tagId, sequence: { steps } });
+    const sequence = graph.sequence(steps);
+    plans.push({ tagId: tag.tagId, sequence, actionGraph: { main: graph.finish(), macros: {} } });
   }
 
   return {
@@ -294,13 +305,17 @@ export async function renderContingencyContractDefinitionsFromCompiled(
     revision,
   } = compiled;
   const prettierConfig = (await resolveConfig(path.resolve('.prettierrc.json'))) ?? {};
+  const graphPlans = plans.map(plan => {
+    validateActionGraphOwner(plan, `contingencyContract.${plan.tagId}`);
+    return plan;
+  });
   const content = await format(
     `/** 由危机合约原生词条、GlobalBuff 与 BuffData 闭包生成；不要手工编辑。 */
-import type { ActionSequenceDefinition, OperatorBuffDefinitions, ContingencyContractTagDefinition } from '../../../../packages/game-data-contract/src/index.ts';
+import type { ContingencyContractTagDefinition } from '../../../../packages/game-data-contract/src/index.ts';
 
-export const contingencyContractBuffDefinitions = Object.freeze(${JSON.stringify(definitions, null, 2)}) as OperatorBuffDefinitions;
+${renderCommonBuffDefinitionsSource(definitions, 'contingencyContractBuffDefinitions')}
 export const contingencyContractTagDefinitions = Object.freeze<readonly ContingencyContractTagDefinition[]>(${JSON.stringify(compiled.tags, null, 2)});
-export const contingencyContractInitializationPlans = Object.freeze(${JSON.stringify(plans, null, 2)}) as readonly { readonly tagId: number; readonly sequence: ActionSequenceDefinition }[];
+export const contingencyContractInitializationPlans = Object.freeze<readonly { readonly tagId: number; readonly sequence: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphReference; readonly actionGraph: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphResourceDefinition }[]>(${renderGraphValue(graphPlans)});
 export const contingencyContractEnemyMaxHealthPlans = Object.freeze(${JSON.stringify(enemyMaxHealthPlans, null, 2)}) as readonly { readonly tagId: number; readonly multiplier: number }[];
 export const contingencyContractBlockedTagReasons = Object.freeze(${JSON.stringify(Object.fromEntries(scope.blockedTagReasons), null, 2)}) as Readonly<Record<number, string>>;
 export const contingencyContractOmittedTagReasons = Object.freeze(${JSON.stringify(Object.fromEntries(scope.omittedTagReasons), null, 2)}) as Readonly<Record<number, string>>;

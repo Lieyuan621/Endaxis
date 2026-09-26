@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseSkillSettingResources } from '../../../packages/game-data-contract/src/skillSettingResources.ts';
+import { parseSkillSettingResources } from '../../../src/core/game-data/definitionGuards.ts';
 import {
   parseSkillSettingDumpSource,
   parseSkillSettingResourceSource,

@@ -19,6 +19,7 @@ import {
   type ReferenceAwareActionLeafSource,
 } from './referenceGraph.ts';
 import type { BlackboardLevelValues } from './scalar.ts';
+import { readBuffEvent } from './nativeEnums.ts';
 import {
   parseSkillTimelineActionSource,
   type SkillActionGraphSource,
@@ -211,7 +212,10 @@ function parseNamedEvents<TLeaf>(
     const event = requireRecord(rawEvent, eventPath);
     requireExactFields(event, new Set([eventField, 'actions']), eventPath);
     return {
-      event: parseEventIdentity(event[eventField], `${eventPath}.${eventField}`),
+      event:
+        eventField === 'buffEvent'
+          ? readBuffEvent(event[eventField], `${eventPath}.${eventField}`)
+          : parseEventIdentity(event[eventField], `${eventPath}.${eventField}`),
       actions: parseEventSequences(event.actions, `${eventPath}.actions`, parseSequence),
     };
   });

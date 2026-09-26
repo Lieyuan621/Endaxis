@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { ABILITY_EVENT_ACTION_CONTEXT_BINDINGS } from '../../../packages/game-data-contract/src/abilityEvents';
 import { pogranichnik as pogranichnikGeneratedOperator } from './pogranichnik.generated';
 
 describe('pogranichnik generated operator', () => {
@@ -26,7 +27,21 @@ describe('pogranichnik generated operator', () => {
     expect(serializedUltimate).toContain('abilityentity_chr_0029_pograni_ultimate_skill');
     expect(serializedUltimate).toContain('chr_0029_pograni_ultimate_skill_abilityentity');
     expect(physicalResponses).toHaveLength(2);
-    expect(JSON.stringify(physicalResponses)).toContain('"target":"eventSource"');
+    // 图迁移后响应不再内嵌 target：beforeTakePhysicalInfliction 的输入目标身份
+    // 由共享动作环境绑定表给出，等价于旧表示的 target: 'eventSource'。
+    expect(ABILITY_EVENT_ACTION_CONTEXT_BINDINGS.beforeTakePhysicalInfliction.inputTarget).toBe(
+      'eventSource',
+    );
+    const auraBuff =
+      pogranichnikGeneratedOperator.buffDefinitions?.[
+        'buff_chr_0029_pograni_ultimate_skill_abilityentity_inaura'
+      ];
+    if (auraBuff?.actionGraph === undefined) throw new Error('missing aura Buff graph');
+    for (const response of physicalResponses ?? []) {
+      expect(
+        auraBuff.actionGraph.main.nodes[(response.sequence as { $sequence: string }).$sequence],
+      ).toBeDefined();
+    }
     expect(
       Object.keys(
         pogranichnikGeneratedOperator.abilityEntityDefinitions?.[
@@ -36,6 +51,6 @@ describe('pogranichnik generated operator', () => {
     ).toContain('chr_0029_pograni_ultimate_skill_abilityentity_finish4');
     expect(serializedTalent1).toContain('skillSpGained');
     expect(serializedTalent1).toContain('storeEventSpGainAmount');
-    expect(JSON.stringify(talent2?.initializationSequence)).toContain('"duration":[5,10]');
+    expect(JSON.stringify(talent2?.attachedBuffs)).toContain('"duration":[5,10]');
   });
 });

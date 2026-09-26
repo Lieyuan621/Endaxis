@@ -6,7 +6,7 @@ import { parseComboSkillConditionsSource } from './comboSkillConditions.ts';
 import { parseBuffIconDuration } from './buffActions.ts';
 import { readBlackboardAssignmentValueType } from './assignments.ts';
 import { readBuffFindCheckType, readBuffStackNumType } from './buffFindSettings.ts';
-import { readCompareType } from './conditionEnums.ts';
+import { readCompareType } from './nativeEnums.ts';
 import { NATIVE_GAMEPLAY_TAG_QUERY_NAMES } from './tagQuery.ts';
 import type { BlackboardLevelValues } from './scalar.ts';
 import {

@@ -1,17 +1,24 @@
+import { validateBuffDefinition } from './validation/buffApplication';
+import {
+  validateActionGraphActions,
+  validateActionGraphContexts,
+  validateActionGraphReference,
+  validateScheduledSequence,
+} from './validation/actionPrograms';
+import type { SkillDefinitionValidationIssue } from './validation/definitionValues';
 import { describe, expect, it } from 'vitest';
 import { validateSkillDefinition } from './validateSkillDefinition';
 import { validateAbilityEntityDefinition } from './validation/actionPrograms';
+
+/** 节点动作问题在当前图校验下的路径前缀。 */
+const nodeActionPath = (id: string) => `$.actionGraph.main.nodes.${JSON.stringify(id)}.action`;
 
 function baseSkill(): Record<string, unknown> {
   return {
     key: 'testSkill',
     timelineBlockFrames: 30,
-    scheduledSequences: [
-      {
-        startFrame: 0,
-        sequence: { steps: [] },
-      },
-    ],
+    scheduledSequences: [{ startFrame: 0, sequence: { $sequence: null } }],
+    actionGraph: { main: { nodes: {} }, macros: {} },
   };
 }
 
@@ -23,7 +30,37 @@ function damageStep(key?: string): Record<string, unknown> {
   };
 }
 
+/**
+ * 平铺动作串成链式图；控制动作的分支由调用方以显式 {$sequence} 引用给出，
+ * 额外节点经 extraNodes 放入同一资源。
+ */
+function skillWithSteps(
+  actions: readonly Record<string, unknown>[],
+  extraNodes: Record<string, { action: unknown; next: string | null }> = {},
+): Record<string, unknown> {
+  const nodes: Record<string, { action: unknown; next: string | null }> = { ...extraNodes };
+  actions.forEach((action, index) => {
+    nodes[`step-${index}`] = {
+      action,
+      next: index + 1 < actions.length ? `step-${index + 1}` : null,
+    };
+  });
+  return {
+    ...baseSkill(),
+    scheduledSequences: [
+      { startFrame: 0, sequence: { $sequence: actions.length === 0 ? null : 'step-0' } },
+    ],
+    actionGraph: { main: { nodes }, macros: {} },
+  };
+}
+
 describe('validateSkillDefinition', () => {
+  it('rejects a Buff definition directory owned by a skill', () => {
+    expect(validateSkillDefinition({ ...baseSkill(), buffDefinitions: {} })).toContainEqual({
+      path: '$.buffDefinitions',
+      message: 'skills may reference Buffs but cannot own their definitions',
+    });
+  });
   it('allows an AbilityEntity passive to address its host entity directly', () => {
     const applyToHost = {
       kind: 'applyBuff' as const,
@@ -31,7 +68,6 @@ describe('validateSkillDefinition', () => {
         buffId: 'entity-monitor',
         target: 'currentAbilityEntity' as const,
         source: 'currentAbilityEntity' as const,
-        definition: { stackingType: 'unique' as const },
       },
     };
 
@@ -41,12 +77,16 @@ describe('validateSkillDefinition', () => {
         passiveSkills: [
           {
             key: 'entity-passive',
-            enableSequence: { steps: [applyToHost] },
+            actionGraph: {
+              main: { nodes: { entry: { action: applyToHost, next: null } } },
+              macros: {},
+            },
+            enableSequence: { $sequence: 'entry' },
             abilityEventResponses: [
               {
                 event: 'addedBuff',
                 priority: 0,
-                sequence: { steps: [applyToHost] },
+                sequence: { $sequence: 'entry' },
               },
             ],
           },
@@ -58,31 +98,23 @@ describe('validateSkillDefinition', () => {
   it.each(['party', 'partyExceptCaster', 'controlledOperator', 'unknown'])(
     '标签结束仍拒绝不属于单对象绑定的目标 %s',
     target => {
-      const issues = validateSkillDefinition({
-        ...baseSkill(),
-        scheduledSequences: [
+      const issues = validateSkillDefinition(
+        skillWithSteps([
           {
-            startFrame: 0,
-            sequence: {
-              steps: [
-                {
-                  kind: 'finishBuffsByTag',
-                  parameters: {
-                    target,
-                    tagQueryType: 'hasAny',
-                    buffTags: ['Test/Tag'],
-                    reason: 'early',
-                  },
-                },
-              ],
+            kind: 'finishBuffsByTag',
+            parameters: {
+              target,
+              tagQueryType: 'hasAny',
+              buffTags: ['Test/Tag'],
+              reason: 'early',
             },
           },
-        ],
-      });
+        ]),
+      );
       expect(issues).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            path: '$.scheduledSequences[0].sequence.steps[0].parameters.target',
+            path: `${nodeActionPath('step-0')}.parameters.target`,
           }),
         ]),
       );
@@ -96,7 +128,7 @@ describe('validateSkillDefinition', () => {
         {
           key: 'native',
           event: { kind: 'abilityEvent', event },
-          scheduledSequences: [{ startFrame: 0, sequence: { steps: [] } }],
+          scheduledSequences: [{ startFrame: 0, sequence: { $sequence: null } }],
         },
       ],
     });
@@ -131,51 +163,33 @@ describe('validateSkillDefinition', () => {
   });
 
   it('validates operator profession conditions as a closed role list', () => {
-    const skill = baseSkill();
-    skill.scheduledSequences = [
-      {
-        startFrame: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'conditional',
-              parameters: {
-                condition: {
-                  kind: 'operatorRoleIn',
-                  target: 'buffOwner',
-                  roles: ['guard', 'supporter'],
-                },
-              },
-              whenTrue: { steps: [] },
-            },
-          ],
-        },
-      },
-    ];
+    const condition: Record<string, unknown> = {
+      kind: 'operatorRoleIn',
+      target: 'buffOwner',
+      roles: ['guard', 'supporter'],
+    };
+    const skill = skillWithSteps([
+      { kind: 'conditional', parameters: { condition }, whenTrue: { $sequence: null } },
+    ]);
     expect(validateSkillDefinition(skill)).toEqual([]);
-    (skill.scheduledSequences as any)[0].sequence.steps[0].parameters.condition.roles = ['medic'];
+    condition.roles = ['medic'];
     expect(validateSkillDefinition(skill)).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          path: '$.scheduledSequences[0].sequence.steps[0].parameters.condition.roles[0]',
+          path: `${nodeActionPath('step-0')}.parameters.condition.roles[0]`,
         }),
       ]),
     );
   });
 
   it('校验原生 TickInterval 参数并禁止与 Channeling 混用', () => {
-    const skill = baseSkill();
     const parameters: Record<string, unknown> = {
       nativeTickInterval: { executeEachFrame: false, intervalSeconds: 0.07 },
     };
-    skill.scheduledSequences = [
-      {
-        startFrame: 0,
-        sequence: {
-          steps: [{ kind: 'repeatEachTick', parameters, body: { steps: [damageStep('tick')] } }],
-        },
-      },
-    ];
+    const skill = skillWithSteps(
+      [{ kind: 'repeatEachTick', parameters, body: { $sequence: 'tick-0' } }],
+      { 'tick-0': { action: damageStep('tick'), next: null } },
+    );
     expect(validateSkillDefinition(skill)).toEqual([]);
 
     parameters.nativeChanneling = {
@@ -187,63 +201,43 @@ describe('validateSkillDefinition', () => {
     expect(validateSkillDefinition(skill)).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          path: '$.scheduledSequences[0].sequence.steps[0].parameters',
+          path: `${nodeActionPath('step-0')}.parameters`,
         }),
       ]),
     );
   });
 
   it.each([undefined, 'parent', 'execution'])('接受黑板作用域生命周期 %s', lifetime => {
-    const skill = {
-      ...baseSkill(),
-      scheduledSequences: [
-        {
-          startFrame: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'withActionBlackboardScope',
-                parameters: {
-                  scopeKey: 'callback',
-                  initialValues: {},
-                  inheritParent: true,
-                  lifetime,
-                  alwaysNext: true,
-                },
-                body: { steps: [] },
-              },
-            ],
-          },
+    const skill = skillWithSteps([
+      {
+        kind: 'withActionBlackboardScope',
+        parameters: {
+          scopeKey: 'callback',
+          initialValues: {},
+          inheritParent: true,
+          lifetime,
+          alwaysNext: true,
         },
-      ],
-    };
+        body: { $sequence: null },
+      },
+    ]);
     expect(validateSkillDefinition(skill)).toEqual([]);
   });
   it.each([{ lifetime: 'unknown' }, { lifetime: null }, { alwaysNext: 1 }])(
     '拒绝非法黑板生命周期参数 %j',
     invalid => {
-      const skill = {
-        ...baseSkill(),
-        scheduledSequences: [
-          {
-            startFrame: 0,
-            sequence: {
-              steps: [
-                {
-                  kind: 'withActionBlackboardScope',
-                  parameters: {
-                    scopeKey: 'callback',
-                    initialValues: {},
-                    inheritParent: true,
-                    ...invalid,
-                  },
-                  body: { steps: [] },
-                },
-              ],
-            },
+      const skill = skillWithSteps([
+        {
+          kind: 'withActionBlackboardScope',
+          parameters: {
+            scopeKey: 'callback',
+            initialValues: {},
+            inheritParent: true,
+            ...invalid,
           },
-        ],
-      };
+          body: { $sequence: null },
+        },
+      ]);
       expect(validateSkillDefinition(skill)).not.toEqual([]);
     },
   );
@@ -254,55 +248,35 @@ describe('validateSkillDefinition', () => {
     { shareParentBlackboard: true, entityInitialValues: {} },
     { shareParentBlackboard: true, entityAssignments: {} },
   ])('拒绝非法共享父黑板参数 %j', invalid => {
-    const skill = {
-      ...baseSkill(),
-      scheduledSequences: [
-        {
-          startFrame: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'withActionBlackboardScope',
-                parameters: {
-                  scopeKey: 'native-callback',
-                  initialValues: {},
-                  inheritParent: true,
-                  ...invalid,
-                },
-                body: { steps: [] },
-              },
-            ],
-          },
+    const skill = skillWithSteps([
+      {
+        kind: 'withActionBlackboardScope',
+        parameters: {
+          scopeKey: 'native-callback',
+          initialValues: {},
+          inheritParent: true,
+          ...invalid,
         },
-      ],
-    };
+        body: { $sequence: null },
+      },
+    ]);
     expect(validateSkillDefinition(skill)).not.toEqual([]);
   });
   it('接受只隔离控制流的共享父 Buff 黑板回调边界', () => {
-    const skill = {
-      ...baseSkill(),
-      scheduledSequences: [
-        {
-          startFrame: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'withActionBlackboardScope',
-                parameters: {
-                  scopeKey: 'native-callback',
-                  lifetime: 'execution',
-                  alwaysNext: true,
-                  shareParentBlackboard: true,
-                  initialValues: {},
-                  inheritParent: true,
-                },
-                body: { steps: [] },
-              },
-            ],
-          },
+    const skill = skillWithSteps([
+      {
+        kind: 'withActionBlackboardScope',
+        parameters: {
+          scopeKey: 'native-callback',
+          lifetime: 'execution',
+          alwaysNext: true,
+          shareParentBlackboard: true,
+          initialValues: {},
+          inheritParent: true,
         },
-      ],
-    };
+        body: { $sequence: null },
+      },
+    ]);
     expect(validateSkillDefinition(skill)).toEqual([]);
   });
   it.each(['enemy', 'input', 'trigger', undefined])('接受有界智能目标 %s', smartTarget => {
@@ -316,102 +290,60 @@ describe('validateSkillDefinition', () => {
     );
   });
   it('validates the fixed fracture entry and both inline Buff definitions', () => {
-    const definition = baseSkill();
-    definition.scheduledSequences = [
-      {
-        startFrame: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'applyPhysicalInfliction',
-              parameters: {
-                type: 'fracture',
-                target: 'enemy',
-                isExtra: false,
-                noGuardBuffId: 'buff_physical_no_guard',
-                noGuardDefinition: { stackingType: 'unlimited' },
-                fractureBuffId: 'buff_physical_fracture',
-                fractureDefinition: { stackingType: 'refresh' },
-              },
-            },
-          ],
-        },
+    const step: Record<string, unknown> = {
+      kind: 'applyPhysicalInfliction',
+      parameters: {
+        type: 'fracture',
+        target: 'enemy',
+        isExtra: false,
+        noGuardBuffId: 'buff_physical_no_guard',
+        noGuardDefinition: { stackingType: 'unlimited' },
+        fractureBuffId: 'buff_physical_fracture',
+        fractureDefinition: { stackingType: 'refresh' },
       },
-    ];
+    };
+    const definition = skillWithSteps([step]);
     expect(validateSkillDefinition(definition)).toEqual([]);
 
-    const parameters = (
-      definition.scheduledSequences as Array<{
-        sequence: { steps: Array<{ parameters: Record<string, unknown> }> };
-      }>
-    )[0]!.sequence.steps[0]!.parameters;
-    parameters.target = 'caster';
+    (step.parameters as Record<string, unknown>).target = 'caster';
     expect(validateSkillDefinition(definition)).toContainEqual(
       expect.objectContaining({ path: expect.stringContaining('.parameters.target') }),
     );
   });
 
   it('validates the evidence-backed heal target and attribute formula', () => {
-    const definition = baseSkill();
-    definition.scheduledSequences = [
-      {
-        startFrame: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'heal',
-              parameters: {
-                target: 'controlledOperator',
-                attribute: 'will',
-                multiplier: [1, 2],
-                addition: { kind: 'blackboard', key: 'base' },
-                tags: ['Test/TagNegative1'],
-              },
-            },
-          ],
-        },
+    const step: Record<string, unknown> = {
+      kind: 'heal',
+      parameters: {
+        target: 'controlledOperator',
+        attribute: 'will',
+        multiplier: [1, 2],
+        addition: { kind: 'blackboard', key: 'base' },
+        tags: ['Test/TagNegative1'],
       },
-    ];
+    };
+    const definition = skillWithSteps([step]);
 
     expect(validateSkillDefinition(definition)).toEqual([]);
-    const parameters = (
-      definition.scheduledSequences as Array<{
-        sequence: { steps: Array<{ parameters: Record<string, unknown> }> };
-      }>
-    )[0]!.sequence.steps[0]!.parameters;
-    parameters.target = 'currentAbilityEntity';
+    (step.parameters as Record<string, unknown>).target = 'currentAbilityEntity';
     expect(validateSkillDefinition(definition)).toContainEqual(
       expect.objectContaining({ path: expect.stringContaining('.parameters.target') }),
     );
   });
 
   it('validates definite healing and rejects mixing it with an attribute formula', () => {
-    const definition = baseSkill();
-    definition.scheduledSequences = [
-      {
-        startFrame: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'heal',
-              parameters: {
-                target: 'controlledOperator',
-                amount: { kind: 'blackboard', key: 'final_heal_value' },
-                tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
-              },
-            },
-          ],
-        },
+    const step: Record<string, unknown> = {
+      kind: 'heal',
+      parameters: {
+        target: 'controlledOperator',
+        amount: { kind: 'blackboard', key: 'final_heal_value' },
+        tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
       },
-    ];
+    };
+    const definition = skillWithSteps([step]);
 
     expect(validateSkillDefinition(definition)).toEqual([]);
-    const parameters = (
-      definition.scheduledSequences as Array<{
-        sequence: { steps: Array<{ parameters: Record<string, unknown> }> };
-      }>
-    )[0]!.sequence.steps[0]!.parameters;
-    parameters.attribute = 'will';
+    (step.parameters as Record<string, unknown>).attribute = 'will';
     expect(validateSkillDefinition(definition)).toContainEqual(
       expect.objectContaining({
         path: expect.stringContaining('.parameters.attribute'),
@@ -421,29 +353,16 @@ describe('validateSkillDefinition', () => {
   });
 
   it('只接受已知的敌人原生 rank，并允许原生空集合表达永不匹配', () => {
-    const definition = baseSkill();
-    definition.scheduledSequences = [
-      {
-        startFrame: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'conditional',
-              parameters: { condition: { kind: 'enemyRankIn', ranks: ['elite', 'boss'] } },
-              whenTrue: { steps: [] },
-            },
-          ],
-        },
-      },
-    ];
+    const condition: { kind: string; ranks: string[] } = {
+      kind: 'enemyRankIn',
+      ranks: ['elite', 'boss'],
+    };
+    const definition = skillWithSteps([
+      { kind: 'conditional', parameters: { condition }, whenTrue: { $sequence: null } },
+    ]);
 
     expect(validateSkillDefinition(definition)).toEqual([]);
 
-    const condition = (
-      definition.scheduledSequences as Array<{
-        sequence: { steps: Array<{ parameters: { condition: { ranks: string[] } } }> };
-      }>
-    )[0]!.sequence.steps[0]!.parameters.condition;
     condition.ranks = ['advanced'];
     expect(validateSkillDefinition(definition)).toContainEqual(
       expect.objectContaining({ message: 'unknown enemy rank' }),
@@ -453,108 +372,76 @@ describe('validateSkillDefinition', () => {
   });
 
   it('允许终结技仅自动忽略施法者而不配置额外对象', () => {
-    const definition = baseSkill();
-    definition.scheduledSequences = [
+    const definition = skillWithSteps([
       {
-        startFrame: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'startUltimateTimeDilation',
-              parameters: {
-                priority: 100,
-                targetScale: { kind: 'constant', value: 0 },
-                ignoredTargets: [],
-              },
-            },
-          ],
+        kind: 'startUltimateTimeDilation',
+        parameters: {
+          priority: 100,
+          targetScale: { kind: 'constant', value: 0 },
+          ignoredTargets: [],
         },
       },
-    ];
+    ]);
 
     expect(validateSkillDefinition(definition)).toEqual([]);
   });
 
   it('允许全局时间膨胀在执行帧排除当前主控干员', () => {
-    const definition = baseSkill();
-    definition.scheduledSequences = [
+    const definition = skillWithSteps([
       {
-        startFrame: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'startTimeDilation',
-              parameters: {
-                scope: 'global',
-                durationSeconds: { kind: 'constant', value: 1 },
-                slot: 'Test/TimeSlot1',
-                priority: 2,
-                curve: { kind: 'named', key: 'ComboSkill' },
-                finishByAction: false,
-                ignoredTargets: ['controlled'],
-              },
-            },
-          ],
+        kind: 'startTimeDilation',
+        parameters: {
+          scope: 'global',
+          durationSeconds: { kind: 'constant', value: 1 },
+          slot: 'Test/TimeSlot1',
+          priority: 2,
+          curve: { kind: 'named', key: 'ComboSkill' },
+          finishByAction: false,
+          ignoredTargets: ['controlled'],
         },
       },
-    ];
+    ]);
 
     expect(validateSkillDefinition(definition)).toEqual([]);
   });
 
   it('严格校验时间膨胀中的能力实体 ID 与 Context 查询', () => {
-    const definition = baseSkill();
-    definition.scheduledSequences = [
+    const queries: Array<Record<string, unknown>> = [
       {
-        startFrame: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'startTimeDilation',
-              parameters: {
-                scope: 'entity',
-                durationSeconds: { kind: 'constant', value: 1 },
-                slot: 'Test/TimeSlot1',
-                priority: 2,
-                curve: { kind: 'named', key: 'ComboSkill' },
-                finishByAction: false,
-                targets: [],
-                abilityEntityTargets: [
-                  {
-                    kind: 'ownerSpawned',
-                    abilityEntityIds: ['abilityentity_test'],
-                  },
-                  { kind: 'context', contextKey: 'mirrors' },
-                ],
-              },
-            },
-          ],
+        kind: 'ownerSpawned',
+        abilityEntityIds: ['abilityentity_test'],
+      },
+      { kind: 'context', contextKey: 'mirrors' },
+    ];
+    const definition = skillWithSteps([
+      {
+        kind: 'startTimeDilation',
+        parameters: {
+          scope: 'entity',
+          durationSeconds: { kind: 'constant', value: 1 },
+          slot: 'Test/TimeSlot1',
+          priority: 2,
+          curve: { kind: 'named', key: 'ComboSkill' },
+          finishByAction: false,
+          targets: [],
+          abilityEntityTargets: queries,
         },
       },
-    ];
+    ]);
 
     expect(validateSkillDefinition(definition)).toEqual([]);
 
-    const queries = (
-      definition.scheduledSequences as Array<{
-        sequence: {
-          steps: Array<{
-            parameters: { abilityEntityTargets: Array<Record<string, unknown>> };
-          }>;
-        };
-      }>
-    )[0]!.sequence.steps[0]!.parameters.abilityEntityTargets;
     queries[0]!.abilityEntityIds = [];
     queries[1]!.contextKey = '';
 
     expect(validateSkillDefinition(definition)).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          path: '$.scheduledSequences[0].sequence.steps[0].parameters.abilityEntityTargets[0].abilityEntityIds',
+          path: `${nodeActionPath('step-0')}.parameters.abilityEntityTargets[0].abilityEntityIds`,
           message: 'expected a non-empty array',
         }),
         expect.objectContaining({
-          path: '$.scheduledSequences[0].sequence.steps[0].parameters.abilityEntityTargets[1].contextKey',
+          path: `${nodeActionPath('step-0')}.parameters.abilityEntityTargets[1].contextKey`,
           message: 'expected a non-empty string',
         }),
       ]),
@@ -562,54 +449,33 @@ describe('validateSkillDefinition', () => {
   });
 
   it('accepts a structurally valid skill', () => {
-    const skill = baseSkill();
-    skill.scheduledSequences = [
+    const skill = skillWithSteps([
+      damageStep('hit:1'),
       {
-        startFrame: 0,
-        sequence: {
-          steps: [
-            damageStep('hit:1'),
-            {
-              kind: 'modifyActionValue',
-              parameters: { key: 'x', operation: 'add', value: { kind: 'constant', value: 1 } },
-            },
-          ],
-        },
+        kind: 'modifyActionValue',
+        parameters: { key: 'x', operation: 'add', value: { kind: 'constant', value: 1 } },
       },
-    ];
+    ]);
     expect(validateSkillDefinition(skill)).toEqual([]);
   });
 
   it('validates named and inline time-dilation curves', () => {
-    const skill = baseSkill();
-    skill.scheduledSequences = [
-      {
-        startFrame: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'startTimeDilation',
-              parameters: {
-                scope: 'global',
-                durationSeconds: { kind: 'constant', value: 1 },
-                slot: 'Test/TimeSlot1',
-                priority: 2,
-                curve: { kind: 'named', key: 'ComboSkill' },
-                finishByAction: false,
-                ignoredTargets: ['caster'],
-              },
-            },
-          ],
-        },
+    const step: Record<string, unknown> = {
+      kind: 'startTimeDilation',
+      parameters: {
+        scope: 'global',
+        durationSeconds: { kind: 'constant', value: 1 },
+        slot: 'Test/TimeSlot1',
+        priority: 2,
+        curve: { kind: 'named', key: 'ComboSkill' },
+        finishByAction: false,
+        ignoredTargets: ['caster'],
       },
-    ];
+    };
+    const skill = skillWithSteps([step]);
     expect(validateSkillDefinition(skill)).toEqual([]);
 
-    const parameters = (
-      skill.scheduledSequences as Array<{
-        sequence: { steps: Array<{ parameters: Record<string, unknown> }> };
-      }>
-    )[0]!.sequence.steps[0]!.parameters;
+    const parameters = step.parameters as Record<string, unknown>;
     parameters.curve = {
       kind: 'inline',
       keys: [
@@ -655,245 +521,93 @@ describe('validateSkillDefinition', () => {
   });
 
   it('keeps Buff presentation metadata strict and separate from runtime fields', () => {
-    const skill = baseSkill();
-    skill.scheduledSequences = [
-      {
-        startFrame: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'applyBuff',
-              parameters: {
-                buffId: 'buff.example',
-                target: 'caster',
-                definition: {
-                  stackingType: 'refresh',
-                  presentation: {
-                    iconId: 'icon_battle_buff_atk_up',
-                    iconPath: '/icons/buffs/example.webp',
-                    visible: true,
-                    showInHeadBarCommon: false,
-                    showInHeadBarAttached: false,
-                    showInSquadIcon: true,
-                    onlyShowForMainCharacter: false,
-                    iconStyleInSquad: 'Default',
-                    abnormalColorType: 'Physical',
-                    orderPriority: {
-                      useDirectoryValue: false,
-                      value: 0,
-                      category: 'CommonCharBuff',
-                    },
-                  },
-                },
-              },
-            },
-          ],
+    const definition: Record<string, unknown> = {
+      stackingType: 'refresh',
+      presentation: {
+        iconId: 'icon_battle_buff_atk_up',
+        iconPath: '/icons/buffs/example.webp',
+        visible: true,
+        showInHeadBarCommon: false,
+        showInHeadBarAttached: false,
+        showInSquadIcon: true,
+        onlyShowForMainCharacter: false,
+        iconStyleInSquad: 'Default',
+        abnormalColorType: 'Physical',
+        orderPriority: {
+          useDirectoryValue: false,
+          value: 0,
+          category: 'CommonCharBuff',
         },
       },
-    ];
+    };
+    expect(validateBuff(definition)).toEqual([]);
 
-    expect(validateSkillDefinition(skill)).toEqual([]);
-    const definition = (
-      skill.scheduledSequences as Array<{
-        sequence: { steps: Array<{ parameters: { definition: Record<string, unknown> } }> };
-      }>
-    )[0]!.sequence.steps[0]!.parameters.definition;
     definition.presentation = { iconPath: '', color: '#fff' };
-    const issues = validateSkillDefinition(skill);
+    const issues = validateBuff(definition);
     expect(issues.some(issue => issue.path.endsWith('.presentation.iconPath'))).toBe(true);
     expect(issues.some(issue => issue.path.endsWith('.presentation.color'))).toBe(true);
   });
 
-  it('accepts ordered inline Buff lifecycle sequences', () => {
-    const skill = baseSkill();
-    skill.scheduledSequences = [
-      {
-        startFrame: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'applyBuff',
-              parameters: {
-                buffId: 'buff.lifecycle',
-                target: 'caster',
-                inheritSourceSkillCastInfo: true,
-                definition: {
-                  stackingType: 'unique',
-                  lifecycleSequences: {
-                    start: {
-                      steps: [
-                        {
-                          kind: 'setContextFlag',
-                          parameters: { flag: 'started', value: true, target: 'caster' },
-                        },
-                      ],
-                    },
-                  },
-                },
-              },
-            },
-          ],
-        },
+  it('accepts ordered owner Buff lifecycle sequences', () => {
+    const definition: Record<string, unknown> = {
+      stackingType: 'unique',
+      lifecycleSequences: {
+        start: { $sequence: 'entry' },
       },
-    ];
-
-    expect(validateSkillDefinition(skill)).toEqual([]);
+    };
+    expect(validateBuff(definition)).toEqual([]);
   });
 
-  it('accepts an inline Buff max stack count resolved from its application blackboard', () => {
-    const skill = baseSkill();
-    skill.scheduledSequences = [
-      {
-        startFrame: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'applyBuff',
-              parameters: {
-                buffId: 'buff.dynamic-stack',
-                target: 'caster',
-                blackboardAssignments: { max_stack: { kind: 'constant', value: 2 } },
-                definition: {
-                  stackingType: 'stack',
-                  maxStackCount: { blackboardKey: 'max_stack' },
-                },
-              },
-            },
-          ],
-        },
-      },
-    ];
-
-    expect(validateSkillDefinition(skill)).toEqual([]);
+  it('accepts an owner Buff max stack count resolved from its application blackboard', () => {
+    const definition: Record<string, unknown> = {
+      stackingType: 'stack',
+      maxStackCount: { blackboardKey: 'max_stack' },
+    };
+    expect(validateBuff(definition)).toEqual([]);
   });
 
-  it('requires source skill-cast identity for inline Buff lifecycle sequences', () => {
-    const skill = baseSkill();
-    skill.scheduledSequences = [
-      {
-        startFrame: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'applyBuff',
-              parameters: {
-                buffId: 'buff.lifecycle-without-origin',
-                target: 'caster',
-                definition: {
-                  stackingType: 'unique',
-                  lifecycleSequences: { start: { steps: [] } },
-                },
-              },
-            },
-          ],
-        },
-      },
-    ];
-
-    const issues = validateSkillDefinition(skill);
-    expect(
-      issues.some(
-        issue =>
-          issue.path.endsWith('.parameters.inheritSourceSkillCastInfo') &&
-          issue.message.includes('require inherited skill-cast info'),
-      ),
-    ).toBe(true);
+  it('validates Buff independently of a creating skill', () => {
+    const definition: Record<string, unknown> = {
+      stackingType: 'unique',
+      lifecycleSequences: { start: { $sequence: null } },
+    };
+    expect(validateBuff(definition)).toEqual([]);
   });
 
-  it('validates inline Buff ability event responses and their sequences', () => {
-    const skill = baseSkill();
-    skill.scheduledSequences = [
-      {
-        startFrame: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'applyBuff',
-              parameters: {
-                buffId: 'buff.damage-listener',
-                target: 'enemy',
-                inheritSourceSkillCastInfo: true,
-                definition: {
-                  stackingType: 'unique',
-                  abilityEventResponses: [
-                    {
-                      event: 'beforeTakeDamage',
-                      priority: 3,
-                      sequence: {
-                        steps: [
-                          {
-                            kind: 'conditional',
-                            parameters: {
-                              condition: {
-                                kind: 'eventDamageTagsMatch',
-                                match: 'hasAll',
-                                tags: ['normalSkill'],
-                              },
-                            },
-                            whenTrue: { steps: [] },
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                },
-              },
-            },
-          ],
+  it('validates owner Buff ability event responses and their sequences', () => {
+    const definition: Record<string, unknown> = {
+      stackingType: 'unique',
+      abilityEventResponses: [
+        {
+          event: 'beforeTakeDamage',
+          priority: 3,
+          sequence: { $sequence: 'entry' },
         },
-      },
-    ];
-
-    expect(validateSkillDefinition(skill)).toEqual([]);
-
-    const response = (
-      (
-        skill.scheduledSequences as Array<{
-          sequence: { steps: Array<{ parameters: { definition: unknown } }> };
-        }>
-      )[0]!.sequence.steps[0]!.parameters.definition as {
-        abilityEventResponses: Array<Record<string, unknown>>;
-      }
-    ).abilityEventResponses[0]!;
+      ],
+    };
+    expect(validateBuff(definition)).toEqual([]);
+    const response = (definition.abilityEventResponses as Array<Record<string, unknown>>)[0]!;
     response.samePriorityKey = 'obsolete-ordering-hint';
-    expect(
-      validateSkillDefinition(skill).some(issue => issue.path.endsWith('.samePriorityKey')),
-    ).toBe(true);
+    expect(validateBuff(definition).some(issue => issue.path.endsWith('.samePriorityKey'))).toBe(
+      true,
+    );
     delete response.samePriorityKey;
     response.event = 'unknownEvent';
     response.priority = 0.5;
     response.unknown = true;
-    const issues = validateSkillDefinition(skill);
+    const issues = validateBuff(definition);
     expect(issues.some(issue => issue.path.endsWith('.event'))).toBe(true);
     expect(issues.some(issue => issue.path.endsWith('.priority'))).toBe(true);
     expect(issues.some(issue => issue.path.endsWith('.unknown'))).toBe(true);
   });
 
-  it('rejects old low-level actions and unknown inline Buff lifecycle names', () => {
-    const skill = baseSkill();
-    skill.scheduledSequences = [
-      {
-        startFrame: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'applyBuff',
-              parameters: {
-                buffId: 'buff.invalid-lifecycle',
-                target: 'caster',
-                definition: {
-                  stackingType: 'unique',
-                  actions: { start: [] },
-                  lifecycleSequences: { update: { steps: [] } },
-                },
-              },
-            },
-          ],
-        },
-      },
-    ];
-
-    const issues = validateSkillDefinition(skill);
+  it('rejects old low-level actions and unknown owner Buff lifecycle names', () => {
+    const definition: Record<string, unknown> = {
+      stackingType: 'unique',
+      actions: { start: [] },
+      lifecycleSequences: { update: { $sequence: null } },
+    };
+    const issues = validateBuff(definition);
     expect(issues.some(issue => issue.path.endsWith('.definition.actions'))).toBe(true);
     expect(issues.some(issue => issue.path.endsWith('.lifecycleSequences.update'))).toBe(true);
   });
@@ -911,88 +625,6 @@ describe('validateSkillDefinition', () => {
     expect(issues.some(issue => issue.path === '$.scheduledSequences')).toBe(true);
   });
 
-  it('rejects a missing damage step key', () => {
-    const skill = baseSkill();
-    skill.scheduledSequences = [{ startFrame: 0, sequence: { steps: [damageStep()] } }];
-    const issues = validateSkillDefinition(skill);
-    expect(
-      issues.some(
-        issue =>
-          issue.path === '$.scheduledSequences[0].sequence.steps[0]' &&
-          issue.message.includes('non-empty key'),
-      ),
-    ).toBe(true);
-  });
-
-  it('rejects a missing key nested inside conditional branches', () => {
-    const skill = baseSkill();
-    skill.scheduledSequences = [
-      {
-        startFrame: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'conditional',
-              parameters: { condition: { kind: 'combatActive' } },
-              whenTrue: { steps: [damageStep()] },
-            },
-          ],
-        },
-      },
-    ];
-    const issues = validateSkillDefinition(skill);
-    expect(
-      issues.some(
-        issue =>
-          issue.path === '$.scheduledSequences[0].sequence.steps[0].whenTrue.steps[0]' &&
-          issue.message.includes('non-empty key'),
-      ),
-    ).toBe(true);
-  });
-
-  it('rejects a missing key nested inside once body', () => {
-    const skill = baseSkill();
-    skill.scheduledSequences = [
-      {
-        startFrame: 0,
-        sequence: {
-          steps: [{ kind: 'once', parameters: { scopeKey: 's' }, body: { steps: [damageStep()] } }],
-        },
-      },
-    ];
-    const issues = validateSkillDefinition(skill);
-    expect(
-      issues.some(
-        issue =>
-          issue.path === '$.scheduledSequences[0].sequence.steps[0].once.steps[0]' &&
-          issue.message.includes('non-empty key'),
-      ),
-    ).toBe(true);
-  });
-
-  it('rejects duplicate damage step keys anywhere in the definition', () => {
-    const skill = baseSkill();
-    skill.scheduledSequences = [
-      {
-        startFrame: 0,
-        sequence: {
-          steps: [
-            damageStep('dup'),
-            {
-              kind: 'conditional',
-              parameters: { condition: { kind: 'combatActive' } },
-              whenTrue: { steps: [damageStep('dup')] },
-            },
-          ],
-        },
-      },
-    ];
-    const issues = validateSkillDefinition(skill);
-    expect(issues.some(issue => issue.message.includes("duplicate damage step key 'dup'"))).toBe(
-      true,
-    );
-  });
-
   it.each(['unknownTrigger', 'statusExpired', 'statusConsumed'])(
     'rejects an unsupported event trigger kind: %s',
     kind => {
@@ -1001,7 +633,7 @@ describe('validateSkillDefinition', () => {
         {
           key: 'handler:1',
           event: { kind, statusKey: 'status', target: 'enemy' },
-          scheduledSequences: [{ startFrame: 0, sequence: { steps: [] } }],
+          scheduledSequences: [{ startFrame: 0, sequence: { $sequence: null } }],
         },
       ];
       const issues = validateSkillDefinition(skill);
@@ -1015,51 +647,13 @@ describe('validateSkillDefinition', () => {
     },
   );
 
-  it('requires an explicit end frame for nested combat event listeners', () => {
-    const skill = baseSkill();
-    skill.scheduledSequences = [
-      {
-        startFrame: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'conditional',
-              parameters: { condition: { kind: 'combatActive' } },
-              whenTrue: {
-                steps: [
-                  {
-                    kind: 'listenForCombatEvents',
-                    parameters: {
-                      responses: [
-                        {
-                          key: 'response',
-                          event: { kind: 'damageTagHit', tag: 'normalSkill', scope: 'operator' },
-                          sequence: { steps: [] },
-                        },
-                      ],
-                    },
-                  },
-                ],
-              },
-            },
-          ],
-        },
-      },
-    ];
-
-    expect(validateSkillDefinition(skill)).toContainEqual({
-      path: '$.scheduledSequences[0].endFrame',
-      message: 'combat event listeners require an end frame',
-    });
-  });
-
   it('rejects an event trigger with an invalid scope', () => {
     const skill = baseSkill();
     skill.eventHandlers = [
       {
         key: 'handler:1',
         event: { kind: 'skillHit', skillGroupKey: 'battleSkill', scope: 'all' },
-        scheduledSequences: [{ startFrame: 0, sequence: { steps: [] } }],
+        scheduledSequences: [{ startFrame: 0, sequence: { $sequence: null } }],
       },
     ];
     const issues = validateSkillDefinition(skill);
@@ -1067,24 +661,13 @@ describe('validateSkillDefinition', () => {
   });
 
   it('rejects invalid LevelValues: NaN and empty array', () => {
-    const skill = baseSkill();
-    skill.scheduledSequences = [
-      {
-        startFrame: 0,
-        sequence: {
-          steps: [damageStep('hit:1')],
-        },
-      },
-    ];
+    const step = damageStep('hit:1');
+    const skillA = skillWithSteps([step]);
     // 攻击倍率传 NaN
-    const skillA = structuredClone(skill) as Record<string, unknown>;
-    const stepsA = skillA.scheduledSequences as Array<{
-      sequence: { steps: Array<{ parameters: Record<string, unknown> }> };
-    }>;
-    stepsA[0]!.sequence.steps[0]!.parameters.attackScale = Number.NaN;
+    (step.parameters as Record<string, unknown>).attackScale = Number.NaN;
     expect(
       validateSkillDefinition(skillA).some(
-        issue => issue.path === '$.scheduledSequences[0].sequence.steps[0].parameters.attackScale',
+        issue => issue.path === `${nodeActionPath('step-0')}.parameters.attackScale`,
       ),
     ).toBe(true);
 
@@ -1097,175 +680,142 @@ describe('validateSkillDefinition', () => {
   });
 
   it('rejects invalid damage tag', () => {
-    const skill = baseSkill();
-    skill.scheduledSequences = [
-      {
-        startFrame: 0,
-        sequence: { steps: [damageStep('hit:1')] },
-      },
-    ];
-    const tagsStep = skill.scheduledSequences as Array<{
-      sequence: { steps: Array<{ parameters: { tags: string[] } }> };
-    }>;
-    tagsStep[0]!.sequence.steps[0]!.parameters.tags = ['unknownTag'];
+    const step: Record<string, unknown> = damageStep('hit:1');
+    const skill = skillWithSteps([step]);
+    (step.parameters as { tags: string[] }).tags = ['unknownTag'];
     expect(
       validateSkillDefinition(skill).some(
-        issue => issue.path === '$.scheduledSequences[0].sequence.steps[0].parameters.tags[0]',
+        issue => issue.path === `${nodeActionPath('step-0')}.parameters.tags[0]`,
       ),
     ).toBe(true);
   });
 
   it('rejects unknown combat step kind', () => {
-    const skill = baseSkill();
-    skill.scheduledSequences = [
-      {
-        startFrame: 0,
-        sequence: { steps: [{ kind: 'unknownStep', parameters: {} }] },
-      },
-    ];
+    const skill = skillWithSteps([{ kind: 'unknownStep', parameters: {} }]);
     expect(
       validateSkillDefinition(skill).some(
         issue =>
-          issue.path === '$.scheduledSequences[0].sequence.steps[0].kind' &&
+          issue.path === `${nodeActionPath('step-0')}.kind` &&
           issue.message.includes('unknown combat step'),
       ),
     ).toBe(true);
   });
 
-  it('requires an entity iteration target for AbilityEntity finish operations', () => {
-    const skill = baseSkill();
-    skill.scheduledSequences = [
-      {
-        startFrame: 0,
-        sequence: { steps: [{ kind: 'finishCurrentAbilityEntity', parameters: {} }] },
-      },
-    ];
+  it('rejects entity finish operations outside an entity iteration', () => {
+    const skill = skillWithSteps([{ kind: 'finishCurrentAbilityEntity', parameters: {} }]);
+    expect(validateSkillDefinition(skill)).not.toEqual([]);
+  });
 
-    expect(validateSkillDefinition(skill)).toContainEqual({
-      path: '$.scheduledSequences[0].sequence.steps[0]',
-      message: 'requires a forEachContextTarget body',
-    });
-
-    skill.scheduledSequences = [
+  it('requires an end frame for nested combat event listeners', () => {
+    const skill = skillWithSteps(
+      [
+        {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'combatActive' } },
+          whenTrue: { $sequence: 'listener' },
+        },
+      ],
       {
-        startFrame: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'forEachContextTarget',
-              parameters: { contextKey: 'entities' },
-              body: {
-                steps: [{ kind: 'finishCurrentAbilityEntity', parameters: {} }],
-              },
+        listener: {
+          action: {
+            kind: 'listenForCombatEvents',
+            parameters: {
+              responses: [
+                {
+                  key: 'response',
+                  event: { kind: 'damageTagHit', tag: 'normalSkill', scope: 'operator' },
+                  sequence: { $sequence: null },
+                },
+              ],
             },
-          ],
+          },
+          next: null,
         },
       },
-    ];
-    expect(validateSkillDefinition(skill)).toEqual([]);
-
-    skill.scheduledSequences = [
-      {
-        startFrame: 0,
-        sequence: {
-          steps: [{ kind: 'finishCurrentAbilityEntityWhenSourceDies', parameters: {} }],
-        },
-      },
-    ];
+    );
     expect(validateSkillDefinition(skill)).toContainEqual({
-      path: '$.scheduledSequences[0].sequence.steps[0]',
-      message: 'requires a forEachContextTarget body',
+      path: '$.scheduledSequences[0].endFrame',
+      message: 'combat event listeners require an end frame',
     });
   });
 
-  it('allows current AbilityEntity Buff application only inside an entity target scope', () => {
+  it('rejects current entity Buff targets outside an entity scope', () => {
+    for (const parameters of [
+      { target: 'currentAbilityEntity', source: 'caster' },
+      { target: 'caster', source: 'currentAbilityEntity' },
+    ]) {
+      const skill = skillWithSteps([
+        { kind: 'applyBuff', parameters: { buffId: 'entity-monitor', ...parameters } },
+      ]);
+      expect(validateSkillDefinition(skill)).not.toEqual([]);
+    }
+  });
+
+  it('allows AbilityEntity finish operations inside an entity iteration body', () => {
+    const wrapped = skillWithSteps(
+      [
+        {
+          kind: 'forEachContextTarget',
+          parameters: { contextKey: 'entities' },
+          body: { $sequence: 'child-0' },
+        },
+      ],
+      {
+        'child-0': {
+          action: { kind: 'finishCurrentAbilityEntity', parameters: {} },
+          next: null,
+        },
+      },
+    );
+    expect(validateSkillDefinition(wrapped)).toEqual([]);
+  });
+
+  it('allows current AbilityEntity Buff application inside an entity target scope', () => {
     const apply = {
       kind: 'applyBuff' as const,
       parameters: {
         buffId: 'entity-monitor',
         target: 'currentAbilityEntity' as const,
         source: 'currentAbilityEntity' as const,
-        definition: { stackingType: 'unique' as const },
       },
     };
-    const skill = baseSkill();
-    skill.scheduledSequences = [{ startFrame: 0, sequence: { steps: [apply] } }];
-    expect(validateSkillDefinition(skill)).toContainEqual({
-      path: '$.scheduledSequences[0].sequence.steps[0]',
-      message: 'currentAbilityEntity target requires a forEachContextTarget body',
-    });
-    expect(validateSkillDefinition(skill)).toContainEqual({
-      path: '$.scheduledSequences[0].sequence.steps[0]',
-      message: 'currentAbilityEntity source requires a forEachContextTarget body',
-    });
-
-    skill.scheduledSequences = [
-      {
-        startFrame: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'forEachContextTarget',
-              parameters: { contextKey: 'entities' },
-              body: { steps: [apply] },
-            },
-          ],
+    const wrapped = skillWithSteps(
+      [
+        {
+          kind: 'forEachContextTarget',
+          parameters: { contextKey: 'entities' },
+          body: { $sequence: 'child-0' },
         },
-      },
-    ];
-    expect(validateSkillDefinition(skill)).toEqual([]);
+      ],
+      { 'child-0': { action: apply, next: null } },
+    );
+    expect(validateSkillDefinition(wrapped)).toEqual([]);
   });
 
   it('rejects mixing a lightweight damage modifier condition with a condition program', () => {
-    const skill = baseSkill();
-    skill.scheduledSequences = [
-      {
-        startFrame: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'applyBuff',
-              parameters: {
-                buffId: 'mixed-condition',
-                target: 'caster',
-                definition: {
-                  stackingType: 'unique',
-                  damageModifiers: [
-                    {
-                      enabledSide: 'attacker',
-                      condition: { kind: 'combatActive' },
-                      conditionProgram: { steps: [] },
-                      processors: [],
-                    },
-                  ],
-                },
-              },
-            },
-          ],
+    const definition: Record<string, unknown> = {
+      stackingType: 'unique',
+      damageModifiers: [
+        {
+          enabledSide: 'attacker',
+          condition: { kind: 'combatActive' },
+          conditionProgram: { $sequence: null },
+          processors: [],
         },
-      },
-    ];
-
-    expect(validateSkillDefinition(skill)).toContainEqual({
-      path: '$.scheduledSequences[0].sequence.steps[0].parameters.definition.damageModifiers[0]',
+      ],
+    };
+    expect(validateBuff(definition)).toContainEqual({
+      path: '$.definition.damageModifiers[0]',
       message: 'cannot define both condition and conditionProgram',
     });
   });
 
   it('rejects conditional without whenTrue', () => {
-    const skill = baseSkill();
-    skill.scheduledSequences = [
-      {
-        startFrame: 0,
-        sequence: {
-          steps: [{ kind: 'conditional', parameters: { condition: { kind: 'combatActive' } } }],
-        },
-      },
-    ];
+    const skill = skillWithSteps([
+      { kind: 'conditional', parameters: { condition: { kind: 'combatActive' } } },
+    ]);
     const issues = validateSkillDefinition(skill);
-    expect(
-      issues.some(issue => issue.path === '$.scheduledSequences[0].sequence.steps[0].whenTrue'),
-    ).toBe(true);
+    expect(issues.some(issue => issue.path === `${nodeActionPath('step-0')}.whenTrue`)).toBe(true);
   });
 
   it('rejects invalid cost resource and negative level value', () => {
@@ -1284,141 +834,101 @@ describe('validateSkillDefinition', () => {
   });
 
   it('rejects changeResource with sp-only fields on ultimateEnergy', () => {
-    const skill = baseSkill();
-    skill.scheduledSequences = [
+    const skill = skillWithSteps([
       {
-        startFrame: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'changeResource',
-              parameters: {
-                resource: 'ultimateEnergy',
-                amount: 10,
-                recipient: 'caster',
-                spGainSource: 'normalAttack',
-              },
-            },
-          ],
+        kind: 'changeResource',
+        parameters: {
+          resource: 'ultimateEnergy',
+          amount: 10,
+          recipient: 'caster',
+          spGainSource: 'normalAttack',
         },
       },
-    ];
+    ]);
     expect(
       validateSkillDefinition(skill).some(
-        issue => issue.path === '$.scheduledSequences[0].sequence.steps[0].parameters.spGainSource',
+        issue => issue.path === `${nodeActionPath('step-0')}.parameters.spGainSource`,
       ),
     ).toBe(true);
   });
 
   it('validates a dynamic resource coefficient as an action value operand', () => {
-    const skill = baseSkill();
-    skill.scheduledSequences = [
+    const coefficient: Record<string, unknown> = { kind: 'blackboard', key: 'targetCount' };
+    const skill = skillWithSteps([
       {
-        startFrame: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'changeResourceByActionValue',
-              parameters: {
-                resource: 'sp',
-                amount: { kind: 'blackboard', key: 'refundAmount' },
-                coefficient: { kind: 'blackboard', key: 'targetCount' },
-                recipient: 'team',
-              },
-            },
-          ],
+        kind: 'changeResourceByActionValue',
+        parameters: {
+          resource: 'sp',
+          amount: { kind: 'blackboard', key: 'refundAmount' },
+          coefficient,
+          recipient: 'team',
         },
       },
-    ];
+    ]);
 
     expect(validateSkillDefinition(skill)).toEqual([]);
 
-    const coefficient = (
-      skill.scheduledSequences as Array<{
-        sequence: { steps: Array<{ parameters: Record<string, unknown> }> };
-      }>
-    )[0]!.sequence.steps[0]!.parameters.coefficient as Record<string, unknown>;
     coefficient.key = '';
 
     expect(
       validateSkillDefinition(skill).some(
-        issue =>
-          issue.path === '$.scheduledSequences[0].sequence.steps[0].parameters.coefficient.key',
+        issue => issue.path === `${nodeActionPath('step-0')}.parameters.coefficient.key`,
       ),
     ).toBe(true);
   });
 
   it('validates the inline AbilityEntity definition at its spawn site', () => {
-    const skill = baseSkill();
-    skill.scheduledSequences = [
-      {
-        startFrame: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'spawnAbilityEntity',
-              parameters: {
-                abilityEntityId: 'fixture',
-                definition: {
-                  lifetime: { kind: 'limited', durationSeconds: 5 },
-                  childSkill: {
-                    skillId: 'child',
-                    scheduledSequences: [],
-                    nativeSkillType: 'normalSkill',
-                    naturalDurationFrames: 1,
-                    castResource: {
-                      costFrame: 0,
-                      cooldownSeconds: 0,
-                      maxChargeTime: 1,
-                      cost: { resource: 'sp', value: 0, availabilityThreshold: 0 },
-                    },
-                  },
-                },
-                dieWhenSourceDies: false,
-              },
+    const step: Record<string, unknown> = {
+      kind: 'spawnAbilityEntity',
+      parameters: {
+        abilityEntityId: 'fixture',
+        definition: {
+          lifetime: { kind: 'limited', durationSeconds: 5 },
+          childSkill: {
+            skillId: 'child',
+            scheduledSequences: [],
+            actionGraph: { main: { nodes: {} }, macros: {} },
+            nativeSkillType: 'normalSkill',
+            naturalDurationFrames: 1,
+            castResource: {
+              costFrame: 0,
+              cooldownSeconds: 0,
+              maxChargeTime: 1,
+              cost: { resource: 'sp', value: 0, availabilityThreshold: 0 },
             },
-          ],
+          },
         },
+        dieWhenSourceDies: false,
       },
-    ];
+    };
+    const skill = skillWithSteps([step]);
 
     expect(validateSkillDefinition(skill)).toEqual([]);
 
-    const parameters = (
-      skill.scheduledSequences as Array<{
-        sequence: { steps: Array<{ parameters: Record<string, unknown> }> };
-      }>
-    )[0]!.sequence.steps[0]!.parameters;
-    parameters.definition = {
+    (step.parameters as Record<string, unknown>).definition = {
       lifetime: { kind: 'limited', durationSeconds: -1 },
     };
 
     expect(validateSkillDefinition(skill)).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          path: '$.scheduledSequences[0].sequence.steps[0].parameters.definition.lifetime.durationSeconds',
+          path: `${nodeActionPath('step-0')}.parameters.definition.lifetime.durationSeconds`,
         }),
       ]),
     );
   });
 
   it.each(['projectiles', undefined, 12])('投射物查询必须提供目标组名称：%s', saveToContextKey => {
-    const skill = baseSkill();
-    skill.scheduledSequences = [
-      {
-        startFrame: 0,
-        sequence: {
-          steps: [{ kind: 'findUnfinishedProjectileTargets', parameters: { saveToContextKey } }],
-        },
-      },
-    ];
+    const skill = skillWithSteps([
+      { kind: 'findUnfinishedProjectileTargets', parameters: { saveToContextKey } },
+    ]);
     const errors = validateSkillDefinition(skill);
     if (saveToContextKey === 'projectiles') expect(errors).toEqual([]);
     else
       expect(errors).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            path: '$.scheduledSequences[0].sequence.steps[0].parameters.saveToContextKey',
+            path: `${nodeActionPath('step-0')}.parameters.saveToContextKey`,
           }),
         ]),
       );
@@ -1427,29 +937,21 @@ describe('validateSkillDefinition', () => {
   it.each(['actionSource', 'actionOwner', 'recursiveSource'])(
     '校验单层来源查询的宿主 %s',
     owner => {
-      const skill = baseSkill();
-      skill.scheduledSequences = [
+      const skill = skillWithSteps([
         {
-          startFrame: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'mergeContextTargets',
-                parameters: {
-                  saveToContextKey: 'source',
-                  sources: [{ kind: 'abilitySystemSource', owner }],
-                },
-              },
-            ],
+          kind: 'mergeContextTargets',
+          parameters: {
+            saveToContextKey: 'source',
+            sources: [{ kind: 'abilitySystemSource', owner }],
           },
         },
-      ];
+      ]);
       const errors = validateSkillDefinition(skill);
       if (owner === 'recursiveSource')
         expect(errors).toEqual(
           expect.arrayContaining([
             expect.objectContaining({
-              path: '$.scheduledSequences[0].sequence.steps[0].parameters.sources[0].owner',
+              path: `${nodeActionPath('step-0')}.parameters.sources[0].owner`,
             }),
           ]),
         );
@@ -1458,31 +960,23 @@ describe('validateSkillDefinition', () => {
   );
 
   it.each([false, true])('Context Buff 来源与直接来源互斥：%s', conflicting => {
-    const skill = baseSkill();
-    skill.scheduledSequences = [
+    const skill = skillWithSteps([
       {
-        startFrame: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'applyBuff',
-              parameters: {
-                buffId: 'test',
-                target: 'caster',
-                sourceContextKey: 'queried',
-                ...(conflicting ? { source: 'caster' } : {}),
-              },
-            },
-          ],
+        kind: 'applyBuff',
+        parameters: {
+          buffId: 'test',
+          target: 'caster',
+          sourceContextKey: 'queried',
+          ...(conflicting ? { source: 'caster' } : {}),
         },
       },
-    ];
+    ]);
     const errors = validateSkillDefinition(skill);
     if (conflicting)
       expect(errors).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            path: '$.scheduledSequences[0].sequence.steps[0].parameters.source',
+            path: `${nodeActionPath('step-0')}.parameters.source`,
           }),
         ]),
       );
@@ -1490,45 +984,44 @@ describe('validateSkillDefinition', () => {
   });
 
   it('validates Buff-source context targets and contextual ability-entity owners', () => {
-    const skill = baseSkill();
-    skill.scheduledSequences = [
+    const second: Record<string, unknown> = {
+      kind: 'findOwnerSpawnedAbilityEntities',
+      parameters: {
+        saveToContextKey: 'entities',
+        ownerContextKey: 'source',
+      },
+    };
+    const skill = skillWithSteps([
       {
-        startFrame: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'mergeContextTargets',
-              parameters: {
-                saveToContextKey: 'source',
-                sources: [{ kind: 'target', target: 'buffSource' }],
-              },
-            },
-            {
-              kind: 'findOwnerSpawnedAbilityEntities',
-              parameters: {
-                saveToContextKey: 'entities',
-                ownerContextKey: 'source',
-              },
-            },
-          ],
+        kind: 'mergeContextTargets',
+        parameters: {
+          saveToContextKey: 'source',
+          sources: [{ kind: 'target', target: 'buffSource' }],
         },
       },
-    ];
+      second,
+    ]);
 
     expect(validateSkillDefinition(skill)).toEqual([]);
 
-    const steps = (
-      skill.scheduledSequences as Array<{
-        sequence: { steps: Array<{ parameters: Record<string, unknown> }> };
-      }>
-    )[0]!.sequence.steps;
-    steps[1]!.parameters.ownerContextKey = '';
+    (second.parameters as Record<string, unknown>).ownerContextKey = '';
     expect(validateSkillDefinition(skill)).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          path: '$.scheduledSequences[0].sequence.steps[1].parameters.ownerContextKey',
+          path: `${nodeActionPath('step-1')}.parameters.ownerContextKey`,
         }),
       ]),
     );
   });
 });
+
+function validateBuff(definition: unknown) {
+  const issues: SkillDefinitionValidationIssue[] = [];
+  validateBuffDefinition(definition, 'fixture', '$.definition', issues, {
+    action: validateActionGraphReference,
+    scheduled: validateScheduledSequence,
+    graph: (value, path, out) => out.push(...validateActionGraphActions(value, path)),
+    contexts: (value, path, entries, out) => validateActionGraphContexts(value, path, entries, out),
+  });
+  return issues;
+}

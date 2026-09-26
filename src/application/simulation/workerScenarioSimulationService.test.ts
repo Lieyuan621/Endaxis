@@ -1,6 +1,20 @@
+import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import { expect, it, vi } from 'vitest';
+
+import type { ActionGraphNode } from '../../../packages/game-data-contract/src/actionGraph';
+import type { OperatorDefinition } from '../../core/game-data/operatorDefinition';
+import { createGameDataRepository } from '../../data/createGameDataRepository';
+import { perlica } from '../../data/operators/perlica.generated';
+import { placeSkillGroup } from '../../ui/timeline/interaction/placeSkillGroup';
+import { createScenarioSimulationService } from './createScenarioSimulationService';
+import {
+  captureScenarioSimulationGameData,
+  restoreScenarioSimulationGameData,
+} from './scenarioSimulationGameData';
+import { toSimulationWorkerResult } from './scenarioSimulationWorkerProtocol';
 import { WorkerScenarioSimulationService } from './workerScenarioSimulationService';
 import { createEmptyScenario } from '../../core/project/createProject';
+import type { ScenarioSimulationGameData } from './scenarioSimulationGameData';
 
 function harness() {
   const worker = {
@@ -9,18 +23,17 @@ function harness() {
     onmessage: null as any,
     onerror: null as any,
   };
-  const gameData = {
+  const gameData: ScenarioSimulationGameData = {
     revision: 'test',
     selectionKey: '',
-    commonBuffDefinitions: {},
-    commonAbilityEntityDefinitions: {},
+    commonDefinitionSources: [],
     operators: [],
     weapons: [],
     gears: [],
     gearSets: [],
     enemies: [],
-      mechanics: [],
-      consumables: [],
+    mechanics: [],
+    consumables: [],
   };
   const captureGameData = vi.fn(() => gameData);
   const service = new WorkerScenarioSimulationService(worker as unknown as Worker, captureGameData);
@@ -28,6 +41,87 @@ function harness() {
     worker.onmessage({ data: { id, ok: true, result: { frame: id }, samples: [] } });
   return { worker, service, reply, captureGameData };
 }
+
+it('图场景通过 Worker 数据包往返后仍执行技能', async () => {
+  const nodes: Record<string, ActionGraphNode> = {
+    'step-0': { action: { kind: 'dealStagger', parameters: { value: 1 } }, next: null },
+  };
+  const graphSkill: SkillDefinition = {
+    key: 'worker-graph-skill',
+    skillType: 'battleSkill',
+    levelSource: 'battleSkill',
+    timelineBlockFrames: 1,
+    scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'step-0' } }],
+    actionGraph: { main: { nodes }, macros: {} },
+  };
+  const definition: OperatorDefinition = {
+    ...perlica,
+    talents: [],
+    potentials: [],
+    comboSkillConditions: [],
+    skillGroups: [
+      {
+        key: 'battleSkill',
+        skillType: 'battleSkill' as const,
+        levelSource: 'battleSkill',
+        skills: graphSkill,
+      },
+    ],
+  };
+  const source = createEmptyScenario('worker-graph', 'Worker graph');
+  source.tracks[0] = {
+    id: 'track:graph',
+    operator: {
+      operatorSlug: perlica.slug,
+      level: 90,
+      promoted: true,
+      potential: 0,
+      trustLevel: 4,
+      skillLevels: { battleSkill: 12 },
+      talentStates: {},
+    },
+    weapon: null,
+    gears: { armor: null, gloves: null, accessory1: null, accessory2: null },
+    initialState: { ultimateEnergy: 0, maxUltimateEnergyOverride: 100 },
+    skillCasts: [],
+  };
+  const scenario = placeSkillGroup({
+    scenario: source,
+    trackIndex: 0,
+    operator: definition,
+    skillGroupKey: 'battleSkill',
+    startFrame: 1,
+    ids: { allocate: () => 'cast:worker-graph' },
+  }).scenario;
+  const repository = createGameDataRepository({
+    revision: 'worker-graph',
+    operators: [definition],
+    commonDefinitionSources: [],
+  });
+  const worker = {
+    postMessage: vi.fn(
+      async (request: import('./scenarioSimulationWorkerProtocol').SimulationWorkerRequest) => {
+        const restored = restoreScenarioSimulationGameData(request.gameData!);
+        const service = createScenarioSimulationService(restored);
+        const result = await service.simulate(request.scenario, request.endFrame);
+        worker.onmessage?.({
+          data: { id: request.id, ok: true, result: toSimulationWorkerResult(result), samples: [] },
+        } as MessageEvent);
+      },
+    ),
+    terminate: vi.fn(),
+    onmessage: null as ((event: MessageEvent) => void) | null,
+    onerror: null as ((event: ErrorEvent) => void) | null,
+  };
+  const bridge = new WorkerScenarioSimulationService(worker as unknown as Worker, current =>
+    captureScenarioSimulationGameData(current, repository),
+  );
+  const result = await bridge.simulate(scenario, 4);
+  expect(worker.postMessage).toHaveBeenCalledOnce();
+  expect(result.receiptEntries.some(entry => entry.event === 'SkillInputProcessed')).toBe(true);
+  expect(result.enemyVitals.finalPoise).toBeLessThan(result.enemyVitals.initialPoise);
+  bridge.dispose();
+});
 it('首次请求携带当前场景数据，引用集合不变时由后台复用', async () => {
   const { worker, service, reply, captureGameData } = harness();
   const scenario = createEmptyScenario('definitions', 'definitions');
@@ -51,6 +145,34 @@ it('首次请求携带当前场景数据，引用集合不变时由后台复用'
   expect(captureGameData).toHaveBeenCalledTimes(2);
   reply(3);
   await changed;
+  service.dispose();
+});
+
+it('去除请求代理时保留 Infinity 和共享图引用', async () => {
+  const { worker, service, reply, captureGameData } = harness();
+  const scenario = new Proxy(createEmptyScenario('proxy', 'proxy'), {});
+  const graphNode = {
+    action: { kind: 'dealStagger' as const, parameters: { value: Number.POSITIVE_INFINITY } },
+    next: null,
+  };
+  const data = captureGameData.getMockImplementation()!;
+  captureGameData.mockImplementation(() => {
+    const packet = data();
+    return {
+      ...packet,
+      commonDefinitionSources: [
+        { id: 'graph', actionGraph: { nodes: { first: graphNode, second: graphNode } } },
+      ],
+    };
+  });
+  const pending = service.simulate(scenario, 1);
+  const sent = worker.postMessage.mock.lastCall![0];
+  const nodes = sent.gameData.commonDefinitionSources[0].actionGraph.nodes;
+  expect(nodes.first.action.parameters.value).toBe(Number.POSITIVE_INFINITY);
+  expect(nodes.first).toBe(nodes.second);
+  expect(() => structuredClone(sent)).not.toThrow();
+  reply(1);
+  await pending;
   service.dispose();
 });
 it('在主线程从纯回执数据重建固定历史视图', async () => {

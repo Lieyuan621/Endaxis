@@ -138,7 +138,7 @@ type GlobalTimeDilation = Omit<
 > & {
   readonly curve: TimeScaleCurveDefinition;
   readonly ignoredTargets: readonly ('controlled' | 'caster')[];
-  readonly ignoredAbilityEntityTargets?: readonly AbilityEntityTargetQuery[];
+  readonly ignoredAbilityEntityTargets?: readonly [{ readonly kind: 'current' | 'ownerSpawned' }];
 };
 type EntityTimeDilation = Omit<
   Extract<Parameters<'startTimeDilation'>, { scope: 'entity' }>,
@@ -263,6 +263,7 @@ type HealParameters = (
   );
 
 export type CompiledBuffStepSource =
+  | import('../../../../../packages/game-data-contract/src/actionGraph.ts').ActionGraphResourceCall
   | Step<'applyKnockDown'>
   | Step<'applyPhysicalInfliction'>
   | Step<'findCharacterTeamTargets'>
@@ -360,6 +361,7 @@ export type CompiledBuffStepSource =
       readonly callbacks: readonly {
         readonly event: 'hit' | 'block' | 'reach' | 'finish';
         readonly skill: {
+          readonly actionGraph: import('../../../../../packages/game-data-contract/src/actionGraph.ts').ActionGraphResourceDefinition;
           readonly skillId: string;
           readonly nativeSkillType: import('../../../../../packages/game-data-contract/src/index.ts').NativeSkillType;
           readonly naturalDurationFrames: number;
@@ -478,6 +480,5 @@ export type CompiledBuffStepSource =
   | Step<'skillAffix'>
   | Step<'setCurrentBuffTimePaused'>;
 
-export interface CompiledBuffSequenceSource {
-  readonly steps: readonly CompiledBuffStepSource[];
-}
+export type CompiledBuffSequenceSource =
+  import('../../../../../packages/game-data-contract/src/actionGraph.ts').ActionGraphReference;

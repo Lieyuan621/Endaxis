@@ -11,10 +11,8 @@ import {
  * 执行技能序列中面向施法者或敌方 Buff 容器的查询与结束操作。
  * 这里只暴露动作需要的最小端口；目标身份到具体容器的映射由战斗装配层决定。
  */
-import {
-  compareCombatNumbers,
-  type ActionBlackboardValue,
-} from '../../../../packages/game-data-contract/src/primitives';
+import { type ActionBlackboardValue } from '../../../../packages/game-data-contract/src/primitives';
+import { compareCombatNumbers } from '../../mechanics/combatNumbers.ts';
 import type {
   ResolvedCombatOperationStep,
   ResolvedCombatStepParameters,
@@ -419,11 +417,13 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
       const dynamicId = typeof identity !== 'string';
       if (
         dynamicId &&
-        (step.parameters.definition !== undefined ||
+        ('definition' in step.parameters ||
           step.parameters.durationSeconds !== undefined ||
           step.parameters.effectiveness !== undefined)
       )
         throw new Error('动态 Buff ID 不能使用内联定义或旧式覆盖');
+      if ('definition' in step.parameters)
+        throw new Error('applyBuff must reference an owner Buff definition');
       const attachToSkill = step.parameters.lifetimeOwner === 'currentCastSkill';
       const attachBuff =
         context?.event === undefined
@@ -500,8 +500,7 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
           throw new Error(
             `Buff ID '${typeof identity === 'string' ? identity : identity.blackboardKey}' 缺失、为空或不是字符串`,
           );
-        let definition =
-          step.parameters.definition ?? this.dependencies.resolveBuffDefinition?.(buffId);
+        let definition = this.dependencies.resolveBuffDefinition?.(buffId);
         if (dynamicId && definition === undefined) {
           throw new Error(`动态 Buff ID '${buffId}' 在定义目录中不存在`);
         }

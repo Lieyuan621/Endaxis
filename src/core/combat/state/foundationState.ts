@@ -264,7 +264,6 @@ export interface CombatSkillCastInfo {
   readonly skillCastId: number;
   /** 最初发起本次施法链的技能；当前直接释放时就是正在执行的技能。 */
   readonly originSkillId: string;
-  /** 最初发起本次施法链的技能类型，供 Buff 来源条件稳定读取。 */
   /** 玩家技能库分类；没有继承玩家施法来源的实体技能不填写。 */
   readonly originSkillType?: import('../../game-data/operatorDefinition').SkillType;
   /** 时间轴上的技能块身份；单元测试或非时间轴技能可以缺失。 */

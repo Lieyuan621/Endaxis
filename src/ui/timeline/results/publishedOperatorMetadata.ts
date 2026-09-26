@@ -1,7 +1,6 @@
 import type { OperatorDefinition } from '../../../core/game-data/operatorDefinition';
 import { listOperatorSkillDefinitionBindings } from '../../../core/game-data/operatorSkillDefinitions';
 import type { ScenarioDocument } from '../../../core/project/schema';
-import type { TimelineOperatorIndex } from '../timelineEditorViewModel';
 import { getOperatorSkillIconPath, getWeaponActionIconPath } from '../../gameAssetPaths';
 
 /** 结果来源显示所需的最小事实，不复制技能树或模拟状态。 */
@@ -24,7 +23,7 @@ type PublishedUpgradeMetadata = Pick<OperatorDefinition['talents'][number], 'lev
 
 export function capturePublishedOperatorMetadata(
   scenario: ScenarioDocument,
-  index: TimelineOperatorIndex,
+  index: { getOperator(slug: string): OperatorDefinition | null },
 ): ReadonlyMap<string, PublishedOperatorMetadata> {
   const result = new Map<string, PublishedOperatorMetadata>();
   for (const track of scenario.tracks) {

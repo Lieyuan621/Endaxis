@@ -855,6 +855,7 @@ export function tryParseKnownNativeActionLeafSource(
         action: parseBreakInteractiveActionSource(value, path, inheritedBlackboard),
       };
     case 'InverseSpellInfliction':
+      // 原生 InverseSpellInfliction 与 SpellInfliction 载荷相同，只交换复合状态的选表顺序。
       return {
         family: 'elementalInfliction',
         action: { ...parseElementalInflictionActionSource(value, path), inverseReaction: true },

@@ -6,14 +6,17 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ActionSequenceDefinition } from '../../../packages/game-data-contract/src/actions.ts';
+import type {
+  ActionGraphResourceDefinition,
+  ActionGraphReference,
+} from '../../../packages/game-data-contract/src/actionGraph.ts';
 import type { SkillBuffDefinition } from '../../../packages/game-data-contract/src/buffs.ts';
 import type {
   GearDefinition,
   GearSetDefinition,
   WeaponDefinition,
 } from '../../../packages/game-data-contract/src/equipment.ts';
-import type { SharedEntityValueUsage } from '../src/compiler/optimization/definitionEntityUsageContext.ts';
+import type { GraphSharedEntityValueUsage } from '../src/compiler/optimization/graphValueOptimization.ts';
 import type { OperatorDefinitionBatchArguments } from '../scripts/generateOperatorDefinitionCandidates.ts';
 
 const mocks = vi.hoisted(() => ({
@@ -60,16 +63,27 @@ const buff = (domain: string): SkillBuffDefinition => ({
   stackingType: 'unlimited',
   durationSeconds: { blackboardKey: readKey(domain) },
 });
-const queryEntityValue = (key: string): ActionSequenceDefinition => ({
-  steps: [
-    {
-      kind: 'findOwnerSpawnedAbilityEntities',
-      parameters: {
-        saveToContextKey: 'found',
-        circularOrder: { indexBlackboardKey: key, desiredCount: 1, reverseFlag: 1 },
+const queryEntityValue = (
+  key: string,
+): { actionGraph: ActionGraphResourceDefinition; sequence: ActionGraphReference } => ({
+  actionGraph: {
+    main: {
+      nodes: {
+        entry: {
+          action: {
+            kind: 'findOwnerSpawnedAbilityEntities',
+            parameters: {
+              saveToContextKey: 'found',
+              circularOrder: { indexBlackboardKey: key, desiredCount: 1, reverseFlag: 1 },
+            },
+          },
+          next: null,
+        },
       },
     },
-  ],
+    macros: {},
+  },
+  sequence: { $sequence: 'entry' },
 });
 function weaponBatch() {
   return {
@@ -79,7 +93,8 @@ function weaponBatch() {
         rarity: 6,
         weaponType: 'polearm',
         baseAttackAtLevelNodes: [1, 2, 3, 4, 5, 6],
-        traits: [{ key: 'passive', levelCount: 1, buffDefinitions: { fixture: buff('weapons') } }],
+        traits: [{ key: 'passive', levelCount: 1 }],
+        buffDefinitions: { fixture: buff('weapons') },
       } satisfies WeaponDefinition,
     ],
   };
@@ -100,7 +115,6 @@ function gearBatch() {
               kind: 'modifier',
               modifier: { kind: 'attribute', attribute: 'strength', operation: 'flat', value: 1 },
             },
-            buffDefinitions: { fixture: buff('gears') },
           },
         ],
       } satisfies GearDefinition,
@@ -120,12 +134,17 @@ function gearSetBatch() {
 function mechanicBatch() {
   return {
     buffDefinitions: { fixture: buff('mechanics') },
-    initializationPlans: [{ tagId: 1, sequence: queryEntityValue(readKey('mechanicQuery')) }],
+    initializationPlans: [{ tagId: 1, ...queryEntityValue(readKey('mechanicQuery')) }],
   };
 }
-const files = (domain: string) => [{ relativePath: 'fixture.ts', content: `${readKey(domain)}\n` }];
+const files = (domain: string) => [
+  {
+    relativePath: 'fixture.ts',
+    content: `export default {"name":"${readKey(domain)}","values":[1,2,3]}`,
+  },
+];
 const expectedReads = () =>
-  ['weapons', 'gears', 'gearSets', 'mechanics', 'mechanicQuery'].map(readKey).sort();
+  ['weapons', 'gearSets', 'mechanics', 'mechanicQuery'].map(readKey).sort();
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -174,7 +193,7 @@ beforeEach(() => {
     return { files: files('mechanics'), summary: { supportedTagCount: 1 } };
   });
   mocks.renderOperators.mockImplementation(
-    (_args: OperatorDefinitionBatchArguments, usage: SharedEntityValueUsage) => {
+    (_args: OperatorDefinitionBatchArguments, usage: GraphSharedEntityValueUsage) => {
       calls.push('render:operators');
       return {
         files: [
@@ -298,6 +317,11 @@ describe('整轮战斗候选生成', () => {
     ]);
     for (const directory of outputDirectories(args))
       expect(await fs.readdir(directory)).toEqual(['fixture.ts']);
+    const content = await fs.readFile(
+      path.join(args.candidateRoot, 'src/data/equipment/generated-weapons/fixture.ts'),
+      'utf8',
+    );
+    expect(content).toBe("export default { name: 'weapons_1', values: [1, 2, 3] };\n");
   });
 
   it('独立 check 重新编译所有来源，来源变化后报告过期且不修改已有输出', async () => {

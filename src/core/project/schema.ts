@@ -1,3 +1,5 @@
+import type { SkillBuffDefinition } from '../../../packages/game-data-contract/src/buffs.ts';
+import type { SkillGraphPresentation } from './graphPresentation';
 /**
  * 项目存档的数据结构。
  * 存档包含用户编辑内容以及编辑器版本元数据；
@@ -7,9 +9,9 @@ import type {
   DamageElement,
   OperatorDefinition,
   SkillDefinition,
-  SkillBuffDefinition,
   SkillType,
 } from '../game-data/operatorDefinition';
+
 import type {
   GearDefinition,
   GearSetDefinition,
@@ -137,6 +139,7 @@ export interface SkillCastDocument {
   placement: SkillCastPlacementDocument;
   /** 纯展示覆盖（颜色、锁定等），不包含技能逻辑。 */
   presentation?: {
+    graph?: SkillGraphPresentation;
     locked?: boolean;
     disabled?: boolean;
     color?: string | null;
@@ -148,7 +151,7 @@ export interface SkillCastDocument {
     /** 按伤害 step key 覆盖本次结果；true 为暴击，false 为明确不暴击。 */
     criticalOverrides?: Record<string, boolean>;
   };
-  /** 完整的自定义技能定义。存在时显示铅笔角标，模拟时使用它替代技能模板。 */
+  /** 完整覆盖所属技能；正式项目必须携带自身局部图，不能借用模板节点或内嵌 Buff。 */
   customDefinition?: SkillDefinition;
 }
 

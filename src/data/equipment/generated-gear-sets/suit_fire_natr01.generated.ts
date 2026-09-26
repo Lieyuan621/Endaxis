@@ -4,13 +4,32 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'suit_fire_natr01',
   iconPath: '/equipment/fire_natr01/item_equip_t4_suit_fire_natr01_edc_02.webp',
-  modifiers: [
-    {
-      kind: 'panelStat',
-      stat: 'artsIntensity',
-      value: 30,
+  modifiers: [{ kind: 'panelStat', stat: 'artsIntensity', value: 30 }],
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffId: 'buff_equipsuit_fninflict_01',
+              target: 'caster',
+              blackboardAssignments: {
+                phy_spell_up: { kind: 'constant', value: 30 },
+                fire_dmg_up: { kind: 'constant', value: 0.5 },
+                nature_dmg_up: { kind: 'constant', value: 0.5 },
+                duration: { kind: 'constant', value: 10 },
+                duration2: { kind: 'constant', value: 10 },
+              },
+            },
+          },
+          next: null,
+        },
+      },
     },
-  ],
+    macros: {},
+  },
+  skillId: 'passive_equipsuit_fninflict_01',
   buffDefinitions: {
     buff_equipsuit_fninflict_01: {
       stackingType: 'unlimited',
@@ -30,12 +49,27 @@ const definition = {
       },
       attributeModifiers: [],
       abilityEventResponses: [
-        {
-          event: 'outputBuff',
-          priority: 0,
-          sequence: {
-            steps: [
-              {
+        { event: 'outputBuff', priority: 0, sequence: { $sequence: 'conditional_2' } },
+        { event: 'outputBuff', priority: 0, sequence: { $sequence: 'conditional_4' } },
+      ],
+      actionGraph: {
+        main: {
+          nodes: {
+            applyBuff_1: {
+              action: {
+                kind: 'applyBuff',
+                parameters: {
+                  buffId: 'buff_equipsuit_fninflict_01_firedamageadd',
+                  target: 'buffOwner',
+                  source: 'buffOwner',
+                  inheritSourceSkillCastInfo: true,
+                  copiedBlackboardAssignments: { duration: 'duration', fire_dmg_up: 'fire_dmg_up' },
+                },
+              },
+              next: null,
+            },
+            conditional_2: {
+              action: {
                 kind: 'conditional',
                 parameters: {
                   condition: {
@@ -44,33 +78,28 @@ const definition = {
                     buffTags: ['Skill/Character/Common/SpellStatus/Burning'],
                   },
                 },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'applyBuff',
-                      parameters: {
-                        buffId: 'buff_equipsuit_fninflict_01_firedamageadd',
-                        target: 'buffOwner',
-                        source: 'buffOwner',
-                        inheritSourceSkillCastInfo: true,
-                        copiedBlackboardAssignments: {
-                          duration: 'duration',
-                          fire_dmg_up: 'fire_dmg_up',
-                        },
-                      },
-                    },
-                  ],
+                whenTrue: { $sequence: 'applyBuff_1' },
+              },
+              next: null,
+            },
+            applyBuff_3: {
+              action: {
+                kind: 'applyBuff',
+                parameters: {
+                  buffId: 'buff_equipsuit_fninflict_01_poisedamageadd',
+                  target: 'buffOwner',
+                  source: 'buffOwner',
+                  inheritSourceSkillCastInfo: true,
+                  copiedBlackboardAssignments: {
+                    duration: 'duration2',
+                    nature_dmg_up: 'nature_dmg_up',
+                  },
                 },
               },
-            ],
-          },
-        },
-        {
-          event: 'outputBuff',
-          priority: 0,
-          sequence: {
-            steps: [
-              {
+              next: null,
+            },
+            conditional_4: {
+              action: {
                 kind: 'conditional',
                 parameters: {
                   condition: {
@@ -79,36 +108,20 @@ const definition = {
                     buffTags: ['Skill/Character/Common/SpellStatus/Corrupt'],
                   },
                 },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'applyBuff',
-                      parameters: {
-                        buffId: 'buff_equipsuit_fninflict_01_poisedamageadd',
-                        target: 'buffOwner',
-                        source: 'buffOwner',
-                        inheritSourceSkillCastInfo: true,
-                        copiedBlackboardAssignments: {
-                          duration: 'duration2',
-                          nature_dmg_up: 'nature_dmg_up',
-                        },
-                      },
-                    },
-                  ],
-                },
+                whenTrue: { $sequence: 'applyBuff_3' },
               },
-            ],
+              next: null,
+            },
           },
         },
-      ],
+        macros: {},
+      },
     },
     buff_equipsuit_fninflict_01_firedamageadd: {
       stackingType: 'stack',
       priority: 0,
       maxStackCount: 1,
-      durationSeconds: {
-        blackboardKey: 'duration',
-      },
+      durationSeconds: { blackboardKey: 'duration' },
       triggerIntervalSeconds: 0,
       waitFirstTriggerInterval: true,
       maxTriggerCount: 1,
@@ -132,35 +145,25 @@ const definition = {
         charHpBarVfxType: 'Fire',
         iconStyleInSquad: 'Default',
         abnormalColorType: 'Physical',
-        orderPriority: {
-          useDirectoryValue: false,
-          value: 0,
-          category: 'CommonCharBuff',
-        },
+        orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
       },
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        duration: 8,
-        fire_dmg_up: 0.2,
-      },
+      blackboard: { duration: 8, fire_dmg_up: 0.2 },
       attributeModifiers: [
         {
           attribute: 'heatDamageIncrease',
           slot: 'baseAddition',
-          value: {
-            blackboardKey: 'fire_dmg_up',
-          },
+          value: { blackboardKey: 'fire_dmg_up' },
         },
       ],
+      actionGraph: { main: { nodes: {} }, macros: {} },
     },
     buff_equipsuit_fninflict_01_poisedamageadd: {
       stackingType: 'stack',
       priority: 0,
       maxStackCount: 1,
-      durationSeconds: {
-        blackboardKey: 'duration',
-      },
+      durationSeconds: { blackboardKey: 'duration' },
       triggerIntervalSeconds: 0,
       waitFirstTriggerInterval: true,
       maxTriggerCount: 1,
@@ -184,62 +187,22 @@ const definition = {
         charHpBarVfxType: 'Fire',
         iconStyleInSquad: 'Default',
         abnormalColorType: 'Physical',
-        orderPriority: {
-          useDirectoryValue: false,
-          value: 0,
-          category: 'CommonCharBuff',
-        },
+        orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
       },
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        duration: 8,
-        nature_dmg_up: 0.2,
-      },
+      blackboard: { duration: 8, nature_dmg_up: 0.2 },
       attributeModifiers: [
         {
           attribute: 'natureDamageIncrease',
           slot: 'baseAddition',
-          value: {
-            blackboardKey: 'nature_dmg_up',
-          },
+          value: { blackboardKey: 'nature_dmg_up' },
         },
       ],
+      actionGraph: { main: { nodes: {} }, macros: {} },
     },
   },
-  enableSequence: {
-    steps: [
-      {
-        kind: 'applyBuff',
-        parameters: {
-          buffId: 'buff_equipsuit_fninflict_01',
-          target: 'caster',
-          blackboardAssignments: {
-            phy_spell_up: {
-              kind: 'constant',
-              value: 30,
-            },
-            fire_dmg_up: {
-              kind: 'constant',
-              value: 0.5,
-            },
-            nature_dmg_up: {
-              kind: 'constant',
-              value: 0.5,
-            },
-            duration: {
-              kind: 'constant',
-              value: 10,
-            },
-            duration2: {
-              kind: 'constant',
-              value: 10,
-            },
-          },
-        },
-      },
-    ],
-  },
+  enableSequence: { $sequence: 'applyBuff_1' },
 } as const satisfies GearSetDefinition;
 
 export default definition;

@@ -3,6 +3,11 @@ import {
   compileProjectileCallbackSkillSource,
   createZeroDistanceProjectileProjectionExtensionSource,
 } from '../src/compiler/abilities/projectileRuntimeProjection.ts';
+import {
+  createActionGraphBuilder,
+  readActionGraphChain,
+} from '../src/compiler/actions/actionGraphBuilder.ts';
+import type { CompiledBuffStepSource } from '../src/compiler/actions/combatActionProjectionTypes.ts';
 import type { SkillActionGraphSource } from '../src/source/skillActionGraph.ts';
 import type { KnownNativeActionLeafSource } from '../src/source/actionLeaf.ts';
 import { returnProjectionContext } from './support/avywennaReturnProjection.ts';
@@ -45,10 +50,18 @@ function projectFixture(
     },
     callbackContext: input.callbackContext,
   });
-  const result = project(input.launch, input.sourcePath, input.projectionContext);
+  const hostGraph = createActionGraphBuilder<CompiledBuffStepSource>();
+  const result = project(input.launch, input.sourcePath, {
+    ...input.projectionContext,
+    graph: hostGraph,
+  });
   if (result.length !== 1 || result[0]?.kind !== 'withActionBlackboardScope')
     throw new Error('expected launch scope');
-  return result[0];
+  return {
+    scope: result[0],
+    /** 图引用沿宿主图 next 链展开后的动作列表。 */
+    steps: readActionGraphChain(hostGraph.finish(), result[0].body),
+  };
 }
 
 function reachInput(): ProjectileFixture {
@@ -146,7 +159,7 @@ it('保留原生投射物 Owner 来源，不替换为 Buff 的 Source', () => {
     projectileSource: parseTargetReferenceSource(targetFixture('Owner'), 'fixture.source'),
   };
   const projected = projectFixture(input);
-  expect(projected.body.steps[0]).toMatchObject({
+  expect(projected.steps[0]).toMatchObject({
     kind: 'launchProjectile',
     parameters: { source: 'actionOwner' },
   });
@@ -185,7 +198,7 @@ describe('独立到达回调的编译', () => {
       blockLayerDef: { value: 1, name: 'WallAndGround' },
       colliderShape: { shapeType: 1, radius: 1, extent: [0, 0, 0] },
     };
-    expect(projectFixture(input).body.steps).toEqual([
+    expect(projectFixture(input).steps).toEqual([
       expect.objectContaining({
         kind: 'launchProjectile',
         parameters: expect.objectContaining({ finish: 'firstTickBlock' }),
@@ -215,8 +228,8 @@ describe('独立到达回调的编译', () => {
   it('即时写入和延迟读取留在同一个回调程序中，不调度到发射者的技能上', () => {
     const input = reachInput();
     const scope = projectFixture(input);
-    expect(scope.body.steps).toHaveLength(1);
-    const action = scope.body.steps[0]!;
+    expect(scope.steps).toHaveLength(1);
+    const action = scope.steps[0]!;
     expect(action.kind).toBe('launchProjectile');
     if (action.kind !== 'launchProjectile') throw new Error('unexpected action');
     expect(action.callbacks[0]!.skill.blackboard).toEqual({ value: 1 });
@@ -227,7 +240,10 @@ describe('独立到达回调的编译', () => {
       [2, 3],
     ]);
     expect(
-      action.callbacks[0]!.skill.scheduledSequences.every(t => t.sequence.steps.length > 0),
+      action.callbacks[0]!.skill.scheduledSequences.every(
+        t =>
+          readActionGraphChain(action.callbacks[0]!.skill.actionGraph.main, t.sequence).length > 0,
+      ),
     ).toBe(true);
     expect(action.callbacks[0]!.skill.naturalDurationFrames).toBe(30);
   });
@@ -238,7 +254,7 @@ describe('独立到达回调的编译', () => {
       ...input,
       runtime: { ...input.runtime, finishOnReach: false },
     });
-    expect(scope.body.steps[0]).toMatchObject({
+    expect(scope.steps[0]).toMatchObject({
       kind: 'launchProjectile',
       parameters: {
         finish: {
@@ -256,7 +272,7 @@ describe('独立到达回调的编译', () => {
       ...input,
       launch: { ...input.launch, syncTimeScale: true },
     });
-    expect(scope.body.steps[0]).toMatchObject({
+    expect(scope.steps[0]).toMatchObject({
       kind: 'launchProjectile',
       parameters: { syncTimeScale: true },
     });
@@ -298,11 +314,15 @@ it.each([
     },
     callbackContext: input.callbackContext,
   });
-  const steps = project(launch, input.sourcePath, input.projectionContext)!;
+  const hostGraph = createActionGraphBuilder<CompiledBuffStepSource>();
+  const steps = project(launch, input.sourcePath, {
+    ...input.projectionContext,
+    graph: hostGraph,
+  })!;
   expect(steps).toHaveLength(1);
   const scope = steps[0]!;
   if (scope.kind !== 'withActionBlackboardScope') throw new Error('expected projectile scope');
-  const action = scope.body.steps[0]!;
+  const action = readActionGraphChain(hostGraph.finish(), scope.body)[0]!;
   if (action.kind !== 'launchProjectile') throw new Error('expected independent hit');
   expect(action.parameters).toEqual({
     finish: 10,
@@ -343,7 +363,7 @@ it('飞向主控的投射物仍按碰撞阵营决定命中对象', () => {
       targetFilter: { ...input.runtime.targetFilter, autoSetTargetFaction: true, factionTarget: 1 },
     },
   });
-  expect(scope.body.steps[0]?.kind).toBe('launchProjectile');
+  expect(scope.steps[0]?.kind).toBe('launchProjectile');
 });
 
 it.each([false, true])(
@@ -391,7 +411,7 @@ it.each([false, true])(
       });
     if (useHitBlockReachOrder)
       expect(project).toThrow('outside the proven zero-distance first-tick shape');
-    else expect(project().kind).toBe('withActionBlackboardScope');
+    else expect(project().scope.kind).toBe('withActionBlackboardScope');
   },
 );
 
@@ -535,7 +555,11 @@ describe('complete projectile callback skill source', () => {
       [0, 0],
       [2, 3],
     ]);
-    expect(compiled.timelineActions.every(t => t.sequence.steps.length > 0)).toBe(true);
+    expect(
+      compiled.timelineActions.every(
+        t => readActionGraphChain(compiled.program.finish(), t.sequence).length > 0,
+      ),
+    ).toBe(true);
   });
   it('keeps all native action intervals and their order, even when empty after projection', () => {
     const source = graph(900);
@@ -551,7 +575,11 @@ describe('complete projectile callback skill source', () => {
       [0, 10],
       [12, 20],
     ]);
-    expect(compiled.timelineActions.every(t => t.sequence.steps.length === 0)).toBe(true);
+    expect(
+      compiled.timelineActions.every(
+        t => readActionGraphChain(compiled.program.finish(), t.sequence).length === 0,
+      ),
+    ).toBe(true);
   });
 
   it('uses the native minimum one-frame duration, not the last action end', () => {

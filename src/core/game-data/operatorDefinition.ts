@@ -72,7 +72,6 @@ export {
   COMBAT_STEP_KINDS,
   type CombatStepKind,
   type CombatStepDefinition,
-  type ActionSequenceDefinition,
   type ScheduledSequenceDefinition,
   type CombatEventResponseDefinition,
   type CombatEventTrigger,

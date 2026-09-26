@@ -13,9 +13,9 @@ import type { CompiledWeaponRuntimeDefinitionBatchSource } from '../src/domains/
 import type { CompiledEquipmentDefinitionBatchSource } from '../src/domains/equipment/formalDefinition.ts';
 import type { CompiledEquipmentSuitRuntimeBatchSource } from '../src/domains/equipment/suitRuntimeDefinition.ts';
 import {
-  createSharedEntityValueUsageCollector,
-  type SharedEntityValueUsageCollector,
-} from '../src/compiler/optimization/definitionEntityUsageContext.ts';
+  createGraphSharedEntityValueUsageCollector,
+  type GraphSharedEntityValueUsageCollector,
+} from '../src/compiler/optimization/graphValueOptimization.ts';
 import { readGameplayTagPaths } from './readGameplayTagPaths.ts';
 
 export interface EntityValueConsumerSourceArguments {
@@ -42,7 +42,7 @@ export async function compileEntityValueConsumers(
   rendering?: EntityValueConsumerRendering,
 ) {
   // 默认仓库没有共享实体定义；游戏实体随所属干员收集。
-  const usage = createSharedEntityValueUsageCollector({});
+  const usage = createGraphSharedEntityValueUsageCollector({});
   await weapons(args, usage, rendering);
   await gears(args, usage, rendering);
   await gearSets(args, usage, rendering);
@@ -52,7 +52,7 @@ export async function compileEntityValueConsumers(
 
 async function weapons(
   args: EntityValueConsumerSourceArguments,
-  usage: SharedEntityValueUsageCollector,
+  usage: GraphSharedEntityValueUsageCollector,
   rendering: EntityValueConsumerRendering | undefined,
 ) {
   const weapons = compileWeaponDefinitionsFromFiles({
@@ -67,7 +67,7 @@ async function weapons(
 
 async function gears(
   args: EntityValueConsumerSourceArguments,
-  usage: SharedEntityValueUsageCollector,
+  usage: GraphSharedEntityValueUsageCollector,
   rendering: EntityValueConsumerRendering | undefined,
 ) {
   const gears = await compileGearDefinitionsFromFiles(args.tableRoot);
@@ -77,7 +77,7 @@ async function gears(
 
 async function gearSets(
   args: EntityValueConsumerSourceArguments,
-  usage: SharedEntityValueUsageCollector,
+  usage: GraphSharedEntityValueUsageCollector,
   rendering: EntityValueConsumerRendering | undefined,
 ) {
   const gearSets = await compileGearSetDefinitionsFromFiles({
@@ -92,7 +92,7 @@ async function gearSets(
 
 async function mechanics(
   args: EntityValueConsumerSourceArguments,
-  usage: SharedEntityValueUsageCollector,
+  usage: GraphSharedEntityValueUsageCollector,
   rendering: EntityValueConsumerRendering | undefined,
 ) {
   const mechanics = compileContingencyContractDefinitionsFromFiles({
@@ -106,6 +106,8 @@ async function mechanics(
       path.resolve(import.meta.dirname, '../config/contingencyContractSimulationScope.json'),
   });
   usage.addBuffDefinitions(mechanics.buffDefinitions);
-  mechanics.initializationPlans.forEach(plan => usage.addSequence(plan.sequence));
+  mechanics.initializationPlans.forEach(plan =>
+    usage.addSequence({ graph: plan.actionGraph.main, entry: plan.sequence }),
+  );
   await rendering?.mechanics(mechanics);
 }

@@ -4,13 +4,30 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'suit_crush_fracture',
   iconPath: '/equipment/crush_fracture/item_equip_t4_suit_crush_fracture_edc_01.webp',
-  modifiers: [
-    {
-      kind: 'panelStat',
-      stat: 'attackPercent',
-      value: 0.08,
+  modifiers: [{ kind: 'panelStat', stat: 'attackPercent', value: 0.08 }],
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffId: 'buff_equipsuit_crush_fracture',
+              target: 'caster',
+              blackboardAssignments: {
+                phy_dmg_up_perstack: { kind: 'constant', value: 0.06 },
+                duration: { kind: 'constant', value: 20 },
+                special_multi: { kind: 'constant', value: 1.5 },
+              },
+            },
+          },
+          next: null,
+        },
+      },
     },
-  ],
+    macros: {},
+  },
+  skillId: 'passive_equipsuit_crush_fracture',
   buffDefinitions: {
     buff_equipsuit_crush_fracture: {
       stackingType: 'unique',
@@ -33,9 +50,145 @@ const definition = {
         {
           event: 'beforeOutputPhysicalInfliction',
           priority: 0,
-          sequence: {
-            steps: [
-              {
+          sequence: { $sequence: 'conditional_9' },
+        },
+      ],
+      actionGraph: {
+        main: {
+          nodes: {
+            modifyActionValue_1: {
+              action: {
+                kind: 'modifyActionValue',
+                parameters: {
+                  key: 'phy_dmg_up_perstack_dynamic',
+                  operation: 'multiply',
+                  value: { kind: 'blackboard', key: 'special_multi' },
+                },
+              },
+              next: null,
+            },
+            applyBuff_2: {
+              action: {
+                kind: 'applyBuff',
+                parameters: {
+                  buffId: 'buff_equipsuit_crush_fracture_physicdamage',
+                  target: 'buffOwner',
+                  source: 'buffOwner',
+                  inheritSourceSkillCastInfo: true,
+                  asChildBuff: true,
+                  copiedBlackboardAssignments: {
+                    priority: 'phy_dmg_up_final',
+                    phy_dmg_up: 'phy_dmg_up_final',
+                    duration: 'duration',
+                  },
+                },
+              },
+              next: null,
+            },
+            modifyActionValue_3: {
+              action: {
+                kind: 'modifyActionValue',
+                parameters: {
+                  key: 'phy_dmg_up_final',
+                  operation: 'multiply',
+                  value: { kind: 'blackboard', key: 'phy_dmg_up_perstack_dynamic' },
+                },
+              },
+              next: 'applyBuff_2',
+            },
+            conditional_4: {
+              action: {
+                kind: 'conditional',
+                parameters: {
+                  condition: {
+                    kind: 'any',
+                    conditions: [
+                      {
+                        kind: 'buffStackCompare',
+                        target: 'actionInputTarget',
+                        tagQueryType: 'hasAny',
+                        buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerablePhysic'],
+                        operator: 'greaterOrEqual',
+                        value: { kind: 'constant', value: 1 },
+                      },
+                      {
+                        kind: 'buffIdStackCompare',
+                        target: 'actionInputTarget',
+                        buffIds: ['buff_common_originum_frozen'],
+                        operator: 'greaterOrEqual',
+                        value: { kind: 'constant', value: 1 },
+                      },
+                      {
+                        kind: 'poiseCompare',
+                        target: 'enemy',
+                        returnValueIfMissing: false,
+                        operator: 'equal',
+                        value: { kind: 'constant', value: 0 },
+                      },
+                    ],
+                  },
+                  alwaysNext: true,
+                },
+                whenTrue: { $sequence: 'modifyActionValue_1' },
+              },
+              next: 'modifyActionValue_3',
+            },
+            readBuffStackCount_5: {
+              action: {
+                kind: 'readBuffStackCount',
+                parameters: {
+                  target: 'eventTarget',
+                  outputKey: 'phy_dmg_up_final',
+                  query: {
+                    kind: 'tag',
+                    tagQueryType: 'hasAny',
+                    buffTags: ['Skill/Character/Common/NoGuard'],
+                  },
+                },
+              },
+              next: 'conditional_4',
+            },
+            modifyActionValue_6: {
+              action: {
+                kind: 'modifyActionValue',
+                parameters: {
+                  key: 'phy_dmg_up_final',
+                  operation: 'assign',
+                  value: { kind: 'constant', value: 0 },
+                },
+              },
+              next: 'readBuffStackCount_5',
+            },
+            modifyActionValue_7: {
+              action: {
+                kind: 'modifyActionValue',
+                parameters: {
+                  key: 'phy_dmg_up_perstack_dynamic',
+                  operation: 'assign',
+                  value: { kind: 'blackboard', key: 'phy_dmg_up_perstack' },
+                },
+              },
+              next: 'modifyActionValue_6',
+            },
+            conditional_8: {
+              action: {
+                kind: 'conditional',
+                parameters: {
+                  condition: {
+                    kind: 'buffStackCompare',
+                    target: 'actionInputTarget',
+                    tagQueryType: 'hasAny',
+                    buffTags: ['Skill/Character/Common/NoGuard'],
+                    operator: 'greaterOrEqual',
+                    value: { kind: 'constant', value: 1 },
+                  },
+                },
+                whenTrue: { $sequence: 'modifyActionValue_7' },
+              },
+              next: null,
+            },
+            conditional_9: {
+              action: {
                 kind: 'conditional',
                 parameters: {
                   condition: {
@@ -43,164 +196,20 @@ const definition = {
                     types: ['fracture', 'crush'],
                   },
                 },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'conditional',
-                      parameters: {
-                        condition: {
-                          kind: 'buffStackCompare',
-                          target: 'actionInputTarget',
-                          tagQueryType: 'hasAny',
-                          buffTags: ['Skill/Character/Common/NoGuard'],
-                          operator: 'greaterOrEqual',
-                          value: {
-                            kind: 'constant',
-                            value: 1,
-                          },
-                        },
-                      },
-                      whenTrue: {
-                        steps: [
-                          {
-                            kind: 'modifyActionValue',
-                            parameters: {
-                              key: 'phy_dmg_up_perstack_dynamic',
-                              operation: 'assign',
-                              value: {
-                                kind: 'blackboard',
-                                key: 'phy_dmg_up_perstack',
-                              },
-                            },
-                          },
-                          {
-                            kind: 'modifyActionValue',
-                            parameters: {
-                              key: 'phy_dmg_up_final',
-                              operation: 'assign',
-                              value: {
-                                kind: 'constant',
-                                value: 0,
-                              },
-                            },
-                          },
-                          {
-                            kind: 'readBuffStackCount',
-                            parameters: {
-                              target: 'eventTarget',
-                              outputKey: 'phy_dmg_up_final',
-                              query: {
-                                kind: 'tag',
-                                tagQueryType: 'hasAny',
-                                buffTags: ['Skill/Character/Common/NoGuard'],
-                              },
-                            },
-                          },
-                          {
-                            kind: 'conditional',
-                            parameters: {
-                              condition: {
-                                kind: 'any',
-                                conditions: [
-                                  {
-                                    kind: 'buffStackCompare',
-                                    target: 'actionInputTarget',
-                                    tagQueryType: 'hasAny',
-                                    buffTags: [
-                                      'Skill/Character/Common/Affixes/Vulnerable/VulnerablePhysic',
-                                    ],
-                                    operator: 'greaterOrEqual',
-                                    value: {
-                                      kind: 'constant',
-                                      value: 1,
-                                    },
-                                  },
-                                  {
-                                    kind: 'buffIdStackCompare',
-                                    target: 'actionInputTarget',
-                                    buffIds: ['buff_common_originum_frozen'],
-                                    operator: 'greaterOrEqual',
-                                    value: {
-                                      kind: 'constant',
-                                      value: 1,
-                                    },
-                                  },
-                                  {
-                                    kind: 'poiseCompare',
-                                    target: 'enemy',
-                                    returnValueIfMissing: false,
-                                    operator: 'equal',
-                                    value: {
-                                      kind: 'constant',
-                                      value: 0,
-                                    },
-                                  },
-                                ],
-                              },
-                              alwaysNext: true,
-                            },
-                            whenTrue: {
-                              steps: [
-                                {
-                                  kind: 'modifyActionValue',
-                                  parameters: {
-                                    key: 'phy_dmg_up_perstack_dynamic',
-                                    operation: 'multiply',
-                                    value: {
-                                      kind: 'blackboard',
-                                      key: 'special_multi',
-                                    },
-                                  },
-                                },
-                              ],
-                            },
-                          },
-                          {
-                            kind: 'modifyActionValue',
-                            parameters: {
-                              key: 'phy_dmg_up_final',
-                              operation: 'multiply',
-                              value: {
-                                kind: 'blackboard',
-                                key: 'phy_dmg_up_perstack_dynamic',
-                              },
-                            },
-                          },
-                          {
-                            kind: 'applyBuff',
-                            parameters: {
-                              buffId: 'buff_equipsuit_crush_fracture_physicdamage',
-                              target: 'buffOwner',
-                              source: 'buffOwner',
-                              inheritSourceSkillCastInfo: true,
-                              asChildBuff: true,
-                              copiedBlackboardAssignments: {
-                                priority: 'phy_dmg_up_final',
-                                phy_dmg_up: 'phy_dmg_up_final',
-                                duration: 'duration',
-                              },
-                            },
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                },
+                whenTrue: { $sequence: 'conditional_8' },
               },
-            ],
+              next: null,
+            },
           },
         },
-      ],
+        macros: {},
+      },
     },
     buff_equipsuit_crush_fracture_physicdamage: {
       stackingType: 'highPriority',
-      priority: {
-        blackboardKey: 'priority',
-      },
+      priority: { blackboardKey: 'priority' },
       maxStackCount: 0,
-      durationSeconds: {
-        blackboardKey: 'duration',
-      },
+      durationSeconds: { blackboardKey: 'duration' },
       triggerIntervalSeconds: 0,
       waitFirstTriggerInterval: true,
       maxTriggerCount: 1,
@@ -224,55 +233,22 @@ const definition = {
         charHpBarVfxType: 'Fire',
         iconStyleInSquad: 'Default',
         abnormalColorType: 'Physical',
-        orderPriority: {
-          useDirectoryValue: false,
-          value: 0,
-          category: 'CommonCharBuff',
-        },
+        orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
       },
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        duration: 10,
-        phy_dmg_up: 0.1,
-        priority: 0,
-      },
+      blackboard: { duration: 10, phy_dmg_up: 0.1, priority: 0 },
       attributeModifiers: [
         {
           attribute: 'physicalDamageIncrease',
           slot: 'baseAddition',
-          value: {
-            blackboardKey: 'phy_dmg_up',
-          },
+          value: { blackboardKey: 'phy_dmg_up' },
         },
       ],
+      actionGraph: { main: { nodes: {} }, macros: {} },
     },
   },
-  enableSequence: {
-    steps: [
-      {
-        kind: 'applyBuff',
-        parameters: {
-          buffId: 'buff_equipsuit_crush_fracture',
-          target: 'caster',
-          blackboardAssignments: {
-            phy_dmg_up_perstack: {
-              kind: 'constant',
-              value: 0.06,
-            },
-            duration: {
-              kind: 'constant',
-              value: 20,
-            },
-            special_multi: {
-              kind: 'constant',
-              value: 1.5,
-            },
-          },
-        },
-      },
-    ],
-  },
+  enableSequence: { $sequence: 'applyBuff_1' },
 } as const satisfies GearSetDefinition;
 
 export default definition;

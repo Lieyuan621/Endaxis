@@ -4,13 +4,29 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'suit_usp01',
   iconPath: '/equipment/usp01/item_equip_t3_suit_usp01_edc_02.webp',
-  modifiers: [
-    {
-      kind: 'panelStat',
-      stat: 'ultimateEnergyGainEfficiency',
-      value: 0.2,
+  modifiers: [{ kind: 'panelStat', stat: 'ultimateEnergyGainEfficiency', value: 0.2 }],
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffId: 'buff_equipsuit_usp_01',
+              target: 'caster',
+              blackboardAssignments: {
+                ultimate_gain_up: { kind: 'constant', value: 0.2 },
+                atb_recover: { kind: 'constant', value: 50 },
+              },
+            },
+          },
+          next: null,
+        },
+      },
     },
-  ],
+    macros: {},
+  },
+  skillId: 'passive_equipsuit_usp_01',
   buffDefinitions: {
     buff_equipsuit_usp_01: {
       stackingType: 'unlimited',
@@ -21,127 +37,83 @@ const definition = {
       maxTriggerCount: 1,
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        atb_recover: 50,
-        has_gain_atb: 0,
-        ultimate_gain_up: 0.2,
-      },
+      blackboard: { atb_recover: 50, has_gain_atb: 0, ultimate_gain_up: 0.2 },
       attributeModifiers: [],
       abilityEventResponses: [
-        {
-          event: 'enterFight',
-          priority: 0,
-          sequence: {
-            steps: [
-              {
+        { event: 'enterFight', priority: 0, sequence: { $sequence: 'modifyActionValue_1' } },
+        { event: 'beforeCastSkill', priority: 0, sequence: { $sequence: 'conditional_5' } },
+      ],
+      actionGraph: {
+        main: {
+          nodes: {
+            modifyActionValue_1: {
+              action: {
                 kind: 'modifyActionValue',
                 parameters: {
                   key: 'has_gain_atb',
                   operation: 'assign',
-                  value: {
-                    kind: 'constant',
-                    value: 0,
-                  },
+                  value: { kind: 'constant', value: 0 },
                 },
               },
-            ],
-          },
-        },
-        {
-          event: 'beforeCastSkill',
-          priority: 0,
-          sequence: {
-            steps: [
-              {
+              next: null,
+            },
+            changeResourceByActionValue_2: {
+              action: {
+                kind: 'changeResourceByActionValue',
+                parameters: {
+                  resource: 'sp',
+                  amount: { kind: 'blackboard', key: 'atb_recover' },
+                  coefficient: { kind: 'constant', value: 1 },
+                  recipient: 'team',
+                  spGainKind: 'refund',
+                  spGainSource: 'default',
+                },
+              },
+              next: null,
+            },
+            modifyActionValue_3: {
+              action: {
+                kind: 'modifyActionValue',
+                parameters: {
+                  key: 'has_gain_atb',
+                  operation: 'assign',
+                  value: { kind: 'constant', value: 1 },
+                },
+              },
+              next: 'changeResourceByActionValue_2',
+            },
+            conditional_4: {
+              action: {
                 kind: 'conditional',
                 parameters: {
                   condition: {
-                    kind: 'eventSkillTypeIn',
-                    skillTypes: ['battleSkill'],
+                    kind: 'actionValueCompare',
+                    left: { kind: 'blackboard', key: 'has_gain_atb', fallback: 0 },
+                    operator: 'equal',
+                    right: { kind: 'constant', value: 0 },
                   },
                 },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'conditional',
-                      parameters: {
-                        condition: {
-                          kind: 'actionValueCompare',
-                          left: {
-                            kind: 'blackboard',
-                            key: 'has_gain_atb',
-                            fallback: 0,
-                          },
-                          operator: 'equal',
-                          right: {
-                            kind: 'constant',
-                            value: 0,
-                          },
-                        },
-                      },
-                      whenTrue: {
-                        steps: [
-                          {
-                            kind: 'modifyActionValue',
-                            parameters: {
-                              key: 'has_gain_atb',
-                              operation: 'assign',
-                              value: {
-                                kind: 'constant',
-                                value: 1,
-                              },
-                            },
-                          },
-                          {
-                            kind: 'changeResourceByActionValue',
-                            parameters: {
-                              resource: 'sp',
-                              amount: {
-                                kind: 'blackboard',
-                                key: 'atb_recover',
-                              },
-                              coefficient: {
-                                kind: 'constant',
-                                value: 1,
-                              },
-                              recipient: 'team',
-                              spGainKind: 'refund',
-                              spGainSource: 'default',
-                            },
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                },
+                whenTrue: { $sequence: 'modifyActionValue_3' },
               },
-            ],
+              next: null,
+            },
+            conditional_5: {
+              action: {
+                kind: 'conditional',
+                parameters: {
+                  condition: { kind: 'eventSkillTypeIn', skillTypes: ['battleSkill'] },
+                },
+                whenTrue: { $sequence: 'conditional_4' },
+              },
+              next: null,
+            },
           },
         },
-      ],
+        macros: {},
+      },
     },
   },
-  initializationSequence: {
-    steps: [
-      {
-        kind: 'applyBuff',
-        parameters: {
-          buffId: 'buff_equipsuit_usp_01',
-          target: 'caster',
-          blackboardAssignments: {
-            ultimate_gain_up: {
-              kind: 'constant',
-              value: 0.2,
-            },
-            atb_recover: {
-              kind: 'constant',
-              value: 50,
-            },
-          },
-        },
-      },
-    ],
-  },
+  initializationSequence: { $sequence: 'applyBuff_1' },
 } as const satisfies GearSetDefinition;
 
 export default definition;

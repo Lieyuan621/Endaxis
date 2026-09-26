@@ -1,5 +1,5 @@
 import { expect, it, vi } from 'vitest';
-import type { CompiledProjectileCallbackSkillProgram } from '../../../compiler/combatProgram';
+import type { CompiledAbilityEntityChildSkillProgram } from '../../../compiler/combatProgram';
 import { ActionBlackboard } from '../../actions/actionBlackboard';
 import { createCallbackSkillHostFactory } from '../../abilities/callbackSkillHost';
 import { CombatClock } from '../../time/combatClock';
@@ -80,7 +80,7 @@ it.each(['hit', 'reach', 'finish', 'filteredHit'] as const)(
     const event = mode === 'filteredHit' ? 'hit' : mode;
     let acceptsHit = mode !== 'filteredHit';
     const evaluate = vi.fn((..._args: unknown[]) => acceptsHit);
-    const program: CompiledProjectileCallbackSkillProgram = {
+    const program: CompiledAbilityEntityChildSkillProgram = {
       skillId: 'callback',
       nativeSkillType: 'normalSkill',
       naturalDurationFrames: 1,

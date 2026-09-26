@@ -14,14 +14,20 @@ import type {
   WeaponDefinition,
 } from '../game-data/equipmentDefinition';
 import type {
+  ActionGraphReference,
+  ActionGraphResourceDefinition,
+} from '../../../packages/game-data-contract/src/actionGraph';
+import type { ActionGraphDefinitionRepository } from './actionGraphDefinitionRepository';
+import type {
   CombatCondition,
   CombatEventTrigger,
   DamageType,
+  OperatorBuffDefinitions,
   OperatorAttribute,
   SkillType,
 } from '../game-data/operatorDefinition';
 import type { ResolvedActionSequence, ResolvedSkillBuffDefinition } from './combatProgram';
-import { compileActionSequence, compileOperatorBuffResources } from './compileSkill';
+import { compileIndependentBuffResource } from './compileSkill';
 import type { EquipmentContributionSource } from '../combat/state/foundationState';
 export type { EquipmentContributionSource } from '../combat/state/foundationState';
 
@@ -88,10 +94,41 @@ export interface CompiledEquipmentContribution {
   readonly initializationSequence?: ResolvedActionSequence;
 }
 
+/** 面板只需静态修正；不为它编译装备内部的行为图和 Buff 程序。 */
+export type CompiledEquipmentModifierContribution = Pick<
+  CompiledEquipmentContribution,
+  'source' | 'selectedLevel' | 'modifiers'
+>;
+
 /** 解析装备中 `main`、`secondary` 相对属性所需的干员构筑上下文。 */
 export interface EquipmentAttributeContext {
   readonly main: OperatorAttribute;
   readonly secondary: OperatorAttribute;
+}
+
+function compileEquipmentBuffDefinitions(
+  definitions: OperatorBuffDefinitions | undefined,
+  repository: ActionGraphDefinitionRepository,
+): Readonly<Record<string, ResolvedSkillBuffDefinition>> {
+  return Object.fromEntries(
+    Object.entries(definitions ?? {}).map(([id, definition]) => [
+      id,
+      compileIndependentBuffResource(definition, id, repository),
+    ]),
+  );
+}
+
+function graphPrograms(
+  graph: ActionGraphResourceDefinition | undefined,
+  repository: ActionGraphDefinitionRepository,
+) {
+  return {
+    sequence: (entry: ActionGraphReference, level: number, path: string) => {
+      if (graph === undefined)
+        throw new Error(`${path}: equipment program has no owned action graph`);
+      return repository.compile(graph, level).compileEntry(entry, path);
+    },
+  };
 }
 
 function resolveLevelValue(value: number | readonly number[], level: number, path: string): number {
@@ -148,6 +185,7 @@ function compileEventHandler(
   handler: EquipmentEventHandlerDefinition,
   level: number,
   path: string,
+  programs: ReturnType<typeof graphPrograms>,
 ): CompiledEquipmentEventHandler {
   const priority = handler.priority ?? 0;
   if (!Number.isInteger(priority)) {
@@ -160,7 +198,7 @@ function compileEventHandler(
       : { event: handler.event }),
     priority,
     ...(handler.condition === undefined ? {} : { condition: handler.condition }),
-    sequence: compileActionSequence(handler.sequence, level, `${path}.sequence`),
+    sequence: programs.sequence(handler.sequence, level, `${path}.sequence`),
   };
 }
 
@@ -171,27 +209,25 @@ function compileContribution(
   source: EquipmentContributionSource,
   path: string,
   attributes: EquipmentAttributeContext,
+  programs: ReturnType<typeof graphPrograms>,
+  buffDefinitions: Readonly<Record<string, ResolvedSkillBuffDefinition>> = {},
 ): CompiledEquipmentContribution {
-  if (!Number.isInteger(selectedLevel) || selectedLevel <= 0 || selectedLevel > levelCount) {
-    throw new RangeError(`${path} level must be an integer between 1 and ${levelCount}`);
-  }
-  const resources = compileOperatorBuffResources(definition.buffDefinitions);
-  const abilityEntityIds = Object.keys(resources.abilityEntityDefinitions);
-  if (abilityEntityIds.length > 0) {
-    throw new Error(
-      `${path}.buffDefinitions: equipment Buffs cannot reference AbilityEntity definitions: ${abilityEntityIds.join(', ')}`,
-    );
-  }
-  return {
-    source,
+  if (source.kind === 'weaponTrait' && 'buffDefinitions' in definition)
+    throw new Error(`${path}: skills may reference Buffs but cannot own their definitions`);
+  const staticContribution = compileModifierContribution(
+    definition,
     selectedLevel,
-    modifiers: (definition.modifiers ?? []).map((modifier, index) =>
-      compileModifier(modifier, selectedLevel, `${path}.modifiers[${index}]`, attributes),
-    ),
+    levelCount,
+    source,
+    path,
+    attributes,
+  );
+  return {
+    ...staticContribution,
     eventHandlers: (definition.eventHandlers ?? []).map((handler, index) =>
-      compileEventHandler(handler, selectedLevel, `${path}.eventHandlers[${index}]`),
+      compileEventHandler(handler, selectedLevel, `${path}.eventHandlers[${index}]`, programs),
     ),
-    buffDefinitions: resources.buffDefinitions,
+    buffDefinitions,
     ...(definition.blackboard === undefined
       ? {}
       : {
@@ -205,7 +241,7 @@ function compileContribution(
     ...(definition.enableSequence === undefined
       ? {}
       : {
-          enableSequence: compileActionSequence(
+          enableSequence: programs.sequence(
             definition.enableSequence,
             selectedLevel,
             `${path}.enableSequence`,
@@ -214,7 +250,7 @@ function compileContribution(
     ...(definition.initializationSequence === undefined
       ? {}
       : {
-          initializationSequence: compileActionSequence(
+          initializationSequence: programs.sequence(
             definition.initializationSequence,
             selectedLevel,
             `${path}.initializationSequence`,
@@ -223,11 +259,32 @@ function compileContribution(
   };
 }
 
+export function compileModifierContribution(
+  definition: Pick<EquipmentContributionDefinition, 'modifiers'>,
+  selectedLevel: number,
+  levelCount: number,
+  source: EquipmentContributionSource,
+  path: string,
+  attributes: EquipmentAttributeContext,
+): CompiledEquipmentModifierContribution {
+  if (!Number.isInteger(selectedLevel) || selectedLevel <= 0 || selectedLevel > levelCount) {
+    throw new RangeError(`${path} level must be an integer between 1 and ${levelCount}`);
+  }
+  return {
+    source,
+    selectedLevel,
+    modifiers: (definition.modifiers ?? []).map((modifier, index) =>
+      compileModifier(modifier, selectedLevel, `${path}.modifiers[${index}]`, attributes),
+    ),
+  };
+}
+
 /** 按 build 中一一对应的词条等级编译整把武器。 */
 export function compileWeaponContributions(
   definition: WeaponDefinition,
   traitLevels: readonly number[],
   attributes: EquipmentAttributeContext,
+  repository: ActionGraphDefinitionRepository,
 ): readonly CompiledEquipmentContribution[] {
   if (traitLevels.length !== definition.traits.length) {
     throw new RangeError(
@@ -242,12 +299,21 @@ export function compileWeaponContributions(
       { kind: 'weaponTrait', slug: definition.slug, traitKey: trait.key },
       `weapon '${definition.slug}'.traits[${index}]`,
       attributes,
+      graphPrograms(trait.actionGraph, repository),
     ),
   );
 }
 
+/** 武器级定义只编译一次，不绑定任意词条的等级、黑板或生命周期。 */
+export function compileWeaponBuffDefinitions(
+  definition: WeaponDefinition,
+  repository: ActionGraphDefinitionRepository,
+): Readonly<Record<string, ResolvedSkillBuffDefinition>> {
+  return compileEquipmentBuffDefinitions(definition.buffDefinitions, repository);
+}
+
 /** 精锻等级以 0 为初始档，编译时转换为从 1 开始的等级索引。 */
-export function compileGearContributions(
+function compileGear(
   definition: GearDefinition,
   artificingLevels: readonly number[],
   attributes: EquipmentAttributeContext,
@@ -257,22 +323,42 @@ export function compileGearContributions(
       `gear '${definition.slug}' expects ${definition.traits.length} artificing levels, got ${artificingLevels.length}`,
     );
   }
-  return definition.traits.map((trait, index) =>
-    compileContribution(
-      trait,
-      artificingLevels[index]! + 1,
-      trait.levelCount,
-      { kind: 'gearTrait', slug: definition.slug, traitKey: trait.key },
-      `gear '${definition.slug}'.traits[${index}]`,
-      attributes,
-    ),
-  );
+  return definition.traits.map((trait, index) => {
+    const path = `gear '${definition.slug}'.traits[${index}]`;
+    const selectedLevel = artificingLevels[index]! + 1;
+    if (
+      !Number.isInteger(selectedLevel) ||
+      selectedLevel <= 0 ||
+      selectedLevel > trait.levelCount
+    ) {
+      throw new RangeError(`${path} level must be an integer between 1 and ${trait.levelCount}`);
+    }
+    const contribution: CompiledEquipmentContribution = {
+      source: { kind: 'gearTrait', slug: definition.slug, traitKey: trait.key },
+      selectedLevel,
+      modifiers: (trait.modifiers ?? []).map((modifier, modifierIndex) =>
+        compileModifier(modifier, selectedLevel, `${path}.modifiers[${modifierIndex}]`, attributes),
+      ),
+      eventHandlers: [],
+      buffDefinitions: {},
+    };
+    return contribution;
+  });
+}
+
+export function compileGearContributions(
+  definition: GearDefinition,
+  artificingLevels: readonly number[],
+  attributes: EquipmentAttributeContext,
+): readonly CompiledEquipmentContribution[] {
+  return compileGear(definition, artificingLevels, attributes);
 }
 
 /** 套装没有用户可选等级，满足三件规则后始终按唯一等级编译。 */
 export function compileGearSetContribution(
   definition: GearSetDefinition,
   attributes: EquipmentAttributeContext,
+  repository: ActionGraphDefinitionRepository,
 ): CompiledEquipmentContribution {
   return compileContribution(
     definition,
@@ -281,5 +367,7 @@ export function compileGearSetContribution(
     { kind: 'gearSet', slug: definition.slug },
     `gear set '${definition.slug}'`,
     attributes,
+    graphPrograms(definition.actionGraph, repository),
+    compileEquipmentBuffDefinitions(definition.buffDefinitions, repository),
   );
 }

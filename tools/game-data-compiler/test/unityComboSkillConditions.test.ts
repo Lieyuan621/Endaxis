@@ -5,6 +5,11 @@ import { parseUnityComboSkillConditionsSource } from '../src/source/unityComboSk
 import { compilePendingComboConditionSource } from '../src/compiler/conditions/comboSkillConditions.ts';
 import { parseObjectTypeMask } from '../src/source/objectType.ts';
 import { GameplayTagRegistry } from '../src/source/nativeGameplayTags.ts';
+import { readActionGraphChain } from '../src/compiler/actions/actionGraphBuilder.ts';
+
+/** 读取编译结果的入口同层动作；节点留在 result.actionGraph 内。 */
+const chainOf = (result: ReturnType<typeof compilePendingComboConditionSource>) =>
+  readActionGraphChain(result.actionGraph.main, result.sequence);
 const projection = {
   gameplayTagRegistry: fixtureGameplayTagRegistry,
   actionOwnerTarget: 'caster',
@@ -36,7 +41,7 @@ describe('Unity RID 条件适配', () => {
     };
     fixture.conditions[0]!.comboSkillCheckAction.actionData = [rid];
     const source = parse(fixture).conditions[0]!;
-    expect(compilePendingComboConditionSource(source, projection).sequence.steps[0]).toMatchObject({
+    expect(chainOf(compilePendingComboConditionSource(source, projection))[0]).toMatchObject({
       parameters: { condition: { kind: 'casterComboPending' } },
     });
   });
@@ -106,7 +111,7 @@ describe('Unity RID 条件适配', () => {
     const compiled = source.conditions.map(condition =>
       compilePendingComboConditionSource(condition, projection),
     );
-    expect(compiled[0]!.sequence.steps[0]).toMatchObject({
+    expect(chainOf(compiled[0]!)[0]).toMatchObject({
       parameters: {
         condition: {
           kind: 'eventBuffIdMatch',
@@ -115,7 +120,7 @@ describe('Unity RID 条件适配', () => {
         },
       },
     });
-    expect(compiled[1]!.sequence.steps[0]).toMatchObject({
+    expect(chainOf(compiled[1]!)[0]).toMatchObject({
       parameters: {
         condition: {
           kind: 'entityTagMatch',
@@ -125,10 +130,10 @@ describe('Unity RID 条件适配', () => {
         },
       },
     });
-    expect(compiled[2]!.sequence.steps[0]).toMatchObject({
+    expect(chainOf(compiled[2]!)[0]).toMatchObject({
       parameters: { condition: { kind: 'casterControlled' } },
     });
-    expect(compiled[3]!.sequence.steps[0]).toMatchObject({
+    expect(chainOf(compiled[3]!)[0]).toMatchObject({
       parameters: {
         condition: { kind: 'not', condition: { kind: 'casterControlled' } },
       },
@@ -195,25 +200,18 @@ describe('Unity RID 条件适配', () => {
         ],
       },
     });
-    expect(
-      compilePendingComboConditionSource(source.conditions[0]!, {
-        ...projection,
-        gameplayTagRegistry: new GameplayTagRegistry(['Skill/Character/Common/SpellBurst']),
-      }),
-    ).toMatchObject({
-      event: 'addedBuff',
-      sequence: {
-        steps: [
-          {
-            parameters: {
-              condition: {
-                kind: 'eventBuffTagsMatch',
-                match: 'hasAny',
-                buffTags: ['Skill/Character/Common/SpellBurst'],
-              },
-            },
-          },
-        ],
+    const advancedCompiled = compilePendingComboConditionSource(source.conditions[0]!, {
+      ...projection,
+      gameplayTagRegistry: new GameplayTagRegistry(['Skill/Character/Common/SpellBurst']),
+    });
+    expect(advancedCompiled.event).toBe('addedBuff');
+    expect(chainOf(advancedCompiled)[0]).toMatchObject({
+      parameters: {
+        condition: {
+          kind: 'eventBuffTagsMatch',
+          match: 'hasAny',
+          buffTags: ['Skill/Character/Common/SpellBurst'],
+        },
       },
     });
   });
@@ -342,26 +340,22 @@ describe('Unity RID 条件适配', () => {
       expect(() => compilePendingComboConditionSource(source.conditions[0]!, projection)).toThrow(
         'target identity sources',
       );
-    expect(
-      compilePendingComboConditionSource(source.conditions[0]!, boundProjection),
-    ).toMatchObject({
-      event: 'beforeTakeDamage',
-      sequence: {
-        steps: [
-          {
-            parameters: {
-              condition:
-                targetSource === 0
-                  ? { kind: 'eventSourceControlled' }
-                  : {
-                      kind: 'contextTargetIdentityMatch',
-                      contextKey: 'trigger',
-                      other: 'controlledOperator',
-                      operator: 'equal',
-                    },
-            },
-          },
-        ],
+    const boundCompiled = compilePendingComboConditionSource(
+      source.conditions[0]!,
+      boundProjection,
+    );
+    expect(boundCompiled.event).toBe('beforeTakeDamage');
+    expect(chainOf(boundCompiled)[0]).toMatchObject({
+      parameters: {
+        condition:
+          targetSource === 0
+            ? { kind: 'eventSourceControlled' }
+            : {
+                kind: 'contextTargetIdentityMatch',
+                contextKey: 'trigger',
+                other: 'controlledOperator',
+                operator: 'equal',
+              },
       },
     });
   });
@@ -374,22 +368,18 @@ describe('Unity RID 条件适配', () => {
     expect(source.referenceSources[0]!.source).toBe(fixture.references['2708501211437859822']);
     const compiled = source.conditions.map(c => compilePendingComboConditionSource(c, projection));
     expect(compiled.map(c => c.event)).toEqual(Array(5).fill('beforeTakeInfliction'));
-    expect(compiled[1]!.sequence).toMatchObject({
-      steps: [
-        {
-          parameters: {
-            condition: {
-              kind: 'contextTargetObjectTypeMatch',
-              contextKey: 'trigger',
-              objectTypes: ['enemy'],
-            },
-          },
+    expect(chainOf(compiled[1]!)[0]).toMatchObject({
+      parameters: {
+        condition: {
+          kind: 'contextTargetObjectTypeMatch',
+          contextKey: 'trigger',
+          objectTypes: ['enemy'],
         },
-      ],
+      },
     });
-    expect(compiled[4]!.sequence.steps).toHaveLength(1);
+    expect(chainOf(compiled[4]!)).toHaveLength(1);
     // 原生 DebugPrint 的 Target 不被读取；纯查询之前的 Debug no-op 不阻塞条件。
-    expect(compiled[4]!.sequence.steps[0]).toMatchObject({
+    expect(chainOf(compiled[4]!)[0]).toMatchObject({
       kind: 'conditional',
       parameters: {
         condition: { kind: 'actionValueCompare' },

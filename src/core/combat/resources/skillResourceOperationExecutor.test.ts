@@ -1,7 +1,9 @@
+import type { SkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
 import { describe, expect, it } from 'vitest';
 import { perlica } from '../../../data/operators/perlica.generated';
 import { compileSkill } from '../../compiler/compileSkill';
-import type { SkillDefinition } from '../../game-data/operatorDefinition';
+import { ActionGraphDefinitionRepository } from '../../compiler/actionGraphDefinitionRepository';
+
 import { CombatReceiptCollector } from '../receipt/combatReceipt';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { CombatClock } from '../time/combatClock';
@@ -519,6 +521,7 @@ describe('SkillResourceOperationExecutor', () => {
         skillType: 'battleSkill',
         skillLevel: 12,
         skill: findSkill('chr_0004_pelica_normal_skill'),
+        programs: new ActionGraphDefinitionRepository(),
       }),
       { clock, resources, receipt, operations, allocateSkillCastId: () => 1 },
     );

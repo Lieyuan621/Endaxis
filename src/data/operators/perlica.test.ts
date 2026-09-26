@@ -1,18 +1,110 @@
+import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import { describe, expect, it } from 'vitest';
 import { perlica } from './perlica.generated';
-import { collectSteps, getGroupSkills, getSkill as findSkill } from './testUtils';
+import type {
+  ActionGraphDefinition,
+  ActionGraphReference,
+  ActionGraphResourceDefinition,
+  ActionGraphStep,
+} from '../../../packages/game-data-contract/src/actionGraph';
+import type { SkillGroupDefinition } from '../../core/game-data/operatorDefinition';
+import { createGraphDataResolver } from '../../core/action-graph/actionGraphData';
 
-const getSkill = (key: string) => findSkill(perlica, key);
+function getGroupSkills(group: SkillGroupDefinition): readonly SkillDefinition[] {
+  const skills: SkillDefinition | readonly SkillDefinition[] = group.skills;
+  return Array.isArray(skills) ? skills : [skills].flat();
+}
+
+function getSkill(key: string): SkillDefinition {
+  const skill = perlica.skillGroups
+    .flatMap(getGroupSkills)
+    .find(candidate => candidate.key === key);
+  if (!skill) throw new Error(`missing skill: ${key}`);
+  return skill;
+}
+
+function collectGraphSteps(
+  resource: ActionGraphResourceDefinition,
+  entry: ActionGraphReference | null | undefined,
+): ActionGraphStep[] {
+  const steps: ActionGraphStep[] = [];
+  const visited = new Set<string>();
+  const visitGraph = (
+    graph: ActionGraphDefinition,
+    ref: ActionGraphReference | null | undefined,
+    scope: string,
+  ) => {
+    let nodeId = ref?.$sequence ?? null;
+    const resolve = createGraphDataResolver(graph).bind;
+    while (nodeId !== null) {
+      const identity = `${scope}/${nodeId}`;
+      if (visited.has(identity)) return;
+      visited.add(identity);
+      const node = graph.nodes[nodeId];
+      if (!node) return;
+      const action = resolve(node.action) as ActionGraphStep;
+      steps.push(action);
+      switch (action.kind) {
+        case 'conditional':
+          visitGraph(graph, action.whenTrue, scope);
+          if (action.whenFalse !== undefined) visitGraph(graph, action.whenFalse, scope);
+          break;
+        case 'switch':
+          for (const option of action.options) visitGraph(graph, option.sequence, scope);
+          break;
+        case 'once':
+        case 'withActionBlackboardScope':
+        case 'repeatEachTick':
+        case 'repeatByActionValue':
+        case 'forEachContextTarget':
+          visitGraph(graph, action.body, scope);
+          break;
+        case 'callMacro': {
+          // 宏提取只把节点移入同资源的宏图；查询必须跟随局部宏，不能只扫主图。
+          const macro = resource.macros[action.macroId];
+          if (macro) visitGraph(macro.graph, macro.entry, `${scope}/macro:${action.macroId}`);
+          break;
+        }
+        case 'callResource':
+          visitGraph(
+            action.resource.actionGraph.main,
+            action.resource.entry,
+            `${scope}/resource:${action.resource.id}`,
+          );
+          break;
+        case 'launchProjectile':
+          // 回调技能是独立资源；遍历跟随发射进入每个回调自己的图。
+          for (const callback of action.callbacks) {
+            for (const scheduled of callback.skill.scheduledSequences) {
+              visitGraph(
+                callback.skill.actionGraph.main,
+                scheduled.sequence,
+                `${scope}/callback:${callback.skill.skillId}:${scheduled.startFrame}`,
+              );
+            }
+          }
+          break;
+      }
+      nodeId = node.next;
+    }
+  };
+  visitGraph(resource.main, entry, 'main');
+  return steps;
+}
+
+function skillSteps(skill: SkillDefinition): ActionGraphStep[] {
+  return skill.scheduledSequences.flatMap(item =>
+    collectGraphSteps(skill.actionGraph, item.sequence),
+  );
+}
 
 describe('next Perlica definition', () => {
   it('keeps infliction, damage, and energy gain in source order', () => {
-    const steps = getSkill('chr_0004_pelica_normal_skill')
-      .scheduledSequences.flatMap(item => collectSteps(item.sequence))
-      .filter(step =>
-        ['applyElementalInfliction', 'dealDamage', 'gainSquadUltimateEnergyFromSkillCost'].includes(
-          step.kind,
-        ),
-      );
+    const steps = skillSteps(getSkill('chr_0004_pelica_normal_skill')).filter(step =>
+      ['applyElementalInfliction', 'dealDamage', 'gainSquadUltimateEnergyFromSkillCost'].includes(
+        step.kind,
+      ),
+    );
 
     expect(steps.map(step => step.kind)).toEqual([
       'applyElementalInfliction',
@@ -23,7 +115,8 @@ describe('next Perlica definition', () => {
 
   it('models combo impact as supported semantic operations', () => {
     const skill = getSkill('chr_0004_pelica_combo_skill');
-    const steps = collectSteps(
+    const steps = collectGraphSteps(
+      skill.actionGraph,
       skill.scheduledSequences.find(item => item.startFrame === 24)!.sequence,
     ).filter(step =>
       ['applyBuff', 'dealDamage', 'changeResourceByActionValue'].includes(step.kind),
@@ -31,7 +124,9 @@ describe('next Perlica definition', () => {
 
     expect(
       skill.scheduledSequences.some(item =>
-        collectSteps(item.sequence).some(step => step.kind === 'startTimeDilation'),
+        collectGraphSteps(skill.actionGraph, item.sequence).some(
+          step => step.kind === 'startTimeDilation',
+        ),
       ),
     ).toBe(true);
 
@@ -77,8 +172,7 @@ describe('next Perlica definition', () => {
       'chr_0004_pelica_attack4',
     ]
       .map(key => getSkill(key))
-      .flatMap(skill => skill.scheduledSequences)
-      .flatMap(scheduledSequence => collectSteps(scheduledSequence.sequence))
+      .flatMap(skillSteps)
       .filter(step => step.kind === 'dealDamage');
 
     expect(normalAttackHits.map(hit => hit.parameters.tags)).toEqual([
@@ -93,9 +187,9 @@ describe('next Perlica definition', () => {
   });
 
   it('uses the third normal attack per-hit scales instead of its rounded display totals', () => {
-    const damageHits = getSkill('chr_0004_pelica_attack3')
-      .scheduledSequences.flatMap(scheduledSequence => collectSteps(scheduledSequence.sequence))
-      .filter(step => step.kind === 'dealDamage');
+    const damageHits = skillSteps(getSkill('chr_0004_pelica_attack3')).filter(
+      step => step.kind === 'dealDamage',
+    );
 
     expect(damageHits).toHaveLength(3);
     expect(getSkill('chr_0004_pelica_attack3').blackboard?.atk_scale).toEqual([
@@ -134,13 +228,9 @@ describe('next Perlica definition', () => {
   });
 
   it('uses breaking-attack calculation only for the finisher', () => {
-    const finisherSteps = getSkill('chr_0004_pelica_power_attack').scheduledSequences.flatMap(
-      item => collectSteps(item.sequence),
-    );
+    const finisherSteps = skillSteps(getSkill('chr_0004_pelica_power_attack'));
     const finisherDamage = finisherSteps[0];
-    const plungingDamage = getSkill(
-      'chr_0004_pelica_plunging_attack_end',
-    ).scheduledSequences.flatMap(item => collectSteps(item.sequence))[0];
+    const plungingDamage = skillSteps(getSkill('chr_0004_pelica_plunging_attack_end'))[0];
 
     expect(finisherDamage).toMatchObject({
       kind: 'dealDamage',
@@ -177,14 +267,12 @@ describe('next Perlica definition', () => {
 
     expect(potential).toMatchObject({
       levels: 1,
-      initializationSequence: {
-        steps: [
-          {
-            kind: 'applyBuff',
-            parameters: { buffId: 'buff_chr_0004_pelica_potential_3', target: 'caster' },
-          },
-        ],
-      },
+      attachedBuffs: [
+        {
+          buffId: 'buff_chr_0004_pelica_potential_3',
+          blackboardAssignments: { atk_up: 0.2, atk_duration: 5, max_stack: 2 },
+        },
+      ],
     });
     expect(perlica.buffDefinitions?.buff_chr_0004_pelica_potential_3_atkup).toMatchObject({
       stackingType: 'enhanceAndRefresh',
@@ -213,22 +301,20 @@ describe('next Perlica definition', () => {
   });
 
   it('keys every damage step with a non-empty unique identity', () => {
-    const entries: Array<{ skillKey: string; stepKey: string }> = [];
+    const entries: Array<{ skillKey: string; nodeId: string }> = [];
     for (const skill of perlica.skillGroups.flatMap(getGroupSkills)) {
-      for (const scheduledSequence of skill.scheduledSequences) {
-        for (const step of collectSteps(scheduledSequence.sequence)) {
-          if (step.kind === 'dealDamage' || step.kind === 'dealFixedDamage') {
-            entries.push({ skillKey: skill.key, stepKey: step.key ?? '' });
-          }
+      for (const [nodeId, node] of Object.entries(skill.actionGraph.main.nodes)) {
+        if (node.action.kind === 'dealDamage' || node.action.kind === 'dealFixedDamage') {
+          entries.push({ skillKey: skill.key, nodeId });
         }
       }
     }
 
     expect(entries.length).toBeGreaterThan(0);
     for (const entry of entries) {
-      expect(entry.stepKey.length).toBeGreaterThan(0);
+      expect(entry.nodeId.length).toBeGreaterThan(0);
     }
-    const allKeys = entries.map(entry => entry.stepKey);
+    const allKeys = entries.map(entry => `${entry.skillKey}:${entry.nodeId}`);
     expect(allKeys.length).toBe(new Set(allKeys).size);
   });
 });

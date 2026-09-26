@@ -1,11 +1,53 @@
+import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import { describe, expect, it, vi } from 'vitest';
+
+import type {
+  ActionGraphNode,
+  ActionGraphStep,
+} from '../../../packages/game-data-contract/src/actionGraph';
+import { ActionGraphDefinitionRepository } from '../../core/compiler/actionGraphDefinitionRepository';
+import { createGameDataRepository } from '../../data/createGameDataRepository';
 import { createEmptyScenario } from '../../core/project/createProject';
 import type { ScenarioDocument } from '../../core/project/schema';
 import type { OperatorDefinition } from '../../core/game-data/operatorDefinition';
-import { perlica } from '../../data/operators/perlica.generated';
-import { getSkill } from '../../data/operators/testUtils';
 
-const perlicaBattleSkill = getSkill(perlica, 'chr_0004_pelica_normal_skill');
+import { perlica } from '../../data/operators/perlica.generated';
+
+/** 单段调度技能夹具：整条 main 图只有一条线性链，节点由调用侧显式给出。 */
+function graphFixtureSkillOf(fixture: {
+  readonly key: string;
+  readonly skillType: 'battleSkill';
+  readonly levelSource: 'battleSkill';
+  readonly timelineBlockFrames: number;
+  readonly steps: readonly ActionGraphStep[];
+}): SkillDefinition {
+  const nodes: Record<string, ActionGraphNode> = {};
+  fixture.steps.forEach((action, index) => {
+    nodes[`step-${index}`] = {
+      action,
+      next: index + 1 < fixture.steps.length ? `step-${index + 1}` : null,
+    };
+  });
+  return {
+    key: fixture.key,
+    skillType: fixture.skillType,
+    levelSource: fixture.levelSource,
+    timelineBlockFrames: fixture.timelineBlockFrames,
+    scheduledSequences: [
+      { startFrame: 0, sequence: { $sequence: fixture.steps.length === 0 ? null : 'step-0' } },
+    ],
+    actionGraph: { main: { nodes }, macros: {} },
+  };
+}
+
+function findSkill(operator: OperatorDefinition, key: string) {
+  const skill = operator.skillGroups
+    .flatMap(group => (Array.isArray(group.skills) ? group.skills : [group.skills]))
+    .find(candidate => candidate.key === key);
+  if (!skill) throw new Error(`missing skill: ${key}`);
+  return skill;
+}
+const perlicaBattleSkill = findSkill(perlica, 'chr_0004_pelica_normal_skill');
 import { commonBuffDefinitions } from '../../data/buffs/commonDefinitions';
 import { CombatAttributeSet } from '../../core/combat/attributes/combatAttributes';
 import {
@@ -13,6 +55,7 @@ import {
   groupPlacedSkillSequence,
 } from '../../ui/timeline/interaction/placeSkillGroup';
 import { CombatInputSchedule } from './combatInputSchedule';
+import { createScenarioSimulationService } from './createScenarioSimulationService';
 import type { CombatSkillInputPhase } from '../../core/combat/runtime/combatFrameInput';
 import {
   compileFixedCombatInputSchedule,
@@ -101,6 +144,8 @@ function createService(
 
 const testIndex = {
   revision: 'test-definitions',
+  actionPrograms: new ActionGraphDefinitionRepository(),
+  getCommonDefinitionSources: () => [{ id: 'shared', buffDefinitions: commonBuffDefinitions }],
   getOperator: (slug: string) => (slug === perlica.slug ? perlica : null),
   getCommonBuffDefinitions: () => commonBuffDefinitions,
   getWeapon: () => null,
@@ -109,6 +154,73 @@ const testIndex = {
 };
 
 describe('ScenarioSimulationService', () => {
+  it('图干员通过正式服务编译输入并复用模拟结果', async () => {
+    const graphFixtureSkill = graphFixtureSkillOf({
+      key: 'service-graph-skill',
+      skillType: 'battleSkill',
+      levelSource: 'battleSkill',
+      timelineBlockFrames: 1,
+      steps: [{ kind: 'dealStagger', parameters: { value: 1 } }],
+    });
+    const definition: OperatorDefinition = {
+      ...perlica,
+      talents: [],
+      potentials: [],
+      comboSkillConditions: [],
+      skillGroups: [
+        {
+          key: 'battleSkill',
+          skillType: 'battleSkill',
+          levelSource: 'battleSkill',
+          skills: graphFixtureSkill,
+        },
+      ],
+    };
+    const scenario = placeSkillGroup({
+      scenario: createPerlicaScenario(),
+      trackIndex: 0,
+      operator: definition,
+      skillGroupKey: 'battleSkill',
+      startFrame: 1,
+      ids: { allocate: () => 'cast:service-graph' },
+    }).scenario;
+    scenario.tracks[0]!.initialState.maxUltimateEnergyOverride = 100;
+    const resources = {
+      sharedSpGain: { baseGainEfficiency: 1 },
+      spRecoveryPauseDuration: 1.5,
+      ultimateEnergySystemUnlocked: true,
+      normalSkillUltimateEnergy: { selfGainPerSp: 0.065, otherGainPerSp: 0.065 },
+    };
+    const graphService = new ScenarioSimulationService({
+      index: { ...testIndex, getOperator: () => definition },
+      resources,
+    });
+    const schedule = graphService.compileInputSchedule(scenario);
+    expect(schedule.inputs.length).toBeGreaterThan(0);
+    const graph = await graphService.simulate(scenario, 4);
+    expect(graph.receiptEntries.some(entry => entry.event === 'SkillInputProcessed')).toBe(true);
+    expect(graph.enemyVitals.finalPoise).toBeLessThan(graph.enemyVitals.initialPoise);
+    expect(await graphService.simulate(scenario, 4)).toBe(graph);
+    const graphInherited = structuredClone(scenario);
+    graphInherited.inheritance = { frame: 2, sourceScenarioId: 'source' };
+    const inheritedGraphRun = await graphService.simulate(graphInherited, 4);
+    expect(
+      inheritedGraphRun.receiptEntries.some(entry => entry.event === 'SkillInputProcessed'),
+    ).toBe(true);
+    expect(inheritedGraphRun.enemyVitals.finalPoise).toBe(graph.enemyVitals.finalPoise);
+    const factoryService = createScenarioSimulationService(
+      createGameDataRepository({
+        revision: 'graph-service',
+        operators: [definition],
+        commonDefinitionSources: [{ id: 'shared', buffDefinitions: commonBuffDefinitions }],
+      }),
+    );
+    expect(factoryService.compileInputSchedule(scenario).inputs).toEqual(schedule.inputs);
+    expect((await factoryService.simulate(scenario, 4)).enemyVitals.finalPoise).toBe(
+      graph.enemyVitals.finalPoise,
+    );
+  });
+
   it('自定义全局 Buff 与预设同时生效，停用保留定义且不影响同组其他 Buff', () => {
     const scenario = createPerlicaScenario();
     scenario.tracks[1] = { ...structuredClone(scenario.tracks[0]!), id: 'track:1' };
@@ -120,6 +232,7 @@ describe('ScenarioSimulationService', () => {
       definition: {
         stackingType: 'unlimited',
         attributeModifiers: [{ attribute: 'criticalRate', slot: 'baseAddition', value: 0.2 }],
+        actionGraph: { main: { nodes: {} }, macros: {} },
       },
     }));
     const service = createService();
@@ -791,6 +904,10 @@ describe('ScenarioSimulationService', () => {
     }).scenario;
     const service = new ScenarioSimulationService({
       index: {
+        actionPrograms: new ActionGraphDefinitionRepository(),
+        getCommonDefinitionSources: () => [
+          { id: 'shared', buffDefinitions: commonBuffDefinitions },
+        ],
         getOperator: slug =>
           slug === attacker.slug ? attacker : slug === perlica.slug ? perlica : null,
         getWeapon: () => null,
@@ -843,6 +960,10 @@ describe('ScenarioSimulationService', () => {
     }).scenario;
     const service = new ScenarioSimulationService({
       index: {
+        actionPrograms: new ActionGraphDefinitionRepository(),
+        getCommonDefinitionSources: () => [
+          { id: 'shared', buffDefinitions: commonBuffDefinitions },
+        ],
         getOperator: (slug: string) => (slug === perlica.slug ? perlica : null),
         getWeapon: () => null,
         getGear: () => null,
@@ -1053,7 +1174,7 @@ describe('ScenarioSimulationService', () => {
             entry =>
               entry.event === 'DamageApplied' &&
               entry.data?.castId === laterCast.id &&
-              entry.data?.stepKey !== undefined,
+              entry.producedBy?.kind === 'action',
           )
           .map(entry => ({
             stepKey: entry.data?.stepKey,

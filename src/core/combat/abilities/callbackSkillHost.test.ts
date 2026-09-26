@@ -6,10 +6,11 @@ import { CombatReceiptCollector } from '../receipt/combatReceipt';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { restoreProjectileCallback, ProjectileCallbackRuntime } from './projectileCallbackRuntime';
 import { ProjectileCallbackPrograms } from './projectileCallbackPrograms';
-import type { CompiledProjectileCallbackSkillProgram } from '../../compiler/combatProgram';
+import type { CompiledAbilityEntityChildSkillProgram } from '../../compiler/combatProgram';
+import { chainEntry } from '../../../test/compiledGraphEntry';
 
 it('回调重复命中不能越过自身冷却，冷却结束后才再次执行', () => {
-  const program: CompiledProjectileCallbackSkillProgram = {
+  const program: CompiledAbilityEntityChildSkillProgram = {
     skillId: 'cooldown-hit',
     nativeSkillType: 'normalSkill',
     naturalDurationFrames: 3,
@@ -24,14 +25,12 @@ it('回调重复命中不能越过自身冷却，冷却结束后才再次执行'
       {
         startFrame: 0,
         endFrame: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'setContextFlag',
-              parameters: { flag: 'hit', value: true, target: 'caster' },
-            },
-          ],
-        },
+        sequence: chainEntry('callback', [
+          {
+            kind: 'setContextFlag',
+            parameters: { flag: 'hit', value: true, target: 'caster' },
+          },
+        ]),
       },
     ],
   };
@@ -99,7 +98,7 @@ it('回调重复命中不能越过自身冷却，冷却结束后才再次执行'
 });
 
 it('多目标命中复用回调宿主，并逐次传递各自的输入目标', () => {
-  const program: CompiledProjectileCallbackSkillProgram = {
+  const program: CompiledAbilityEntityChildSkillProgram = {
     skillId: 'heal-hit',
     nativeSkillType: 'normalSkill',
     naturalDurationFrames: 3,
@@ -114,11 +113,9 @@ it('多目标命中复用回调宿主，并逐次传递各自的输入目标', (
       {
         startFrame: 0,
         endFrame: 0,
-        sequence: {
-          steps: [
-            { kind: 'setContextFlag', parameters: { flag: 'hit', value: true, target: 'caster' } },
-          ],
-        },
+        sequence: chainEntry('callback', [
+          { kind: 'setContextFlag', parameters: { flag: 'hit', value: true, target: 'caster' } },
+        ]),
       },
     ],
   };
@@ -178,7 +175,7 @@ it('多目标命中复用回调宿主，并逐次传递各自的输入目标', (
 });
 
 it('恢复回调宿主后逐帧状态和回执一致，绑定不分配编号或重放动作', () => {
-  const program: CompiledProjectileCallbackSkillProgram = {
+  const program: CompiledAbilityEntityChildSkillProgram = {
     skillId: 'callback',
     nativeSkillType: 'normalSkill',
     naturalDurationFrames: 4,
@@ -193,11 +190,9 @@ it('恢复回调宿主后逐帧状态和回执一致，绑定不分配编号或�
       {
         startFrame: 2,
         endFrame: 3,
-        sequence: {
-          steps: [
-            { kind: 'setContextFlag', parameters: { flag: 'hit', value: true, target: 'caster' } },
-          ],
-        },
+        sequence: chainEntry('callback', [
+          { kind: 'setContextFlag', parameters: { flag: 'hit', value: true, target: 'caster' } },
+        ]),
       },
     ],
   };

@@ -587,6 +587,9 @@ describe('独立游戏数据契约边界', () => {
       function visit(node: ts.Node): void {
         if (
           ts.isClassDeclaration(node) ||
+          ts.isFunctionDeclaration(node) ||
+          ts.isFunctionExpression(node) ||
+          ts.isArrowFunction(node) ||
           ts.isFunctionTypeNode(node) ||
           ts.isMethodSignature(node) ||
           ts.isCallSignatureDeclaration(node)
@@ -595,7 +598,7 @@ describe('独立游戏数据契约边界', () => {
         }
         ts.forEachChild(node, visit);
       }
-      visit(ast);
+      ast.statements.forEach(visit);
     }
     expect(violations).toEqual([]);
   });
@@ -613,14 +616,22 @@ describe('独立游戏数据契约边界', () => {
     ).toEqual([]);
   });
 
-  it('转换器生产依赖图不加载本体', () => {
+  it('转换器只共享主包的纯逻辑，不加载应用状态、UI 或正式数据仓库', () => {
     const program = loadProgram(join(compilerRoot, 'tsconfig.production.json'));
+    const sharedDirectories = [join(productRoot, 'core/action-graph')];
+    const sharedFiles = [
+      join(productRoot, 'core/game-data/definitionGuards.ts'),
+      join(productRoot, 'core/mechanics/combatNumbers.ts'),
+    ];
     const violations = program
       .getSourceFiles()
       .filter(
         file =>
           !file.isDeclarationFile &&
-          ![compilerRoot, contractRoot].some(directory => inside(file.fileName, directory)),
+          ![compilerRoot, contractRoot, ...sharedDirectories].some(directory =>
+            inside(file.fileName, directory),
+          ) &&
+          !sharedFiles.some(path => relative(path, file.fileName) === ''),
       );
     expect(violations.map(file => relative(root, file.fileName))).toEqual([]);
     expect(

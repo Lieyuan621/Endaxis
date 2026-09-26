@@ -78,24 +78,27 @@ function collectRequiredActionSequenceReferences(
   references: BuffReference[],
 ): void {
   if (sequence === null) return;
-  for (const data of sequence.steps) {
+  const dataItems = [...sequence.nodes.values()].map(node => node.data);
+  for (const data of dataItems) {
     if (data === null) continue;
     if (data.kind === 'buffHold') {
       references.push(...data.buffs.references);
-    } else if (data.kind === 'sequence') {
-      collectRequiredActionSequenceReferences(data.sequence, references);
-    } else if (data.kind === 'branch') {
-      for (const branch of data.branches)
+    } else if (data.kind === 'graphMacro') {
+      collectRequiredActionSequenceReferences(data.body, references);
+    } else if (data.kind === 'graphBranch') {
+      for (const branch of data.branches.values())
         collectRequiredActionSequenceReferences(branch, references);
-    } else if (data.kind === 'targets') {
+    } else if (data.kind === 'graphGuard') {
+      collectRequiredActionSequenceReferences(data.body, references);
+    } else if (data.kind === 'graphScope') {
+      collectRequiredActionSequenceReferences(data.body?.execution ?? null, references);
+    } else if (data.kind === 'graphTargets') {
       for (const body of data.loop.bodies.values()) {
         collectRequiredActionSequenceReferences(body.sequence, references);
       }
-    } else if (data.kind === 'blackboardScope') {
-      collectRequiredActionSequenceReferences(data.scope.body?.sequence ?? null, references);
     } else if (data.kind === 'repeat') {
       collectRequiredActionSequenceReferences(data.repetition.body, references);
-    } else if (data.kind === 'listener') {
+    } else if (data.kind === 'graphListener') {
       for (const response of data.listener.responses) {
         collectRequiredActionSequenceReferences(response.sequence, references);
       }

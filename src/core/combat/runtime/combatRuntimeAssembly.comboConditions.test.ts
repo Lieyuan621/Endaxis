@@ -2,13 +2,42 @@ import { describe, expect, it, vi } from 'vitest';
 import type {
   CompiledComboSkillConditionProgram,
   CompiledSkillProgram,
-  ResolvedCombatStep,
+  ResolvedActionSequence,
 } from '../../compiler/combatProgram';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import type {
+  ActionGraphNode,
+  ActionGraphStep,
+} from '../../../../packages/game-data-contract/src/actionGraph';
 import { CombatRuntimeAssembly, type CombatRuntimeAssemblyOptions } from './combatRuntimeAssembly';
 import {
   ComboSkillConditionRuntime,
   type PendingComboCondition,
 } from '../skills/comboSkillConditionRuntime';
+
+const compileGraphEntry = (
+  revision: string,
+  entry: string | null,
+  nodes: Record<string, ActionGraphNode>,
+): ResolvedActionSequence => ({
+  graph: createActionGraphCompilation({ nodes }, 1, revision).compileAll(),
+  entry,
+  callSite: revision,
+});
+
+const chainEntry = (
+  revision: string,
+  actions: readonly ActionGraphStep[],
+): ResolvedActionSequence => {
+  const nodes: Record<string, ActionGraphNode> = {};
+  actions.forEach((action, index) => {
+    nodes[`step-${index}`] = {
+      action,
+      next: index + 1 < actions.length ? `step-${index + 1}` : null,
+    };
+  });
+  return compileGraphEntry(revision, actions.length === 0 ? null : 'step-0', nodes);
+};
 
 const condition: CompiledComboSkillConditionProgram = {
   key: 'saved-element',
@@ -17,14 +46,12 @@ const condition: CompiledComboSkillConditionProgram = {
   event: 'beforeTakeInfliction',
   immediately: false,
   initialValues: { local: 0, label: 'condition' },
-  sequence: {
-    steps: [
-      {
-        kind: 'modifyActionValue',
-        parameters: { key: 'local', operation: 'add', value: { kind: 'constant', value: 1 } },
-      },
-    ],
-  },
+  sequence: chainEntry('saved-element', [
+    {
+      kind: 'modifyActionValue',
+      parameters: { key: 'local', operation: 'add', value: { kind: 'constant', value: 1 } },
+    },
+  ]),
 };
 
 function combo(skillId = 'combo'): CompiledSkillProgram {
@@ -39,17 +66,17 @@ function combo(skillId = 'combo'): CompiledSkillProgram {
     cooldownFrames: 300,
     costFrame: 6,
     timelineBlockFrames: 60,
-    timelineActions: [{ startFrame: 60, sequence: { steps: [] } }],
+    timelineActions: [{ startFrame: 60, sequence: chainEntry(`combo-empty-${skillId}`, []) }],
   };
 }
-function action(skillId: string, steps: readonly ResolvedCombatStep[]): CompiledSkillProgram {
+function action(skillId: string, steps: readonly ActionGraphStep[]): CompiledSkillProgram {
   return {
     ...combo(skillId),
     skillGroupKey: skillId,
     skillType: 'battleSkill',
     cooldownFrames: undefined,
     costFrame: undefined,
-    timelineActions: [{ startFrame: 0, sequence: { steps } }],
+    timelineActions: [{ startFrame: 0, sequence: chainEntry(`action-${skillId}`, steps) }],
   };
 }
 function setup() {
@@ -184,17 +211,18 @@ describe('assembly 原生常驻连携条件', () => {
     f.owner.comboConditionPrograms = [
       {
         ...condition,
-        sequence: {
-          steps: [
-            {
+        sequence: compileGraphEntry('combo-pending-guard', 'step-0', {
+          'step-0': {
+            action: {
               kind: 'conditional',
               parameters: {
                 condition: { kind: 'not', condition: { kind: 'casterComboPending' } },
               },
-              whenTrue: { steps: [] },
+              whenTrue: { $sequence: null },
             },
-          ],
-        },
+            next: null,
+          },
+        }),
       },
     ];
     const assembly = new CombatRuntimeAssembly({
@@ -213,7 +241,7 @@ describe('assembly 原生常驻连携条件', () => {
   it('无需外部 Pending 接收方：条件快照进窗口并在第零帧前覆盖，下一次不残留', () => {
     const f = setup();
     const frames: unknown[] = [];
-    const probe: ResolvedCombatStep = {
+    const probe: ActionGraphStep = {
       kind: 'dealDamage',
       parameters: { damageType: 'nature', attackScale: 1, tags: ['comboSkill'] },
     };
@@ -222,7 +250,7 @@ describe('assembly 原生常驻连携条件', () => {
         ...combo(),
         smartTarget: 'trigger',
         initialBlackboard: { local: 0 },
-        timelineActions: [{ startFrame: 0, sequence: { steps: [probe] } }],
+        timelineActions: [{ startFrame: 0, sequence: chainEntry('combo-probe', [probe]) }],
       },
     ];
     const assembly = new CombatRuntimeAssembly({
@@ -276,14 +304,12 @@ describe('assembly 原生常驻连携条件', () => {
         timelineActions: [
           {
             startFrame: 0,
-            sequence: {
-              steps: [
-                {
-                  kind: 'dealDamage',
-                  parameters: { damageType: 'nature', attackScale: 1, tags: ['comboSkill'] },
-                },
-              ],
-            },
+            sequence: chainEntry('combo-expired-candidate', [
+              {
+                kind: 'dealDamage',
+                parameters: { damageType: 'nature', attackScale: 1, tags: ['comboSkill'] },
+              },
+            ]),
           },
         ],
       },
@@ -318,14 +344,12 @@ describe('assembly 原生常驻连携条件', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'dealDamage',
-                parameters: { damageType: 'nature', attackScale: 1, tags: ['comboSkill'] },
-              },
-            ],
-          },
+          sequence: chainEntry('combo-replacement-action', [
+            {
+              kind: 'dealDamage',
+              parameters: { damageType: 'nature', attackScale: 1, tags: ['comboSkill'] },
+            },
+          ]),
         },
       ],
     });
@@ -388,20 +412,18 @@ describe('assembly 原生常驻连携条件', () => {
           initializationPrograms: [
             {
               key: 'cooldown',
-              sequence: {
-                steps: [
-                  {
-                    kind: 'adjustSkillCooldown',
-                    parameters: {
-                      target: 'caster',
-                      skill: { kind: 'type', skillType: 'comboSkill' },
-                      operation: 'set',
-                      basis: 'baseDurationRatio',
-                      value: { kind: 'constant', value: 1 },
-                    },
+              sequence: chainEntry('combo-init-cooldown', [
+                {
+                  kind: 'adjustSkillCooldown',
+                  parameters: {
+                    target: 'caster',
+                    skill: { kind: 'type', skillType: 'comboSkill' },
+                    operation: 'set',
+                    basis: 'baseDurationRatio',
+                    value: { kind: 'constant', value: 1 },
                   },
-                ],
-              },
+                },
+              ]),
             },
           ],
         },
@@ -447,20 +469,18 @@ describe('assembly 原生常驻连携条件', () => {
             initializationPrograms: [
               {
                 key: 'set',
-                sequence: {
-                  steps: [
-                    {
-                      kind: 'adjustSkillCooldown',
-                      parameters: {
-                        target: 'caster',
-                        skill: { kind: 'type', skillType: 'comboSkill' },
-                        operation: 'set',
-                        basis: 'absoluteSeconds',
-                        value: { kind: 'constant', value: 5 },
-                      },
+                sequence: chainEntry('combo-init-set-cooldown', [
+                  {
+                    kind: 'adjustSkillCooldown',
+                    parameters: {
+                      target: 'caster',
+                      skill: { kind: 'type', skillType: 'comboSkill' },
+                      operation: 'set',
+                      basis: 'absoluteSeconds',
+                      value: { kind: 'constant', value: 5 },
                     },
-                  ],
-                },
+                  },
+                ]),
               },
             ],
           },
@@ -498,20 +518,18 @@ describe('assembly 原生常驻连携条件', () => {
           initializationPrograms: [
             {
               key: 'set',
-              sequence: {
-                steps: [
-                  {
-                    kind: 'adjustSkillCooldown',
-                    parameters: {
-                      target: 'caster',
-                      skill: { kind: 'id', skillId: 'combo' },
-                      operation: 'set',
-                      basis: 'baseDurationRatio',
-                      value: { kind: 'constant', value: 0.5 },
-                    },
+              sequence: chainEntry('combo-init-variant-cooldown', [
+                {
+                  kind: 'adjustSkillCooldown',
+                  parameters: {
+                    target: 'caster',
+                    skill: { kind: 'id', skillId: 'combo' },
+                    operation: 'set',
+                    basis: 'baseDurationRatio',
+                    value: { kind: 'constant', value: 0.5 },
                   },
-                ],
-              },
+                },
+              ]),
             },
           ],
         },
@@ -642,18 +660,16 @@ describe('assembly 原生常驻连携条件', () => {
     const f = setup();
     f.owner.comboConditionPrograms[0] = {
       ...condition,
-      sequence: {
-        steps: [
-          {
-            kind: 'modifyActionValue',
-            parameters: {
-              key: 'local',
-              operation: 'add',
-              value: { kind: 'blackboard', key: 'EntityBB_value' },
-            },
+      sequence: chainEntry('combo-entity-board-read', [
+        {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'local',
+            operation: 'add',
+            value: { kind: 'blackboard', key: 'EntityBB_value' },
           },
-        ],
-      },
+        },
+      ]),
     };
     f.owner.skills.push(
       action('write', [
@@ -684,7 +700,11 @@ describe('assembly 原生常驻连携条件', () => {
     { label: 'local', empty: null },
   ])('条件初值 %j 原样进入 Pending，仅复制 direct 板', initialValues => {
     const f = setup();
-    f.owner.comboConditionPrograms[0] = { ...condition, initialValues, sequence: { steps: [] } };
+    f.owner.comboConditionPrograms[0] = {
+      ...condition,
+      initialValues,
+      sequence: chainEntry('combo-initial-values', []),
+    };
     new CombatRuntimeAssembly({
       ...f.options,
       operators: [{ ...f.owner, initialEntityBlackboard: { EntityBB_hidden: 7 } }],
@@ -733,7 +753,7 @@ describe('assembly 原生常驻连携条件', () => {
     const f = setup();
     f.owner.skillSlotGroups[0]!.replacementSkillKeys.push('variant');
     f.owner.skills.push(combo('variant'));
-    const change = (targetSkillKey: string): ResolvedCombatStep => ({
+    const change = (targetSkillKey: string): ActionGraphStep => ({
       kind: 'changeSkillSlot',
       parameters: { skillGroupKey: 'combo', targetSkillKey },
     });

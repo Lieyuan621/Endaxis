@@ -2,7 +2,7 @@
  * 与框架无关的核心 API 出口。应用装配层通过这里组合项目、编译器和运行时，
  * UI 不应绕过此边界直接操作内部可变对象。
  */
-export * from './combat/actions/actionSequence';
+export * from './combat/actions/actionGraphExecution';
 export * from './combat/actions/combatStep';
 export * from './combat/events/abilityEventDispatcher';
 export * from './combat/events/abilityEventListenerStep';

@@ -328,10 +328,7 @@ function presentationPlacement(
     : 'upper';
 }
 
-/**
- * 普通 Buff 仅展示原生开启头顶或队伍图标的状态。有图标资源不代表应当显示。
- * 显式 visible: false 仍优先隐藏；干员专属 UI 由独立投影负责。
- */
+/** 轴上只展示原生头顶或队伍栏开启图标的 Buff。 */
 function isVisibleBuff(data: Readonly<Record<string, CombatReceiptValue>>): boolean {
   return (
     data.visible !== false &&
@@ -348,7 +345,7 @@ export function projectBuffTimelineViz(
   return projectBuffSegments(entries, endFrame, isVisibleBuff);
 }
 
-/** 伤害图标和物理异常标记需要来源身份，即使原生不在头顶或队伍栏显示。 */
+/** 伤害图标和物理异常仍需内部 Buff 身份，即使它不在轴上显示。 */
 export function projectBuffIconTimelineMetadata(
   entries: readonly CombatReceiptEntry[],
   endFrame: number,
@@ -426,7 +423,16 @@ function projectBuffSegments(
       }
       continue;
     }
-    if (!include(data)) continue;
+    if (
+      !include(data) &&
+      !(
+        entry.event === 'BuffPresentationStarted' &&
+        data.visible !== false &&
+        (optionalString(data, 'iconPath') !== undefined ||
+          optionalString(data, 'iconId') !== undefined)
+      )
+    )
+      continue;
     const modifierFact =
       simpleModifierFact(data) ??
       (sourceFrameKey(entry) === undefined

@@ -1,7 +1,8 @@
+import type { SkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
 import { describe, expect, it } from 'vitest';
 import { ExplicitCriticalSampleSource } from '../../../core/combat/random/criticalSampleSource';
 import { ExplicitProbabilitySampleSource } from '../../../core/combat/random/probabilitySampleSource';
-import type { SkillDefinition } from '../../../core/game-data/operatorDefinition';
+import type { OperatorDefinition } from '../../../core/game-data/operatorDefinition';
 import { compileOperatorEntityBlackboardInitialValues } from '../../../core/compiler/compileScenarioRuntimeAssembly';
 import { compileOperatorDefinitionSkills } from '../../../core/compiler/compileScenarioTimeline';
 import { resolveOperatorPanel } from '../../../core/compiler/resolveOperatorPanel';
@@ -15,7 +16,6 @@ import { projectPurrchenaGiftResults } from '../../../ui/operators/purrchenaGift
 import { elementalAttachments } from '../../../data/buffs/elementalAttachments';
 import { compoundStatusFactories } from '../../../data/buffs/compoundStatusFactories';
 import { skillSettings } from '../../../data/combat/skillSettings';
-import { scheduled, sequence, step } from '../../../data/operators/definitionHelpers';
 import {
   alesh,
   antal,
@@ -46,8 +46,43 @@ import {
   zhuangFangyi,
 } from '../../../data/operators';
 import { placeSkillGroup } from '../../../ui/timeline/interaction/placeSkillGroup';
-import { getSkill } from '../../../data/operators/testUtils';
-const laevatainBasicAttack1 = getSkill(laevatain, 'chr_0016_laevat_attack1');
+import type {
+  ActionGraphNode,
+  ActionGraphStep,
+} from '../../../../packages/game-data-contract/src/actionGraph';
+
+function findSkill(operator: OperatorDefinition, key: string) {
+  const skill = operator.skillGroups
+    .flatMap(group => (Array.isArray(group.skills) ? group.skills : [group.skills]))
+    .find(candidate => candidate.key === key);
+  if (!skill) throw new Error(`missing skill: ${key}`);
+  return skill;
+}
+const laevatainBasicAttack1 = findSkill(laevatain, 'chr_0016_laevat_attack1');
+
+/** 线性链夹具技能：调用处显式给出每段排程的步骤列表，节点铺入技能自己的 main 图。 */
+function graphFixtureSkill(
+  fixture: Omit<SkillDefinition, 'scheduledSequences' | 'actionGraph'> & {
+    readonly sequences: readonly { startFrame: number; steps: readonly ActionGraphStep[] }[];
+  },
+): SkillDefinition {
+  const { sequences, ...fields } = fixture;
+  const nodes: Record<string, ActionGraphNode> = {};
+  const scheduledSequences = sequences.map((scheduledSequence, sequenceIndex) => {
+    const prefix = `seq${sequenceIndex}`;
+    scheduledSequence.steps.forEach((action, index) => {
+      nodes[`${prefix}-${index}`] = {
+        action,
+        next: index + 1 < scheduledSequence.steps.length ? `${prefix}-${index + 1}` : null,
+      };
+    });
+    return {
+      startFrame: scheduledSequence.startFrame,
+      sequence: { $sequence: scheduledSequence.steps.length === 0 ? null : `${prefix}-0` },
+    };
+  });
+  return { ...fields, scheduledSequences, actionGraph: { main: { nodes }, macros: {} } };
+}
 import { projectTimelineEditor } from '../../../ui/timeline/timelineEditorViewModel';
 import {
   projectHitEffectsByCast,
@@ -564,6 +599,9 @@ describe('registered generated operators', () => {
         'track:ardelia',
         scenario.tracks[0]!.operator!,
         ardelia,
+        undefined,
+        undefined,
+        gameDataRepository.actionPrograms,
       ).find(candidate => candidate.skillGroupKey === 'battleSkill')!;
       const placed = placeSkillGroup({
         scenario,
@@ -889,9 +927,30 @@ describe('registered generated operators', () => {
   });
 
   it('applies Xaihi ultimate Crystal enhancement to a later basic attack', () => {
-    const enhancementSteps =
-      xaihi.buffDefinitions?.['buff_chr_0011_seraph_atk_buff']?.lifecycleSequences?.start?.steps;
-    expect(enhancementSteps?.slice(-2)).toMatchObject([
+    const enhancementBuff = xaihi.buffDefinitions?.['buff_chr_0011_seraph_atk_buff'];
+    const startEntry =
+      enhancementBuff?.lifecycleSequences?.start == null
+        ? null
+        : enhancementBuff.lifecycleSequences.start.$sequence;
+    const enhancementSteps: unknown[] = [];
+    if (
+      enhancementBuff !== undefined &&
+      'actionGraph' in enhancementBuff &&
+      enhancementBuff.actionGraph !== undefined &&
+      startEntry !== null
+    ) {
+      const nodes = enhancementBuff.actionGraph.main.nodes;
+      const seen = new Set<string>();
+      let current: string | null = startEntry;
+      while (current !== null && !seen.has(current)) {
+        seen.add(current);
+        const node: ActionGraphNode | undefined = nodes[current];
+        if (node === undefined) break;
+        enhancementSteps.push(node.action);
+        current = node.next;
+      }
+    }
+    expect(enhancementSteps.slice(-2)).toMatchObject([
       {
         kind: 'applyBuff',
         parameters: {
@@ -1210,6 +1269,7 @@ describe('registered generated operators', () => {
       build.operator,
       gameDataRepository.getCommonAbilityEntityDefinitions?.() ?? {},
       panel.attributes,
+      gameDataRepository.actionPrograms,
     );
     expect(
       allSkills.find(skill => skill.skillId === 'chr_0032_lizhiyan_combo_skill')?.cooldownFrames,
@@ -1367,49 +1427,53 @@ describe('registered generated operators', () => {
       }).scenario;
       const cast = placed.tracks[0]?.skillCasts[0];
       if (cast === undefined) throw new Error('missing Laevatain test cast');
-      const attachmentAndHit = (key: string): SkillDefinition => ({
+      const attachmentAndHit = (key: string): SkillDefinition =>
+        graphFixtureSkill({
+          key: laevatainBasicAttack1.key,
+          skillType: 'basicAttack',
+          levelSource: 'basicAttack',
+          nativeSkillType: laevatainBasicAttack1.nativeSkillType,
+          timelineBlockFrames: 1,
+          sequences: [
+            {
+              startFrame: 0,
+              steps: [
+                {
+                  kind: 'applyElementalInfliction',
+                  parameters: { element: 'heat', isExtra: false },
+                },
+                {
+                  kind: 'dealDamage',
+                  key,
+                  parameters: {
+                    damageType: 'heat',
+                    attackScale: 1,
+                    tags: ['normalAttack', 'normalAttackLastCombo'],
+                  },
+                },
+              ],
+            },
+          ],
+        });
+      const probe: SkillDefinition = graphFixtureSkill({
         key: laevatainBasicAttack1.key,
         skillType: 'basicAttack',
         levelSource: 'basicAttack',
         nativeSkillType: laevatainBasicAttack1.nativeSkillType,
         timelineBlockFrames: 1,
-        scheduledSequences: [
-          scheduled(
-            0,
-            sequence(
-              step('applyElementalInfliction', { element: 'heat', isExtra: false }),
-              step(
-                'dealDamage',
-                {
-                  damageType: 'heat',
-                  attackScale: 1,
-                  tags: ['normalAttack', 'normalAttackLastCombo'],
-                },
-                key,
-              ),
-            ),
-          ),
+        sequences: [
+          {
+            startFrame: 0,
+            steps: [
+              {
+                kind: 'dealDamage',
+                key: 'probe',
+                parameters: { damageType: 'heat', attackScale: 1, tags: ['normalAttack'] },
+              },
+            ],
+          },
         ],
       });
-      const probe: SkillDefinition = {
-        key: laevatainBasicAttack1.key,
-        skillType: 'basicAttack',
-        levelSource: 'basicAttack',
-        nativeSkillType: laevatainBasicAttack1.nativeSkillType,
-        timelineBlockFrames: 1,
-        scheduledSequences: [
-          scheduled(
-            0,
-            sequence(
-              step(
-                'dealDamage',
-                { damageType: 'heat', attackScale: 1, tags: ['normalAttack'] },
-                'probe',
-              ),
-            ),
-          ),
-        ],
-      };
       const track = placed.tracks[0];
       if (track === null) throw new Error('missing Laevatain test track');
       track.skillCasts = [1, 32, 63, 94].map((startFrame, index) => ({
@@ -1972,12 +2036,13 @@ describe('registered generated operators', () => {
           entry.data?.requestedValue === -40,
       ),
     ).toBe(true);
+    const camilleDamage = result.receiptEntries.filter(
+      entry => entry.event === 'DamageApplied' && entry.sourceId === 'track:camille',
+    );
+
     expect(
-      result.receiptEntries.some(
-        entry =>
-          entry.event === 'DamageApplied' &&
-          entry.sourceId === 'track:camille' &&
-          String(entry.data?.stepKey).includes('chr_0033_camille_combo_skill_2'),
+      camilleDamage.some(entry =>
+        String(entry.data?.stepKey).includes('chr_0033_camille_combo_skill_2'),
       ),
     ).toBe(true);
   });
@@ -2047,27 +2112,35 @@ describe('registered generated operators', () => {
         .find(skill => skill.key === 'chr_0033_camille_combo_skill');
       if (camilleComboDefinition === undefined)
         throw new Error('missing Camille combo skill definition');
+      const {
+        eventHandlers: _comboEvents,
+        switchToBuffCast: _comboBypass,
+        ...comboBase
+      } = camilleComboDefinition;
       placed.tracks[0]!.skillCasts = [
         {
           ...camilleCast,
-          customDefinition: {
-            ...camilleComboDefinition,
+          customDefinition: graphFixtureSkill({
+            ...comboBase,
             timelineBlockFrames: 1,
-            scheduledSequences: [
-              scheduled(
-                0,
-                sequence(
-                  step('heal', {
-                    target: 'controlledOperator',
-                    tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
-                    attribute: 'intellect',
-                    multiplier: { kind: 'constant', value: 0.3 },
-                    addition: { kind: 'constant', value: 60 },
-                  }),
-                ),
-              ),
+            sequences: [
+              {
+                startFrame: 0,
+                steps: [
+                  {
+                    kind: 'heal',
+                    parameters: {
+                      target: 'controlledOperator',
+                      tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
+                      attribute: 'intellect',
+                      multiplier: { kind: 'constant', value: 0.3 },
+                      addition: { kind: 'constant', value: 60 },
+                    },
+                  },
+                ],
+              },
             ],
-          },
+          }),
         },
       ];
       placed = placeSkillGroup({
@@ -2233,7 +2306,7 @@ describe('registered generated operators', () => {
         data: expect.objectContaining({
           castId: enhancedBattleCastId,
           stepKey:
-            'abilityentity_chr_0030_zhuangfy_normal_skill_ult:chr_0030_zhuangfy_normal_skill_ult_abilityrange:/childSkill/scheduledSequences/3/sequence/steps/0/whenTrue/steps/2',
+            'abilityentity_chr_0030_zhuangfy_normal_skill_ult:chr_0030_zhuangfy_normal_skill_ult_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_12/action',
         }),
       }),
     );
@@ -3060,6 +3133,8 @@ describe('registered generated operators', () => {
   });
 
   it('keeps Perlica, Wulfgard, Last Rite and Tangtang native combo conditions in generated operator definitions', () => {
+    const conditionGraphText = (condition: { readonly actionGraph?: unknown }) =>
+      JSON.stringify(condition.actionGraph ?? {});
     expect('comboSkillRegistrations' in perlica).toBe(false);
     expect(perlica.comboSkillConditions).toEqual([
       expect.objectContaining({
@@ -3068,20 +3143,12 @@ describe('registered generated operators', () => {
         event: 'beforeTakeDamage',
         immediately: false,
         initialValues: null,
-        sequence: expect.objectContaining({
-          steps: expect.arrayContaining([
-            expect.objectContaining({
-              parameters: expect.objectContaining({
-                condition: expect.objectContaining({
-                  kind: 'eventDamageTagsMatch',
-                  tags: ['normalAttackLastCombo'],
-                }),
-              }),
-            }),
-          ]),
-        }),
+        sequence: { $sequence: expect.any(String) },
       }),
     ]);
+    const perlicaCondition = perlica.comboSkillConditions![0]!;
+    expect(conditionGraphText(perlicaCondition)).toContain('eventDamageTagsMatch');
+    expect(conditionGraphText(perlicaCondition)).toContain('normalAttackLastCombo');
     expect(JSON.stringify(perlica.comboSkillConditions)).toContain('eventSourceControlled');
     expect(JSON.stringify(perlica.comboSkillConditions)).toContain('contextTargetObjectTypeMatch');
     expect('comboSkillRegistrations' in wulfgard).toBe(false);
@@ -3112,19 +3179,7 @@ describe('registered generated operators', () => {
         event: 'takeDamage',
         immediately: false,
         initialValues: null,
-        sequence: expect.objectContaining({
-          steps: expect.arrayContaining([
-            expect.objectContaining({
-              parameters: expect.objectContaining({
-                condition: {
-                  kind: 'eventDamageTagsMatch',
-                  match: 'hasAny',
-                  tags: ['fireBurst', 'cryoBurst', 'electricBurst', 'natureBurst'],
-                },
-              }),
-            }),
-          ]),
-        }),
+        sequence: { $sequence: expect.any(String) },
       }),
       expect.objectContaining({
         key: 'native-combo:1',
@@ -3132,6 +3187,10 @@ describe('registered generated operators', () => {
         event: 'beforeTakeInfliction',
       }),
     ]);
+    const tangtangCondition = tangtang.comboSkillConditions![0]!;
+    expect(conditionGraphText(tangtangCondition)).toContain('eventDamageTagsMatch');
+    expect(conditionGraphText(tangtangCondition)).toContain('fireBurst');
+    expect(conditionGraphText(tangtangCondition)).toContain('cryoBurst');
   });
 
   it('keeps newly decoded Arclight, Gilberta, Estella and Laevatain native combo conditions', () => {

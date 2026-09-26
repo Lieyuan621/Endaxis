@@ -6,7 +6,7 @@
  */
 import type { CompiledOperatorInitializationProgram } from '../../../compiler/combatProgram';
 import type { BuffApplicationHandle } from '../../buffs/combatBuffs';
-import type { ActionSequence } from '../../actions/actionSequence';
+import type { CombatActionExecution as ActionSequence } from '../../actions/actionGraphExecution';
 import { ActionBlackboard } from '../../actions/actionBlackboard';
 import { CombatActionSequenceRuntime } from '../../actions/combatActionSequenceRuntime';
 import type { CombatSemanticEventRuntime } from '../../events/combatSemanticEventRuntime';

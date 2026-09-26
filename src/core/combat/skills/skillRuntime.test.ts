@@ -1,32 +1,128 @@
+import type { SkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
 import { createTestBuffReference } from '../buffs/buffTestFixtures';
 import { describe, expect, it, vi } from 'vitest';
 import { perlica } from '../../../data/operators/perlica.generated';
-import { liino } from '../../../data/operators/liino.generated';
 import { arcane } from '../../../data/operators/arcane.generated';
-import { getSkill } from '../../../data/operators/testUtils';
-
-const arcaneUltimate = getSkill(arcane, 'chr_0032_lizhiyan_ultimate_skill');
+import { liino } from '../../../data/operators/liino.generated';
+import type { OperatorDefinition } from '../../../../packages/game-data-contract/src/operators';
+import type {
+  ActionGraphNode,
+  ActionGraphStep,
+} from '../../../../packages/game-data-contract/src/actionGraph';
 import { listOperatorSkillDefinitionBindings } from '../../game-data/operatorSkillDefinitions';
-import type { SkillDefinition } from '../../game-data/operatorDefinition';
 import { compileSkill } from '../../compiler/compileSkill';
+import { ActionGraphDefinitionRepository } from '../../compiler/actionGraphDefinitionRepository';
 import { CombatReceiptCollector } from '../receipt/combatReceipt';
 import { CombatClock } from '../time/combatClock';
 import { CombatResources } from '../resources/combatResources';
 import { projectResourceChangePoints } from '../../projection/resourceChangePoints';
 import { CombatSimulation } from '../runtime/combatSimulation';
 import { SkillRuntime, type CombatOperationExecutor } from './skillRuntime';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+
+import type { CompiledSkillExecutionProgram } from '../../compiler/combatProgram';
 import { createNativeEventFixture } from '../events/nativeEventTestFixture';
 import { AbilitySystemRuntime } from '../abilities/abilitySystemRuntime';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { SkillCooldown } from './skillCooldown';
 
-function findPerlicaSkill(key: string): SkillDefinition {
-  for (const group of perlica.skillGroups) {
+const skillPrograms = new ActionGraphDefinitionRepository();
+
+function findGraphSkill(operator: OperatorDefinition, key: string): SkillDefinition {
+  for (const group of operator.skillGroups) {
     const skills = Array.isArray(group.skills) ? group.skills : [group.skills];
     const skill = skills.find(candidate => candidate.key === key);
-    if (skill !== undefined) return skill;
+    if (skill !== undefined) return skill as SkillDefinition;
   }
-  throw new Error(`missing Perlica skill '${key}'`);
+  throw new Error(`missing skill '${key}'`);
+}
+
+function findPerlicaSkill(key: string): SkillDefinition {
+  return findGraphSkill(perlica, key);
+}
+
+const arcaneUltimate = findGraphSkill(arcane, 'chr_0032_lizhiyan_ultimate_skill');
+
+interface ScheduledFixture {
+  readonly startFrame: number;
+  readonly endFrame?: number;
+  readonly steps: readonly ActionGraphStep[];
+}
+
+// 手写图节点构建技能夹具：每个调度项与旁路序列都是 main 图内的一条链。
+function defineSkillFixture(options: {
+  readonly key: string;
+  readonly skillType?: SkillDefinition['skillType'];
+  readonly nativeSkillType?: SkillDefinition['nativeSkillType'];
+  readonly timelineBlockFrames: number;
+  readonly naturalDurationFrames?: number;
+  readonly exclusiveFrame?: number;
+  readonly blackboard?: Readonly<Record<string, number>>;
+  readonly costs?: SkillDefinition['costs'];
+  readonly costFrame?: number;
+  readonly cooldownFrames?: SkillDefinition['cooldownFrames'];
+  readonly inputWindows?: SkillDefinition['inputWindows'];
+  readonly scheduled?: readonly ScheduledFixture[];
+  readonly switchToBuffCast?: {
+    readonly currentSkillTypes?: readonly (
+      'basicAttack' | 'battleSkill' | 'comboSkill' | 'ultimate' | 'finisher'
+    )[];
+    readonly requiresCurrentSkillNotInterruptible?: boolean;
+    readonly asSkillCast?: boolean;
+    readonly steps: readonly ActionGraphStep[];
+  };
+  readonly extraNodes?: Readonly<Record<string, ActionGraphNode>>;
+}): SkillDefinition {
+  const nodes: Record<string, ActionGraphNode> = { ...options.extraNodes };
+  const chain = (prefix: string, steps: readonly ActionGraphStep[]): string | null => {
+    steps.forEach((action, index) => {
+      nodes[`${prefix}-${index}`] = {
+        action,
+        next: index + 1 < steps.length ? `${prefix}-${index + 1}` : null,
+      };
+    });
+    return steps.length === 0 ? null : `${prefix}-0`;
+  };
+  const switchToBuffCast =
+    options.switchToBuffCast === undefined
+      ? undefined
+      : {
+          ...(options.switchToBuffCast.currentSkillTypes === undefined
+            ? {}
+            : { currentSkillTypes: options.switchToBuffCast.currentSkillTypes }),
+          ...(options.switchToBuffCast.requiresCurrentSkillNotInterruptible === undefined
+            ? {}
+            : {
+                requiresCurrentSkillNotInterruptible:
+                  options.switchToBuffCast.requiresCurrentSkillNotInterruptible,
+              }),
+          ...(options.switchToBuffCast.asSkillCast === undefined
+            ? {}
+            : { asSkillCast: options.switchToBuffCast.asSkillCast }),
+          sequence: { $sequence: chain('switch', options.switchToBuffCast.steps) },
+        };
+  return {
+    key: options.key,
+    ...(options.skillType === undefined ? {} : { skillType: options.skillType }),
+    ...(options.nativeSkillType === undefined ? {} : { nativeSkillType: options.nativeSkillType }),
+    timelineBlockFrames: options.timelineBlockFrames,
+    ...(options.naturalDurationFrames === undefined
+      ? {}
+      : { naturalDurationFrames: options.naturalDurationFrames }),
+    ...(options.exclusiveFrame === undefined ? {} : { exclusiveFrame: options.exclusiveFrame }),
+    ...(options.blackboard === undefined ? {} : { blackboard: options.blackboard }),
+    ...(options.costs === undefined ? {} : { costs: options.costs }),
+    ...(options.costFrame === undefined ? {} : { costFrame: options.costFrame }),
+    ...(options.cooldownFrames === undefined ? {} : { cooldownFrames: options.cooldownFrames }),
+    ...(options.inputWindows === undefined ? {} : { inputWindows: options.inputWindows }),
+    scheduledSequences: (options.scheduled ?? []).map((item, index) => ({
+      startFrame: item.startFrame,
+      ...(item.endFrame === undefined ? {} : { endFrame: item.endFrame }),
+      sequence: { $sequence: chain(`s${index}`, item.steps) },
+    })),
+    ...(switchToBuffCast === undefined ? {} : { switchToBuffCast }),
+    actionGraph: { main: { nodes }, macros: {} },
+  };
 }
 
 function createBattleSkillRuntime(
@@ -69,6 +165,7 @@ function createBattleSkillRuntime(
     skillGroupKey: 'battleSkill',
     skillType: 'battleSkill',
     skillLevel: 12,
+    programs: skillPrograms,
     skill:
       costFrame === undefined && cooldownFrames === undefined
         ? skillDefinition
@@ -105,6 +202,79 @@ function createBattleSkillRuntime(
 }
 
 describe('SkillRuntime', () => {
+  it('正式技能宿主执行图区间，施法中恢复保留身份、输入标记和自然结束时序', () => {
+    const graph = createActionGraphCompilation(
+      {
+        nodes: {
+          flag: { action: { kind: 'markCurrentSkillCanInterrupt', parameters: {} }, next: 'hit' },
+          hit: {
+            action: {
+              kind: 'dealDamage',
+              parameters: { damageType: 'physical', attackScale: 1, tags: [] },
+            },
+            next: null,
+          },
+        },
+      },
+      1,
+      'skill-graph',
+    ).compileAll();
+    const program: CompiledSkillExecutionProgram = {
+      operatorId: 'operator',
+      skillId: 'skill',
+      skillType: 'battleSkill',
+      initialBlackboard: { power: 2 },
+      costs: [],
+      naturalDurationFrames: 6,
+      timelineActions: [
+        { startFrame: 3, endFrame: 5, sequence: { graph, entry: 'hit', callSite: 'late' } },
+        { startFrame: 0, endFrame: 2, sequence: { graph, entry: 'flag', callSite: 'early' } },
+      ],
+    };
+    const createDependencies = () => ({
+      castId: 'cast',
+      clock: new CombatClock(),
+      receipt: new CombatReceiptCollector(),
+      resources: null,
+      operations: {
+        execute: vi.fn(() => true),
+        evaluate: () => true,
+        prepare: vi.fn(),
+        end: vi.fn(),
+      },
+      allocateSkillCastId: vi.fn(() => 7),
+      emitSkillEnd: vi.fn(),
+    });
+    const original = createDependencies();
+    const skill = new SkillRuntime(program, original);
+    expect(skill.tryStart()).toBe(true);
+    expect(skill.runtimeState.markedCanInterrupt).toBe(true);
+    expect(original.operations.execute).toHaveBeenCalledTimes(1);
+    skill.advanceFrame();
+    const saved = structuredClone(skill.runtimeState);
+    const restored = createDependencies();
+    const resumed = new SkillRuntime(program, restored, {
+      state: saved,
+      damageSnapshotProgram: skill.damageSnapshotProgram,
+      resolveAttachedBuff: () => undefined,
+    });
+    expect(resumed.skillCastInfo).toEqual(skill.skillCastInfo);
+    expect(restored.allocateSkillCastId).not.toHaveBeenCalled();
+    expect(restored.operations.execute).not.toHaveBeenCalled();
+    expect(restored.operations.prepare).not.toHaveBeenCalled();
+    expect(restored.operations.end).not.toHaveBeenCalled();
+    expect(restored.receipt.entries).toEqual([]);
+    for (let frame = 0; frame < 6; frame++) {
+      skill.advanceFrame();
+      resumed.advanceFrame();
+    }
+    expect(restored.operations.execute).toHaveBeenCalledTimes(1);
+    expect(restored.operations.end).toHaveBeenCalledTimes(2);
+    expect(resumed.state).toBe(skill.state);
+    expect(restored.emitSkillEnd.mock.calls).toEqual(original.emitSkillEnd.mock.calls);
+    expect(resumed.runtimeState.timeline).toEqual(skill.runtimeState.timeline);
+    expect(original.operations.execute).toHaveBeenCalledTimes(2);
+  });
   it('同一执行程序支持不同施放身份，回执与恢复使用实例身份', () => {
     const program = {
       operatorId: 'operator',
@@ -190,20 +360,31 @@ describe('SkillRuntime', () => {
           startFrame: 0,
           endFrame: 4,
           sequence: {
-            steps: [
+            graph: createActionGraphCompilation(
               {
-                kind: 'repeatEachTick' as const,
-                parameters: {},
-                body: {
-                  steps: [
-                    {
-                      kind: 'setContextFlag' as const,
-                      parameters: { flag: 'count', value: true, target: 'caster' as const },
+                nodes: {
+                  loop: {
+                    action: {
+                      kind: 'repeatEachTick',
+                      parameters: {},
+                      body: { $sequence: 'count' },
                     },
-                  ],
+                    next: null,
+                  },
+                  count: {
+                    action: {
+                      kind: 'setContextFlag',
+                      parameters: { flag: 'count', value: true, target: 'caster' },
+                    },
+                    next: null,
+                  },
                 },
               },
-            ],
+              1,
+              'saved-skill-loop',
+            ).compileAll(),
+            entry: 'loop',
+            callSite: 'saved-skill-loop',
           },
         },
       ],
@@ -294,6 +475,7 @@ describe('SkillRuntime', () => {
       skillGroupKey: 'battleSkill',
       skillType: 'battleSkill',
       skillLevel: 12,
+      programs: skillPrograms,
       skill: findPerlicaSkill('chr_0004_pelica_normal_skill'),
     });
     let nextId = 1;
@@ -538,38 +720,34 @@ describe('SkillRuntime', () => {
       300,
       undefined,
       undefined,
-      {
+      defineSkillFixture({
         key: 'callback',
         timelineBlockFrames: 0,
         naturalDurationFrames: 4,
         blackboard: { value: 1 },
-        scheduledSequences: [
+        scheduled: [
           {
             startFrame: 0,
             endFrame: 1,
-            sequence: {
-              steps: [
-                {
-                  kind: 'setContextFlag',
-                  parameters: { flag: 'write', value: true, target: 'caster' },
-                },
-              ],
-            },
+            steps: [
+              {
+                kind: 'setContextFlag',
+                parameters: { flag: 'write', value: true, target: 'caster' },
+              },
+            ],
           },
           {
             startFrame: 2,
             endFrame: 3,
-            sequence: {
-              steps: [
-                {
-                  kind: 'setContextFlag',
-                  parameters: { flag: 'read', value: true, target: 'caster' },
-                },
-              ],
-            },
+            steps: [
+              {
+                kind: 'setContextFlag',
+                parameters: { flag: 'read', value: true, target: 'caster' },
+              },
+            ],
           },
         ],
-      },
+      }),
       ended,
     );
     const seen: number[] = [];
@@ -633,23 +811,20 @@ describe('SkillRuntime', () => {
         300,
         undefined,
         undefined,
-        {
+        defineSkillFixture({
           key: 'processing-route',
           timelineBlockFrames: 1,
           switchToBuffCast: {
             asSkillCast,
             currentSkillTypes: ['battleSkill'],
-            sequence: {
-              steps: [
-                {
-                  kind: 'setContextFlag',
-                  parameters: { flag: 'probe', value: true, target: 'caster' },
-                },
-              ],
-            },
+            steps: [
+              {
+                kind: 'setContextFlag',
+                parameters: { flag: 'probe', value: true, target: 'caster' },
+              },
+            ],
           },
-          scheduledSequences: [],
-        },
+        }),
         () => observed.push(['end', ability.currentProcessingSkillCastId]),
       );
       route.runtime.prepareSkillCastId(73);
@@ -695,14 +870,16 @@ describe('SkillRuntime', () => {
     kind => {
       const current = createBattleSkillRuntime(300);
       current.runtime.prepareSkillCastId(42);
-      const next = createBattleSkillRuntime(300, undefined, undefined, {
-        key: 'next',
-        timelineBlockFrames: 1,
-        scheduledSequences: [],
-        ...(kind === 'buff-route'
-          ? { switchToBuffCast: { asSkillCast: true, sequence: { steps: [] } } }
-          : {}),
-      });
+      const next = createBattleSkillRuntime(
+        300,
+        undefined,
+        undefined,
+        defineSkillFixture({
+          key: 'next',
+          timelineBlockFrames: 1,
+          ...(kind === 'buff-route' ? { switchToBuffCast: { asSkillCast: true, steps: [] } } : {}),
+        }),
+      );
       next.runtime.prepareSkillCastId(73);
       const ability = new AbilitySystemRuntime({
         skills: [current.runtime, next.runtime],
@@ -730,14 +907,17 @@ describe('SkillRuntime', () => {
   );
 
   it.each([1, 30])('展示宽度 %s 不裁切后续原生序列', timelineBlockFrames => {
-    const fixture = createBattleSkillRuntime(300, undefined, undefined, {
-      key: 'display-is-not-lifetime',
-      timelineBlockFrames,
-      naturalDurationFrames: 20,
-      scheduledSequences: [
-        {
-          startFrame: 10,
-          sequence: {
+    const fixture = createBattleSkillRuntime(
+      300,
+      undefined,
+      undefined,
+      defineSkillFixture({
+        key: 'display-is-not-lifetime',
+        timelineBlockFrames,
+        naturalDurationFrames: 20,
+        scheduled: [
+          {
+            startFrame: 10,
             steps: [
               {
                 kind: 'setContextFlag',
@@ -745,9 +925,9 @@ describe('SkillRuntime', () => {
               },
             ],
           },
-        },
-      ],
-    });
+        ],
+      }),
+    );
     fixture.runtime.tryStart();
     fixture.simulation.advanceFrames(10);
     expect(fixture.operations.execute).toHaveBeenCalledOnce();
@@ -757,14 +937,17 @@ describe('SkillRuntime', () => {
   });
 
   it('真实中断停止尚未到点的序列，而不是根据块体宽度停止', () => {
-    const fixture = createBattleSkillRuntime(300, undefined, undefined, {
-      key: 'interrupted-sequence',
-      timelineBlockFrames: 1,
-      naturalDurationFrames: 20,
-      scheduledSequences: [
-        {
-          startFrame: 10,
-          sequence: {
+    const fixture = createBattleSkillRuntime(
+      300,
+      undefined,
+      undefined,
+      defineSkillFixture({
+        key: 'interrupted-sequence',
+        timelineBlockFrames: 1,
+        naturalDurationFrames: 20,
+        scheduled: [
+          {
+            startFrame: 10,
             steps: [
               {
                 kind: 'setContextFlag',
@@ -772,9 +955,9 @@ describe('SkillRuntime', () => {
               },
             ],
           },
-        },
-      ],
-    });
+        ],
+      }),
+    );
     fixture.runtime.tryStart();
     fixture.simulation.advanceFrames(5);
     fixture.runtime.interrupt('castNextSkill');
@@ -800,16 +983,20 @@ describe('SkillRuntime', () => {
 
   it.each([false, true])('施法前事件只在需要的 Buff 旁路发布，asSkillCast=%s', asSkillCast => {
     const current = createBattleSkillRuntime(300);
-    const ending = createBattleSkillRuntime(300, undefined, undefined, {
-      key: 'route',
-      timelineBlockFrames: 1,
-      switchToBuffCast: {
-        asSkillCast,
-        currentSkillTypes: ['battleSkill'],
-        sequence: { steps: [] },
-      },
-      scheduledSequences: [],
-    });
+    const ending = createBattleSkillRuntime(
+      300,
+      undefined,
+      undefined,
+      defineSkillFixture({
+        key: 'route',
+        timelineBlockFrames: 1,
+        switchToBuffCast: {
+          asSkillCast,
+          currentSkillTypes: ['battleSkill'],
+          steps: [],
+        },
+      }),
+    );
     const beforeCastStart = vi.fn();
     const fallback = vi.fn();
     const ability = new AbilitySystemRuntime({
@@ -901,12 +1088,15 @@ describe('SkillRuntime', () => {
   });
   it('SwitchToAddBuff 旁路保留当前技能并且不启动结束技能时间轴', () => {
     const current = createBattleSkillRuntime(300);
-    const ending = createBattleSkillRuntime(300, undefined, undefined, {
-      key: 'battleSkillEnd',
-      timelineBlockFrames: 1,
-      switchToBuffCast: {
-        currentSkillTypes: ['battleSkill'],
-        sequence: {
+    const ending = createBattleSkillRuntime(
+      300,
+      undefined,
+      undefined,
+      defineSkillFixture({
+        key: 'battleSkillEnd',
+        timelineBlockFrames: 1,
+        switchToBuffCast: {
+          currentSkillTypes: ['battleSkill'],
           steps: [
             {
               kind: 'applyBuff',
@@ -914,9 +1104,8 @@ describe('SkillRuntime', () => {
             },
           ],
         },
-      },
-      scheduledSequences: [],
-    });
+      }),
+    );
     const ability = new AbilitySystemRuntime({ skills: [current.runtime, ending.runtime] });
 
     expect(ability.tryStartSkill(current.runtime.skillId)).toBe(true);
@@ -940,22 +1129,31 @@ describe('SkillRuntime', () => {
   });
 
   it('SwitchToAddBuff can require the current skill to remain inside its native exclusive window', () => {
-    const current = createBattleSkillRuntime(300, undefined, undefined, {
-      key: 'current',
-      timelineBlockFrames: 101,
-      exclusiveFrame: 10,
-      scheduledSequences: [{ startFrame: 100, sequence: { steps: [] } }],
-    });
-    const ending = createBattleSkillRuntime(300, undefined, undefined, {
-      key: 'ending',
-      timelineBlockFrames: 1,
-      switchToBuffCast: {
-        currentSkillTypes: ['battleSkill'],
-        requiresCurrentSkillNotInterruptible: true,
-        sequence: { steps: [] },
-      },
-      scheduledSequences: [],
-    });
+    const current = createBattleSkillRuntime(
+      300,
+      undefined,
+      undefined,
+      defineSkillFixture({
+        key: 'current',
+        timelineBlockFrames: 101,
+        exclusiveFrame: 10,
+        scheduled: [{ startFrame: 100, steps: [] }],
+      }),
+    );
+    const ending = createBattleSkillRuntime(
+      300,
+      undefined,
+      undefined,
+      defineSkillFixture({
+        key: 'ending',
+        timelineBlockFrames: 1,
+        switchToBuffCast: {
+          currentSkillTypes: ['battleSkill'],
+          requiresCurrentSkillNotInterruptible: true,
+          steps: [],
+        },
+      }),
+    );
     expect(current.runtime.tryStart()).toBe(true);
     const input = () => ({
       skillType: current.runtime.skillType,
@@ -973,15 +1171,19 @@ describe('SkillRuntime', () => {
 
   it('未比较玩家分类的旁路保留原生技能的不可打断判断', () => {
     const current = createBattleSkillRuntime(300);
-    const ending = createBattleSkillRuntime(300, undefined, undefined, {
-      key: 'ending',
-      timelineBlockFrames: 1,
-      switchToBuffCast: {
-        requiresCurrentSkillNotInterruptible: true,
-        sequence: { steps: [] },
-      },
-      scheduledSequences: [],
-    });
+    const ending = createBattleSkillRuntime(
+      300,
+      undefined,
+      undefined,
+      defineSkillFixture({
+        key: 'ending',
+        timelineBlockFrames: 1,
+        switchToBuffCast: {
+          requiresCurrentSkillNotInterruptible: true,
+          steps: [],
+        },
+      }),
+    );
     expect(current.runtime.tryStart()).toBe(true);
     const input = {
       skillType: undefined,
@@ -993,14 +1195,17 @@ describe('SkillRuntime', () => {
   });
 
   it('afterCastStart 在初值恢复和 SkillStarted 后、费用及第零帧动作前，只消费一次', () => {
-    const fixture = createBattleSkillRuntime(300, 0, undefined, {
-      key: 'probe',
-      blackboard: { local: 0 },
-      timelineBlockFrames: 1,
-      scheduledSequences: [
-        {
-          startFrame: 0,
-          sequence: {
+    const fixture = createBattleSkillRuntime(
+      300,
+      0,
+      undefined,
+      defineSkillFixture({
+        key: 'probe',
+        blackboard: { local: 0 },
+        timelineBlockFrames: 1,
+        scheduled: [
+          {
+            startFrame: 0,
             steps: [
               {
                 kind: 'dealDamage',
@@ -1012,9 +1217,9 @@ describe('SkillRuntime', () => {
               },
             ],
           },
-        },
-      ],
-    });
+        ],
+      }),
+    );
     const observed: number[] = [];
     vi.mocked(fixture.operations.execute).mockImplementation((_step, context) => {
       observed.push(context!.blackboard.getNumber('local')!);
@@ -1063,7 +1268,7 @@ describe('SkillRuntime', () => {
         300,
         undefined,
         undefined,
-        { key: 'attached', timelineBlockFrames: 0, scheduledSequences: [] },
+        defineSkillFixture({ key: 'attached', timelineBlockFrames: 0 }),
         () => order.push('skillEnd'),
       );
       const first = {
@@ -1105,15 +1310,18 @@ describe('SkillRuntime', () => {
   it.each(['natural', 'interrupt'] as const)(
     'snapshots attached Buffs before %s timeline cleanup',
     mode => {
-      const fixture = createBattleSkillRuntime(300, undefined, undefined, {
-        key: 'attachment-snapshot',
-        timelineBlockFrames: 10,
-        naturalDurationFrames: 1,
-        scheduledSequences: [
-          {
-            startFrame: 0,
-            endFrame: 10,
-            sequence: {
+      const fixture = createBattleSkillRuntime(
+        300,
+        undefined,
+        undefined,
+        defineSkillFixture({
+          key: 'attachment-snapshot',
+          timelineBlockFrames: 10,
+          naturalDurationFrames: 1,
+          scheduled: [
+            {
+              startFrame: 0,
+              endFrame: 10,
               steps: [
                 {
                   kind: 'setContextFlag',
@@ -1121,9 +1329,9 @@ describe('SkillRuntime', () => {
                 },
               ],
             },
-          },
-        ],
-      });
+          ],
+        }),
+      );
       const addedDuringEnd = {
         isRecycled: false,
         reference: createTestBuffReference(),
@@ -1186,20 +1394,18 @@ describe('SkillRuntime', () => {
   it.each(['markCurrentSkillCanDash', 'markCurrentSkillCanInterrupt'] as const)(
     '%s 标记归属当前施放、进入切面并在重放时重置',
     kind => {
-      const fixture = createBattleSkillRuntime(300, undefined, undefined, {
-        key: 'mark-can-dash',
-        timelineBlockFrames: 10,
-        naturalDurationFrames: 20,
-        exclusiveFrame: 100,
-        scheduledSequences: [
-          {
-            startFrame: 1,
-            sequence: {
-              steps: [{ kind, parameters: {} }],
-            },
-          },
-        ],
-      });
+      const fixture = createBattleSkillRuntime(
+        300,
+        undefined,
+        undefined,
+        defineSkillFixture({
+          key: 'mark-can-dash',
+          timelineBlockFrames: 10,
+          naturalDurationFrames: 20,
+          exclusiveFrame: 100,
+          scheduled: [{ startFrame: 1, steps: [{ kind, parameters: {} }] }],
+        }),
+      );
 
       fixture.runtime.tryStart();
       expect(fixture.runtime.canInterrupt).toBe(false);
@@ -1223,8 +1429,16 @@ describe('SkillRuntime', () => {
   );
 
   it('chr_0032_lizhiyan 终结技按原生第 48 帧开放闪避', () => {
+    const chainHasDashMark = (entry: string | null): boolean => {
+      for (let nodeId = entry; nodeId !== null;) {
+        const node = arcaneUltimate.actionGraph.main.nodes[nodeId]!;
+        if (node.action.kind === 'markCurrentSkillCanDash') return true;
+        nodeId = node.next;
+      }
+      return false;
+    };
     const markWindow = arcaneUltimate.scheduledSequences.find(item =>
-      item.sequence.steps.some(step => step.kind === 'markCurrentSkillCanDash'),
+      chainHasDashMark(item.sequence.$sequence),
     );
     expect(markWindow?.startFrame).toBe(48);
     const fixture = createBattleSkillRuntime(300, undefined, undefined, {
@@ -1243,11 +1457,12 @@ describe('SkillRuntime', () => {
   });
 
   it('keeps equal local Buff numbers on different owners distinct', () => {
-    const fixture = createBattleSkillRuntime(300, undefined, undefined, {
-      key: 'attachment-owner-identity',
-      timelineBlockFrames: 0,
-      scheduledSequences: [],
-    });
+    const fixture = createBattleSkillRuntime(
+      300,
+      undefined,
+      undefined,
+      defineSkillFixture({ key: 'attachment-owner-identity', timelineBlockFrames: 0 }),
+    );
     const first = {
       isRecycled: false,
       reference: { ownerId: 'first', instanceId: 1 },
@@ -1282,7 +1497,7 @@ describe('SkillRuntime', () => {
       300,
       undefined,
       undefined,
-      { key: 'natural-end', timelineBlockFrames: 0, scheduledSequences: [] },
+      defineSkillFixture({ key: 'natural-end', timelineBlockFrames: 0 }),
       natural,
     );
     naturalFixture.runtime.tryStart();
@@ -1295,11 +1510,11 @@ describe('SkillRuntime', () => {
       300,
       undefined,
       undefined,
-      {
+      defineSkillFixture({
         key: 'interrupted-end',
         timelineBlockFrames: 10,
-        scheduledSequences: [{ startFrame: 0, endFrame: 10, sequence: { steps: [] } }],
-      },
+        scheduled: [{ startFrame: 0, endFrame: 10, steps: [] }],
+      }),
       interrupted,
     );
     interruptedFixture.runtime.tryStart();
@@ -1311,12 +1526,17 @@ describe('SkillRuntime', () => {
   });
 
   it('uses native natural duration instead of the last retained combat action', () => {
-    const fixture = createBattleSkillRuntime(300, undefined, undefined, {
-      key: 'native-duration',
-      timelineBlockFrames: 2,
-      naturalDurationFrames: 5,
-      scheduledSequences: [{ startFrame: 0, sequence: { steps: [] } }],
-    });
+    const fixture = createBattleSkillRuntime(
+      300,
+      undefined,
+      undefined,
+      defineSkillFixture({
+        key: 'native-duration',
+        timelineBlockFrames: 2,
+        naturalDurationFrames: 5,
+        scheduled: [{ startFrame: 0, steps: [] }],
+      }),
+    );
 
     fixture.runtime.tryStart();
     fixture.simulation.advanceFrames(4);
@@ -1327,39 +1547,48 @@ describe('SkillRuntime', () => {
   });
 
   it('keeps the current combo segment alive until the next independent input window', () => {
-    const first = createBattleSkillRuntime(300, undefined, undefined, {
-      key: 'native.enhancedAttack1',
-      skillType: 'basicAttack',
-      timelineBlockFrames: 22,
-      naturalDurationFrames: 160,
-      exclusiveFrame: 135,
-      inputWindows: {
-        commandMappings: [
-          {
-            startFrame: 0,
-            endFrame: 60,
-            input: 'basicAttack',
-            targetSkillId: 'native.enhancedAttack2',
-          },
-        ],
-        allowedNextSkills: [
-          {
-            startFrame: 22,
-            endFrame: 60,
-            skillIds: ['native.enhancedAttack2'],
-          },
-        ],
-      },
-      scheduledSequences: [{ startFrame: 0, sequence: { steps: [] } }],
-    });
-    const second = createBattleSkillRuntime(300, undefined, undefined, {
-      key: 'native.enhancedAttack2',
-      skillType: 'basicAttack',
-      timelineBlockFrames: 27,
-      naturalDurationFrames: 155,
-      exclusiveFrame: 120,
-      scheduledSequences: [],
-    });
+    const first = createBattleSkillRuntime(
+      300,
+      undefined,
+      undefined,
+      defineSkillFixture({
+        key: 'native.enhancedAttack1',
+        skillType: 'basicAttack',
+        timelineBlockFrames: 22,
+        naturalDurationFrames: 160,
+        exclusiveFrame: 135,
+        inputWindows: {
+          commandMappings: [
+            {
+              startFrame: 0,
+              endFrame: 60,
+              input: 'basicAttack',
+              targetSkillId: 'native.enhancedAttack2',
+            },
+          ],
+          allowedNextSkills: [
+            {
+              startFrame: 22,
+              endFrame: 60,
+              skillIds: ['native.enhancedAttack2'],
+            },
+          ],
+        },
+        scheduled: [{ startFrame: 0, steps: [] }],
+      }),
+    );
+    const second = createBattleSkillRuntime(
+      300,
+      undefined,
+      undefined,
+      defineSkillFixture({
+        key: 'native.enhancedAttack2',
+        skillType: 'basicAttack',
+        timelineBlockFrames: 27,
+        naturalDurationFrames: 155,
+        exclusiveFrame: 120,
+      }),
+    );
     const ability = new AbilitySystemRuntime({
       skills: [first.runtime, second.runtime],
       playerActionRoutes: {
@@ -1402,17 +1631,28 @@ describe('SkillRuntime', () => {
   });
 
   it('exposes the native rounded local execute frame to timeline actions', () => {
-    const fixture = createBattleSkillRuntime(300, undefined, undefined, {
-      key: 'local-frame-fixture',
-      timelineBlockFrames: 10,
-      scheduledSequences: [
-        {
-          startFrame: 0,
-          endFrame: 10,
-          sequence: { steps: [{ kind: 'repeatEachTick', parameters: {}, body: { steps: [] } }] },
-        },
-      ],
-    });
+    const fixture = createBattleSkillRuntime(
+      300,
+      undefined,
+      undefined,
+      defineSkillFixture({
+        key: 'local-frame-fixture',
+        timelineBlockFrames: 10,
+        scheduled: [
+          {
+            startFrame: 0,
+            endFrame: 10,
+            steps: [
+              {
+                kind: 'repeatEachTick',
+                parameters: {},
+                body: { $sequence: null },
+              },
+            ],
+          },
+        ],
+      }),
+    );
 
     fixture.runtime.tryStart();
     fixture.runtime.advance(1 / 60, 0);
@@ -1424,20 +1664,21 @@ describe('SkillRuntime', () => {
   });
 
   it('时间轴跳转改写本次释放的局部帧并跳过中间调度项', () => {
-    const fixture = createBattleSkillRuntime(300, undefined, undefined, {
-      key: 'timeline-jump-fixture',
-      timelineBlockFrames: 6,
-      scheduledSequences: [
-        {
-          startFrame: 1,
-          endFrame: 2,
-          sequence: {
+    const fixture = createBattleSkillRuntime(
+      300,
+      undefined,
+      undefined,
+      defineSkillFixture({
+        key: 'timeline-jump-fixture',
+        timelineBlockFrames: 6,
+        scheduled: [
+          {
+            startFrame: 1,
+            endFrame: 2,
             steps: [{ kind: 'jumpTimeline', parameters: { destinationFrame: 5 } }],
           },
-        },
-        {
-          startFrame: 3,
-          sequence: {
+          {
+            startFrame: 3,
             steps: [
               {
                 kind: 'setContextFlag',
@@ -1445,10 +1686,8 @@ describe('SkillRuntime', () => {
               },
             ],
           },
-        },
-        {
-          startFrame: 5,
-          sequence: {
+          {
+            startFrame: 5,
             steps: [
               {
                 kind: 'setContextFlag',
@@ -1456,9 +1695,9 @@ describe('SkillRuntime', () => {
               },
             ],
           },
-        },
-      ],
-    });
+        ],
+      }),
+    );
 
     fixture.runtime.tryStart();
     fixture.simulation.advanceFrames(1);
@@ -1485,15 +1724,18 @@ describe('SkillRuntime', () => {
   });
 
   it('有效跳转推进自然结束计时，技能到期清理尚未到结束帧的动作', () => {
-    const fixture = createBattleSkillRuntime(300, undefined, undefined, {
-      key: 'jump-natural-end',
-      timelineBlockFrames: 10,
-      naturalDurationFrames: 6,
-      scheduledSequences: [
-        {
-          startFrame: 0,
-          endFrame: 10,
-          sequence: {
+    const fixture = createBattleSkillRuntime(
+      300,
+      undefined,
+      undefined,
+      defineSkillFixture({
+        key: 'jump-natural-end',
+        timelineBlockFrames: 10,
+        naturalDurationFrames: 6,
+        scheduled: [
+          {
+            startFrame: 0,
+            endFrame: 10,
             steps: [
               {
                 kind: 'setContextFlag',
@@ -1505,14 +1747,14 @@ describe('SkillRuntime', () => {
               },
             ],
           },
-        },
-        {
-          startFrame: 1,
-          endFrame: 2,
-          sequence: { steps: [{ kind: 'jumpTimeline', parameters: { destinationFrame: 5 } }] },
-        },
-      ],
-    });
+          {
+            startFrame: 1,
+            endFrame: 2,
+            steps: [{ kind: 'jumpTimeline', parameters: { destinationFrame: 5 } }],
+          },
+        ],
+      }),
+    );
     fixture.operations.end = vi.fn();
     fixture.runtime.tryStart();
     fixture.simulation.advanceFrames(1);
@@ -1530,12 +1772,16 @@ describe('SkillRuntime', () => {
   ])(
     '跳转下界由技能宿主管理：$current → $destination',
     ({ current, destination, expected, jumped }) => {
-      const fixture = createBattleSkillRuntime(300, undefined, undefined, {
-        key: 'jump-lower-bound',
-        timelineBlockFrames: 20,
-        naturalDurationFrames: 20,
-        scheduledSequences: [],
-      });
+      const fixture = createBattleSkillRuntime(
+        300,
+        undefined,
+        undefined,
+        defineSkillFixture({
+          key: 'jump-lower-bound',
+          timelineBlockFrames: 20,
+          naturalDurationFrames: 20,
+        }),
+      );
       fixture.runtime.tryStart();
       fixture.runtime.advance(current / 30, 0);
       expect(() =>
@@ -1554,38 +1800,34 @@ describe('SkillRuntime', () => {
       300,
       undefined,
       undefined,
-      {
+      defineSkillFixture({
         key: 'jump-past-end',
         timelineBlockFrames: 20,
         naturalDurationFrames: 5,
-        scheduledSequences: [
+        scheduled: [
           {
             startFrame: 0,
             endFrame: 20,
-            sequence: {
-              steps: [
-                {
-                  kind: 'setContextFlag',
-                  parameters: { flag: 'active', value: true, target: 'caster' },
-                },
-              ],
-            },
+            steps: [
+              {
+                kind: 'setContextFlag',
+                parameters: { flag: 'active', value: true, target: 'caster' },
+              },
+            ],
           },
           {
             startFrame: 1,
             endFrame: 2,
-            sequence: {
-              steps: [
-                { kind: 'jumpTimeline', parameters: { destinationFrame: 6 } },
-                {
-                  kind: 'setContextFlag',
-                  parameters: { flag: 'unreachable', value: true, target: 'caster' },
-                },
-              ],
-            },
+            steps: [
+              { kind: 'jumpTimeline', parameters: { destinationFrame: 6 } },
+              {
+                kind: 'setContextFlag',
+                parameters: { flag: 'unreachable', value: true, target: 'caster' },
+              },
+            ],
           },
         ],
-      },
+      }),
       ended,
     );
     fixture.operations.end = vi.fn(() => fixture.runtime.operationContext.requestTimelineJump!(3));
@@ -1605,17 +1847,20 @@ describe('SkillRuntime', () => {
   });
 
   it('时间轴自终止丢弃未来调度且不改写局部帧', () => {
-    const fixture = createBattleSkillRuntime(300, undefined, undefined, {
-      key: 'timeline-finish-fixture',
-      timelineBlockFrames: 10,
-      scheduledSequences: [
-        {
-          startFrame: 2,
-          sequence: { steps: [{ kind: 'finishTimeline', parameters: {} }] },
-        },
-        {
-          startFrame: 8,
-          sequence: {
+    const fixture = createBattleSkillRuntime(
+      300,
+      undefined,
+      undefined,
+      defineSkillFixture({
+        key: 'timeline-finish-fixture',
+        timelineBlockFrames: 10,
+        scheduled: [
+          {
+            startFrame: 2,
+            steps: [{ kind: 'finishTimeline', parameters: {} }],
+          },
+          {
+            startFrame: 8,
             steps: [
               {
                 kind: 'setContextFlag',
@@ -1623,9 +1868,9 @@ describe('SkillRuntime', () => {
               },
             ],
           },
-        },
-      ],
-    });
+        ],
+      }),
+    );
 
     fixture.runtime.tryStart();
     fixture.simulation.advanceFrames(2);
@@ -1639,14 +1884,17 @@ describe('SkillRuntime', () => {
   });
 
   it('只在调度区间内响应技能临时监听事件，并在中断时立即注销', () => {
-    const fixture = createBattleSkillRuntime(300, undefined, undefined, {
-      key: 'listener-fixture',
-      timelineBlockFrames: 4,
-      scheduledSequences: [
-        {
-          startFrame: 1,
-          endFrame: 4,
-          sequence: {
+    const fixture = createBattleSkillRuntime(
+      300,
+      undefined,
+      undefined,
+      defineSkillFixture({
+        key: 'listener-fixture',
+        timelineBlockFrames: 4,
+        scheduled: [
+          {
+            startFrame: 1,
+            endFrame: 4,
             steps: [
               {
                 kind: 'listenForCombatEvents',
@@ -1656,27 +1904,32 @@ describe('SkillRuntime', () => {
                       key: 'normal-skill-hit',
                       event: { kind: 'damageTagHit', tag: 'normalSkill', scope: 'operator' },
                       condition: { kind: 'combatActive' },
-                      sequence: {
-                        steps: [
-                          {
-                            kind: 'setContextFlag',
-                            parameters: { flag: 'first', value: true, target: 'caster' },
-                          },
-                          {
-                            kind: 'setContextFlag',
-                            parameters: { flag: 'second', value: true, target: 'caster' },
-                          },
-                        ],
-                      },
+                      sequence: { $sequence: 'respond-0' },
                     },
                   ],
                 },
               },
             ],
           },
+        ],
+        extraNodes: {
+          'respond-0': {
+            action: {
+              kind: 'setContextFlag',
+              parameters: { flag: 'first', value: true, target: 'caster' },
+            },
+            next: 'respond-1',
+          },
+          'respond-1': {
+            action: {
+              kind: 'setContextFlag',
+              parameters: { flag: 'second', value: true, target: 'caster' },
+            },
+            next: null,
+          },
         },
-      ],
-    });
+      }),
+    );
     const emit = () =>
       fixture.emitOutputDamage({
         sourceId: 'perlica',
@@ -1716,14 +1969,17 @@ describe('SkillRuntime', () => {
   });
 
   it('只在事件响应条件通过时同步跳转宿主时间轴，并在区间结束后注销', () => {
-    const fixture = createBattleSkillRuntime(300, undefined, undefined, {
-      key: 'listener-jump-fixture',
-      timelineBlockFrames: 8,
-      scheduledSequences: [
-        {
-          startFrame: 1,
-          endFrame: 8,
-          sequence: {
+    const fixture = createBattleSkillRuntime(
+      300,
+      undefined,
+      undefined,
+      defineSkillFixture({
+        key: 'listener-jump-fixture',
+        timelineBlockFrames: 8,
+        scheduled: [
+          {
+            startFrame: 1,
+            endFrame: 8,
             steps: [
               {
                 kind: 'listenForCombatEvents',
@@ -1732,36 +1988,38 @@ describe('SkillRuntime', () => {
                     {
                       key: 'jump-on-buff',
                       event: { kind: 'buffApplied' },
-                      sequence: {
-                        steps: [
-                          {
-                            kind: 'conditional',
-                            parameters: {
-                              condition: {
-                                kind: 'buffIdStackCompare',
-                                target: 'caster',
-                                buffIds: ['buff.skill.end'],
-                                operator: 'greaterOrEqual',
-                                value: { kind: 'constant', value: 1 },
-                              },
-                            },
-                            whenTrue: {
-                              steps: [
-                                { kind: 'jumpTimeline', parameters: { destinationFrame: 6 } },
-                              ],
-                            },
-                          },
-                        ],
-                      },
+                      sequence: { $sequence: 'jump-on-buff-guard' },
                     },
                   ],
                 },
               },
             ],
           },
+        ],
+        extraNodes: {
+          'jump-on-buff-guard': {
+            action: {
+              kind: 'conditional',
+              parameters: {
+                condition: {
+                  kind: 'buffIdStackCompare',
+                  target: 'caster',
+                  buffIds: ['buff.skill.end'],
+                  operator: 'greaterOrEqual',
+                  value: { kind: 'constant', value: 1 },
+                },
+              },
+              whenTrue: { $sequence: 'jump-on-buff-jump' },
+            },
+            next: null,
+          },
+          'jump-on-buff-jump': {
+            action: { kind: 'jumpTimeline', parameters: { destinationFrame: 6 } },
+            next: null,
+          },
         },
-      ],
-    });
+      }),
+    );
 
     fixture.runtime.tryStart();
     fixture.simulation.advanceFrames(1);
@@ -1802,37 +2060,38 @@ describe('SkillRuntime', () => {
   });
 
   it('同一次释放只执行一次共享作用域，并在下一次释放时重置', () => {
-    const onceStep = {
+    const onceBody = {
+      kind: 'setContextFlag',
+      parameters: { flag: 'executed', value: true, target: 'caster' },
+    } as const satisfies ActionGraphStep;
+    const onceStep = (body: string): ActionGraphStep => ({
       kind: 'once',
       parameters: { scopeKey: 'normal-attack-sp' },
-      body: {
-        steps: [
+      body: { $sequence: body },
+    });
+    const fixture = createBattleSkillRuntime(
+      300,
+      undefined,
+      undefined,
+      defineSkillFixture({
+        key: 'once-fixture',
+        timelineBlockFrames: 2,
+        scheduled: [
           {
-            kind: 'setContextFlag',
-            parameters: { flag: 'executed', value: true, target: 'caster' },
-          },
-        ],
-      },
-    } as const;
-    const fixture = createBattleSkillRuntime(300, undefined, undefined, {
-      key: 'once-fixture',
-      timelineBlockFrames: 2,
-      scheduledSequences: [
-        {
-          startFrame: 0,
-          sequence: {
+            startFrame: 0,
             steps: [
-              onceStep,
+              onceStep('once-body'),
               {
                 kind: 'setContextFlag',
                 parameters: { flag: 'continued', value: true, target: 'caster' },
               },
             ],
           },
-        },
-        { startFrame: 1, sequence: { steps: [onceStep] } },
-      ],
-    });
+          { startFrame: 1, steps: [onceStep('once-body')] },
+        ],
+        extraNodes: { 'once-body': { action: onceBody, next: null } },
+      }),
+    );
     vi.mocked(fixture.operations.execute).mockReturnValueOnce(false);
 
     fixture.runtime.tryStart();
@@ -1911,29 +2170,27 @@ describe('SkillRuntime', () => {
       300,
       0,
       undefined,
-      {
+      defineSkillFixture({
         key: 'cost-event-order',
         costFrame: 0,
         costs: [{ resource: 'sp', value: 100 }],
         timelineBlockFrames: 1,
-        scheduledSequences: [
+        scheduled: [
           {
             startFrame: 0,
-            sequence: {
-              steps: [
-                {
-                  kind: 'modifyActionValue',
-                  parameters: {
-                    key: 'hit',
-                    operation: 'assign',
-                    value: { kind: 'constant', value: 1 },
-                  },
+            steps: [
+              {
+                kind: 'modifyActionValue',
+                parameters: {
+                  key: 'hit',
+                  operation: 'assign',
+                  value: { kind: 'constant', value: 1 },
                 },
-              ],
-            },
+              },
+            ],
           },
         ],
-      },
+      }),
       undefined,
       payload => {
         expect(fixture.resources.sp).toBe(200);
@@ -2043,6 +2300,7 @@ describe('SkillRuntime', () => {
       skillGroupKey: 'battleSkill',
       skillType: 'battleSkill',
       skillLevel: 12,
+      programs: skillPrograms,
       skill: { ...findPerlicaSkill('chr_0004_pelica_normal_skill'), costFrame: 3 },
     });
     const clock = new CombatClock();

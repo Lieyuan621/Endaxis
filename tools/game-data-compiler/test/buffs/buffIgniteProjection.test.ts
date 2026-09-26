@@ -4,7 +4,10 @@ import { parseKnownNativeActionLeafSource } from '../../src/source/actionLeaf.ts
 import { parseNativeSequenceSource } from '../../src/source/controlFlow.ts';
 import { compileCombatActionSequenceSource } from '../../src/compiler/buffs/buffRuntimeProjection.ts';
 import { targetFixture } from '../sourceFixtures.ts';
-import { compileActionSequence } from '../../../../src/core/compiler/compileSkill';
+import { createActionGraphBuilder } from '../../src/compiler/actions/actionGraphBuilder.ts';
+import { readActionGraphChain } from '../../src/compiler/actions/actionGraphBuilder.ts';
+import type { CompiledBuffStepSource } from '../../src/compiler/actions/combatActionProjectionTypes.ts';
+import { compileGraphSequence } from '../support/graphSequence.ts';
 import { BuffOperationExecutor } from '../../../../src/core/combat/buffs/buffOperationExecutor';
 import { CombatBuffContainer } from '../../../../src/core/combat/buffs/combatBuffs';
 import { CombatAttributeSet } from '../../../../src/core/combat/attributes/combatAttributes';
@@ -28,7 +31,10 @@ const context = {
 } as const;
 function project(
   actions: unknown[],
-  projectionContext: Parameters<typeof compileCombatActionSequenceSource>[1] = context,
+  projectionContext: Omit<
+    Parameters<typeof compileCombatActionSequenceSource>[1],
+    'graph'
+  > = context,
 ) {
   const source = parseNativeSequenceSource(
     {
@@ -40,7 +46,15 @@ function project(
     {},
     (value, path) => parseKnownNativeActionLeafSource(value, path, {}),
   );
-  return compileCombatActionSequenceSource(source, projectionContext);
+  const builder = createActionGraphBuilder<CompiledBuffStepSource>();
+  const entry = compileCombatActionSequenceSource(source, { ...projectionContext, graph: builder });
+  const graph = builder.finish();
+  return {
+    entry,
+    graph,
+    steps: readActionGraphChain(graph, entry),
+    compiled: () => compileGraphSequence(entry, graph),
+  };
 }
 
 describe('公共 Buff 点燃投影', () => {
@@ -100,9 +114,7 @@ describe('公共 Buff 点燃投影', () => {
       buffSourceId: 'caster',
       skillCastInfo: cast,
     });
-    expect(
-      runtime.createSequence(compileActionSequence(project([rawIgnite()]), 1)).executeInstant({}),
-    ).toBe(true);
+    expect(runtime.createSequence(project([rawIgnite()]).compiled()).executeInstant({})).toBe(true);
     expect(calls).toEqual([{ type: 'PhysicalStatus', sourceId: 'caster', skillCastInfo: cast }]);
   });
 

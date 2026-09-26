@@ -1,5 +1,6 @@
 import { expect, it } from 'vitest';
 import type { CompiledOperatorUpgradeEventProgram } from '../../../compiler/combatProgram';
+import { chainEntry } from '../../../../test/compiledGraphEntry';
 import { bindRestoredCombatOperatorUpgradeEvents } from './combatOperatorSourceRestoration';
 import { CombatSemanticEventRuntime } from '../../events/combatSemanticEventRuntime';
 import { AbilityEventDispatcher } from '../../events/abilityEventDispatcher';
@@ -10,14 +11,12 @@ const program: CompiledOperatorUpgradeEventProgram = {
   key: 'potential:event',
   event: { kind: 'spGained' },
   initialBlackboard: {},
-  sequence: {
-    steps: [
-      {
-        kind: 'changeResource',
-        parameters: { resource: 'sp', amount: 1, recipient: 'team' },
-      },
-    ],
-  },
+  sequence: chainEntry('potential:event', [
+    {
+      kind: 'changeResource',
+      parameters: { resource: 'sp', amount: 1, recipient: 'team' },
+    },
+  ]),
 };
 
 it('恢复潜能事件时复用原订阅身份且只由当前分支处理函数响应', () => {

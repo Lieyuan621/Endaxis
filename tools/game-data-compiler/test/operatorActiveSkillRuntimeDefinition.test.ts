@@ -4,6 +4,7 @@ import {
   compileOperatorActiveSkillRuntimeDefinitionSource,
   renderOperatorActiveSkillRuntimeDefinitionSource,
 } from '../src/domains/operator/activeSkillRuntimeDefinition.ts';
+import { createActionGraphBuilder } from '../src/compiler/actions/actionGraphBuilder.ts';
 import { activeSkillFixture } from './sourceFixtures.ts';
 
 const context = {
@@ -161,6 +162,7 @@ describe('Operator 主动技能正式运行定义', () => {
           extendTags: [],
           blackboard: {},
           attributeModifiers: [],
+          actionGraph: { main: { nodes: {} }, macros: {} },
         },
       },
     });
@@ -170,43 +172,49 @@ describe('Operator 主动技能正式运行定义', () => {
     expect(rendered.content).toContain('"durationSeconds": 2');
     expect(rendered.content).not.toMatch(/[A-Z]:[\\/]|tmp[\\/]/i);
 
+    const curveGraph = createActionGraphBuilder();
+    const curveEntry = curveGraph.node({
+      kind: 'startTimeDilation',
+      parameters: {
+        scope: 'entity',
+        durationSeconds: { kind: 'constant', value: 1 },
+        slot: 'Test/TimeSlot1',
+        priority: 1,
+        curve: {
+          kind: 'inline',
+          keys: [
+            {
+              time: 0,
+              value: 1,
+              inTangent: Number.POSITIVE_INFINITY,
+              outTangent: Number.NEGATIVE_INFINITY,
+              weightedMode: 0,
+              inWeight: 0,
+              outWeight: 0,
+            },
+          ],
+        },
+        finishByAction: false,
+        targets: ['caster'],
+      },
+    });
+    const curveNodes = curveGraph.finish().nodes;
+    for (const id of Object.keys(curveNodes))
+      if (id in definition.actionGraph.main.nodes)
+        throw new Error(`fixture node id collides with compiled graph: ${id}`);
     const curveRendered = renderOperatorActiveSkillRuntimeDefinitionSource({
       operatorSlug: 'fixture',
       definition: {
         ...definition,
+        actionGraph: {
+          main: { nodes: { ...definition.actionGraph.main.nodes, ...curveNodes } },
+          macros: definition.actionGraph.macros,
+        },
         scheduledSequences: [
           {
             startFrame: 0,
             endFrame: 1,
-            sequence: {
-              steps: [
-                {
-                  kind: 'startTimeDilation',
-                  parameters: {
-                    scope: 'entity',
-                    durationSeconds: { kind: 'constant', value: 1 },
-                    slot: 'Test/TimeSlot1',
-                    priority: 1,
-                    curve: {
-                      kind: 'inline',
-                      keys: [
-                        {
-                          time: 0,
-                          value: 1,
-                          inTangent: Number.POSITIVE_INFINITY,
-                          outTangent: Number.NEGATIVE_INFINITY,
-                          weightedMode: 0,
-                          inWeight: 0,
-                          outWeight: 0,
-                        },
-                      ],
-                    },
-                    finishByAction: false,
-                    targets: ['caster'],
-                  },
-                },
-              ],
-            },
+            sequence: curveEntry,
           },
         ],
       },

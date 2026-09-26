@@ -1,5 +1,6 @@
 import { createTestBuffReference } from '../../core/combat/buffs/buffTestFixtures';
 import { describe, expect, it, vi } from 'vitest';
+import { ActionGraphDefinitionRepository } from '../../core/compiler/actionGraphDefinitionRepository';
 import type {
   EnemyBuffRuntime,
   OperatorBuffRuntime,
@@ -69,6 +70,8 @@ function operationExecutor(): CombatOperationExecutor {
 function options(): CompileScenarioRuntimeAssemblyOptions {
   return {
     index: {
+      actionPrograms: new ActionGraphDefinitionRepository(),
+      getCommonDefinitionSources: () => [],
       getOperator: () => null,
       getWeapon: () => null,
       getGear: () => null,

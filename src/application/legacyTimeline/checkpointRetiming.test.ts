@@ -1,4 +1,5 @@
 import { expect, it, vi } from 'vitest';
+import { ActionGraphDefinitionRepository } from '../../core/compiler/actionGraphDefinitionRepository';
 import { createEmptyScenario } from '../../core/project/createProject';
 import type { EndaxisProjectDocument, ScenarioDocument } from '../../core/project/schema';
 import { perlica } from '../../data/operators/perlica.generated';
@@ -47,6 +48,8 @@ function fixture() {
   scenario.battle.controlSwitches = [{ id: 'before', frame: 4, trackIndex: 0 }];
   const service = new ScenarioSimulationService({
     index: {
+      actionPrograms: new ActionGraphDefinitionRepository(),
+      getCommonDefinitionSources: () => [{ id: 'shared', buffDefinitions: commonBuffDefinitions }],
       getOperator: slug => (slug === perlica.slug ? perlica : null),
       getCommonBuffDefinitions: () => commonBuffDefinitions,
       getWeapon: () => null,

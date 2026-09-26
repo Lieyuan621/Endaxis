@@ -1,9 +1,88 @@
+import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import { describe, expect, it } from 'vitest';
 import { compileOperatorDefinitionSkills } from '../../core/compiler/compileScenarioTimeline';
-import type { OperatorDefinition, SkillDefinition } from '../../core/game-data/operatorDefinition';
+import { ActionGraphDefinitionRepository } from '../../core/compiler/actionGraphDefinitionRepository';
+import type {
+  OperatorDefinition,
+  SkillGroupDefinition,
+} from '../../core/game-data/operatorDefinition';
+import type {
+  ActionGraphNode,
+  ActionGraphReference,
+  ActionGraphResourceDefinition,
+  ActionGraphStep,
+} from '../../../packages/game-data-contract/src/actionGraph';
+import { createGraphDataResolver } from '../../core/action-graph/actionGraphData';
 import type { OperatorInstanceDocument } from '../../core/project/schema';
-import { getSkill } from './testUtils';
 import { rossiChr_0028_wulfa_combo_3_skill } from './rossi.generated';
+
+function getGroupSkills(group: SkillGroupDefinition): readonly SkillDefinition[] {
+  const skills: SkillDefinition | readonly SkillDefinition[] = group.skills;
+  return Array.isArray(skills) ? skills : [skills].flat();
+}
+
+function getSkill(operator: OperatorDefinition, key: string): SkillDefinition {
+  const skill = operator.skillGroups
+    .flatMap(getGroupSkills)
+    .find(candidate => candidate.key === key);
+  if (!skill) throw new Error(`missing skill: ${key}`);
+  return skill;
+}
+
+function collectGraphSteps(
+  resource: ActionGraphResourceDefinition,
+  entry: ActionGraphReference | null | undefined,
+): ActionGraphStep[] {
+  const steps: ActionGraphStep[] = [];
+  const visited = new Set<string>();
+  const visit = (ref: ActionGraphReference | null | undefined) => {
+    let nodeId = ref?.$sequence ?? null;
+    while (nodeId !== null) {
+      if (visited.has(nodeId)) return;
+      visited.add(nodeId);
+      const node = resource.main.nodes[nodeId];
+      if (!node) return;
+      const action = node.action;
+      steps.push(action);
+      switch (action.kind) {
+        case 'conditional':
+          visit(action.whenTrue);
+          if (action.whenFalse !== undefined) visit(action.whenFalse);
+          break;
+        case 'switch':
+          for (const option of action.options) visit(option.sequence);
+          break;
+        case 'once':
+        case 'withActionBlackboardScope':
+        case 'repeatEachTick':
+        case 'repeatByActionValue':
+        case 'forEachContextTarget':
+          visit(action.body);
+          break;
+        case 'callResource':
+          // 独立子资源的节点表与调用方不同；步骤仍按内容归属当前遍历。
+          steps.push(...collectGraphSteps(action.resource.actionGraph, action.resource.entry));
+          break;
+        case 'launchProjectile':
+          for (const callback of action.callbacks) {
+            for (const scheduled of callback.skill.scheduledSequences) {
+              steps.push(...collectGraphSteps(callback.skill.actionGraph, scheduled.sequence));
+            }
+          }
+          break;
+      }
+      nodeId = node.next;
+    }
+  };
+  visit(entry);
+  return steps;
+}
+
+function skillSteps(skill: SkillDefinition): ActionGraphStep[] {
+  return skill.scheduledSequences.flatMap(item =>
+    collectGraphSteps(skill.actionGraph, item.sequence),
+  );
+}
 import {
   alesh,
   antal,
@@ -45,6 +124,30 @@ const rossiComboSkill2 = getSkill(rossi, 'chr_0028_wulfa_combo_2_skill');
 const rossiComboSkill3 = rossiChr_0028_wulfa_combo_3_skill;
 const rossiUltimate = getSkill(rossi, 'chr_0028_wulfa_ultimate_skill');
 
+/** 生成的数据节点只改变表达式的存储位置；断言前把引用绑定回内联表达式。 */
+function resolveGeneratedDataNodes(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(resolveGeneratedDataNodes);
+  if (value === null || typeof value !== 'object') return value;
+  const record = value as Record<string, unknown>;
+  // 图：先把本图节点内的数据节点引用绑定回内联表达式，再递归嵌套资源。
+  if ('nodes' in record && record.nodes !== null && typeof record.nodes === 'object') {
+    const graph = record as unknown as ActionGraphResourceDefinition['main'];
+    const resolver = createGraphDataResolver(graph);
+    return {
+      ...record,
+      nodes: Object.fromEntries(
+        Object.entries(graph.nodes).map(([id, node]) => [
+          id,
+          { ...node, action: resolveGeneratedDataNodes(resolver.bind(node.action)) },
+        ]),
+      ),
+    };
+  }
+  return Object.fromEntries(
+    Object.entries(record).map(([key, item]) => [key, resolveGeneratedDataNodes(item)]),
+  );
+}
+
 const generatedOperators: readonly [OperatorDefinition, number][] = [
   [gilberta, 9],
   [lifeng, 9],
@@ -83,6 +186,7 @@ function hasUpgradeBehavior(
     (upgrade.modifiers?.length ?? 0) > 0 ||
     (upgrade.eventHandlers?.length ?? 0) > 0 ||
     (upgrade.passiveSkills?.length ?? 0) > 0 ||
+    (upgrade.attachedBuffs?.length ?? 0) > 0 ||
     upgrade.initializationSequence !== undefined ||
     upgrade.simulationNoEffect !== undefined
   );
@@ -177,35 +281,32 @@ describe('新增的完整技能转换干员', () => {
     expect(avywenna.buffDefinitions?.buff_chr_0012_avywen_lance_pulse_check).toBeDefined();
     expect(JSON.stringify(avywenna)).toContain('buff_chr_0012_avywen_lance_pulse_check');
     expect(avywenna.talents[0]?.modifiers).toHaveLength(3);
-    expect(avywenna.talents[0]?.initializationSequence?.steps[0]).toMatchObject({
-      kind: 'applyBuff',
-      parameters: {
-        buffId: 'buff_chr_0012_avywen_talent_0',
-        target: 'caster',
-        inheritSourceSkillCastInfo: false,
-      },
+    expect(avywenna.talents[0]).toMatchObject({
+      attachedBuffs: [{ buffId: 'buff_chr_0012_avywen_talent_0' }],
     });
     expect(avywenna.talents[0]?.passiveSkills).toBeUndefined();
   });
 
   it('Avywenna 处决保留三段破防倍率，并在首段伤害后读取敌人处决技力', () => {
     const finisher = avywenna.skillGroups
-      .flatMap(group => (Array.isArray(group.skills) ? group.skills : [group.skills]))
-      .find(skill => skill.key === 'chr_0012_avywen_power_attack') as SkillDefinition | undefined;
+      .flatMap(getGroupSkills)
+      .find(skill => skill.key === 'chr_0012_avywen_power_attack');
     expect(finisher).toBeDefined();
-    const damageSteps = finisher!.scheduledSequences.flatMap(item =>
-      item.sequence.steps.filter(step => step.kind === 'dealDamage'),
-    );
+    const damageSteps = skillSteps(finisher!).filter(step => step.kind === 'dealDamage');
     expect(damageSteps.map(step => step.parameters.calculationMultiplier)).toEqual([0.3, 0.2, 0.5]);
     const firstSequence = finisher!.scheduledSequences.find(item => item.startFrame === 27);
-    expect(firstSequence?.sequence.steps).toMatchObject([
-      { kind: 'dealDamage', parameters: { calculation: 'breakingAttack' } },
-      {
-        kind: 'conditional',
-        whenTrue: {
-          steps: [{ kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } }],
-        },
-      },
+    const firstSteps = collectGraphSteps(finisher!.actionGraph, firstSequence?.sequence);
+    expect(firstSteps[0]).toMatchObject({
+      kind: 'dealDamage',
+      parameters: { calculation: 'breakingAttack' },
+    });
+    const conditional = firstSteps.find(step => step.kind === 'conditional');
+    if (conditional?.kind !== 'conditional') throw new Error('missing conditional step');
+    expect(collectGraphSteps(finisher!.actionGraph, conditional.whenTrue)).toEqual([
+      expect.objectContaining({
+        kind: 'gainFinisherSp',
+        parameters: { factor: 1, recipient: 'team' },
+      }),
     ]);
   });
 
@@ -278,17 +379,66 @@ describe('新增的完整技能转换干员', () => {
   it('Lifeng 连携状态跨能力实体传入终结技第三段', () => {
     const serialized = JSON.stringify([lifengUltimate, lifeng.abilityEntityDefinitions]);
     const frames = lifengUltimate.scheduledSequences.map(sequence => sequence.startFrame);
-    const ultimateStart = JSON.stringify(lifengUltimate.scheduledSequences);
+    const ultimateSteps = JSON.stringify(skillSteps(lifengUltimate));
     const combo = JSON.stringify(lifengComboSkill);
 
     expect(serialized).toContain('"childSkill":');
     expect(serialized).toContain('"destinationFrame":150');
     expect(serialized).toContain('"key":"EntityBB_isCombo"');
-    expect(ultimateStart).toContain('"key":"isCombo","operation":"assign"');
+    expect(ultimateSteps).toContain('"key":"isCombo","operation":"assign"');
     expect(combo).toContain('"globalBuffId":"global_buff_combo_trigger"');
     expect(lifengComboSkill.blackboard).toHaveProperty('duration', 20);
-    const jumpIndex = serialized.indexOf('"destinationFrame":150');
-    expect(jumpIndex).toBeLessThan(serialized.indexOf('"key":"EntityBB_isCombo"', jumpIndex));
+    const lifengEntity =
+      lifeng.abilityEntityDefinitions?.abilityentity_chr_0015_lifeng_ultimate_skill;
+    // 实体模板自身不再持有图；节点分布在子技能与被动各自的资源图中。
+    // 数据节点引用属于各资源自己的图，先绑定回原表达式再按内容断言。
+    const resolveNodes = (
+      resource: ActionGraphResourceDefinition,
+    ): Record<string, ActionGraphNode> => {
+      const resolver = createGraphDataResolver(resource.main);
+      return Object.fromEntries(
+        Object.entries(resource.main.nodes).map(([id, node]) => [
+          id,
+          { ...node, action: resolver.bind(node.action) as ActionGraphNode['action'] },
+        ]),
+      );
+    };
+    const entityNodes: Record<string, ActionGraphNode> = {
+      ...(lifengEntity?.childSkill === undefined
+        ? {}
+        : resolveNodes(lifengEntity.childSkill.actionGraph)),
+    };
+    for (const child of Object.values(lifengEntity?.childSkills ?? {}))
+      Object.assign(entityNodes, resolveNodes(child.actionGraph));
+    for (const passive of lifengEntity?.passiveSkills ?? [])
+      Object.assign(entityNodes, resolveNodes(passive.actionGraph));
+    const comboCondition = Object.values(entityNodes).find(node => {
+      const action = node.action;
+      if (action.kind !== 'conditional') return false;
+      const condition = action.parameters.condition;
+      return (
+        condition.kind === 'actionValueCompare' &&
+        condition.left.kind === 'blackboard' &&
+        condition.left.key === 'isCombo'
+      );
+    });
+    if (comboCondition?.action.kind !== 'conditional') {
+      throw new Error('missing isCombo branch conditional');
+    }
+    const trueNode = entityNodes[comboCondition.action.whenTrue.$sequence!];
+    const falseNode = entityNodes[comboCondition.action.whenFalse!.$sequence!];
+    expect(trueNode?.action).toMatchObject({
+      kind: 'jumpTimeline',
+      parameters: { destinationFrame: 150 },
+    });
+    expect(falseNode?.action).toMatchObject({
+      kind: 'modifyActionValue',
+      parameters: {
+        key: 'EntityBB_isCombo',
+        operation: 'assign',
+        value: { kind: 'constant', value: 0 },
+      },
+    });
     expect(frames).not.toEqual(expect.arrayContaining([64, 124, 179]));
   });
 
@@ -303,16 +453,18 @@ describe('新增的完整技能转换干员', () => {
     expect(serialized).toContain('"enabledSide":"defender"');
     expect(serialized).toContain('"zone":"product"');
     expect(serialized).toContain('"blackboardKey":"defup"');
-    expect(rossi.buffDefinitions?.buff_chr_0028_wulfa_normal_bleed).toMatchObject({
+    const bleed = rossi.buffDefinitions?.buff_chr_0028_wulfa_normal_bleed;
+    expect(bleed).toMatchObject({
       triggerIntervalSeconds: { blackboardKey: 'damage_interval' },
       blackboard: { damage_interval: 1 },
       maxTriggerCount: -1,
-      lifecycleSequences: {
-        trigger: {
-          steps: expect.arrayContaining([expect.objectContaining({ kind: 'dealDamage' })]),
-        },
-      },
     });
+    const trigger = bleed?.lifecycleSequences?.trigger;
+    expect(trigger).toBeDefined();
+    if (!bleed || !trigger) throw new Error('missing bleed buff trigger');
+    expect(collectGraphSteps(bleed.actionGraph!, trigger)).toEqual(
+      expect.arrayContaining([expect.objectContaining({ kind: 'dealDamage' })]),
+    );
   });
 
   it('Rossi ultimate preserves its ultimate-only critical-damage modifier', () => {
@@ -359,11 +511,13 @@ describe('新增的完整技能转换干员', () => {
   });
 
   it('Rossi 二段连携按原生 QTE 窗口执行完整成功动作', () => {
-    const serialized = JSON.stringify([
-      rossiComboSkill2,
-      rossi.buffDefinitions?.buff_chr_0028_wulfa_combo_2_qte_timerlistening,
-      rossi.buffDefinitions?.buff_chr_0028_wulfa_combo_2_qte_timer,
-    ]);
+    const serialized = JSON.stringify(
+      resolveGeneratedDataNodes([
+        rossiComboSkill2,
+        rossi.buffDefinitions?.buff_chr_0028_wulfa_combo_2_qte_timerlistening,
+        rossi.buffDefinitions?.buff_chr_0028_wulfa_combo_2_qte_timer,
+      ]),
+    );
 
     expect(serialized).toContain('buff_chr_0028_wulfa_combo_2_qte_timerlistening');
     expect(serialized).toContain('"kind":"showComboRingQte"');
@@ -383,7 +537,7 @@ describe('新增的完整技能转换干员', () => {
   });
 
   it('Rossi 三段连携保留 timing_success 成功条件和专用成功 Buff', () => {
-    const serialized = JSON.stringify(rossiComboSkill3);
+    const serialized = JSON.stringify(resolveGeneratedDataNodes(rossiComboSkill3));
     const successCondition =
       '"left":{"kind":"blackboard","key":"timing_success","fallback":0},"operator":"equal","right":{"kind":"constant","value":1}';
     const successBuff = '"buffId":"buff_chr_0028_wulfa_tut_comboskill_success"';
@@ -475,9 +629,13 @@ describe('新增的完整技能转换干员', () => {
   });
 
   it('汤汤终结技 Aura 的两个可见 Buff 共用实体 TimedMarker 展示时钟', () => {
-    const source = JSON.stringify(
-      tangtang.abilityEntityDefinitions?.abilityentity_chr_0027_tangtang_ultskill?.childSkill,
-    );
+    const tangtangEntity =
+      tangtang.abilityEntityDefinitions?.abilityentity_chr_0027_tangtang_ultskill;
+    const source = JSON.stringify([
+      tangtangEntity?.childSkill,
+      tangtangEntity?.childSkills,
+      tangtangEntity?.passiveSkills,
+    ]);
     expect(source).toContain('"kind":"createAbilityEntityTimedMarker"');
     expect(source.match(/"kind":"actionOwnerTimedMarker","markerId":"tangtang_ult"/g)).toHaveLength(
       2,
@@ -518,7 +676,16 @@ describe('新增的完整技能转换干员', () => {
         talentStates: {},
       };
 
-      expect(() => compileOperatorDefinitionSkills('operator', build, operator)).not.toThrow();
+      expect(() =>
+        compileOperatorDefinitionSkills(
+          'operator',
+          build,
+          operator,
+          {},
+          undefined,
+          new ActionGraphDefinitionRepository(),
+        ),
+      ).not.toThrow();
     }
   });
 });

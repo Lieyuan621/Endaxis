@@ -4,13 +4,30 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'suit_usp02',
   iconPath: '/equipment/usp02/item_equip_t4_suit_usp02_edc_01.webp',
-  modifiers: [
-    {
-      kind: 'panelStat',
-      stat: 'healthFlat',
-      value: 1000,
+  modifiers: [{ kind: 'panelStat', stat: 'healthFlat', value: 1000 }],
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffId: 'buff_equipsuit_usp_02',
+              target: 'caster',
+              blackboardAssignments: {
+                hp_up: { kind: 'constant', value: 1000 },
+                dmg_up: { kind: 'constant', value: 0.16 },
+                duration: { kind: 'constant', value: 15 },
+              },
+            },
+          },
+          next: null,
+        },
+      },
     },
-  ],
+    macros: {},
+  },
+  skillId: 'passive_equipsuit_usp_02',
   buffDefinitions: {
     buff_equipsuit_usp_02: {
       stackingType: 'unlimited',
@@ -21,19 +38,29 @@ const definition = {
       maxTriggerCount: 1,
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        dmg_up: 0.25,
-        duration: 15,
-        hp_up: 1000,
-      },
+      blackboard: { dmg_up: 0.25, duration: 15, hp_up: 1000 },
       attributeModifiers: [],
       abilityEventResponses: [
-        {
-          event: 'outputBuff',
-          priority: 0,
-          sequence: {
-            steps: [
-              {
+        { event: 'outputBuff', priority: 0, sequence: { $sequence: 'conditional_2' } },
+      ],
+      actionGraph: {
+        main: {
+          nodes: {
+            applyBuff_1: {
+              action: {
+                kind: 'applyBuff',
+                parameters: {
+                  buffId: 'buff_equipsuit_usp_02_AddAttack',
+                  target: 'partyExceptCaster',
+                  source: 'buffOwner',
+                  inheritSourceSkillCastInfo: true,
+                  copiedBlackboardAssignments: { dmg_up: 'dmg_up', duration: 'duration' },
+                },
+              },
+              next: null,
+            },
+            conditional_2: {
+              action: {
                 kind: 'conditional',
                 parameters: {
                   condition: {
@@ -47,36 +74,20 @@ const definition = {
                     ],
                   },
                 },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'applyBuff',
-                      parameters: {
-                        buffId: 'buff_equipsuit_usp_02_AddAttack',
-                        target: 'partyExceptCaster',
-                        source: 'buffOwner',
-                        inheritSourceSkillCastInfo: true,
-                        copiedBlackboardAssignments: {
-                          dmg_up: 'dmg_up',
-                          duration: 'duration',
-                        },
-                      },
-                    },
-                  ],
-                },
+                whenTrue: { $sequence: 'applyBuff_1' },
               },
-            ],
+              next: null,
+            },
           },
         },
-      ],
+        macros: {},
+      },
     },
     buff_equipsuit_usp_02_AddAttack: {
       stackingType: 'stack',
       priority: 0,
       maxStackCount: 1,
-      durationSeconds: {
-        blackboardKey: 'duration',
-      },
+      durationSeconds: { blackboardKey: 'duration' },
       triggerIntervalSeconds: 0,
       waitFirstTriggerInterval: true,
       maxTriggerCount: 1,
@@ -100,19 +111,11 @@ const definition = {
         charHpBarVfxType: 'Fire',
         iconStyleInSquad: 'Default',
         abnormalColorType: 'Physical',
-        orderPriority: {
-          useDirectoryValue: false,
-          value: 0,
-          category: 'CommonCharBuff',
-        },
+        orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
       },
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        dmg_up: 0.25,
-        duration: 15,
-        hp_up: 1000,
-      },
+      blackboard: { dmg_up: 0.25, duration: 15, hp_up: 1000 },
       attributeModifiers: [],
       damageModifiers: [
         {
@@ -122,40 +125,15 @@ const definition = {
               kind: 'damageScale',
               side: 'attacker',
               zone: 'normal',
-              addition: {
-                blackboardKey: 'dmg_up',
-              },
+              addition: { blackboardKey: 'dmg_up' },
             },
           ],
         },
       ],
+      actionGraph: { main: { nodes: {} }, macros: {} },
     },
   },
-  enableSequence: {
-    steps: [
-      {
-        kind: 'applyBuff',
-        parameters: {
-          buffId: 'buff_equipsuit_usp_02',
-          target: 'caster',
-          blackboardAssignments: {
-            hp_up: {
-              kind: 'constant',
-              value: 1000,
-            },
-            dmg_up: {
-              kind: 'constant',
-              value: 0.16,
-            },
-            duration: {
-              kind: 'constant',
-              value: 15,
-            },
-          },
-        },
-      },
-    ],
-  },
+  enableSequence: { $sequence: 'applyBuff_1' },
 } as const satisfies GearSetDefinition;
 
 export default definition;

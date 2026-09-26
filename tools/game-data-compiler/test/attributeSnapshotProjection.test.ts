@@ -5,14 +5,17 @@ import {
   BUFF_ACTION_CONTEXT,
   type CombatActionProjectionContextSource,
 } from '../src/compiler/combatProjectionCommon.ts';
+import { withProjectionGraph } from './support/projectionContext.ts';
 import { activeSkillFixture, scalarFixture, targetFixture } from './sourceFixtures.ts';
 
-const ACTIVE_CONTEXT: CombatActionProjectionContextSource = {
-  gameplayTagRegistry: fixtureGameplayTagRegistry,
-  actionOwnerTarget: 'caster',
-  actionSourceTarget: 'caster',
-  actionTargetTarget: 'enemy',
-};
+function createActiveContext(): CombatActionProjectionContextSource {
+  return withProjectionGraph({
+    gameplayTagRegistry: fixtureGameplayTagRegistry,
+    actionOwnerTarget: 'caster',
+    actionSourceTarget: 'caster',
+    actionTargetTarget: 'enemy',
+  });
+}
 
 // 秋栗连携的原生形状：Sub/Level 中 Level 只是非 Specific 路径未使用的字段。
 function snapshotAction(overrides: Record<string, unknown> = {}) {
@@ -35,7 +38,7 @@ function snapshotAction(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function project(overrides: Record<string, unknown> = {}, context = ACTIVE_CONTEXT) {
+function project(overrides: Record<string, unknown> = {}, context = createActiveContext()) {
   const skill = activeSkillFixture();
   skill.blackboard = [{ key: 'sub_ratio', valueDouble: 0.02, valueStr: '', isDynamic: false }];
   skill.actionGroupData = {
@@ -53,12 +56,14 @@ function project(overrides: Record<string, unknown> = {}, context = ACTIVE_CONTE
     ],
     passiveEventActions: [],
   };
-  return compileActiveSkillRuntimeProjectionSource({
+  const projected = compileActiveSkillRuntimeProjectionSource({
     value: skill,
     sourcePath: 'snapshot',
     patch: null,
     context,
-  }).scheduledSequences[0]!.sequence.steps[0];
+  });
+  const entry = projected.scheduledSequences[0]!.sequence.$sequence;
+  return entry === null ? undefined : projected.actionGraph.main.nodes[entry]?.action;
 }
 
 describe('公共属性快照投影', () => {
@@ -95,10 +100,15 @@ describe('公共属性快照投影', () => {
   });
 
   it('Buff 宿主的 Source 复用相同投影，但不把 Buff Owner 当成来源', () => {
-    expect(project({ targetSettings: targetFixture('Source') }, BUFF_ACTION_CONTEXT)).toMatchObject(
-      { parameters: { attribute: { kind: 'secondary' } } },
+    expect(
+      project(
+        { targetSettings: targetFixture('Source') },
+        withProjectionGraph(BUFF_ACTION_CONTEXT),
+      ),
+    ).toMatchObject({ parameters: { attribute: { kind: 'secondary' } } });
+    expect(() => project({}, withProjectionGraph(BUFF_ACTION_CONTEXT))).toThrow(
+      'unsupported attribute snapshot target',
     );
-    expect(() => project({}, BUFF_ACTION_CONTEXT)).toThrow('unsupported attribute snapshot target');
   });
 
   it('保留原有 Specific/MaxHp 支持', () => {
@@ -137,7 +147,7 @@ describe('公共属性快照投影', () => {
         {},
         {
           gameplayTagRegistry: fixtureGameplayTagRegistry,
-          ...ACTIVE_CONTEXT,
+          ...createActiveContext(),
           actionOwnerTarget: 'unavailable',
         },
       ),
@@ -148,10 +158,10 @@ describe('公共属性快照投影', () => {
     expect(() =>
       project(
         { targetSettings: targetFixture('Source') },
-        {
+        withProjectionGraph({
           ...BUFF_ACTION_CONTEXT,
           actionSourceTarget: 'buffSource',
-        },
+        }),
       ),
     ).toThrow('unsupported attribute snapshot target or selector');
   });

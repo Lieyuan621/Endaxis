@@ -4,79 +4,84 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'suit_combo_cd01',
   iconPath: '/equipment/combo_cd01/item_equip_t4_suit_combo_cd01_body_01.webp',
-  modifiers: [
-    {
-      kind: 'skillCooldownMultiplier',
-      skillTypes: 'comboSkill',
-      value: 0.85,
+  modifiers: [{ kind: 'skillCooldownMultiplier', skillTypes: 'comboSkill', value: 0.85 }],
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffId: 'buff_equipsuit_combo_cd01',
+              target: 'caster',
+              blackboardAssignments: {
+                spell_up: { kind: 'constant', value: 0.2 },
+                max_stack: { kind: 'constant', value: 2 },
+                duration: { kind: 'constant', value: 15 },
+              },
+            },
+          },
+          next: null,
+        },
+      },
     },
-  ],
+    macros: {},
+  },
+  skillId: 'passive_equipsuit_combo_cd01',
   buffDefinitions: {
     buff_equipsuit_combo_cd01: {
       stackingType: 'unlimited',
       priority: 0,
-      maxStackCount: {
-        blackboardKey: 'max_stack',
-      },
+      maxStackCount: { blackboardKey: 'max_stack' },
       triggerIntervalSeconds: 0,
       waitFirstTriggerInterval: true,
       maxTriggerCount: 1,
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        duration: 30,
-        max_stack: 2,
-        spell_up: 0.1,
-      },
+      blackboard: { duration: 30, max_stack: 2, spell_up: 0.1 },
       attributeModifiers: [],
       abilityEventResponses: [
-        {
-          event: 'beforeCastSkill',
-          priority: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'conditional',
+        { event: 'beforeCastSkill', priority: 0, sequence: { $sequence: 'conditional_2' } },
+      ],
+      actionGraph: {
+        main: {
+          nodes: {
+            applyBuff_1: {
+              action: {
+                kind: 'applyBuff',
                 parameters: {
-                  condition: {
-                    kind: 'eventSkillTypeIn',
-                    skillTypes: ['comboSkill'],
+                  buffId: 'buff_equipsuit_combo_cd01_spellup',
+                  target: 'buffOwner',
+                  source: 'buffOwner',
+                  inheritSourceSkillCastInfo: true,
+                  asChildBuff: true,
+                  copiedBlackboardAssignments: {
+                    spell_up: 'spell_up',
+                    duration: 'duration',
+                    max_stack: 'max_stack',
                   },
                 },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'applyBuff',
-                      parameters: {
-                        buffId: 'buff_equipsuit_combo_cd01_spellup',
-                        target: 'buffOwner',
-                        source: 'buffOwner',
-                        inheritSourceSkillCastInfo: true,
-                        asChildBuff: true,
-                        copiedBlackboardAssignments: {
-                          spell_up: 'spell_up',
-                          duration: 'duration',
-                          max_stack: 'max_stack',
-                        },
-                      },
-                    },
-                  ],
-                },
               },
-            ],
+              next: null,
+            },
+            conditional_2: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'eventSkillTypeIn', skillTypes: ['comboSkill'] } },
+                whenTrue: { $sequence: 'applyBuff_1' },
+              },
+              next: null,
+            },
           },
         },
-      ],
+        macros: {},
+      },
     },
     buff_equipsuit_combo_cd01_spellup: {
       stackingType: 'stack',
       priority: 0,
-      maxStackCount: {
-        blackboardKey: 'max_stack',
-      },
-      durationSeconds: {
-        blackboardKey: 'duration',
-      },
+      maxStackCount: { blackboardKey: 'max_stack' },
+      durationSeconds: { blackboardKey: 'duration' },
       triggerIntervalSeconds: 0,
       waitFirstTriggerInterval: true,
       maxTriggerCount: 1,
@@ -100,69 +105,32 @@ const definition = {
         charHpBarVfxType: 'Fire',
         iconStyleInSquad: 'Default',
         abnormalColorType: 'Physical',
-        orderPriority: {
-          useDirectoryValue: false,
-          value: 0,
-          category: 'CommonCharBuff',
-        },
+        orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
       },
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        duration: 30,
-        max_stack: 2,
-        spell_up: 0.1,
-      },
+      blackboard: { duration: 30, max_stack: 2, spell_up: 0.1 },
       attributeModifiers: [
         {
           attribute: 'comboSkillDamageIncrease',
           slot: 'baseAddition',
-          value: {
-            blackboardKey: 'spell_up',
-          },
+          value: { blackboardKey: 'spell_up' },
         },
         {
           attribute: 'normalSkillDamageIncrease',
           slot: 'baseAddition',
-          value: {
-            blackboardKey: 'spell_up',
-          },
+          value: { blackboardKey: 'spell_up' },
         },
         {
           attribute: 'ultimateSkillDamageIncrease',
           slot: 'baseAddition',
-          value: {
-            blackboardKey: 'spell_up',
-          },
+          value: { blackboardKey: 'spell_up' },
         },
       ],
+      actionGraph: { main: { nodes: {} }, macros: {} },
     },
   },
-  enableSequence: {
-    steps: [
-      {
-        kind: 'applyBuff',
-        parameters: {
-          buffId: 'buff_equipsuit_combo_cd01',
-          target: 'caster',
-          blackboardAssignments: {
-            spell_up: {
-              kind: 'constant',
-              value: 0.2,
-            },
-            max_stack: {
-              kind: 'constant',
-              value: 2,
-            },
-            duration: {
-              kind: 'constant',
-              value: 15,
-            },
-          },
-        },
-      },
-    ],
-  },
+  enableSequence: { $sequence: 'applyBuff_1' },
 } as const satisfies GearSetDefinition;
 
 export default definition;

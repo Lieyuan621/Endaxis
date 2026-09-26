@@ -12,7 +12,7 @@ import {
   type KnockDownAbilityEvent,
 } from './knockDownOperationExecutor';
 import type { CombatOperationContext } from '../skills/skillRuntime';
-import { compileActionSequence } from '../../compiler/compileSkill';
+import { chainEntry } from '../../../test/compiledGraphEntry';
 import { CombatActionSequenceRuntime } from '../actions/combatActionSequenceRuntime';
 import { validateSkillDefinition } from '../../game-data/validateSkillDefinition';
 import { inspectStandardPlayerDamageCompatibility } from '../runtime/standardPlayerDamageCompatibility';
@@ -365,11 +365,10 @@ describe('普通根倒地：复用真实 Buff 目标与控制标签', () => {
   it('真实序列按返回策略决定是否执行后续步骤，首次破防的 Always 不会吞掉技能', () => {
     for (const returnWhen of ['always', 'success'] as const) {
       const s = setup();
-      const sequence = compileActionSequence(
-        { steps: [step({ returnWhen }), { kind: 'dealStagger', parameters: { value: 1 } }] },
-        1,
-        'fixture',
-      );
+      const sequence = chainEntry('knockdown-return-policy', [
+        step({ returnWhen }),
+        { kind: 'dealStagger', parameters: { value: 1 } },
+      ]);
       const runtime = new CombatActionSequenceRuntime(s.executor, s.context);
       runtime.createSequence(sequence).tryExecute({});
       expect(s.trace.includes('next')).toBe(returnWhen === 'always');
@@ -391,10 +390,11 @@ describe('普通根倒地：复用真实 Buff 目标与控制标签', () => {
       key: 'battle',
       timelineBlockFrames: 1,
       costs: [],
-      scheduledSequences: [{ startFrame: 0, sequence: { steps: [step()] } }],
+      scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'step-0' } }],
+      actionGraph: { main: { nodes: { 'step-0': { action: step(), next: null } } }, macros: {} },
     };
     expect(validateSkillDefinition(skill)).toEqual([]);
-    const compiled = compileActionSequence(skill.scheduledSequences[0]!.sequence, 1, 'fixture');
+    const compiled = chainEntry('fixture', [step()]);
     const issues = inspectStandardPlayerDamageCompatibility({
       endFrame: 10,
       inputs: [{ frame: 0, operatorId: 'ember', skillId: 'battle' }],
@@ -421,12 +421,11 @@ describe('普通根倒地：复用真实 Buff 目标与控制标签', () => {
     expect(issues[0]!.detail).toContain('audited standard-scene control-consumer bindings');
     const invalid = {
       ...skill,
-      scheduledSequences: [
-        {
-          startFrame: 0,
-          sequence: {
-            steps: [
-              {
+      actionGraph: {
+        main: {
+          nodes: {
+            'step-0': {
+              action: {
                 ...step(),
                 parameters: {
                   ...step().parameters,
@@ -435,10 +434,12 @@ describe('普通根倒地：复用真实 Buff 目标与控制标签', () => {
                   targetFilter: 'corpses',
                 },
               },
-            ],
+              next: null,
+            },
           },
         },
-      ],
+        macros: {},
+      },
     };
     expect(validateSkillDefinition(invalid).map(issue => issue.path)).toEqual(
       expect.arrayContaining([

@@ -12,6 +12,7 @@ import {
 } from './primitives.ts';
 import { type CombatEventHandlerDefinition, type ScheduledSequenceDefinition } from './actions.ts';
 import { type AbilityEventResponse } from './abilityEvents.ts';
+import type { ActionGraphReference, ActionGraphResourceDefinition } from './actionGraph.ts';
 import { type BuildCondition, type CombatCondition } from './conditions.ts';
 
 /** 生成期已从原生 born-tag 证据解析出的可执行能力实体查询。 */
@@ -58,11 +59,10 @@ export interface SkillCastResourceDefinition {
   };
 }
 
-/** 投射物结束时启动的回调技能；它的动作寿命不受投射物对象回收时间影响。 */
-export interface ProjectileCallbackSkillDefinition extends AbilityEntityChildSkillDefinition {}
-
 /** 能力实体拥有的完整技能；施放、费用、冷却与普通技能共用规则。 */
 export interface AbilityEntityChildSkillDefinition extends Readonly<SkillActionProgramDefinition> {
+  /** 子技能自己的节点和宏，不与能力实体模板合图。 */
+  readonly actionGraph: ActionGraphResourceDefinition;
   /** 子技能的原生 ID。 */
   readonly skillId: string;
   /** 实体注册表确定的原生技能类型。 */
@@ -75,12 +75,14 @@ export interface AbilityEntityChildSkillDefinition extends Readonly<SkillActionP
 
 /** 随能力实体 AbilitySystem 启用，并在该实体结束时销毁的原生被动技能。 */
 export interface AbilityEntityPassiveSkillDefinition {
+  /** 原生被动 SkillData 自己的图。 */
+  readonly actionGraph: ActionGraphResourceDefinition;
   /** 被动技能在能力实体定义中的唯一名称。 */
   readonly key: string;
   /** 创建时按引用技能等级解析的初始黑板。 */
   readonly blackboard?: Readonly<Record<string, LevelValues>>;
   /** 能力实体启用时执行一次的动作序列。 */
-  readonly enableSequence: import('./actions.ts').ActionSequenceDefinition;
+  readonly enableSequence: ActionGraphReference;
   /** 实体存活期间监听的 Buff 加入事件响应。 */
   readonly abilityEventResponses?: readonly AbilityEventResponse<'addedBuff'>[];
 }
@@ -126,7 +128,7 @@ export interface AbilityEntityDefinition {
   readonly passiveSkills?: readonly AbilityEntityPassiveSkillDefinition[];
 }
 
-/** 干员级能力实体蓝图；技能只引用身份并提供本次生成参数。 */
+/** 能力实体定义目录；技能只引用实体 ID 并提供本次生成参数。 */
 export type OperatorAbilityEntityDefinitions = Readonly<Record<string, AbilityEntityDefinition>>;
 
 /** 技能的一项等级化资源费用；实际扣除时机由技能 `costFrame` 决定。 */
@@ -280,6 +282,8 @@ export type ComboSkillPriority = (typeof COMBO_SKILL_PRIORITIES)[number];
  * 它描述战斗身份和时序，不承载翻译后的名称或编辑器布局。
  */
 export interface SkillDefinition extends SkillActionProgramDefinition {
+  /** 该技能完整的节点和宏；所有入口均在此图中解析。 */
+  readonly actionGraph: ActionGraphResourceDefinition;
   /** 原生 SkillData.skillId，也是干员定义和时间轴引用此技能时使用的唯一 ID。 */
   key: string;
   /**
@@ -356,7 +360,7 @@ export interface SkillDefinition extends SkillActionProgramDefinition {
     /** 是否仍发布完整的技能施放事件。 */
     readonly asSkillCast?: boolean;
     /** 命中旁路后直接执行的动作序列。 */
-    readonly sequence: import('./actions.ts').ActionSequenceDefinition;
+    readonly sequence: ActionGraphReference;
   };
   /** 技能启用期间注册的战斗事件响应。 */
   eventHandlers?: readonly CombatEventHandlerDefinition[];

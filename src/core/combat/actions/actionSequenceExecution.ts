@@ -2,22 +2,27 @@
  * 根据显式状态推进动作序列。执行端口只在调用期间使用，不进入保存的数据。
  * 状态赋值与同步回调的顺序沿用原有执行器，允许动作在执行中结束整个序列。
  */
-import { COMBAT_STEP_STATE, type ActionSequenceState } from '../state/actionState';
+import { COMBAT_STEP_STATE, type ActionStepState } from '../state/actionState';
 import { STEP_RESULT_MODE, type CombatExecutionContext } from './combatStep';
 
 /** 下标对应程序中的步骤；宿主必须即时读取本次步进的数据。 */
-export interface ActionSequenceExecutionHost {
+export interface ActionSequenceExecutionHost<Key = number> {
   canExecute(): boolean;
-  execute(index: number): boolean;
-  reset(index: number): void;
-  tick(index: number, deltaTime: number): void;
-  end(index: number): void;
+  execute(index: Key): boolean;
+  reset(index: Key): void;
+  tick(index: Key, deltaTime: number): void;
+  end(index: Key): void;
 }
 
-export function executeActionSequence(
-  state: ActionSequenceState,
+/** 数组步骤和图节点共用生命周期算法；枚举顺序由各自程序决定。 */
+export interface ActionExecutionEntries<Key> {
+  readonly entries: { entries(): IterableIterator<[Key, ActionStepState]> };
+}
+
+export function executeActionSequence<Key>(
+  state: ActionExecutionEntries<Key>,
   context: CombatExecutionContext,
-  host: ActionSequenceExecutionHost,
+  host: ActionSequenceExecutionHost<Key>,
 ): boolean {
   for (const [index, entry] of state.entries.entries()) {
     if (entry.state === COMBAT_STEP_STATE.ended) continue;
@@ -41,9 +46,9 @@ export function executeActionSequence(
   return true;
 }
 
-export function resetActionSequence(
-  state: ActionSequenceState,
-  host: ActionSequenceExecutionHost,
+export function resetActionSequence<Key>(
+  state: ActionExecutionEntries<Key>,
+  host: ActionSequenceExecutionHost<Key>,
 ): void {
   for (const [index, entry] of state.entries.entries()) {
     host.reset(index);
@@ -53,10 +58,10 @@ export function resetActionSequence(
   }
 }
 
-export function tickActionSequence(
-  state: ActionSequenceState,
+export function tickActionSequence<Key>(
+  state: ActionExecutionEntries<Key>,
   deltaTime: number,
-  host: ActionSequenceExecutionHost,
+  host: ActionSequenceExecutionHost<Key>,
 ): void {
   for (const [index, entry] of state.entries.entries()) {
     if (entry.state !== COMBAT_STEP_STATE.started && entry.state !== COMBAT_STEP_STATE.ticking) {
@@ -70,9 +75,9 @@ export function tickActionSequence(
   }
 }
 
-export function endActionSequence(
-  state: ActionSequenceState,
-  host: ActionSequenceExecutionHost,
+export function endActionSequence<Key>(
+  state: ActionExecutionEntries<Key>,
+  host: ActionSequenceExecutionHost<Key>,
 ): void {
   for (const [index, entry] of state.entries.entries()) {
     if (

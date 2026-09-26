@@ -1,42 +1,68 @@
+import type { SkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
+import type {
+  ActionGraphNode,
+  ActionGraphStep,
+} from '../../../../packages/game-data-contract/src/actionGraph';
 import type { CombatStepForKind } from '../../../../packages/game-data-contract/src/actions';
 import { describe, expect, it } from 'vitest';
-import type {
-  OperatorDefinition,
-  ScheduledSequenceDefinition,
-  SkillType,
-} from '../../../core/game-data/operatorDefinition';
+import type { OperatorDefinition, SkillType } from '../../../core/game-data/operatorDefinition';
 import type { WeaponDefinition } from '../../../core/game-data/equipmentDefinition';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import { generatedWeaponDefinitions } from '../../../data/equipment/generated-weapons/index.generated';
 import { gameDataRepository } from '../../../data/gameDataRepository';
 import { skillSettings } from '../../../data/combat/skillSettings';
 import { daPan } from '../../../data/operators/da-pan.generated';
-import { getSkill } from '../../../data/operators/testUtils';
 import { placeSkillGroup } from '../../../ui/timeline/interaction/placeSkillGroup';
 import { ScenarioSimulationService } from '../scenarioSimulationService';
 
-const daPanComboSkill = getSkill(daPan, 'chr_0018_dapan_combo_skill');
+function findSkill(operator: OperatorDefinition, key: string): SkillDefinition {
+  for (const group of operator.skillGroups) {
+    const skills = Array.isArray(group.skills) ? group.skills : [group.skills];
+    const skill = skills.find(candidate => candidate.key === key);
+    if (skill !== undefined) return skill;
+  }
+  throw new Error(`missing skill: ${key}`);
+}
+const daPanComboSkill = findSkill(daPan, 'chr_0018_dapan_combo_skill');
+
+/** 一条按帧排程的探针步骤链；节点归属在 simulate 中显式铺入技能图。 */
+interface ProbeSequence {
+  readonly startFrame: number;
+  readonly steps: readonly ActionGraphStep[];
+}
+
+/** 把一条纯线性 ActionGraphStep 链铺成同图节点并返回入口身份。 */
+function linearChain(
+  prefix: string,
+  steps: readonly ActionGraphStep[],
+): { readonly nodes: Record<string, ActionGraphNode>; readonly entry: string | null } {
+  const nodes: Record<string, ActionGraphNode> = {};
+  steps.forEach((action, index) => {
+    nodes[`${prefix}-${index}`] = {
+      action,
+      next: index + 1 < steps.length ? `${prefix}-${index + 1}` : null,
+    };
+  });
+  return { nodes, entry: steps.length === 0 ? null : `${prefix}-0` };
+}
 
 // 受控排程只隔离输入；真实公共破防/猛击定义、武器安装、事件、消费和伤害均经生产管线。
 describe('生成武器的目标状态与层数伤害分支', () => {
   it.each([0, 1, 3, 4])('猛击前读取敌人 %i 层破防，而不是 Buff 实例数', async layers => {
     const crush = createCrushProbe();
     for (const tier of [1, 9]) {
-      const sequences: ScheduledSequenceDefinition[] = [
+      const sequences: ProbeSequence[] = [
         {
           startFrame: 1,
-          sequence: {
-            steps: Array.from({ length: layers }, () => ({
-              kind: 'applyBuff',
-              parameters: {
-                buffId: crush.parameters.noGuardBuffId,
-                definition: crush.parameters.noGuardDefinition,
-                target: 'enemy',
-              },
-            })),
-          },
+          steps: Array.from({ length: layers }, () => ({
+            kind: 'applyBuff' as const,
+            parameters: {
+              buffId: crush.parameters.noGuardBuffId,
+              target: 'enemy' as const,
+            },
+          })),
         },
-        { startFrame: 60, sequence: { steps: [crush] } },
+        { startFrame: 60, steps: [crush] },
         ...[31, 61, 1001].map(frame => hit(frame, 'physical')),
       ];
       const { active, baseline } = await simulate('wpn_claym_0017', tier, sequences);
@@ -62,20 +88,17 @@ describe('生成武器的目标状态与层数伤害分支', () => {
     const { active, baseline } = await simulate('wpn_claym_0017', 9, [
       {
         startFrame: 1,
-        sequence: {
-          steps: [
-            {
-              kind: 'applyBuff',
-              parameters: {
-                buffId: crush.parameters.noGuardBuffId,
-                definition: crush.parameters.noGuardDefinition,
-                target: 'caster',
-              },
+        steps: [
+          {
+            kind: 'applyBuff',
+            parameters: {
+              buffId: crush.parameters.noGuardBuffId,
+              target: 'caster',
             },
-          ],
-        },
+          },
+        ],
       },
-      { startFrame: 60, sequence: { steps: [crush] } },
+      { startFrame: 60, steps: [crush] },
       hit(61, 'physical'),
     ]);
     expect(
@@ -94,14 +117,12 @@ describe('生成武器的目标状态与层数伤害分支', () => {
         const { active, baseline } = await simulate('wpn_claym_0013', tier, [
           {
             startFrame: 1,
-            sequence: {
-              steps: (attachment ? (['cryo'] as const) : (['electric', 'cryo'] as const)).map(
-                element => ({
-                  kind: 'applyElementalInfliction',
-                  parameters: { element, isExtra: false },
-                }),
-              ),
-            },
+            steps: (attachment ? (['cryo'] as const) : (['electric', 'cryo'] as const)).map(
+              element => ({
+                kind: 'applyElementalInfliction' as const,
+                parameters: { element, isExtra: false },
+              }),
+            ),
           },
           hit(31, 'cryo', 'comboSkill'),
           hit(32, 'cryo'),
@@ -120,43 +141,51 @@ describe('生成武器的目标状态与层数伤害分支', () => {
   );
 });
 
-function createCrushProbe() {
-  const step = findPhysicalInfliction(daPanComboSkill.scheduledSequences);
-  if (!step || step.parameters.type !== 'crush')
-    throw new Error('fixture requires a production Crush step');
-  return structuredClone(step);
-}
-
-function findPhysicalInfliction(
-  value: unknown,
-): CombatStepForKind<'applyPhysicalInfliction'> | null {
-  if (value === null || typeof value !== 'object') return null;
-  if ('kind' in value && value.kind === 'applyPhysicalInfliction' && 'parameters' in value) {
-    return value as CombatStepForKind<'applyPhysicalInfliction'>;
+function createCrushProbe(): CombatStepForKind<'applyPhysicalInfliction'> {
+  const nodes = daPanComboSkill.actionGraph.main.nodes;
+  for (const node of Object.values(nodes)) {
+    if (node.action.kind === 'applyPhysicalInfliction' && node.action.parameters.type === 'crush') {
+      const { noGuardBuffId, crushedBuffId, damageMultiplier, ignoreHitEffect } =
+        node.action.parameters;
+      // 层数由夹具手动施加；内联 Buff 定义不带程序字段，避免复制大潘自己的图节点引用。
+      return {
+        kind: 'applyPhysicalInfliction',
+        parameters: {
+          target: 'enemy',
+          isExtra: false,
+          noGuardBuffId,
+          noGuardDefinition: {
+            stackingType: 'enhanceAndRefresh',
+            priority: 100,
+            maxStackCount: 4,
+            durationSeconds: 2,
+          },
+          type: 'crush',
+          crushedBuffId,
+          crushedDefinition: { stackingType: 'refresh', durationSeconds: 2 },
+          damageMultiplier,
+          ignoreHitEffect,
+        },
+      };
+    }
   }
-  for (const child of Array.isArray(value) ? value : Object.values(value)) {
-    const result = findPhysicalInfliction(child);
-    if (result !== null) return result;
-  }
-  return null;
+  throw new Error('fixture requires a production Crush step');
 }
 
 function hit(
   frame: number,
   damageType: 'physical' | 'cryo',
   tag: 'normalAttack' | 'comboSkill' = 'normalAttack',
-): ScheduledSequenceDefinition {
+): ProbeSequence {
   return {
     startFrame: frame,
-    sequence: {
-      steps: [
-        {
-          key: `probe-${frame}`,
-          kind: 'dealDamage',
-          parameters: { damageType, attackScale: 1, tags: [tag] },
-        },
-      ],
-    },
+    steps: [
+      {
+        key: `probe-${frame}`,
+        kind: 'dealDamage',
+        parameters: { damageType, attackScale: 1, tags: [tag] },
+      },
+    ],
   };
 }
 
@@ -190,11 +219,7 @@ function assertProbeDeltas(
   });
 }
 
-async function simulate(
-  slug: string,
-  tier: number,
-  sequences: readonly ScheduledSequenceDefinition[],
-) {
+async function simulate(slug: string, tier: number, sequences: readonly ProbeSequence[]) {
   const weapon: WeaponDefinition = generatedWeaponDefinitions.find(item => item.slug === slug)!;
   const base = gameDataRepository.getOperator('da-pan')!;
   const operator: OperatorDefinition = {
@@ -218,15 +243,35 @@ async function simulate(
         key: 'basicAttack',
         skillType: 'basicAttack' as SkillType,
         levelSource: 'basicAttack',
-        skills: {
-          skillType: 'basicAttack' as const,
-          levelSource: 'basicAttack' as const,
-          key: 'state-probe',
-          // 保留大潘原始猛击参数，不为 fixture 猜 crush_multi。
-          blackboard: daPanComboSkill.blackboard,
-          timelineBlockFrames: 1050,
-          scheduledSequences: [...sequences].sort((a, b) => a.startFrame - b.startFrame),
-        },
+        skills: (() => {
+          const nodes: Record<string, ActionGraphNode> = {};
+          const scheduledSequences = [...sequences]
+            .sort((a, b) => a.startFrame - b.startFrame)
+            .map((probe, index) => {
+              const chain = linearChain(`seq${index}`, probe.steps);
+              Object.assign(nodes, chain.nodes);
+              return { startFrame: probe.startFrame, sequence: { $sequence: chain.entry } };
+            });
+          const probe: SkillDefinition = {
+            skillType: 'basicAttack' as const,
+            levelSource: 'basicAttack' as const,
+            key: 'state-probe',
+            // 保留大潘原始猛击参数，不为 fixture 猜 crush_multi。
+            blackboard: daPanComboSkill.blackboard,
+            timelineBlockFrames: 1050,
+            scheduledSequences,
+            actionGraph: {
+              main: {
+                nodes,
+                ...(daPanComboSkill.actionGraph.main.dataNodes === undefined
+                  ? {}
+                  : { dataNodes: daPanComboSkill.actionGraph.main.dataNodes }),
+              },
+              macros: {},
+            },
+          };
+          return probe;
+        })(),
       },
     ],
   };

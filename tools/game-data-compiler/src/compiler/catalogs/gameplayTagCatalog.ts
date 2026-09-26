@@ -1,7 +1,7 @@
 import { gameplayTagIdFromPath, type GameplayTagId } from '../../source/nativeGameplayTags.ts';
 import type { GameplayTagConfigDumpSource } from '../../source/gameplayTagConfigDump.ts';
 import type { GameplayTagConfigReferenceSource } from '../../source/gameplayTagConfigDump.ts';
-import { assertGameplayTag } from '../../../../../packages/game-data-contract/src/gameplayTags.ts';
+import { assertGameplayTag } from '../../../../../src/core/game-data/definitionGuards.ts';
 
 export interface CompiledGameplayTagDefinitionSource {
   readonly id: GameplayTagId;

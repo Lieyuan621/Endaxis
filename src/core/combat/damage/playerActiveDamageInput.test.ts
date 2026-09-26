@@ -1,9 +1,11 @@
+import type { SkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
+import { rootActionSteps } from '../../compiler/actionProgramInspection';
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
 import { describe, expect, it } from 'vitest';
 import { perlica } from '../../../data/operators/perlica.generated';
 import { compileSkill } from '../../compiler/compileSkill';
+import { ActionGraphDefinitionRepository } from '../../compiler/actionGraphDefinitionRepository';
 
-import type { SkillDefinition } from '../../game-data/operatorDefinition';
 import { calculatePlayerActiveDamage } from './playerActiveDamage';
 import {
   resolvePlayerActiveDamageInput,
@@ -39,9 +41,10 @@ function findDamageStep(): ResolvedCombatStepForKind<'dealDamage'> {
     skillType: 'battleSkill',
     skillLevel: 12,
     skill: findPerlicaBattleSkill(),
+    programs: new ActionGraphDefinitionRepository(),
   });
   const step = program.timelineActions
-    .flatMap(action => action.sequence.steps)
+    .flatMap(action => rootActionSteps(action.sequence))
     .find(candidate => candidate.kind === 'dealDamage');
   if (step?.kind !== 'dealDamage') throw new Error('Perlica damage step is missing');
   return step;

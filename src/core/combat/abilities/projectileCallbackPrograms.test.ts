@@ -1,11 +1,11 @@
 /** 同名不同配置的回调必须保持各自身份；分支追加程序不能改写已有编号。 */
 import { expect, it } from 'vitest';
 import { ProjectileCallbackPrograms } from './projectileCallbackPrograms';
-import type { CompiledProjectileCallbackSkillProgram } from '../../compiler/combatProgram';
+import type { CompiledAbilityEntityChildSkillProgram } from '../../compiler/combatProgram';
 
 it('按程序对象登记，不按技能名或相同内容合并', () => {
   const directory = new ProjectileCallbackPrograms();
-  const program: CompiledProjectileCallbackSkillProgram = {
+  const program: CompiledAbilityEntityChildSkillProgram = {
     skillId: 'same',
     nativeSkillType: 'normalSkill',
     naturalDurationFrames: 1,

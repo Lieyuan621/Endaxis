@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { layoutSkillGroupPlacement, skillPlacementDisplayFrames } from './skillGroupPlacement';
+
+import type { SkillGroupDefinition } from '../../core/game-data/operatorDefinition';
+import {
+  layoutSkillGroupPlacement,
+  listSkillGroupLibraryPlacements,
+  resolveSkillGroupPlacementSkills,
+  skillPlacementDisplayFrames,
+} from './skillGroupPlacement';
 
 describe('layoutSkillGroupPlacement', () => {
   it('shares the chain offsets and preview span without changing individual block widths', () => {
@@ -21,5 +28,49 @@ describe('layoutSkillGroupPlacement', () => {
     expect(
       layoutSkillGroupPlacement([{ timelineBlockFrames: 0 }, { timelineBlockFrames: 16 }]),
     ).toEqual({ offsets: [0, 0], durationFrames: 17 });
+  });
+});
+
+it('图技能组仅凭技能元数据决定技能库与放置链', () => {
+  const group: SkillGroupDefinition = {
+    key: 'basicAttack',
+    skillType: 'basicAttack',
+    levelSource: 'basicAttack',
+    skills: [
+      {
+        key: 'attack1',
+        levelSource: 'basicAttack',
+        timelineBlockFrames: 16,
+        scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'shared' } }],
+        actionGraph: {
+          main: {
+            nodes: {
+              shared: { action: { kind: 'dealStagger', parameters: { value: 1 } }, next: null },
+            },
+          },
+          macros: {},
+        },
+      },
+      {
+        key: 'attack2',
+        levelSource: 'basicAttack',
+        timelineBlockFrames: 18,
+        scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'shared' } }],
+        actionGraph: {
+          main: {
+            nodes: {
+              shared: { action: { kind: 'dealStagger', parameters: { value: 1 } }, next: null },
+            },
+          },
+          macros: {},
+        },
+      },
+    ],
+  };
+  const [entry] = listSkillGroupLibraryPlacements(group);
+  expect(entry?.skills.map(skill => skill.key)).toEqual(['attack1', 'attack2']);
+  expect(layoutSkillGroupPlacement(resolveSkillGroupPlacementSkills(group))).toEqual({
+    offsets: [0, 17],
+    durationFrames: 36,
   });
 });

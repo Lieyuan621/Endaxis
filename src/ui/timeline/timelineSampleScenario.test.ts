@@ -21,11 +21,11 @@ describe('timelineSampleScenario', () => {
     const track = scenario.tracks[ABILITY_ENTITY_SAMPLE_TRACK_INDEX]!;
     const cast = track.skillCasts.find(item => item.id === ABILITY_ENTITY_SAMPLE_CAST_ID)!;
     const { definition } = resolveSkillTemplateDefinition(cast, arclight);
-    const spawn = definition.scheduledSequences
-      .flatMap(sequence => sequence.sequence.steps)
-      .find(step => step.kind === 'spawnAbilityEntity');
+    const spawn = Object.values(definition.actionGraph.main.nodes).find(
+      node => node.action.kind === 'spawnAbilityEntity',
+    )?.action;
 
-    expect(validateSkillDefinition(definition)).toEqual([]);
+    expect(validateSkillDefinition(definition, '$')).toEqual([]);
     expect(cast.customDefinition).toBeUndefined();
     expect(cast.presentation?.disabled).toBe(true);
     expect(spawn?.kind).toBe('spawnAbilityEntity');

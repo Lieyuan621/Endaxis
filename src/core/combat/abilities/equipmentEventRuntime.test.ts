@@ -1,3 +1,8 @@
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import type {
+  ActionGraphNode,
+  ActionGraphStep,
+} from '../../../../packages/game-data-contract/src/actionGraph';
 import { createTestBuffReference } from '../buffs/buffTestFixtures';
 import { createNativeEventFixture } from '../events/nativeEventTestFixture';
 import { AbilityEventDispatcher } from '../events/abilityEventDispatcher';
@@ -5,9 +10,28 @@ import type { AbilityEvent } from '../../../../packages/game-data-contract/src/a
 import type { AbilityEventPayloadMap } from '../events/combatAbilityEvent';
 import { describe, expect, it, vi } from 'vitest';
 import type { CompiledEquipmentContribution } from '../../compiler/compileEquipment';
+import type { ResolvedActionSequence } from '../../compiler/combatProgram';
 import type { CombatOperationExecutor } from '../skills/skillRuntime';
 import { CombatSemanticEventRuntime } from '../events/combatSemanticEventRuntime';
 import { EquipmentEventRuntime } from './equipmentEventRuntime';
+
+const chainSequence = (
+  revision: string,
+  actions: readonly ActionGraphStep[],
+): ResolvedActionSequence => {
+  const nodes: Record<string, ActionGraphNode> = {};
+  actions.forEach((action, index) => {
+    nodes[`step-${index}`] = {
+      action,
+      next: index + 1 < actions.length ? `step-${index + 1}` : null,
+    };
+  });
+  return {
+    graph: createActionGraphCompilation({ nodes }, 1, revision).compileAll(),
+    entry: actions.length === 0 ? null : 'step-0',
+    callSite: revision,
+  };
+};
 
 // 非生命周期用例显式建立已启用实例；门禁用例直接调用构造器验证未启用状态。
 function createEnabledEquipmentRuntime(
@@ -21,6 +45,11 @@ function createEnabledEquipmentRuntime(
   return runtime;
 }
 
+const gainSpStep = {
+  kind: 'changeResource',
+  parameters: { resource: 'sp', amount: 10, recipient: 'team' },
+} as const satisfies ActionGraphStep;
+
 const contribution: CompiledEquipmentContribution = {
   source: { kind: 'weaponTrait', slug: 'fixture-weapon', traitKey: 'skill' },
   selectedLevel: 3,
@@ -30,14 +59,7 @@ const contribution: CompiledEquipmentContribution = {
       key: 'gain-sp',
       event: { kind: 'damageTagHit', tag: 'normalSkill', scope: 'operator' },
       condition: { kind: 'combatActive' },
-      sequence: {
-        steps: [
-          {
-            kind: 'changeResource',
-            parameters: { resource: 'sp', amount: 10, recipient: 'team' },
-          },
-        ],
-      },
+      sequence: chainSequence('equipment-gain-sp', [gainSpStep]),
     },
   ],
 };
@@ -106,7 +128,7 @@ describe('EquipmentEventRuntime', () => {
       });
       const end = vi.fn();
       const original = contribution.eventHandlers[0]!;
-      const step = original.sequence.steps[0]!;
+      const step = gainSpStep;
       const runtime = createEnabledEquipmentRuntime(
         native.semanticEvents,
         'operator:a',
@@ -120,10 +142,15 @@ describe('EquipmentEventRuntime', () => {
                       ...original,
                       event: undefined,
                       abilityEvent: 'skillSpGained',
-                      sequence: { steps: [step, step] },
+                      sequence: chainSequence('equipment-release-native', [step, step]),
                     },
                   ]
-                : [{ ...original, sequence: { steps: [step, step] } }],
+                : [
+                    {
+                      ...original,
+                      sequence: chainSequence('equipment-release-compat', [step, step]),
+                    },
+                  ],
           },
         ],
         () => ({ execute, end, evaluate: () => true }),
@@ -495,12 +522,13 @@ describe('EquipmentEventRuntime', () => {
             {
               key: 'reentry',
               abilityEvent: 'skillSpGained',
-              sequence: {
-                steps: (prefix ? ['prefix', 'emit', 'tail'] : ['emit', 'tail']).map(flag => ({
+              sequence: chainSequence(
+                'equipment-reentry',
+                (prefix ? ['prefix', 'emit', 'tail'] : ['emit', 'tail']).map(flag => ({
                   kind: 'setContextFlag',
                   parameters: { flag, value: true, target: 'caster' },
                 })),
-              },
+              ),
             },
           ],
         },
@@ -600,7 +628,7 @@ describe('EquipmentEventRuntime', () => {
       ...contribution,
       source: { kind: 'gearSet', slug: 'initial-only' },
       eventHandlers: [],
-      initializationSequence: { steps: [] },
+      initializationSequence: chainSequence('equipment-init', []),
     };
     const staticOnly = { ...contribution, eventHandlers: [] };
     const runtime = createEnabledEquipmentRuntime(

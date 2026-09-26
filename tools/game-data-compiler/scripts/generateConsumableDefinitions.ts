@@ -44,12 +44,13 @@ export async function generateConsumableDefinitions(
       `export const consumableDefinitions = Object.freeze(${JSON.stringify(catalog.definitions, null, 2)}) as readonly ConsumableDefinition[];\n`,
     { ...prettier, parser: 'typescript' },
   );
-  const buffSource = (
-    await format(renderCommonBuffDefinitionsSource(closure.definitions), {
+  const buffSource = await format(
+    renderCommonBuffDefinitionsSource(closure.definitions, 'consumableBuffDefinitions'),
+    {
       ...prettier,
       parser: 'typescript',
-    })
-  ).replaceAll('commonBuffDefinitions', 'consumableBuffDefinitions');
+    },
+  );
   for (const [output, content] of [
     [args.definitionOutput, definitionsSource],
     [args.buffOutput, buffSource],

@@ -5,10 +5,10 @@ import { createEmptyProject, createEmptyScenario } from '../../core/project/crea
 import {
   deriveProjectGearSetTemplate,
   deriveProjectGearTemplate,
-  deriveProjectOperatorTemplate,
   getProjectDefinitionLibrary,
   replaceProjectGearTemplateDefinition,
 } from '../../core/project/projectDefinitionLibrary';
+import { withProjectOperatorTemplate } from '../../test/projectOperatorTemplateFixture';
 import { createDefaultOperatorInstance } from '../../application/editor/loadoutBuildFactory';
 import { openProject } from '../../application/openProject';
 import { createProjectGameDataRepository } from '../../data/projectGameDataRepository';
@@ -64,12 +64,7 @@ describe('project export scope', () => {
 
   it('exports only templates used by the selected scenario, including its custom gear set', async () => {
     let project = createEmptyProject({ createdWith: 'test' });
-    project = deriveProjectOperatorTemplate(project, {
-      id: 'project:operator:unused',
-      name: '未使用',
-      baseTemplateId: perlica.slug,
-      definition: perlica,
-    });
+    project = withProjectOperatorTemplate(project, 'project:operator:unused', '未使用', perlica);
     project = deriveProjectGearSetTemplate(project, {
       id: 'project:gearSet:1',
       name: '自定义套装',

@@ -25,6 +25,8 @@ import { standardStumpBuffAbilityEventOmissionReason } from '../../compiler/scen
 
 export interface CompiledEquipmentSuitRuntimeBatchSource {
   readonly definitions: readonly (CompiledGearSetStaticDefinitionSource & {
+    readonly skillId: string;
+    readonly actionGraph?: import('../../../../../packages/game-data-contract/src/actionGraph.ts').ActionGraphResourceDefinition;
     readonly buffDefinitions?: Readonly<Record<string, CompiledBuffDefinitionSource>>;
     readonly enableSequence?: CompiledBuffSequenceSource;
     readonly initializationSequence?: CompiledBuffSequenceSource;
@@ -108,7 +110,7 @@ export function compileEquipmentSuitRuntimeBatchSource(
       dependency.startupBuffIds.map(buffId => ({ buffId, blackboardAssignments: {} }));
     const installations = [...startupInstallations, ...activeToggleInstallations];
     if (installations.length === 0) {
-      output.push(definition);
+      output.push({ ...definition, skillId: dependency.skillId });
       continue;
     }
 
@@ -228,15 +230,18 @@ export function compileEquipmentSuitRuntimeBatchSource(
       });
     }
     if (blocked) continue;
+    const graph = createActionGraphBuilder<CompiledBuffStepSource>();
+    const enableSequence = graph.sequence(enableSteps);
+    const initializationSequence = graph.sequence(initializationSteps);
     output.push({
       ...definition,
+      actionGraph: { main: graph.finish(), macros: {} },
+      skillId: dependency.skillId,
       buffDefinitions: Object.fromEntries(
         Object.entries(buffDefinitions).sort(([left], [right]) => left.localeCompare(right)),
       ),
-      ...(enableSteps.length === 0 ? {} : { enableSequence: { steps: enableSteps } }),
-      ...(initializationSteps.length === 0
-        ? {}
-        : { initializationSequence: { steps: initializationSteps } }),
+      ...(enableSteps.length === 0 ? {} : { enableSequence }),
+      ...(initializationSteps.length === 0 ? {} : { initializationSequence }),
     });
   }
   return { definitions: output, diagnostics };
@@ -274,3 +279,4 @@ function isUnresolvedSkillBlackboardValue(
 }
 
 /** Whether any executable/lifecycle field consumes a value from this Buff's local blackboard. */
+import { createActionGraphBuilder } from '../../compiler/actions/actionGraphBuilder.ts';

@@ -36,7 +36,7 @@ export function projectElementalInflictionAction(
     parameters: {
       element,
       isExtra: action.isExtra,
-      ...(action.inverseReaction ? { inverseReaction: true } : {}),
+      ...(action.inverseReaction ? { inverseReaction: true as const } : {}),
       ...(targetsBuffOwner ? { target: 'buffOwner' as const } : {}),
     },
   };

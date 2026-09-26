@@ -2,6 +2,11 @@ import { equipmentFixture } from './sourceFixtures.ts';
 import { fixtureGameplayTagRegistry } from './gameplayTagFixtures.ts';
 
 import { describe, expect, it } from 'vitest';
+import ts from 'typescript';
+import type { WeaponDefinition } from '../../../packages/game-data-contract/src/equipment.ts';
+import { ActionGraphDefinitionRepository } from '../../../src/core/compiler/actionGraphDefinitionRepository.ts';
+import { compileWeaponContributions } from '../../../src/core/compiler/compileEquipment.ts';
+import { rootActionSteps } from '../../../src/core/compiler/actionProgramInspection.ts';
 import {
   attachWeaponProductIdentities,
   compileWeaponRuntimeDefinitionBatchSource,
@@ -109,7 +114,18 @@ describe('weapon runtime definitions', () => {
     );
 
     expect(result.diagnostics).toEqual([]);
-    expect(result.definitions).toEqual([definition]);
+    expect(result.definitions).toEqual([
+      {
+        ...definition,
+        traits: [
+          {
+            ...definition.traits[0],
+            skillId: dependency.skillId,
+            actionGraph: { main: { nodes: {} }, macros: {} },
+          },
+        ],
+      },
+    ]);
   });
 
   it('fails closed when a trait runtime dependency is missing', () => {
@@ -164,6 +180,7 @@ describe('weapon runtime definitions', () => {
     ['OnObtainAtb', 'skillSpGained'],
     ['OnConsumeBuff', 'buffConsumed'],
     ['OnAfterOutputPhysicalInfliction', 'afterOutputPhysicalInfliction'],
+    [302, 'beforeOutputDamage'],
   ] as const)(
     '把 %s 投影到公共 AbilityEvent，不生成另一份语义事件',
     (nativeEvent, abilityEvent) => {
@@ -229,16 +246,20 @@ describe('weapon runtime definitions', () => {
       expect(result.definitions[0]?.traits[0]?.blackboard?.constant).toBe(7);
       expect(result.definitions[0]?.traits[0]?.eventHandlers?.[0]).not.toHaveProperty('blackboard');
       expect(result.diagnostics).toEqual([]);
-      expect(result.definitions[0]?.traits[0]?.eventHandlers).toMatchObject([
-        {
-          key: 'skill1:event:0:sequence:0',
-          abilityEvent,
-          priority: 0,
-          sequence: {
-            steps: [{ kind: 'modifyActionValue', parameters: { key: 'counter' } }],
-          },
-        },
-      ]);
+      const trait = result.definitions[0]?.traits[0];
+      const handler = trait?.eventHandlers?.[0];
+      expect(handler).toMatchObject({
+        key: 'skill1:event:0:sequence:0',
+        abilityEvent,
+        priority: 0,
+      });
+      const reference = handler?.sequence.$sequence;
+      expect(reference).toEqual(expect.any(String));
+      const action =
+        trait?.actionGraph && 'main' in trait.actionGraph
+          ? trait.actionGraph.main.nodes[reference as string]?.action
+          : undefined;
+      expect(action).toMatchObject({ kind: 'modifyActionValue', parameters: { key: 'counter' } });
     },
   );
 
@@ -300,10 +321,16 @@ describe('weapon runtime definitions', () => {
     );
 
     expect(result.diagnostics).toEqual([]);
-    expect(result.definitions[0]?.traits[0]).toMatchObject({
-      initializationSequence: {
-        steps: [{ kind: 'modifyActionValue', parameters: { key: 'form' } }],
-      },
+    const deckTrait = result.definitions[0]?.traits[0];
+    const initialization = deckTrait?.initializationSequence?.$sequence;
+    expect(initialization).toEqual(expect.any(String));
+    const initialAction =
+      deckTrait?.actionGraph && 'main' in deckTrait.actionGraph
+        ? deckTrait.actionGraph.main.nodes[initialization as string]?.action
+        : undefined;
+    expect(initialAction).toMatchObject({
+      kind: 'modifyActionValue',
+      parameters: { key: 'form' },
     });
     expect(result.definitions[0]?.traits[0]?.eventHandlers).toBeUndefined();
   });
@@ -389,21 +416,23 @@ describe('weapon runtime definitions', () => {
     );
 
     expect(result.diagnostics).toEqual([]);
-    expect(result.definitions[0]?.traits[0]?.eventHandlers?.[0]).toMatchObject({
-      abilityEvent: 'beforeOutputDamage',
-      sequence: {
-        steps: [
-          {
-            kind: 'conditional',
-            parameters: {
-              condition: {
-                kind: 'eventDamageTagsMatch',
-                match: 'hasAll',
-                tags: ['normalAttackLastCombo'],
-              },
-            },
-          },
-        ],
+    const guardedTrait = result.definitions[0]?.traits[0];
+    const guardedHandler = guardedTrait?.eventHandlers?.[0];
+    expect(guardedHandler).toMatchObject({ abilityEvent: 'beforeOutputDamage' });
+    const guardedReference = guardedHandler?.sequence.$sequence;
+    const guardedAction =
+      guardedTrait?.actionGraph && 'main' in guardedTrait.actionGraph
+        ? guardedTrait.actionGraph.main.nodes[guardedReference as string]?.action
+        : undefined;
+    // 条件守卫保留为独立节点，不被拍平进响应入口。
+    expect(guardedAction).toMatchObject({
+      kind: 'conditional',
+      parameters: {
+        condition: {
+          kind: 'eventDamageTagsMatch',
+          match: 'hasAll',
+          tags: ['normalAttackLastCombo'],
+        },
       },
     });
   });
@@ -423,5 +452,68 @@ describe('weapon runtime definitions', () => {
       'weapon-definitions.audit.json',
     ]);
     expect(files[1]!.content).toContain('satisfies WeaponDefinition');
+  });
+
+  it('武器内嵌词条自己的图，生成文件可直接编译事件程序', () => {
+    const source: WeaponDefinition = {
+      slug: 'wpn_graph_test',
+      rarity: 5,
+      weaponType: 'sword',
+      baseAttackAtLevelNodes: [1, 2, 3, 4, 5, 6],
+      traits: [
+        {
+          key: 'event',
+          levelCount: 1,
+          skillId: 'sk_wpn_graph_test',
+          eventHandlers: [
+            {
+              key: 'on-buff',
+              event: { kind: 'buffConsumed' },
+              sequence: { $sequence: 'entry' },
+            },
+          ],
+          actionGraph: {
+            main: {
+              nodes: {
+                entry: {
+                  action: { kind: 'dealStagger', parameters: { value: 7 } },
+                  next: null,
+                },
+              },
+            },
+            macros: {},
+          },
+        },
+      ],
+    };
+    const weaponContent = renderWeaponDefinitionFiles({
+      definitions: [source],
+      diagnostics: [],
+    }).find(file => file.relativePath.endsWith('wpn_graph_test.generated.ts'))!.content;
+    const loadDefinition = (content: string) => {
+      const code = ts.transpileModule(content, {
+        compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2023 },
+      }).outputText;
+      const exports: Record<string, unknown> = {};
+      new Function('require', 'exports', code)((id: string) => {
+        throw new Error(`Unexpected generated import ${id}`);
+      }, exports);
+      return exports.default;
+    };
+    const weapon = loadDefinition(
+      weaponContent,
+    ) as import('../../../packages/game-data-contract/src/equipment.ts').WeaponDefinition;
+    expect(weapon.traits[0]!.eventHandlers![0]!.sequence).toHaveProperty('$sequence');
+    expect(weapon.traits[0]).toHaveProperty('actionGraph');
+    const compiled = compileWeaponContributions(
+      weapon,
+      [1],
+      { main: 'strength', secondary: 'agility' },
+      new ActionGraphDefinitionRepository(),
+    );
+    expect(rootActionSteps(compiled[0]!.eventHandlers[0]!.sequence)[0]).toMatchObject({
+      kind: 'dealStagger',
+      parameters: { value: 7 },
+    });
   });
 });

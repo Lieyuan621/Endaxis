@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { KeyboardShortcutRouter } from './keyboardShortcutRouter';
 import routerSource from './keyboardShortcutRouter.ts?raw';
-import mapSource from '../timeline/definitions/SkillStructureMindMap.vue?raw';
 
 const clipboardEvent = (type: string) => new Event(type, { cancelable: true }) as ClipboardEvent;
 afterEach(() => vi.unstubAllGlobals());
@@ -115,7 +114,5 @@ describe('native clipboard command ownership', () => {
         `window.removeEventListener('${type}', routePageClipboardEvent, true)`,
       );
     }
-    expect(mapSource).toContain("clipboardNodeAction(key === 'c' ? 'copy' : 'paste')");
-    expect(mapSource).toContain('clipboardNodeAction(event.type)');
   });
 });

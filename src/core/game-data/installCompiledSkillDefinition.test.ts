@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { emptyActionGraph } from '../../test/compiledGraphEntry';
 import type { OperatorDefinition, SkillDefinition } from './operatorDefinition';
 import { installCompiledSkillDefinition } from './installCompiledSkillDefinition';
 
@@ -6,6 +7,7 @@ const original: SkillDefinition = {
   key: 'skill_source',
   timelineBlockFrames: 1,
   scheduledSequences: [],
+  actionGraph: emptyActionGraph(),
 };
 
 const operator = {

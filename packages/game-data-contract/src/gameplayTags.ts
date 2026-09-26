@@ -8,18 +8,6 @@
 /** GameplayTag 的完整可读路径。 */
 export type GameplayTag = string;
 
-/** 验证一个外部值是否是格式正确的可读标签路径。 */
-export function assertGameplayTag(value: unknown): asserts value is GameplayTag {
-  if (
-    typeof value !== 'string' ||
-    value.trim() !== value ||
-    value.split('/').some(segment => !segment || !/[\p{L}_]/u.test(segment)) ||
-    /^(?:unknown|unresolved)(?:[:/]|$)/i.test(value)
-  ) {
-    throw new Error(`GameplayTag 必须是可读路径：${JSON.stringify(value)}`);
-  }
-}
-
 /** 标签集合支持的四种查询方式。 */
 export const GAMEPLAY_TAG_QUERY_TYPES = ['hasAny', 'hasAll', 'exceptAny', 'exceptAll'] as const;
 /** 标签集合查询方式。 */

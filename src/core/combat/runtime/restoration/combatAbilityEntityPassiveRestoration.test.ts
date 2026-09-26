@@ -10,6 +10,7 @@ import { ActionBlackboard } from '../../actions/actionBlackboard';
 import { CombatActionSequenceRuntime } from '../../actions/combatActionSequenceRuntime';
 import { createCombatOperationHostState } from '../../state/actionState';
 import { CombatOperationPrograms } from '../../actions/combatOperationPrograms';
+import { chainEntry } from '../../../../test/compiledGraphEntry';
 import { bindRestoredCombatAbilityEntityPassives } from './combatAbilityEntityPassiveRestoration';
 import { CombatSemanticEventRuntime } from '../../events/combatSemanticEventRuntime';
 import { PassiveAbilityEventRuntime } from '../../abilities/passiveAbilityEventRuntime';
@@ -18,23 +19,21 @@ import type { CombatOperationContext } from '../../skills/skillRuntime';
 const passive: CompiledOperatorPassiveProgram = {
   key: 'entity-passive',
   initialBlackboard: {},
-  enableSequence: { steps: [] },
+  enableSequence: chainEntry('entity-passive-enable', []),
   abilityEventResponses: [
     {
       event: 'abilityEntityFinished',
       priority: 0,
-      sequence: {
-        steps: [
-          {
-            kind: 'modifyActionValue',
-            parameters: {
-              key: 'count',
-              operation: 'add',
-              value: { kind: 'constant', value: 1 },
-            },
+      sequence: chainEntry('entity-passive-count', [
+        {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'count',
+            operation: 'add',
+            value: { kind: 'constant', value: 1 },
           },
-        ],
-      },
+        },
+      ]),
     },
   ],
 };

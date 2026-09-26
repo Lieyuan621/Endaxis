@@ -4,40 +4,76 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'suit_expend_spell01',
   iconPath: '/equipment/expend_spell01/item_equip_t4_suit_expend_spell01_body_02.webp',
-  modifiers: [
-    {
-      kind: 'panelStat',
-      stat: 'attackPercent',
-      value: 0.1,
+  modifiers: [{ kind: 'panelStat', stat: 'attackPercent', value: 0.1 }],
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffId: 'buff_equipsuit_expend_spell01',
+              target: 'caster',
+              blackboardAssignments: {
+                spell_dmg_up: { kind: 'constant', value: 0.15 },
+                max_stack: { kind: 'constant', value: 3 },
+                duration: { kind: 'constant', value: 25 },
+              },
+            },
+          },
+          next: null,
+        },
+      },
     },
-  ],
+    macros: {},
+  },
+  skillId: 'passive_equipsuit_expend_spell01',
   buffDefinitions: {
     buff_equipsuit_expend_spell01: {
       stackingType: 'unlimited',
       priority: 0,
-      maxStackCount: {
-        blackboardKey: 'max_stack',
-      },
+      maxStackCount: { blackboardKey: 'max_stack' },
       triggerIntervalSeconds: 0,
       waitFirstTriggerInterval: true,
       maxTriggerCount: 1,
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        addstack: 1,
-        buffid: 0,
-        duration: 10,
-        max_stack: 4,
-        spell_dmg_up: 0.2,
-      },
+      blackboard: { addstack: 1, buffid: 0, duration: 10, max_stack: 4, spell_dmg_up: 0.2 },
       attributeModifiers: [],
       abilityEventResponses: [
-        {
-          event: 'buffConsumed',
-          priority: 0,
-          sequence: {
-            steps: [
-              {
+        { event: 'buffConsumed', priority: 0, sequence: { $sequence: 'conditional_3' } },
+      ],
+      actionGraph: {
+        main: {
+          nodes: {
+            applyBuff_1: {
+              action: {
+                kind: 'applyBuff',
+                parameters: {
+                  buffId: 'buff_equipsuit_expend_spelldamage',
+                  target: 'buffOwner',
+                  source: 'buffOwner',
+                  count: { kind: 'blackboard', key: 'addstack' },
+                  inheritSourceSkillCastInfo: true,
+                  asChildBuff: true,
+                  copiedBlackboardAssignments: {
+                    spell_dmg_up: 'spell_dmg_up',
+                    duration: 'duration',
+                    max_stack: 'max_stack',
+                  },
+                },
+              },
+              next: null,
+            },
+            readEventBuffBlackboard_2: {
+              action: {
+                kind: 'readEventBuffBlackboard',
+                parameters: { desiredKey: 'count', outputKey: 'addstack' },
+              },
+              next: 'applyBuff_1',
+            },
+            conditional_3: {
+              action: {
                 kind: 'conditional',
                 parameters: {
                   condition: {
@@ -50,51 +86,20 @@ const definition = {
                     buffIdOutputKey: 'buffid',
                   },
                 },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'readEventBuffBlackboard',
-                      parameters: {
-                        desiredKey: 'count',
-                        outputKey: 'addstack',
-                      },
-                    },
-                    {
-                      kind: 'applyBuff',
-                      parameters: {
-                        buffId: 'buff_equipsuit_expend_spelldamage',
-                        target: 'buffOwner',
-                        source: 'buffOwner',
-                        count: {
-                          kind: 'blackboard',
-                          key: 'addstack',
-                        },
-                        inheritSourceSkillCastInfo: true,
-                        asChildBuff: true,
-                        copiedBlackboardAssignments: {
-                          spell_dmg_up: 'spell_dmg_up',
-                          duration: 'duration',
-                          max_stack: 'max_stack',
-                        },
-                      },
-                    },
-                  ],
-                },
+                whenTrue: { $sequence: 'readEventBuffBlackboard_2' },
               },
-            ],
+              next: null,
+            },
           },
         },
-      ],
+        macros: {},
+      },
     },
     buff_equipsuit_expend_spelldamage: {
       stackingType: 'stack',
       priority: 0,
-      maxStackCount: {
-        blackboardKey: 'max_stack',
-      },
-      durationSeconds: {
-        blackboardKey: 'duration',
-      },
+      maxStackCount: { blackboardKey: 'max_stack' },
+      durationSeconds: { blackboardKey: 'duration' },
       triggerIntervalSeconds: 0,
       waitFirstTriggerInterval: true,
       maxTriggerCount: 1,
@@ -118,62 +123,27 @@ const definition = {
         charHpBarVfxType: 'Fire',
         iconStyleInSquad: 'Default',
         abnormalColorType: 'Physical',
-        orderPriority: {
-          useDirectoryValue: false,
-          value: 0,
-          category: 'CommonCharBuff',
-        },
+        orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
       },
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        duration: 10,
-        max_stack: 4,
-        spell_dmg_up: 0.1,
-      },
+      blackboard: { duration: 10, max_stack: 4, spell_dmg_up: 0.1 },
       attributeModifiers: [
         {
           attribute: 'electricDamageIncrease',
           slot: 'baseAddition',
-          value: {
-            blackboardKey: 'spell_dmg_up',
-          },
+          value: { blackboardKey: 'spell_dmg_up' },
         },
         {
           attribute: 'natureDamageIncrease',
           slot: 'baseAddition',
-          value: {
-            blackboardKey: 'spell_dmg_up',
-          },
+          value: { blackboardKey: 'spell_dmg_up' },
         },
       ],
+      actionGraph: { main: { nodes: {} }, macros: {} },
     },
   },
-  enableSequence: {
-    steps: [
-      {
-        kind: 'applyBuff',
-        parameters: {
-          buffId: 'buff_equipsuit_expend_spell01',
-          target: 'caster',
-          blackboardAssignments: {
-            spell_dmg_up: {
-              kind: 'constant',
-              value: 0.15,
-            },
-            max_stack: {
-              kind: 'constant',
-              value: 3,
-            },
-            duration: {
-              kind: 'constant',
-              value: 25,
-            },
-          },
-        },
-      },
-    ],
-  },
+  enableSequence: { $sequence: 'applyBuff_1' },
 } as const satisfies GearSetDefinition;
 
 export default definition;

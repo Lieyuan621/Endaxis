@@ -1,9 +1,7 @@
 import { NATIVE_SKILL_TYPES, COMBAT_RESOURCES } from '../operatorDefinition';
 import { BUFF_APPLICATION_TARGETS, BUFF_APPLICATION_SOURCES } from '../operatorDefinition';
-import {
-  assertGameplayTag,
-  GAMEPLAY_TAG_QUERY_TYPES,
-} from '../../../../packages/game-data-contract/src/gameplayTags';
+import { GAMEPLAY_TAG_QUERY_TYPES } from '../../../../packages/game-data-contract/src/gameplayTags';
+import { assertGameplayTag } from '../definitionGuards.ts';
 import {
   COMBAT_TARGETS,
   TIMED_MARKER_TARGETS,
@@ -165,7 +163,7 @@ export function validateLevelValues(
   });
 }
 
-/** ActionValueOperand：blackboard（key）或 constant（value）。 */
+/** ActionValueOperand：blackboard（key）、constant（value）或 parameter（形参名）。 */
 export function validateActionValueOperand(
   value: unknown,
   path: string,
@@ -179,8 +177,11 @@ export function validateActionValueOperand(
     if (record.fallback !== undefined) requireFiniteNumber(record, 'fallback', path, out);
   } else if (kind === 'constant') {
     requireFiniteNumber(record, 'value', path, out);
+  } else if (kind === 'parameter') {
+    // 宏作用域归属由 actionGraphValidation 负责，这里只查形状。
+    requireString(record, 'parameter', path, out);
   } else if (kind !== null) {
-    push(out, `${path}.kind`, "expected 'blackboard' or 'constant'");
+    push(out, `${path}.kind`, "expected 'blackboard', 'constant' or 'parameter'");
   }
 }
 

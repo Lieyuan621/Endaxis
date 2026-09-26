@@ -1,4 +1,4 @@
-import type { CompiledProjectileCallbackSkillProgram } from '../../compiler/combatProgram';
+import type { CompiledAbilityEntityChildSkillProgram } from '../../compiler/combatProgram';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { hasActiveCombatOperationState } from '../actions/combatOperationHostInspection';
 import type { BuffApplicationHandle } from '../buffs/buffOperationExecutor';
@@ -81,7 +81,7 @@ export interface CallbackSkillHost {
   advance(deltaSeconds: number): void;
 }
 export type CallbackSkillHostFactory = (
-  program: CompiledProjectileCallbackSkillProgram,
+  program: CompiledAbilityEntityChildSkillProgram,
   context: CombatOperationContext,
   operations: CombatOperationExecutor,
   restored?: {

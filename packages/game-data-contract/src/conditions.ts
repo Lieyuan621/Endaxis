@@ -42,6 +42,11 @@ export const NATIVE_SKILL_HAS_HIT_BLACKBOARD_KEY = '__endaxis_native_skill_has_h
  * 每一项的 `kind` 决定模拟器读取哪些字段以及检查哪一种战斗状态。
  */
 export type CombatCondition =
+  | {
+      /** 从当前资源图的数据节点读取条件；编译时绑定，不缓存判断结果。 */
+      kind: 'conditionNode';
+      nodeId: string;
+    }
   /** 原生显式返回动作的布尔结果；用于控制流，不代表战斗状态。 */
   | {
       /** 直接返回固定真假值。 */
@@ -737,6 +742,11 @@ export type CombatConditionKind = (typeof COMBAT_CONDITION_KINDS)[number];
 /** 条件和动作使用的数值常量或当前动作黑板引用。 */
 export type ActionValueOperand =
   | {
+      /** 从当前资源图读取数值表达式，在使用点按当前作用域求值。 */
+      kind: 'valueNode';
+      nodeId: string;
+    }
+  | {
       /** 从当前动作黑板读取。 */
       kind: 'blackboard';
       /** 要读取的黑板键。 */
@@ -749,6 +759,12 @@ export type ActionValueOperand =
       kind: 'constant';
       /** 固定数值。 */
       value: number;
+    }
+  | {
+      /** 引用宏调用参数；只允许出现在声明了同名参数的宏图内。 */
+      kind: 'parameter';
+      /** 形参名；在使用点求值，不做调用时快照。 */
+      parameter: string;
     };
 
 /** 时间倍率曲线中的一个关键点。 */

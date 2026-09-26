@@ -129,7 +129,9 @@ export async function auditCandidateOperatorSkills(args: AuditArguments) {
     const runtimeSkillSettings = await server.ssrLoadModule('/src/data/combat/skillSettings.ts');
     const repository = repositoryModule.createGameDataRepository({
       revision: 'candidate-operator-simulation-audit',
-      commonBuffDefinitions: commonBuffModule.commonBuffDefinitions,
+      commonDefinitionSources: [
+        { id: 'common-buffs', buffDefinitions: commonBuffModule.commonBuffDefinitions },
+      ],
       operators,
       enemies: formalRepository.getEnemies(),
     });

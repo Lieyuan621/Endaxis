@@ -3,7 +3,6 @@ import {
   OPERATOR_ATTRIBUTES,
   UPGRADE_STATIC_DAMAGE_INCREASE_TARGETS,
   type CombatResource,
-  type ActionSequenceDefinition,
   type OperatorUpgradeDefinition,
   type UpgradeModifierDefinition,
 } from '../../../../../packages/game-data-contract/src/index.ts';
@@ -90,41 +89,17 @@ function assembleUpgrade(
   const modifiersByLevel = levels.map(bundle =>
     bundle.entries.flatMap(entry => (entry.kind === 'buff' ? [] : compileModifier(entry, context))),
   );
-  const initializations = levels.map(
-    bundle =>
-      ({
-        steps: bundle.entries.flatMap(entry => {
-          if (entry.kind !== 'buff') return [];
-          if (entry.activeCondition !== null)
-            throw new Error(
-              `${entry.sourcePath}: attached Buff has an unrepresentable build condition`,
-            );
-          // CharMiscFeature.Start → RefreshTalentBuff/RefreshPotentialBuff：角色直接给自身加 Buff，
-          // 不是 AddPassiveSkill。初始黑板只来自 attachBuff，不继承某次技能的施放信息。
-          return [
-            {
-              kind: 'applyBuff' as const,
-              parameters: {
-                buffId: entry.buffId,
-                target: 'caster' as const,
-                inheritSourceSkillCastInfo: false,
-                ...(Object.keys(entry.inputBlackboard).length
-                  ? {
-                      blackboardAssignments: Object.fromEntries(
-                        Object.entries(entry.inputBlackboard).map(([key, value]) => [
-                          key,
-                          { kind: 'constant' as const, value },
-                        ]),
-                      ),
-                    }
-                  : {}),
-              },
-            },
-          ];
-        }),
-      }) satisfies ActionSequenceDefinition,
+  const attachedByLevel = levels.map(bundle =>
+    bundle.entries.flatMap(entry => {
+      if (entry.kind !== 'buff') return [];
+      if (entry.activeCondition !== null)
+        throw new Error(
+          `${entry.sourcePath}: attached Buff has an unrepresentable build condition`,
+        );
+      return [{ buffId: entry.buffId, blackboardAssignments: entry.inputBlackboard }];
+    }),
   );
-  const initializationSequence = mergeInitializationSequences(key, initializations);
+  const attachedBuffs = mergeAttachedBuffs(key, attachedByLevel);
   const first = modifiersByLevel[0]!;
   if (modifiersByLevel.some(modifiers => modifiers.length !== first.length))
     throw new Error(`${key}: level-dependent effect structure is not representable`);
@@ -182,71 +157,40 @@ function assembleUpgrade(
   return {
     levels: levels.length,
     ...(modifiers.length ? { modifiers } : {}),
-    ...(initializationSequence.steps.length ? { initializationSequence } : {}),
+    ...(attachedBuffs.length ? { attachedBuffs } : {}),
   };
 }
 
-/** 同一养成项的各级直接附着 Buff 必须同构；仅数值黑板输入可按等级变化。 */
-function mergeInitializationSequences(
+/** 直接合并各等级的静态附着配置，不把配置绕成 applyBuff 动作再还原。 */
+function mergeAttachedBuffs(
   key: string,
-  sequences: readonly ActionSequenceDefinition[],
-): ActionSequenceDefinition {
-  const first = sequences[0]!;
-  if (sequences.every(sequence => isDeepStrictEqual(sequence, first))) return first;
-  if (sequences.some(sequence => sequence.steps.length !== first.steps.length))
-    throw new Error(`${key}: level-dependent attached Buff initialization structure`);
-  return {
-    steps: first.steps.map((step, stepIndex) => {
-      const variants = sequences.map(sequence => sequence.steps[stepIndex]!);
-      if (step.kind !== 'applyBuff' || variants.some(variant => variant.kind !== 'applyBuff'))
-        throw new Error(`${key}: level-dependent attached Buff initialization structure`);
-      const { blackboardAssignments: firstAssignments = {}, ...firstParameters } = step.parameters;
-      const assignments = variants.map(variant =>
-        variant.kind === 'applyBuff' ? (variant.parameters.blackboardAssignments ?? {}) : {},
-      );
-      if (
-        variants.some(variant => {
-          if (variant.kind !== 'applyBuff') return true;
-          const { blackboardAssignments: _assignments, ...parameters } = variant.parameters;
-          return !isDeepStrictEqual(parameters, firstParameters);
-        }) ||
-        assignments.some(
-          value => !isDeepStrictEqual(Object.keys(value), Object.keys(firstAssignments)),
-        )
+  levels: readonly (readonly {
+    readonly buffId: string;
+    readonly blackboardAssignments: Readonly<Record<string, number>>;
+  }[])[],
+): NonNullable<OperatorUpgradeDefinition['attachedBuffs']> {
+  const first = levels[0] ?? [];
+  if (levels.some(items => items.length !== first.length))
+    throw new Error(`${key}: level-dependent attached Buff structure`);
+  return first.map((item, index) => {
+    const variants = levels.map(items => items[index]!);
+    const keys = Object.keys(item.blackboardAssignments).sort();
+    if (
+      variants.some(
+        other =>
+          other.buffId !== item.buffId ||
+          !isDeepStrictEqual(Object.keys(other.blackboardAssignments).sort(), keys),
       )
-        throw new Error(`${key}: level-dependent attached Buff initialization structure`);
-      const mergedAssignments = Object.fromEntries(
-        Object.keys(firstAssignments).map(blackboardKey => {
-          const values = assignments.map(value => {
-            const operand = value[blackboardKey];
-            if (
-              operand === undefined ||
-              typeof operand !== 'object' ||
-              !('kind' in operand) ||
-              operand.kind !== 'constant'
-            )
-              throw new Error(`${key}: level-dependent attached Buff initialization operand`);
-            return operand.value;
-          });
-          return [
-            blackboardKey,
-            values.every(value => value === values[0])
-              ? { kind: 'constant' as const, value: values[0]! }
-              : values,
-          ];
-        }),
-      );
-      return {
-        ...step,
-        parameters: {
-          ...firstParameters,
-          ...(Object.keys(mergedAssignments).length
-            ? { blackboardAssignments: mergedAssignments }
-            : {}),
-        },
-      };
-    }),
-  };
+    )
+      throw new Error(`${key}: level-dependent attached Buff structure`);
+    const blackboardAssignments = Object.fromEntries(
+      keys.map(name => {
+        const values = variants.map(other => other.blackboardAssignments[name]!);
+        return [name, values.every(value => value === values[0]) ? values[0]! : values];
+      }),
+    );
+    return { buffId: item.buffId, ...(keys.length === 0 ? {} : { blackboardAssignments }) };
+  });
 }
 
 function compileModifier(

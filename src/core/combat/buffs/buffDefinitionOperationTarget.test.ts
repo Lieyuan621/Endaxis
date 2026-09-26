@@ -5,6 +5,38 @@ import { ActionBlackboard } from '../actions/actionBlackboard';
 import type { CombatBuffDefinitionEntry } from './combatBuffDefinitions';
 import { BuffDefinitionOperationTarget } from './buffDefinitionOperationTarget';
 import { TimeDilationRuntime } from '../time/timeDilationRuntime';
+import type { ResolvedActionSequence } from '../../compiler/combatProgram';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import type {
+  ActionGraphNode,
+  ActionGraphStep,
+} from '../../../../packages/game-data-contract/src/actionGraph';
+
+const compileGraphEntry = (
+  revision: string,
+  entry: string | null,
+  nodes: Record<string, ActionGraphNode>,
+): ResolvedActionSequence => ({
+  graph: createActionGraphCompilation({ nodes }, 1, revision).compileAll(),
+  entry,
+  callSite: revision,
+});
+
+const chainEntry = (
+  revision: string,
+  actions: readonly ActionGraphStep[],
+): ResolvedActionSequence => {
+  const nodes: Record<string, ActionGraphNode> = {};
+  actions.forEach((action, index) => {
+    nodes[`step-${index}`] = {
+      action,
+      next: index + 1 < actions.length ? `step-${index + 1}` : null,
+    };
+  });
+  return compileGraphEntry(revision, actions.length === 0 ? null : 'step-0', nodes);
+};
+
+const emptySequence = chainEntry('buff-empty', []);
 
 type Attribute = 'cost';
 
@@ -160,7 +192,7 @@ describe('BuffDefinitionOperationTarget', () => {
     const sourceDefinition = {
       stackingType: 'unique',
       durationSeconds: 10,
-      lifecycleSequences: { trigger: { steps: [] } },
+      lifecycleSequences: { trigger: emptySequence },
     } as const;
     const originalContainer = new CombatBuffContainer<string>(
       'enemy',
@@ -460,7 +492,7 @@ describe('BuffDefinitionOperationTarget', () => {
         blackboardValues: {},
         definition: {
           stackingType: 'unique',
-          lifecycleSequences: { start: { steps: [] } },
+          lifecycleSequences: { start: emptySequence },
         },
       }),
     ).toThrow('no Buff sequence runtime is configured');
@@ -497,14 +529,12 @@ describe('BuffDefinitionOperationTarget', () => {
         definition: {
           stackingType: 'unique',
           lifecycleSequences: {
-            start: {
-              steps: [
-                {
-                  kind: 'setContextFlag',
-                  parameters: { flag: 'started', value: true, target: 'caster' },
-                },
-              ],
-            },
+            start: chainEntry('buff-lifecycle-start', [
+              {
+                kind: 'setContextFlag',
+                parameters: { flag: 'started', value: true, target: 'caster' },
+              },
+            ]),
           },
         },
       }),
@@ -674,14 +704,12 @@ describe('BuffDefinitionOperationTarget', () => {
             {
               event: 'addedBuff',
               priority: 0,
-              sequence: {
-                steps: [
-                  {
-                    kind: 'setContextFlag',
-                    parameters: { flag: 'added', value: true, target: 'caster' },
-                  },
-                ],
-              },
+              sequence: chainEntry('buff-listens-for-add', [
+                {
+                  kind: 'setContextFlag',
+                  parameters: { flag: 'added', value: true, target: 'caster' },
+                },
+              ]),
             },
           ],
         },
@@ -728,14 +756,12 @@ describe('BuffDefinitionOperationTarget', () => {
             {
               event: 'beforeTakeSpellInfliction',
               priority: 0,
-              sequence: {
-                steps: [
-                  {
-                    kind: 'setContextFlag',
-                    parameters: { flag: 'inflicted', value: true, target: 'caster' },
-                  },
-                ],
-              },
+              sequence: chainEntry('buff-spell-infliction-listener', [
+                {
+                  kind: 'setContextFlag',
+                  parameters: { flag: 'inflicted', value: true, target: 'caster' },
+                },
+              ]),
             },
           ],
         },

@@ -110,6 +110,22 @@ describe('ElementalInflictionBuffAdapter', () => {
     expect(output?.buffId).toBe('status.heat.electric');
     expect(output?.instanceId).not.toBe(applied?.instanceId);
   });
+
+  it('inverseReaction 交换复合状态的选表顺序，黑板仍记录真实消耗元素', () => {
+    const { adapter } = createAdapter();
+    const applied = adapter.apply({ kind: 'addAttachment', element: 'heat' });
+    const existing = adapter.getExistingAttachment()!;
+    adapter.apply({ kind: 'consumeAttachment', attachment: existing });
+    const output = adapter.apply({
+      kind: 'createCompoundStatus',
+      inverseReaction: true,
+      consumedElement: 'heat',
+      incomingElement: 'electric',
+      consumedLayers: existing.layers,
+    });
+    expect(output?.buffId).toBe('status.electric.heat');
+    expect(output?.instanceId).not.toBe(applied?.instanceId);
+  });
   it.each([
     { kind: 'addAttachment', element: 'cryo' },
     { kind: 'triggerBurst', element: 'heat' },

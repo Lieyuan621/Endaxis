@@ -1,3 +1,4 @@
+import { rootActionSteps } from '../../compiler/actionProgramInspection';
 import { createTestBuffReference } from './buffTestFixtures';
 import type { GameplayTag } from '../../../../packages/game-data-contract/src/gameplayTags';
 import { describe, expect, it, vi } from 'vitest';
@@ -11,9 +12,9 @@ import type { ResolvedSkillBuffDefinition } from '../../compiler/combatProgram';
 import { BuffDefinitionOperationTarget } from './buffDefinitionOperationTarget';
 import { RuntimeTargetContext } from '../abilities/runtimeTargetContext';
 import type { CombatOperationExecutor } from '../skills/skillRuntime';
-import { compileActionSequence } from '../../compiler/compileSkill';
 import { validateSkillDefinition } from '../../game-data/validateSkillDefinition';
-import type { ActionSequenceDefinition } from '../../../../packages/game-data-contract/src/actions';
+import { chainEntry } from '../../../test/compiledGraphEntry';
+import type { ActionGraphStep } from '../../../../packages/game-data-contract/src/actionGraph';
 
 const delegate: CombatOperationExecutor = {
   execute: () => false,
@@ -21,6 +22,41 @@ const delegate: CombatOperationExecutor = {
 };
 
 describe('BuffOperationExecutor', () => {
+  it('拒绝旧内嵌蓝图，不忽略它或改用目录中的同名定义', () => {
+    const parameters = {
+      buffId: 'owned',
+      target: 'caster' as const,
+      definition: { stackingType: 'unlimited' as const },
+    };
+    const step = { kind: 'applyBuff' as const, parameters };
+    expect(() => chainEntry('owned-buff', [step])).toThrow(
+      'applyBuff must reference an owner Buff definition',
+    );
+    expect(
+      validateSkillDefinition({
+        key: 'invalid',
+        timelineBlockFrames: 1,
+        scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'step-0' } }],
+        actionGraph: { main: { nodes: { 'step-0': { action: step, next: null } } }, macros: {} },
+      }),
+    ).toContainEqual({
+      path: '$.actionGraph.main.nodes."step-0".action.parameters.definition',
+      message: 'applyBuff must reference an owner Buff definition',
+    });
+    const target = Object.assign(new CombatBuffContainer('target', new CombatAttributeSet()), {
+      apply: vi.fn(() => true),
+    });
+    const executor = new BuffOperationExecutor({
+      sourceId: 'operator',
+      resolveTarget: () => target,
+      resolveBuffDefinition: () => ({ stackingType: 'unique' }),
+      delegate,
+    });
+    expect(() => executor.execute(step)).toThrow(
+      'applyBuff must reference an owner Buff definition',
+    );
+    expect(target.apply).not.toHaveBeenCalled();
+  });
   it('Buff 黑板查询与施加都使用动作输入目标，不误读 Buff 来源或迭代目标', () => {
     const recipient = Object.assign(new CombatBuffContainer('enemy', new CombatAttributeSet()), {
       apply: vi.fn(() => true),
@@ -40,23 +76,21 @@ describe('BuffOperationExecutor', () => {
       },
       delegate,
     });
-    const definition: ActionSequenceDefinition = {
-      steps: [
-        {
-          kind: 'readBuffBlackboard',
-          parameters: {
-            target: 'actionInputTarget',
-            query: { kind: 'id', buffIds: ['input-value'] },
-            desiredKey: 'value',
-            outputKey: 'read-value',
-          },
+    const definition: readonly ActionGraphStep[] = [
+      {
+        kind: 'readBuffBlackboard',
+        parameters: {
+          target: 'actionInputTarget',
+          query: { kind: 'id', buffIds: ['input-value'] },
+          desiredKey: 'value',
+          outputKey: 'read-value',
         },
-        {
-          kind: 'applyBuff',
-          parameters: { target: 'actionInputTarget', buffId: 'bonus' },
-        },
-      ],
-    };
+      },
+      {
+        kind: 'applyBuff',
+        parameters: { target: 'actionInputTarget', buffId: 'bonus' },
+      },
+    ];
     const blackboard = new ActionBlackboard();
     const context = {
       blackboard,
@@ -67,18 +101,13 @@ describe('BuffOperationExecutor', () => {
     };
     expect(
       new CombatActionSequenceRuntime(executor, context)
-        .createSequence(compileActionSequence(definition, 1))
+        .createSequence(chainEntry('buff-input-target', definition))
         .executeInstant({}),
     ).toBe(true);
     expect(blackboard.getNumber('read-value')).toBe(8);
     expect(recipient.apply).toHaveBeenCalledOnce();
   });
-  it.each([
-    ['inline', false],
-    ['catalog', false],
-    ['inline', true],
-    ['catalog', true],
-  ] as const)('%s 定义仅在护盾读取来源属性时保留属性端口：%s', (lookup, shield) => {
+  it.each([false, true])('目录定义仅在护盾读取来源属性时保留属性端口：%s', shield => {
     const definition: ResolvedSkillBuffDefinition = {
       stackingType: 'unlimited',
       ...(shield
@@ -120,7 +149,7 @@ describe('BuffOperationExecutor', () => {
         if (!shield) throw new Error('来源已经回收，不能索取活动 Buff 容器');
         return source;
       },
-      resolveBuffDefinition: () => (lookup === 'catalog' ? definition : undefined),
+      resolveBuffDefinition: () => definition,
       delegate,
     });
     executor.execute(
@@ -130,7 +159,6 @@ describe('BuffOperationExecutor', () => {
           buffId: 'counter-or-shield',
           target: 'caster',
           source: 'buffSource',
-          ...(lookup === 'inline' ? { definition } : {}),
         },
       },
       { blackboard: new ActionBlackboard(), buffSourceId: source.ownerId },
@@ -158,23 +186,20 @@ describe('BuffOperationExecutor', () => {
         { id: 'unrelated', stackingType: 'unlimited', applyTags: ['Test/Other'] },
         'source',
       );
-      const sequence: ActionSequenceDefinition = {
-        steps: [
-          {
-            kind: 'finishBuffsByTag',
-            parameters: { target, buffTags: ['Test/Tag'], tagQueryType: 'hasAny', reason: 'early' },
-          },
-        ],
+      const step: ActionGraphStep = {
+        kind: 'finishBuffsByTag',
+        parameters: { target, buffTags: ['Test/Tag'], tagQueryType: 'hasAny', reason: 'early' },
       };
       expect(
         validateSkillDefinition({
           key: 'finish',
           timelineBlockFrames: 1,
-          scheduledSequences: [{ startFrame: 0, sequence }],
+          scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'step-0' } }],
+          actionGraph: { main: { nodes: { 'step-0': { action: step, next: null } } }, macros: {} },
         }),
       ).toEqual([]);
-      const step = compileActionSequence(sequence, 1).steps[0]!;
-      if (step.kind !== 'finishBuffsByTag') throw new Error('unexpected compiled step');
+      const compiledStep = rootActionSteps(chainEntry('finish-by-tag', [step]))[0]!;
+      if (compiledStep.kind !== 'finishBuffsByTag') throw new Error('unexpected compiled step');
       const executor = new BuffOperationExecutor({
         sourceId: 'caster',
         delegate,
@@ -187,7 +212,7 @@ describe('BuffOperationExecutor', () => {
         },
       });
       expect(
-        executor.execute(step, {
+        executor.execute(compiledStep, {
           blackboard: new ActionBlackboard(),
           buffOwnerId: 'recipient',
           buffSourceId: 'recipient',

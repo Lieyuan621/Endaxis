@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { ActionGraphDefinitionRepository } from '../../../core/compiler/actionGraphDefinitionRepository';
 import { perlica } from '../../../data/operators/perlica.generated';
 import { rossi } from '../../../data/operators/rossi.generated';
 import { commonBuffDefinitions } from '../../../data/buffs/commonDefinitions';
@@ -60,6 +61,10 @@ function prepare(value = scenario(), live = false) {
     options: {
       ...(live ? { liveInputInitialFrame: 0 } : {}),
       index: {
+        actionPrograms: new ActionGraphDefinitionRepository(),
+        getCommonDefinitionSources: () => [
+          { id: 'shared', buffDefinitions: commonBuffDefinitions },
+        ],
         getOperator: slug => (slug === rossi.slug ? rossi : perlica),
         getWeapon: () => null,
         getGear: () => null,

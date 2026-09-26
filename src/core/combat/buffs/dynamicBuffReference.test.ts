@@ -3,7 +3,7 @@ import { ActionBlackboard } from '../actions/actionBlackboard';
 import { BuffOperationExecutor, type BuffApplicationRequest } from './buffOperationExecutor';
 import { CombatBuffContainer } from './combatBuffs';
 import { CombatAttributeSet } from '../attributes/combatAttributes';
-import { validateActionSequenceDefinition } from '../../game-data/validation/actionPrograms';
+import { validateActionGraphActions } from '../../game-data/validation/actionPrograms';
 
 const step = {
   kind: 'applyBuff',
@@ -85,28 +85,30 @@ describe('动态 Buff 引用复用公共施加管线', () => {
   });
 
   it('正式协议只允许键引用，不接受回退字面值或内联定义', () => {
-    expect(validateActionSequenceDefinition({ steps: [step] })).toEqual([]);
+    const graphWith = (action: unknown) => ({
+      main: { nodes: { entry: { action, next: null } } },
+      macros: {},
+    });
+    expect(validateActionGraphActions(graphWith(step), '$')).toEqual([]);
     for (const parameters of [
       { ...step.parameters, buffId: { blackboardKey: '' } },
       { ...step.parameters, buffId: { blackboardKey: 'child', value: 'stale' } },
       { ...step.parameters, definition: { stackingType: 'unlimited' } },
       { ...step.parameters, durationSeconds: 1 },
     ])
-      expect(validateActionSequenceDefinition({ steps: [{ ...step, parameters }] })).not.toEqual(
-        [],
-      );
+      expect(validateActionGraphActions(graphWith({ ...step, parameters }), '$')).not.toEqual([]);
   });
 
   it('运行端同样拒绝内联定义、缺少上下文和未装配的施加端口', () => {
     const blackboard = new ActionBlackboard({ child: 'first' });
     const { executor, requests } = fixture(blackboard);
     expect(() => executor.execute(step)).toThrow(/Buff ID/);
-    expect(() =>
-      executor.execute(
-        { ...step, parameters: { ...step.parameters, definition: { stackingType: 'unlimited' } } },
-        { blackboard },
-      ),
-    ).toThrow(/内联定义/);
+    const inlineParameters = {
+      ...step.parameters,
+      definition: { stackingType: 'unlimited' as const },
+    };
+    const inlineStep = { ...step, parameters: inlineParameters };
+    expect(() => executor.execute(inlineStep, { blackboard })).toThrow(/内联定义/);
     const withoutPort = new BuffOperationExecutor({
       sourceId: 'caster',
       resolveTarget: () =>

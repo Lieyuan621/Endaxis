@@ -34,17 +34,24 @@ function cast(id: string, startFrame: number): SkillCastDocument {
       scheduledSequences: [
         {
           startFrame: 2,
-          sequence: {
-            steps: [
-              {
+          sequence: { $sequence: 'hit-0' },
+        },
+      ],
+      actionGraph: {
+        main: {
+          nodes: {
+            'hit-0': {
+              action: {
                 kind: 'dealDamage',
                 key: `hit:${id}`,
                 parameters: { damageType: 'electric', attackScale: 1, tags: [] },
               },
-            ],
+              next: null,
+            },
           },
         },
-      ],
+        macros: {},
+      },
     },
   };
 }

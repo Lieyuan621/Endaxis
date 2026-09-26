@@ -26,6 +26,8 @@ import { CombatRuntimeAssembly, type AbilityEntityBuffRuntime } from '../combatR
 import { CombatSharedRuntime } from '../combatSharedRuntime';
 import { StandardPlayerDamageEnvironment } from '../standardPlayerDamageEnvironment';
 import { restoreCombatRuntime } from './combatRuntimeRestoration';
+import { chainEntry, compileGraphEntry } from '../../../../test/compiledGraphEntry';
+import type { ActionGraphNode } from '../../../../../packages/game-data-contract/src/actionGraph';
 
 const resources = {
   sp: 0,
@@ -359,6 +361,36 @@ it('整场恢复基础阶段直接绑定共享账本、环境和全部基础 Buf
 });
 
 it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', () => {
+  const spawnedEntityDefinition = {
+    lifetime: { kind: 'limited' as const, durationSeconds: 10 },
+    childSkill: {
+      skillId: 'entity-child',
+      nativeSkillType: 'normalSkill' as const,
+      naturalDurationFrames: 30,
+      castResource: {
+        costFrame: 0,
+        cooldownSeconds: 0,
+        maxChargeTime: 1,
+        cost: { resource: 'sp' as const, value: 0, availabilityThreshold: 0 },
+      },
+      blackboard: {},
+      scheduledSequences: [{ startFrame: 2, sequence: { $sequence: 'entity-child-sp' } }],
+      actionGraph: {
+        main: {
+          nodes: {
+            'entity-child-sp': {
+              action: {
+                kind: 'changeResource' as const,
+                parameters: { resource: 'sp' as const, amount: 3, recipient: 'team' as const },
+              },
+              next: null,
+            },
+          },
+        },
+        macros: {},
+      },
+    },
+  };
   const abilityEntityDefinition = {
     lifetime: { kind: 'limited' as const, durationSeconds: 10 },
     childSkill: {
@@ -375,16 +407,82 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
       timelineActions: [
         {
           startFrame: 2,
-          sequence: {
-            steps: [
-              {
-                kind: 'changeResource' as const,
-                parameters: { resource: 'sp' as const, amount: 3, recipient: 'team' as const },
-              },
-            ],
-          },
+          sequence: chainEntry('entity-child-sp', [
+            {
+              kind: 'changeResource' as const,
+              parameters: { resource: 'sp' as const, amount: 3, recipient: 'team' as const },
+            },
+          ]),
         },
       ],
+    },
+  };
+  const skillSequenceNodes: Record<string, ActionGraphNode> = {
+    'apply-persistent': {
+      action: {
+        kind: 'applyBuff' as const,
+        parameters: {
+          buffId: 'persistent',
+          target: 'caster' as const,
+          inheritSourceSkillCastInfo: true,
+        },
+      },
+      next: 'schedule-callback',
+    },
+    'schedule-callback': {
+      action: {
+        kind: 'launchProjectile' as const,
+        parameters: { finish: 0.05, recycleDelaySeconds: 0.05 },
+        callbacks: [
+          {
+            event: 'finish' as const,
+            skill: {
+              skillId: 'callback',
+              nativeSkillType: 'normalSkill' as const,
+              naturalDurationFrames: 2,
+              castResource: {
+                costFrame: 0,
+                cooldownSeconds: 0,
+                maxChargeTime: 1,
+                cost: { resource: 'sp' as const, value: 0, availabilityThreshold: 0 },
+              },
+              blackboard: {},
+              scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'callback-hit' } }],
+              actionGraph: {
+                main: {
+                  nodes: {
+                    'callback-hit': {
+                      action: {
+                        kind: 'dealFixedDamage' as const,
+                        key: 'callback-hit',
+                        parameters: {
+                          damageType: 'physical' as const,
+                          value: 25,
+                          tags: [],
+                        },
+                      },
+                      next: null,
+                    },
+                  },
+                },
+                macros: {},
+              },
+            },
+          },
+        ],
+      },
+      next: 'spawn-entity',
+    },
+    'spawn-entity': {
+      action: {
+        kind: 'spawnAbilityEntity' as const,
+        parameters: {
+          abilityEntityId: 'restored_entity',
+          definition: spawnedEntityDefinition,
+          dieWhenSourceDies: false,
+        },
+      },
+      next: null,
     },
   };
   const program = {
@@ -402,65 +500,7 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
     timelineActions: [
       {
         startFrame: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'applyBuff' as const,
-              parameters: {
-                buffId: 'persistent',
-                target: 'caster' as const,
-                inheritSourceSkillCastInfo: true,
-              },
-            },
-            {
-              kind: 'launchProjectile' as const,
-              parameters: { finish: 0.05, recycleDelaySeconds: 0.05 },
-              callbacks: [
-                {
-                  event: 'finish' as const,
-                  skill: {
-                    skillId: 'callback',
-                    nativeSkillType: 'normalSkill' as const,
-                    naturalDurationFrames: 2,
-                    castResource: {
-                      costFrame: 0,
-                      cooldownSeconds: 0,
-                      maxChargeTime: 1,
-                      cost: { resource: 'sp' as const, value: 0, availabilityThreshold: 0 },
-                    },
-                    initialBlackboard: {},
-                    timelineActions: [
-                      {
-                        startFrame: 0,
-                        sequence: {
-                          steps: [
-                            {
-                              kind: 'dealFixedDamage' as const,
-                              key: 'callback-hit',
-                              parameters: {
-                                damageType: 'physical' as const,
-                                value: 25,
-                                tags: [],
-                              },
-                            },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                },
-              ],
-            },
-            {
-              kind: 'spawnAbilityEntity' as const,
-              parameters: {
-                abilityEntityId: 'restored_entity',
-                definition: abilityEntityDefinition,
-                dieWhenSourceDies: false,
-              },
-            },
-          ],
-        },
+        sequence: compileGraphEntry('skill-main', 'apply-persistent', skillSequenceNodes),
       },
     ],
   };
@@ -469,18 +509,16 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
     passivePersistent: {
       stackingType: 'unique' as const,
       lifecycleSequences: {
-        enable: {
-          steps: [
-            {
-              kind: 'modifyActionValue' as const,
-              parameters: {
-                key: 'restoredValue',
-                operation: 'assign' as const,
-                value: { kind: 'constant' as const, value: 9 },
-              },
+        enable: chainEntry('passive-persistent-enable', [
+          {
+            kind: 'modifyActionValue' as const,
+            parameters: {
+              key: 'restoredValue',
+              operation: 'assign' as const,
+              value: { kind: 'constant' as const, value: 9 },
             },
-          ],
-        },
+          },
+        ]),
       },
     },
     potentialPersistent: { stackingType: 'unique' as const },
@@ -489,14 +527,12 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
     {
       key: 'passive',
       initialBlackboard: { restoredValue: 7 },
-      enableSequence: {
-        steps: [
-          {
-            kind: 'applyBuff' as const,
-            parameters: { buffId: 'passivePersistent', target: 'caster' as const },
-          },
-        ],
-      },
+      enableSequence: chainEntry('passive-enable', [
+        {
+          kind: 'applyBuff' as const,
+          parameters: { buffId: 'passivePersistent', target: 'caster' as const },
+        },
+      ]),
     },
   ];
   const comboProgram = {
@@ -511,7 +547,7 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
     costs: [],
     timelineBlockFrames: 1,
     naturalDurationFrames: 1,
-    timelineActions: [{ startFrame: 1, sequence: { steps: [] } }],
+    timelineActions: [{ startFrame: 1, sequence: chainEntry('combo-empty', []) }],
   };
   const comboConditionPrograms = [
     {
@@ -521,18 +557,16 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
       event: 'beforeOutputDamage' as const,
       immediately: false,
       initialValues: { hits: 0 },
-      sequence: {
-        steps: [
-          {
-            kind: 'modifyActionValue' as const,
-            parameters: {
-              key: 'hits',
-              operation: 'add' as const,
-              value: { kind: 'constant' as const, value: 1 },
-            },
+      sequence: chainEntry('combo-condition-hits', [
+        {
+          kind: 'modifyActionValue' as const,
+          parameters: {
+            key: 'hits',
+            operation: 'add' as const,
+            value: { kind: 'constant' as const, value: 1 },
           },
-        ],
-      },
+        },
+      ]),
     },
   ];
   const panel = {
@@ -580,18 +614,16 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
         {
           key: 'count-damage',
           abilityEvent: 'beforeOutputDamage' as const,
-          sequence: {
-            steps: [
-              {
-                kind: 'modifyActionValue' as const,
-                parameters: {
-                  key: 'hits',
-                  operation: 'add' as const,
-                  value: { kind: 'constant' as const, value: 1 },
-                },
+          sequence: chainEntry('equipment-count-damage', [
+            {
+              kind: 'modifyActionValue' as const,
+              parameters: {
+                key: 'hits',
+                operation: 'add' as const,
+                value: { kind: 'constant' as const, value: 1 },
               },
-            ],
-          },
+            },
+          ]),
         },
       ],
     },
@@ -600,7 +632,7 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
     {
       key: 'equipment-fixture',
       equipmentContributionIndex: 0,
-      sequence: { steps: [] },
+      sequence: chainEntry('equipment-fixture-init', []),
     },
   ];
   const upgradeEventPrograms = [
@@ -612,14 +644,12 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
         scope: 'operator' as const,
       },
       initialBlackboard: {},
-      sequence: {
-        steps: [
-          {
-            kind: 'applyBuff' as const,
-            parameters: { buffId: 'potentialPersistent', target: 'caster' as const },
-          },
-        ],
-      },
+      sequence: chainEntry('potential-skill-hit-buff', [
+        {
+          kind: 'applyBuff' as const,
+          parameters: { buffId: 'potentialPersistent', target: 'caster' as const },
+        },
+      ]),
     },
   ];
   const operatorProgram = {

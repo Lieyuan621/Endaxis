@@ -4,7 +4,7 @@
  */
 import type { OperatorPanelAttributes } from '../../../core/compiler/resolveOperatorPanel';
 import type { OperatorDefinition } from '../../../core/game-data/operatorDefinition';
-import { compareCombatNumbers } from '../../../../packages/game-data-contract/src/primitives';
+import { compareCombatNumbers } from '../../../core/mechanics/combatNumbers.ts';
 
 export function resolveOperatorPresentationFormKey(
   definition: Readonly<OperatorDefinition>,

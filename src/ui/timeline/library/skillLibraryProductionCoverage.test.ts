@@ -1,9 +1,8 @@
+import type { SkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
 import { describe, expect, it } from 'vitest';
 
-import type {
-  OperatorDefinition,
-  SkillDefinition,
-} from '../../../core/game-data/operatorDefinition';
+import type { OperatorDefinition } from '../../../core/game-data/operatorDefinition';
+
 import { createEmptyScenario } from '../../../core/project/createProject';
 import { gameDataRepository } from '../../../data/gameDataRepository';
 import { placeSkillGroup } from '../interaction/placeSkillGroup';
@@ -17,7 +16,7 @@ interface DeclaredPlaceableSkill {
 }
 
 function asSkills(value: SkillDefinition | readonly SkillDefinition[]): readonly SkillDefinition[] {
-  return Array.isArray(value) ? value : [value as SkillDefinition];
+  return Array.isArray(value) ? value : [value].flat();
 }
 
 function identity(
@@ -89,7 +88,7 @@ describe('正式干员技能库覆盖', () => {
       identity(entry.operator.slug, entry.groupKey, entry.variantKey, entry.skill.key),
     );
 
-    expect(declared.length).toBeGreaterThan(0);
+    expect(declared).toHaveLength(332);
     expect(new Set(declared).size).toBe(declared.length);
     expect(new Set(projected).size).toBe(projected.length);
     expect(projected.toSorted()).toEqual(declared.toSorted());

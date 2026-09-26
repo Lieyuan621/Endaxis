@@ -57,14 +57,12 @@ export function restoreProjectileCallback(
   const program = programs.resolve(state.programId);
   if (program.skillId !== state.skillId)
     throw new Error('projectile callback program identity mismatch');
-  if (state.skillCastInfo === null)
-    throw new Error('projectile callback has no inherited cast information');
   if (!Number.isSafeInteger(instanceId) || instanceId <= 0)
     throw new Error('invalid projectile identity');
   const context = {
     actionInputTarget: state.inputTarget,
     blackboard: ActionBlackboard.bindRuntimeState(state.blackboard),
-    skillCastInfo: state.skillCastInfo,
+    skillCastInfo: state.skillCastInfo ?? undefined,
     actionOwnerAbilityEntity: { kind: 'abilityEntity' as const, instanceId },
     actionOwnerId: `ability-entity:${instanceId}`,
     actionSourceId: sourceId ?? `ability-entity:${instanceId}`,

@@ -1,7 +1,76 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ActionSequence } from '../actions/actionSequence';
+import {
+  endActionSequence,
+  executeActionSequence,
+  resetActionSequence,
+  tickActionSequence,
+  type ActionSequenceExecutionHost,
+} from '../actions/actionSequenceExecution';
 import { CombatStep, type CombatExecutionContext } from '../actions/combatStep';
-import { TimelineActionProcessor, type TimelineAction } from './timelineActionProcessor';
+import { COMBAT_STEP_STATE, type ActionStepData, type ActionStepState } from '../state/actionState';
+import {
+  TimelineActionProcessor,
+  type TimelineAction,
+  type TimelineExecution,
+} from './timelineActionProcessor';
+
+/** 调度器测试探针：把步骤对象绑定到与图执行器相同的数据驱动序列内核。 */
+interface ProbeSequenceState {
+  steps: (ActionStepData | null)[];
+  entries: ActionStepState[];
+}
+
+class StepProbeSequence implements TimelineExecution<ProbeSequenceState> {
+  readonly #steps: readonly CombatStep[];
+  readonly runtimeState: ProbeSequenceState;
+
+  constructor(steps: readonly CombatStep[], state?: ProbeSequenceState) {
+    this.#steps = [...steps];
+    this.runtimeState = state ?? {
+      steps: steps.map(step => step.executionData),
+      entries: steps.map(() => ({
+        state: COMBAT_STEP_STATE.pending,
+        executeResult: false,
+        executionPermitted: false,
+      })),
+    };
+    if (
+      this.runtimeState.entries.length !== steps.length ||
+      this.runtimeState.steps.length !== steps.length
+    )
+      throw new Error('action sequence state does not match program length');
+    steps.forEach((step, index) => {
+      if (state === undefined) this.runtimeState.steps[index] = step.executionData;
+      else step.bindExecutionData(this.runtimeState.steps[index]!);
+    });
+  }
+
+  execute(context: CombatExecutionContext): void {
+    executeActionSequence(this.runtimeState, context, this.#host(context));
+  }
+
+  reset(context: CombatExecutionContext): void {
+    resetActionSequence(this.runtimeState, this.#host(context));
+  }
+
+  tick(deltaTime: number, context: CombatExecutionContext): void {
+    tickActionSequence(this.runtimeState, deltaTime, this.#host(context));
+  }
+
+  end(context: CombatExecutionContext): void {
+    endActionSequence(this.runtimeState, this.#host(context));
+  }
+
+  #host(context: CombatExecutionContext): ActionSequenceExecutionHost<number> {
+    return {
+      canExecute: () => true,
+      execute: index => this.#steps[index]!.tryExecute(context),
+      reset: index => this.#steps[index]!.reset(context),
+      tick: (index, deltaTime) => this.#steps[index]!.tick(deltaTime, context),
+      end: index => this.#steps[index]!.end(context),
+    };
+  }
+}
 
 class RecordingStep extends CombatStep {
   constructor(
@@ -39,10 +108,14 @@ class JumpingStep extends RecordingStep {
   }
 }
 
-function timelineAction(startFrame: number, name: string, events: string[]): TimelineAction {
+function timelineAction(
+  startFrame: number,
+  name: string,
+  events: string[],
+): TimelineAction<ProbeSequenceState> {
   return {
     startFrame,
-    sequence: new ActionSequence([new RecordingStep(name, events)]),
+    sequence: new StepProbeSequence([new RecordingStep(name, events)]),
   };
 }
 
@@ -51,16 +124,16 @@ function rangedTimelineAction(
   endFrame: number,
   name: string,
   events: string[],
-): TimelineAction {
+): TimelineAction<ProbeSequenceState> {
   return { ...timelineAction(startFrame, name, events), endFrame };
 }
 
-describe('TimelineActionProcessor', () => {
+describe('TimelineActionProcessor<ProbeSequenceState>', () => {
   const context: CombatExecutionContext = {};
 
   it('host CastEnd synchronously closes the current sequence before its next step', () => {
     const calls: string[] = [];
-    let processor: TimelineActionProcessor;
+    let processor: TimelineActionProcessor<ProbeSequenceState>;
     class EndHostStep extends RecordingStep {
       override execute(): void {
         super.execute();
@@ -68,11 +141,11 @@ describe('TimelineActionProcessor', () => {
         calls.push('returned');
       }
     }
-    processor = new TimelineActionProcessor([
+    processor = new TimelineActionProcessor<ProbeSequenceState>([
       {
         startFrame: 0,
         endFrame: 10,
-        sequence: new ActionSequence([
+        sequence: new StepProbeSequence([
           new EndHostStep('first', calls),
           new RecordingStep('tail', calls),
         ]),
@@ -86,7 +159,9 @@ describe('TimelineActionProcessor', () => {
 
   it('does not restart pending timelines after host CastEnd until reset', () => {
     const events: string[] = [];
-    const processor = new TimelineActionProcessor([timelineAction(2, 'later', events)]);
+    const processor = new TimelineActionProcessor<ProbeSequenceState>([
+      timelineAction(2, 'later', events),
+    ]);
     processor.reset(context);
     processor.end(0, context);
     processor.tick(2, 0, context);
@@ -101,7 +176,7 @@ describe('TimelineActionProcessor', () => {
     'stops later timelines when %s synchronously ends the host',
     phase => {
       const events: string[] = [];
-      let processor: TimelineActionProcessor;
+      let processor: TimelineActionProcessor<ProbeSequenceState>;
       class EndingStep extends RecordingStep {
         override execute(): void {
           super.execute();
@@ -112,11 +187,11 @@ describe('TimelineActionProcessor', () => {
           if (phase === 'tick') processor.end(0, context);
         }
       }
-      processor = new TimelineActionProcessor([
+      processor = new TimelineActionProcessor<ProbeSequenceState>([
         {
           startFrame: 0,
           endFrame: 10,
-          sequence: new ActionSequence([new EndingStep('first', events)]),
+          sequence: new StepProbeSequence([new EndingStep('first', events)]),
         },
         timelineAction(0, 'same-frame', events),
         timelineAction(2, 'future', events),
@@ -138,7 +213,7 @@ describe('TimelineActionProcessor', () => {
     'defers the first Tick/End for a zero-length interval with end %s',
     endFrame => {
       const events: string[] = [];
-      const processor = new TimelineActionProcessor([
+      const processor = new TimelineActionProcessor<ProbeSequenceState>([
         { ...timelineAction(2, 'action', events), endFrame },
       ]);
       processor.reset(context);
@@ -157,7 +232,7 @@ describe('TimelineActionProcessor', () => {
 
   it('uses source order for equal start frames', () => {
     const events: string[] = [];
-    const processor = new TimelineActionProcessor([
+    const processor = new TimelineActionProcessor<ProbeSequenceState>([
       timelineAction(1, 'first', events),
       timelineAction(1, 'second', events),
     ]);
@@ -176,19 +251,22 @@ describe('TimelineActionProcessor', () => {
       }
     }
     const events: string[] = [];
-    const original = new TimelineActionProcessor([timelineAction(0, 'action', events)]);
+    const original = new TimelineActionProcessor<ProbeSequenceState>([
+      timelineAction(0, 'action', events),
+    ]);
     original.reset(context);
     original.tick(0, 0, context);
     expect(events).toEqual(['action:execute']);
     const saved = structuredClone(original.runtimeState);
+    if (saved.sequences[0] && !('steps' in saved.sequences[0]))
+      throw new Error('expected tree fixture');
     events.length = 0;
-    const restored = new TimelineActionProcessor(
+    const restored = new TimelineActionProcessor<ProbeSequenceState>(
       [
         {
           startFrame: 0,
-          sequence: new ActionSequence(
+          sequence: new StepProbeSequence(
             [new RestorableRecordingStep('action', events)],
-            undefined,
             saved.sequences[0],
           ),
         },
@@ -221,10 +299,10 @@ describe('TimelineActionProcessor', () => {
         observed.push(active);
       }
     }
-    const processor = new TimelineActionProcessor([
-      { startFrame: 0, endFrame: 0, sequence: new ActionSequence([new EffectStep()]) },
-      { startFrame: 0, sequence: new ActionSequence([new HitStep()]) },
-      { startFrame: 1, sequence: new ActionSequence([new HitStep()]) },
+    const processor = new TimelineActionProcessor<ProbeSequenceState>([
+      { startFrame: 0, endFrame: 0, sequence: new StepProbeSequence([new EffectStep()]) },
+      { startFrame: 0, sequence: new StepProbeSequence([new HitStep()]) },
+      { startFrame: 1, sequence: new StepProbeSequence([new HitStep()]) },
     ]);
     processor.reset(context);
     processor.tick(0, 0, context);
@@ -235,7 +313,7 @@ describe('TimelineActionProcessor', () => {
 
   it('ends an earlier source interval before a same-frame later source hit', () => {
     const events: string[] = [];
-    const processor = new TimelineActionProcessor([
+    const processor = new TimelineActionProcessor<ProbeSequenceState>([
       rangedTimelineAction(0, 2, 'buff', events),
       timelineAction(2, 'hit', events),
     ]);
@@ -248,7 +326,7 @@ describe('TimelineActionProcessor', () => {
 
   it('interleaves new and running nodes in source order rather than start-frame order', () => {
     const events: string[] = [];
-    const processor = new TimelineActionProcessor([
+    const processor = new TimelineActionProcessor<ProbeSequenceState>([
       timelineAction(2, 'hit', events),
       rangedTimelineAction(0, 2, 'buff', events),
     ]);
@@ -266,7 +344,7 @@ describe('TimelineActionProcessor', () => {
 
   it('keeps source order when one update crosses several pending starts', () => {
     const events: string[] = [];
-    const processor = new TimelineActionProcessor([
+    const processor = new TimelineActionProcessor<ProbeSequenceState>([
       timelineAction(2, 'first', events),
       timelineAction(0, 'second', events),
     ]);
@@ -287,7 +365,7 @@ describe('TimelineActionProcessor', () => {
 
   it('executes actions only when their frames are reached', () => {
     const events: string[] = [];
-    const processor = new TimelineActionProcessor([
+    const processor = new TimelineActionProcessor<ProbeSequenceState>([
       timelineAction(1, 'first', events),
       timelineAction(2, 'second', events),
     ]);
@@ -304,7 +382,7 @@ describe('TimelineActionProcessor', () => {
     const events: string[] = [];
     const future = timelineAction(10, 'future', events);
     const lifecycle = { started: vi.fn(), ended: vi.fn() };
-    const processor = new TimelineActionProcessor(
+    const processor = new TimelineActionProcessor<ProbeSequenceState>(
       [timelineAction(1, 'action', events), future],
       lifecycle,
     );
@@ -321,7 +399,7 @@ describe('TimelineActionProcessor', () => {
 
   it('finishes the timeline by discarding pending actions', () => {
     const events: string[] = [];
-    const processor = new TimelineActionProcessor([
+    const processor = new TimelineActionProcessor<ProbeSequenceState>([
       timelineAction(2, 'current', events),
       timelineAction(10, 'future', events),
     ]);
@@ -336,7 +414,9 @@ describe('TimelineActionProcessor', () => {
 
   it('ticks an active ranged action until its inclusive end frame', () => {
     const events: string[] = [];
-    const processor = new TimelineActionProcessor([rangedTimelineAction(2, 4, 'ranged', events)]);
+    const processor = new TimelineActionProcessor<ProbeSequenceState>([
+      rangedTimelineAction(2, 4, 'ranged', events),
+    ]);
     processor.reset(context);
 
     processor.tick(2, 1 / 30, context);
@@ -349,7 +429,9 @@ describe('TimelineActionProcessor', () => {
 
   it('ends an active ranged action when its parent skill is interrupted', () => {
     const events: string[] = [];
-    const processor = new TimelineActionProcessor([rangedTimelineAction(1, 10, 'ranged', events)]);
+    const processor = new TimelineActionProcessor<ProbeSequenceState>([
+      rangedTimelineAction(1, 10, 'ranged', events),
+    ]);
     processor.reset(context);
     processor.tick(1, 1 / 30, context);
 
@@ -360,7 +442,7 @@ describe('TimelineActionProcessor', () => {
 
   it('skips pending actions whose start frame is before a jump destination', () => {
     const events: string[] = [];
-    const processor = new TimelineActionProcessor([
+    const processor = new TimelineActionProcessor<ProbeSequenceState>([
       timelineAction(2, 'skipped', events),
       timelineAction(5, 'destination', events),
     ]);
@@ -377,7 +459,9 @@ describe('TimelineActionProcessor', () => {
 
   it('ends active actions crossed by a jump', () => {
     const events: string[] = [];
-    const processor = new TimelineActionProcessor([rangedTimelineAction(1, 3, 'crossed', events)]);
+    const processor = new TimelineActionProcessor<ProbeSequenceState>([
+      rangedTimelineAction(1, 3, 'crossed', events),
+    ]);
     processor.reset(context);
     processor.tick(1, 1 / 30, context);
 
@@ -389,7 +473,9 @@ describe('TimelineActionProcessor', () => {
 
   it('keeps active actions whose end frame is after a jump destination', () => {
     const events: string[] = [];
-    const processor = new TimelineActionProcessor([rangedTimelineAction(1, 8, 'spanning', events)]);
+    const processor = new TimelineActionProcessor<ProbeSequenceState>([
+      rangedTimelineAction(1, 8, 'spanning', events),
+    ]);
     processor.reset(context);
     processor.tick(1, 1 / 30, context);
 
@@ -402,7 +488,9 @@ describe('TimelineActionProcessor', () => {
 
   it('does not skip pending actions at the exact jump destination', () => {
     const events: string[] = [];
-    const processor = new TimelineActionProcessor([timelineAction(5, 'exact', events)]);
+    const processor = new TimelineActionProcessor<ProbeSequenceState>([
+      timelineAction(5, 'exact', events),
+    ]);
     processor.reset(context);
 
     processor.jumpTo(5, 1, context);
@@ -415,15 +503,15 @@ describe('TimelineActionProcessor', () => {
 
   it('ends the currently starting action after a reentrant jump and skips crossed actions', () => {
     const events: string[] = [];
-    let processor: TimelineActionProcessor;
-    const jumping: TimelineAction = {
+    let processor: TimelineActionProcessor<ProbeSequenceState>;
+    const jumping: TimelineAction<ProbeSequenceState> = {
       startFrame: 1,
       endFrame: 2,
-      sequence: new ActionSequence([
+      sequence: new StepProbeSequence([
         new JumpingStep('jumping', events, () => processor.jumpTo(5, 1, context)),
       ]),
     };
-    processor = new TimelineActionProcessor([
+    processor = new TimelineActionProcessor<ProbeSequenceState>([
       jumping,
       timelineAction(3, 'skipped', events),
       timelineAction(5, 'destination', events),
@@ -446,15 +534,15 @@ describe('TimelineActionProcessor', () => {
   });
 
   it('rejects unsupported backward jumps', () => {
-    const processor = new TimelineActionProcessor([]);
+    const processor = new TimelineActionProcessor<ProbeSequenceState>([]);
     expect(() => processor.jumpTo(1, 2, context)).toThrow(
       'backward timeline jumps are not supported',
     );
   });
 
   it('rejects non-integer frames before runtime', () => {
-    expect(() => new TimelineActionProcessor([timelineAction(1.5, 'invalid', [])])).toThrow(
-      'timeline action 0 must use an integer frame',
-    );
+    expect(
+      () => new TimelineActionProcessor<ProbeSequenceState>([timelineAction(1.5, 'invalid', [])]),
+    ).toThrow('timeline action 0 must use an integer frame');
   });
 });

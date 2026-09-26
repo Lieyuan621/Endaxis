@@ -1,4 +1,5 @@
 import { compileGearSetContribution } from '../../../src/core/compiler/compileEquipment.ts';
+import { ActionGraphDefinitionRepository } from '../../../src/core/compiler/actionGraphDefinitionRepository.ts';
 import { describe, expect, it } from 'vitest';
 
 import { compileEquipmentSuitStaticDefinitionBatchSource } from '../src/index.ts';
@@ -27,7 +28,9 @@ describe('装备套装静态定义', () => {
     ]);
     const definition = result.definitions[0]!;
     const attributes = { main: 'will', secondary: 'agility' } as const;
-    expect(compileGearSetContribution(definition, attributes)).toEqual(
+    expect(
+      compileGearSetContribution(definition, attributes, new ActionGraphDefinitionRepository()),
+    ).toEqual(
       compileGearSetContribution(
         {
           ...definition,
@@ -37,6 +40,7 @@ describe('装备套装静态定义', () => {
           })),
         },
         attributes,
+        new ActionGraphDefinitionRepository(),
       ),
     );
     expect(result.diagnostics).toEqual([

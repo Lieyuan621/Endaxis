@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createEmptyProject } from '../core/project/createProject';
-import {
-  deriveProjectGearTemplate,
-  deriveProjectOperatorTemplate,
-} from '../core/project/projectDefinitionLibrary';
+import { deriveProjectGearTemplate } from '../core/project/projectDefinitionLibrary';
+import { withProjectOperatorTemplate } from '../test/projectOperatorTemplateFixture';
 import { openProject } from '../application/openProject';
 import { createDefaultOperatorInstance } from '../application/editor/loadoutBuildFactory';
 import { perlica } from './operators/perlica.generated';
@@ -18,6 +16,16 @@ describe('project game data repository', () => {
     expect(repository.getGears()).toEqual([]);
     expect(repository.getGearSets()).toEqual([]);
     expect(repository.hasAllDefinitions()).toBe(false);
+    expect(repository.getCommonDefinitionSources?.().map(source => source.id)).toEqual([
+      'common-buffs',
+      'contingency-contracts',
+      'consumables',
+    ]);
+    const [buffId] = Object.keys(repository.getCommonBuffDefinitions?.() ?? {});
+    expect(buffId).toBeDefined();
+    expect(repository.getCommonBuffSource?.(buffId!)?.buffDefinitions?.[buffId!]).toBe(
+      repository.getCommonBuffDefinitions?.()[buffId!],
+    );
   });
   it('loads only referenced definitions before the selection catalog is requested', async () => {
     const repository = await createProjectGameDataRepository({
@@ -44,22 +52,26 @@ describe('project game data repository', () => {
     expect(repository.getOperator('typhoeus')).toBeNull();
     expect(repository.hasAllDefinitions()).toBe(false);
 
+    const programs = repository.actionPrograms!;
+    const graph = { nodes: {} };
+    const compilation = programs.compile(graph, 1);
     await repository.ensureAllDefinitions();
 
-    expect(
-      repository
-        .getOperators()
-        .map(value => value.slug)
-        .sort(),
-    ).toEqual(
-      Object.keys(import.meta.glob('./operators/*.generated.ts'))
-        .map(file => file.split('/').at(-1)!.replace('.generated.ts', ''))
-        .sort(),
-    );
-    expect(repository.getWeapons().length).toBeGreaterThan(1);
+    expect(repository.actionPrograms).toBe(programs);
+    expect(repository.actionPrograms!.compile(graph, 1)).toBe(compilation);
+    const { operatorDefinitions } = await import('./operators');
+    expect(repository.getOperators()).toEqual(operatorDefinitions);
     expect(repository.getOperator('purrchena')).not.toBeNull();
+    expect(repository.getWeapons()).toHaveLength(80);
+    expect(repository.getWeapon('wpn_sword_0023')).not.toBeNull();
+    expect(repository.getWeapon('wpn_sword_0026')).not.toBeNull();
     expect(repository.getOperator('typhoeus')).not.toBeNull();
     expect(repository.hasAllDefinitions()).toBe(true);
+    expect(repository.getCommonDefinitionSources?.().map(source => source.id)).toEqual([
+      'common-buffs',
+      'contingency-contracts',
+      'consumables',
+    ]);
   });
 
   it('does not look for project templates or their audit origins among generated files', async () => {
@@ -83,12 +95,12 @@ describe('project game data repository', () => {
   });
 
   it('opens a saved project whose track uses a materialized operator template', async () => {
-    const project = deriveProjectOperatorTemplate(createEmptyProject({ createdWith: 'test' }), {
-      id: 'project:operator:1',
-      name: '自定义佩丽卡',
-      baseTemplateId: perlica.slug,
-      definition: perlica,
-    });
+    const project = withProjectOperatorTemplate(
+      createEmptyProject({ createdWith: 'test' }),
+      'project:operator:1',
+      '自定义佩丽卡',
+      perlica,
+    );
     project.scenarios[0]!.tracks[0] = {
       id: 'track:1',
       operator: {

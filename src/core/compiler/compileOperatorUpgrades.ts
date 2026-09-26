@@ -17,10 +17,18 @@ import type {
   OperatorUpgradeDefinition,
   UpgradeModifierDefinition,
 } from '../game-data/operatorDefinition';
+import type { ActionGraphReference } from '../../../packages/game-data-contract/src/actionGraph';
 import type { OperatorInstanceDocument } from '../project/schema';
-import { compileActionSequence } from './compileSkill';
-import { compareCombatNumbers } from '../../../packages/game-data-contract/src/primitives';
-import { isOperatorPassiveAbilityEvent } from '../../../packages/game-data-contract/src/operators';
+import { createActionGraphCompilation } from './compileActionGraph';
+import type { CompiledGraphEntry } from './combatProgram';
+export type CompileUpgradeEntry = (
+  entry: ActionGraphReference,
+  level: number,
+  path: string,
+  owner: OperatorPassiveSkillDefinition | OperatorUpgradeDefinition,
+) => CompiledGraphEntry;
+import { compareCombatNumbers } from '../mechanics/combatNumbers.ts';
+import { isOperatorPassiveAbilityEvent } from '../game-data/definitionGuards.ts';
 import type { BuildCondition } from '../../../packages/game-data-contract/src/conditions';
 
 export interface ActiveOperatorUpgrade {
@@ -164,6 +172,7 @@ function compilePassiveAbilityResponses(
   passive: OperatorPassiveSkillDefinition,
   level: number,
   path: string,
+  compileEntry: CompileUpgradeEntry,
 ): Pick<CompiledOperatorPassiveProgram, 'abilityEventResponses'> {
   if (passive.abilityEventResponses === undefined) return {};
   return {
@@ -172,20 +181,22 @@ function compilePassiveAbilityResponses(
         throw new Error(`${path}.abilityEventResponses[${index}]: invalid event or priority`);
       return {
         ...response,
-        sequence: compileActionSequence(
+        sequence: compileEntry(
           response.sequence,
           level,
           `${path}.abilityEventResponses[${index}].sequence`,
+          passive,
         ),
       };
     }),
   };
 }
 
-export function compileOperatorPassivePrograms(
+function compileOperatorPassiveProgramsWithEntry(
   upgrades: readonly ActiveOperatorUpgrade[],
   basePassives: readonly OperatorPassiveSkillDefinition[] = [],
-  skillLevels?: OperatorInstanceDocument['skillLevels'],
+  skillLevels: OperatorInstanceDocument['skillLevels'] | undefined,
+  compileEntry: CompileUpgradeEntry,
 ): readonly CompiledOperatorPassiveProgram[] {
   const programs: CompiledOperatorPassiveProgram[] = [];
   const keys = new Set<string>();
@@ -209,12 +220,13 @@ export function compileOperatorPassivePrograms(
           resolveUpgradeLevelValue(value, passiveLevel, `${path}.blackboard.${key}`),
         ]),
       ),
-      enableSequence: compileActionSequence(
+      enableSequence: compileEntry(
         passive.enableSequence,
         passiveLevel,
         `${path}.enableSequence`,
+        passive,
       ),
-      ...compilePassiveAbilityResponses(passive, passiveLevel, path),
+      ...compilePassiveAbilityResponses(passive, passiveLevel, path, compileEntry),
     });
   }
   for (const upgrade of upgrades) {
@@ -231,12 +243,13 @@ export function compileOperatorPassivePrograms(
             resolveUpgradeLevelValue(value, upgrade.level, `${path}.blackboard.${key}`),
           ]),
         ),
-        enableSequence: compileActionSequence(
+        enableSequence: compileEntry(
           passive.enableSequence,
           upgrade.level,
           `${path}.enableSequence`,
+          passive,
         ),
-        ...compilePassiveAbilityResponses(passive, upgrade.level, path),
+        ...compilePassiveAbilityResponses(passive, upgrade.level, path, compileEntry),
       });
     }
   }
@@ -280,20 +293,68 @@ export function compileOperatorPassivePrograms(
 }
 
 /** 将直接附着 Buff 等养成初始化行为编译为独立的一次性程序。 */
-export function compileOperatorInitializationPrograms(
+function compileOperatorInitializationProgramsWithEntry(
   upgrades: readonly ActiveOperatorUpgrade[],
+  compileEntry: CompileUpgradeEntry,
 ): readonly CompiledOperatorInitializationProgram[] {
   return upgrades.flatMap(upgrade => {
     const sequence = upgrade.definition.initializationSequence;
-    if (sequence === undefined) return [];
+    const attachedBuffs = upgrade.definition.attachedBuffs ?? [];
+    if (sequence !== undefined && attachedBuffs.length > 0) {
+      throw new Error(
+        `${upgrade.source} '${upgrade.index}' mixes direct Buff installations with an initialization program`,
+      );
+    }
+    if (sequence === undefined && attachedBuffs.length === 0) return [];
+    const path = `${upgrade.source} '${upgrade.index}'`;
+    const compiledSequence =
+      sequence === undefined
+        ? createActionGraphCompilation(
+            {
+              nodes: Object.fromEntries(
+                attachedBuffs.map((installation, index) => [
+                  `install:${index}`,
+                  {
+                    action: {
+                      kind: 'applyBuff' as const,
+                      parameters: {
+                        buffId: installation.buffId,
+                        target: 'caster' as const,
+                        inheritSourceSkillCastInfo: false,
+                        blackboardAssignments: Object.fromEntries(
+                          Object.entries(installation.blackboardAssignments ?? {}).map(
+                            ([key, value]) => [
+                              key,
+                              {
+                                kind: 'constant' as const,
+                                value: resolveUpgradeLevelValue(
+                                  value,
+                                  upgrade.level,
+                                  `${path}.attachedBuffs[${index}].blackboardAssignments.${key}`,
+                                ),
+                              },
+                            ],
+                          ),
+                        ),
+                      },
+                    },
+                    next: index + 1 < attachedBuffs.length ? `install:${index + 1}` : null,
+                  },
+                ]),
+              ),
+            },
+            0,
+          ).compileEntry({ $sequence: 'install:0' }, `${path}.attachedBuffs`)
+        : compileEntry(
+            sequence,
+            upgrade.level,
+            `${path}.initializationSequence`,
+            upgrade.definition,
+          );
     return [
       {
         key: `${upgrade.source}:${upgrade.index}`,
-        sequence: compileActionSequence(
-          sequence,
-          upgrade.level,
-          `${upgrade.source} '${upgrade.index}'.initializationSequence`,
-        ),
+        sequence: compiledSequence,
       },
     ];
   });
@@ -428,22 +489,37 @@ function patchKeyedReactionStep(
     let programMatchCount = 0;
     const patchedProgram = {
       ...program,
-      timelineActions: program.timelineActions.map(action => ({
-        ...action,
-        sequence: {
-          steps: action.sequence.steps.map(step => {
-            if (step.key !== stepKey) return step;
-            if (step.kind !== 'applyElementalReaction') {
-              throw new Error(
-                `${path} step '${stepKey}' is '${step.kind}', expected 'applyElementalReaction'`,
-              );
-            }
-            matchCount += 1;
-            programMatchCount += 1;
-            return patch(step);
-          }),
-        },
-      })),
+      timelineActions: program.timelineActions.map(action => {
+        const entry = action.sequence;
+        const nodes = new Map(entry.graph.nodes);
+        let changed = false;
+        for (let id = entry.entry; id !== null; id = entry.graph.nodes.get(id)!.next) {
+          const node = entry.graph.nodes.get(id)!;
+          if (node.action.key !== stepKey) continue;
+          if (node.action.kind !== 'applyElementalReaction')
+            throw new Error(
+              `${path} step '${stepKey}' is '${node.action.kind}', expected 'applyElementalReaction'`,
+            );
+          matchCount++;
+          programMatchCount++;
+          changed = true;
+          nodes.set(id, { ...node, action: patch(node.action) });
+        }
+        if (!changed) return action;
+        // 养成补丁只修改该入口根节点；原程序和旧结果仍持有旧节点目录。
+        const graph = {
+          ...entry.graph,
+          nodes,
+          operationBindings: new Map(),
+          revision: JSON.stringify([
+            entry.graph.revision,
+            path,
+            stepKey,
+            [...nodes].filter(([id]) => entry.graph.nodes.get(id) !== nodes.get(id)),
+          ]),
+        };
+        return { ...action, sequence: { ...entry, graph } };
+      }),
     };
     if (programMatchCount > 1) {
       throw new Error(
@@ -634,8 +710,9 @@ export function applyOperatorUpgradeSkillPatches(
 /**
  * 将启用养成项的同步事件动作编译为独立程序；事件监听不伪装成可释放技能。
  */
-export function compileOperatorUpgradeEventPrograms(
+function compileOperatorUpgradeEventProgramsWithEntry(
   upgrades: readonly ActiveOperatorUpgrade[],
+  compileEntry: CompileUpgradeEntry,
 ): readonly CompiledOperatorUpgradeEventProgram[] {
   const programs: CompiledOperatorUpgradeEventProgram[] = [];
   const keys = new Set<string>();
@@ -657,13 +734,37 @@ export function compileOperatorUpgradeEventPrograms(
             ),
           ]),
         ),
-        sequence: compileActionSequence(
+        sequence: compileEntry(
           handler.sequence,
           upgrade.level,
           `${upgrade.source} '${upgrade.index}'.eventHandlers[${index}].sequence`,
+          upgrade.definition,
         ),
       });
     }
   }
   return programs;
+}
+
+export function compileOperatorInitializationPrograms(
+  upgrades: readonly ActiveOperatorUpgrade[],
+  compileEntry: CompileUpgradeEntry,
+): readonly CompiledOperatorInitializationProgram[] {
+  return compileOperatorInitializationProgramsWithEntry(upgrades, compileEntry);
+}
+
+export function compileOperatorPassivePrograms(
+  upgrades: readonly ActiveOperatorUpgrade[],
+  basePassives: readonly OperatorPassiveSkillDefinition[],
+  skillLevels: OperatorInstanceDocument['skillLevels'] | undefined,
+  compileEntry: CompileUpgradeEntry,
+): readonly CompiledOperatorPassiveProgram[] {
+  return compileOperatorPassiveProgramsWithEntry(upgrades, basePassives, skillLevels, compileEntry);
+}
+
+export function compileOperatorUpgradeEventPrograms(
+  upgrades: readonly ActiveOperatorUpgrade[],
+  compileEntry: CompileUpgradeEntry,
+): readonly CompiledOperatorUpgradeEventProgram[] {
+  return compileOperatorUpgradeEventProgramsWithEntry(upgrades, compileEntry);
 }

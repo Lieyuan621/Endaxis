@@ -1,9 +1,11 @@
+import type { SkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
 import { describe, expect, it } from 'vitest';
 import { perlica } from '../../../data/operators/perlica.generated';
 import { createEnemyElementalBuffRuntime } from '../../../test/elementalBuffFixture';
 import { CombatAttributeSet } from '../attributes/combatAttributes';
 import { compileSkill } from '../../compiler/compileSkill';
-import type { SkillDefinition } from '../../game-data/operatorDefinition';
+import { ActionGraphDefinitionRepository } from '../../compiler/actionGraphDefinitionRepository';
+
 import {
   DAMAGE_SCALE_ATTRIBUTE_KEYS,
   type DamageScaleAttributeSnapshot,
@@ -73,6 +75,7 @@ describe('Perlica standard damage slice', () => {
       skillType: 'battleSkill',
       skillLevel: 12,
       skill: findPerlicaBattleSkill(),
+      programs: new ActionGraphDefinitionRepository(),
     });
     const elementalTarget = createEnemyElementalBuffRuntime({
       attributes: new CombatAttributeSet(),

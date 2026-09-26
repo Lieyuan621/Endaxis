@@ -3,6 +3,7 @@
  * 本层只生成定义默认值和身份，不执行模拟；调用方必须提供可进入撤销历史的稳定 ID 分配器。
  */
 import type { OperatorDefinition } from '../../../core/game-data/operatorDefinition';
+
 import type {
   ScenarioDocument,
   SkillCastDocument,
@@ -10,7 +11,10 @@ import type {
   TrackIndex,
 } from '../../../core/project/schema';
 import { resolveUniquePlayerActionForSkill } from '../../../core/game-data/resolvePlayerActionRoute';
-import { layoutSkillGroupPlacement, resolveSkillGroupPlacementSkills } from '../../../application/editor/skillGroupPlacement';
+import {
+  layoutSkillGroupPlacement,
+  resolveSkillGroupPlacementSkills,
+} from '../../../application/editor/skillGroupPlacement';
 import type { RecursiveSkillChain } from '../../../application/simulation/recursiveSkillChain';
 
 /** 放置命令生成稳定文档身份所需的端口。 */

@@ -1,6 +1,5 @@
 /** 技能自身结构的严格校验；动作与能力实体的递归校验归 validation/actionPrograms。 */
 import { SKILL_LEVEL_SOURCES } from './operatorDefinition';
-import { collectDamageStepKeys } from './collectDamageStepKeys';
 import {
   type SkillDefinitionValidationIssue,
   SKILL_TYPES_SET,
@@ -16,7 +15,10 @@ import {
 } from './validation/definitionValues';
 import { validateCombatCondition } from './validation/combatConditions';
 import {
-  validateActionSequence,
+  type ActionGraphContextEntry,
+  validateActionGraphContexts,
+  validateActionGraphReference,
+  validateActionGraphActions,
   validateScheduledSequence,
   validateEventHandler,
 } from './validation/actionPrograms';
@@ -71,6 +73,69 @@ export function validateSkillDefinition(
   const out: SkillDefinitionValidationIssue[] = [];
   const record = asRecord(value, path, out);
   if (record === null) return out;
+  if (record.actionGraph !== undefined) {
+    out.push(...validateActionGraphActions(record.actionGraph, `${path}.actionGraph`));
+    // 实体上下文与嵌套监听器寿命按入口沿图遍历；缺失节点由契约校验报告。
+    const entries: ActionGraphContextEntry[] = [];
+    if (Array.isArray(record.scheduledSequences))
+      record.scheduledSequences.forEach((sequence, index) => {
+        const sequencePath = `${path}.scheduledSequences[${index}]`;
+        const row =
+          sequence !== null && typeof sequence === 'object' && !Array.isArray(sequence)
+            ? (sequence as Record<string, unknown>)
+            : null;
+        entries.push({
+          reference: row === null ? undefined : row.sequence,
+          path: sequencePath,
+          currentTargetAvailable: false,
+          ...(row !== null && row.endFrame === undefined
+            ? { missingListenerEndFramePath: `${sequencePath}.endFrame` }
+            : {}),
+        });
+      });
+    const route =
+      record.switchToBuffCast !== null &&
+      typeof record.switchToBuffCast === 'object' &&
+      !Array.isArray(record.switchToBuffCast)
+        ? (record.switchToBuffCast as Record<string, unknown>)
+        : null;
+    if (route !== null)
+      entries.push({
+        reference: route.sequence,
+        path: `${path}.switchToBuffCast.sequence`,
+        currentTargetAvailable: false,
+      });
+    if (Array.isArray(record.eventHandlers))
+      record.eventHandlers.forEach((handler, index) => {
+        const row =
+          handler !== null && typeof handler === 'object' && !Array.isArray(handler)
+            ? (handler as Record<string, unknown>)
+            : null;
+        if (row === null || !Array.isArray(row.scheduledSequences)) return;
+        row.scheduledSequences.forEach((sequence, sequenceIndex) => {
+          const sequencePath = `${path}.eventHandlers[${index}].scheduledSequences[${sequenceIndex}]`;
+          const item =
+            sequence !== null && typeof sequence === 'object' && !Array.isArray(sequence)
+              ? (sequence as Record<string, unknown>)
+              : null;
+          entries.push({
+            reference: item === null ? undefined : item.sequence,
+            path: sequencePath,
+            currentTargetAvailable: false,
+            ...(item !== null && item.endFrame === undefined
+              ? { missingListenerEndFramePath: `${sequencePath}.endFrame` }
+              : {}),
+          });
+        });
+      });
+    validateActionGraphContexts(record.actionGraph, `${path}.actionGraph`, entries, out);
+  }
+  if ('buffDefinitions' in record)
+    push(
+      out,
+      `${path}.buffDefinitions`,
+      'skills may reference Buffs but cannot own their definitions',
+    );
 
   requireString(record, 'key', path, out);
   if (record.skillType !== undefined) requireEnum(record, 'skillType', SKILL_TYPES_SET, path, out);
@@ -211,7 +276,7 @@ export function validateSkillDefinition(
       }
       if (route.asSkillCast !== undefined && typeof route.asSkillCast !== 'boolean')
         push(out, `${path}.switchToBuffCast.asSkillCast`, 'expected a boolean');
-      validateActionSequence(route.sequence, `${path}.switchToBuffCast.sequence`, out);
+      validateActionGraphReference(route.sequence, `${path}.switchToBuffCast.sequence`, out);
     }
   }
   if (record.scheduledSequences !== undefined) {
@@ -233,22 +298,6 @@ export function validateSkillDefinition(
       record.eventHandlers.forEach((handler, index) => {
         validateEventHandler(handler, `${path}.eventHandlers[${index}]`, out);
       });
-    }
-  }
-
-  // 伤害步骤 key：非空 + 同一 SkillDefinition 内全局唯一。
-  // 遍历结果同时携带路径，缺失与重复都能精确定位。
-  const seenKeys = new Map<string, string>();
-  for (const entry of collectDamageStepKeys(record as never)) {
-    if (entry.key.length === 0) {
-      push(out, `${path}.${entry.path}`, 'damage step must have a non-empty key');
-      continue;
-    }
-    const previousPath = seenKeys.get(entry.key);
-    if (previousPath !== undefined) {
-      push(out, `${path}.${entry.path}`, `duplicate damage step key '${entry.key}'`);
-    } else {
-      seenKeys.set(entry.key, `${path}.${entry.path}`);
     }
   }
 

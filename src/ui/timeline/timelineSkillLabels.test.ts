@@ -137,6 +137,22 @@ describe('skill sequence labels', () => {
     ).toBe('重击*');
   });
 
+  it('marks floating attacks and combos on the timeline without changing library segment names', () => {
+    const keys = ['attack-1', 'attack-2', 'attack-3', 'attack-4', 'heavy-attack'];
+    const attacks = skillLibraryEntry('basicAttack', keys, 'floating');
+    expect(keys.map(key => timelineSkillBlockLabel(attacks, key, labels, '普攻'))).toEqual([
+      'A1*',
+      'A2*',
+      'A3*',
+      'A4*',
+      '重击*',
+    ]);
+    expect(skillLibrarySegmentLabel(attacks, keys[0]!, labels)).toBe('A1');
+    const combo = skillLibraryEntry('comboSkill', ['combo'], 'floating');
+    expect(timelineSkillBlockLabel(combo, 'combo', labels, '连携')).toBe('连携*');
+    expect(timelineSkillBlockLabelForKey([combo], 'combo', labels, () => '连携')).toBe('连携*');
+  });
+
   it('names an unplaced routed skill like its timeline block, without guessing ambiguous groups', () => {
     const enhanced = skillLibraryEntry(
       'basicAttack',

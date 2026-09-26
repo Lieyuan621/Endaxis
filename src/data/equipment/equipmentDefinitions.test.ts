@@ -67,7 +67,7 @@ describe('equipmentDefinitions', () => {
   });
 
   it('keeps every native set reference closed inside the generated set catalog', () => {
-    const registered = new Set(gearSetDefinitions.map(definition => definition.slug));
+    const registered = new Set<string>(gearSetDefinitions.map(definition => definition.slug));
     const referenced = new Set(
       gearDefinitions
         .map(definition => definition.gearSetSlug)
@@ -90,6 +90,7 @@ describe('equipmentDefinitions', () => {
       });
     }
     expect(getEquipmentSupport('gear', 'xiranflow-light-armor')).toBeNull();
-    expect(gearSetDefinitions.some(definition => definition.slug === 'no-set-bonuses')).toBe(false);
+    const setSlugs: readonly string[] = gearSetDefinitions.map(definition => definition.slug);
+    expect(setSlugs.includes('no-set-bonuses')).toBe(false);
   });
 });

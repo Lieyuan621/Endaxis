@@ -65,7 +65,9 @@ import {
   requireInteger,
 } from './definitionValues';
 import { validateCombatCondition } from './combatConditions';
-import { validateBuffApplication } from './buffApplication';
+import { resolveGraphData, createGraphDataResolver } from '../../action-graph/actionGraphData';
+import type { ActionGraphDefinition } from '../../../../packages/game-data-contract/src/actionGraph';
+import { validateBuffApplication, validateBuffDefinition } from './buffApplication';
 import { NATIVE_SKILL_TYPES_SET, COMBAT_RESOURCES_SET } from './definitionValues';
 
 const STEP_KINDS = new Set<string>(COMBAT_STEP_KINDS);
@@ -341,6 +343,30 @@ function validateAbilityEntityChildSkill(
 ): void {
   const child = asRecord(value, path, out);
   if (child === null) return;
+  out.push(...validateActionGraphActions(child.actionGraph, `${path}.actionGraph`));
+  if (child.actionGraph !== undefined && Array.isArray(child.scheduledSequences)) {
+    // 实体子技能以宿主实体为当前实体；监听器寿命规则与干员排程一致。
+    validateActionGraphContexts(
+      child.actionGraph,
+      `${path}.actionGraph`,
+      child.scheduledSequences.map((sequence, index) => {
+        const sequencePath = `${path}.scheduledSequences[${index}]`;
+        const row =
+          sequence !== null && typeof sequence === 'object' && !Array.isArray(sequence)
+            ? (sequence as Record<string, unknown>)
+            : null;
+        return {
+          reference: row === null ? undefined : row.sequence,
+          path: sequencePath,
+          currentTargetAvailable: true,
+          ...(row !== null && row.endFrame === undefined
+            ? { missingListenerEndFramePath: `${sequencePath}.endFrame` }
+            : {}),
+        };
+      }),
+      out,
+    );
+  }
   requireString(child, 'skillId', path, out);
   validateEntitySkillCastMetadata(child, path, out);
   if (child.blackboard !== undefined) {
@@ -356,7 +382,7 @@ function validateAbilityEntityChildSkill(
     push(out, `${path}.scheduledSequences`, 'expected an array');
   } else {
     child.scheduledSequences.forEach((sequence, index) =>
-      validateScheduledSequence(sequence, `${path}.scheduledSequences[${index}]`, out, true),
+      validateScheduledSequence(sequence, `${path}.scheduledSequences[${index}]`, out),
     );
   }
 }
@@ -395,6 +421,7 @@ function validateAbilityEntityPassiveSkill(
 ): void {
   const passive = asRecord(value, path, out);
   if (passive === null) return;
+  out.push(...validateActionGraphActions(passive.actionGraph, `${path}.actionGraph`));
   requireString(passive, 'key', path, out);
   if (passive.blackboard !== undefined) {
     const blackboard = asRecord(passive.blackboard, `${path}.blackboard`, out);
@@ -406,7 +433,27 @@ function validateAbilityEntityPassiveSkill(
     }
   }
   // 能力实体被动以宿主实体作为 currentTarget；无需额外的 Context 迭代。
-  validateActionSequence(passive.enableSequence, `${path}.enableSequence`, out, true);
+  validateActionGraphReference(passive.enableSequence, `${path}.enableSequence`, out);
+  if (passive.actionGraph !== undefined) {
+    const entries: ActionGraphContextEntry[] = [];
+    if (passive.enableSequence !== undefined)
+      entries.push({
+        reference: passive.enableSequence,
+        path: `${path}.enableSequence`,
+        currentTargetAvailable: true,
+      });
+    if (Array.isArray(passive.abilityEventResponses))
+      passive.abilityEventResponses.forEach((value, index) => {
+        const response = asRecord(value, `${path}.abilityEventResponses[${index}]`, []);
+        if (response === null) return;
+        entries.push({
+          reference: response.sequence,
+          path: `${path}.abilityEventResponses[${index}].sequence`,
+          currentTargetAvailable: true,
+        });
+      });
+    validateActionGraphContexts(passive.actionGraph, `${path}.actionGraph`, entries, out);
+  }
   if (passive.abilityEventResponses === undefined) return;
   if (!Array.isArray(passive.abilityEventResponses)) {
     push(out, `${path}.abilityEventResponses`, 'expected an array');
@@ -420,7 +467,7 @@ function validateAbilityEntityPassiveSkill(
       push(out, `${responsePath}.event`, "expected 'addedBuff'");
     }
     requireInteger(response, 'priority', responsePath, out);
-    validateActionSequence(response.sequence, `${responsePath}.sequence`, out, true);
+    validateActionGraphReference(response.sequence, `${responsePath}.sequence`, out);
   });
 }
 
@@ -1166,10 +1213,7 @@ function validateCombatStep(
       validateGameplayTags(parameters.tags, `${path}.parameters.tags`, out, true);
       break;
     case 'applyBuff': {
-      validateBuffApplication(parameters, path, out, currentTargetAvailable, {
-        action: validateActionSequence,
-        scheduled: validateScheduledSequence,
-      });
+      validateBuffApplication(parameters, path, out, currentTargetAvailable);
       break;
     }
     case 'createGlobalBuff': {
@@ -1432,20 +1476,21 @@ function validateCombatStep(
         [statusDefinitionKey, statusBuffId],
       ] as const) {
         if (buffId === null) continue;
-        validateCombatStep(
-          {
-            kind: 'applyBuff',
-            parameters: {
-              buffId,
-              definition: parameters[definitionKey],
-              target: 'enemy',
-              inheritSourceSkillCastInfo: true,
+        if (parameters[definitionKey] !== undefined)
+          validateBuffDefinition(
+            parameters[definitionKey],
+            buffId,
+            `${path}.parameters.${definitionKey}`,
+            out,
+            {
+              action: validateActionGraphReference,
+              scheduled: validateScheduledSequence,
+              graph: (value, path, issues) =>
+                issues.push(...validateActionGraphActions(value, path)),
+              contexts: (value, path, entries, issues) =>
+                validateActionGraphContexts(value, path, entries, issues),
             },
-          },
-          `${path}.parameters.${definitionKey}`,
-          out,
-          currentTargetAvailable,
-        );
+          );
       }
       break;
     }
@@ -1972,10 +2017,12 @@ function validateCombatStep(
       }
       break;
     case 'once':
-      requireString(parameters, 'scopeKey', `${path}.parameters`, out);
+      if (parameters.scopeKey !== undefined)
+        requireString(parameters, 'scopeKey', `${path}.parameters`, out);
       break;
     case 'withActionBlackboardScope': {
-      requireString(parameters, 'scopeKey', `${path}.parameters`, out);
+      if (parameters.scopeKey !== undefined)
+        requireString(parameters, 'scopeKey', `${path}.parameters`, out);
       if (parameters.alwaysNext !== undefined && typeof parameters.alwaysNext !== 'boolean') {
         push(out, `${path}.parameters.alwaysNext`, 'expected a boolean');
       }
@@ -2341,145 +2388,62 @@ function validateCombatStep(
               currentTargetAvailable,
             );
           }
-          validateActionSequence(
-            record.sequence,
-            `${responsePath}.sequence`,
-            out,
-            currentTargetAvailable,
-          );
+          validateActionGraphReference(record.sequence, `${responsePath}.sequence`, out);
         });
       }
       break;
   }
 }
 
-/** ActionSequenceDefinition：严格按数组顺序同步执行的步骤集合。 */
-export function validateActionSequence(
+function validateActionChildren(
   value: unknown,
   path: string,
   out: SkillDefinitionValidationIssue[],
-  currentTargetAvailable = false,
 ): void {
-  const record = asRecord(value, path, out);
-  if (record === null) return;
-  if (!Array.isArray(record.steps)) {
-    push(out, `${path}.steps`, 'expected an array');
-    return;
-  }
-  record.steps.forEach((step, index) => {
-    validateCombatStep(step, `${path}.steps[${index}]`, out, currentTargetAvailable);
-  });
-  // 嵌套结构校验：条件、once 与 Context 迭代必须有对应分支。
-  record.steps.forEach((step, index) => {
-    const recordStep = asRecord(step, `${path}.steps[${index}]`, out);
-    if (recordStep === null) return;
-    const stepKind = recordStep.kind;
-    if (stepKind === 'conditional') {
-      validateActionSequence(
-        recordStep.whenTrue,
-        `${path}.steps[${index}].whenTrue`,
-        out,
-        currentTargetAvailable,
-      );
-      if (recordStep.whenFalse !== undefined) {
-        validateActionSequence(
-          recordStep.whenFalse,
-          `${path}.steps[${index}].whenFalse`,
-          out,
-          currentTargetAvailable,
-        );
-      }
-    } else if (stepKind === 'switch') {
-      const optionsPath = `${path}.steps[${index}].options`;
-      if (!Array.isArray(recordStep.options)) {
-        push(out, optionsPath, 'expected an array');
-        return;
-      }
-      recordStep.options.forEach((option, optionIndex) => {
-        const optionPath = `${optionsPath}[${optionIndex}]`;
-        const entry = asRecord(option, optionPath, out);
-        if (entry === null) return;
-        validateActionValueOperand(entry.value, `${optionPath}.value`, out);
-        validateActionSequence(
-          entry.sequence,
-          `${optionPath}.sequence`,
-          out,
-          currentTargetAvailable,
-        );
-      });
-    } else if (stepKind === 'launchProjectile') {
-      if (!Array.isArray(recordStep.callbacks)) {
-        push(out, `${path}.steps[${index}].callbacks`, 'expected an array');
-        return;
-      }
-      recordStep.callbacks.forEach((value, callbackIndex) => {
-        const entryPath = `${path}.steps[${index}].callbacks[${callbackIndex}]`;
-        const entry = asRecord(value, entryPath, out);
-        if (entry === null) return;
-        if (!['hit', 'block', 'reach', 'finish'].includes(String(entry.event)))
-          push(out, `${entryPath}.event`, 'expected hit, reach or finish');
-        const callbackPath = `${entryPath}.skill`;
-        validateAbilityEntityChildSkill(entry.skill, callbackPath, out);
-      });
-    } else if (
-      stepKind === 'once' ||
-      stepKind === 'withActionBlackboardScope' ||
-      stepKind === 'repeatEachTick' ||
-      stepKind === 'repeatByActionValue'
-    ) {
-      validateActionSequence(
-        recordStep.body,
-        `${path}.steps[${index}].body`,
-        out,
-        currentTargetAvailable,
-      );
-    } else if (stepKind === 'forEachContextTarget') {
-      validateActionSequence(recordStep.body, `${path}.steps[${index}].body`, out, true);
+  const recordStep = asRecord(value, path, out);
+  if (recordStep === null) return;
+  const stepKind = recordStep.kind;
+  if (stepKind === 'conditional') {
+    validateActionGraphReference(recordStep.whenTrue, `${path}.whenTrue`, out);
+    if (recordStep.whenFalse !== undefined) {
+      validateActionGraphReference(recordStep.whenFalse, `${path}.whenFalse`, out);
     }
-  });
-}
-
-function containsCombatEventListener(value: unknown): boolean {
-  if (typeof value !== 'object' || value === null) return false;
-  const record = value as Record<string, unknown>;
-  if (record.kind === 'launchProjectile') {
-    return (
-      Array.isArray(record.callbacks) &&
-      record.callbacks.some(entry => {
-        const skill = (entry as { skill?: { scheduledSequences?: { sequence: unknown }[] } })
-          ?.skill;
-        return (
-          skill?.scheduledSequences?.some(item => containsCombatEventListener(item.sequence)) ??
-          false
-        );
-      })
-    );
-  }
-  if (record.kind === 'listenForCombatEvents') return true;
-  if (record.kind === 'switch' && Array.isArray(record.options)) {
-    return record.options.some(
-      option =>
-        typeof option === 'object' &&
-        option !== null &&
-        containsCombatEventListener((option as Record<string, unknown>).sequence),
-    );
-  }
-  if (record.kind === 'conditional') {
-    return (
-      containsCombatEventListener(record.whenTrue) || containsCombatEventListener(record.whenFalse)
-    );
-  }
-  if (
-    record.kind === 'once' ||
-    record.kind === 'withActionBlackboardScope' ||
-    record.kind === 'repeatEachTick' ||
-    record.kind === 'repeatByActionValue' ||
-    record.kind === 'forEachContextTarget'
+  } else if (stepKind === 'switch') {
+    const optionsPath = `${path}.options`;
+    if (!Array.isArray(recordStep.options)) {
+      push(out, optionsPath, 'expected an array');
+      return;
+    }
+    recordStep.options.forEach((option, optionIndex) => {
+      const optionPath = `${optionsPath}[${optionIndex}]`;
+      const entry = asRecord(option, optionPath, out);
+      if (entry === null) return;
+      validateActionValueOperand(entry.value, `${optionPath}.value`, out);
+      validateActionGraphReference(entry.sequence, `${optionPath}.sequence`, out);
+    });
+  } else if (stepKind === 'launchProjectile') {
+    if (!Array.isArray(recordStep.callbacks)) {
+      push(out, `${path}.callbacks`, 'expected an array');
+      return;
+    }
+    recordStep.callbacks.forEach((value, callbackIndex) => {
+      const entryPath = `${path}.callbacks[${callbackIndex}]`;
+      const entry = asRecord(value, entryPath, out);
+      if (entry === null) return;
+      if (!['hit', 'block', 'reach', 'finish'].includes(String(entry.event)))
+        push(out, `${entryPath}.event`, 'expected hit, block, reach or finish');
+      validateAbilityEntityChildSkill(entry.skill, `${entryPath}.skill`, out);
+    });
+  } else if (
+    stepKind === 'once' ||
+    stepKind === 'withActionBlackboardScope' ||
+    stepKind === 'repeatEachTick' ||
+    stepKind === 'repeatByActionValue'
   ) {
-    return containsCombatEventListener(record.body);
+    validateActionGraphReference(recordStep.body, `${path}.body`, out);
+  } else if (stepKind === 'forEachContextTarget') {
+    validateActionGraphReference(recordStep.body, `${path}.body`, out);
   }
-  if (Array.isArray(record.steps)) return record.steps.some(containsCombatEventListener);
-  return false;
 }
 
 /** ScheduledSequenceDefinition：相对释放帧的调度项。 */
@@ -2487,7 +2451,6 @@ export function validateScheduledSequence(
   value: unknown,
   path: string,
   out: SkillDefinitionValidationIssue[],
-  currentTargetAvailable = false,
 ): void {
   const record = asRecord(value, path, out);
   if (record === null) return;
@@ -2498,10 +2461,32 @@ export function validateScheduledSequence(
       push(out, `${path}.endFrame`, 'must not be less than startFrame');
     }
   }
-  if (containsCombatEventListener(record.sequence) && record.endFrame === undefined) {
-    push(out, `${path}.endFrame`, 'combat event listeners require an end frame');
-  }
-  validateActionSequence(record.sequence, `${path}.sequence`, out, currentTargetAvailable);
+  validateActionGraphReference(record.sequence, `${path}.sequence`, out);
+}
+
+export function validateActionGraphReferenceDefinition(
+  value: unknown,
+  path = '$',
+): SkillDefinitionValidationIssue[] {
+  const issues: SkillDefinitionValidationIssue[] = [];
+  validateActionGraphReference(value, path, issues);
+  return issues;
+}
+
+export function validateActionGraphReference(
+  value: unknown,
+  path: string,
+  out: SkillDefinitionValidationIssue[],
+): void {
+  const record = asRecord(value, path, out);
+  if (record === null) return;
+  if (
+    Object.keys(record).length !== 1 ||
+    !Object.hasOwn(record, '$sequence') ||
+    (record.$sequence !== null &&
+      (typeof record.$sequence !== 'string' || record.$sequence.length === 0))
+  )
+    push(out, path, 'expected an action graph entry reference');
 }
 
 /**
@@ -2587,16 +2572,6 @@ function validateEventTrigger(
   }
 }
 
-/** 校验独立动作序列；技能、Buff 与配装事件共用同一种顺序语义。 */
-export function validateActionSequenceDefinition(
-  value: unknown,
-  path = '$',
-): SkillDefinitionValidationIssue[] {
-  const out: SkillDefinitionValidationIssue[] = [];
-  validateActionSequence(value, path, out);
-  return out;
-}
-
 /** 校验独立战斗事件触发器。 */
 export function validateCombatEventTriggerDefinition(
   value: unknown,
@@ -2627,4 +2602,336 @@ export function validateEventHandler(
       validateScheduledSequence(sequence, `${path}.scheduledSequences[${index}]`, out);
     });
   }
+}
+
+/** 校验单个图动作及其子入口字段，不展开引用程序；调用上下文留给编译阶段检查。 */
+export function validateActionGraphStepDefinition(
+  value: unknown,
+  path: string,
+): SkillDefinitionValidationIssue[] {
+  const out: SkillDefinitionValidationIssue[] = [];
+  const record = asRecord(value, path, out);
+  if (record === null) return out;
+  if (record.kind === 'callResource') {
+    const resource = asRecord(record.resource, `${path}.resource`, out);
+    if (resource !== null) {
+      requireString(resource, 'id', `${path}.resource`, out);
+      validateActionGraphReference(resource.entry, `${path}.resource.entry`, out);
+      out.push(...validateActionGraphActions(resource.actionGraph, `${path}.resource.actionGraph`));
+    }
+    return out;
+  }
+  if (record.kind === 'callMacro') {
+    requireString(record, 'macroId', path, out);
+    if (record.nodeBindings !== undefined) {
+      const bindings = asRecord(record.nodeBindings, `${path}.nodeBindings`, out);
+      if (bindings !== null)
+        for (const [nodeId, identity] of Object.entries(bindings)) {
+          if (!nodeId) push(out, `${path}.nodeBindings`, 'contains an empty node identity');
+          if (typeof identity !== 'string' || !identity)
+            push(
+              out,
+              `${path}.nodeBindings.${JSON.stringify(nodeId)}`,
+              'must be a non-empty string',
+            );
+        }
+    }
+    // 实参只查形状；与宏声明的一致性由 actionGraphValidation 负责。
+    if (record.arguments !== undefined) {
+      const args = asRecord(record.arguments, `${path}.arguments`, out);
+      if (args !== null) {
+        for (const [name, operand] of Object.entries(args)) {
+          if (name.length === 0) push(out, `${path}.arguments`, 'contains an empty key');
+          validateActionValueOperand(operand, `${path}.arguments.${JSON.stringify(name)}`, out);
+        }
+      }
+    }
+    return out;
+  }
+  validateCombatStep(value, path, out, true);
+  validateActionChildren(value, path, out);
+  return out;
+}
+
+/** 主图及每张宏图各校验一次，不沿执行引用遍历，避免共享节点重复校验。 */
+export function validateActionGraphActions(
+  value: unknown,
+  path: string,
+): SkillDefinitionValidationIssue[] {
+  const out: SkillDefinitionValidationIssue[] = [];
+  const resource = asRecord(value, path, out);
+  if (resource === null) return out;
+  const validateGraph = (value: unknown, path: string): void => {
+    try {
+      if (value && typeof value === 'object' && 'dataNodes' in value) {
+        const graph = value as ActionGraphDefinition;
+        const resolver = createGraphDataResolver(graph);
+        for (const [id, node] of Object.entries(graph.dataNodes ?? {})) {
+          const expression = resolver.node(id, node.type);
+          if (node.type === 'boolean')
+            validateCombatCondition(expression, `${path}.dataNodes.${id}`, out);
+          else validateActionValueOperand(expression, `${path}.dataNodes.${id}`, out);
+        }
+        value = resolveGraphData(graph);
+      }
+    } catch (error) {
+      push(out, path, error instanceof Error ? error.message : String(error));
+      return;
+    }
+    const graph = asRecord(value, path, out);
+    if (graph === null) return;
+    const nodes = asRecord(graph.nodes, `${path}.nodes`, out);
+    if (nodes === null) return;
+    for (const [id, value] of Object.entries(nodes)) {
+      const nodePath = `${path}.nodes.${JSON.stringify(id)}`;
+      const node = asRecord(value, nodePath, out);
+      if (node !== null)
+        out.push(...validateActionGraphStepDefinition(node.action, `${nodePath}.action`));
+    }
+  };
+  if (!Object.hasOwn(resource, 'main')) {
+    validateGraph(resource, path);
+    return out;
+  }
+  validateGraph(resource.main, `${path}.main`);
+  const macros = asRecord(resource.macros, `${path}.macros`, out);
+  if (macros !== null)
+    for (const [id, value] of Object.entries(macros)) {
+      const macroPath = `${path}.macros.${JSON.stringify(id)}`;
+      const macro = asRecord(value, macroPath, out);
+      if (macro !== null) validateGraph(macro.graph, `${macroPath}.graph`);
+    }
+  return out;
+}
+
+/** 入口处的执行上下文：实体迭代上下文按图传播，不能泄漏到同级 next 或其他资源。 */
+export interface ActionGraphContextEntry {
+  /** 图入口引用（{$sequence}）；形状错误由扁平校验报告，这里只读取。 */
+  readonly reference: unknown;
+  /** 入口在所属定义中的路径，仅用于定位。 */
+  readonly path: string;
+  /** 实体子技能/被动等以宿主实体为当前目标；普通技能入口为 false。 */
+  readonly currentTargetAvailable: boolean;
+  /** 排程入口缺少 endFrame 时，嵌套监听器在此路径报告。 */
+  readonly missingListenerEndFramePath?: string;
+}
+
+function lenientRecord(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+/**
+ * 从定义的实际入口沿图引用遍历，按访问时的上下文校验实体操作与嵌套监听器寿命。
+ * 访问记录包含上下文（及排程路径），同一节点在不同上下文下分别检查；宏在调用点继承
+ * 上下文，callResource 与投射物回调是独立资源边界。形状与引用有效性由扁平校验和
+ * 契约校验器负责，本 walker 不重复报告。
+ */
+export function validateActionGraphContexts(
+  value: unknown,
+  path: string,
+  entries: readonly ActionGraphContextEntry[],
+  out: SkillDefinitionValidationIssue[],
+): void {
+  const resource = lenientRecord(value);
+  if (resource === null) return;
+  const main = lenientRecord(resource.main);
+  const mainNodes = main === null ? null : lenientRecord(main.nodes);
+  if (mainNodes === null) return;
+  const macros = new Map<
+    string,
+    { readonly nodes: Record<string, unknown>; readonly entry: unknown }
+  >();
+  const macrosRecord = lenientRecord(resource.macros);
+  if (macrosRecord !== null)
+    for (const [id, macroValue] of Object.entries(macrosRecord)) {
+      const macro = lenientRecord(macroValue);
+      const graph = macro === null ? null : lenientRecord(macro.graph);
+      const nodes = graph === null ? null : lenientRecord(graph.nodes);
+      if (nodes !== null) macros.set(id, { nodes, entry: macro!.entry });
+    }
+  interface WalkContext {
+    readonly currentTarget: boolean;
+    readonly missingEndFramePath?: string;
+  }
+  const visited = new Set<string>();
+  const activeMacros = new Set<string>();
+  const walkReference = (
+    scope: string,
+    graphPath: string,
+    nodes: Record<string, unknown>,
+    scopeMacros: Map<string, { readonly nodes: Record<string, unknown>; readonly entry: unknown }>,
+    reference: unknown,
+    context: WalkContext,
+  ): void => {
+    const ref = lenientRecord(reference);
+    if (ref === null) return;
+    let cursor: unknown = ref.$sequence;
+    while (typeof cursor === 'string') {
+      const visitKey = `${scope}|${context.currentTarget ? 1 : 0}|${context.missingEndFramePath ?? ''}|${cursor}`;
+      if (visited.has(visitKey)) return;
+      visited.add(visitKey);
+      const node = lenientRecord(nodes[cursor]);
+      if (node === null) return;
+      const nodePath = `${graphPath}.nodes.${JSON.stringify(cursor)}.action`;
+      const action = lenientRecord(node.action);
+      if (action !== null) {
+        const parameters = lenientRecord(action.parameters);
+        switch (action.kind) {
+          case 'readAbilityEntityRemainingDuration':
+          case 'setAbilityEntityRemainingDuration':
+          case 'finishCurrentAbilityEntity':
+          case 'finishCurrentAbilityEntityWhenSourceDies':
+          case 'startCurrentAbilityEntityChildSkill':
+          case 'startCurrentAbilityEntityChildSkillById':
+            if (!context.currentTarget) push(out, nodePath, 'requires a forEachContextTarget body');
+            break;
+          case 'spawnAbilityEntity':
+            if (!context.currentTarget && parameters?.target === 'currentAbilityEntity')
+              push(out, nodePath, 'requires a forEachContextTarget body');
+            break;
+          case 'applyBuff':
+            if (!context.currentTarget && parameters !== null) {
+              if (parameters.target === 'currentAbilityEntity')
+                push(
+                  out,
+                  nodePath,
+                  'currentAbilityEntity target requires a forEachContextTarget body',
+                );
+              if (parameters.source === 'currentAbilityEntity')
+                push(
+                  out,
+                  nodePath,
+                  'currentAbilityEntity source requires a forEachContextTarget body',
+                );
+            }
+            break;
+        }
+        // 子入口按所属种类的上下文规则递归；同级 next 不继承 forEach 的实体上下文。
+        const child = (ref: unknown, next: WalkContext) =>
+          walkReference(scope, graphPath, nodes, scopeMacros, ref, next);
+        switch (action.kind) {
+          case 'conditional':
+            child(action.whenTrue, context);
+            if (action.whenFalse !== undefined) child(action.whenFalse, context);
+            break;
+          case 'switch':
+            if (Array.isArray(action.options))
+              for (const option of action.options) {
+                const entry = lenientRecord(option);
+                if (entry !== null) child(entry.sequence, context);
+              }
+            break;
+          case 'once':
+          case 'withActionBlackboardScope':
+          case 'repeatEachTick':
+          case 'repeatByActionValue':
+            child(action.body, context);
+            break;
+          case 'forEachContextTarget':
+            child(action.body, { ...context, currentTarget: true });
+            break;
+          case 'listenForCombatEvents': {
+            if (context.missingEndFramePath !== undefined)
+              push(out, context.missingEndFramePath, 'combat event listeners require an end frame');
+            const responses = parameters === null ? null : parameters.responses;
+            if (Array.isArray(responses))
+              for (const response of responses) {
+                const entry = lenientRecord(response);
+                if (entry !== null) child(entry.sequence, context);
+              }
+            break;
+          }
+          case 'callMacro': {
+            // 宏在调用点继承上下文；宏节点归属宏图命名空间。
+            const macroId = action.macroId;
+            if (typeof macroId === 'string') {
+              const macro = scopeMacros.get(macroId);
+              if (macro !== undefined) {
+                if (activeMacros.has(macroId)) {
+                  push(out, nodePath, `recursive macro call: ${macroId}`);
+                  break;
+                }
+                activeMacros.add(macroId);
+                try {
+                  walkReference(
+                    `macro:${macroId}`,
+                    `${path}.macros.${JSON.stringify(macroId)}.graph`,
+                    macro.nodes,
+                    scopeMacros,
+                    macro.entry,
+                    context,
+                  );
+                } finally {
+                  activeMacros.delete(macroId);
+                }
+              }
+            }
+            break;
+          }
+          case 'callResource': {
+            // 节点在独立资源内解析；同步调用仍使用调用者的执行上下文和排程寿命。
+            const resourceRef = lenientRecord(action.resource);
+            if (resourceRef !== null)
+              validateActionGraphContexts(
+                resourceRef.actionGraph,
+                `${nodePath}.resource.actionGraph`,
+                [
+                  {
+                    reference: resourceRef.entry,
+                    path: `${nodePath}.resource.entry`,
+                    currentTargetAvailable: context.currentTarget,
+                    ...(context.missingEndFramePath === undefined
+                      ? {}
+                      : { missingListenerEndFramePath: context.missingEndFramePath }),
+                  },
+                ],
+                out,
+              );
+            break;
+          }
+          case 'launchProjectile': {
+            // 回调技能是独立资源；宿主是投射物实体，实体上下文合法。
+            const callbacks = Array.isArray(action.callbacks) ? action.callbacks : [];
+            for (const [callbackIndex, callbackValue] of callbacks.entries()) {
+              const callback = lenientRecord(callbackValue);
+              const skill = callback === null ? null : lenientRecord(callback.skill);
+              const skillGraph = skill === null ? null : lenientRecord(skill.actionGraph);
+              const sequences = skill === null ? null : skill.scheduledSequences;
+              if (skillGraph !== null && Array.isArray(sequences)) {
+                const callbackPath = `${nodePath}.callbacks[${callbackIndex}].skill`;
+                validateActionGraphContexts(
+                  skillGraph,
+                  `${callbackPath}.actionGraph`,
+                  sequences.map((sequence, index) => {
+                    const sequencePath = `${callbackPath}.scheduledSequences[${index}]`;
+                    const row = lenientRecord(sequence);
+                    return {
+                      reference: row === null ? undefined : row.sequence,
+                      path: sequencePath,
+                      currentTargetAvailable: true,
+                      ...(row !== null && row.endFrame === undefined
+                        ? { missingListenerEndFramePath: `${sequencePath}.endFrame` }
+                        : {}),
+                    };
+                  }),
+                  out,
+                );
+              }
+            }
+            break;
+          }
+        }
+      }
+      cursor = node.next;
+    }
+  };
+  for (const entry of entries)
+    walkReference('main', `${path}.main`, mainNodes, macros, entry.reference, {
+      currentTarget: entry.currentTargetAvailable,
+      ...(entry.missingListenerEndFramePath === undefined
+        ? {}
+        : { missingEndFramePath: entry.missingListenerEndFramePath }),
+    });
 }

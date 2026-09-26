@@ -4,13 +4,32 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'suit_pulse_cryst01',
   iconPath: '/equipment/pulse_cryst01/item_equip_t4_suit_pulse_cryst01_edc_02.webp',
-  modifiers: [
-    {
-      kind: 'panelStat',
-      stat: 'artsIntensity',
-      value: 30,
+  modifiers: [{ kind: 'panelStat', stat: 'artsIntensity', value: 30 }],
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffId: 'buff_equipsuit_cpinflict_01',
+              target: 'caster',
+              blackboardAssignments: {
+                phy_spell_up: { kind: 'constant', value: 30 },
+                pulse_dmg_up: { kind: 'constant', value: 0.5 },
+                cryst_dmg_up: { kind: 'constant', value: 0.5 },
+                duration: { kind: 'constant', value: 10 },
+                duration2: { kind: 'constant', value: 10 },
+              },
+            },
+          },
+          next: null,
+        },
+      },
     },
-  ],
+    macros: {},
+  },
+  skillId: 'passive_equipsuit_cpinflict_01',
   buffDefinitions: {
     buff_equipsuit_cpinflict_01: {
       stackingType: 'unlimited',
@@ -30,12 +49,30 @@ const definition = {
       },
       attributeModifiers: [],
       abilityEventResponses: [
-        {
-          event: 'outputBuff',
-          priority: 0,
-          sequence: {
-            steps: [
-              {
+        { event: 'outputBuff', priority: 0, sequence: { $sequence: 'conditional_2' } },
+        { event: 'outputBuff', priority: 0, sequence: { $sequence: 'conditional_4' } },
+      ],
+      actionGraph: {
+        main: {
+          nodes: {
+            applyBuff_1: {
+              action: {
+                kind: 'applyBuff',
+                parameters: {
+                  buffId: 'buff_equipsuit_cpinflict_01_elecdamageadd',
+                  target: 'buffOwner',
+                  source: 'buffOwner',
+                  inheritSourceSkillCastInfo: true,
+                  copiedBlackboardAssignments: {
+                    duration: 'duration',
+                    pulse_dmg_up: 'pulse_dmg_up',
+                  },
+                },
+              },
+              next: null,
+            },
+            conditional_2: {
+              action: {
                 kind: 'conditional',
                 parameters: {
                   condition: {
@@ -44,33 +81,28 @@ const definition = {
                     buffTags: ['Skill/Character/Common/SpellStatus/Conduct'],
                   },
                 },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'applyBuff',
-                      parameters: {
-                        buffId: 'buff_equipsuit_cpinflict_01_elecdamageadd',
-                        target: 'buffOwner',
-                        source: 'buffOwner',
-                        inheritSourceSkillCastInfo: true,
-                        copiedBlackboardAssignments: {
-                          duration: 'duration',
-                          pulse_dmg_up: 'pulse_dmg_up',
-                        },
-                      },
-                    },
-                  ],
+                whenTrue: { $sequence: 'applyBuff_1' },
+              },
+              next: null,
+            },
+            applyBuff_3: {
+              action: {
+                kind: 'applyBuff',
+                parameters: {
+                  buffId: 'buff_equipsuit_cpinflict_01_crystdamageadd',
+                  target: 'buffOwner',
+                  source: 'buffOwner',
+                  inheritSourceSkillCastInfo: true,
+                  copiedBlackboardAssignments: {
+                    duration: 'duration2',
+                    cryst_dmg_up: 'cryst_dmg_up',
+                  },
                 },
               },
-            ],
-          },
-        },
-        {
-          event: 'outputBuff',
-          priority: 0,
-          sequence: {
-            steps: [
-              {
+              next: null,
+            },
+            conditional_4: {
+              action: {
                 kind: 'conditional',
                 parameters: {
                   condition: {
@@ -79,36 +111,20 @@ const definition = {
                     buffTags: ['Skill/Character/Common/SpellStatus/Frozen'],
                   },
                 },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'applyBuff',
-                      parameters: {
-                        buffId: 'buff_equipsuit_cpinflict_01_crystdamageadd',
-                        target: 'buffOwner',
-                        source: 'buffOwner',
-                        inheritSourceSkillCastInfo: true,
-                        copiedBlackboardAssignments: {
-                          duration: 'duration2',
-                          cryst_dmg_up: 'cryst_dmg_up',
-                        },
-                      },
-                    },
-                  ],
-                },
+                whenTrue: { $sequence: 'applyBuff_3' },
               },
-            ],
+              next: null,
+            },
           },
         },
-      ],
+        macros: {},
+      },
     },
     buff_equipsuit_cpinflict_01_crystdamageadd: {
       stackingType: 'stack',
       priority: 0,
       maxStackCount: 1,
-      durationSeconds: {
-        blackboardKey: 'duration',
-      },
+      durationSeconds: { blackboardKey: 'duration' },
       triggerIntervalSeconds: 0,
       waitFirstTriggerInterval: true,
       maxTriggerCount: 1,
@@ -132,35 +148,25 @@ const definition = {
         charHpBarVfxType: 'Fire',
         iconStyleInSquad: 'Default',
         abnormalColorType: 'Physical',
-        orderPriority: {
-          useDirectoryValue: false,
-          value: 0,
-          category: 'CommonCharBuff',
-        },
+        orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
       },
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        cryst_dmg_up: 0.2,
-        duration: 8,
-      },
+      blackboard: { cryst_dmg_up: 0.2, duration: 8 },
       attributeModifiers: [
         {
           attribute: 'cryoDamageIncrease',
           slot: 'baseAddition',
-          value: {
-            blackboardKey: 'cryst_dmg_up',
-          },
+          value: { blackboardKey: 'cryst_dmg_up' },
         },
       ],
+      actionGraph: { main: { nodes: {} }, macros: {} },
     },
     buff_equipsuit_cpinflict_01_elecdamageadd: {
       stackingType: 'stack',
       priority: 0,
       maxStackCount: 1,
-      durationSeconds: {
-        blackboardKey: 'duration',
-      },
+      durationSeconds: { blackboardKey: 'duration' },
       triggerIntervalSeconds: 0,
       waitFirstTriggerInterval: true,
       maxTriggerCount: 1,
@@ -184,62 +190,22 @@ const definition = {
         charHpBarVfxType: 'Fire',
         iconStyleInSquad: 'Default',
         abnormalColorType: 'Physical',
-        orderPriority: {
-          useDirectoryValue: false,
-          value: 0,
-          category: 'CommonCharBuff',
-        },
+        orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
       },
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        duration: 8,
-        pulse_dmg_up: 0.2,
-      },
+      blackboard: { duration: 8, pulse_dmg_up: 0.2 },
       attributeModifiers: [
         {
           attribute: 'electricDamageIncrease',
           slot: 'baseAddition',
-          value: {
-            blackboardKey: 'pulse_dmg_up',
-          },
+          value: { blackboardKey: 'pulse_dmg_up' },
         },
       ],
+      actionGraph: { main: { nodes: {} }, macros: {} },
     },
   },
-  enableSequence: {
-    steps: [
-      {
-        kind: 'applyBuff',
-        parameters: {
-          buffId: 'buff_equipsuit_cpinflict_01',
-          target: 'caster',
-          blackboardAssignments: {
-            phy_spell_up: {
-              kind: 'constant',
-              value: 30,
-            },
-            pulse_dmg_up: {
-              kind: 'constant',
-              value: 0.5,
-            },
-            cryst_dmg_up: {
-              kind: 'constant',
-              value: 0.5,
-            },
-            duration: {
-              kind: 'constant',
-              value: 10,
-            },
-            duration2: {
-              kind: 'constant',
-              value: 10,
-            },
-          },
-        },
-      },
-    ],
-  },
+  enableSequence: { $sequence: 'applyBuff_1' },
 } as const satisfies GearSetDefinition;
 
 export default definition;

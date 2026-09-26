@@ -1,4 +1,5 @@
 import { compileWeaponContributions } from '../../../src/core/compiler/compileEquipment.ts';
+import { ActionGraphDefinitionRepository } from '../../../src/core/compiler/actionGraphDefinitionRepository.ts';
 import { describe, expect, it } from 'vitest';
 
 import { compileWeaponStaticDefinitionBatchSource } from '../src/index.ts';
@@ -99,8 +100,14 @@ describe('武器静态定义', () => {
     };
     for (const level of [1, 2]) {
       const attributes = { main: 'will', secondary: 'agility' } as const;
-      expect(compileWeaponContributions(definition, [level], attributes)).toEqual(
-        compileWeaponContributions(expanded, [level], attributes),
+      const repository = new ActionGraphDefinitionRepository();
+      expect(compileWeaponContributions(definition, [level], attributes, repository)).toEqual(
+        compileWeaponContributions(
+          expanded,
+          [level],
+          attributes,
+          new ActionGraphDefinitionRepository(),
+        ),
       );
     }
     expect(result.definitions[0]?.traits[0]).toEqual({

@@ -59,11 +59,12 @@ export function compileAbilityEntityChildSkillSource(
     if (Object.hasOwn(runtime.blackboard, key)) {
       throw new Error(`${sourcePath}: native missing-blackboard key '${key}' is already declared`);
     }
-    if (!readsBlackboardKey(runtime.scheduledSequences, key)) {
+    if (!readsBlackboardKey(runtime.actionGraph, key)) {
       throw new Error(`${sourcePath}: native missing-blackboard key '${key}' is not read`);
     }
   }
   const definition = {
+    actionGraph: runtime.actionGraph,
     skillId: runtime.skillId,
     nativeSkillType,
     naturalDurationFrames: Math.max(1, runtime.durationFrame),

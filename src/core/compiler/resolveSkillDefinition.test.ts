@@ -1,11 +1,13 @@
+import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import { describe, expect, it } from 'vitest';
-import type {
-  OperatorDefinition,
-  SkillDefinition,
-  SkillGroupDefinition,
-} from '../game-data/operatorDefinition';
+import type { OperatorDefinition, SkillGroupDefinition } from '../game-data/operatorDefinition';
+
 import type { SkillCastDocument } from '../project/schema';
-import { resolveEffectiveSkillDefinition } from './resolveSkillDefinition';
+import {
+  resolveEffectiveSkillDefinition,
+  resolveSkillTemplateDefinition,
+} from './resolveSkillDefinition';
+import { listOperatorSkillDefinitionBindings } from '../game-data/operatorSkillDefinitions';
 
 const catalogSkill: SkillDefinition = {
   key: 'battleSkill',
@@ -13,6 +15,7 @@ const catalogSkill: SkillDefinition = {
   levelSource: 'battleSkill',
   timelineBlockFrames: 45,
   scheduledSequences: [],
+  actionGraph: { main: { nodes: {} }, macros: {} },
 };
 const customSkill: SkillDefinition = {
   key: 'battleSkill',
@@ -22,7 +25,8 @@ const customSkill: SkillDefinition = {
   availability: { kind: 'combatActive' },
   costs: [{ resource: 'sp', value: [80, 90, 100, 110, 120, 125, 130, 135, 140, 145, 150, 155] }],
   costFrame: 0,
-  scheduledSequences: [{ startFrame: 0, sequence: { steps: [] } }],
+  scheduledSequences: [{ startFrame: 0, sequence: { $sequence: null } }],
+  actionGraph: { main: { nodes: {} }, macros: {} },
 };
 
 const skillGroup: SkillGroupDefinition = {
@@ -106,6 +110,7 @@ describe('resolveEffectiveSkillDefinition', () => {
       levelSource: 'ultimate',
       timelineBlockFrames: 30,
       scheduledSequences: [],
+      actionGraph: { main: { nodes: {} }, macros: {} },
     };
     const groupWithVariant: SkillGroupDefinition = {
       ...skillGroup,
@@ -263,4 +268,45 @@ describe('resolveEffectiveSkillDefinition', () => {
       ),
     ).toThrow('unsupported source kind');
   });
+});
+
+it('resolves graph-backed skill templates without expanding or copying their entries', () => {
+  const graphOperator: OperatorDefinition = {
+    ...operator,
+    skillGroups: [{ ...skillGroup, skills: customSkill }],
+    skillAliases: [{ from: ['oldGroup', 'oldSkill'], to: ['battleSkill', 'battleSkill'] }],
+  };
+  const binding = listOperatorSkillDefinitionBindings(graphOperator)[0]!;
+  const resolved = resolveSkillTemplateDefinition(
+    createCast({
+      source: { kind: 'operatorSkill', skillGroupKey: 'oldGroup', skillKey: 'oldSkill' },
+    }),
+    graphOperator,
+  );
+  expect(resolved.definition).toBe(binding.skill);
+  expect(resolved.group).toBe(binding.group);
+  expect(resolved.levelSource).toBe('battleSkill');
+  expect(resolved.definition.scheduledSequences[0]!.sequence).toEqual({ $sequence: null });
+});
+
+it('keeps graph custom overrides as graph entries through effective-definition resolution', () => {
+  const customDefinition = customSkill;
+  const cast = {
+    id: 'graph-custom',
+    source: createCast().source,
+    customDefinition,
+  };
+  const resolved = resolveEffectiveSkillDefinition(cast, operator);
+  expect(resolved.definition).toBe(customDefinition);
+  expect(resolved.definition.scheduledSequences[0]!.sequence).toEqual({ $sequence: null });
+  expect(resolved.group).toBe(operator.skillGroups[0]);
+  expect(() =>
+    resolveEffectiveSkillDefinition(
+      {
+        ...cast,
+        customDefinition: { ...customDefinition, key: 'wrong' },
+      },
+      operator,
+    ),
+  ).toThrow('does not match source skill key');
 });

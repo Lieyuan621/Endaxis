@@ -1,3 +1,4 @@
+import { rootActionSteps } from '../../compiler/actionProgramInspection';
 import type { ResolvedActionSequence } from '../../compiler/combatProgram';
 import type { DamageModifierConditionProgram } from './damageModifiers';
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
@@ -51,7 +52,7 @@ function assertSynchronousModifierSequence(
   sequence: ResolvedActionSequence,
   path = 'damage modifier condition',
 ): void {
-  for (const [index, step] of sequence.steps.entries()) {
+  for (const [index, step] of rootActionSteps(sequence).entries()) {
     const stepPath = `${path}.steps[${index}]`;
     if (step.kind === 'conditional') {
       assertSynchronousModifierSequence(step.whenTrue, `${stepPath}.whenTrue`);

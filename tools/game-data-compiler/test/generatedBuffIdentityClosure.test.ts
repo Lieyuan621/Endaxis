@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import * as operators from '../../../src/data/operators';
+import { operatorDefinitions } from '../../../src/data/operators';
 import { commonBuffDefinitions } from '../../../src/data/buffs/commonDefinitions';
 import { collectCompiledBuffIdentityReadIds } from '../src/compiler/references/compiledReferences';
 
@@ -15,9 +15,9 @@ describe('generated Buff identity closure', () => {
     };
     const definitions = new Set([
       ...Object.keys(commonBuffDefinitions),
-      ...Object.values(operators).flatMap(operator => Object.keys(operator.buffDefinitions ?? {})),
+      ...operatorDefinitions.flatMap(operator => Object.keys(operator.buffDefinitions ?? {})),
     ]);
-    const missing = Object.values(operators).flatMap(operator =>
+    const missing = operatorDefinitions.flatMap(operator =>
       [...collectCompiledBuffIdentityReadIds(eventConditions(operator))]
         .filter(id => !definitions.has(id))
         .map(id => `${operator.slug}: ${id}`),

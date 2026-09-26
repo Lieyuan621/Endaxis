@@ -15,8 +15,15 @@ import { isPresentationOnlyActionSequence } from '../../compiler/skills/skillPre
 import { compileCombatActionSequenceSource } from '../../compiler/buffs/buffRuntimeProjection.ts';
 import { collectNativeActionNodes } from '../../source/controlFlow.ts';
 import { projectAbilityEvent } from '../../compiler/abilities/abilityEventProjection.ts';
-import { isOperatorPassiveAbilityEvent } from '../../../../../packages/game-data-contract/src/operators.ts';
-import type { CompiledBuffSequenceSource } from '../../compiler/actions/combatActionProjectionTypes.ts';
+import { isOperatorPassiveAbilityEvent } from '../../../../../src/core/game-data/definitionGuards.ts';
+import type {
+  CompiledBuffSequenceSource,
+  CompiledBuffStepSource,
+} from '../../compiler/actions/combatActionProjectionTypes.ts';
+import {
+  createActionGraphBuilder,
+  type ActionGraphBuilder,
+} from '../../compiler/actions/actionGraphBuilder.ts';
 import { collectCompiledBuffIds } from '../../compiler/references/compiledReferences.ts';
 import type { GameplayTagRegistry } from '../../source/nativeGameplayTags.ts';
 import {
@@ -28,6 +35,7 @@ import {
 } from '../../source/primitives.ts';
 
 interface PlannedPassiveSkill {
+  readonly graph: ActionGraphBuilder<CompiledBuffStepSource>;
   readonly abilityEventResponses: NonNullable<
     OperatorPassiveSkillDefinition['abilityEventResponses']
   >;
@@ -84,6 +92,7 @@ export function compileOperatorUpgradePassiveSkills(
         passive.initializationSequences,
         passive.reactionProjection,
         passive.abilityEventResponses,
+        passive.graph.finish(),
       ]),
     ),
   );
@@ -99,48 +108,50 @@ export function compileOperatorUpgradePassiveSkills(
       blackboard[key] = mergePassiveLevelValues(values, `${passive.key}.blackboard.${key}`);
       usedKeys.add(key);
     }
-    const steps: OperatorPassiveSkillDefinition['enableSequence']['steps'][number][] =
-      passive.buffs.map((buff, buffIndex) => {
-        const blackboardAssignments: Record<string, { kind: 'blackboard'; key: string }> = {};
-        for (const targetKey of Object.keys(buff.assignments).sort()) {
-          const values = levelPlans.map(
-            level => level[passiveIndex]!.buffs[buffIndex]!.assignments[targetKey]!,
-          );
-          const levelValue = mergePassiveLevelValues(
-            values,
-            `${passive.key}.buffs[${buffIndex}].assignments.${targetKey}`,
-          );
-          if (usedKeys.has(targetKey)) {
-            if (JSON.stringify(blackboard[targetKey]) !== JSON.stringify(levelValue)) {
-              throw new Error(
-                `${passive.key}: passive Buff assignment collides with blackboard key ${JSON.stringify(targetKey)}`,
-              );
-            }
-          } else {
-            usedKeys.add(targetKey);
-            blackboard[targetKey] = levelValue;
+    const steps: CompiledBuffStepSource[] = passive.buffs.map((buff, buffIndex) => {
+      const blackboardAssignments: Record<string, { kind: 'blackboard'; key: string }> = {};
+      for (const targetKey of Object.keys(buff.assignments).sort()) {
+        const values = levelPlans.map(
+          level => level[passiveIndex]!.buffs[buffIndex]!.assignments[targetKey]!,
+        );
+        const levelValue = mergePassiveLevelValues(
+          values,
+          `${passive.key}.buffs[${buffIndex}].assignments.${targetKey}`,
+        );
+        if (usedKeys.has(targetKey)) {
+          if (JSON.stringify(blackboard[targetKey]) !== JSON.stringify(levelValue)) {
+            throw new Error(
+              `${passive.key}: passive Buff assignment collides with blackboard key ${JSON.stringify(targetKey)}`,
+            );
           }
-          blackboardAssignments[targetKey] = { kind: 'blackboard', key: targetKey };
+        } else {
+          usedKeys.add(targetKey);
+          blackboard[targetKey] = levelValue;
         }
-        return {
-          kind: 'applyBuff' as const,
-          parameters: {
-            buffId: buff.buffId,
-            target: 'caster' as const,
-            inheritSourceSkillCastInfo: false,
-            ...(Object.keys(blackboardAssignments).length === 0 ? {} : { blackboardAssignments }),
-          },
-        };
-      });
+        blackboardAssignments[targetKey] = { kind: 'blackboard', key: targetKey };
+      }
+      return {
+        kind: 'applyBuff' as const,
+        parameters: {
+          buffId: buff.buffId,
+          target: 'caster' as const,
+          inheritSourceSkillCastInfo: false,
+          ...(Object.keys(blackboardAssignments).length === 0 ? {} : { blackboardAssignments }),
+        },
+      };
+    });
     for (const sequence of passive.initializationSequences) {
-      if (projectEntityBlackboardInitializer(sequence) === null) steps.push(...sequence.steps);
+      if (projectEntityBlackboardInitializer(passive.graph, sequence) === null)
+        steps.push(...passive.graph.actions(sequence));
     }
+    const enableSequence = passive.graph.sequence(steps);
     return [
       {
         key: passive.key,
         ...(passive.levelSource === undefined ? {} : { levelSource: passive.levelSource }),
         ...(Object.keys(blackboard).length === 0 ? {} : { blackboard }),
-        enableSequence: { steps },
+        enableSequence,
+        actionGraph: { main: passive.graph.finish(), macros: {} },
         ...(passive.abilityEventResponses.length === 0
           ? {}
           : { abilityEventResponses: passive.abilityEventResponses }),
@@ -202,7 +213,7 @@ export function compileOperatorUpgradePassiveSkills(
     ),
     entityBlackboardInitializers: (levelPlans[0] ?? []).flatMap(passive =>
       passive.initializationSequences.flatMap(sequence => {
-        const initializer = projectEntityBlackboardInitializer(sequence);
+        const initializer = projectEntityBlackboardInitializer(passive.graph, sequence);
         return initializer === null ? [] : [initializer];
       }),
     ),
@@ -223,15 +234,18 @@ export function compileOperatorUpgradePassiveSkills(
 }
 
 function projectEntityBlackboardInitializer(
+  graph: ActionGraphBuilder<CompiledBuffStepSource>,
   sequence: CompiledBuffSequenceSource,
 ): OperatorEntityBlackboardInitializerDefinition | null {
-  if (sequence.steps.length !== 1) return null;
-  const branch = sequence.steps[0];
+  const steps = graph.actions(sequence);
+  if (steps.length !== 1) return null;
+  const branch = steps[0];
   if (branch?.kind !== 'conditional' || branch.parameters.condition.kind !== 'deckAttributeCompare')
     return null;
   const assigned = (body: CompiledBuffSequenceSource | undefined) => {
-    const step = body?.steps[0];
-    return body?.steps.length === 1 &&
+    const steps = body === undefined ? [] : graph.actions(body);
+    const step = steps[0];
+    return steps.length === 1 &&
       step?.kind === 'modifyActionValue' &&
       step.parameters.operation === 'assign' &&
       step.parameters.key.startsWith('EntityBB_') &&
@@ -269,6 +283,7 @@ function planPassiveSkill(
   gameplayTagRegistry?: GameplayTagRegistry,
   loadBuff?: (id: string) => unknown,
 ): PlannedPassiveSkill {
+  const graph = createActionGraphBuilder<CompiledBuffStepSource>();
   if (request.activeConditionIds?.length) {
     throw new Error(`${request.sourcePath}: conditioned operator passive SkillData is unsupported`);
   }
@@ -293,6 +308,7 @@ function planPassiveSkill(
     loadBuff,
   );
   const passiveEventContext = {
+    graph,
     gameplayTagRegistry,
     actionOwnerTarget: 'caster' as const,
     actionSourceTarget: 'caster' as const,
@@ -356,6 +372,7 @@ function planPassiveSkill(
   });
   return {
     key: request.skillId,
+    graph,
     ...(request.levelSource.kind === 'operatorSkillGroup'
       ? { levelSource: request.levelSource.levelSource }
       : {}),

@@ -1,4 +1,5 @@
 import type { DeclaredBlackboardValueSource } from '../../source/blackboard.ts';
+import type { ActionGraphBuilder } from '../actions/actionGraphBuilder.ts';
 import type {
   ProjectileLaunchActionSource,
   ProjectileSkillCallbackSource,
@@ -20,12 +21,11 @@ export interface CompiledActionBlackboardScopeSource {
     readonly entityInitialValues?: Readonly<Record<string, number>>;
     readonly entityAssignments?: Readonly<Record<string, CompiledActionValueOperandSource>>;
   };
-  readonly body: {
-    readonly steps: readonly CompiledBuffStepSource[];
-  };
+  readonly body: CompiledBuffSequenceSource;
 }
 
 export interface ProjectileCallbackInvocationSource {
+  readonly program: ActionGraphBuilder<CompiledBuffStepSource>;
   readonly event: ProjectileSkillCallbackSource['event'];
   readonly skillId: string;
   readonly declaredBlackboard: readonly DeclaredBlackboardValueSource[];
@@ -52,7 +52,7 @@ export function compileProjectileLaunchScopeSource(input: {
       ...invocation.declaredBlackboard
         .filter(value => value.key.startsWith('EntityBB_'))
         .map(value => value.key),
-      ...collectEntityBlackboardReads(invocation.sequence),
+      ...collectEntityBlackboardReads(invocation.program.reachableActions(invocation.sequence)),
     ]),
   );
   const callbackReadsEntityBlackboard = callbackEntityBlackboardKeys.size > 0;
@@ -153,15 +153,17 @@ function collectEntityBlackboardReads(value: unknown): string[] {
  * 一个本来只服务多敌人弹射的 EntityBB 初值。
  */
 export function omitDeadSingleEnemyBounceBookkeeping(
+  graph: ActionGraphBuilder<CompiledBuffStepSource>,
   sequence: CompiledBuffSequenceSource,
-  laterCallbacks: readonly CompiledBuffSequenceSource[],
+  laterActions: readonly CompiledBuffStepSource[],
 ): CompiledBuffSequenceSource {
-  const retained = sequence.steps.filter((step, index, steps) => {
+  const actions = graph.actions(sequence);
+  const retained = actions.filter((step, index, steps) => {
     if (step.kind !== 'conditional' || step.whenFalse !== undefined) return true;
     if (step.parameters.alwaysNext !== true) return true;
     const writes: string[] = [];
     let hasEmptyTargetGroupWrite = false;
-    for (const child of step.whenTrue.steps) {
+    for (const child of graph.actions(step.whenTrue)) {
       if (child.kind === 'modifyActionValue') {
         writes.push(child.parameters.key);
         continue;
@@ -174,10 +176,13 @@ export function omitDeadSingleEnemyBounceBookkeeping(
       return true;
     }
     if (!hasEmptyTargetGroupWrite || writes.length < 2) return true;
-    const remaining = [...steps.slice(index + 1), ...laterCallbacks.flatMap(item => item.steps)];
+    const remaining = [
+      ...graph.reachableActions(graph.sequence(steps.slice(index + 1))),
+      ...laterActions,
+    ];
     return writes.some(key => containsStringValue(remaining, key));
   });
-  return retained.length === sequence.steps.length ? sequence : { steps: retained };
+  return retained.length === actions.length ? sequence : graph.sequence(retained);
 }
 
 function containsStringValue(value: unknown, expected: string): boolean {

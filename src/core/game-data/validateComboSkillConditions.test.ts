@@ -1,11 +1,20 @@
+import type { ComboSkillConditionDefinition } from '../../../packages/game-data-contract/src/operators.ts';
+
+import { ActionGraphDefinitionRepository } from '../compiler/actionGraphDefinitionRepository';
+import { rootActionSteps } from '../compiler/actionProgramInspection';
 import { describe, expect, it } from 'vitest';
 import { validateComboSkillConditions } from './validateComboSkillConditions';
-import { ABILITY_EVENTS, type ComboSkillConditionDefinition } from './operatorDefinition';
+import { ABILITY_EVENTS, type OperatorDefinition } from './operatorDefinition';
 import { perlica } from '../../data/operators/perlica.generated';
 import { compileOperatorComboSkillConditions } from '../compiler/compileOperatorComboSkillConditions';
 import { createEmptyProject } from '../project/createProject';
-import { deriveProjectOperatorTemplate } from '../project/projectDefinitionLibrary';
+import { withProjectOperatorTemplate } from '../../test/projectOperatorTemplateFixture';
 import { parseProjectDocument, serializeProjectDocument } from '../project/serialization';
+import { validateOperatorDefinition } from './validateOperatorDefinition';
+import { validateActionGraphReferenceDefinition } from './validation/actionPrograms';
+
+const validateGraphComboConditions = (value: unknown, path?: string) =>
+  validateComboSkillConditions(value, path, validateActionGraphReferenceDefinition);
 
 const entry: ComboSkillConditionDefinition = {
   key: 'condition',
@@ -13,7 +22,8 @@ const entry: ComboSkillConditionDefinition = {
   event: 'beforeTakeInfliction',
   immediately: false,
   initialValues: { count: 1, label: 'local', empty: null },
-  sequence: { steps: [] },
+  sequence: { $sequence: null },
+  actionGraph: { main: { nodes: {} }, macros: {} },
 };
 const build = {
   operatorSlug: perlica.slug,
@@ -25,24 +35,24 @@ const build = {
   talentStates: {},
 };
 function project(condition: ComboSkillConditionDefinition = entry) {
-  return deriveProjectOperatorTemplate(createEmptyProject({ createdWith: 'test' }), {
-    id: 'project:operator:conditions',
-    name: 'conditions',
-    baseTemplateId: perlica.slug,
-    definition: { ...perlica, comboSkillConditions: [condition] },
-  });
+  return withProjectOperatorTemplate(
+    createEmptyProject({ createdWith: 'test' }),
+    'project:operator:conditions',
+    'conditions',
+    { ...perlica, comboSkillConditions: [condition] },
+  );
 }
 
 describe('正式原生连携条件结构与绑定', () => {
-  it.each(ABILITY_EVENTS)('%s 接受公共 AbilitySystem 事件及现有动作树', event => {
-    expect(validateComboSkillConditions([{ ...entry, event }])).toEqual([]);
+  it.each(ABILITY_EVENTS)('%s 接受公共 AbilitySystem 事件及现有动作图', event => {
+    expect(validateGraphComboConditions([{ ...entry, event }])).toEqual([]);
   });
   it.each(
     [undefined, [], [{ ...entry, initialValues: null }], [{ ...entry, initialValues: {} }]].map(
       value => ({ value }),
     ),
   )('缺省/空列表/禁用板/空板均可表示：%j', ({ value }) => {
-    expect(validateComboSkillConditions(value)).toEqual([]);
+    expect(validateGraphComboConditions(value)).toEqual([]);
   });
   it.each(
     [
@@ -60,34 +70,44 @@ describe('正式原生连携条件结构与绑定', () => {
       [{ ...entry, initialValues: { '': 0 } }],
       [{ ...entry, initialValues: { x: false } }],
       [{ ...entry, immediately: 'yes' }],
-      [{ ...entry, sequence: { steps: [{ kind: 'unknown', parameters: {} }] } }],
+      [{ ...entry, sequence: { $sequence: '' } }],
     ].map(value => ({ value })),
   )('损坏或尚未支持的字段给出可定位路径：%j', ({ value }) => {
-    const issues = validateComboSkillConditions(value, '$.operator.comboSkillConditions');
+    const issues = validateGraphComboConditions(value, '$.operator.comboSkillConditions');
     expect(issues.length).toBeGreaterThan(0);
     expect(issues.every(issue => issue.path.startsWith('$.operator.comboSkillConditions'))).toBe(
       true,
     );
   });
   it('序列按绑定技能等级展开，局部字面板不混进实体板或被当作等级数组', () => {
-    const definition = {
-      ...perlica,
-      comboSkillConditions: [
-        {
-          ...entry,
-          sequence: {
-            steps: [
-              {
+    const condition: ComboSkillConditionDefinition = {
+      ...entry,
+      sequence: { $sequence: 'entry' },
+      actionGraph: {
+        main: {
+          nodes: {
+            entry: {
+              action: {
                 kind: 'changeResource' as const,
-                parameters: { resource: 'sp' as const, amount: [4, 9], recipient: 'team' as const },
+                parameters: {
+                  resource: 'sp' as const,
+                  amount: [4, 9],
+                  recipient: 'team' as const,
+                },
               },
-            ],
+              next: null,
+            },
           },
         },
-      ],
+        macros: {},
+      },
     };
-    const [compiled] = compileOperatorComboSkillConditions(definition, build);
-    expect(compiled?.sequence.steps[0]).toMatchObject({
+    const [compiled] = compileOperatorComboSkillConditions(
+      { ...perlica, comboSkillConditions: [condition] },
+      build,
+      { programs: new ActionGraphDefinitionRepository() },
+    );
+    expect(rootActionSteps(compiled?.sequence!)[0]).toMatchObject({
       kind: 'changeResource',
       parameters: { amount: 9 },
     });
@@ -95,11 +115,48 @@ describe('正式原生连携条件结构与绑定', () => {
     expect(compiled?.initialValues).not.toBe(entry.initialValues);
     expect(Object.isFrozen(compiled?.initialValues)).toBe(true);
   });
-  it.each(['missing', 'battleSkill'])('引用 %s 在项目定义入口和编译入口均严格拒绝', skillKey => {
+  it.each(['missing', 'battleSkill'])('引用 %s 在定义校验和编译入口均严格拒绝', skillKey => {
     const condition = { ...entry, skillKey };
-    expect(() => project(condition)).toThrow('unknown combo skill');
+    const graphOperatorDefinition: OperatorDefinition = {
+      slug: 'combo-probe',
+      gameId: 'chr_combo_probe',
+      rarity: 6,
+      weaponType: 'sword',
+      element: 'physical',
+      role: 'guard',
+      mainAttribute: 'strength',
+      secondaryAttribute: 'agility',
+      attributes: {
+        strength: [1],
+        agility: [1],
+        intellect: [1],
+        will: [1],
+        baseAttack: [1],
+        baseHealth: [1],
+      },
+      skillGroups: [],
+      talents: [{ levels: 1 }],
+      potentials: [{ levels: 1 }, { levels: 1 }, { levels: 1 }, { levels: 1 }, { levels: 1 }],
+      comboSkillConditions: [
+        {
+          key: entry.key,
+          skillKey,
+          event: entry.event,
+          immediately: entry.immediately,
+          initialValues: entry.initialValues,
+          sequence: { $sequence: null },
+          actionGraph: { main: { nodes: {} }, macros: {} },
+        },
+      ],
+    };
+    const issues = validateOperatorDefinition(graphOperatorDefinition);
+    expect(issues.some(issue => issue.message.includes('unknown combo skill'))).toBe(true);
     expect(() =>
-      compileOperatorComboSkillConditions({ ...perlica, comboSkillConditions: [condition] }, build),
+      compileOperatorComboSkillConditions(
+        { ...perlica, comboSkillConditions: [condition] },
+        build,
+        { programs: new ActionGraphDefinitionRepository() },
+      ),
     ).toThrow('must resolve to exactly one combo skill');
   });
   it.each([undefined, 0, 1.5, -1])('空序列也不能绕过缺失/非法组等级 %s', level => {
@@ -111,6 +168,7 @@ describe('正式原生连携条件结构与绑定', () => {
       compileOperatorComboSkillConditions(
         { ...perlica, comboSkillConditions: [entry] },
         invalidBuild,
+        { programs: new ActionGraphDefinitionRepository() },
       ),
     ).toThrow('requires a positive integer level');
   });
@@ -120,6 +178,7 @@ describe('正式原生连携条件结构与绑定', () => {
       compileOperatorComboSkillConditions(
         { ...perlica, skillGroups: [combo, combo], comboSkillConditions: [entry] },
         build,
+        { programs: new ActionGraphDefinitionRepository() },
       ),
     ).toThrow('exactly one combo skill');
   });
@@ -143,4 +202,54 @@ describe('正式原生连携条件结构与绑定', () => {
       throw new Error('expected structure failure');
     expect(rejected.issues[0]?.path).toContain('comboSkillConditions[0].initialValues');
   });
+});
+
+it('binds graph combo conditions at the referenced skill level without expanding them', () => {
+  const condition: ComboSkillConditionDefinition = {
+    ...entry,
+    sequence: { $sequence: 'entry' },
+    actionGraph: {
+      main: {
+        nodes: {
+          entry: {
+            action: {
+              kind: 'changeResource' as const,
+              parameters: { resource: 'sp' as const, amount: [3, 7], recipient: 'team' as const },
+            },
+            next: null,
+          },
+        },
+      },
+      macros: {},
+    },
+  };
+  const operator = { ...perlica, comboSkillConditions: [condition] };
+  const context = { programs: new ActionGraphDefinitionRepository() };
+  const [compiled] = compileOperatorComboSkillConditions(operator, build, context);
+  expect(rootActionSteps(compiled!.sequence)).toMatchObject([
+    { kind: 'changeResource', parameters: { amount: 7 } },
+  ]);
+  expect(compiled!.initialValues).toEqual(entry.initialValues);
+  expect(compiled!.initialValues).not.toBe(entry.initialValues);
+  expect('steps' in compiled!.sequence).toBe(false);
+  expect(() =>
+    compileOperatorComboSkillConditions(
+      {
+        ...operator,
+        comboSkillConditions: [{ ...condition, sequence: { $sequence: 'missing' } }],
+      },
+      build,
+      context,
+    ),
+  ).toThrow(/missing/i);
+  expect(() =>
+    compileOperatorComboSkillConditions(
+      {
+        ...operator,
+        comboSkillConditions: [{ ...condition, sequence: { $sequence: '' } }],
+      },
+      build,
+      context,
+    ),
+  ).toThrow('expected an action graph entry reference');
 });

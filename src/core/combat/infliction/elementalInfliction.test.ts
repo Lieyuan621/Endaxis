@@ -29,4 +29,20 @@ describe('resolveElementalInfliction', () => {
       },
     ]);
   });
+
+  it('inverseReaction 只标记交换选表顺序，消耗的附着与事件元素不变', () => {
+    expect(resolveElementalInfliction('nature', { element: 'cryo', layers: 3 }, true)).toEqual([
+      {
+        kind: 'consumeAttachment',
+        attachment: { element: 'cryo', layers: 3 },
+      },
+      {
+        kind: 'createCompoundStatus',
+        inverseReaction: true,
+        consumedElement: 'cryo',
+        incomingElement: 'nature',
+        consumedLayers: 3,
+      },
+    ]);
+  });
 });

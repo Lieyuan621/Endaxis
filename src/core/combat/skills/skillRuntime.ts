@@ -1,3 +1,4 @@
+import type { TimelineActionProcessor } from '../timeline/timelineActionProcessor';
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
 import type { CallbackSkillHostFactory } from '../abilities/callbackSkillHost';
 import type {
@@ -33,7 +34,7 @@ export type LaunchProjectile = (request: {
   readonly recycleDelaySeconds: number;
   readonly callbacks: readonly {
     readonly runtime: import('../abilities/projectileCallbackRuntime').ProjectileCallbackRuntime;
-    readonly program: import('../../compiler/combatProgram').CompiledProjectileCallbackSkillProgram;
+    readonly program: import('../../compiler/combatProgram').CompiledAbilityEntityChildSkillProgram;
   }[];
   readonly skillCastInfo?: CombatSkillCastInfo;
   readonly sourceId?: string;
@@ -52,7 +53,6 @@ export interface ProjectileRuntimeDependencies {
  */
 import type {
   CompiledSkillExecutionProgram,
-  ResolvedActionSequence,
   ResolvedCombatOperationStep,
 } from '../../compiler/combatProgram';
 import type {
@@ -61,7 +61,6 @@ import type {
 } from '../../game-data/logicalAbilityEntity';
 import { RuntimeTargetContext } from '../abilities/runtimeTargetContext';
 import { ActionBlackboard } from '../actions/actionBlackboard';
-import type { ActionSequence } from '../actions/actionSequence';
 import { CombatActionSequenceRuntime } from '../actions/combatActionSequenceRuntime';
 import type { CombatOperationPrograms } from '../actions/combatOperationPrograms';
 import type { CombatExecutionContext } from '../actions/combatStep';
@@ -79,7 +78,7 @@ import {
 } from '../state/actionState';
 import type { BuffFinishReason, CombatSkillCastInfo } from '../state/foundationState';
 import { COMBAT_FRAME_INTERVAL, type CombatClock } from '../time/combatClock';
-import type { TimelineActionProcessor } from '../timeline/timelineActionProcessor';
+
 import { SkillCooldown } from './skillCooldown';
 import { SkillTimelineJumpGate } from './skillTimelineJump';
 
@@ -863,22 +862,6 @@ export class SkillRuntime {
     } finally {
       this.#pendingTransition = null;
     }
-  }
-
-  createSequence(sequence: ResolvedActionSequence): ActionSequence {
-    return this.#sequenceRuntime.createSequence(sequence);
-  }
-
-  /**
-   * 复现原生 DoOnceAction：内部序列无论返回真假，当前释放实例后续都不再重复执行。
-   * 作用域在下一次 tryStart 时统一清空，不能放进跨释放共享的实体黑板。
-   */
-  tryExecuteOnce(
-    scopeKey: string,
-    body: ResolvedActionSequence,
-    context: CombatExecutionContext,
-  ): boolean {
-    return this.#sequenceRuntime.tryExecuteOnce(scopeKey, body, context);
   }
 
   record(

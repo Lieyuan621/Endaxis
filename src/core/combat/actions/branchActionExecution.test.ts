@@ -1,7 +1,11 @@
 /** 将分支选择与真实动作序列进度一起保存，避免只恢复选择却丢失分支内的执行状态。 */
 import { describe, expect, it } from 'vitest';
 import { StateStepper } from '../runtime/stateStepper';
-import { createActionSequenceState, createBranchActionState } from '../state/actionState';
+import {
+  COMBAT_STEP_STATE,
+  createBranchActionState,
+  type ActionStepState,
+} from '../state/actionState';
 import {
   endActionSequence,
   executeActionSequence,
@@ -17,6 +21,17 @@ import {
   tickBranchAction,
   type BranchActionHost,
 } from './branchActionExecution';
+
+/** 共享内核状态的测试夹具：与图执行器同样按 `entries()` 枚举步骤生命周期。 */
+function createActionSequenceState(stepCount: number): { entries: ActionStepState[] } {
+  return {
+    entries: Array.from({ length: stepCount }, () => ({
+      state: COMBAT_STEP_STATE.pending,
+      executeResult: false,
+      executionPermitted: false,
+    })),
+  };
+}
 
 function createSession(kind: 'switch' | 'conditional') {
   return new StateStepper(

@@ -44,6 +44,10 @@ export function collectCombatInvisibleBuffClosureIds(
     for (const reference of node.references) if (!nodes.has(reference)) queue.push(reference);
   }
 
+  // 身份被战斗条件读取的 Buff 从初始集合起就不是表现节点，可见性沿引用边向上传播；
+  // 不能事后从结果里 filter，否则创建它的父 Buff 仍会被误判为纯表现而整条丢失。
+  // 身份被战斗条件读取的 Buff 从初始集合起就不是表现节点，可见性沿引用边向上传播；
+  // 不能事后从结果里 filter，否则创建它的父 Buff 仍会被误判为纯表现而整条丢失。
   const invisible = new Set(
     [...nodes]
       .filter(([id, node]) => node.locallyInvisible && !observedBuffIds.has(id))

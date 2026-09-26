@@ -1,12 +1,32 @@
 import { describe, expect, it } from 'vitest';
 
+import type {
+  ActionGraphNode,
+  ActionGraphReference,
+  ActionGraphStep,
+} from '../../../../packages/game-data-contract/src/actionGraph';
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
 import type { WeaponDefinition } from '../../../core/game-data/equipmentDefinition';
 import type {
   InflictionElement,
   OperatorDefinition,
   ScheduledSequenceDefinition,
+  SkillDefinition,
 } from '../../../core/game-data/operatorDefinition';
+
+function chainNodes(
+  nodes: Record<string, ActionGraphNode>,
+  prefix: string,
+  steps: readonly ActionGraphStep[],
+): ActionGraphReference {
+  steps.forEach((action, index) => {
+    nodes[`${prefix}-${index}`] = {
+      action,
+      next: index + 1 < steps.length ? `${prefix}-${index + 1}` : null,
+    };
+  });
+  return { $sequence: steps.length === 0 ? null : `${prefix}-0` };
+}
 import { createEmptyScenario } from '../../../core/project/createProject';
 import type { TrackDocument, TrackIndex } from '../../../core/project/schema';
 import { skillSettings } from '../../../data/combat/skillSettings';
@@ -220,7 +240,7 @@ function assertHitDeltas(
       entry.sourceId === `track:reaction:${actor}` &&
       // 原生完整爆发继承技能身份；本断言只比较夹具主动命中，不混入 Buff 的 DamageAction。
       entry.data?.spellBurstType === undefined &&
-      !String(entry.data?.stepKey).includes('/lifecycleSequences/') &&
+      !String(entry.data?.stepKey).includes('lifecycleSequences.') &&
       entry.data?.skillType === 'basicAttack',
   );
   expect(hits).toHaveLength(damage.length);
@@ -322,35 +342,44 @@ function fixtureOperator(
   const source = gameDataRepository.getOperator(
     weapon.weaponType === 'sword' ? 'laevatain' : 'tangtang',
   )!;
-  const scheduledSequences: ScheduledSequenceDefinition[] = plan.reactions.map(startFrame => ({
-    startFrame,
-    sequence: {
-      steps: (plan.elements ?? (['electric', 'nature'] satisfies InflictionElement[])).map(
-        element => ({
+  const nodes: Record<string, ActionGraphNode> = {};
+  const scheduledSequences: ScheduledSequenceDefinition[] = plan.reactions.map(
+    (startFrame, reactionIndex) => ({
+      startFrame,
+      sequence: chainNodes(
+        nodes,
+        `reaction-${reactionIndex}`,
+        (plan.elements ?? (['electric', 'nature'] satisfies InflictionElement[])).map(element => ({
           kind: 'applyElementalInfliction',
           parameters: { element, isExtra: false },
-        }),
+        })),
       ),
-    },
-  }));
+    }),
+  );
   scheduledSequences.push(
     ...plan.hits.map(startFrame => ({
       startFrame,
-      sequence: {
-        steps: [
-          {
-            key: `probe-${startFrame}`,
-            kind: 'dealDamage' as const,
-            parameters: {
-              damageType: 'nature' as const,
-              attackScale: 1,
-              tags: ['normalAttack' as const],
-            },
+      sequence: chainNodes(nodes, `hit-${startFrame}`, [
+        {
+          key: `probe-${startFrame}`,
+          kind: 'dealDamage' as const,
+          parameters: {
+            damageType: 'nature' as const,
+            attackScale: 1,
+            tags: ['normalAttack' as const],
           },
-        ],
-      },
+        },
+      ]),
     })),
   );
+  const probeSkill: SkillDefinition = {
+    key: 'probe',
+    skillType: 'basicAttack',
+    levelSource: 'basicAttack',
+    timelineBlockFrames: 1050,
+    scheduledSequences: scheduledSequences.sort((a, b) => a.startFrame - b.startFrame),
+    actionGraph: { main: { nodes }, macros: {} },
+  };
   return {
     slug: `reaction-fixture-${index}`,
     gameId: `reaction-fixture-${index}`,
@@ -372,13 +401,7 @@ function fixtureOperator(
         key: 'basicAttack',
         skillType: 'basicAttack',
         levelSource: 'basicAttack',
-        skills: {
-          key: 'probe',
-          skillType: 'basicAttack',
-          levelSource: 'basicAttack',
-          timelineBlockFrames: 1050,
-          scheduledSequences: scheduledSequences.sort((a, b) => a.startFrame - b.startFrame),
-        },
+        skills: probeSkill,
       },
     ],
   };

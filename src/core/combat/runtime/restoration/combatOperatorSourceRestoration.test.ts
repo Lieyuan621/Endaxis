@@ -10,12 +10,13 @@ import type { CombatOperatorState } from '../../state/combatState';
 import { CombatSemanticEventRuntime } from '../../events/combatSemanticEventRuntime';
 import { createPassiveAbilityEventState } from '../../state/abilityState';
 import { createTimedMarkerState } from '../../state/environmentState';
+import { chainEntry } from '../../../../test/compiledGraphEntry';
 
 it('单干员来源协调器恢复被动并在统一关系阶段接回子 Buff', () => {
   const passive: CompiledOperatorPassiveProgram = {
     key: 'passive',
     initialBlackboard: {},
-    enableSequence: { steps: [] },
+    enableSequence: chainEntry('passive-enable', []),
   };
   const operatorBlackboard = new ActionBlackboard({ value: 1 });
   const passiveBlackboard = new ActionBlackboard({}, operatorBlackboard);

@@ -49,19 +49,27 @@ describe('Buff 运行时公共来源', () => {
           fixedBuffOwnerTarget,
           fixedBuffSourceTarget: 'caster',
         });
-      expect(compile('caster').abilityEventResponses?.[0]?.sequence.steps[0]).toMatchObject({
-        kind: 'conditional',
-        parameters: {
-          condition: {
-            kind: 'healthCompare',
-            target: 'enemy',
-            valueType: 'current',
-            operator: 'greater',
-            value: { kind: 'constant', value: 0 },
-          },
-        },
-        whenTrue: { steps: [{ kind: 'calculateActionValue' }] },
+      const compiled = compile('caster');
+      const response = compiled.abilityEventResponses?.[0];
+      const reference = response?.sequence.$sequence;
+      const guard =
+        reference && 'actionGraph' in compiled && compiled.actionGraph !== undefined
+          ? compiled.actionGraph.main.nodes[reference]?.action
+          : undefined;
+      if (guard?.kind !== 'conditional') throw new Error('expected conditional guard');
+      expect(guard.parameters.condition).toEqual({
+        kind: 'healthCompare',
+        target: 'enemy',
+        valueType: 'current',
+        operator: 'greater',
+        value: { kind: 'constant', value: 0 },
       });
+      const whenTrue = guard.whenTrue.$sequence;
+      expect(
+        whenTrue !== null && 'actionGraph' in compiled && compiled.actionGraph !== undefined
+          ? compiled.actionGraph.main.nodes[whenTrue]?.action.kind
+          : undefined,
+      ).toBe('calculateActionValue');
       expect(() => compile('enemy')).toThrow('unsupported health condition target');
     },
   );

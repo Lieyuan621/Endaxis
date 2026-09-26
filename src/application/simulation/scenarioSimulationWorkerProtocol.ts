@@ -4,6 +4,7 @@ import type {
   ScenarioSimulationPerformanceSample,
 } from './scenarioSimulationService';
 import type { ScenarioDocument } from '../../core/project/schema';
+
 import type { RecursiveSkillChain } from './recursiveSkillChain';
 import { restoreCombatReceiptView } from '../../core/combat/receipt/combatReceiptHistory';
 import type { ScenarioSimulationGameData } from './scenarioSimulationGameData';
@@ -54,7 +55,7 @@ function removeHistory(run: ScenarioSimulationRun): TransferableScenarioSimulati
 export function toSimulationWorkerResult(
   result: ScenarioSimulationRun | SimulationPlan,
 ): SimulationWorkerResult {
-  if (isTransferableSimulationRun(result)) return removeHistory(result);
+  if ('receiptHistory' in result) return removeHistory(result);
   if (result.status === 'planned') return { ...result, run: removeHistory(result.run) };
   return result;
 }

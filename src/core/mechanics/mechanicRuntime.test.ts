@@ -1,3 +1,4 @@
+import { createActionGraphCompilation } from '../compiler/compileActionGraph';
 import { describe, expect, it, vi } from 'vitest';
 import { AbilityEventDispatcher } from '../combat/events/abilityEventDispatcher';
 import { GameLevelEventDispatcher } from '../combat/events/gameLevelEventDispatcher';
@@ -5,7 +6,11 @@ import type { CompiledMechanics } from './mechanicCompiler';
 import type { MechanicAbilityEvent } from './mechanicContribution';
 import { installMechanicContributions } from './mechanicRuntime';
 
-const emptySequence = { steps: [] } as const;
+const emptySequence = {
+  graph: createActionGraphCompilation({ nodes: {} }, 1, 'mechanic-empty').compileAll(),
+  entry: null,
+  callSite: 'mechanic-empty',
+} as const;
 
 describe('installMechanicContributions', () => {
   it('routes compiled sequences through core event dispatchers with provenance', () => {

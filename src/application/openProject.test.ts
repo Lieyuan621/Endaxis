@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { GameDataRepository } from '../core/game-data/gameDataRepository';
+import { ActionGraphDefinitionRepository } from '../core/compiler/actionGraphDefinitionRepository';
 import { createEmptyProject } from '../core/project/createProject';
 import { serializeProjectDocument } from '../core/project/serialization';
 import { openProject } from './openProject';
@@ -7,6 +8,8 @@ import { openProject } from './openProject';
 function createRepository(revision = 'definitions:current'): GameDataRepository {
   return {
     revision,
+    actionPrograms: new ActionGraphDefinitionRepository(),
+    getCommonDefinitionSources: () => [],
     getOperator: () => null,
     getWeapon: () => null,
     getGear: () => null,

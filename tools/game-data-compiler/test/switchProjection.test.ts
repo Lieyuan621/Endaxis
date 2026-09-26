@@ -9,7 +9,10 @@ import {
   scalarFixture,
   targetFixture,
 } from './sourceFixtures.ts';
-import { compileActionSequence } from '../../../src/core/compiler/compileSkill';
+import { createActionGraphBuilder } from '../src/compiler/actions/actionGraphBuilder.ts';
+import type { CompiledBuffStepSource } from '../src/compiler/actions/combatActionProjectionTypes.ts';
+import { readActionGraphChain } from '../src/compiler/actions/actionGraphBuilder.ts';
+import { compileGraphSequence } from './support/graphSequence.ts';
 import { CombatActionSequenceRuntime } from '../../../src/core/combat/actions/combatActionSequenceRuntime';
 import { ActionBlackboard } from '../../../src/core/combat/actions/actionBlackboard';
 import { renderCommonBuffDefinitionsSource } from '../src/domains/operator/definitionSourceRenderer.ts';
@@ -55,7 +58,7 @@ const count = (key: string) => ({
 });
 function project(
   actions: unknown[],
-  context: CombatActionProjectionContextSource = {
+  context: Omit<CombatActionProjectionContextSource, 'graph'> = {
     gameplayTagRegistry: fixtureGameplayTagRegistry,
     actionOwnerTarget: 'caster',
     actionSourceTarget: 'caster',
@@ -65,12 +68,27 @@ function project(
   const source = parseNativeSequenceSource(sequence(actions), 'fixture', {}, (value, path) =>
     parseKnownNativeActionLeafSource(value, path, {}),
   );
-  return compileCombatActionSequenceSource(source, context, new Set(), {
-    resolveTimeDilationPriority: id => {
-      if (id !== -693798243) throw new Error('unknown priority');
-      return 20;
+  const builder = createActionGraphBuilder<CompiledBuffStepSource>();
+  const entry = compileCombatActionSequenceSource(
+    source,
+    { ...context, graph: builder },
+    new Set(),
+    {
+      resolveTimeDilationPriority: id => {
+        if (id !== -693798243) throw new Error('unknown priority');
+        return 20;
+      },
     },
-  });
+  );
+  const graph = builder.finish();
+  return {
+    entry,
+    graph,
+    /** 入口同层动作；分支内容仍需按 {$sequence} 显式读取。 */
+    steps: readActionGraphChain(graph, entry),
+    /** 编译当前图入口，供执行断言。 */
+    compiled: () => compileGraphSequence(entry, graph),
+  };
 }
 
 describe('公共 Switch 投影', () => {
@@ -78,45 +96,48 @@ describe('公共 Switch 投影', () => {
     const result = project([
       select([option(2, []), option(2, [read]), option(3, [select([option(3, [read])])])]),
     ]);
-    expect(result.steps[0]).toMatchObject({
-      kind: 'switch',
-      parameters: { choice: { kind: 'blackboard', key: 'choice' } },
-      options: [
-        { value: { kind: 'constant', value: 2 }, sequence: { steps: [] } },
-        { value: { kind: 'constant', value: 2 } },
-        { sequence: { steps: [{ kind: 'switch' }] } },
-      ],
-    });
+    const selected = result.steps[0];
+    if (selected?.kind !== 'switch') throw new Error('missing switch');
+    expect(selected.parameters.choice).toEqual({ kind: 'blackboard', key: 'choice' });
+    // 空分支、重复标签值与嵌套 Switch 均按显式引用保留。
+    expect(selected.options[0]?.value).toEqual({ kind: 'constant', value: 2 });
+    expect(readActionGraphChain(result.graph, selected.options[0]!.sequence)).toEqual([]);
+    expect(selected.options[1]?.value).toEqual({ kind: 'constant', value: 2 });
+    expect(readActionGraphChain(result.graph, selected.options[1]!.sequence)).toHaveLength(1);
+    const nested = readActionGraphChain(result.graph, selected.options[2]!.sequence);
+    expect(nested[0]?.kind).toBe('switch');
     const execute = vi.fn(() => true);
     const runtime = new CombatActionSequenceRuntime(
       { execute, evaluate: () => true },
       { blackboard: new ActionBlackboard({ choice: 2 }) },
     );
-    expect(runtime.createSequence(compileActionSequence(result, 1)).executeInstant({})).toBe(true);
+    expect(runtime.createSequence(result.compiled()).executeInstant({})).toBe(true);
     expect(execute).not.toHaveBeenCalled();
     const rendered = renderCommonBuffDefinitionsSource({
-      buff: { id: 'buff', lifecycleSequences: { start: result } },
+      buff: {
+        id: 'buff',
+        lifecycleSequences: { start: result.entry },
+        actionGraph: { main: result.graph, macros: {} },
+      },
     });
-    expect(rendered).toContain('"kind": "switch"');
-    expect(rendered).toContain('"options":');
-    expect(rendered.match(/"kind": "switch"/g)).toHaveLength(2);
+    expect(rendered.match(/"kind"\s*:\s*"switch"/g)).toHaveLength(2);
+    expect(rendered).toMatch(/"options"\s*:/);
   });
 
   it.each([false, true])(
     'alwaysNext=%s 不得让尾条件消失；假条件的选中序列仍返回 false',
     alwaysNext => {
       const result = project([select([option(0, [count('missing')])], alwaysNext), read]);
-      expect(result.steps[0]).toMatchObject({
-        options: [{ sequence: { steps: [{ kind: 'conditional' }] } }],
-      });
+      const selected = result.steps[0];
+      if (selected?.kind !== 'switch') throw new Error('missing switch');
+      const branch = readActionGraphChain(result.graph, selected.options[0]!.sequence);
+      expect(branch.map(step => step.kind)).toEqual(['conditional']);
       const execute = vi.fn(() => true);
       const runtime = new CombatActionSequenceRuntime(
         { execute, evaluate: () => false },
         { blackboard: new ActionBlackboard({ choice: 0 }) },
       );
-      expect(runtime.createSequence(compileActionSequence(result, 1)).executeInstant({})).toBe(
-        alwaysNext,
-      );
+      expect(runtime.createSequence(result.compiled()).executeInstant({})).toBe(alwaysNext);
       expect(execute).toHaveBeenCalledTimes(alwaysNext ? 1 : 0);
     },
   );
@@ -142,9 +163,11 @@ describe('公共 Switch 投影', () => {
     ]);
     const selected = result.steps.find(step => step.kind === 'switch');
     if (selected?.kind !== 'switch') throw new Error('missing switch');
-    expect(JSON.stringify(selected.options[0])).not.toContain('contextTargetCountCompare');
-    expect(JSON.stringify(selected.options[0])).toContain('actionValueCompare');
-    expect(JSON.stringify(selected.options[1])).toContain('contextTargetCountCompare');
+    const branchContent = (index: number) =>
+      JSON.stringify(readActionGraphChain(result.graph, selected.options[index]!.sequence));
+    expect(branchContent(0)).not.toContain('contextTargetCountCompare');
+    expect(branchContent(0)).toContain('actionValueCompare');
+    expect(branchContent(1)).toContain('contextTargetCountCompare');
     expect(JSON.stringify(result.steps.at(-1))).toContain('contextTargetCountCompare');
   });
 
@@ -183,24 +206,17 @@ describe('公共 Switch 投影', () => {
       fixedBuffOwnerTarget: 'enemy',
     } as const;
     const result = project([select([option(0, [dilation])])], context);
-    expect(result.steps[0]).toMatchObject({
-      options: [
-        {
-          sequence: {
-            steps: [
-              {
-                kind: 'startTimeDilation',
-                parameters: {
-                  scope: 'entity',
-                  targets: ['enemy', 'caster'],
-                  curve: { kind: 'named', key: 'interrupt_weakness' },
-                  priority: 20,
-                },
-              },
-            ],
-          },
-        },
-      ],
+    const selected = result.steps[0];
+    if (selected?.kind !== 'switch') throw new Error('missing switch');
+    const branch = readActionGraphChain(result.graph, selected.options[0]!.sequence);
+    expect(branch[0]).toMatchObject({
+      kind: 'startTimeDilation',
+      parameters: {
+        scope: 'entity',
+        targets: ['enemy', 'caster'],
+        curve: { kind: 'named', key: 'interrupt_weakness' },
+        priority: 20,
+      },
     });
     expect(() =>
       project([select([option(0, [dilation])])], { ...context, fixedBuffOwnerTarget: undefined }),

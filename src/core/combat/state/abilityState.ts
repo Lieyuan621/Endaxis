@@ -295,7 +295,7 @@ export function createSkillExecutionState(): SkillExecutionState {
 }
 
 /** 一个技能宿主已经接入的完整数据。 */
-export interface SkillRuntimeState {
+export interface SkillRuntimeState<Execution = ActionSequenceState> {
   readonly castId: string | null;
   /** 当前这次施放是否已经执行原生 MarkCanDash；新一次施放会清零。 */
   markedCanDash: boolean;
@@ -308,7 +308,7 @@ export interface SkillRuntimeState {
   readonly scopes: ActionScopeState;
   readonly damageSnapshots: DamageCalculationSnapshotState;
   readonly operations: CombatOperationHostState;
-  timeline: TimelineRuntimeState | null;
+  timeline: TimelineRuntimeState<Execution> | null;
 }
 
 /** 投射物回调技能的数据；两个字段一起复制以保留内部共享关系。 */

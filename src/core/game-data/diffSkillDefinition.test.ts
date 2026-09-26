@@ -5,6 +5,8 @@ import {
   type SkillDiffPathSegment,
 } from './diffSkillDefinition';
 import type { CombatStepDefinition, SkillDefinition } from './operatorDefinition';
+import type { CombatEventHandlerDefinition } from '../../../packages/game-data-contract/src/actions.ts';
+import type { ActionGraphNode } from '../../../packages/game-data-contract/src/actionGraph';
 
 function damageStep(key: string | undefined, attackScale = 1): CombatStepDefinition {
   return {
@@ -22,11 +24,30 @@ function skill(
   steps: readonly CombatStepDefinition[],
   overrides: Partial<SkillDefinition> = {},
 ): SkillDefinition {
+  const nodes: Record<string, ActionGraphNode> = {};
+  steps.forEach((action, index) => {
+    nodes[`step-${index}`] = {
+      action,
+      next: index + 1 < steps.length ? `step-${index + 1}` : null,
+    };
+  });
   return {
     key: 'skill',
     timelineBlockFrames: 30,
-    scheduledSequences: [{ startFrame: 0, sequence: { steps } }],
+    scheduledSequences: [
+      { startFrame: 0, sequence: { $sequence: steps.length === 0 ? null : 'step-0' } },
+    ],
+    actionGraph: { main: { nodes }, macros: {} },
     ...overrides,
+  };
+}
+
+/** 事件处理器是技能定义中仍带稳定 key 的数组；用它保留 key 匹配语义覆盖。 */
+function handler(key: string, startFrame = 1): CombatEventHandlerDefinition {
+  return {
+    key,
+    event: { kind: 'operatorHit' },
+    scheduledSequences: [{ startFrame, sequence: { $sequence: null } }],
   };
 }
 
@@ -45,12 +66,13 @@ function pathString(path: readonly SkillDiffPathSegment[]): string {
     .join('');
 }
 
-const stepsPath: readonly SkillDiffPathSegment[] = [
-  { kind: 'field', name: 'scheduledSequences' },
-  { kind: 'index', index: 0 },
-  { kind: 'field', name: 'sequence' },
-  { kind: 'field', name: 'steps' },
+const graphNodesPath: readonly SkillDiffPathSegment[] = [
+  { kind: 'field', name: 'actionGraph' },
+  { kind: 'field', name: 'main' },
+  { kind: 'field', name: 'nodes' },
 ];
+
+const handlersPath: readonly SkillDiffPathSegment[] = [{ kind: 'field', name: 'eventHandlers' }];
 
 describe('diffSkillDefinition', () => {
   it('相同输入返回空数组', () => {
@@ -60,7 +82,7 @@ describe('diffSkillDefinition', () => {
     expect(diffSkillDefinition(template, custom)).toEqual([]);
   });
 
-  it('标量变化产生 changed（无 key 时按位置匹配）', () => {
+  it('标量变化产生 changed（图节点按节点 ID 字段匹配）', () => {
     const template = skill([damageStep(undefined, 0.5)]);
     const custom = skill([damageStep(undefined, 0.8)]);
 
@@ -69,8 +91,9 @@ describe('diffSkillDefinition', () => {
       {
         kind: 'changed',
         path: [
-          ...stepsPath,
-          { kind: 'index', index: 0 },
+          ...graphNodesPath,
+          { kind: 'field', name: 'step-0' },
+          { kind: 'field', name: 'action' },
           { kind: 'field', name: 'parameters' },
           { kind: 'field', name: 'attackScale' },
         ],
@@ -104,131 +127,102 @@ describe('diffSkillDefinition', () => {
   });
 
   it('稳定 key 内容变化只对受影响步骤产生 changed', () => {
-    const template = skill([damageStep('hit:a', 0.5), damageStep('hit:b', 0.5)]);
-    const custom = skill([damageStep('hit:a', 0.6), damageStep('hit:b', 0.5)]);
+    const template = skill([], { eventHandlers: [handler('hit:a', 1), handler('hit:b', 1)] });
+    const custom = skill([], { eventHandlers: [handler('hit:a', 2), handler('hit:b', 1)] });
 
     const items = diffSkillDefinition(template, custom);
     expect(items).toEqual<SkillDiffEntry[]>([
       {
         kind: 'changed',
         path: [
-          ...stepsPath,
+          ...handlersPath,
           { kind: 'key', key: 'hit:a' },
-          { kind: 'field', name: 'parameters' },
-          { kind: 'field', name: 'attackScale' },
+          { kind: 'field', name: 'scheduledSequences' },
+          { kind: 'index', index: 0 },
+          { kind: 'field', name: 'startFrame' },
         ],
-        before: 0.5,
-        after: 0.6,
+        before: 1,
+        after: 2,
       },
     ]);
   });
 
   it('稳定 key 重排产生 moved，模板原顺序优先', () => {
-    const template = skill([damageStep('hit:a'), damageStep('hit:b')]);
-    const custom = skill([damageStep('hit:b'), damageStep('hit:a')]);
+    const template = skill([], { eventHandlers: [handler('hit:a'), handler('hit:b')] });
+    const custom = skill([], { eventHandlers: [handler('hit:b'), handler('hit:a')] });
 
     const items = diffSkillDefinition(template, custom);
     expect(items.map(item => item.kind)).toEqual(['moved', 'moved']);
     expect(items[0]).toMatchObject({
       kind: 'moved',
-      path: [...stepsPath, { kind: 'key', key: 'hit:a' }],
+      path: [...handlersPath, { kind: 'key', key: 'hit:a' }],
       fromIndex: 0,
       toIndex: 1,
     });
     expect(items[1]).toMatchObject({
       kind: 'moved',
-      path: [...stepsPath, { kind: 'key', key: 'hit:b' }],
+      path: [...handlersPath, { kind: 'key', key: 'hit:b' }],
       fromIndex: 1,
       toIndex: 0,
     });
   });
 
   it('稳定 key 增删报告完整元素', () => {
-    const template = skill([damageStep('hit:a'), damageStep('hit:b')]);
-    const custom = skill([damageStep('hit:a'), damageStep('hit:c', 2)]);
+    const template = skill([], { eventHandlers: [handler('hit:a'), handler('hit:b')] });
+    const custom = skill([], { eventHandlers: [handler('hit:a'), handler('hit:c', 2)] });
 
     const items = diffSkillDefinition(template, custom);
     expect(items.map(item => item.kind)).toEqual(['removed', 'added']);
     const removed = items[0];
     expect(removed).toMatchObject({
       kind: 'removed',
-      path: [...stepsPath, { kind: 'key', key: 'hit:b' }],
+      path: [...handlersPath, { kind: 'key', key: 'hit:b' }],
     });
     if (removed?.kind !== 'removed') throw new Error('expected removed entry');
-    expect(removed.before).toEqual({
-      kind: 'dealDamage',
-      key: 'hit:b',
-      parameters: { damageType: 'physical', attackScale: 1, tags: ['normalAttack'] },
-    });
+    expect(removed.before).toEqual(handler('hit:b'));
     const added = items[1];
     expect(added).toMatchObject({
       kind: 'added',
-      path: [...stepsPath, { kind: 'key', key: 'hit:c' }],
+      path: [...handlersPath, { kind: 'key', key: 'hit:c' }],
     });
     if (added?.kind !== 'added') throw new Error('expected added entry');
-    expect(added.after).toEqual({
-      kind: 'dealDamage',
-      key: 'hit:c',
-      parameters: { damageType: 'physical', attackScale: 2, tags: ['normalAttack'] },
-    });
+    expect(added.after).toEqual(handler('hit:c', 2));
   });
 
   it('无 key 数组按位置匹配', () => {
-    const template = skill([damageStep(undefined, 0.5), damageStep(undefined, 0.5)]);
-    const custom = skill([damageStep(undefined, 0.5)]);
+    const sequence = (startFrame: number) => ({ startFrame, sequence: { $sequence: null } });
+    const template = skill([], { scheduledSequences: [sequence(0), sequence(10)] });
+    const custom = skill([], { scheduledSequences: [sequence(0)] });
 
     const items = diffSkillDefinition(template, custom);
-    expect(items.map(item => pathString(item.path))).toEqual([
-      '.scheduledSequences[0].sequence.steps[1]',
-    ]);
+    expect(items.map(item => pathString(item.path))).toEqual(['.scheduledSequences[1]']);
     expect(items[0]).toMatchObject({
       kind: 'removed',
-      path: [...stepsPath, { kind: 'index', index: 1 }],
-      before: {
-        kind: 'dealDamage',
-        parameters: { damageType: 'physical', attackScale: 0.5, tags: ['normalAttack'] },
-      },
-    });
-  });
-
-  it('混合 key 数组退化为位置匹配，不猜相似对象', () => {
-    const template = skill([damageStep('hit:a'), damageStep(undefined)]);
-    const custom = skill([damageStep(undefined), damageStep('hit:a')]);
-
-    const items = diffSkillDefinition(template, custom);
-    // 两边不能按 key 对齐，只能按位置：位置 0 的 key 被删除，位置 1 新增 key。
-    expect(items.map(item => pathString(item.path))).toEqual([
-      '.scheduledSequences[0].sequence.steps[0].key',
-      '.scheduledSequences[0].sequence.steps[1].key',
-    ]);
-    expect(items[0]).toMatchObject({
-      kind: 'removed',
-      path: [...stepsPath, { kind: 'index', index: 0 }, { kind: 'field', name: 'key' }],
-      before: 'hit:a',
-    });
-    expect(items[1]).toMatchObject({
-      kind: 'added',
-      path: [...stepsPath, { kind: 'index', index: 1 }, { kind: 'field', name: 'key' }],
-      after: 'hit:a',
+      path: [
+        { kind: 'field', name: 'scheduledSequences' },
+        { kind: 'index', index: 1 },
+      ],
+      before: sequence(10),
     });
   });
 
   it('重复 key 数组退化为位置匹配', () => {
-    const template = skill([damageStep('hit:a', 0.5), damageStep('hit:a')]);
-    const custom = skill([damageStep('hit:a', 0.6), damageStep('hit:a')]);
+    const template = skill([], { eventHandlers: [handler('hit:a', 1), handler('hit:a')] });
+    const custom = skill([], { eventHandlers: [handler('hit:a', 2), handler('hit:a')] });
 
     const items = diffSkillDefinition(template, custom);
     expect(items).toEqual<SkillDiffEntry[]>([
       {
         kind: 'changed',
         path: [
-          ...stepsPath,
+          ...handlersPath,
           { kind: 'index', index: 0 },
-          { kind: 'field', name: 'parameters' },
-          { kind: 'field', name: 'attackScale' },
+          { kind: 'field', name: 'scheduledSequences' },
+          { kind: 'index', index: 0 },
+          { kind: 'field', name: 'startFrame' },
         ],
-        before: 0.5,
-        after: 0.6,
+        before: 1,
+        after: 2,
       },
     ]);
   });
@@ -249,33 +243,37 @@ describe('diffSkillDefinition', () => {
   });
 
   it('changed 的 after 为快照，不受输入后续修改影响', () => {
-    const template = skill([damageStep('hit:a', 0.5)]);
-    const mutableStep = {
-      key: 'hit:a',
-      kind: 'dealDamage' as const,
-      parameters: {
-        damageType: 'physical' as const,
-        attackScale: 0.8,
-        tags: ['normalAttack'] as const,
-      },
+    const template = skill([], { eventHandlers: [handler('hit:a', 1)] });
+    const scheduled: { startFrame: number; sequence: { $sequence: null } } = {
+      startFrame: 2,
+      sequence: { $sequence: null },
     };
-    const custom = skill([mutableStep]);
+    const mutableHandler: CombatEventHandlerDefinition = {
+      key: 'hit:a',
+      event: { kind: 'operatorHit' },
+      scheduledSequences: [scheduled],
+    };
+    const custom = skill([], { eventHandlers: [mutableHandler] });
 
     const items = diffSkillDefinition(template, custom);
     const changed = items.find(item => item.kind === 'changed');
-    expect(changed?.after).toBe(0.8);
+    expect(changed?.after).toBe(2);
 
-    mutableStep.parameters.attackScale = 9;
-    expect(changed?.after).toBe(0.8);
+    scheduled.startFrame = 9;
+    expect(changed?.after).toBe(2);
   });
 
   it('相同 key 与顺序变化同时出现时保持模板原顺序', () => {
-    const template = skill([damageStep('hit:a'), damageStep('hit:b'), damageStep('hit:c')]);
-    const custom = skill([damageStep('hit:b'), damageStep('hit:a'), damageStep('hit:c')]);
+    const template = skill([], {
+      eventHandlers: [handler('hit:a'), handler('hit:b'), handler('hit:c')],
+    });
+    const custom = skill([], {
+      eventHandlers: [handler('hit:b'), handler('hit:a'), handler('hit:c')],
+    });
 
     const items = diffSkillDefinition(template, custom);
     expect(items.map(item => item.kind)).toEqual(['moved', 'moved']);
-    expect(items[0]).toMatchObject({ path: [...stepsPath, { kind: 'key', key: 'hit:a' }] });
-    expect(items[1]).toMatchObject({ path: [...stepsPath, { kind: 'key', key: 'hit:b' }] });
+    expect(items[0]).toMatchObject({ path: [...handlersPath, { kind: 'key', key: 'hit:a' }] });
+    expect(items[1]).toMatchObject({ path: [...handlersPath, { kind: 'key', key: 'hit:b' }] });
   });
 });

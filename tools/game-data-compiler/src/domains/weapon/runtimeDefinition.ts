@@ -1,4 +1,8 @@
 import type { GameplayTagRegistry } from '../../source/nativeGameplayTags.ts';
+import {
+  createActionGraphBuilder,
+  type ActionGraphBuilder,
+} from '../../compiler/actions/actionGraphBuilder.ts';
 import type { LevelValues } from '../../../../../packages/game-data-contract/src/index.ts';
 import type {
   EquipmentAbilityEvent,
@@ -36,9 +40,10 @@ export type CompiledWeaponRuntimeDefinitionSource = Omit<
   'traits'
 > &
   Readonly<Pick<WeaponDefinition, 'assetSlug' | 'iconPath'>> & {
+    readonly buffDefinitions?: Readonly<Record<string, CompiledBuffDefinitionSource>>;
     readonly traits: readonly (CompiledWeaponStaticDefinitionSource['traits'][number] &
-      Readonly<Pick<WeaponTraitDefinition, 'blackboard'>> & {
-        readonly buffDefinitions?: Readonly<Record<string, CompiledBuffDefinitionSource>>;
+      Readonly<Pick<WeaponTraitDefinition, 'blackboard' | 'skillId'>> & {
+        readonly actionGraph?: import('../../../../../packages/game-data-contract/src/actionGraph.ts').ActionGraphResourceDefinition;
         readonly enableSequence?: CompiledBuffSequenceSource;
         readonly initializationSequence?: CompiledBuffSequenceSource;
         readonly eventHandlers?: readonly CompiledWeaponEventHandlerSource[];
@@ -80,7 +85,8 @@ export function compileWeaponRuntimeDefinitionBatchSource(
       continue;
     }
     const typedDependencies = traitDependencies as CompiledWeaponTraitRuntimeDependencySource[];
-    const eventHandlers = typedDependencies.map(dependency => {
+    const graphs = typedDependencies.map(() => createActionGraphBuilder<CompiledBuffStepSource>());
+    const eventHandlers = typedDependencies.map((dependency, index) => {
       const actionGroup = dependency.actionGraph.actionGroup;
       if (actionGroup.timelineActions.length > 0) {
         diagnostics.push({
@@ -91,7 +97,12 @@ export function compileWeaponRuntimeDefinitionBatchSource(
         return [];
       }
       try {
-        return compileWeaponEventHandlers(dependency, diagnostics, gameplayTagRegistry);
+        return compileWeaponEventHandlers(
+          dependency,
+          diagnostics,
+          graphs[index]!,
+          gameplayTagRegistry,
+        );
       } catch (error) {
         diagnostics.push({
           status: 'blocked',
@@ -101,9 +112,9 @@ export function compileWeaponRuntimeDefinitionBatchSource(
         return [];
       }
     });
-    const deckInitializations = typedDependencies.map(dependency => {
+    const deckInitializations = typedDependencies.map((dependency, index) => {
       try {
-        return compileWeaponDeckInitialization(dependency, gameplayTagRegistry);
+        return compileWeaponDeckInitialization(dependency, graphs[index]!, gameplayTagRegistry);
       } catch (error) {
         diagnostics.push({
           status: 'blocked',
@@ -204,19 +215,19 @@ export function compileWeaponRuntimeDefinitionBatchSource(
         ...steps.filter((_step, index) => activePlans[0]![index]!.phase === 'afterEnable'),
         ...deckInitializations[traitIndex]!.steps,
       ];
+      const graph = graphs[traitIndex]!;
+      const enableSequence = graph.sequence(enableSteps);
+      const initializationSequence = graph.sequence(initializationSteps);
       return {
         ...trait,
+        actionGraph: { main: graph.finish(), macros: {} },
+        skillId: typedDependencies[traitIndex]!.skillId,
         ...(eventHandlers[traitIndex]!.length === 0
           ? {}
           : { eventHandlers: eventHandlers[traitIndex] }),
-        ...(traitIndex === 0 && Object.keys(closure.definitions).length > 0
-          ? { buffDefinitions: closure.definitions }
-          : {}),
         ...(Object.keys(blackboard).length === 0 ? {} : { blackboard }),
-        ...(enableSteps.length === 0 ? {} : { enableSequence: { steps: enableSteps } }),
-        ...(initializationSteps.length === 0
-          ? {}
-          : { initializationSequence: { steps: initializationSteps } }),
+        ...(enableSteps.length === 0 ? {} : { enableSequence }),
+        ...(initializationSteps.length === 0 ? {} : { initializationSequence }),
       };
     });
     if (
@@ -226,7 +237,13 @@ export function compileWeaponRuntimeDefinitionBatchSource(
     ) {
       continue;
     }
-    output.push({ ...definition, traits });
+    output.push({
+      ...definition,
+      traits,
+      ...(Object.keys(closure.definitions).length > 0
+        ? { buffDefinitions: closure.definitions }
+        : {}),
+    });
   }
   return { definitions: output, diagnostics };
 }
@@ -234,6 +251,7 @@ export function compileWeaponRuntimeDefinitionBatchSource(
 function compileWeaponEventHandlers(
   dependency: CompiledWeaponTraitRuntimeDependencySource,
   diagnostics: BuildDefinitionDiagnosticSource[],
+  graph: ActionGraphBuilder<CompiledBuffStepSource>,
   gameplayTagRegistry?: GameplayTagRegistry,
 ): CompiledWeaponEventHandlerSource[] {
   const events = dependency.actionGraph.actionGroup.passiveEvents;
@@ -256,12 +274,13 @@ function compileWeaponEventHandlers(
     mapEvent: projectWeaponAbilityEvent,
     compileSequence: sequence =>
       compileCombatActionSequenceSource(sequence, {
+        graph,
         gameplayTagRegistry,
         actionOwnerTarget: 'caster',
         actionSourceTarget: 'caster',
         actionTargetTarget: 'eventTarget',
       }),
-    isEmptySequence: sequence => sequence.steps.length === 0,
+    isEmptySequence: sequence => sequence.$sequence === null,
   });
   return programs.map(program => ({
     key: `${dependency.traitKey}:event:${program.sourceEventIndex}:sequence:${program.sourceSequenceIndex}`,
@@ -277,6 +296,7 @@ function compileWeaponEventHandlers(
  */
 function compileWeaponDeckInitialization(
   dependency: CompiledWeaponTraitRuntimeDependencySource,
+  graph: ActionGraphBuilder<CompiledBuffStepSource>,
   gameplayTagRegistry?: GameplayTagRegistry,
 ): {
   readonly steps: CompiledBuffStepSource[];
@@ -288,15 +308,16 @@ function compileWeaponDeckInitialization(
     mapEvent: (_event, _sourcePath) => 'deckAttributesChanged' as const,
     compileSequence: sequence =>
       compileCombatActionSequenceSource(sequence, {
+        graph,
         gameplayTagRegistry,
         actionOwnerTarget: 'caster',
         actionSourceTarget: 'caster',
         actionTargetTarget: 'eventTarget',
       }),
-    isEmptySequence: sequence => sequence.steps.length === 0,
+    isEmptySequence: sequence => sequence.$sequence === null,
   });
   return {
-    steps: programs.flatMap(program => program.sequence.steps),
+    steps: programs.flatMap(program => graph.actions(program.sequence)),
   };
 }
 
@@ -304,9 +325,6 @@ function projectWeaponAbilityEvent(
   event: string | number,
   sourcePath: string,
 ): { readonly abilityEvent: EquipmentAbilityEvent } {
-  if (typeof event !== 'string') {
-    throw new Error(`${sourcePath}: unnamed numeric weapon AbilityEvent is unsupported`);
-  }
   const projected = projectAbilityEvent(event, sourcePath);
   const supported = EQUIPMENT_ABILITY_EVENTS.find(candidate => candidate === projected);
   if (supported === undefined) {

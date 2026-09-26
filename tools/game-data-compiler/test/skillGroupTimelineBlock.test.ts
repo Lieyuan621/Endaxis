@@ -19,6 +19,7 @@ function skill(
     costFrame: 0,
     scheduledSequences: [],
     allowNextSkillTransitions: transitions,
+    actionGraph: { main: { nodes: {} }, macros: {} },
   };
 }
 
@@ -149,6 +150,35 @@ describe('基础攻击技能块窗口', () => {
 });
 
 describe('单技能入口的预览宽度', () => {
+  it('只有条件普攻接续时使用候选窗口预览，保留实际条件判定', () => {
+    const combo = {
+      ...skill('combo', [
+        { startFrame: 5, endFrame: 70, skillIds: ['internal'], direct: false },
+        { startFrame: 40, endFrame: 70, skillIds: ['attack'], direct: false },
+      ]),
+      timelineBlockFrames: 180,
+      naturalDurationFrames: 70,
+    };
+    const definitions = new Map([
+      ['combo', combo],
+      ['attack', skill('attack', [])],
+      ['internal', skill('internal', [])],
+    ]);
+    selectSingleSkillTimelineBlockFrames(
+      definitions,
+      [
+        { skillType: 'comboSkill', skillKeys: ['combo'], replacementPlacements: {} },
+        {
+          skillType: 'basicAttack',
+          skillKeys: ['internal'],
+          variants: [{ skillKeys: ['attack'] }],
+          replacementPlacements: { internal: 'internal' },
+        },
+      ],
+      new Set(['internal']),
+    );
+    expect(definitions.get('combo')).toEqual({ ...combo, timelineBlockFrames: 40 });
+  });
   it('连携序列和战技的提前窗口不再缩短非普攻块宽', () => {
     const definitions = new Map([
       [
@@ -269,9 +299,20 @@ describe('单技能入口的预览宽度', () => {
             {
               startFrame: 180,
               endFrame: 181,
-              sequence: { steps: [{ kind: 'finishTimeline' as const, parameters: {} }] },
+              sequence: { $sequence: 'entry' },
             },
           ],
+          actionGraph: {
+            main: {
+              nodes: {
+                entry: {
+                  action: { kind: 'finishTimeline' as const, parameters: {} },
+                  next: null,
+                },
+              },
+            },
+            macros: {},
+          },
         },
       ],
     ]);

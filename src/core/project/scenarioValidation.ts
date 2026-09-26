@@ -1,5 +1,14 @@
+import type { SkillBuffDefinition } from '../../../packages/game-data-contract/src/buffs.ts';
 import { GLOBAL_CONFIG_PRESETS } from './globalConfigPresets';
-import { validateActionSequenceDefinition } from '../game-data/validation/actionPrograms';
+
+import { validateActionGraphOwner } from '../action-graph/actionGraphValidation';
+import {
+  validateActionGraphReference,
+  validateScheduledSequence,
+  validateActionGraphActions,
+  validateActionGraphContexts,
+} from '../game-data/validation/actionPrograms';
+import { validateBuffDefinition } from '../game-data/validation/buffApplication';
 /**
  * 顶层项目校验器使用的场景内部一致性规则。
  * 这里只检查持久化结构和引用关系，不应调用游戏数据或执行战斗规则。
@@ -399,24 +408,37 @@ export function validateGlobalConfig(
         requireBoolean(buff.enabled, `${buffPath}.enabled`, issues);
         if (!isObject(buff.definition))
           issues.push({ path: `${buffPath}.definition`, message: 'expected a Buff definition' });
-        else
-          issues.push(
-            ...validateActionSequenceDefinition(
-              {
-                steps: [
-                  {
-                    kind: 'applyBuff',
-                    parameters: {
-                      target: 'caster',
-                      buffId: id,
-                      definition: buff.definition,
-                    },
-                  },
-                ],
-              },
-              buffPath,
-            ),
-          );
+        else {
+          const definitionPath = `${buffPath}.definition`;
+          const { actionGraph: graph, ...buffFields } = buff.definition;
+          validateBuffDefinition(buffFields, id ?? 'invalid', `${buffPath}.definition`, issues, {
+            action: validateActionGraphReference,
+            scheduled: validateScheduledSequence,
+            graph: (value, path, out) => out.push(...validateActionGraphActions(value, path)),
+            contexts: (value, path, entries, out) =>
+              validateActionGraphContexts(value, path, entries, out),
+          });
+          if (!isObject(graph) || !isObject(graph.main) || !isObject(graph.macros)) {
+            issues.push({
+              path: `${definitionPath}.actionGraph`,
+              message: 'custom Buff requires its own main graph and macros',
+            });
+          } else {
+            issues.push(...validateActionGraphActions(graph, `${definitionPath}.actionGraph`));
+            try {
+              // The topology validator checks untrusted references and reports malformed graphs.
+              validateActionGraphOwner(
+                buff.definition as unknown as SkillBuffDefinition,
+                definitionPath,
+              );
+            } catch (error) {
+              issues.push({
+                path: definitionPath,
+                message: error instanceof Error ? error.message : String(error),
+              });
+            }
+          }
+        }
       });
     }
   }

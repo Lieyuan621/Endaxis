@@ -37,9 +37,7 @@ const accessoryPairs = accessoryGears.map((gear, index) => ({
 const gearSets = gameDataRepository.getGearSets();
 const runtimeGearSets = gearSets.filter(
   gearSet =>
-    (gearSet.initializationSequence?.steps.length ?? 0) +
-      (gearSet.enableSequence?.steps.length ?? 0) >
-    0,
+    gearSet.initializationSequence?.$sequence != null || gearSet.enableSequence?.$sequence != null,
 );
 const resources = {
   sharedSpGain: { baseGainEfficiency: 1 },
@@ -93,7 +91,11 @@ describe('所有正式武器与单件装备逐项装配和模拟', () => {
   it.each(gearSets)('$slug 三件套可被真实构筑激活并经历四类技能事件', async gearSet => {
     const operator = requireFourSkillOperator();
     const scenario = createScenarioWithGearSet(operator, gearSet.slug);
-    const [compiled] = compileScenarioEquipment(scenario, gameDataRepository);
+    const [compiled] = compileScenarioEquipment(
+      scenario,
+      gameDataRepository,
+      gameDataRepository.actionPrograms,
+    );
     expect(
       compiled?.contributions.flatMap(contribution =>
         contribution.source.kind === 'gearSet' ? [contribution.source.slug] : [],
@@ -355,8 +357,7 @@ function createRepositoryWithoutGearSet(gearSetSlug: string) {
           : definition,
       ),
     gearSets: gameDataRepository.getGearSets(),
-    commonBuffDefinitions: gameDataRepository.getCommonBuffDefinitions?.(),
-    commonAbilityEntityDefinitions: gameDataRepository.getCommonAbilityEntityDefinitions?.(),
+    commonDefinitionSources: gameDataRepository.getCommonDefinitionSources?.(),
   });
 }
 
@@ -370,8 +371,7 @@ function createRepositoryWithoutGearSetRuntime(gearSetSlug: string) {
       if (definition.slug !== gearSetSlug) return definition;
       return staticEquipmentContribution(definition);
     }),
-    commonBuffDefinitions: gameDataRepository.getCommonBuffDefinitions?.(),
-    commonAbilityEntityDefinitions: gameDataRepository.getCommonAbilityEntityDefinitions?.(),
+    commonDefinitionSources: gameDataRepository.getCommonDefinitionSources?.(),
   });
 }
 
@@ -400,10 +400,27 @@ function observableGearSetRuntimeResult(
   gearSet: (typeof gearSets)[number],
 ) {
   const rootBuffIds = new Set(
-    [
-      ...(gearSet.initializationSequence?.steps ?? []),
-      ...(gearSet.enableSequence?.steps ?? []),
-    ].flatMap(step => (step.kind === 'applyBuff' ? [step.parameters.buffId] : [])),
+    [gearSet.initializationSequence, gearSet.enableSequence].flatMap(reference => {
+      if (reference === undefined || reference.$sequence === null) return [];
+      const nodes = gearSet.actionGraph?.main.nodes ?? {};
+      const stack = [reference.$sequence];
+      const buffIds: string[] = [];
+      const seen = new Set<string>();
+      while (stack.length > 0) {
+        const name = stack.pop()!;
+        if (seen.has(name)) continue;
+        seen.add(name);
+        const node = nodes[name];
+        if (node === undefined) continue;
+        if (node.action.kind !== 'applyBuff') continue;
+        const { buffId } = node.action.parameters;
+        if (typeof buffId === 'string') buffIds.push(buffId);
+        if (node.next !== null) stack.push(node.next);
+        const action = node.action as { body?: { $sequence: string | null } };
+        if (typeof action.body?.$sequence === 'string') stack.push(action.body.$sequence);
+      }
+      return buffIds;
+    }),
   );
   return {
     operatorPanel: result.operatorPanels[0],

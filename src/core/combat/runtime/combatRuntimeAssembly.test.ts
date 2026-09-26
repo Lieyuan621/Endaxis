@@ -1,20 +1,28 @@
+import type { SkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
+import { rootActionSteps } from '../../compiler/actionProgramInspection';
 import { describe, expect, it, vi } from 'vitest';
 import { GAMEPLAY_TAG_PREDEFINE } from '../../../data/combat/gameplayTagPredefine.generated';
 import { gilberta as gilbertaGeneratedOperator } from '../../../data/operators/gilberta.generated';
-import { getSkill } from '../../../data/operators/testUtils';
-
-const gilbertaBattleSkill = getSkill(gilbertaGeneratedOperator, 'chr_0013_aglina_normal_skill');
 import type {
   CompiledOperatorPassiveProgram,
   CompiledSkillProgram,
   CompiledSkillSlotGroup,
-  ResolvedCombatStep,
+  ResolvedActionSequence,
 } from '../../compiler/combatProgram';
-import { compileOperatorBuffDefinitions, compileSkill } from '../../compiler/compileSkill';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import type {
+  ActionGraphNode,
+  ActionGraphStep,
+} from '../../../../packages/game-data-contract/src/actionGraph';
+
+import type { AbilityEntityChildSkillDefinition } from '../../../../packages/game-data-contract/src/skills';
 import {
   logicalAbilityEntityRuntimeId,
   type RuntimeTargetRef,
 } from '../../game-data/logicalAbilityEntity';
+import { ActionGraphDefinitionRepository } from '../../compiler/actionGraphDefinitionRepository';
+import { compileIndependentBuffResource, compileSkill } from '../../compiler/compileSkill';
+import { createIndependentAbilityEntityImportResolver } from '../../compiler/compileCommonAbilityEntityImports';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { CombatAttributeSet } from '../attributes/combatAttributes';
 import { BuffDefinitionOperationTarget } from '../buffs/buffDefinitionOperationTarget';
@@ -28,7 +36,7 @@ import { CombatReceiptCollector } from '../receipt/combatReceipt';
 import { CombatVitals } from '../resources/combatVitals';
 import { CombatSkillPrograms, combatSkillProgramKey } from '../skills/combatSkillPrograms';
 import type { CombatOperationExecutor } from '../skills/skillRuntime';
-import { createActionSequenceState, createTimelineActionState } from '../state/actionState';
+import { createTimelineActionState, type ActionGraphExecutionState } from '../state/actionState';
 import { createBuffInstanceState } from '../state/instanceState';
 import { CombatStatusContainer } from '../status/combatStatuses';
 import { GameplayTagPredefine } from '../tags/gameplayTagPredefine';
@@ -53,6 +61,34 @@ const emptyEnemyBuffRuntime = {
 const rejectingExecutor: CombatOperationExecutor = {
   execute: () => false,
   evaluate: () => false,
+};
+
+const gilbertaBattleSkill = gilbertaGeneratedOperator.skillGroups
+  .flatMap(group => (Array.isArray(group.skills) ? group.skills : [group.skills]))
+  .find(skill => skill.key === 'chr_0013_aglina_normal_skill') as SkillDefinition;
+
+const compileGraphEntry = (
+  revision: string,
+  entry: string | null,
+  nodes: Record<string, ActionGraphNode>,
+): ResolvedActionSequence => ({
+  graph: createActionGraphCompilation({ nodes }, 1, revision).compileAll(),
+  entry,
+  callSite: revision,
+});
+
+const chainEntry = (
+  revision: string,
+  actions: readonly ActionGraphStep[],
+): ResolvedActionSequence => {
+  const nodes: Record<string, ActionGraphNode> = {};
+  actions.forEach((action, index) => {
+    nodes[`step-${index}`] = {
+      action,
+      next: index + 1 < actions.length ? `step-${index + 1}` : null,
+    };
+  });
+  return compileGraphEntry(revision, actions.length === 0 ? null : 'step-0', nodes);
 };
 
 const testEnemy: CombatEnemyProgram = {
@@ -130,37 +166,33 @@ it('被动写入EntityBB由同角色主动技能读取，而非留在被动局�
     timelineActions: [
       {
         startFrame: 0,
-        sequence: {
-          steps: [
-            {
-              kind: 'changeResourceByActionValue',
-              parameters: {
-                resource: 'ultimateEnergy',
-                recipient: 'caster',
-                amount: { kind: 'blackboard', key: 'EntityBB_value' },
-                coefficient: { kind: 'constant', value: 1 },
-              },
+        sequence: chainEntry('passive-entitybb-writer', [
+          {
+            kind: 'changeResourceByActionValue',
+            parameters: {
+              resource: 'ultimateEnergy',
+              recipient: 'caster',
+              amount: { kind: 'blackboard', key: 'EntityBB_value' },
+              coefficient: { kind: 'constant', value: 1 },
             },
-          ],
-        },
+          },
+        ]),
       },
     ],
   });
   const passive: CompiledOperatorPassiveProgram = {
     key: 'writer',
     initialBlackboard: {},
-    enableSequence: {
-      steps: [
-        {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'EntityBB_value',
-            operation: 'assign',
-            value: { kind: 'constant', value: 7 },
-          },
+    enableSequence: chainEntry('passive-writer-enable', [
+      {
+        kind: 'modifyActionValue',
+        parameters: {
+          key: 'EntityBB_value',
+          operation: 'assign',
+          value: { kind: 'constant', value: 7 },
         },
-      ],
-    },
+      },
+    ]),
   };
   const assembly = createAssembly(
     [program],
@@ -775,13 +807,27 @@ describe('CombatRuntimeAssembly', () => {
     ).toThrow('restored attached Buff');
 
     const missingActionBuff = structuredClone(saved);
-    const actionSequence = createActionSequenceState(1);
-    actionSequence.steps[0] = {
-      kind: 'buffHold',
-      buffs: {
-        active: true,
-        references: [{ ownerId: 'enemy', instanceId: 100 }],
-      },
+    const actionSequence: ActionGraphExecutionState = {
+      revision: 'restore-preflight',
+      entry: 'step-0',
+      invocation: 'restore-preflight/invocation',
+      callSite: 'restore-preflight',
+      closed: false,
+      nodes: new Map([
+        [
+          'step-0',
+          {
+            lifecycle: { state: 'started', executeResult: true, executionPermitted: true },
+            data: {
+              kind: 'buffHold',
+              buffs: {
+                active: true,
+                references: [{ ownerId: 'enemy', instanceId: 100 }],
+              },
+            },
+          },
+        ],
+      ]),
     };
     missingActionBuff.operators.get('operator')!.skills.get('skill\u0000')!.timeline = {
       scheduling: createTimelineActionState(),
@@ -797,7 +843,7 @@ describe('CombatRuntimeAssembly', () => {
     const passive: CompiledOperatorPassiveProgram = {
       key: 'passive',
       initialBlackboard: {},
-      enableSequence: { steps: [] },
+      enableSequence: chainEntry('restore-detached-passive-enable', []),
     };
     const operator = {
       operatorId: 'operator',
@@ -912,7 +958,14 @@ describe('CombatRuntimeAssembly', () => {
           timelineBlockFrames: blockFrames,
           // 自然周期明显大于块宽，防止把自然结束误当成组内衔接点。
           naturalDurationFrames: 300,
-          ...(instant ? { switchToBuffCast: { asSkillCast: true, sequence: { steps: [] } } } : {}),
+          ...(instant
+            ? {
+                switchToBuffCast: {
+                  asSkillCast: true,
+                  sequence: chainEntry('switch-buff-cast', []),
+                },
+              }
+            : {}),
         }),
       );
       const assembly = new CombatRuntimeAssembly({
@@ -1096,71 +1149,116 @@ describe('CombatRuntimeAssembly', () => {
     ),
   )('嵌套投射物 $event 回调按 $source 选择来源与发射事件身份', ({ event, source }) => {
     const emitAbilityEvent = vi.fn();
-    const callbackStep = (
-      steps: readonly ResolvedCombatStep[],
-      source: 'actionSource' | 'actionOwner' = 'actionSource',
-    ): ResolvedCombatStep => ({
-      kind: 'launchProjectile',
-      parameters: {
-        source,
-        finish: event === 'reach' ? 'firstTickReach' : event === 'hit' ? 10 : 0.01,
-        recycleDelaySeconds: 10,
-        ...(event === 'hit' ? { hit: { finishOnHit: true } } : {}),
+    const callbackMeta = {
+      skillId: 'callback',
+      nativeSkillType: 'normalSkill' as const,
+      naturalDurationFrames: 3,
+      blackboard: {},
+      castResource: {
+        costFrame: 0,
+        cooldownSeconds: 0,
+        maxChargeTime: 1,
+        cost: { resource: 'ultimateEnergy' as const, value: 0, availabilityThreshold: 0 },
       },
-      callbacks: [
-        {
-          event,
-          skill: {
-            skillId: 'callback',
-            nativeSkillType: 'normalSkill',
-            naturalDurationFrames: 3,
-            initialBlackboard: {},
-            castResource: {
-              costFrame: 0,
-              cooldownSeconds: 0,
-              maxChargeTime: 1,
-              cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-            },
-            timelineActions: [{ startFrame: 0, endFrame: 0, sequence: { steps } }],
-          },
-        },
-      ],
-    });
-    const sourceProbe = (
+    };
+    const sourceProbeNodes = (
+      prefix: string,
       objectType: import('../../../../packages/game-data-contract/src/primitives').CombatObjectType,
       name: string,
-    ): ResolvedCombatStep[] => [
-      {
-        kind: 'mergeContextTargets',
-        parameters: {
-          saveToContextKey: 'source',
-          sources: [{ kind: 'abilitySystemSource', owner: 'actionOwner' }],
-        },
-      },
-      {
-        kind: 'conditional',
-        parameters: {
-          condition: {
-            kind: 'contextTargetObjectTypeMatch',
-            contextKey: 'source',
-            objectTypes: [objectType],
+    ) => {
+      const nodes: Record<string, ActionGraphNode> = {
+        [`${prefix}-merge`]: {
+          action: {
+            kind: 'mergeContextTargets',
+            parameters: {
+              saveToContextKey: 'source',
+              sources: [{ kind: 'abilitySystemSource', owner: 'actionOwner' }],
+            },
           },
+          next: `${prefix}-branch`,
         },
-        whenTrue: {
-          steps: [
-            {
-              kind: 'triggerCustomAbilityEvent',
-              parameters: {
-                target: 'caster',
-                source: 'currentAbilityEntity',
-                eventName: name,
-                eventParam: 1,
+        [`${prefix}-branch`]: {
+          action: {
+            kind: 'conditional',
+            parameters: {
+              condition: {
+                kind: 'contextTargetObjectTypeMatch',
+                contextKey: 'source',
+                objectTypes: [objectType],
               },
             },
-          ],
+            whenTrue: { $sequence: `${prefix}-emit` },
+          },
+          next: null,
         },
-      },
-    ];
+        [`${prefix}-emit`]: {
+          action: {
+            kind: 'triggerCustomAbilityEvent',
+            parameters: {
+              target: 'caster',
+              source: 'currentAbilityEntity',
+              eventName: name,
+              eventParam: 1,
+            },
+          },
+          next: null,
+        },
+      };
+      return { nodes, entry: `${prefix}-merge` };
+    };
+    const callbackStep = (
+      probes: readonly ReturnType<typeof sourceProbeNodes>[],
+      source: 'actionSource' | 'actionOwner' = 'actionSource',
+    ): ActionGraphNode => {
+      const callbackSkill: AbilityEntityChildSkillDefinition = {
+        ...callbackMeta,
+        scheduledSequences: [
+          { startFrame: 0, endFrame: 0, sequence: { $sequence: probes[0]!.entry } },
+        ],
+        actionGraph: {
+          main: { nodes: Object.assign({}, ...probes.map(probe => probe.nodes)) },
+          macros: {},
+        },
+      };
+      return {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            source,
+            finish: event === 'reach' ? 'firstTickReach' : event === 'hit' ? 10 : 0.01,
+            recycleDelaySeconds: 10,
+            ...(event === 'hit' ? { hit: { finishOnHit: true } } : {}),
+          },
+          callbacks: [{ event, skill: callbackSkill }],
+        },
+        next: null,
+      };
+    };
+    // 内层回调自己的图：来源探针 + abilityEntity 探针。
+    const innerProbeA = sourceProbeNodes(
+      'inner-probe-a',
+      source === 'actionOwner' ? 'projectile' : 'character',
+      'nested-source',
+    );
+    const innerProbeB = sourceProbeNodes(
+      'inner-probe-b',
+      'abilityEntity',
+      'incorrect-ability-entity-match',
+    );
+    innerProbeA.nodes['inner-probe-a-branch'] = {
+      ...innerProbeA.nodes['inner-probe-a-branch']!,
+      next: 'inner-probe-b-merge',
+    };
+    // 外层回调自己的图：character 探针 + 内层回调调度节点。
+    const outerProbe = sourceProbeNodes('outer-probe', 'character', 'source-is-operator');
+    outerProbe.nodes['outer-probe-branch'] = {
+      ...outerProbe.nodes['outer-probe-branch']!,
+      next: 'inner-callback',
+    };
+    outerProbe.nodes['inner-callback'] = callbackStep([innerProbeA, innerProbeB], source);
+    const nodes: Record<string, ActionGraphNode> = {
+      'outer-callback': callbackStep([outerProbe]),
+    };
     const assembly = createAssembly({
       ...nativeEventRuntimeOptions(),
       emitAbilityEvent,
@@ -1171,23 +1269,7 @@ describe('CombatRuntimeAssembly', () => {
           timelineActions: [
             {
               startFrame: 0,
-              sequence: {
-                steps: [
-                  callbackStep([
-                    ...sourceProbe('character', 'source-is-operator'),
-                    callbackStep(
-                      [
-                        ...sourceProbe(
-                          source === 'actionOwner' ? 'projectile' : 'character',
-                          'nested-source',
-                        ),
-                        ...sourceProbe('abilityEntity', 'incorrect-ability-entity-match'),
-                      ],
-                      source,
-                    ),
-                  ]),
-                ],
-              },
+              sequence: compileGraphEntry('nested-projectile-source', 'outer-callback', nodes),
             },
           ],
         }),
@@ -1217,14 +1299,12 @@ describe('CombatRuntimeAssembly', () => {
         {
           startFrame: 0,
           endFrame: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'changeSkillSlot',
-                parameters: { skillGroupKey: 'battleSkill', targetSkillKey: 'replacement' },
-              },
-            ],
-          },
+          sequence: chainEntry('slot-rewrite-source-identity', [
+            {
+              kind: 'changeSkillSlot',
+              parameters: { skillGroupKey: 'battleSkill', targetSkillKey: 'replacement' },
+            },
+          ]),
         },
       ],
     });
@@ -1288,9 +1368,9 @@ describe('CombatRuntimeAssembly', () => {
             {
               startFrame: 0,
               endFrame: 0,
-              sequence: {
-                steps: [
-                  {
+              sequence: compileGraphEntry('projectile-publish-callback', 'step-0', {
+                'step-0': {
+                  action: {
                     kind: 'launchProjectile',
                     parameters: { finish: 0.1, recycleDelaySeconds: 0 },
                     callbacks: [
@@ -1310,16 +1390,16 @@ describe('CombatRuntimeAssembly', () => {
                               availabilityThreshold: 0,
                             },
                           },
-                          initialBlackboard: {},
-                          timelineActions: [
-                            { startFrame: 0, endFrame: 0, sequence: { steps: [] } },
-                          ],
+                          blackboard: {},
+                          scheduledSequences: [],
+                          actionGraph: { main: { nodes: {} }, macros: {} },
                         },
                       },
                     ],
                   },
-                ],
-              },
+                  next: null,
+                },
+              }),
             },
           ],
         }),
@@ -1396,16 +1476,14 @@ describe('CombatRuntimeAssembly', () => {
                 {
                   startFrame: 0,
                   endFrame: 0,
-                  sequence: {
-                    steps: [
-                      {
-                        kind: 'launchProjectile',
-                        parameters: { finish: 'firstTickReach', recycleDelaySeconds },
-                        callbacks: [],
-                      },
-                      { kind: 'finishTimeline', parameters: {} },
-                    ],
-                  },
+                  sequence: chainEntry('recycle-delay-launch', [
+                    {
+                      kind: 'launchProjectile',
+                      parameters: { finish: 'firstTickReach', recycleDelaySeconds },
+                      callbacks: [],
+                    },
+                    { kind: 'finishTimeline', parameters: {} },
+                  ]),
                 },
               ],
             }),
@@ -1598,18 +1676,16 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'applyBuff',
-                parameters: {
-                  buffId: 'hidden-buff',
-                  target: 'caster',
-                  inheritSourceSkillCastInfo: true,
-                },
+          sequence: chainEntry('deferred-hidden-apply-buff', [
+            {
+              kind: 'applyBuff',
+              parameters: {
+                buffId: 'hidden-buff',
+                target: 'caster',
+                inheritSourceSkillCastInfo: true,
               },
-            ],
-          },
+            },
+          ]),
         },
       ],
     });
@@ -1621,19 +1697,17 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'castSkillDuringAction',
-                parameters: {
-                  skillId: 'native-hidden',
-                  target: 'enemy',
-                  skipApplyCost: true,
-                  inheritSourceSkillCastInfo: false,
-                },
+          sequence: chainEntry('deferred-hidden-cast-during-action', [
+            {
+              kind: 'castSkillDuringAction',
+              parameters: {
+                skillId: 'native-hidden',
+                target: 'enemy',
+                skipApplyCost: true,
+                inheritSourceSkillCastInfo: false,
               },
-            ],
-          },
+            },
+          ]),
         },
       ],
     });
@@ -1653,18 +1727,16 @@ describe('CombatRuntimeAssembly', () => {
         'hidden-buff': {
           stackingType: 'unique',
           lifecycleSequences: {
-            enable: {
-              steps: [
-                {
-                  kind: 'modifyActionValue',
-                  parameters: {
-                    key: 'seen',
-                    operation: 'assign',
-                    value: { kind: 'constant', value: 1 },
-                  },
+            enable: chainEntry('hidden-buff-enable', [
+              {
+                kind: 'modifyActionValue',
+                parameters: {
+                  key: 'seen',
+                  operation: 'assign',
+                  value: { kind: 'constant', value: 1 },
                 },
-              ],
-            },
+              },
+            ]),
           },
         },
       },
@@ -1820,18 +1892,16 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'changeSkillSlot',
-                parameters: {
-                  skillGroupKey: 'comboSkill',
-                  targetSkillKey: 'enhancedComboSkill',
-                  inheritOriginSkillCooldownProgress: true,
-                },
+          sequence: chainEntry('combo-candidate-slot-change', [
+            {
+              kind: 'changeSkillSlot',
+              parameters: {
+                skillGroupKey: 'comboSkill',
+                targetSkillKey: 'enhancedComboSkill',
+                inheritOriginSkillCooldownProgress: true,
               },
-            ],
-          },
+            },
+          ]),
         },
       ],
     });
@@ -1912,18 +1982,16 @@ describe('CombatRuntimeAssembly', () => {
     const parentDefinition = {
       stackingType: 'unique' as const,
       lifecycleSequences: {
-        enable: {
-          steps: [
-            {
-              kind: 'applyBuff' as const,
-              parameters: {
-                buffId: 'source-child',
-                target: 'buffOwner' as const,
-                inheritSourceSkillCastInfo: true,
-              },
+        enable: chainEntry('source-parent-enable', [
+          {
+            kind: 'applyBuff' as const,
+            parameters: {
+              buffId: 'source-child',
+              target: 'buffOwner' as const,
+              inheritSourceSkillCastInfo: true,
             },
-          ],
-        },
+          },
+        ]),
       },
     };
     const sourceSkill = skill({
@@ -1935,18 +2003,16 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'applyBuff',
-                parameters: {
-                  buffId: 'source-parent',
-                  target: 'partyExceptCaster',
-                  inheritSourceSkillCastInfo: true,
-                },
+          sequence: chainEntry('support-apply-parent', [
+            {
+              kind: 'applyBuff',
+              parameters: {
+                buffId: 'source-parent',
+                target: 'partyExceptCaster',
+                inheritSourceSkillCastInfo: true,
               },
-            ],
-          },
+            },
+          ]),
         },
       ],
     });
@@ -2082,14 +2148,12 @@ describe('CombatRuntimeAssembly', () => {
         {
           startFrame: 0,
           endFrame: 1,
-          sequence: {
-            steps: [
-              {
-                kind: 'changeSkillSlot',
-                parameters: { skillGroupKey: 'ultimate', targetSkillKey: 'arcana' },
-              },
-            ],
-          },
+          sequence: chainEntry('frame-zero-slot-arcana', [
+            {
+              kind: 'changeSkillSlot',
+              parameters: { skillGroupKey: 'ultimate', targetSkillKey: 'arcana' },
+            },
+          ]),
         },
       ],
     });
@@ -2104,14 +2168,12 @@ describe('CombatRuntimeAssembly', () => {
         {
           startFrame: 0,
           endFrame: 1,
-          sequence: {
-            steps: [
-              {
-                kind: 'changeSkillSlot',
-                parameters: { skillGroupKey: 'ultimate', targetSkillKey: 'ultimate' },
-              },
-            ],
-          },
+          sequence: chainEntry('frame-zero-slot-ultimate', [
+            {
+              kind: 'changeSkillSlot',
+              parameters: { skillGroupKey: 'ultimate', targetSkillKey: 'ultimate' },
+            },
+          ]),
         },
       ],
     });
@@ -2187,40 +2249,39 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'spawnAbilityEntity',
-                parameters: {
-                  abilityEntityId: 'fixture_entity',
-                  definition: {
-                    lifetime: { kind: 'limited', durationSeconds: 5 },
-                    childSkill: {
-                      nativeSkillType: 'normalSkill' as const,
-                      naturalDurationFrames: 30,
-                      castResource: {
-                        costFrame: 0,
-                        cooldownSeconds: 0,
-                        maxChargeTime: 1,
-                        cost: {
-                          resource: 'ultimateEnergy' as const,
-                          value: 0,
-                          availabilityThreshold: 0,
-                        },
+          sequence: chainEntry('spawn-logical-entity', [
+            {
+              kind: 'spawnAbilityEntity',
+              parameters: {
+                abilityEntityId: 'fixture_entity',
+                definition: {
+                  lifetime: { kind: 'limited', durationSeconds: 5 },
+                  childSkill: {
+                    skillId: 'fixture_child',
+                    nativeSkillType: 'normalSkill' as const,
+                    naturalDurationFrames: 30,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: {
+                        resource: 'ultimateEnergy' as const,
+                        value: 0,
+                        availabilityThreshold: 0,
                       },
-                      skillId: 'fixture_child',
-                      initialBlackboard: {},
-                      timelineActions: [],
                     },
+                    blackboard: {},
+                    scheduledSequences: [],
+                    actionGraph: { main: { nodes: {} }, macros: {} },
                   },
-                  target: 'enemy',
-                  overrideDurationSeconds: { kind: 'constant', value: 2 },
-                  saveToContextKey: 'spawned',
-                  dieWhenSourceDies: false,
                 },
+                target: 'enemy',
+                overrideDurationSeconds: { kind: 'constant', value: 2 },
+                saveToContextKey: 'spawned',
+                dieWhenSourceDies: false,
               },
-            ],
-          },
+            },
+          ]),
         },
       ],
     });
@@ -2300,9 +2361,9 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
+          sequence: compileGraphEntry('spawn-passive-host', 'step-0', {
+            'step-0': {
+              action: {
                 kind: 'spawnAbilityEntity',
                 parameters: {
                   abilityEntityId: 'passive-host',
@@ -2313,29 +2374,37 @@ describe('CombatRuntimeAssembly', () => {
                     passiveSkills: [
                       {
                         key: 'entity-passive',
-                        initialBlackboard: {},
-                        enableSequence: { steps: [] },
+                        blackboard: {},
+                        enableSequence: { $sequence: null },
                         abilityEventResponses: [
                           {
                             event: 'addedBuff',
                             priority: 0,
-                            sequence: {
-                              steps: [
-                                {
+                            sequence: { $sequence: 'passive-added-buff-response' },
+                          },
+                        ],
+                        actionGraph: {
+                          main: {
+                            nodes: {
+                              'passive-added-buff-response': {
+                                action: {
                                   kind: 'changeResource',
                                   parameters: { resource: 'sp', amount: 10, recipient: 'team' },
                                 },
-                              ],
+                                next: null,
+                              },
                             },
                           },
-                        ],
+                          macros: {},
+                        },
                       },
                     ],
                   },
                 },
               },
-            ],
-          },
+              next: null,
+            },
+          }),
         },
       ],
     });
@@ -2380,9 +2449,9 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
+          sequence: compileGraphEntry('entity-child-timeline', 'step-0', {
+            'step-0': {
+              action: {
                 kind: 'spawnAbilityEntity',
                 parameters: {
                   abilityEntityId: 'fixture_entity',
@@ -2390,6 +2459,7 @@ describe('CombatRuntimeAssembly', () => {
                   definition: {
                     lifetime: { kind: 'limited', durationSeconds: 10 },
                     childSkill: {
+                      skillId: 'fixture_child',
                       nativeSkillType: 'normalSkill' as const,
                       naturalDurationFrames: 30,
                       castResource: {
@@ -2402,27 +2472,34 @@ describe('CombatRuntimeAssembly', () => {
                           availabilityThreshold: 0,
                         },
                       },
-                      skillId: 'fixture_child',
-                      initialBlackboard: {},
-                      timelineActions: [
+                      blackboard: {},
+                      scheduledSequences: [
                         {
                           startFrame: 2,
-                          sequence: {
-                            steps: [
-                              {
+                          sequence: { $sequence: 'child-resource' },
+                        },
+                      ],
+                      actionGraph: {
+                        main: {
+                          nodes: {
+                            'child-resource': {
+                              action: {
                                 kind: 'changeResource',
                                 parameters: { resource: 'sp', amount: 10, recipient: 'team' },
                               },
-                            ],
+                              next: null,
+                            },
                           },
                         },
-                      ],
+                        macros: {},
+                      },
                     },
                   },
                 },
               },
-            ],
-          },
+              next: null,
+            },
+          }),
         },
       ],
     });
@@ -2470,9 +2547,9 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
+          sequence: compileGraphEntry('entity-child-projectile', 'step-0', {
+            'step-0': {
+              action: {
                 kind: 'spawnAbilityEntity',
                 parameters: {
                   abilityEntityId: 'projectile-child-host',
@@ -2480,6 +2557,7 @@ describe('CombatRuntimeAssembly', () => {
                   definition: {
                     lifetime: { kind: 'limited', durationSeconds: 10 },
                     childSkill: {
+                      skillId: 'projectile-child',
                       nativeSkillType: 'normalSkill' as const,
                       naturalDurationFrames: 30,
                       castResource: {
@@ -2492,28 +2570,35 @@ describe('CombatRuntimeAssembly', () => {
                           availabilityThreshold: 0,
                         },
                       },
-                      skillId: 'projectile-child',
-                      initialBlackboard: {},
-                      timelineActions: [
+                      blackboard: {},
+                      scheduledSequences: [
                         {
                           startFrame: 1,
-                          sequence: {
-                            steps: [
-                              {
+                          sequence: { $sequence: 'child-launch' },
+                        },
+                      ],
+                      actionGraph: {
+                        main: {
+                          nodes: {
+                            'child-launch': {
+                              action: {
                                 kind: 'launchProjectile',
                                 parameters: { finish: 'firstTickReach' },
                                 callbacks: [],
                               },
-                            ],
+                              next: null,
+                            },
                           },
                         },
-                      ],
+                        macros: {},
+                      },
                     },
                   },
                 },
               },
-            ],
-          },
+              next: null,
+            },
+          }),
         },
       ],
     });
@@ -2569,9 +2654,9 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
+          sequence: compileGraphEntry('entity-buff-lifecycle', 'step-0', {
+            'step-0': {
+              action: {
                 kind: 'spawnAbilityEntity',
                 parameters: {
                   abilityEntityId: 'buff-host',
@@ -2579,6 +2664,7 @@ describe('CombatRuntimeAssembly', () => {
                   definition: {
                     lifetime: { kind: 'limited', durationSeconds: 10 },
                     childSkill: {
+                      skillId: 'buff-child',
                       nativeSkillType: 'normalSkill' as const,
                       naturalDurationFrames: 30,
                       castResource: {
@@ -2591,53 +2677,38 @@ describe('CombatRuntimeAssembly', () => {
                           availabilityThreshold: 0,
                         },
                       },
-                      skillId: 'buff-child',
-                      initialBlackboard: {},
-                      timelineActions: [
+                      blackboard: {},
+                      scheduledSequences: [
                         {
                           startFrame: 0,
-                          sequence: {
-                            steps: [
-                              {
+                          sequence: { $sequence: 'child-apply-monitor' },
+                        },
+                      ],
+                      actionGraph: {
+                        main: {
+                          nodes: {
+                            'child-apply-monitor': {
+                              action: {
                                 kind: 'applyBuff',
                                 parameters: {
                                   buffId: 'entity-monitor',
                                   target: 'currentAbilityEntity',
                                   inheritSourceSkillCastInfo: true,
-                                  definition: {
-                                    stackingType: 'unique',
-                                    triggerIntervalSeconds: 1 / 30,
-                                    waitFirstTriggerInterval: true,
-                                    maxTriggerCount: 1,
-                                    lifecycleSequences: {
-                                      trigger: {
-                                        steps: [
-                                          {
-                                            kind: 'applyBuff',
-                                            parameters: {
-                                              buffId: 'entity-trigger-result',
-                                              target: 'buffOwner',
-                                              inheritSourceSkillCastInfo: true,
-                                              definition: { stackingType: 'unique' },
-                                            },
-                                          },
-                                          { kind: 'finishCurrentAbilityEntity', parameters: {} },
-                                        ],
-                                      },
-                                    },
-                                  },
                                 },
                               },
-                            ],
+                              next: null,
+                            },
                           },
                         },
-                      ],
+                        macros: {},
+                      },
                     },
                   },
                 },
               },
-            ],
-          },
+              next: null,
+            },
+          }),
         },
       ],
     });
@@ -2653,6 +2724,28 @@ describe('CombatRuntimeAssembly', () => {
       undefined,
       undefined,
       emitAbilityEvent,
+      {
+        'entity-monitor': {
+          stackingType: 'unique',
+          triggerIntervalSeconds: 1 / 30,
+          waitFirstTriggerInterval: true,
+          maxTriggerCount: 1,
+          lifecycleSequences: {
+            trigger: chainEntry('entity-monitor-trigger', [
+              {
+                kind: 'applyBuff',
+                parameters: {
+                  buffId: 'entity-trigger-result',
+                  target: 'buffOwner',
+                  inheritSourceSkillCastInfo: true,
+                },
+              },
+              { kind: 'finishCurrentAbilityEntity', parameters: {} },
+            ]),
+          },
+        },
+        'entity-trigger-result': { stackingType: 'unique' },
+      },
     );
 
     expect(assembly.tryStartSkill('operator', 'skill', 'entity-buff-cast')).toBe(true);
@@ -2714,16 +2807,21 @@ describe('CombatRuntimeAssembly', () => {
         target,
       );
     };
+    const programs = new ActionGraphDefinitionRepository();
     const compiled = compileSkill({
       operatorId: 'operator',
       skillGroupKey: 'battleSkill',
       skillType: 'battleSkill',
       skillLevel: 1,
       skill: gilbertaBattleSkill,
-      abilityEntityDefinitions: gilbertaGeneratedOperator.abilityEntityDefinitions,
+      programs,
+      importedAbilityEntityDefinitions: createIndependentAbilityEntityImportResolver(
+        gilbertaGeneratedOperator.abilityEntityDefinitions ?? {},
+        programs,
+      )(1),
     });
     const spawnAction = compiled.timelineActions.find(action =>
-      action.sequence.steps.some(step => step.kind === 'spawnAbilityEntity'),
+      rootActionSteps(action.sequence).some(step => step.kind === 'spawnAbilityEntity'),
     );
     if (spawnAction === undefined) throw new Error('Gilberta generated spawn action is missing');
     const castId = 'gilberta-monitor-cast';
@@ -2757,7 +2855,12 @@ describe('CombatRuntimeAssembly', () => {
       undefined,
       undefined,
       undefined,
-      compileOperatorBuffDefinitions(gilbertaGeneratedOperator.buffDefinitions),
+      Object.fromEntries(
+        Object.entries(gilbertaGeneratedOperator.buffDefinitions ?? {}).map(([id, definition]) => [
+          id,
+          compileIndependentBuffResource(definition, id, programs),
+        ]),
+      ),
     );
 
     expect(assembly.tryStartSkill('operator', program.skillId, castId)).toBe(true);
@@ -2791,28 +2894,26 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'startTimeDilation',
-                parameters: {
-                  scope: 'entity',
-                  durationSeconds: { kind: 'constant', value: 1 },
-                  slot: 'Test/TimeSlot1',
-                  priority: 10,
-                  curve: { kind: 'named', key: 'half' },
-                  finishByAction: false,
-                  targets: [],
-                  abilityEntityTargets: [
-                    {
-                      kind: 'ownerSpawned',
-                      abilityEntityIds: ['marked'],
-                    },
-                  ],
-                },
+          sequence: chainEntry('dilation-owner-entity-targets', [
+            {
+              kind: 'startTimeDilation',
+              parameters: {
+                scope: 'entity',
+                durationSeconds: { kind: 'constant', value: 1 },
+                slot: 'Test/TimeSlot1',
+                priority: 10,
+                curve: { kind: 'named', key: 'half' },
+                finishByAction: false,
+                targets: [],
+                abilityEntityTargets: [
+                  {
+                    kind: 'ownerSpawned',
+                    abilityEntityIds: ['marked'],
+                  },
+                ],
               },
-            ],
-          },
+            },
+          ]),
         },
       ],
     });
@@ -2989,18 +3090,16 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'changeSkillSlot',
-                parameters: {
-                  skillGroupKey: 'battleSkill',
-                  targetSkillKey: 'battleSkillEnd',
-                  inheritOriginSkillCooldownProgress: true,
-                },
+          sequence: chainEntry('inherit-cooldown-slot-change', [
+            {
+              kind: 'changeSkillSlot',
+              parameters: {
+                skillGroupKey: 'battleSkill',
+                targetSkillKey: 'battleSkillEnd',
+                inheritOriginSkillCooldownProgress: true,
               },
-            ],
-          },
+            },
+          ]),
         },
       ],
     });
@@ -3062,19 +3161,17 @@ describe('CombatRuntimeAssembly', () => {
         {
           startFrame: 0,
           endFrame: 3,
-          sequence: {
-            steps: [
-              {
-                kind: 'changeSkillSlot',
-                parameters: {
-                  skillGroupKey: 'battle',
-                  targetSkillKey: 'enhanced',
-                  lifetime: 'finishByAction',
-                  inheritOriginSkillCooldownProgress: true,
-                },
+          sequence: chainEntry('slot-replacement-registration', [
+            {
+              kind: 'changeSkillSlot',
+              parameters: {
+                skillGroupKey: 'battle',
+                targetSkillKey: 'enhanced',
+                lifetime: 'finishByAction',
+                inheritOriginSkillCooldownProgress: true,
               },
-            ],
-          },
+            },
+          ]),
         },
       ],
     });
@@ -3117,18 +3214,16 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'changeSkillSlot',
-                parameters: {
-                  skillGroupKey: 'comboSkill',
-                  targetSkillKey: 'enhancedComboSkill',
-                  inheritOriginSkillCooldownProgress: true,
-                },
+          sequence: chainEntry('unplaced-group-slot-change', [
+            {
+              kind: 'changeSkillSlot',
+              parameters: {
+                skillGroupKey: 'comboSkill',
+                targetSkillKey: 'enhancedComboSkill',
+                inheritOriginSkillCooldownProgress: true,
               },
-            ],
-          },
+            },
+          ]),
         },
       ],
     });
@@ -3198,22 +3293,20 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'startTimeDilation',
-                parameters: {
-                  scope: 'global',
-                  durationSeconds: { kind: 'constant', value: 1 },
-                  slot: 'Test/TimeSlot1',
-                  priority: 10,
-                  curve: { kind: 'named', key: 'half' },
-                  finishByAction: false,
-                  ignoredTargets: ['controlled'],
-                },
+          sequence: chainEntry('freeze-global-dilation', [
+            {
+              kind: 'startTimeDilation',
+              parameters: {
+                scope: 'global',
+                durationSeconds: { kind: 'constant', value: 1 },
+                slot: 'Test/TimeSlot1',
+                priority: 10,
+                curve: { kind: 'named', key: 'half' },
+                finishByAction: false,
+                ignoredTargets: ['controlled'],
               },
-            ],
-          },
+            },
+          ]),
         },
       ],
     });
@@ -3366,18 +3459,16 @@ describe('CombatRuntimeAssembly', () => {
 
   it('installs equipment event handlers and executes their resource sequence', () => {
     const nativeEvents = createNativeEventFixture();
-    const initialize = {
-      steps: [
-        {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'gain',
-            operation: 'assign',
-            value: { kind: 'constant', value: 10 },
-          },
+    const initialize = chainEntry('equipment-initialize', [
+      {
+        kind: 'modifyActionValue',
+        parameters: {
+          key: 'gain',
+          operation: 'assign',
+          value: { kind: 'constant', value: 10 },
         },
-      ],
-    } as const;
+      },
+    ]);
     const assembly = new CombatRuntimeAssembly({
       ...nativeEventRuntimeOptions(),
       registerCombatAbilityEvent: nativeEvents.register,
@@ -3415,18 +3506,16 @@ describe('CombatRuntimeAssembly', () => {
                   key: 'gain-sp',
                   event: { kind: 'damageTagHit', tag: 'normalSkill', scope: 'operator' },
                   condition: { kind: 'combatActive' },
-                  sequence: {
-                    steps: [
-                      {
-                        kind: 'changeResourceByActionValue',
-                        parameters: {
-                          resource: 'sp',
-                          amount: { kind: 'blackboard', key: 'gain' },
-                          recipient: 'team',
-                        },
+                  sequence: chainEntry('equipment-gain-sp', [
+                    {
+                      kind: 'changeResourceByActionValue',
+                      parameters: {
+                        resource: 'sp',
+                        amount: { kind: 'blackboard', key: 'gain' },
+                        recipient: 'team',
                       },
-                    ],
-                  },
+                    },
+                  ]),
                 },
               ],
               blackboard: { gain: 1 },
@@ -3461,18 +3550,16 @@ describe('CombatRuntimeAssembly', () => {
   it('配装逐能力启用：自身启动不响应，已启用能力及启用后安装正常响应', () => {
     const native = createNativeEventFixture();
     const observed: string[] = [];
-    const sequence = {
-      steps: [
-        {
-          kind: 'changeResource',
-          parameters: {
-            resource: 'sp',
-            amount: 1,
-            recipient: 'team',
-          },
+    const sequence = chainEntry('equipment-enable-sequence', [
+      {
+        kind: 'changeResource',
+        parameters: {
+          resource: 'sp',
+          amount: 1,
+          recipient: 'team',
         },
-      ],
-    } as const;
+      },
+    ]);
     new CombatRuntimeAssembly({
       ...nativeEventRuntimeOptions(),
       emitAbilityEvent: (_owner, event, payload) =>
@@ -3504,7 +3591,13 @@ describe('CombatRuntimeAssembly', () => {
             modifiers: [],
             enableSequence: sequence,
             initializationSequence: sequence,
-            eventHandlers: [{ key, abilityEvent: 'skillSpGained', sequence: { steps: [] } }],
+            eventHandlers: [
+              {
+                key,
+                abilityEvent: 'skillSpGained',
+                sequence: chainEntry('equipment-empty-handler', []),
+              },
+            ],
           })),
           initializationPrograms: ['first', 'second'].map((key, equipmentContributionIndex) => ({
             key,
@@ -3530,7 +3623,7 @@ describe('CombatRuntimeAssembly', () => {
       const eventHandler = {
         key: 'gain',
         abilityEvent: 'skillSpGained',
-        sequence: { steps: [] },
+        sequence: chainEntry('equipment-cleanup-handler', []),
       } as const;
       expect(
         () =>
@@ -3566,21 +3659,19 @@ describe('CombatRuntimeAssembly', () => {
                     failure === 'initialization' && operatorId === 'second' ? 99 : 0,
                   ...(failure === 'enable' && operatorId === 'second'
                     ? {
-                        enableSequence: {
-                          steps: [
-                            {
-                              kind: 'modifyActionValue' as const,
-                              parameters: {
-                                key: 'result',
-                                operation: 'assign' as const,
-                                value: { kind: 'blackboard' as const, key: 'missing-enable-value' },
-                              },
+                        enableSequence: chainEntry('equipment-missing-enable-value', [
+                          {
+                            kind: 'modifyActionValue' as const,
+                            parameters: {
+                              key: 'result',
+                              operation: 'assign' as const,
+                              value: { kind: 'blackboard' as const, key: 'missing-enable-value' },
                             },
-                          ],
-                        },
+                          },
+                        ]),
                       }
                     : {}),
-                  sequence: { steps: [] },
+                  sequence: chainEntry('equipment-cleanup-initialization', []),
                 },
               ],
             })),
@@ -3637,7 +3728,7 @@ describe('CombatRuntimeAssembly', () => {
                     {
                       key: 'handler',
                       event: { kind: 'damageTagHit', tag: 'normalSkill', scope: 'team' },
-                      sequence: { steps: [] },
+                      sequence: chainEntry('equipment-handler-requires-executor', []),
                     },
                   ],
                 },
@@ -3666,35 +3757,16 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'applyBuff',
-                parameters: {
-                  buffId: 'resource-buff',
-                  target: 'caster',
-                  inheritSourceSkillCastInfo: true,
-                  definition: {
-                    stackingType: 'unique',
-                    lifecycleSequences: {
-                      start: {
-                        steps: [
-                          {
-                            kind: 'changeResource',
-                            parameters: {
-                              resource: 'sp',
-                              amount: 20,
-                              recipient: 'team',
-                            },
-                          },
-                        ],
-                      },
-                    },
-                  },
-                },
+          sequence: chainEntry('inline-buff-lifecycle-apply', [
+            {
+              kind: 'applyBuff',
+              parameters: {
+                buffId: 'resource-buff',
+                target: 'caster',
+                inheritSourceSkillCastInfo: true,
               },
-            ],
-          },
+            },
+          ]),
         },
       ],
     });
@@ -3704,6 +3776,29 @@ describe('CombatRuntimeAssembly', () => {
       undefined,
       emptyEnemyBuffRuntime,
       () => buffRuntime,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      {
+        'resource-buff': {
+          stackingType: 'unique',
+          lifecycleSequences: {
+            start: chainEntry('resource-buff-start', [
+              {
+                kind: 'changeResource',
+                parameters: {
+                  resource: 'sp',
+                  amount: 20,
+                  recipient: 'team',
+                },
+              },
+            ]),
+          },
+        },
+      },
     );
 
     expect(assembly.tryStartSkill('operator', 'skill', 'cast-1')).toBe(true);
@@ -3737,9 +3832,9 @@ describe('CombatRuntimeAssembly', () => {
         {
           startFrame: 0,
           endFrame: 2,
-          sequence: {
-            steps: [
-              {
+          sequence: compileGraphEntry('buff-application-listener', 'step-0', {
+            'step-0': {
+              action: {
                 kind: 'listenForCombatEvents',
                 parameters: {
                   responses: [
@@ -3747,32 +3842,35 @@ describe('CombatRuntimeAssembly', () => {
                       key: 'on-added-buff',
                       event: { kind: 'buffApplied' },
                       condition: { kind: 'eventBuffIdMatch', buffIds: ['watched-buff'] },
-                      sequence: {
-                        steps: [
-                          {
-                            kind: 'changeResource',
-                            parameters: {
-                              resource: 'sp',
-                              amount: 7,
-                              recipient: 'team',
-                            },
-                          },
-                        ],
-                      },
+                      sequence: { $sequence: 'respond-added-buff' },
                     },
                   ],
                 },
               },
-              {
+              next: 'step-1',
+            },
+            'step-1': {
+              action: {
                 kind: 'applyBuff',
                 parameters: {
                   buffId: 'watched-buff',
                   target: 'caster',
-                  definition: { stackingType: 'unique' },
                 },
               },
-            ],
-          },
+              next: null,
+            },
+            'respond-added-buff': {
+              action: {
+                kind: 'changeResource',
+                parameters: {
+                  resource: 'sp',
+                  amount: 7,
+                  recipient: 'team',
+                },
+              },
+              next: null,
+            },
+          }),
         },
       ],
     });
@@ -3782,6 +3880,15 @@ describe('CombatRuntimeAssembly', () => {
       undefined,
       emptyEnemyBuffRuntime,
       () => buffRuntime,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      {
+        'watched-buff': { stackingType: 'unique' },
+      },
     );
 
     expect(assembly.tryStartSkill('operator', 'skill')).toBe(true);
@@ -3795,20 +3902,18 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'changeResource',
-                parameters: {
-                  resource: 'sp',
-                  amount: 10,
-                  recipient: 'team',
-                  spGainKind: 'gain',
-                  spGainSource: 'skill',
-                },
+          sequence: chainEntry('passive-listener-sp-gain', [
+            {
+              kind: 'changeResource',
+              parameters: {
+                resource: 'sp',
+                amount: 10,
+                recipient: 'team',
+                spGainKind: 'gain',
+                spGainSource: 'skill',
               },
-            ],
-          },
+            },
+          ]),
         },
       ],
     });
@@ -3816,9 +3921,9 @@ describe('CombatRuntimeAssembly', () => {
       {
         key: 'skill-sp-listener',
         initialBlackboard: {},
-        enableSequence: {
-          steps: [
-            {
+        enableSequence: compileGraphEntry('passive-skill-sp-listener', 'listen', {
+          listen: {
+            action: {
               kind: 'listenForCombatEvents',
               parameters: {
                 responses: [
@@ -3827,24 +3932,25 @@ describe('CombatRuntimeAssembly', () => {
                     event: { kind: 'spGained', source: 'skill', gainKind: 'gain' },
                     phase: 'dataAction',
                     priority: 0,
-                    sequence: {
-                      steps: [
-                        {
-                          kind: 'changeResource',
-                          parameters: {
-                            resource: 'ultimateEnergy',
-                            amount: 9,
-                            recipient: 'caster',
-                          },
-                        },
-                      ],
-                    },
+                    sequence: { $sequence: 'respond-skill-sp' },
                   },
                 ],
               },
             },
-          ],
-        },
+            next: null,
+          },
+          'respond-skill-sp': {
+            action: {
+              kind: 'changeResource',
+              parameters: {
+                resource: 'ultimateEnergy',
+                amount: 9,
+                recipient: 'caster',
+              },
+            },
+            next: null,
+          },
+        }),
       },
     ];
     const assembly = createAssembly(
@@ -3875,34 +3981,41 @@ describe('CombatRuntimeAssembly', () => {
         {
           startFrame: 0,
           endFrame: 2,
-          sequence: {
-            steps: [
-              {
+          sequence: compileGraphEntry('airborne-output-listener', 'step-0', {
+            'step-0': {
+              action: {
                 kind: 'listenForCombatEvents',
                 parameters: {
                   responses: [
                     {
                       key: 'before-output-airborne',
                       event: { kind: 'airborneOutput' },
-                      sequence: {
-                        steps: [
-                          {
-                            kind: 'changeResource',
-                            parameters: { resource: 'sp', amount: 9, recipient: 'team' },
-                          },
-                        ],
-                      },
+                      sequence: { $sequence: 'respond-airborne' },
                     },
                   ],
                 },
               },
-              { kind: 'outputAirborne', parameters: { target: 'enemy' } },
-              {
+              next: 'step-1',
+            },
+            'step-1': {
+              action: { kind: 'outputAirborne', parameters: { target: 'enemy' } },
+              next: 'step-2',
+            },
+            'step-2': {
+              action: {
                 kind: 'changeResource',
                 parameters: { resource: 'sp', amount: 1, recipient: 'team' },
               },
-            ],
-          },
+              next: null,
+            },
+            'respond-airborne': {
+              action: {
+                kind: 'changeResource',
+                parameters: { resource: 'sp', amount: 9, recipient: 'team' },
+              },
+              next: null,
+            },
+          }),
         },
       ],
     });
@@ -3947,35 +4060,16 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'applyBuff',
-                parameters: {
-                  buffId: 'party-owner-buff',
-                  target: 'party',
-                  inheritSourceSkillCastInfo: true,
-                  definition: {
-                    stackingType: 'unique',
-                    lifecycleSequences: {
-                      start: {
-                        steps: [
-                          {
-                            kind: 'changeResource',
-                            parameters: {
-                              resource: 'ultimateEnergy',
-                              amount: 10,
-                              recipient: 'caster',
-                            },
-                          },
-                        ],
-                      },
-                    },
-                  },
-                },
+          sequence: chainEntry('party-owner-buff-apply', [
+            {
+              kind: 'applyBuff',
+              parameters: {
+                buffId: 'party-owner-buff',
+                target: 'party',
+                inheritSourceSkillCastInfo: true,
               },
-            ],
-          },
+            },
+          ]),
         },
       ],
     });
@@ -4009,7 +4103,28 @@ describe('CombatRuntimeAssembly', () => {
       },
       enemyBuffRuntime: emptyEnemyBuffRuntime,
       operators: [
-        { operatorId: 'source', skills: [program], buffRuntime: sourceBuffRuntime },
+        {
+          operatorId: 'source',
+          skills: [program],
+          buffRuntime: sourceBuffRuntime,
+          buffDefinitions: {
+            'party-owner-buff': {
+              stackingType: 'unique',
+              lifecycleSequences: {
+                start: chainEntry('party-owner-buff-start', [
+                  {
+                    kind: 'changeResource',
+                    parameters: {
+                      resource: 'ultimateEnergy',
+                      amount: 10,
+                      recipient: 'caster',
+                    },
+                  },
+                ]),
+              },
+            },
+          },
+        },
         { operatorId: 'ally', skills: [], buffRuntime: allyBuffRuntime },
       ],
       createOperationExecutor: () => rejectingExecutor,
@@ -4041,20 +4156,17 @@ describe('CombatRuntimeAssembly', () => {
         compile: entry => ({ id: entry.id, stackingType: entry.stackingType }),
       });
       const configureLifecycle = vi.spyOn(buffRuntime, 'configureLifecycleOperations');
-      const sequence = {
-        steps: [
-          {
-            kind: 'applyBuff',
-            parameters: {
-              buffId: 'equipment-child',
-              target: 'caster',
-              ...(owner === 'upgrade' ? {} : { source: 'eventSource' as const }),
-              asChildBuff: true,
-              definition: { stackingType: 'unique' },
-            },
+      const sequence = chainEntry('equipment-child-apply', [
+        {
+          kind: 'applyBuff',
+          parameters: {
+            buffId: 'equipment-child',
+            target: 'caster',
+            ...(owner === 'upgrade' ? {} : { source: 'eventSource' as const }),
+            asChildBuff: true,
           },
-        ],
-      } as const;
+        },
+      ]);
       const create = () =>
         new CombatRuntimeAssembly({
           ...nativeEventRuntimeOptions(),
@@ -4075,6 +4187,7 @@ describe('CombatRuntimeAssembly', () => {
               operatorId: 'operator',
               skills: [],
               buffRuntime,
+              buffDefinitions: { 'equipment-child': { stackingType: 'unique' } },
               equipmentContributions: [
                 {
                   source: { kind: 'weaponTrait', slug: 'fixture', traitKey: 'skill' },
@@ -4178,62 +4291,58 @@ describe('CombatRuntimeAssembly', () => {
           initializationPrograms: [
             {
               key: 'potential:potential1',
-              sequence: {
-                steps: [
-                  {
-                    kind: 'applyBuff',
-                    parameters: {
-                      buffId: 'potential-marker',
-                      target: 'caster',
-                      definition: {
-                        stackingType: 'unique',
-                        blackboard: { ratio: 0.5 },
-                      },
-                      blackboardAssignments: {
-                        ratio: { kind: 'constant', value: 0.5 },
-                      },
+              sequence: chainEntry('potential-marker-apply', [
+                {
+                  kind: 'applyBuff',
+                  parameters: {
+                    buffId: 'potential-marker',
+                    target: 'caster',
+                    blackboardAssignments: {
+                      ratio: { kind: 'constant', value: 0.5 },
                     },
                   },
-                ],
-              },
+                },
+              ]),
             },
           ],
+          buffDefinitions: {
+            'potential-marker': {
+              stackingType: 'unique',
+              blackboard: { ratio: 0.5 },
+            },
+            'talent-aura': {
+              stackingType: 'unique',
+              lifecycleSequences: {
+                start: chainEntry('talent-aura-start', [
+                  {
+                    kind: 'changeResource',
+                    parameters: {
+                      resource: 'sp',
+                      amount: 20,
+                      recipient: 'team',
+                    },
+                  },
+                ]),
+              },
+            },
+          },
           passivePrograms: [
             {
               key: 'talent-aura',
               initialBlackboard: { attackIncrease: 0.2 },
-              enableSequence: {
-                steps: [
-                  {
-                    kind: 'applyBuff',
-                    parameters: {
-                      buffId: 'talent-aura',
-                      target: 'caster',
-                      asChildBuff: true,
-                      definition: {
-                        stackingType: 'unique',
-                        lifecycleSequences: {
-                          start: {
-                            steps: [
-                              {
-                                kind: 'changeResource',
-                                parameters: {
-                                  resource: 'sp',
-                                  amount: 20,
-                                  recipient: 'team',
-                                },
-                              },
-                            ],
-                          },
-                        },
-                      },
-                      blackboardAssignments: {
-                        attackIncrease: { kind: 'blackboard', key: 'attackIncrease' },
-                      },
+              enableSequence: chainEntry('talent-aura-enable', [
+                {
+                  kind: 'applyBuff',
+                  parameters: {
+                    buffId: 'talent-aura',
+                    target: 'caster',
+                    asChildBuff: true,
+                    blackboardAssignments: {
+                      attackIncrease: { kind: 'blackboard', key: 'attackIncrease' },
                     },
                   },
-                ],
-              },
+                },
+              ]),
             },
           ],
         },
@@ -4325,27 +4434,25 @@ describe('CombatRuntimeAssembly', () => {
               key: 'potential:attackAfterSpGain:0',
               event: { kind: 'spGained' },
               initialBlackboard: {},
-              sequence: {
-                steps: [
-                  {
-                    kind: 'applyBuff',
-                    parameters: {
-                      buffId: 'attack-up',
-                      target: 'caster',
-                      definition: {
-                        stackingType: 'enhanceAndRefresh',
-                        maxStackCount: 2,
-                        durationSeconds: 5,
-                        attributeModifiers: [
-                          { attribute: 'Atk', slot: 'baseMultiplier', value: 0.2 },
-                        ],
-                      },
-                    },
+              sequence: chainEntry('upgrade-attack-after-sp-gain', [
+                {
+                  kind: 'applyBuff',
+                  parameters: {
+                    buffId: 'attack-up',
+                    target: 'caster',
                   },
-                ],
-              },
+                },
+              ]),
             },
           ],
+          buffDefinitions: {
+            'attack-up': {
+              stackingType: 'enhanceAndRefresh',
+              maxStackCount: 2,
+              durationSeconds: 5,
+              attributeModifiers: [{ attribute: 'Atk', slot: 'baseMultiplier', value: 0.2 }],
+            },
+          },
         },
       ],
       createOperationExecutor: () => rejectingExecutor,
@@ -4393,20 +4500,18 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'changeResource',
-                parameters: {
-                  resource: 'sp',
-                  amount: 20,
-                  recipient: 'team',
-                  spGainKind: 'gain',
-                  spGainSource: 'skill',
-                },
+          sequence: chainEntry('sp-skill-gain', [
+            {
+              kind: 'changeResource',
+              parameters: {
+                resource: 'sp',
+                amount: 20,
+                recipient: 'team',
+                spGainKind: 'gain',
+                spGainSource: 'skill',
               },
-            ],
-          },
+            },
+          ]),
         },
       ],
     });
@@ -4445,73 +4550,67 @@ describe('CombatRuntimeAssembly', () => {
           initializationPrograms: [
             {
               key: 'skill-sp-buff-listener',
-              sequence: {
-                steps: [
-                  {
-                    kind: 'applyBuff',
-                    parameters: {
-                      buffId: 'skill-sp-listener',
-                      target: 'caster',
-                      definition: {
-                        stackingType: 'unique',
-                        abilityEventResponses: [
-                          {
-                            event: 'skillSpGained',
-                            priority: 0,
-                            sequence: {
-                              steps: [
-                                {
-                                  kind: 'applyBuff',
-                                  parameters: {
-                                    buffId: 'skill-sp-listener-attack',
-                                    target: 'caster',
-                                    definition: {
-                                      stackingType: 'unique',
-                                      attributeModifiers: [
-                                        {
-                                          attribute: 'Atk',
-                                          slot: 'baseMultiplier',
-                                          value: 0.1,
-                                        },
-                                      ],
-                                    },
-                                  },
-                                },
-                              ],
-                            },
-                          },
-                        ],
-                      },
-                    },
+              sequence: chainEntry('skill-sp-listener-apply', [
+                {
+                  kind: 'applyBuff',
+                  parameters: {
+                    buffId: 'skill-sp-listener',
+                    target: 'caster',
                   },
-                ],
-              },
+                },
+              ]),
             },
           ],
+          buffDefinitions: {
+            'skill-sp-listener': {
+              stackingType: 'unique',
+              abilityEventResponses: [
+                {
+                  event: 'skillSpGained',
+                  priority: 0,
+                  sequence: chainEntry('skill-sp-listener-response', [
+                    {
+                      kind: 'applyBuff',
+                      parameters: {
+                        buffId: 'skill-sp-listener-attack',
+                        target: 'caster',
+                      },
+                    },
+                  ]),
+                },
+              ],
+            },
+            'skill-sp-listener-attack': {
+              stackingType: 'unique',
+              attributeModifiers: [
+                {
+                  attribute: 'Atk',
+                  slot: 'baseMultiplier',
+                  value: 0.1,
+                },
+              ],
+            },
+            'skill-sp-attack': {
+              stackingType: 'enhanceAndRefresh',
+              maxStackCount: 5,
+              durationSeconds: 10,
+              attributeModifiers: [{ attribute: 'Atk', slot: 'baseMultiplier', value: 0.1 }],
+            },
+          },
           upgradeEventPrograms: [
             {
               key: 'potential:skill-sp-attack:0',
               event: { kind: 'spGained', source: 'skill', gainKind: 'gain' },
               initialBlackboard: {},
-              sequence: {
-                steps: [
-                  {
-                    kind: 'applyBuff',
-                    parameters: {
-                      buffId: 'skill-sp-attack',
-                      target: 'caster',
-                      definition: {
-                        stackingType: 'enhanceAndRefresh',
-                        maxStackCount: 5,
-                        durationSeconds: 10,
-                        attributeModifiers: [
-                          { attribute: 'Atk', slot: 'baseMultiplier', value: 0.1 },
-                        ],
-                      },
-                    },
+              sequence: chainEntry('upgrade-skill-sp-attack', [
+                {
+                  kind: 'applyBuff',
+                  parameters: {
+                    buffId: 'skill-sp-attack',
+                    target: 'caster',
                   },
-                ],
-              },
+                },
+              ]),
             },
           ],
         },
@@ -4539,14 +4638,12 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'openComboWindow',
-                parameters: { nextSkillKey: 'combo-stage-2' },
-              },
-            ],
-          },
+          sequence: chainEntry('combo-window-opener', [
+            {
+              kind: 'openComboWindow',
+              parameters: { nextSkillKey: 'combo-stage-2' },
+            },
+          ]),
         },
       ],
     });
@@ -4672,9 +4769,9 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
+          sequence: compileGraphEntry('health-compare-vitals', 'step-0', {
+            'step-0': {
+              action: {
                 kind: 'conditional',
                 parameters: {
                   condition: {
@@ -4685,17 +4782,18 @@ describe('CombatRuntimeAssembly', () => {
                     value: { kind: 'constant', value: 0.5 },
                   },
                 },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'changeResource',
-                      parameters: { resource: 'sp', amount: 20, recipient: 'team' },
-                    },
-                  ],
-                },
+                whenTrue: { $sequence: 'grant-sp' },
               },
-            ],
-          },
+              next: null,
+            },
+            'grant-sp': {
+              action: {
+                kind: 'changeResource',
+                parameters: { resource: 'sp', amount: 20, recipient: 'team' },
+              },
+              next: null,
+            },
+          }),
         },
       ],
     });
@@ -4714,22 +4812,23 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
+          sequence: compileGraphEntry('enemy-rank-condition', 'step-0', {
+            'step-0': {
+              action: {
                 kind: 'conditional',
                 parameters: { condition: { kind: 'enemyRankIn', ranks: ['elite', 'boss'] } },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'changeResource',
-                      parameters: { resource: 'sp', amount: 20, recipient: 'team' },
-                    },
-                  ],
-                },
+                whenTrue: { $sequence: 'rank-grant' },
               },
-            ],
-          },
+              next: null,
+            },
+            'rank-grant': {
+              action: {
+                kind: 'changeResource',
+                parameters: { resource: 'sp', amount: 20, recipient: 'team' },
+              },
+              next: null,
+            },
+          }),
         },
       ],
     });
@@ -4753,13 +4852,16 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
+          sequence: compileGraphEntry('status-owner-routing', 'step-0', {
+            'step-0': {
+              action: {
                 kind: 'applyStatus',
                 parameters: { statusKey: 'ready', target: 'caster' },
               },
-              {
+              next: 'step-1',
+            },
+            'step-1': {
+              action: {
                 kind: 'conditional',
                 parameters: {
                   condition: {
@@ -4768,17 +4870,18 @@ describe('CombatRuntimeAssembly', () => {
                     target: 'caster',
                   },
                 },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'changeResource',
-                      parameters: { resource: 'sp', amount: 1, recipient: 'team' },
-                    },
-                  ],
-                },
+                whenTrue: { $sequence: 'status-grant' },
               },
-            ],
-          },
+              next: null,
+            },
+            'status-grant': {
+              action: {
+                kind: 'changeResource',
+                parameters: { resource: 'sp', amount: 1, recipient: 'team' },
+              },
+              next: null,
+            },
+          }),
         },
       ],
     });
@@ -4832,22 +4935,23 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 1,
-          sequence: {
-            steps: [
-              {
+          sequence: compileGraphEntry('caster-controlled-condition', 'step-0', {
+            'step-0': {
+              action: {
                 kind: 'conditional',
                 parameters: { condition: { kind: 'casterControlled' } },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'changeResource',
-                      parameters: { resource: 'sp', amount: 20, recipient: 'team' },
-                    },
-                  ],
-                },
+                whenTrue: { $sequence: 'control-grant' },
               },
-            ],
-          },
+              next: null,
+            },
+            'control-grant': {
+              action: {
+                kind: 'changeResource',
+                parameters: { resource: 'sp', amount: 20, recipient: 'team' },
+              },
+              next: null,
+            },
+          }),
         },
       ],
     });
@@ -4865,15 +4969,16 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 1,
-          sequence: {
-            steps: [
-              {
+          sequence: compileGraphEntry('caster-controlled-requires-state', 'step-0', {
+            'step-0': {
+              action: {
                 kind: 'conditional',
                 parameters: { condition: { kind: 'casterControlled' } },
-                whenTrue: { steps: [] },
+                whenTrue: { $sequence: null },
               },
-            ],
-          },
+              next: null,
+            },
+          }),
         },
       ],
     });
@@ -4910,19 +5015,17 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 1,
-          sequence: {
-            steps: [
-              {
-                kind: 'changeResource',
-                parameters: {
-                  resource: 'sp',
-                  amount: 20,
-                  recipient: 'team',
-                  spGainKind: 'refund',
-                },
+          sequence: chainEntry('refund-shared-resource', [
+            {
+              kind: 'changeResource',
+              parameters: {
+                resource: 'sp',
+                amount: 20,
+                recipient: 'team',
+                spGainKind: 'refund',
               },
-            ],
-          },
+            },
+          ]),
         },
       ],
     });
@@ -4968,27 +5071,25 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'readBuffBlackboard',
-                parameters: {
-                  target: 'enemy',
-                  query: {
-                    kind: 'tag',
-                    tagQueryType: 'hasAny',
-                    buffTags: [path],
-                  },
-                  desiredKey: 'count',
-                  outputKey: 'conductCount',
+          sequence: chainEntry('read-buff-blackboard-count', [
+            {
+              kind: 'readBuffBlackboard',
+              parameters: {
+                target: 'enemy',
+                query: {
+                  kind: 'tag',
+                  tagQueryType: 'hasAny',
+                  buffTags: [path],
                 },
+                desiredKey: 'count',
+                outputKey: 'conductCount',
               },
-              {
-                kind: 'setContextFlag',
-                parameters: { flag: 'observed', value: true, target: 'caster' },
-              },
-            ],
-          },
+            },
+            {
+              kind: 'setContextFlag',
+              parameters: { flag: 'observed', value: true, target: 'caster' },
+            },
+          ]),
         },
       ],
     });
@@ -5039,9 +5140,9 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
+          sequence: compileGraphEntry('action-value-compare-branch', 'step-0', {
+            'step-0': {
+              action: {
                 kind: 'conditional',
                 parameters: {
                   condition: {
@@ -5051,17 +5152,18 @@ describe('CombatRuntimeAssembly', () => {
                     right: { kind: 'constant', value: 3 },
                   },
                 },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'setContextFlag',
-                      parameters: { flag: 'reached', value: true, target: 'caster' },
-                    },
-                  ],
-                },
+                whenTrue: { $sequence: 'mark-reached' },
               },
-            ],
-          },
+              next: null,
+            },
+            'mark-reached': {
+              action: {
+                kind: 'setContextFlag',
+                parameters: { flag: 'reached', value: true, target: 'caster' },
+              },
+              next: null,
+            },
+          }),
         },
       ],
     });
@@ -5111,18 +5213,16 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'modifyActionValue',
-                parameters: {
-                  key: 'EntityBB_SwordNum',
-                  operation: 'add',
-                  value: { kind: 'constant', value: 1 },
-                },
+          sequence: chainEntry('entity-sword-writer', [
+            {
+              kind: 'modifyActionValue',
+              parameters: {
+                key: 'EntityBB_SwordNum',
+                operation: 'add',
+                value: { kind: 'constant', value: 1 },
               },
-            ],
-          },
+            },
+          ]),
         },
       ],
     });
@@ -5133,9 +5233,9 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
+          sequence: compileGraphEntry('entity-sword-reader', 'step-0', {
+            'step-0': {
+              action: {
                 kind: 'conditional',
                 parameters: {
                   condition: {
@@ -5145,17 +5245,18 @@ describe('CombatRuntimeAssembly', () => {
                     right: { kind: 'constant', value: 1 },
                   },
                 },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'setContextFlag',
-                      parameters: { flag: 'reached', value: true, target: 'caster' },
-                    },
-                  ],
-                },
+                whenTrue: { $sequence: 'reader-reached' },
               },
-            ],
-          },
+              next: null,
+            },
+            'reader-reached': {
+              action: {
+                kind: 'setContextFlag',
+                parameters: { flag: 'reached', value: true, target: 'caster' },
+              },
+              next: null,
+            },
+          }),
         },
       ],
     });
@@ -5207,9 +5308,9 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
+          sequence: compileGraphEntry('buff-runtime-entity-blackboard', 'step-0', {
+            'step-0': {
+              action: {
                 kind: 'conditional',
                 parameters: {
                   condition: {
@@ -5219,17 +5320,18 @@ describe('CombatRuntimeAssembly', () => {
                     right: { kind: 'constant', value: 4 },
                   },
                 },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'setContextFlag',
-                      parameters: { flag: 'reached', value: true, target: 'caster' },
-                    },
-                  ],
-                },
+                whenTrue: { $sequence: 'buff-board-reached' },
               },
-            ],
-          },
+              next: null,
+            },
+            'buff-board-reached': {
+              action: {
+                kind: 'setContextFlag',
+                parameters: { flag: 'reached', value: true, target: 'caster' },
+              },
+              next: null,
+            },
+          }),
         },
       ],
     });
@@ -5296,14 +5398,12 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
-                kind: 'applyBuff',
-                parameters: { buffId: 'party-buff', target: 'party' },
-              },
-            ],
-          },
+          sequence: chainEntry('party-buff-apply', [
+            {
+              kind: 'applyBuff',
+              parameters: { buffId: 'party-buff', target: 'party' },
+            },
+          ]),
         },
       ],
     });
@@ -5414,9 +5514,9 @@ describe('CombatRuntimeAssembly', () => {
         timelineActions: [
           {
             startFrame: 0,
-            sequence: {
-              steps: [{ kind: 'applyBuff', parameters: { buffId: 'shield', target } }],
-            },
+            sequence: chainEntry(`teammate-shield-apply-${target}`, [
+              { kind: 'applyBuff', parameters: { buffId: 'shield', target } },
+            ]),
           },
         ],
       });
@@ -5468,9 +5568,9 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
+          sequence: compileGraphEntry('caster-buff-identity-operations', 'step-0', {
+            'step-0': {
+              action: {
                 kind: 'conditional',
                 parameters: {
                   condition: {
@@ -5481,21 +5581,22 @@ describe('CombatRuntimeAssembly', () => {
                     value: 1,
                   },
                 },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'finishBuffsById',
-                      parameters: {
-                        target: 'caster',
-                        buffIds: ['sword-trigger'],
-                        reason: 'other',
-                      },
-                    },
-                  ],
+                whenTrue: { $sequence: 'finish-sword-trigger' },
+              },
+              next: null,
+            },
+            'finish-sword-trigger': {
+              action: {
+                kind: 'finishBuffsById',
+                parameters: {
+                  target: 'caster',
+                  buffIds: ['sword-trigger'],
+                  reason: 'other',
                 },
               },
-            ],
-          },
+              next: null,
+            },
+          }),
         },
       ],
     });

@@ -11,6 +11,15 @@ export function resetActionScopes(state: ActionScopeState): void {
   state.blackboards.clear();
 }
 
+/** 同步计数循环在入口只读取一次次数，内部短路不取消后续轮次。 */
+export function executeCountedAction(count: number, execute: () => void): boolean {
+  if (!Number.isInteger(count) || count < 0) {
+    throw new RangeError('repeatByActionValue count must be a non-negative integer');
+  }
+  for (let index = 0; index < count; index += 1) execute();
+  return true;
+}
+
 /** 保留原有顺序：动作体完整返回后才记为已执行；false 结果也算执行过，抛错则不标记。 */
 export function executeActionOnce(
   state: ActionScopeState,
@@ -55,8 +64,8 @@ export interface TargetLoopHost {
   end(id: number): void;
 }
 
-export function executeTargetLoop(
-  state: TargetLoopState,
+export function executeTargetLoop<Execution>(
+  state: TargetLoopState<Execution>,
   targets: RuntimeTargetGroup,
   host: TargetLoopHost,
 ): void {
@@ -66,18 +75,25 @@ export function executeTargetLoop(
   }
 }
 
-export function tickTargetLoop(state: TargetLoopState, delta: number, host: TargetLoopHost): void {
+export function tickTargetLoop<Execution>(
+  state: TargetLoopState<Execution>,
+  delta: number,
+  host: TargetLoopHost,
+): void {
   for (const id of state.activeBodies) host.tick(id, delta);
 }
 
-export function endTargetLoop(state: TargetLoopState, host: TargetLoopHost): void {
+export function endTargetLoop<Execution>(
+  state: TargetLoopState<Execution>,
+  host: TargetLoopHost,
+): void {
   for (const id of state.activeBodies) host.end(id);
   state.activeBodies.length = 0;
   state.bodies.clear();
 }
 
 /** 沿用原动作 Reset：丢弃活动列表，不调用 End。恢复切面不能调用此操作替代换数据。 */
-export function resetTargetLoop(state: TargetLoopState): void {
+export function resetTargetLoop<Execution>(state: TargetLoopState<Execution>): void {
   state.activeBodies.length = 0;
   state.bodies.clear();
 }

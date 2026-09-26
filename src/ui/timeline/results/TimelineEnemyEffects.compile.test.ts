@@ -1,6 +1,8 @@
 import { expect, it } from 'vitest';
 import { compileScript, compileStyle, compileTemplate, parse } from '@vue/compiler-sfc';
-import source from './TimelineEnemyEffects.vue?raw';
+import rawSource from './TimelineEnemyEffects.vue?raw';
+
+const source = rawSource.replace(/\r\n/g, '\n');
 
 it('keeps legacy mouse-down activation and handles both keyboard activation keys', () => {
   expect(source).not.toContain('<EaButton');

@@ -4,13 +4,30 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'suit_phy01',
   iconPath: '/equipment/phy01/item_equip_t4_suit_phy01_edc_04.webp',
-  modifiers: [
-    {
-      kind: 'panelStat',
-      stat: 'staggerDamagePercent',
-      value: 0.2,
+  modifiers: [{ kind: 'panelStat', stat: 'staggerDamagePercent', value: 0.2 }],
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffId: 'buff_equipsuit_physuit_01',
+              target: 'caster',
+              blackboardAssignments: {
+                atk_scale: { kind: 'constant', value: 2.5 },
+                poise: { kind: 'constant', value: 10 },
+                duration: { kind: 'constant', value: 15 },
+              },
+            },
+          },
+          next: null,
+        },
+      },
     },
-  ],
+    macros: {},
+  },
+  skillId: 'passive_equipsuit_physuit_01',
   buffDefinitions: {
     buff_equipsuit_physuit_01: {
       stackingType: 'unique',
@@ -21,20 +38,56 @@ const definition = {
       maxTriggerCount: 1,
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        atk_scale: 1,
-        duration: 0,
-        poise: 0,
-        poise_up: 0.1,
-      },
+      blackboard: { atk_scale: 1, duration: 0, poise: 0, poise_up: 0.1 },
       attributeModifiers: [],
       abilityEventResponses: [
-        {
-          event: 'outputBuff',
-          priority: 0,
-          sequence: {
-            steps: [
-              {
+        { event: 'outputBuff', priority: 0, sequence: { $sequence: 'conditional_4' } },
+      ],
+      actionGraph: {
+        main: {
+          nodes: {
+            setGlobalCooldown_1: {
+              action: {
+                kind: 'setGlobalCooldown',
+                parameters: {
+                  target: 'caster',
+                  markerId: 'buff_equipsuit_physuit_01',
+                  durationSeconds: { kind: 'blackboard', key: 'duration' },
+                },
+              },
+              next: null,
+            },
+            dealDamage_2: {
+              action: {
+                kind: 'dealDamage',
+                parameters: {
+                  damageType: 'physical',
+                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                  tags: [],
+                  stagger: { kind: 'blackboard', key: 'poise' },
+                },
+              },
+              next: 'setGlobalCooldown_1',
+            },
+            conditional_3: {
+              action: {
+                kind: 'conditional',
+                parameters: {
+                  condition: {
+                    kind: 'not',
+                    condition: {
+                      kind: 'globalCooldownPresent',
+                      target: 'buffOwner',
+                      markerId: 'buff_equipsuit_physuit_01',
+                    },
+                  },
+                },
+                whenTrue: { $sequence: 'dealDamage_2' },
+              },
+              next: null,
+            },
+            conditional_4: {
+              action: {
                 kind: 'conditional',
                 parameters: {
                   condition: {
@@ -43,85 +96,17 @@ const definition = {
                     buffTags: ['Skill/Character/Common/PhysicalStatus'],
                   },
                 },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'conditional',
-                      parameters: {
-                        condition: {
-                          kind: 'not',
-                          condition: {
-                            kind: 'globalCooldownPresent',
-                            target: 'buffOwner',
-                            markerId: 'buff_equipsuit_physuit_01',
-                          },
-                        },
-                      },
-                      whenTrue: {
-                        steps: [
-                          {
-                            kind: 'dealDamage',
-                            parameters: {
-                              damageType: 'physical',
-                              attackScale: {
-                                kind: 'blackboard',
-                                key: 'atk_scale',
-                              },
-                              tags: [],
-                              stagger: {
-                                kind: 'blackboard',
-                                key: 'poise',
-                              },
-                            },
-                          },
-                          {
-                            kind: 'setGlobalCooldown',
-                            parameters: {
-                              target: 'caster',
-                              markerId: 'buff_equipsuit_physuit_01',
-                              durationSeconds: {
-                                kind: 'blackboard',
-                                key: 'duration',
-                              },
-                            },
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                },
+                whenTrue: { $sequence: 'conditional_3' },
               },
-            ],
+              next: null,
+            },
           },
         },
-      ],
+        macros: {},
+      },
     },
   },
-  enableSequence: {
-    steps: [
-      {
-        kind: 'applyBuff',
-        parameters: {
-          buffId: 'buff_equipsuit_physuit_01',
-          target: 'caster',
-          blackboardAssignments: {
-            atk_scale: {
-              kind: 'constant',
-              value: 2.5,
-            },
-            poise: {
-              kind: 'constant',
-              value: 10,
-            },
-            duration: {
-              kind: 'constant',
-              value: 15,
-            },
-          },
-        },
-      },
-    ],
-  },
+  enableSequence: { $sequence: 'applyBuff_1' },
 } as const satisfies GearSetDefinition;
 
 export default definition;

@@ -1,6 +1,6 @@
 import { ABILITY_EVENTS } from './operatorDefinition';
 import { type SkillDefinitionValidationIssue } from './validateSkillDefinition';
-import { validateActionSequenceDefinition } from './validation/actionPrograms';
+import { validateActionGraphReferenceDefinition } from './validation/actionPrograms';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -10,12 +10,21 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 export function validateComboSkillConditions(
   value: unknown,
   path = 'comboSkillConditions',
+  validateProgram: typeof validateActionGraphReferenceDefinition = validateActionGraphReferenceDefinition,
 ): SkillDefinitionValidationIssue[] {
   const issues: SkillDefinitionValidationIssue[] = [];
   if (value === undefined) return issues;
   if (!Array.isArray(value)) return [{ path, message: 'expected an array' }];
   const keys = new Set<string>();
-  const fields = new Set(['key', 'skillKey', 'event', 'immediately', 'initialValues', 'sequence']);
+  const fields = new Set([
+    'key',
+    'skillKey',
+    'event',
+    'immediately',
+    'initialValues',
+    'sequence',
+    'actionGraph',
+  ]);
   value.forEach((entry: unknown, index) => {
     const p = `${path}[${index}]`;
     if (!isRecord(entry)) {
@@ -61,7 +70,7 @@ export function validateComboSkillConditions(
             });
         }
     }
-    issues.push(...validateActionSequenceDefinition(entry.sequence, `${p}.sequence`));
+    issues.push(...validateProgram(entry.sequence, `${p}.sequence`));
   });
   return issues;
 }

@@ -1,3 +1,11 @@
+import type {
+  ActionGraphReference,
+  ActionGraphResourceDefinition,
+} from '../../../packages/game-data-contract/src/actionGraph';
+import { createActionGraphCompilation } from './compileActionGraph';
+import { ActionGraphDefinitionRepository } from './actionGraphDefinitionRepository';
+import { actionSteps } from '../../test/actionProgramMatchers';
+import { rootActionSteps } from './actionProgramInspection';
 import { describe, expect, it } from 'vitest';
 import { perlica } from '../../data/operators/perlica.generated';
 import { arclight as arclightGeneratedOperator } from '../../data/operators/arclight.generated';
@@ -25,7 +33,23 @@ import {
   compileOperatorUpgradeEventPrograms,
   compileOperatorPassivePrograms,
   resolveActiveOperatorUpgrades,
+  type CompileUpgradeEntry,
 } from './compileOperatorUpgrades';
+import { compileIndependentBuffResource } from './compileSkill';
+
+function upgradeEntryCompiler(
+  programs = new ActionGraphDefinitionRepository(),
+): CompileUpgradeEntry {
+  return (entry, level, path, owner) => {
+    if (owner.actionGraph === undefined)
+      throw new Error(`${path}: upgrade program requires its owning action graph`);
+    return programs.compile(owner.actionGraph, level).compileEntry(entry, path);
+  };
+}
+
+function emptyGraph(): ActionGraphResourceDefinition {
+  return { main: { nodes: {} }, macros: {} };
+}
 
 function build(overrides: Partial<OperatorInstanceDocument> = {}): OperatorInstanceDocument {
   return {
@@ -48,31 +72,39 @@ it('被动能力事件按所属技能等级编译，不在编译期执行或改�
         key: 'native-passive',
         levelSource: 'battleSkill',
         blackboard: { count: [1, 2] },
-        enableSequence: { steps: [] },
+        enableSequence: { $sequence: null },
         abilityEventResponses: [
           {
             event: 'abilityEntityFinished',
             priority: 0,
-            sequence: {
-              steps: [
-                {
+            sequence: { $sequence: 'response' },
+          },
+        ],
+        actionGraph: {
+          main: {
+            nodes: {
+              response: {
+                action: {
                   kind: 'changeResource',
                   parameters: { resource: 'sp', amount: [3, 7], recipient: 'team' },
                 },
-              ],
+                next: null,
+              },
             },
           },
-        ],
+          macros: {},
+        },
       },
     ],
     { basicAttack: 1, battleSkill: 2, comboSkill: 1, ultimate: 1 },
+    upgradeEntryCompiler(),
   );
   expect(programs[0]).toMatchObject({
     initialBlackboard: { count: 2 },
     abilityEventResponses: [
       {
         event: 'abilityEntityFinished',
-        sequence: { steps: [{ kind: 'changeResource', parameters: { amount: 7 } }] },
+        sequence: actionSteps([{ kind: 'changeResource', parameters: { amount: 7 } }]),
       },
     ],
   });
@@ -98,26 +130,58 @@ function program(
   };
 }
 
-function hydrateOperatorBuffReferences<T>(value: T, operator: OperatorDefinition): T {
-  if (Array.isArray(value)) {
-    return value.map(item => hydrateOperatorBuffReferences(item, operator)) as T;
-  }
+function buffDefinitionResolver(operator: OperatorDefinition) {
+  const programs = new ActionGraphDefinitionRepository();
+  const cache = new Map<string, unknown>();
+  return (buffId: string): unknown => {
+    if (!cache.has(buffId)) {
+      const definition = operator.buffDefinitions?.[buffId];
+      cache.set(
+        buffId,
+        definition === undefined
+          ? undefined
+          : compileIndependentBuffResource(definition, buffId, programs),
+      );
+    }
+    return cache.get(buffId);
+  };
+}
+
+function hydrateOperatorBuffReferences<T>(
+  value: T,
+  resolveBuffDefinition: (buffId: string) => unknown,
+  seen = new WeakMap<object, unknown>(),
+): T {
   if (value === null || typeof value !== 'object') return value;
+  if (seen.has(value)) return seen.get(value) as T;
+  if (Array.isArray(value)) {
+    const result: unknown[] = [];
+    seen.set(value, result);
+    result.push(
+      ...value.map(item => hydrateOperatorBuffReferences(item, resolveBuffDefinition, seen)),
+    );
+    return result as T;
+  }
+  if (value instanceof Map) {
+    const result = new Map();
+    seen.set(value, result);
+    for (const [key, item] of value)
+      result.set(key, hydrateOperatorBuffReferences(item, resolveBuffDefinition, seen));
+    return result as T;
+  }
   const source = value as Record<string, unknown>;
-  const hydrated = Object.fromEntries(
-    Object.entries(source).map(([key, child]) => [
-      key,
-      hydrateOperatorBuffReferences(child, operator),
-    ]),
-  );
+  const hydrated: Record<string, unknown> = {};
+  seen.set(value, hydrated);
+  for (const [key, child] of Object.entries(source))
+    hydrated[key] = hydrateOperatorBuffReferences(child, resolveBuffDefinition, seen);
   if (source.kind === 'applyBuff') {
     const parameters = source.parameters as Record<string, unknown> | undefined;
     const buffId = parameters?.buffId;
-    const definition = typeof buffId === 'string' ? operator.buffDefinitions?.[buffId] : undefined;
+    const definition = typeof buffId === 'string' ? resolveBuffDefinition(buffId) : undefined;
     if (definition !== undefined) {
       hydrated.parameters = {
         ...(hydrated.parameters as Record<string, unknown>),
-        definition: hydrateOperatorBuffReferences(definition, operator),
+        definition: hydrateOperatorBuffReferences(definition, resolveBuffDefinition, seen),
       };
     }
   }
@@ -160,33 +224,42 @@ describe('operator upgrade compilation', () => {
   });
 
   it('compiles direct upgrade initialization separately from passive skills', () => {
-    const programs = compileOperatorInitializationPrograms([
-      {
-        source: 'potential',
-        index: 0,
-        level: 1,
-        definition: {
-          levels: 1,
-          initializationSequence: {
-            steps: [
-              {
-                kind: 'applyBuff',
-                parameters: {
-                  buffId: 'buff.potential',
-                  definition: { stackingType: 'unique', maxStackCount: 1 },
-                  target: 'caster',
+    const programs = compileOperatorInitializationPrograms(
+      [
+        {
+          source: 'potential',
+          index: 0,
+          level: 1,
+          definition: {
+            levels: 1,
+            initializationSequence: { $sequence: 'init' },
+            actionGraph: {
+              main: {
+                nodes: {
+                  init: {
+                    action: {
+                      kind: 'applyBuff',
+                      parameters: {
+                        buffId: 'buff.potential',
+                        target: 'caster',
+                      },
+                    },
+                    next: null,
+                  },
                 },
               },
-            ],
+              macros: {},
+            },
           },
         },
-      },
-    ]);
+      ],
+      upgradeEntryCompiler(),
+    );
 
     expect(programs).toMatchObject([
       {
         key: 'potential:0',
-        sequence: { steps: [{ kind: 'applyBuff', parameters: { buffId: 'buff.potential' } }] },
+        sequence: actionSteps([{ kind: 'applyBuff', parameters: { buffId: 'buff.potential' } }]),
       },
     ]);
   });
@@ -194,24 +267,32 @@ describe('operator upgrade compilation', () => {
   it('resolves attached Buff blackboard inputs at the selected upgrade level', () => {
     const definition = {
       levels: 2,
-      initializationSequence: {
-        steps: [
-          {
-            kind: 'applyBuff' as const,
-            parameters: {
-              buffId: 'buff.talent',
-              target: 'caster' as const,
-              blackboardAssignments: { add: [0.2, 0.3] },
+      initializationSequence: { $sequence: 'init' },
+      actionGraph: {
+        main: {
+          nodes: {
+            init: {
+              action: {
+                kind: 'applyBuff' as const,
+                parameters: {
+                  buffId: 'buff.talent',
+                  target: 'caster' as const,
+                  blackboardAssignments: { add: [0.2, 0.3] },
+                },
+              },
+              next: null,
             },
           },
-        ],
+        },
+        macros: {},
       },
     };
-    const programs = compileOperatorInitializationPrograms([
-      { source: 'talent', index: 0, level: 2, definition },
-    ]);
+    const programs = compileOperatorInitializationPrograms(
+      [{ source: 'talent', index: 0, level: 2, definition }],
+      upgradeEntryCompiler(),
+    );
 
-    expect(programs[0]?.sequence.steps[0]).toMatchObject({
+    expect(rootActionSteps(programs[0]?.sequence!)[0]).toMatchObject({
       kind: 'applyBuff',
       parameters: { blackboardAssignments: { add: { kind: 'constant', value: 0.3 } } },
     });
@@ -222,22 +303,22 @@ describe('operator upgrade compilation', () => {
       build({ operatorSlug: endministratorGeneratedOperator.slug, potential: 3 }),
       endministratorGeneratedOperator,
     );
-    const programs = compileOperatorInitializationPrograms(active);
+    const programs = compileOperatorInitializationPrograms(active, upgradeEntryCompiler());
 
     expect(programs.map(program => program.key)).toEqual([
       'potential:0',
       'potential:1',
       'potential:2',
     ]);
-    expect(programs[0]?.sequence.steps[0]).toMatchObject({
+    expect(rootActionSteps(programs[0]?.sequence!)[0]).toMatchObject({
       kind: 'applyBuff',
       parameters: { buffId: 'buff_chr_0003_endminf_potential1' },
     });
-    expect(programs[1]?.sequence.steps[0]).toMatchObject({
+    expect(rootActionSteps(programs[1]?.sequence!)[0]).toMatchObject({
       kind: 'applyBuff',
       parameters: { buffId: 'buff_chr_0003_endminf_potential2' },
     });
-    expect(programs[2]?.sequence.steps[0]).toMatchObject({
+    expect(rootActionSteps(programs[2]?.sequence!)[0]).toMatchObject({
       kind: 'applyBuff',
       parameters: {
         buffId: 'buff_chr_0003_endminf_potential3',
@@ -251,12 +332,15 @@ describe('operator upgrade compilation', () => {
       build({ operatorSlug: endministratorGeneratedOperator.slug, potential: 5 }),
       endministratorGeneratedOperator,
     );
-    const program = compileOperatorInitializationPrograms(active).find(
+    const program = compileOperatorInitializationPrograms(active, upgradeEntryCompiler()).find(
       item => item.key === 'potential:4',
     );
 
     expect(
-      hydrateOperatorBuffReferences(program?.sequence.steps[0], endministratorGeneratedOperator),
+      hydrateOperatorBuffReferences(
+        rootActionSteps(program?.sequence!)[0],
+        buffDefinitionResolver(endministratorGeneratedOperator),
+      ),
     ).toMatchObject({
       kind: 'applyBuff',
       parameters: {
@@ -266,33 +350,29 @@ describe('operator upgrade compilation', () => {
           abilityEventResponses: [
             {
               event: 'addedBuff',
-              sequence: {
-                steps: [
-                  {
-                    kind: 'conditional',
-                    whenTrue: {
-                      steps: [
-                        {
-                          kind: 'adjustSkillCooldown',
-                          parameters: {
-                            skill: { kind: 'id', skillId: 'chr_0003_endminf_combo_skill' },
-                            operation: 'reduce',
-                            basis: 'absoluteSeconds',
-                          },
-                        },
-                        {
-                          kind: 'adjustSkillCooldown',
-                          parameters: {
-                            skill: { kind: 'id', skillId: 'chr_0002_endminm_combo_skill' },
-                            operation: 'reduce',
-                            basis: 'absoluteSeconds',
-                          },
-                        },
-                      ],
+              sequence: actionSteps([
+                {
+                  kind: 'conditional',
+                  whenTrue: actionSteps([
+                    {
+                      kind: 'adjustSkillCooldown',
+                      parameters: {
+                        skill: { kind: 'id', skillId: 'chr_0003_endminf_combo_skill' },
+                        operation: 'reduce',
+                        basis: 'absoluteSeconds',
+                      },
                     },
-                  },
-                ],
-              },
+                    {
+                      kind: 'adjustSkillCooldown',
+                      parameters: {
+                        skill: { kind: 'id', skillId: 'chr_0002_endminm_combo_skill' },
+                        operation: 'reduce',
+                        basis: 'absoluteSeconds',
+                      },
+                    },
+                  ]),
+                },
+              ]),
             },
           ],
         },
@@ -305,85 +385,80 @@ describe('operator upgrade compilation', () => {
       build({ operatorSlug: estellaGeneratedOperator.slug, potential: 5 }),
       estellaGeneratedOperator,
     );
-    const program = compileOperatorInitializationPrograms(active).find(
+    const program = compileOperatorInitializationPrograms(active, upgradeEntryCompiler()).find(
       item => item.key === 'potential:4',
     );
 
     expect(
-      hydrateOperatorBuffReferences(program?.sequence.steps[0], estellaGeneratedOperator),
+      hydrateOperatorBuffReferences(
+        rootActionSteps(program?.sequence!)[0],
+        buffDefinitionResolver(estellaGeneratedOperator),
+      ),
     ).toMatchObject({
       kind: 'applyBuff',
       parameters: {
         buffId: 'buff_chr_0021_whiten_potential_5',
         definition: {
           lifecycleSequences: {
-            enable: {
-              steps: [
-                {
-                  kind: 'applyBuff',
-                  parameters: {
-                    buffId: 'buff_chr_0021_whiten_potential_5_inaura',
-                    target: 'enemy',
-                    finishByAction: true,
-                    definition: {
-                      abilityEventResponses: [
-                        {
-                          event: 'addedBuff',
-                          sequence: {
-                            steps: [
+            enable: actionSteps([
+              {
+                kind: 'applyBuff',
+                parameters: {
+                  buffId: 'buff_chr_0021_whiten_potential_5_inaura',
+                  target: 'enemy',
+                  finishByAction: true,
+                  definition: {
+                    abilityEventResponses: [
+                      {
+                        event: 'addedBuff',
+                        sequence: actionSteps([
+                          {
+                            kind: 'conditional',
+                            parameters: {
+                              condition: {
+                                kind: 'eventBuffTagsMatch',
+                                match: 'hasAny',
+                                buffTags: ['Skill/Character/Common/SpellStatus/Frozen'],
+                              },
+                            },
+                            whenTrue: actionSteps([
                               {
                                 kind: 'conditional',
                                 parameters: {
                                   condition: {
-                                    kind: 'eventBuffTagsMatch',
-                                    match: 'hasAny',
-                                    buffTags: ['Skill/Character/Common/SpellStatus/Frozen'],
+                                    kind: 'not',
+                                    condition: {
+                                      kind: 'timedMarkerPresent',
+                                      target: 'caster',
+                                      markerId: 'buff_chr_0021_whiten_potential_5_cd',
+                                    },
                                   },
                                 },
-                                whenTrue: {
-                                  steps: [
-                                    {
-                                      kind: 'conditional',
-                                      parameters: {
-                                        condition: {
-                                          kind: 'not',
-                                          condition: {
-                                            kind: 'timedMarkerPresent',
-                                            target: 'caster',
-                                            markerId: 'buff_chr_0021_whiten_potential_5_cd',
-                                          },
-                                        },
-                                      },
-                                      whenTrue: {
-                                        steps: [
-                                          {
-                                            kind: 'createTimedMarker',
-                                            parameters: {
-                                              markerId: 'buff_chr_0021_whiten_potential_5_cd',
-                                            },
-                                          },
-                                          {
-                                            kind: 'changeResourceByActionValue',
-                                            parameters: {
-                                              resource: 'ultimateEnergy',
-                                              recipient: 'caster',
-                                            },
-                                          },
-                                        ],
-                                      },
+                                whenTrue: actionSteps([
+                                  {
+                                    kind: 'createTimedMarker',
+                                    parameters: {
+                                      markerId: 'buff_chr_0021_whiten_potential_5_cd',
                                     },
-                                  ],
-                                },
+                                  },
+                                  {
+                                    kind: 'changeResourceByActionValue',
+                                    parameters: {
+                                      resource: 'ultimateEnergy',
+                                      recipient: 'caster',
+                                    },
+                                  },
+                                ]),
                               },
-                            ],
+                            ]),
                           },
-                        },
-                      ],
-                    },
+                        ]),
+                      },
+                    ],
                   },
                 },
-              ],
-            },
+              },
+            ]),
           },
         },
       },
@@ -400,6 +475,9 @@ describe('operator upgrade compilation', () => {
       'track:0',
       arclightBuild,
       arclightGeneratedOperator,
+      undefined,
+      undefined,
+      new ActionGraphDefinitionRepository(),
     );
     const battleSkill = skills.find(skill => skill.skillGroupKey === 'battleSkill');
     const ultimate = skills.find(skill => skill.skillGroupKey === 'ultimate');
@@ -415,37 +493,37 @@ describe('operator upgrade compilation', () => {
 
     const initialization = compileOperatorInitializationPrograms(
       resolveActiveOperatorUpgrades(arclightBuild, arclightGeneratedOperator),
+      upgradeEntryCompiler(),
     );
     expect(initialization).toHaveLength(1);
     expect(
-      hydrateOperatorBuffReferences(initialization[0], arclightGeneratedOperator),
+      hydrateOperatorBuffReferences(
+        initialization[0],
+        buffDefinitionResolver(arclightGeneratedOperator),
+      ),
     ).toMatchObject({
       key: 'potential:4',
-      sequence: {
-        steps: [
-          {
-            kind: 'applyBuff',
-            parameters: {
-              buffId: 'buff_chr_0007_ikut_finish_count_p5',
-              definition: {
-                lifecycleSequences: {
-                  start: {
-                    steps: [
-                      {
-                        kind: 'finishBuffsById',
-                        parameters: {
-                          target: 'buffOwner',
-                          buffIds: ['buff_chr_0007_ikut_normal_skill_extra_count'],
-                        },
-                      },
-                    ],
+      sequence: actionSteps([
+        {
+          kind: 'applyBuff',
+          parameters: {
+            buffId: 'buff_chr_0007_ikut_finish_count_p5',
+            definition: {
+              lifecycleSequences: {
+                start: actionSteps([
+                  {
+                    kind: 'finishBuffsById',
+                    parameters: {
+                      target: 'buffOwner',
+                      buffIds: ['buff_chr_0007_ikut_normal_skill_extra_count'],
+                    },
                   },
-                },
+                ]),
               },
             },
           },
-        ],
-      },
+        },
+      ]),
     });
   });
 
@@ -710,6 +788,31 @@ describe('operator upgrade compilation', () => {
   });
 
   it('patches one keyed elemental reaction without mutating the source program', () => {
+    const sequence = {
+      graph: createActionGraphCompilation(
+        {
+          nodes: {
+            reaction: {
+              action: {
+                key: 'combo.electrification',
+                kind: 'applyElementalReaction' as const,
+                parameters: {
+                  reaction: 'electrification' as const,
+                  target: 'enemy' as const,
+                  durationSeconds: 5,
+                  effectiveness: 1,
+                },
+              },
+              next: null,
+            },
+          },
+        },
+        1,
+        'combo-reaction',
+      ).compileAll(),
+      entry: 'reaction',
+      callSite: 'combo-reaction',
+    };
     const source = [
       {
         ...program('combo', 'comboSkill', 'sp', 0),
@@ -717,20 +820,7 @@ describe('operator upgrade compilation', () => {
         timelineActions: [
           {
             startFrame: 24,
-            sequence: {
-              steps: [
-                {
-                  key: 'combo.electrification',
-                  kind: 'applyElementalReaction' as const,
-                  parameters: {
-                    reaction: 'electrification' as const,
-                    target: 'enemy' as const,
-                    durationSeconds: 5,
-                    effectiveness: 1,
-                  },
-                },
-              ],
-            },
+            sequence,
           },
         ],
       },
@@ -760,11 +850,11 @@ describe('operator upgrade compilation', () => {
       },
     ]);
 
-    expect(patched[0]!.timelineActions[0]!.sequence.steps[0]).toMatchObject({
+    expect(rootActionSteps(patched[0]!.timelineActions[0]!.sequence)[0]).toMatchObject({
       kind: 'applyElementalReaction',
       parameters: { durationSeconds: 5, durationMultiplier: 1.75, effectiveness: 1.33 },
     });
-    expect(source[0]!.timelineActions[0]!.sequence.steps[0]).toMatchObject({
+    expect(rootActionSteps(source[0]!.timelineActions[0]!.sequence)[0]).toMatchObject({
       parameters: { durationSeconds: 5, effectiveness: 1 },
     });
   });
@@ -774,8 +864,18 @@ describe('operator upgrade compilation', () => {
       'track:perlica',
       build({ potential: 1 }),
       perlica,
+      undefined,
+      undefined,
+      new ActionGraphDefinitionRepository(),
     );
-    const base = compileOperatorDefinitionSkills('track:perlica', build(), perlica);
+    const base = compileOperatorDefinitionSkills(
+      'track:perlica',
+      build(),
+      perlica,
+      undefined,
+      undefined,
+      new ActionGraphDefinitionRepository(),
+    );
     const effectivenessDefinition = perlica.potentials[3]!;
     const effectivenessPatched = applyOperatorUpgradeSkillPatches(base, [
       { source: 'potential', index: 0, level: 1, definition: effectivenessDefinition },
@@ -791,27 +891,26 @@ describe('operator upgrade compilation', () => {
   });
 
   it('compiles Perlica reaction attack potential into its native listening Buff initialization', () => {
-    const programs = compileOperatorInitializationPrograms([
-      { source: 'potential', index: 2, level: 1, definition: perlica.potentials[2]! },
-    ]);
+    const programs = compileOperatorInitializationPrograms(
+      [{ source: 'potential', index: 2, level: 1, definition: perlica.potentials[2]! }],
+      upgradeEntryCompiler(),
+    );
 
-    expect(hydrateOperatorBuffReferences(programs, perlica)).toMatchObject([
+    expect(hydrateOperatorBuffReferences(programs, buffDefinitionResolver(perlica))).toMatchObject([
       {
         key: 'potential:2',
-        sequence: {
-          steps: [
-            {
-              kind: 'applyBuff',
-              parameters: {
-                buffId: 'buff_chr_0004_pelica_potential_3',
-                target: 'caster',
-                definition: {
-                  abilityEventResponses: [{ event: 'outputBuff' }],
-                },
+        sequence: actionSteps([
+          {
+            kind: 'applyBuff',
+            parameters: {
+              buffId: 'buff_chr_0004_pelica_potential_3',
+              target: 'caster',
+              definition: {
+                abilityEventResponses: [{ event: 'outputBuff' }],
               },
             },
-          ],
-        },
+          },
+        ]),
       },
     ]);
   });
@@ -823,13 +922,17 @@ describe('operator upgrade compilation', () => {
         {
           event: { kind: 'elementalAttachmentConsumed' },
           blackboard: { crystal_up: [0.02, 0.04], duration: 15 },
-          sequence: { steps: [] },
+          sequence: { $sequence: null },
         },
       ],
+      actionGraph: emptyGraph(),
     };
 
     expect(
-      compileOperatorUpgradeEventPrograms([{ source: 'talent', index: 0, level: 2, definition }]),
+      compileOperatorUpgradeEventPrograms(
+        [{ source: 'talent', index: 0, level: 2, definition }],
+        upgradeEntryCompiler(),
+      ),
     ).toMatchObject([
       {
         initialBlackboard: { crystal_up: 0.04, duration: 15 },
@@ -843,73 +946,72 @@ describe('operator upgrade compilation', () => {
       lastRiteGeneratedOperator,
     );
 
-    expect(compileOperatorUpgradeEventPrograms(active)).toEqual([]);
+    expect(compileOperatorUpgradeEventPrograms(active, upgradeEntryCompiler())).toEqual([]);
     expect(
       hydrateOperatorBuffReferences(
-        compileOperatorInitializationPrograms(active),
-        lastRiteGeneratedOperator,
+        compileOperatorInitializationPrograms(active, upgradeEntryCompiler()),
+        buffDefinitionResolver(lastRiteGeneratedOperator),
       ),
     ).toMatchObject([
       {
         key: 'talent:0',
-        sequence: {
-          steps: [
-            {
-              kind: 'applyBuff',
-              parameters: {
-                buffId: 'buff_chr_0026_lastrite_talent_1',
-                target: 'caster',
-                blackboardAssignments: {
-                  crystal_up: { kind: 'constant', value: 0.04 },
-                  duration: { kind: 'constant', value: 15 },
-                },
-                definition: {
-                  abilityEventResponses: [
-                    {
-                      event: 'buffConsumed',
-                      sequence: {
-                        steps: [
+        sequence: actionSteps([
+          {
+            kind: 'applyBuff',
+            parameters: {
+              buffId: 'buff_chr_0026_lastrite_talent_1',
+              target: 'caster',
+              blackboardAssignments: {
+                crystal_up: { kind: 'constant', value: 0.04 },
+                duration: { kind: 'constant', value: 15 },
+              },
+              definition: {
+                abilityEventResponses: [
+                  {
+                    event: 'buffConsumed',
+                    sequence: actionSteps([
+                      {
+                        kind: 'conditional',
+                        whenTrue: actionSteps([
                           {
                             kind: 'conditional',
-                            whenTrue: {
-                              steps: [
-                                {
-                                  kind: 'conditional',
-                                  whenTrue: {
-                                    steps: [
-                                      {
-                                        kind: 'calculateActionValue',
-                                        parameters: { key: 'crystal_vul' },
-                                      },
-                                      {
-                                        kind: 'applyBuff',
-                                        parameters: {
-                                          buffId: 'buff_chr_0026_lastrite_talent_1_vul',
-                                          target: 'eventTarget',
-                                          source: 'buffSource',
-                                        },
-                                      },
-                                    ],
-                                  },
+                            whenTrue: actionSteps([
+                              {
+                                kind: 'calculateActionValue',
+                                parameters: { key: 'crystal_vul' },
+                              },
+                              {
+                                kind: 'applyBuff',
+                                parameters: {
+                                  buffId: 'buff_chr_0026_lastrite_talent_1_vul',
+                                  target: 'eventTarget',
+                                  source: 'buffSource',
                                 },
-                              ],
-                            },
+                              },
+                            ]),
                           },
-                        ],
+                        ]),
                       },
-                    },
-                  ],
-                },
+                    ]),
+                  },
+                ],
               },
             },
-          ],
-        },
+          },
+        ]),
       },
     ]);
   });
 
   it('adds Perlica ultimate critical rate to the native ultimate blackboard input', () => {
-    const base = compileOperatorDefinitionSkills('track:perlica', build(), perlica);
+    const base = compileOperatorDefinitionSkills(
+      'track:perlica',
+      build(),
+      perlica,
+      undefined,
+      undefined,
+      new ActionGraphDefinitionRepository(),
+    );
     const patched = applyOperatorUpgradeSkillPatches(base, [
       { source: 'potential', index: 0, level: 1, definition: perlica.potentials[4]! },
     ]);
@@ -927,24 +1029,24 @@ describe('operator upgrade compilation', () => {
 
   it('resolves Perlica staggered-target talent level into its native Buff initialization', () => {
     const active = resolveActiveOperatorUpgrades(build({ talentStates: { 0: 2 } }), perlica);
-    const initialization = compileOperatorInitializationPrograms(active);
+    const initialization = compileOperatorInitializationPrograms(active, upgradeEntryCompiler());
 
-    expect(hydrateOperatorBuffReferences(initialization, perlica)).toMatchObject([
+    expect(
+      hydrateOperatorBuffReferences(initialization, buffDefinitionResolver(perlica)),
+    ).toMatchObject([
       {
         key: 'talent:0',
-        sequence: {
-          steps: [
-            {
-              kind: 'applyBuff',
-              parameters: {
-                buffId: 'buff_chr_0004_pelica_talent_0',
-                target: 'caster',
-                blackboardAssignments: { dmg: { kind: 'constant', value: 0.3 } },
-                definition: { damageModifiers: [{ enabledSide: 'attacker' }] },
-              },
+        sequence: actionSteps([
+          {
+            kind: 'applyBuff',
+            parameters: {
+              buffId: 'buff_chr_0004_pelica_talent_0',
+              target: 'caster',
+              blackboardAssignments: { dmg: { kind: 'constant', value: 0.3 } },
+              definition: { damageModifiers: [{ enabledSide: 'attacker' }] },
             },
-          ],
-        },
+          },
+        ]),
       },
     ]);
   });
@@ -954,6 +1056,9 @@ describe('operator upgrade compilation', () => {
       'track:da-pan',
       build({ operatorSlug: daPanGeneratedOperator.slug, potential: 5 }),
       daPanGeneratedOperator,
+      undefined,
+      undefined,
+      new ActionGraphDefinitionRepository(),
     );
     const ultimate = programs.find(program => program.skillGroupKey === 'ultimate')!;
     const battleSkill = programs.find(program => program.skillGroupKey === 'battleSkill')!;
@@ -973,6 +1078,9 @@ describe('operator upgrade compilation', () => {
         'track:da-pan',
         build({ operatorSlug: daPanGeneratedOperator.slug, talentStates: { 1: level } }),
         daPanGeneratedOperator,
+        undefined,
+        undefined,
+        new ActionGraphDefinitionRepository(),
       ).find(program => program.skillGroupKey === 'ultimate')!;
 
     const firstLevel = compileUltimate(1).initialBlackboard;
@@ -996,6 +1104,9 @@ describe('operator upgrade compilation', () => {
       'track:camille',
       build({ operatorSlug: camilleGeneratedOperator.slug, potential: 1 }),
       camilleGeneratedOperator,
+      undefined,
+      undefined,
+      new ActionGraphDefinitionRepository(),
     );
     const battleSkill = programs.find(program => program.skillGroupKey === 'battleSkill')!;
 
@@ -1009,6 +1120,9 @@ describe('operator upgrade compilation', () => {
       'track:camille',
       build({ operatorSlug: camilleGeneratedOperator.slug, potential: 3 }),
       camilleGeneratedOperator,
+      undefined,
+      undefined,
+      new ActionGraphDefinitionRepository(),
     );
     const combo1 = programs.find(program => program.skillId === 'chr_0033_camille_combo_skill')!;
     const combo2 = programs.find(program => program.skillId === 'chr_0033_camille_combo_skill_2')!;
@@ -1026,6 +1140,9 @@ describe('operator upgrade compilation', () => {
       'track:chen-qianyu',
       build({ operatorSlug: chenQianyuGeneratedOperator.slug, potential: 5 }),
       chenQianyuGeneratedOperator,
+      undefined,
+      undefined,
+      new ActionGraphDefinitionRepository(),
     );
 
     expect(
@@ -1042,6 +1159,9 @@ describe('operator upgrade compilation', () => {
       'track:gilberta',
       build({ operatorSlug: gilbertaGeneratedOperator.slug, potential: 5 }),
       gilbertaGeneratedOperator,
+      undefined,
+      undefined,
+      new ActionGraphDefinitionRepository(),
     );
     const combo = programs.find(program => program.skillId === 'chr_0013_aglina_combo_skill')!;
 
@@ -1056,7 +1176,7 @@ describe('operator upgrade compilation', () => {
       potential: 3,
     });
     const active = resolveActiveOperatorUpgrades(operatorBuild, gilbertaGeneratedOperator);
-    const passives = compileOperatorPassivePrograms(active);
+    const passives = compileOperatorPassivePrograms(active, [], undefined, upgradeEntryCompiler());
 
     expect(passives).toHaveLength(1);
     expect(passives[0]).toMatchObject({ key: 'chr_0013_aglina_talent_0' });
@@ -1068,6 +1188,9 @@ describe('operator upgrade compilation', () => {
       'track:camille',
       build({ operatorSlug: camilleGeneratedOperator.slug, talentStates: { 0: 2 } }),
       camilleGeneratedOperator,
+      undefined,
+      undefined,
+      new ActionGraphDefinitionRepository(),
     );
     const comboPrograms = programs.filter(program => program.skillGroupKey === 'comboSkill');
 
@@ -1133,55 +1256,65 @@ describe('operator upgrade compilation', () => {
   });
 
   it('compiles active passive skills with upgrade-level blackboard values', () => {
-    const programs = compileOperatorPassivePrograms([
-      {
-        source: 'talent',
-        index: 0,
-        level: 2,
-        definition: {
-          levels: 2,
-          passiveSkills: [
-            {
-              key: 'persistent-buff',
-              blackboard: { attackIncrease: [0.1, 0.2] },
-              enableSequence: {
-                steps: [
-                  {
-                    kind: 'applyBuff',
-                    parameters: {
-                      buffId: 'persistent-buff',
-                      target: 'caster',
-                      blackboardAssignments: {
-                        attackIncrease: { kind: 'blackboard', key: 'attackIncrease' },
+    const programs = compileOperatorPassivePrograms(
+      [
+        {
+          source: 'talent',
+          index: 0,
+          level: 2,
+          definition: {
+            levels: 2,
+            passiveSkills: [
+              {
+                key: 'persistent-buff',
+                blackboard: { attackIncrease: [0.1, 0.2] },
+                enableSequence: { $sequence: 'enable' },
+                actionGraph: {
+                  main: {
+                    nodes: {
+                      enable: {
+                        action: {
+                          kind: 'applyBuff',
+                          parameters: {
+                            buffId: 'persistent-buff',
+                            target: 'caster',
+                            blackboardAssignments: {
+                              attackIncrease: { kind: 'blackboard', key: 'attackIncrease' },
+                            },
+                          },
+                        },
+                        next: null,
                       },
                     },
                   },
-                ],
+                  macros: {},
+                },
               },
-            },
-          ],
+            ],
+          },
         },
-      },
-    ]);
+      ],
+      [],
+      undefined,
+      upgradeEntryCompiler(),
+    );
 
     expect(programs).toEqual([
       {
         key: 'persistent-buff',
         initialBlackboard: { attackIncrease: 0.2 },
-        enableSequence: {
-          steps: [
-            {
-              kind: 'applyBuff',
-              parameters: {
-                buffId: 'persistent-buff',
-                target: 'caster',
-                blackboardAssignments: {
-                  attackIncrease: { kind: 'blackboard', key: 'attackIncrease' },
-                },
+        enableSequence: actionSteps([
+          {
+            kind: 'applyBuff',
+            parameters: {
+              buffId: 'persistent-buff',
+              target: 'caster',
+              blackboardAssignments: {
+                attackIncrease: { kind: 'blackboard', key: 'attackIncrease' },
               },
             },
-          ],
-        },
+          },
+        ]),
       },
     ]);
   });
@@ -1193,16 +1326,19 @@ describe('operator upgrade compilation', () => {
         {
           key: 'base-passive',
           blackboard: { range: 50 },
-          enableSequence: { steps: [] },
+          enableSequence: { $sequence: null },
+          actionGraph: emptyGraph(),
         },
       ],
+      undefined,
+      upgradeEntryCompiler(),
     );
 
     expect(programs).toEqual([
       {
         key: 'base-passive',
         initialBlackboard: { range: 50 },
-        enableSequence: { steps: [] },
+        enableSequence: actionSteps([]),
       },
     ]);
   });
@@ -1217,11 +1353,15 @@ describe('operator upgrade compilation', () => {
       'track:tangtang',
       operatorBuild,
       tangtangGeneratedOperator,
+      undefined,
+      undefined,
+      new ActionGraphDefinitionRepository(),
     );
     const passives = compileOperatorPassivePrograms(
       active,
-      tangtangGeneratedOperator.passiveSkills,
+      tangtangGeneratedOperator.passiveSkills ?? [],
       operatorBuild.skillLevels,
+      upgradeEntryCompiler(),
     );
 
     const battleSkill = skills.find(skill => skill.skillGroupKey === 'battleSkill');
@@ -1245,7 +1385,7 @@ describe('operator upgrade compilation', () => {
       lifengGeneratedOperator,
     );
 
-    const programs = compileOperatorPassivePrograms(active);
+    const programs = compileOperatorPassivePrograms(active, [], undefined, upgradeEntryCompiler());
     expect(programs).toHaveLength(1);
     expect(programs[0]).toMatchObject({ key: 'chr_0015_lifeng_talent_1' });
     expect(programs[0]!.initialBlackboard.atk_up).toBeCloseTo(0.002);
@@ -1257,7 +1397,9 @@ describe('operator upgrade compilation', () => {
       lifengGeneratedOperator,
     );
 
-    expect(compileOperatorPassivePrograms(active)).toEqual([]);
+    expect(compileOperatorPassivePrograms(active, [], undefined, upgradeEntryCompiler())).toEqual(
+      [],
+    );
   });
 
   it('compiles Fluorite talent 1 as a complete attached passive program', () => {
@@ -1266,27 +1408,36 @@ describe('operator upgrade compilation', () => {
       fluoriteGeneratedOperator,
     );
 
-    const programs = compileOperatorPassivePrograms(active);
+    const programs = compileOperatorPassivePrograms(active, [], undefined, upgradeEntryCompiler());
     expect(programs).toHaveLength(1);
     expect(programs[0]).toMatchObject({
       key: 'chr_0022_bounda_talent_1',
       initialBlackboard: { dmg_up: 0.2 },
-      enableSequence: { steps: [{ kind: 'applyBuff' }] },
+      enableSequence: actionSteps([{ kind: 'applyBuff' }]),
     });
   });
 
   it('rejects duplicate passive identities across active upgrades', () => {
     expect(() =>
       compileOperatorPassivePrograms(
-        ['talent', 'potential'].map(source => ({
+        (['talent', 'potential'] as const).map(source => ({
           source,
           index: 0,
           level: 1,
           definition: {
             levels: 1,
-            passiveSkills: [{ key: 'same-passive', enableSequence: { steps: [] } }],
+            passiveSkills: [
+              {
+                key: 'same-passive',
+                enableSequence: { $sequence: null },
+                actionGraph: emptyGraph(),
+              },
+            ],
           },
-        })) as Parameters<typeof compileOperatorPassivePrograms>[0],
+        })),
+        [],
+        undefined,
+        upgradeEntryCompiler(),
       ),
     ).toThrow("duplicates passive 'same-passive'");
   });
@@ -1350,4 +1501,98 @@ describe('operator upgrade compilation', () => {
       ]),
     ).toThrow("references missing skill group 'missing'");
   });
+});
+
+it('compiles graph upgrade hosts with shared nodes, distinct entries and level-specific values', () => {
+  const sequence: ActionGraphReference = { $sequence: 'entry' };
+  const actionGraph: ActionGraphResourceDefinition = {
+    main: {
+      nodes: {
+        entry: {
+          action: {
+            kind: 'changeResource',
+            parameters: { resource: 'sp', amount: [3, 7], recipient: 'team' },
+          },
+          next: null,
+        },
+      },
+    },
+    macros: {},
+  };
+  const definition = {
+    levels: 2,
+    actionGraph,
+    initializationSequence: sequence,
+    passiveSkills: [
+      {
+        key: 'shared-passive',
+        blackboard: { count: [1, 2] },
+        actionGraph,
+        enableSequence: sequence,
+        abilityEventResponses: [{ event: 'abilityEntityFinished', priority: 0, sequence }],
+      },
+    ],
+    eventHandlers: [{ event: { kind: 'elementalAttachmentConsumed' }, sequence }],
+  } satisfies OperatorUpgradeDefinition;
+  const repository = new ActionGraphDefinitionRepository();
+  const bind = (entry: ActionGraphReference, level: number, path: string) =>
+    repository.compile(actionGraph, level).compileEntry(entry, path);
+  const compile = (level: number) => {
+    const upgrades = [{ source: 'talent' as const, index: 0, level, definition }];
+    const initialization = compileOperatorInitializationPrograms(upgrades, bind)[0]!;
+    const passive = compileOperatorPassivePrograms(upgrades, [], undefined, bind)[0]!;
+    const event = compileOperatorUpgradeEventPrograms(upgrades, bind)[0]!;
+    return {
+      passive,
+      entries: [
+        initialization.sequence,
+        passive.enableSequence,
+        passive.abilityEventResponses![0]!.sequence,
+        event.sequence,
+      ],
+    };
+  };
+  const first = compile(1);
+  const second = compile(2);
+  expect(first.passive.initialBlackboard).toEqual({ count: 1 });
+  expect(second.passive.initialBlackboard).toEqual({ count: 2 });
+  const graphEntries = second.entries;
+  expect(new Set(graphEntries.map(entry => entry.graph)).size).toBe(1);
+  expect(new Set(graphEntries.map(entry => entry.entry)).size).toBe(1);
+  expect(new Set(graphEntries.map(entry => entry.callSite)).size).toBe(4);
+  for (const entry of first.entries)
+    expect(rootActionSteps(entry)).toMatchObject([{ parameters: { amount: 3 } }]);
+  for (const entry of second.entries)
+    expect(rootActionSteps(entry)).toMatchObject([{ parameters: { amount: 7 } }]);
+});
+
+it('direct talent Buff installations resolve level values without an operator graph entry', () => {
+  const programs = compileOperatorInitializationPrograms(
+    [
+      {
+        source: 'talent',
+        index: 0,
+        level: 2,
+        definition: {
+          levels: 2,
+          attachedBuffs: [{ buffId: 'native-buff', blackboardAssignments: { power: [3, 7] } }],
+        },
+      },
+    ],
+    // 只含 attachedBuffs 的安装不需要图入口；传入即抛的占位编译器证明它未被调用。
+    (entry: ActionGraphReference, level: number, path: string) => {
+      throw new Error(`${path}: unexpected upgrade entry compile ${level} ${entry.$sequence}`);
+    },
+  );
+  expect(programs).toHaveLength(1);
+  expect(rootActionSteps(programs[0]!.sequence)).toMatchObject([
+    {
+      kind: 'applyBuff',
+      parameters: {
+        buffId: 'native-buff',
+        target: 'caster',
+        blackboardAssignments: { power: { kind: 'constant', value: 7 } },
+      },
+    },
+  ]);
 });

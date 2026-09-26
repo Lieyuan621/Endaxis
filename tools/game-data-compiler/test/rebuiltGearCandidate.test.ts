@@ -12,6 +12,7 @@ import { verifyGameDataSnapshot } from '../scripts/verifyGameDataSnapshot.ts';
 import { validateGearDefinition } from '../../../src/core/game-data/equipmentDefinitionValidation';
 import { compileGearContributions } from '../../../src/core/compiler/compileEquipment';
 import { compileScenarioEquipment } from '../../../src/core/compiler/compileScenarioEquipment';
+import { ActionGraphDefinitionRepository } from '../../../src/core/compiler/actionGraphDefinitionRepository';
 import { createEmptyScenario } from '../../../src/core/project/createProject';
 import type { GearDefinition } from '../../../src/core/game-data/equipmentDefinition';
 import { OPERATOR_ATTRIBUTES } from '../../../packages/game-data-contract/src/primitives.ts';
@@ -66,6 +67,8 @@ const candidates: readonly GearDefinition[] = batch.definitions;
 if (!candidates.length) throw new Error('empty gear candidate cannot pass coverage');
 const candidateById = new Map(candidates.map(gear => [gear.slug, gear]));
 const index = {
+  actionPrograms: new ActionGraphDefinitionRepository(),
+  getCommonDefinitionSources: () => [{ id: 'shared', buffDefinitions: commonBuffDefinitions }],
   getOperator: (slug: string) => (slug === perlica.slug ? perlica : null),
   getWeapon: () => null,
   getGearSet: () => null,
@@ -131,7 +134,7 @@ describe('重建单件装备候选与当前运行时兼容性（不证明新版�
       initialState: { ultimateEnergy: 0 },
       skillCasts: [],
     };
-    const [equipment] = compileScenarioEquipment(scenario, index);
+    const [equipment] = compileScenarioEquipment(scenario, index, index.actionPrograms);
     expect(equipment?.contributions).toHaveLength(gear.traits.length);
     let nextId = 0;
     const placed = placeSkillGroup({

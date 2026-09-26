@@ -3,7 +3,6 @@
  * 只按公共类型的字段解释用途；尚未覆盖的动作保留为分析障碍，不靠字符串搜索猜测无用值。
  */
 import type {
-  ActionSequenceDefinition,
   CombatStepDefinition,
   CombatStepForKind,
   CombatStepParameters,
@@ -103,6 +102,9 @@ export function actionValueUsage(
     operand.kind === 'constant'
   )
     return EMPTY;
+  if (operand.kind === 'parameter') return { ...EMPTY, unknownAccess: true, mayThrow: true };
+  // 数据节点在使用点求值，未绑定或节点内部失败都会抛错；读取集合由节点自身图决定，不能静态归并。
+  if (operand.kind === 'valueNode') return { ...EMPTY, unknownAccess: true, mayThrow: true };
   return {
     ...EMPTY,
     reads: new Set([operand.key]),
@@ -139,6 +141,9 @@ export function analyzeConditionUsage(condition: CombatCondition): DefinitionVal
   switch (condition.kind) {
     case 'constant':
       return EMPTY;
+    case 'conditionNode':
+      // 数据节点按当前作用域求值，结果取决于节点自身图；不能静态归并，也不能静默删除。
+      return { ...EMPTY, unknownAccess: true, mayThrow: true };
     case 'not':
       return analyzeConditionUsage(condition.condition);
     case 'all':
@@ -299,56 +304,6 @@ export function analyzeStepUsage(
           { ...EMPTY, reads: new Set([step.parameters.key]) },
         ]),
         writes: new Set([step.parameters.key]),
-        observable: true,
-      };
-    case 'conditional':
-      return mergeDefinitionValueUsage([
-        analyzeConditionUsage(step.parameters.condition),
-        analyzeSequenceUsage(step.whenTrue, context),
-        ...(step.whenFalse === undefined ? [] : [analyzeSequenceUsage(step.whenFalse, context)]),
-      ]);
-    case 'switch':
-      return mergeDefinitionValueUsage([
-        actionValueUsage(step.parameters.choice),
-        ...step.options.flatMap(option => [
-          actionValueUsage(option.value),
-          analyzeSequenceUsage(option.sequence, context),
-        ]),
-      ]);
-    case 'once':
-    case 'repeatEachTick':
-    case 'forEachContextTarget':
-      return { ...analyzeSequenceUsage(step.body, context), observable: true };
-    case 'repeatByActionValue':
-      return {
-        ...mergeDefinitionValueUsage([
-          actionValueUsage(step.parameters.count),
-          analyzeSequenceUsage(step.body, context),
-        ]),
-        observable: true,
-      };
-    case 'withActionBlackboardScope':
-      // 这里只保守汇总父板可能被读取的键，不据此裁剪子板。父快照会覆盖子 initialValues，
-      // 同一 scopeKey 还可能复用其他入口先创建的板，因此不能扣除子初值或 inheritParent=false
-      // 入口中的同名键。子程序仍有未知访问或整板逃逸时，继续阻止父板裁剪。
-      return {
-        ...mergeDefinitionValueUsage([
-          analyzeSequenceUsage(step.body, context),
-          ...Object.values(step.parameters.entityAssignments ?? {}).map(actionValueUsage),
-        ]),
-        mayThrow: true,
-        observable: true,
-      };
-    case 'listenForCombatEvents':
-      return {
-        ...mergeDefinitionValueUsage(
-          step.parameters.responses.flatMap(response => [
-            analyzeSequenceUsage(response.sequence, context),
-            ...(response.condition === undefined
-              ? []
-              : [analyzeConditionUsage(response.condition)]),
-          ]),
-        ),
         observable: true,
       };
     case 'dealDamage':
@@ -569,48 +524,8 @@ export function analyzeStepUsage(
             ...effect(),
             reads: new Set([step.parameters.skillId.blackboardKey]),
           };
-    case 'launchProjectile':
-      // 回调保存父 direct 快照，并用它覆盖自身初值。汇总全部延时入口的读写，不能因回调
-      // 声明了同名默认值就减键；嵌套的实体传值或其他未知访问会继续向父板上传。
-      return mergeDefinitionValueUsage([
-        effect(),
-        ...step.callbacks
-          .flatMap(callback => callback.skill.scheduledSequences)
-          .map(item => analyzeSequenceUsage(item.sequence, context)),
-      ]);
     default:
       // 外部未经检查的对象或新增类型都不能静默变成“没有读取”。
       return { ...EMPTY, unknownAccess: true, mayThrow: true, observable: true };
   }
-}
-
-export function analyzeSequenceUsage(
-  sequence: ActionSequenceDefinition,
-  context?: DefinitionUsageContext,
-): DefinitionValueUsage {
-  return mergeDefinitionValueUsage(sequence.steps.map(step => analyzeStepUsage(step, context)));
-}
-
-/**
- * 不可达分支仍在 Reset 时准备；只允许移除已经确认准备阶段无行为的节点。
- * 未列出的节点保留，例如伤害、治疗、附着、击倒和隐藏 UI 都有专门的 prepare 路径。
- */
-export function canDiscardUnexecutedSequence(sequence: ActionSequenceDefinition): boolean {
-  return sequence.steps.every(step => {
-    if (step.key !== undefined) return false;
-    switch (step.kind) {
-      case 'modifyActionValue':
-      case 'calculateActionValue':
-        return true;
-      case 'conditional':
-        return (
-          canDiscardUnexecutedSequence(step.whenTrue) &&
-          (step.whenFalse === undefined || canDiscardUnexecutedSequence(step.whenFalse))
-        );
-      case 'switch':
-        return step.options.every(option => canDiscardUnexecutedSequence(option.sequence));
-      default:
-        return false;
-    }
-  });
 }

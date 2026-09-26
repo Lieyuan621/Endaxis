@@ -1,4 +1,6 @@
 import type { ScheduledSequenceDefinition } from '../../../../../packages/game-data-contract/src/actions.ts';
+import { createActionGraphBuilder } from '../actions/actionGraphBuilder.ts';
+import type { CompiledBuffStepSource } from '../actions/combatActionProjectionTypes.ts';
 import type { SkillDefinition } from '../../../../../packages/game-data-contract/src/skills.ts';
 import { NATIVE_SKILL_HAS_HIT_BLACKBOARD_KEY } from '../../../../../packages/game-data-contract/src/conditions.ts';
 import { numericDeclaredBlackboard } from '../../source/blackboard.ts';
@@ -61,6 +63,7 @@ export type CompiledActiveSkillTimelineSequenceSource = Readonly<
  * 原生时长与技能块宽度仍分别保留；技能等级的具体取值由最终消费者选择。
  */
 export interface CompiledActiveSkillRuntimeProjectionSource {
+  readonly actionGraph: import('../../../../../packages/game-data-contract/src/actionGraph.ts').ActionGraphResourceDefinition;
   readonly skillId: string;
   readonly durationFrame: number;
   readonly timelineBlockFrames: number;
@@ -704,19 +707,19 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
   readonly value: unknown;
   readonly sourcePath: string;
   readonly patch: SkillPatchSource | null;
-  readonly context: CombatActionProjectionContextSource;
+  readonly context: Omit<CombatActionProjectionContextSource, 'graph'>;
   readonly visualOnlyIds?: ReadonlySet<string>;
   readonly extensions?: CombatActionProjectionExtensionsSource;
 }): CompiledActiveSkillRuntimeProjectionSource {
+  const program = createActionGraphBuilder<CompiledBuffStepSource>();
   const prepared = prepareSkillDefinitionInputSource(input.value, input.sourcePath, input.patch);
   const targeting = compileSkillSmartTargetSource(
     parseSkillTargetSelectionHeaderSource(input.value, input.sourcePath),
   );
-  const switchToBuffCast = compileStrictSwitchToBuffCastSource(
-    input.value,
-    input.sourcePath,
-    input.context,
-  );
+  const switchToBuffCast = compileStrictSwitchToBuffCastSource(input.value, input.sourcePath, {
+    ...input.context,
+    graph: program,
+  });
   assertNoUnprojectedSkillRootEffects(input.value, input.sourcePath);
   const graph = parseKnownSkillActionGraphSource(
     input.value,
@@ -1189,6 +1192,7 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
   );
   const context = {
     ...input.context,
+    graph: program,
     staticEnemyTargetGroupKeys,
     singleEnemyTargetGroupKeys,
     staticZeroSpaceTargetGroupKeys,
@@ -1338,7 +1342,7 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
       visualOnlyIds,
       { ...extensions, allowRootTimelineFinish: true },
     );
-    if (sequence.steps.length > 0) {
+    if (sequence.$sequence !== null) {
       scheduledSequences.push({
         startFrame: timeline.startFrame,
         endFrame: timeline.endFrame,
@@ -1349,9 +1353,11 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
   assertPresentationCalculationIsolation(
     graph.actionGroup.timelineActions.map(item => item.sequence),
     scheduledSequences.map(item => item.sequence),
+    program,
   );
   return {
     skillId: graph.skillId,
+    actionGraph: { main: program.finish(), macros: {} },
     durationFrame: graph.durationFrame,
     // 未模拟时只用当前技能自身的普通可中断边界作为保守预览。AllowNextSkillAction
     // 允许的是特定后继，不能在尚无未来输入时把任意一个窗口当成通用块宽。

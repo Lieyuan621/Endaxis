@@ -4,15 +4,20 @@ import type {
   SimulationWorkerResponse,
 } from './scenarioSimulationWorkerProtocol';
 import { toSimulationWorkerResult } from './scenarioSimulationWorkerProtocol';
-import type { ScenarioSimulationPerformanceSample } from './scenarioSimulationService';
+import type {
+  ScenarioSimulationPerformanceSample,
+  ScenarioSimulationService,
+} from './scenarioSimulationService';
 import { restoreScenarioSimulationGameData } from './scenarioSimulationGameData';
 
-let service: ReturnType<typeof createScenarioSimulationService> | undefined;
+let service: ScenarioSimulationService | undefined;
 // 主线程保证单个在途请求；此处只执行正式模拟与投影，不维护另一套模型。
 self.onmessage = async (event: MessageEvent<SimulationWorkerRequest>) => {
   const request = event.data;
   if (request.gameData !== undefined)
-    service = createScenarioSimulationService(restoreScenarioSimulationGameData(request.gameData));
+    service = createScenarioSimulationService(
+      restoreScenarioSimulationGameData(request.gameData),
+    );
   const samples: ScenarioSimulationPerformanceSample[] = [];
   const currentService = service;
   let response: SimulationWorkerResponse;

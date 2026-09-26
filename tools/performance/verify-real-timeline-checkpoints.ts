@@ -89,7 +89,31 @@ function assertSame(label: string, actual: unknown, expected: unknown): void {
 
 function withoutInputPlan(state: Record<string, unknown>): Record<string, unknown> {
   const { inputs: _inputs, ...combatState } = state;
-  return combatState;
+  return canonicalizeProgramRevisions(combatState) as Record<string, unknown>;
+}
+
+// 程序修订号是编译顺序身份（compiled-program:N），不是行为事实；预排程与逐帧两种模式
+// 编译顺序不同，比较运行状态前先归一化，回执与数值状态不受影响。
+function canonicalizeProgramRevisions(value: unknown): unknown {
+  if (typeof value === 'string') {
+    if (value.startsWith('["compiled-program:')) {
+      return value.replace(/"compiled-program:\d+"/g, '"compiled-program:#"');
+    }
+    return value;
+  }
+  if (Array.isArray(value)) return value.map(canonicalizeProgramRevisions);
+  if (value instanceof Map)
+    return new Map([...value].map(([k, item]) => [k, canonicalizeProgramRevisions(item)]));
+  if (value instanceof Set) return new Set([...value].map(canonicalizeProgramRevisions));
+  if (value !== null && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, item]) => [
+        key,
+        canonicalizeProgramRevisions(item),
+      ]),
+    );
+  }
+  return value;
 }
 
 const projectPath = resolve(input);
@@ -134,7 +158,10 @@ try {
     const scheduledResult = scheduled.collectResult();
 
     const live = new CombatInputSchedule(
-      service.createInputCombatSession(scenario),
+      service.createInputCombatSession(
+        scenario,
+        Math.min(0, ...schedule.inputs.map((input: { frame: number }) => input.frame)),
+      ),
       schedule.inputs,
       schedule.groups,
       schedule.customSkillPrograms,
@@ -151,7 +178,10 @@ try {
     const checkpoints = chooseCheckpointFrames(scheduledReceipts, endFrame);
     for (const checkpoint of checkpoints) {
       const parent = new CombatInputSchedule(
-        service.createInputCombatSession(scenario),
+        service.createInputCombatSession(
+          scenario,
+          Math.min(0, ...schedule.inputs.map((input: { frame: number }) => input.frame)),
+        ),
         schedule.inputs,
         schedule.groups,
         schedule.customSkillPrograms,

@@ -13,7 +13,8 @@ import type { ScenarioEditingSession } from '../../application/editor/scenarioEd
 import type { GameDataBrowser, GameDataRepository } from '../../core/game-data/gameDataRepository';
 import type { EnemyEditableValues, ScenarioDocument } from '../../core/project/schema';
 
-type TimelineEnemyGameData = GameDataRepository & GameDataBrowser;
+type TimelineEnemyGameData = Pick<GameDataRepository, 'getEnemy'> &
+  Pick<GameDataBrowser, 'getEnemies'>;
 
 export interface TimelineEnemyEditorOptions {
   readonly scenario: Readonly<Ref<ScenarioDocument>>;

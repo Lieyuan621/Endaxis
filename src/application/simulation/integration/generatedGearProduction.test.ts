@@ -33,7 +33,7 @@ describe('generated gear production integration', () => {
       Array.from(digest, byte => byte.toString(16).padStart(2, '0')).join(''),
     ]).toEqual([
       generatedSkillSettings.revision,
-      'efd9edef416d75e8dd405bbeff9df0c7a73bfdf99463fee7db4370c541b81ad5',
+      '7a857c98d98883a835e3f2f333314bc0e234a4cf475feee0653582a9c35dccc4',
     ]);
   });
 
@@ -49,6 +49,7 @@ describe('generated gear production integration', () => {
         const [compiled] = compileScenarioEquipment(
           createScenarioWithGear(definition.slug, definition.slotType, levels),
           gameDataRepository,
+          gameDataRepository.actionPrograms,
         );
         expect(compiled?.contributions, identity).toHaveLength(definition.traits.length);
         for (const contribution of compiled?.contributions ?? []) {

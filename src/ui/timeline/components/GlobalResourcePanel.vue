@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, defineAsyncComponent, shallowRef } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { EaButton, EaDialog, EaDialogActions, EaNumberInput } from '@/design-system';
 import type {
@@ -9,7 +9,6 @@ import type {
   GlobalOperatorStatModifierDocument,
 } from '../../../core/project/schema';
 import { GLOBAL_CONFIG_PRESETS } from '../../../core/project/globalConfigPresets';
-import TimelineAsyncDialogLoading from './TimelineAsyncDialogLoading.vue';
 import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
 
 const props = defineProps<{
@@ -53,12 +52,6 @@ const groups = computed(() =>
   })),
 );
 const modifiers = computed(() => props.config.modifiers);
-const GlobalBuffEditorDialog = defineAsyncComponent({
-  loader: () => import('./GlobalBuffEditorDialog.vue'),
-  loadingComponent: TimelineAsyncDialogLoading,
-  delay: 0,
-});
-const editingBuff = shallowRef<GlobalBuffDocument | null>(null);
 function togglePreset(id: string) {
   if (props.readOnly) return;
   const ids = props.config.enabledPresetIds ?? [];
@@ -67,28 +60,14 @@ function togglePreset(id: string) {
     enabledPresetIds: ids.includes(id) ? ids.filter(value => value !== id) : [...ids, id],
   });
 }
-function saveBuff(buff: GlobalBuffDocument) {
+function toggleBuff(buff: GlobalBuffDocument) {
   if (props.readOnly) return;
-  const buffs = props.config.customBuffs ?? [];
   emit('setConfig', {
     ...props.config,
-    customBuffs: buffs.some(item => item.id === buff.id)
-      ? buffs.map(item => (item.id === buff.id ? buff : item))
-      : [...buffs, buff],
+    customBuffs: (props.config.customBuffs ?? []).map(item =>
+      item.id === buff.id ? { ...item, enabled: !item.enabled } : item,
+    ),
   });
-  editingBuff.value = null;
-}
-function addBuff() {
-  if (props.readOnly) return;
-  let index = 1;
-  while (props.config.customBuffs?.some(item => item.id === `scenario:custom-global:${index}`))
-    index++;
-  editingBuff.value = {
-    id: `scenario:custom-global:${index}`,
-    name: t('globalConfig.customBuff'),
-    enabled: true,
-    definition: { stackingType: 'unlimited', presentation: { visible: false } },
-  };
 }
 function deleteBuff(id: string) {
   if (!props.readOnly)
@@ -162,30 +141,18 @@ function removeModifier(id: string) {
           class="preset-tile"
           :pressed="buff.enabled"
           :disabled="readOnly"
-          @click="saveBuff({ ...buff, enabled: !buff.enabled })"
+          @click="toggleBuff(buff)"
         >
           <strong>{{ buff.name }}</strong
           ><small>{{ t(buff.enabled ? 'globalConfig.enabled' : 'globalConfig.disabled') }}</small>
         </EaButton>
         <div class="buff-actions">
-          <EaButton size="sm" :disabled="readOnly" @click="editingBuff = buff">{{
-            t('common.edit')
-          }}</EaButton>
           <EaButton size="sm" variant="danger" :disabled="readOnly" @click="deleteBuff(buff.id)">{{
             t('common.delete')
           }}</EaButton>
         </div>
       </article>
-      <EaButton class="preset-tile add-buff" :disabled="readOnly" @click="addBuff"
-        >+ {{ t('globalConfig.addBuff') }}</EaButton
-      >
     </div>
-    <GlobalBuffEditorDialog
-      v-if="editingBuff"
-      :buff="editingBuff"
-      @save="saveBuff"
-      @close="editingBuff = null"
-    />
   </section>
   <section v-else class="global-config-settings">
     <div class="panel-title">{{ t('globalConfig.customSection') }}</div>

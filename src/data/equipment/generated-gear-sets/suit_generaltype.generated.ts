@@ -5,48 +5,15 @@ const definition = {
   slug: 'suit_generaltype',
   iconPath: '/equipment/wuling00/item_equip_t4_parts_wuling00_edc_01.webp',
   modifiers: [
-    {
-      kind: 'panelStat',
-      stat: 'ultimateEnergyGainEfficiency',
-      value: 0.1,
-    },
-    {
-      kind: 'damageScale',
-      target: 'physical',
-      slot: 'baseAddition',
-      value: 0.2,
-    },
-    {
-      kind: 'damageScale',
-      target: 'electric',
-      slot: 'baseAddition',
-      value: 0.2,
-    },
-    {
-      kind: 'damageScale',
-      target: 'nature',
-      slot: 'baseAddition',
-      value: 0.2,
-    },
-    {
-      kind: 'damageScale',
-      target: 'cryo',
-      slot: 'baseAddition',
-      value: 0.2,
-    },
-    {
-      kind: 'damageScale',
-      target: 'heat',
-      slot: 'baseAddition',
-      value: 0.2,
-    },
-    {
-      kind: 'damageScale',
-      target: 'ether',
-      slot: 'baseAddition',
-      value: 0.2,
-    },
+    { kind: 'panelStat', stat: 'ultimateEnergyGainEfficiency', value: 0.1 },
+    { kind: 'damageScale', target: 'physical', slot: 'baseAddition', value: 0.2 },
+    { kind: 'damageScale', target: 'electric', slot: 'baseAddition', value: 0.2 },
+    { kind: 'damageScale', target: 'nature', slot: 'baseAddition', value: 0.2 },
+    { kind: 'damageScale', target: 'cryo', slot: 'baseAddition', value: 0.2 },
+    { kind: 'damageScale', target: 'heat', slot: 'baseAddition', value: 0.2 },
+    { kind: 'damageScale', target: 'ether', slot: 'baseAddition', value: 0.2 },
   ],
+  skillId: 'passive_equipsuit_generaltype',
 } as const satisfies GearSetDefinition;
 
 export default definition;

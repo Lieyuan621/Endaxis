@@ -52,17 +52,17 @@ function finished(
 }
 
 describe('projectBuffTimelineViz', () => {
-  it('只展示开启原生头顶或队伍图标的 Buff，不能凭图标资源判断', () => {
+  it('内部 Buff 不画轴上状态，但保留伤害归属所需的图标身份', () => {
     const entry = applied(0, 0, 'operator:1', 1, 1);
     const hidden = { ...entry, data: { ...entry.data, showInSquadIcon: false } };
     expect(projectBuffTimelineViz([hidden], 30)).toEqual([]);
-    // 隐藏普通状态条不能连带丢掉伤害图标所需的来源身份。
     expect(projectBuffIconTimelineMetadata([hidden], 30)).toHaveLength(1);
-    for (const flag of ['showInHeadBarCommon', 'showInHeadBarAttached', 'showInSquadIcon']) {
-      expect(
-        projectBuffTimelineViz([{ ...hidden, data: { ...hidden.data, [flag]: true } }], 30),
-      ).toHaveLength(1);
-    }
+    expect(
+      projectBuffTimelineViz(
+        [{ ...hidden, data: { ...hidden.data, showInHeadBarCommon: true } }],
+        30,
+      ),
+    ).toHaveLength(1);
   });
   it('distinguishes host release from an ordinary Buff finish', () => {
     const end = finished(1, 50, 'entity:test', 1);
@@ -88,6 +88,7 @@ describe('projectBuffTimelineViz', () => {
       {
         sourceId: 'source',
         sourceActionId: 'skill:test',
+        showInSquadIcon: true,
         targetId: 'operator:1',
         buffId: 'buff:test',
         instanceId: 4,
@@ -99,11 +100,11 @@ describe('projectBuffTimelineViz', () => {
         endReason: 'reapplied',
         placement: 'upper',
         iconPath: '/icons/icon_battle_buff_atk_up.webp',
-        showInSquadIcon: true,
       },
       {
         sourceId: 'source',
         sourceActionId: 'skill:test',
+        showInSquadIcon: true,
         targetId: 'operator:1',
         buffId: 'buff:test',
         instanceId: 4,
@@ -115,7 +116,6 @@ describe('projectBuffTimelineViz', () => {
         endReason: 'lifetime',
         placement: 'upper',
         iconPath: '/icons/icon_battle_buff_atk_up.webp',
-        showInSquadIcon: true,
       },
     ]);
   });
@@ -227,7 +227,6 @@ describe('projectBuffTimelineViz', () => {
           instanceId: 2,
           layers: 1,
           iconPath: '/icons/child.webp',
-          showInSquadIcon: true,
         },
       },
       {
@@ -257,7 +256,6 @@ describe('projectBuffTimelineViz', () => {
         parentBuffId: 'buff:test',
         placement: 'upper',
         iconPath: '/icons/child.webp',
-        showInSquadIcon: true,
       },
     ]);
   });

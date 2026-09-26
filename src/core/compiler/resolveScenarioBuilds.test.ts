@@ -1,3 +1,4 @@
+import type { ScenarioDocument } from '../project/schema';
 import { describe, expect, it, vi } from 'vitest';
 import { perlica } from '../../data/operators/perlica.generated';
 import type {
@@ -114,4 +115,18 @@ describe('resolveScenarioBuilds', () => {
       "duplicate track identity 'track:0'",
     );
   });
+});
+
+it('retains graph operator and graph cast references in the resolved build', () => {
+  // 生成干员定义本身已经是图资源；解析层应原样保留对象身份。
+  const graphOperator = perlica;
+  const graphScenario: ScenarioDocument = scenario();
+  const source = index();
+  const builds = resolveScenarioBuilds(graphScenario, {
+    ...source,
+    getOperator: slug => (slug === perlica.slug ? graphOperator : null),
+  });
+  expect(builds[0]!.operator).toBe(graphOperator);
+  expect(builds[0]!.track).toBe(graphScenario.tracks[0]);
+  expect(builds[0]!.activeGearSets).toEqual([gearSet]);
 });

@@ -1,4 +1,4 @@
-import { parseSkillSettingResources } from '../../../../packages/game-data-contract/src/skillSettingResources.ts';
+import { parseSkillSettingResources } from '../../../../src/core/game-data/definitionGuards.ts';
 import {
   requireArray,
   requireExactFields,

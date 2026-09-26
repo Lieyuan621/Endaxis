@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { createGameDataRepository } from '../../../data/gameDataRepository';
 import { perlica } from '../../../data/operators/index';
 import {

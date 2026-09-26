@@ -27,6 +27,99 @@ function createTrack(): TrackDocument {
   };
 }
 
+it('独立技能图的自定义覆盖按自身节点校验，保存时不展开动作树', () => {
+  const projectWithEntry = (entry: string) => {
+    const project = createEmptyProject({ createdWith: 'test' });
+    const track = createTrack();
+    track.skillCasts.push({
+      id: 'cast:graph',
+      source: { kind: 'operatorSkill', skillGroupKey: 'battleSkill', skillKey: 'battleSkill' },
+      placement: { startFrame: 30 },
+      customDefinition: {
+        key: 'battleSkill',
+        timelineBlockFrames: 30,
+        scheduledSequences: [{ startFrame: 0, sequence: { $sequence: entry } }],
+        actionGraph: {
+          main: {
+            nodes: {
+              entry: {
+                action: { kind: 'dealStagger', parameters: { value: 1 } },
+                next: null,
+              },
+            },
+          },
+          macros: {},
+        },
+      },
+    });
+    project.scenarios[0]!.tracks[0] = track;
+    return project;
+  };
+  const valid = projectWithEntry('entry');
+  expect(validateProjectDocument(valid).ok).toBe(true);
+  expect(parseProjectDocument(serializeProjectDocument(valid)).ok).toBe(true);
+  const invalid = validateProjectDocument(projectWithEntry('missing'));
+  expect(invalid.ok).toBe(false);
+  if (!invalid.ok)
+    expect(invalid.issues.some(issue => issue.message.includes('missing'))).toBe(true);
+});
+
+it('preserves infinite curve tangents through text and parsed JSON without mutating the input', () => {
+  const project = createEmptyProject({ createdWith: 'test' });
+  const track = createTrack();
+  track.skillCasts.push({
+    id: 'curve',
+    source: { kind: 'operatorSkill', skillGroupKey: 'battleSkill', skillKey: 'battleSkill' },
+    placement: { startFrame: 0 },
+    customDefinition: {
+      key: 'battleSkill',
+      timelineBlockFrames: 30,
+      scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'curve' } }],
+      actionGraph: {
+        main: {
+          nodes: {
+            curve: {
+              next: null,
+              action: {
+                kind: 'startTimeDilation',
+                parameters: {
+                  scope: 'global',
+                  durationSeconds: { kind: 'constant', value: 1 },
+                  slot: 'Test/TimeSlot1',
+                  priority: 2,
+                  finishByAction: false,
+                  ignoredTargets: ['caster'],
+                  curve: {
+                    kind: 'inline',
+                    keys: [
+                      {
+                        time: 0,
+                        value: 1,
+                        inTangent: Infinity,
+                        outTangent: -Infinity,
+                        weightedMode: 0,
+                        inWeight: 0,
+                        outWeight: 0,
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+        },
+        macros: {},
+      },
+    },
+  });
+  project.scenarios[0]!.tracks[0] = track;
+  const text = serializeProjectDocument(project);
+  const encoded: unknown = JSON.parse(text);
+  expect(parseProjectDocument(text)).toEqual({ ok: true, value: project });
+  expect(parseProjectDocument(encoded)).toEqual({ ok: true, value: project });
+  expect(JSON.stringify(encoded)).toBe(text);
+});
+
 describe('current project document', () => {
   it('preserves creation time when saving and rejects invalid dates', () => {
     const project = createEmptyProject({
@@ -51,6 +144,7 @@ describe('current project document', () => {
           name: 'Custom Buff',
           enabled: false,
           definition: {
+            actionGraph: { main: { nodes: {} }, macros: {} },
             stackingType: 'unlimited',
             attributeModifiers: [{ attribute: 'criticalRate', slot: 'baseAddition', value: 0.1 }],
           },
@@ -342,56 +436,30 @@ describe('current project document', () => {
     );
   });
 
-  it('preserves native sequence order instead of using before/after damage flags', () => {
-    const project = createEmptyProject({
-      createdWith: 'test',
-    });
-    const scenario = project.scenarios[0]!;
+  it('round-trips graph order and validates action parameters in main and macro graphs', () => {
+    const project = createEmptyProject({ createdWith: 'test' });
     const track = createTrack();
     track.skillCasts.push({
       id: 'cast:1',
-      source: {
-        kind: 'operatorSkill',
-        skillGroupKey: 'battleSkill',
-        skillKey: 'battleSkill',
-      },
+      source: { kind: 'operatorSkill', skillGroupKey: 'battleSkill', skillKey: 'battleSkill' },
       placement: { startFrame: 30 },
-      presentation: {
-        locked: false,
-        disabled: false,
-      },
       customDefinition: {
         key: 'battleSkill',
         timelineBlockFrames: 30,
-        scheduledSequences: [
-          {
-            startFrame: 8,
-            sequence: {
-              steps: [
-                {
+        scheduledSequences: [{ startFrame: 8, sequence: { $sequence: 'buff' } }],
+        actionGraph: {
+          main: {
+            nodes: {
+              buff: {
+                action: {
                   kind: 'applyBuff',
-                  parameters: {
-                    buffId: 'electric-infliction',
-                    definition: {
-                      stackingType: 'enhanceAndRefresh',
-                      durationSeconds: 10,
-                      maxStackCount: 3,
-                    },
-                    target: 'party',
-                  },
+                  parameters: { buffId: 'electric-infliction', target: 'party' },
                 },
-                {
-                  kind: 'calculateActionValue',
-                  parameters: {
-                    key: 'result',
-                    operation: 'multiply',
-                    left: { kind: 'blackboard', key: 'base' },
-                    right: { kind: 'constant', value: 1.5 },
-                  },
-                },
-                {
+                next: 'damage',
+              },
+              damage: {
+                action: {
                   kind: 'dealDamage',
-                  key: 'hit:1',
                   parameters: {
                     damageType: 'electric',
                     attackScale: 1.78,
@@ -399,7 +467,10 @@ describe('current project document', () => {
                     stagger: 10,
                   },
                 },
-                {
+                next: 'branch',
+              },
+              branch: {
+                action: {
                   kind: 'conditional',
                   parameters: {
                     condition: {
@@ -409,212 +480,153 @@ describe('current project document', () => {
                       right: 'will',
                     },
                   },
-                  whenTrue: {
-                    steps: [
-                      {
-                        kind: 'setContextFlag',
-                        parameters: { flag: 'operatorForm', value: 'intellect', target: 'caster' },
-                      },
-                    ],
-                  },
+                  whenTrue: { $sequence: 'call' },
+                  whenFalse: { $sequence: null },
                 },
-              ],
+                next: null,
+              },
+              call: { action: { kind: 'callMacro', macroId: 'flag' }, next: null },
             },
           },
-        ],
+          macros: {
+            flag: {
+              entry: { $sequence: 'flag' },
+              graph: {
+                nodes: {
+                  flag: {
+                    action: {
+                      kind: 'setContextFlag',
+                      parameters: { flag: 'operatorForm', value: 'intellect', target: 'caster' },
+                    },
+                    next: null,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
-    scenario.tracks[0] = track;
-    scenario.connections.push({
-      id: 'connection:cast',
-      consumption: false,
-      from: { kind: 'skillCast', skillCastId: 'cast:1' },
-      to: { kind: 'skillCast', skillCastId: 'cast:1' },
-    });
-
-    const parsed = parseProjectDocument(serializeProjectDocument(project));
-
-    expect(parsed.ok).toBe(true);
-    if (parsed.ok) {
-      const sequence =
-        parsed.value.scenarios[0]!.tracks[0]!.skillCasts[0]!.customDefinition!
-          .scheduledSequences[0]!.sequence.steps;
-      expect(sequence.map(step => step.kind)).toEqual([
-        'applyBuff',
-        'calculateActionValue',
-        'dealDamage',
-        'conditional',
-      ]);
-      const applyBuff = sequence[0];
-      expect(applyBuff?.kind).toBe('applyBuff');
-      if (applyBuff?.kind === 'applyBuff') {
-        expect(applyBuff.parameters.definition).toEqual({
-          stackingType: 'enhanceAndRefresh',
-          durationSeconds: 10,
-          maxStackCount: 3,
-        });
-      }
-      const branch = sequence[3];
-      expect(branch?.kind).toBe('conditional');
-      if (branch?.kind === 'conditional') {
-        expect(branch.whenTrue.steps[0]?.kind).toBe('setContextFlag');
-      }
-      expect(parsed.value.scenarios[0]?.connections[0]?.from).toEqual({
-        kind: 'skillCast',
-        skillCastId: 'cast:1',
-      });
-      expect(JSON.stringify(sequence)).not.toContain('beforeDamage');
-      expect(JSON.stringify(sequence)).not.toContain('afterDamage');
-    }
-
-    const fixedDamage = JSON.parse(serializeProjectDocument(project));
-    const fixedDamageStep =
-      fixedDamage.scenarios[0].tracks[0].skillCasts[0].customDefinition.scheduledSequences[0]
-        .sequence.steps[2];
-    fixedDamageStep.kind = 'dealFixedDamage';
-    fixedDamageStep.parameters = {
-      damageType: 'physical',
-      value: 0.01,
-      tags: ['ultimateSkill'],
+    project.scenarios[0]!.tracks[0] = track;
+    const serialized = serializeProjectDocument(project);
+    expect(parseProjectDocument(serialized)).toEqual({ ok: true, value: project });
+    expect(serialized).not.toContain('"steps"');
+    const changeAction = (id: string, action: unknown, macro = false) => {
+      const copy = JSON.parse(serialized);
+      const resource = copy.scenarios[0].tracks[0].skillCasts[0].customDefinition.actionGraph;
+      (macro ? resource.macros.flag.graph : resource.main).nodes[id].action = action;
+      return copy;
     };
-    expect(validateProjectDocument(fixedDamage).ok).toBe(true);
-
-    const invalidKind = JSON.parse(serializeProjectDocument(project));
-    invalidKind.scenarios[0].tracks[0].skillCasts[0].customDefinition.scheduledSequences[0].sequence.steps[0].kind =
-      'unknownStep';
-    const invalidKindResult = parseProjectDocument(invalidKind);
-    expect(invalidKindResult.ok).toBe(false);
-    if (!invalidKindResult.ok && invalidKindResult.kind === 'invalid-document') {
-      expect(invalidKindResult.issues).toContainEqual(
-        expect.objectContaining({ message: 'unknown combat step kind' }),
-      );
+    expect(
+      validateProjectDocument(
+        changeAction('damage', {
+          kind: 'dealFixedDamage',
+          parameters: { damageType: 'physical', value: 0.01, tags: ['ultimateSkill'] },
+        }),
+      ).ok,
+    ).toBe(true);
+    for (const [id, action, field, macro] of [
+      ['buff', { kind: 'unknownStep', parameters: {} }, '.kind'],
+      ['damage', { kind: 'dealDamage', parameters: { buffId: 'wrong' } }, '.parameters.damageType'],
+      ['damage', { kind: 'dealStagger', parameters: { value: 'invalid' } }, '.parameters.value'],
+      [
+        'damage',
+        {
+          kind: 'dealDamage',
+          parameters: { damageType: 'electric', attackScale: 1, tags: ['unknown'] },
+        },
+        '.parameters.tags[0]',
+      ],
+      [
+        'damage',
+        {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'result',
+            operation: 'floor',
+            left: { kind: 'constant', value: 1 },
+            right: { kind: 'constant', value: 2 },
+          },
+        },
+        '.parameters.operation',
+      ],
+      [
+        'damage',
+        {
+          kind: 'changeResource',
+          parameters: {
+            resource: 'ultimateEnergy',
+            amount: 10,
+            recipient: 'caster',
+            spGainSource: 'normalAttack',
+          },
+        },
+        '.parameters.spGainSource',
+      ],
+      [
+        'damage',
+        {
+          kind: 'changeResource',
+          parameters: {
+            resource: 'sp',
+            amount: 10,
+            recipient: 'team',
+            ultimateRecoveryTag: 'Skill/Character/chr_0026_lastrite',
+          },
+        },
+        '.parameters.ultimateRecoveryTag',
+      ],
+      [
+        'flag',
+        { kind: 'dealStagger', parameters: { value: 'invalid' } },
+        '.parameters.value',
+        true,
+      ],
+    ] as const) {
+      const result = validateProjectDocument(changeAction(id, action, macro));
+      expect(result.ok).toBe(false);
+      if (!result.ok)
+        expect(result.issues).toContainEqual(
+          expect.objectContaining({ path: expect.stringContaining(field) }),
+        );
     }
-
-    const mismatchedParameters = JSON.parse(serializeProjectDocument(project));
-    mismatchedParameters.scenarios[0].tracks[0].skillCasts[0].customDefinition.scheduledSequences[0].sequence.steps[2].parameters =
-      { buffId: 'not-damage-parameters', target: 'enemy' };
-    const mismatchedResult = parseProjectDocument(mismatchedParameters);
-    expect(mismatchedResult.ok).toBe(false);
-    if (!mismatchedResult.ok && mismatchedResult.kind === 'invalid-document') {
-      expect(mismatchedResult.issues).toContainEqual(
-        expect.objectContaining({ path: expect.stringContaining('.parameters.damageType') }),
-      );
-    }
-
-    const invalidStagger = JSON.parse(serializeProjectDocument(project));
-    invalidStagger.scenarios[0].tracks[0].skillCasts[0].customDefinition.scheduledSequences[0].sequence.steps.push(
-      { kind: 'dealStagger', parameters: { value: 'invalid' } },
-    );
-    const invalidStaggerResult = validateProjectDocument(invalidStagger);
-    expect(invalidStaggerResult.ok).toBe(false);
-    if (!invalidStaggerResult.ok) {
-      expect(invalidStaggerResult.issues).toContainEqual(
-        expect.objectContaining({ path: expect.stringContaining('.parameters.value') }),
-      );
-    }
-
-    const invalidDamageTag = JSON.parse(serializeProjectDocument(project));
-    invalidDamageTag.scenarios[0].tracks[0].skillCasts[0].customDefinition.scheduledSequences[0].sequence.steps[2].parameters.tags =
-      ['unknownDamageTag'];
-    const invalidDamageTagResult = validateProjectDocument(invalidDamageTag);
-    expect(invalidDamageTagResult.ok).toBe(false);
-    if (!invalidDamageTagResult.ok) {
-      expect(invalidDamageTagResult.issues).toContainEqual(
-        expect.objectContaining({ path: expect.stringContaining('.parameters.tags[0]') }),
-      );
-    }
-
-    const invalidCondition = JSON.parse(serializeProjectDocument(project));
-    invalidCondition.scenarios[0].tracks[0].skillCasts[0].customDefinition.scheduledSequences[0].sequence.steps[3].parameters.condition.operator =
-      'approximately';
-    const invalidConditionResult = validateProjectDocument(invalidCondition);
-    expect(invalidConditionResult.ok).toBe(false);
-    if (!invalidConditionResult.ok) {
-      expect(invalidConditionResult.issues).toContainEqual(
-        expect.objectContaining({ path: expect.stringContaining('.condition.operator') }),
-      );
-    }
-
-    const invalidHealthCondition = JSON.parse(serializeProjectDocument(project));
-    invalidHealthCondition.scenarios[0].tracks[0].skillCasts[0].customDefinition.scheduledSequences[0].sequence.steps[3].parameters.condition =
+    for (const condition of [
+      { kind: 'deckAttributeCompare', left: 'intellect', operator: 'approximately', right: 'will' },
       {
         kind: 'healthCompare',
         target: 'enemy',
         valueType: 'percentage',
         operator: 'greater',
         value: { kind: 'constant', value: 0 },
-      };
-    const invalidHealthConditionResult = validateProjectDocument(invalidHealthCondition);
-    expect(invalidHealthConditionResult.ok).toBe(false);
-    if (!invalidHealthConditionResult.ok) {
-      expect(invalidHealthConditionResult.issues).toContainEqual(
-        expect.objectContaining({ path: expect.stringContaining('.condition.valueType') }),
-      );
-    }
-
-    const invalidCalculation = JSON.parse(serializeProjectDocument(project));
-    invalidCalculation.scenarios[0].tracks[0].skillCasts[0].customDefinition.scheduledSequences[0].sequence.steps[1].parameters.operation =
-      'floor';
-    const invalidCalculationResult = validateProjectDocument(invalidCalculation);
-    expect(invalidCalculationResult.ok).toBe(false);
-    if (!invalidCalculationResult.ok) {
-      expect(invalidCalculationResult.issues).toContainEqual(
-        expect.objectContaining({ path: expect.stringContaining('.parameters.operation') }),
-      );
-    }
-
-    const invalidResourceSource = JSON.parse(serializeProjectDocument(project));
-    invalidResourceSource.scenarios[0].tracks[0].skillCasts[0].customDefinition.scheduledSequences[0].sequence.steps.push(
-      {
-        kind: 'changeResource',
-        parameters: {
-          resource: 'ultimateEnergy',
-          amount: 10,
-          recipient: 'caster',
-          spGainSource: 'normalAttack',
-        },
       },
-    );
-    const invalidResourceSourceResult = validateProjectDocument(invalidResourceSource);
-    expect(invalidResourceSourceResult.ok).toBe(false);
-    if (!invalidResourceSourceResult.ok) {
-      expect(invalidResourceSourceResult.issues).toContainEqual(
-        expect.objectContaining({ path: expect.stringContaining('.parameters.spGainSource') }),
-      );
-    }
-
-    const invalidUltimateOption = JSON.parse(serializeProjectDocument(project));
-    invalidUltimateOption.scenarios[0].tracks[0].skillCasts[0].customDefinition.scheduledSequences[0].sequence.steps.push(
-      {
-        kind: 'changeResource',
-        parameters: {
-          resource: 'sp',
-          amount: 10,
-          recipient: 'team',
-          ultimateRecoveryTag: 'Skill/Character/chr_0026_lastrite',
-        },
-      },
-    );
-    const invalidUltimateOptionResult = validateProjectDocument(invalidUltimateOption);
-    expect(invalidUltimateOptionResult.ok).toBe(false);
-    if (!invalidUltimateOptionResult.ok) {
-      expect(invalidUltimateOptionResult.issues).toContainEqual(
-        expect.objectContaining({
-          path: expect.stringContaining('.parameters.ultimateRecoveryTag'),
+    ]) {
+      const invalid = validateProjectDocument(
+        changeAction('branch', {
+          kind: 'conditional',
+          parameters: { condition },
+          whenTrue: { $sequence: 'call' },
         }),
       );
+      expect(invalid.ok).toBe(false);
+      if (!invalid.ok)
+        expect(invalid.issues.some(issue => issue.path.includes('.parameters.condition.'))).toBe(
+          true,
+        );
     }
-
-    const invalidConnectionEndpoint = JSON.parse(serializeProjectDocument(project));
-    invalidConnectionEndpoint.scenarios[0].connections[0].from.kind = 'damageHit';
-    const invalidConnectionEndpointResult = validateProjectDocument(invalidConnectionEndpoint);
-    expect(invalidConnectionEndpointResult.ok).toBe(false);
-    if (!invalidConnectionEndpointResult.ok) {
-      expect(invalidConnectionEndpointResult.issues).toContainEqual({
-        path: '$.scenarios[0].connections[0].from.kind',
-        message: "expected 'skillCast'",
-      });
-    }
+    const unowned = JSON.parse(serialized);
+    unowned.scenarios[0].tracks[0].skillCasts[0].customDefinition.actionGraph = { nodes: {} };
+    expect(validateProjectDocument(unowned).ok).toBe(false);
+    const tree = JSON.parse(serialized);
+    delete tree.scenarios[0].tracks[0].skillCasts[0].customDefinition.actionGraph;
+    tree.scenarios[0].tracks[0].skillCasts[0].customDefinition.scheduledSequences[0].sequence = {
+      steps: [],
+    };
+    const invalid = validateProjectDocument(tree);
+    expect(invalid.ok).toBe(false);
+    if (!invalid.ok)
+      expect(invalid.issues).toContainEqual(
+        expect.objectContaining({ message: 'custom skill requires its own action graph' }),
+      );
   });
 
   it('validates cast-specific random inputs', () => {

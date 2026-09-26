@@ -1,9 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
 import { renderEquipmentSuitDefinitionFiles } from '../src/index.ts';
+import { createActionGraphBuilder } from '../src/compiler/actions/actionGraphBuilder.ts';
 
 describe('装备套装运行时定义渲染', () => {
   it('稳定生成 GearSetDefinition 和索引，不把审计中间产物写入正式目录', () => {
+    const graph = createActionGraphBuilder();
+    const initializationSequence = graph.node({
+      kind: 'applyBuff',
+      parameters: { buffId: 'buff_fixture', target: 'caster' },
+    });
     const files = renderEquipmentSuitDefinitionFiles({
       definitions: [
         {
@@ -20,11 +26,8 @@ describe('装备套装运行时定义渲染', () => {
               attributeModifiers: [],
             },
           },
-          initializationSequence: {
-            steps: [
-              { kind: 'applyBuff', parameters: { buffId: 'buff_fixture', target: 'caster' } },
-            ],
-          },
+          actionGraph: { main: graph.finish(), macros: {} },
+          initializationSequence,
         },
       ],
       diagnostics: [

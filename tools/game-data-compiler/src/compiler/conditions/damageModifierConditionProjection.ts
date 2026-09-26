@@ -1,4 +1,7 @@
-import type { ActionSequenceDefinition } from '../../../../../packages/game-data-contract/src/actions.ts';
+import type {
+  ActionGraphDefinition,
+  ActionGraphReference,
+} from '../../../../../packages/game-data-contract/src/actionGraph.ts';
 import type {
   ActionValueOperand,
   CombatCondition,
@@ -13,10 +16,11 @@ import type {
  * 这里不解析原生动作、枚举或掩码。带副作用的序列必须等待同步动作宿主接通，不能丢掉写入。
  */
 export function projectPureDamageModifierCondition(
-  sequence: ActionSequenceDefinition,
+  graph: ActionGraphDefinition,
+  sequence: ActionGraphReference,
   path: string,
 ): DamageModifierCondition | undefined {
-  const result = reduceSequence(sequence, path);
+  const result = reduceSequence(graph, sequence, path, new Set());
   return result === true ? undefined : materialize(result);
 }
 
@@ -47,34 +51,53 @@ function negate(result: Result): Result {
   return typeof result === 'boolean' ? !result : { kind: 'not', condition: result };
 }
 
-function reduceSequence(sequence: ActionSequenceDefinition, path: string): Result {
-  return combine(
-    'all',
-    sequence.steps.map((step, index): Result => {
-      const stepPath = `${path}.steps[${index}]`;
-      if (step.kind !== 'conditional') {
-        throw new Error(
-          `${stepPath}: damage modifier condition requires an action-sequence runtime (${step.kind}); cannot discard side effects`,
-        );
-      }
-      // 即使 alwaysNext=true，仍先验证两支均无副作用，不能把条件运算当成无操作。
-      const condition = reduceCondition(step.parameters.condition, `${stepPath}.condition`);
-      const whenTrue = reduceSequence(step.whenTrue, `${stepPath}.whenTrue`);
-      const whenFalse =
-        step.whenFalse === undefined
-          ? false
-          : reduceSequence(step.whenFalse, `${stepPath}.whenFalse`);
-      if (step.parameters.alwaysNext) return true;
-      return combine('any', [
-        combine('all', [condition, whenTrue]),
-        combine('all', [negate(condition), whenFalse]),
-      ]);
-    }),
-  );
+function reduceSequence(
+  graph: ActionGraphDefinition,
+  sequence: ActionGraphReference,
+  path: string,
+  ancestors: ReadonlySet<string>,
+): Result {
+  const results: Result[] = [];
+  const visited = new Set(ancestors);
+  let cursor = sequence.$sequence;
+  while (cursor !== null) {
+    if (visited.has(cursor)) throw new Error(`${path}: cyclic condition graph at ${cursor}`);
+    visited.add(cursor);
+    const node = graph.nodes[cursor];
+    if (!node) throw new Error(`${path}: missing condition node ${cursor}`);
+    const step = node.action;
+    const stepPath = `${path}.${cursor}`;
+    if (step.kind !== 'conditional') {
+      throw new Error(
+        `${stepPath}: damage modifier condition requires an action-sequence runtime (${step.kind}); cannot discard side effects`,
+      );
+    }
+    // 即使 alwaysNext=true，仍先验证两支均无副作用，不能把条件运算当成无操作。
+    const condition = reduceCondition(step.parameters.condition, `${stepPath}.condition`);
+    const whenTrue = reduceSequence(graph, step.whenTrue, `${stepPath}.whenTrue`, visited);
+    const whenFalse =
+      step.whenFalse === undefined
+        ? false
+        : reduceSequence(graph, step.whenFalse, `${stepPath}.whenFalse`, visited);
+    results.push(
+      step.parameters.alwaysNext
+        ? true
+        : combine('any', [
+            combine('all', [condition, whenTrue]),
+            combine('all', [negate(condition), whenFalse]),
+          ]),
+    );
+    cursor = node.next;
+  }
+  return combine('all', results);
 }
 
 function number(value: number | ActionValueOperand): DamageModifierNumber {
   if (typeof value === 'number') return value;
+  if (value.kind === 'valueNode')
+    throw new Error('data nodes must be bound before condition lowering');
+  if (value.kind === 'parameter')
+    throw new Error('damage modifier parameters must be bound before condition lowering');
   return value.kind === 'constant' ? value.value : { blackboardKey: value.key };
 }
 

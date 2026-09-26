@@ -1,7 +1,4 @@
 import type { GameDataBrowser, GameDataRepository } from '../game-data/gameDataRepository';
-import type { OperatorDefinition } from '../game-data/operatorDefinition';
-import { listOperatorSkillDefinitionBindings } from '../game-data/operatorSkillDefinitions';
-import { validateOperatorDefinition } from '../game-data/validateOperatorDefinition';
 import type {
   GearDefinition,
   GearSetDefinition,
@@ -16,12 +13,10 @@ import {
 import type {
   EndaxisProjectDocument,
   ProjectDefinitionLibraryDocument,
-  ProjectOperatorTemplateDocument,
   ScenarioDocument,
   TrackDocument,
   TrackIndex,
 } from './schema';
-import { validateProjectDocument } from './validation';
 
 export const EMPTY_PROJECT_DEFINITION_LIBRARY: ProjectDefinitionLibraryDocument = Object.freeze({
   operators: Object.freeze({}),
@@ -45,35 +40,6 @@ export function getProjectDefinitionLibrary(
   return project.definitionLibrary ?? EMPTY_PROJECT_DEFINITION_LIBRARY;
 }
 
-export type ProjectTemplateKind = 'operator' | 'weapon' | 'gear' | 'gearSet';
-
-function projectTemplateRecords(
-  library: ProjectDefinitionLibraryDocument,
-  kind: ProjectTemplateKind,
-): Readonly<Record<string, unknown>> {
-  if (kind === 'operator') return library.operators;
-  if (kind === 'weapon') return library.weapons;
-  if (kind === 'gear') return library.gears;
-  return library.gearSets;
-}
-
-/** 从持久化项目库的已有数字身份之后继续分配，不依赖页面生命周期计数器。 */
-export function allocateProjectTemplateId(
-  library: ProjectDefinitionLibraryDocument,
-  kind: ProjectTemplateKind,
-): string {
-  const prefix = `project:${kind}:`;
-  let maximum = 0;
-  const records = projectTemplateRecords(library, kind);
-  for (const id of Object.keys(records)) {
-    if (!id.startsWith(prefix)) continue;
-    const suffix = id.slice(prefix.length);
-    if (!/^\d+$/.test(suffix)) continue;
-    maximum = Math.max(maximum, Number(suffix));
-  }
-  return `${prefix}${maximum + 1}`;
-}
-
 function requireProjectTemplateId(id: string, kind: string): void {
   if (!id.startsWith(`project:${kind}:`) || id.length === `project:${kind}:`.length) {
     throw new Error(`project ${kind} template id '${id}' must use the project:${kind}: namespace`);
@@ -82,13 +48,6 @@ function requireProjectTemplateId(id: string, kind: string): void {
 
 function clone<T>(value: T): T {
   return structuredClone(value);
-}
-
-export interface DeriveOperatorTemplateInput {
-  id: string;
-  name: string;
-  baseTemplateId: string;
-  definition: OperatorDefinition;
 }
 
 interface DeriveEquipmentTemplateInput<T> {
@@ -180,54 +139,6 @@ export function deriveProjectGearSetTemplateInLibrary(
   };
 }
 
-export function deriveProjectOperatorTemplateInLibrary(
-  library: ProjectDefinitionLibraryDocument,
-  input: DeriveOperatorTemplateInput,
-): ProjectDefinitionLibraryDocument {
-  assertValidOperatorDefinition(input.definition);
-  requireProjectTemplateId(input.id, 'operator');
-  if (input.name.trim().length === 0)
-    throw new Error('project operator template name must not be empty');
-  if (library.operators[input.id] !== undefined) {
-    throw new Error(`project operator template '${input.id}' already exists`);
-  }
-  const definition = clone({
-    ...input.definition,
-    slug: input.id,
-    displayName: input.name.trim(),
-    assetSlug: input.definition.assetSlug ?? input.definition.slug,
-  });
-  const template: ProjectOperatorTemplateDocument = {
-    id: input.id,
-    name: input.name.trim(),
-    origin: {
-      templateId: input.baseTemplateId,
-    },
-    definition,
-  };
-  return { ...library, operators: { ...library.operators, [input.id]: template } };
-}
-
-/** 物化一个完整项目模板；来源仅保留为审计信息，不参与运行时隐式合并。 */
-export function deriveProjectOperatorTemplate(
-  project: EndaxisProjectDocument,
-  input: DeriveOperatorTemplateInput,
-): EndaxisProjectDocument {
-  const candidate: EndaxisProjectDocument = {
-    ...project,
-    definitionLibrary: deriveProjectOperatorTemplateInLibrary(
-      getProjectDefinitionLibrary(project),
-      input,
-    ),
-  };
-  const validation = validateProjectDocument(candidate);
-  if (!validation.ok) {
-    const summary = validation.issues.map(issue => `${issue.path}: ${issue.message}`).join('; ');
-    throw new Error(`invalid project operator definition: ${summary}`);
-  }
-  return candidate;
-}
-
 export function deriveProjectWeaponTemplate(
   project: EndaxisProjectDocument,
   input: DeriveEquipmentTemplateInput<WeaponDefinition>,
@@ -265,111 +176,6 @@ export function deriveProjectGearSetTemplate(
       input,
     ),
   };
-}
-
-function collectSkillIdentities(definition: OperatorDefinition): ReadonlySet<string> {
-  const identities = new Set(
-    listOperatorSkillDefinitionBindings(definition).map(
-      ({ group, skill }) => `${group.key}\u0000${skill.key}`,
-    ),
-  );
-  for (const alias of definition.skillAliases ?? []) {
-    identities.add(`${alias.from[0]}\u0000${alias.from[1]}`);
-  }
-  return identities;
-}
-
-function assertValidOperatorDefinition(definition: OperatorDefinition): void {
-  const issues = validateOperatorDefinition(
-    definition,
-    `$.definitionLibrary.operators['${definition.slug}'].definition`,
-  );
-  if (issues.length === 0) return;
-  const summary = issues.map(issue => `${issue.path}: ${issue.message}`).join('; ');
-  throw new Error(`invalid project operator definition: ${summary}`);
-}
-
-/** 替换一个物化干员定义，并在同一项目命令中守住定义结构和轴上技能引用。 */
-export function replaceProjectOperatorTemplateDefinition(
-  project: EndaxisProjectDocument,
-  templateId: string,
-  definition: OperatorDefinition,
-): EndaxisProjectDocument {
-  const library = getProjectDefinitionLibrary(project);
-  const template = library.operators[templateId];
-  if (template === undefined) throw new Error(`missing project operator template '${templateId}'`);
-  if (definition.slug !== templateId) {
-    throw new Error(
-      `project operator definition slug '${definition.slug}' does not match template '${templateId}'`,
-    );
-  }
-  assertValidOperatorDefinition(definition);
-  const skillIdentities = collectSkillIdentities(definition);
-  for (const scenario of project.scenarios) {
-    for (const track of scenario.tracks) {
-      if (track?.operator?.operatorSlug !== templateId) continue;
-      for (const cast of track.skillCasts) {
-        if (cast.source.kind !== 'operatorSkill') continue;
-        const identity = `${cast.source.skillGroupKey}\u0000${cast.source.skillKey}`;
-        if (!skillIdentities.has(identity)) {
-          throw new Error(
-            `operator template '${templateId}' cannot preserve cast '${cast.id}' (${cast.source.skillGroupKey}/${cast.source.skillKey})`,
-          );
-        }
-      }
-    }
-  }
-
-  const candidate: EndaxisProjectDocument = {
-    ...project,
-    definitionLibrary: {
-      ...library,
-      operators: {
-        ...library.operators,
-        [templateId]: {
-          ...template,
-          name: definition.displayName?.trim() || template.name,
-          definition: clone(definition),
-        },
-      },
-    },
-  };
-  const validation = validateProjectDocument(candidate);
-  if (!validation.ok) {
-    const summary = validation.issues.map(issue => `${issue.path}: ${issue.message}`).join('; ');
-    throw new Error(`invalid project operator definition: ${summary}`);
-  }
-  return candidate;
-}
-
-/** 派生模板与当前模板结构相同才允许原子切换并保留轴上技能块。 */
-export function switchTrackToCompatibleOperatorTemplate(
-  scenario: ScenarioDocument,
-  trackIndex: TrackIndex,
-  previousDefinition: OperatorDefinition,
-  nextTemplateId: string,
-  nextDefinition: OperatorDefinition,
-): ScenarioDocument {
-  const track = scenario.tracks[trackIndex];
-  if (track?.operator === null || track === null)
-    throw new Error(`track ${trackIndex} has no operator`);
-  const previousSkills = collectSkillIdentities(previousDefinition);
-  const nextSkills = collectSkillIdentities(nextDefinition);
-  for (const cast of track.skillCasts) {
-    if (cast.source.kind !== 'operatorSkill') continue;
-    const identity = `${cast.source.skillGroupKey}\u0000${cast.source.skillKey}`;
-    if (!previousSkills.has(identity) || !nextSkills.has(identity)) {
-      throw new Error(
-        `operator template '${nextTemplateId}' cannot preserve cast '${cast.id}' (${cast.source.skillGroupKey}/${cast.source.skillKey})`,
-      );
-    }
-  }
-  const tracks = [...scenario.tracks] as ScenarioDocument['tracks'];
-  tracks[trackIndex] = {
-    ...track,
-    operator: { ...track.operator, operatorSlug: nextTemplateId },
-  };
-  return { ...scenario, tracks };
 }
 
 /** A derived weapon keeps the equipped build while changing only its template identity. */
@@ -627,6 +433,3 @@ export function createProjectGameDataRepository(
     getEnemies: () => base.getEnemies(),
   };
 }
-
-export type ProjectTemplateDefinition =
-  OperatorDefinition | WeaponDefinition | GearDefinition | GearSetDefinition;

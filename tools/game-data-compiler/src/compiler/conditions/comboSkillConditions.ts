@@ -10,10 +10,12 @@ import {
   type ActionContextBoundAbilityEvent,
 } from '../../../../../packages/game-data-contract/src/abilityEvents.ts';
 import { projectAbilityEvent } from '../abilities/abilityEventProjection.ts';
+import { createActionGraphBuilder } from '../actions/actionGraphBuilder.ts';
+import type { CompiledBuffStepSource } from '../actions/combatActionProjectionTypes.ts';
 
 export function createOperatorComboActionProjectionContext(
   gameplayTagRegistry: CombatActionProjectionContextSource['gameplayTagRegistry'],
-): CombatActionProjectionContextSource {
+): Omit<CombatActionProjectionContextSource, 'graph'> {
   return {
     gameplayTagRegistry,
     actionOwnerTarget: 'caster',
@@ -24,6 +26,7 @@ export function createOperatorComboActionProjectionContext(
 }
 
 export interface CompiledComboConditionSource {
+  readonly actionGraph: import('../../../../../packages/game-data-contract/src/actionGraph.ts').ActionGraphResourceDefinition;
   readonly source: ComboSkillConditionSource;
   readonly event: AbilityEvent;
   readonly sequence: CompiledBuffSequenceSource;
@@ -34,7 +37,7 @@ export function compileComboSkillConditionDefinitionSource(
   source: ComboSkillConditionSource,
   blackboards: CompiledAbilitySystemBlackboardsSource,
   binding: { readonly key: string; readonly skillKey: string },
-  context: CombatActionProjectionContextSource,
+  context: Omit<CombatActionProjectionContextSource, 'graph'>,
 ) {
   const compiled = compilePendingComboConditionSource(source, context);
   return {
@@ -49,6 +52,7 @@ export function compileComboSkillConditionDefinitionSource(
           ? null
           : { ...blackboards.comboConditionInitialValues },
       sequence: compiled.sequence,
+      actionGraph: compiled.actionGraph,
     },
   };
 }
@@ -56,7 +60,7 @@ export function compileComboSkillConditionDefinitionSource(
 /** 事件身份与条件树均走公共编译器；目标绑定和事件产生能力由运行端另行门禁。 */
 export function compilePendingComboConditionSource(
   source: ComboSkillConditionSource,
-  context: CombatActionProjectionContextSource,
+  context: Omit<CombatActionProjectionContextSource, 'graph'>,
 ): CompiledComboConditionSource {
   const event = projectAbilityEvent(source.nativeEvent, `${source.sourcePath}.nativeEvent`);
   if (!(event in ABILITY_EVENT_ACTION_CONTEXT_BINDINGS))
@@ -64,14 +68,13 @@ export function compilePendingComboConditionSource(
       `${source.sourcePath}.nativeEvent: AbilityEvent '${event}' has no audited action-context binding`,
     );
   const binding = ABILITY_EVENT_ACTION_CONTEXT_BINDINGS[event as ActionContextBoundAbilityEvent];
-  return {
-    source,
-    event,
-    sequence: compileCombatConditionSequenceSource(source.sequence, {
-      ...context,
-      actionTargetTarget:
-        'fixedStumpInputTarget' in binding ? binding.fixedStumpInputTarget : binding.inputTarget,
-      ...(binding.triggerTarget === null ? { contextTargetGroupTargets: new Map() } : {}),
-    }),
-  };
+  const graph = createActionGraphBuilder<CompiledBuffStepSource>();
+  const sequence = compileCombatConditionSequenceSource(source.sequence, {
+    ...context,
+    graph,
+    actionTargetTarget:
+      'fixedStumpInputTarget' in binding ? binding.fixedStumpInputTarget : binding.inputTarget,
+    ...(binding.triggerTarget === null ? { contextTargetGroupTargets: new Map() } : {}),
+  });
+  return { source, event, sequence, actionGraph: { main: graph.finish(), macros: {} } };
 }

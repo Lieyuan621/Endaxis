@@ -6,6 +6,7 @@ import type { AbilityEvent } from '../../../../../packages/game-data-contract/sr
 import { bindRestoredCombatOperatorEquipment } from './combatOperatorEquipmentRestoration';
 import { CombatSemanticEventRuntime } from '../../events/combatSemanticEventRuntime';
 import { EquipmentEventRuntime } from '../../abilities/equipmentEventRuntime';
+import { chainEntry } from '../../../../test/compiledGraphEntry';
 
 const contribution: CompiledEquipmentContribution = {
   source: { kind: 'weaponTrait', slug: 'weapon', traitKey: 'trait' },
@@ -15,14 +16,12 @@ const contribution: CompiledEquipmentContribution = {
     {
       key: 'gain',
       abilityEvent: 'skillSpGained',
-      sequence: {
-        steps: [
-          {
-            kind: 'changeResource',
-            parameters: { resource: 'sp', amount: 1, recipient: 'team' },
-          },
-        ],
-      },
+      sequence: chainEntry('equipment-gain', [
+        {
+          kind: 'changeResource',
+          parameters: { resource: 'sp', amount: 1, recipient: 'team' },
+        },
+      ]),
     },
   ],
 };

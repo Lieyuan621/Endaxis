@@ -8,7 +8,7 @@ import type {
   DamageModifierNumber,
   DamageProcessorDefinition,
 } from '../../../../packages/game-data-contract/src/modifiers.ts';
-import { compareCombatNumbers } from '../../../../packages/game-data-contract/src/primitives';
+import { compareCombatNumbers } from '../../mechanics/combatNumbers.ts';
 import { attributeModifierValues } from '../attributes/combatAttributes';
 import type {
   DamageModifierSide,

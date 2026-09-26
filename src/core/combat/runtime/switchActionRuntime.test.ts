@@ -1,25 +1,56 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ResolvedCombatStep, ResolvedCombatStepForKind } from '../../compiler/combatProgram';
+import type { ResolvedActionSequence } from '../../compiler/combatProgram';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import type {
+  ActionGraphNode,
+  ActionGraphStep,
+} from '../../../../packages/game-data-contract/src/actionGraph';
 import type { ActionValueOperand } from '../../game-data/operatorDefinition';
 import { CombatActionSequenceRuntime } from '../actions/combatActionSequenceRuntime';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import type { CombatOperationExecutor } from '../skills/skillRuntime';
 
 const constant = (value: number): ActionValueOperand => ({ kind: 'constant', value });
-const effect = (key: string): ResolvedCombatStep => ({
+const effect = (key: string): ActionGraphStep => ({
   kind: 'setContextFlag',
   key,
   parameters: { flag: key, target: 'caster', value: true },
 });
-const select = (
+
+const compileGraphEntry = (
+  revision: string,
+  entry: string | null,
+  nodes: Record<string, ActionGraphNode>,
+): ResolvedActionSequence => ({
+  graph: createActionGraphCompilation({ nodes }, 1, revision).compileAll(),
+  entry,
+  callSite: revision,
+});
+
+/** 每个选项一个单步节点；节点名按选项序号派生。 */
+const selectNodes = (
   choice: ActionValueOperand,
   values: readonly ActionValueOperand[],
   alwaysNext = false,
-): ResolvedCombatStepForKind<'switch'> => ({
-  kind: 'switch',
-  parameters: { choice, alwaysNext },
-  options: values.map((value, index) => ({ value, sequence: { steps: [effect(String(index))] } })),
-});
+): Record<string, ActionGraphNode> => {
+  const nodes: Record<string, ActionGraphNode> = {};
+  nodes.select = {
+    action: {
+      kind: 'switch',
+      parameters: { choice, alwaysNext },
+      options: values.map((value, index) => ({
+        value,
+        sequence: { $sequence: `option-${index}` },
+      })),
+    },
+    next: null,
+  };
+  values.forEach((_value, index) => {
+    nodes[`option-${index}`] = { action: effect(String(index)), next: null };
+  });
+  return nodes;
+};
+
 function fixture(blackboard = new ActionBlackboard()) {
   const execute = vi.fn<CombatOperationExecutor['execute']>(() => true);
   const prepare = vi.fn<NonNullable<CombatOperationExecutor['prepare']>>();
@@ -36,15 +67,22 @@ function fixture(blackboard = new ActionBlackboard()) {
 describe('Switch 原生选择和生命周期', () => {
   it('标签不是索引，重复标签只执行第一项；命中后不读取后面的缺键', () => {
     const f = fixture();
-    const action = select(constant(7), [
+    const nodes = selectNodes(constant(7), [
       constant(20),
       constant(7),
       constant(7),
       { kind: 'blackboard', key: 'missing' },
     ]);
-    expect(f.runtime.createSequence({ steps: [action] }).executeInstant({})).toBe(true);
+    expect(
+      f.runtime
+        .createSequence(compileGraphEntry('switch-duplicate', 'select', nodes))
+        .executeInstant({}),
+    ).toBe(true);
     expect(f.execute).toHaveBeenCalledOnce();
-    expect(f.execute).toHaveBeenCalledWith(action.options[1]!.sequence.steps[0], expect.anything());
+    expect(f.execute).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'setContextFlag', key: '1' }),
+      expect.anything(),
+    );
   });
 
   it.each([
@@ -56,9 +94,10 @@ describe('Switch 原生选择和生命周期', () => {
     [Infinity, Infinity, false],
   ])('单精度匹配 choice=%s option=%s → %s', (choice, value, expected) => {
     const f = fixture();
+    const nodes = selectNodes(constant(choice), [constant(value)]);
     expect(
       f.runtime
-        .createSequence({ steps: [select(constant(choice), [constant(value)])] })
+        .createSequence(compileGraphEntry('switch-float32', 'select', nodes))
         .executeInstant({}),
     ).toBe(expected);
     expect(f.execute).toHaveBeenCalledTimes(expected ? 1 : 0);
@@ -68,11 +107,11 @@ describe('Switch 原生选择和生命周期', () => {
     const blackboard = new ActionBlackboard({ choice: 4, first: 2, second: 4 });
     const reads = vi.spyOn(blackboard, 'getNumber');
     const f = fixture(blackboard);
-    const action = select(
-      { kind: 'blackboard', key: 'choice' },
-      ['first', 'second'].map(key => ({ kind: 'blackboard', key })),
-    );
-    const sequence = f.runtime.createSequence({ steps: [action] });
+    const nodes = selectNodes({ kind: 'blackboard', key: 'choice' }, [
+      { kind: 'blackboard', key: 'first' },
+      { kind: 'blackboard', key: 'second' },
+    ]);
+    const sequence = f.runtime.createSequence(compileGraphEntry('switch-reads', 'select', nodes));
     sequence.executeInstant({});
     expect(reads.mock.calls.map(([key]) => key)).toEqual(['choice', 'first', 'second']);
     reads.mockClear();
@@ -82,12 +121,24 @@ describe('Switch 原生选择和生命周期', () => {
     expect(f.execute.mock.calls.map(([step]) => step.key)).toEqual(['1', '0']);
     expect(() =>
       f.runtime
-        .createSequence({ steps: [select({ kind: 'blackboard', key: 'absent' }, [])] })
+        .createSequence(
+          compileGraphEntry(
+            'switch-absent-choice',
+            'select',
+            selectNodes({ kind: 'blackboard', key: 'absent' }, []),
+          ),
+        )
         .executeInstant({}),
     ).toThrow('absent');
     expect(() =>
       f.runtime
-        .createSequence({ steps: [select(constant(1), [{ kind: 'blackboard', key: 'absent' }])] })
+        .createSequence(
+          compileGraphEntry(
+            'switch-absent-option',
+            'select',
+            selectNodes(constant(1), [{ kind: 'blackboard', key: 'absent' }]),
+          ),
+        )
         .executeInstant({}),
     ).toThrow('absent');
   });
@@ -95,26 +146,25 @@ describe('Switch 原生选择和生命周期', () => {
   it.each([false, true])('alwaysNext=%s 只控制外层后继，不绕过选中分支的短路', alwaysNext => {
     const f = fixture();
     f.execute.mockReturnValueOnce(false);
-    const action = select(constant(1), [constant(1)], alwaysNext);
-    const sequence = f.runtime.createSequence({
-      steps: [
-        {
-          ...action,
-          options: [
-            { ...action.options[0]!, sequence: { steps: [effect('fail'), effect('skipped')] } },
-          ],
-        },
-        effect('outer'),
-      ],
-    });
+    const nodes = selectNodes(constant(1), [constant(1)], alwaysNext);
+    nodes['option-0'] = { action: effect('fail'), next: 'option-0-skipped' };
+    nodes['option-0-skipped'] = { action: effect('skipped'), next: null };
+    nodes.select = { ...nodes.select!, next: 'outer' };
+    nodes.outer = { action: effect('outer'), next: null };
+    const sequence = f.runtime.createSequence(
+      compileGraphEntry(`switch-always-next-${alwaysNext}`, 'select', nodes),
+    );
     expect(sequence.executeInstant({})).toBe(alwaysNext);
     expect(f.execute.mock.calls.map(([step]) => step.key)).toEqual(
       alwaysNext ? ['fail', 'outer'] : ['fail'],
     );
     f.execute.mockClear();
+    const empty = selectNodes(constant(8), [], alwaysNext);
+    empty.select = { ...empty.select!, next: 'after' };
+    empty.after = { action: effect('after'), next: null };
     expect(
       f.runtime
-        .createSequence({ steps: [select(constant(8), [], alwaysNext), effect('after')] })
+        .createSequence(compileGraphEntry(`switch-empty-${alwaysNext}`, 'select', empty))
         .executeInstant({}),
     ).toBe(alwaysNext);
     expect(f.execute).toHaveBeenCalledTimes(alwaysNext ? 1 : 0);
@@ -122,21 +172,34 @@ describe('Switch 原生选择和生命周期', () => {
 
   it('Reset 预备全部分支（包括未选的嵌套 IfElse）；End 只结束选中分支', () => {
     const f = fixture(new ActionBlackboard({ choice: 0 }));
-    const action = select({ kind: 'blackboard', key: 'choice' }, [constant(0), constant(1)]);
-    const conditional: ResolvedCombatStep = {
-      kind: 'conditional',
-      parameters: { condition: { kind: 'combatActive' } },
-      whenTrue: { steps: [effect('true')] },
-      whenFalse: { steps: [effect('false')] },
-    };
-    const sequence = f.runtime.createSequence({
-      steps: [
-        {
-          ...action,
-          options: [action.options[0]!, { value: constant(1), sequence: { steps: [conditional] } }],
+    const nodes: Record<string, ActionGraphNode> = {
+      select: {
+        action: {
+          kind: 'switch',
+          parameters: { choice: { kind: 'blackboard', key: 'choice' }, alwaysNext: false },
+          options: [
+            { value: constant(0), sequence: { $sequence: 'option-0' } },
+            { value: constant(1), sequence: { $sequence: 'option-1' } },
+          ],
         },
-      ],
-    });
+        next: null,
+      },
+      'option-0': { action: effect('0'), next: null },
+      'option-1': {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'combatActive' } },
+          whenTrue: { $sequence: 'true' },
+          whenFalse: { $sequence: 'false' },
+        },
+        next: null,
+      },
+      true: { action: effect('true'), next: null },
+      false: { action: effect('false'), next: null },
+    };
+    const sequence = f.runtime.createSequence(
+      compileGraphEntry('switch-reset-prepare', 'select', nodes),
+    );
     sequence.reset({});
     expect(f.prepare.mock.calls.map(([step]) => step.key)).toEqual(['0', 'true', 'false']);
     sequence.tryExecute({});
@@ -153,20 +216,30 @@ describe('Switch 原生选择和生命周期', () => {
   it('Tick 只推进当前选中分支，下次无匹配时不残留上次分支', () => {
     const blackboard = new ActionBlackboard({ choice: 0 });
     const f = fixture(blackboard);
-    const action = select({ kind: 'blackboard', key: 'choice' }, [constant(0), constant(1)], true);
-    const sequence = f.runtime.createSequence({
-      steps: [
-        {
-          ...action,
-          options: action.options.map(option => ({
-            ...option,
-            sequence: {
-              steps: [{ kind: 'repeatEachTick', parameters: {}, body: option.sequence }],
-            },
-          })),
+    const nodes: Record<string, ActionGraphNode> = {
+      select: {
+        action: {
+          kind: 'switch',
+          parameters: { choice: { kind: 'blackboard', key: 'choice' }, alwaysNext: true },
+          options: [
+            { value: constant(0), sequence: { $sequence: 'tick-0' } },
+            { value: constant(1), sequence: { $sequence: 'tick-1' } },
+          ],
         },
-      ],
-    });
+        next: null,
+      },
+      'tick-0': {
+        action: { kind: 'repeatEachTick', parameters: {}, body: { $sequence: 'option-0' } },
+        next: null,
+      },
+      'tick-1': {
+        action: { kind: 'repeatEachTick', parameters: {}, body: { $sequence: 'option-1' } },
+        next: null,
+      },
+      'option-0': { action: effect('0'), next: null },
+      'option-1': { action: effect('1'), next: null },
+    };
+    const sequence = f.runtime.createSequence(compileGraphEntry('switch-tick', 'select', nodes));
     sequence.tryExecute({});
     sequence.tick(1 / 60, {});
     sequence.tick(1 / 60, {});

@@ -1,7 +1,11 @@
 /** 同时保存目标循环成员、动态子序列进度和目标，验证恢复不会遗漏在执行的子序列。 */
 import { describe, expect, it } from 'vitest';
 import { StateStepper } from '../runtime/stateStepper';
-import { createActionSequenceState, createTargetLoopState } from '../state/actionState';
+import {
+  COMBAT_STEP_STATE,
+  createTargetLoopState,
+  type ActionStepState,
+} from '../state/actionState';
 import {
   endActionSequence,
   executeActionSequence,
@@ -16,10 +20,21 @@ import {
   type TargetLoopHost,
 } from './sequenceControl';
 
+/** 共享内核状态的测试夹具：与图执行器同样按 `entries()` 枚举步骤生命周期。 */
+function createActionSequenceState(stepCount: number): { entries: ActionStepState[] } {
+  return {
+    entries: Array.from({ length: stepCount }, () => ({
+      state: COMBAT_STEP_STATE.pending,
+      executeResult: false,
+      executionPermitted: false,
+    })),
+  };
+}
+
 function createSession() {
   return new StateStepper(
     {
-      loop: createTargetLoopState(),
+      loop: createTargetLoopState<ReturnType<typeof createActionSequenceState>>(),
       calls: [] as string[],
     },
     (step, input: 'start' | 'tick' | 'end' | 'reset') => {

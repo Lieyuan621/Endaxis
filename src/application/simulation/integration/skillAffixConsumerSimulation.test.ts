@@ -85,7 +85,8 @@ it.each([false, true])('伊冯正式战技 SkillAffix 生命周期 interruption=
     entry => entry.event === 'DamageApplied' && entry.data?.castId === 'skillCast:yvonne:affix',
   );
   expect(damage).toHaveLength(1);
-  expect(damage[0]!.data!.stepKey).toContain('buff_chr_0017_yvonne_normal_skill_projectile:');
+  // 统一投射物生命周期下，命中伤害由发射动作内的回调技能图承载。
+  expect(damage[0]!.data!.stepKey).toContain('launchProjectile');
   const ends = entries.filter(
     entry =>
       entry.event === (interrupted ? 'SkillInterrupted' : 'SkillEnded') &&

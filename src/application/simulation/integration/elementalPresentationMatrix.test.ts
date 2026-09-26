@@ -3,6 +3,10 @@ import type {
   InflictionElement,
   OperatorDefinition,
 } from '../../../core/game-data/operatorDefinition';
+import type {
+  ActionGraphNode,
+  ActionGraphStep,
+} from '../../../../packages/game-data-contract/src/actionGraph';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import { gameDataRepository } from '../../../data/gameDataRepository';
 import { elementalAttachments } from '../../../data/buffs/elementalAttachments';
@@ -84,47 +88,49 @@ async function run(
         key: 'basicAttack',
         skillType: 'basicAttack',
         levelSource: 'basicAttack',
-        skills: {
-          key: 'probe',
-          skillType: 'basicAttack',
-          levelSource: 'basicAttack',
-          timelineBlockFrames: 1500,
-          scheduledSequences: [
+        skills: (() => {
+          const actionSpecs: { startFrame: number; action: ActionGraphStep }[] = [
             ...elements.map((element, index) => ({
               startFrame: 1 + spacing * index,
-              sequence: {
-                steps: [
-                  {
-                    kind: 'applyElementalInfliction' as const,
-                    parameters: { element, isExtra: false },
-                  },
-                ],
+              action: {
+                kind: 'applyElementalInfliction' as const,
+                parameters: { element, isExtra: false },
               },
             })),
             ...(consume === undefined
               ? []
               : [120, 180].map(startFrame => ({
                   startFrame,
-                  sequence: {
-                    steps: [
-                      {
-                        kind: 'finishBuffsByTag' as const,
-                        parameters: {
-                          target: 'enemy' as const,
-                          tagQueryType: 'hasAny' as const,
-                          buffTags: [
-                            consume === 'electrification'
-                              ? 'Skill/Character/Common/SpellStatus/Conduct'
-                              : 'Skill/Character/Common/SpellStatus/Corrupt',
-                          ],
-                          reason: 'early' as const,
-                        },
-                      },
-                    ],
+                  action: {
+                    kind: 'finishBuffsByTag' as const,
+                    parameters: {
+                      target: 'enemy' as const,
+                      tagQueryType: 'hasAny' as const,
+                      buffTags: [
+                        consume === 'electrification'
+                          ? 'Skill/Character/Common/SpellStatus/Conduct'
+                          : 'Skill/Character/Common/SpellStatus/Corrupt',
+                      ],
+                      reason: 'early' as const,
+                    },
                   },
                 }))),
-          ],
-        },
+          ];
+          const nodes: Record<string, ActionGraphNode> = {};
+          const scheduledSequences = actionSpecs.map((spec, index) => {
+            const nodeId = `probe-${index}`;
+            nodes[nodeId] = { action: spec.action, next: null };
+            return { startFrame: spec.startFrame, sequence: { $sequence: nodeId } };
+          });
+          return {
+            key: 'probe',
+            skillType: 'basicAttack' as const,
+            levelSource: 'basicAttack' as const,
+            timelineBlockFrames: 1500,
+            scheduledSequences,
+            actionGraph: { main: { nodes }, macros: {} },
+          };
+        })(),
       },
     ],
   };

@@ -27,7 +27,7 @@ import type { CombatCondition, DamageFeature, DamageTag } from '../../game-data/
 import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
 import type { GameplayTagQueryType } from '../tags/gameplayTags';
 import { resolveActionValueOperand } from '../actions/actionBlackboard';
-import { compareCombatNumbers } from '../../../../packages/game-data-contract/src/primitives';
+import { compareCombatNumbers } from '../../mechanics/combatNumbers.ts';
 import { NATIVE_ELEMENT_VALUES, spellBurstElement } from '../infliction/elementalInfliction';
 
 export class EventContextConditionExecutor implements CombatOperationExecutor {

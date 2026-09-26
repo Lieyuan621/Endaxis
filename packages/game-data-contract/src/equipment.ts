@@ -6,9 +6,14 @@
  */
 import { type LevelValues, type OperatorWeaponType } from './primitives.ts';
 import { type CombatCondition } from './conditions.ts';
-import { type ActionSequenceDefinition, type CombatEventTrigger } from './actions.ts';
+import { type CombatEventTrigger } from './actions.ts';
 import { type OperatorBuffDefinitions } from './buffs.ts';
 import type { AbilityEvent } from './abilityEvents.ts';
+import type {
+  ActionGraphDefinition,
+  ActionGraphReference,
+  ActionGraphResourceDefinition,
+} from './actionGraph.ts';
 
 /** 数据中允许出现的武器星级。 */
 export const WEAPON_RARITIES = [3, 4, 5, 6] as const;
@@ -93,7 +98,7 @@ interface EquipmentEventHandlerDefinitionBase {
   /** 事件发生后还需满足的条件。 */
   readonly condition?: CombatCondition;
   /** 条件成立时执行的动作序列。 */
-  readonly sequence: ActionSequenceDefinition;
+  readonly sequence: ActionGraphReference;
 }
 
 /** 配装能力监听战斗事件后执行的纯数据序列。 */
@@ -113,26 +118,30 @@ export type EquipmentEventHandlerDefinition = EquipmentEventHandlerDefinitionBas
       }
   );
 
-/** 武器词条、装备词条与套装共用的声明式贡献集合。 */
+/** 武器被动与套装效果的声明式贡献集合；普通装备词条只有静态修正。 */
 export interface EquipmentContributionDefinition {
+  /** 当前武器词条或套装效果自己的程序图；不按原生 ID 跨对象共享。 */
+  readonly actionGraph?: ActionGraphReference extends ActionGraphReference
+    ? ActionGraphResourceDefinition
+    : ActionGraphDefinition | ActionGraphResourceDefinition;
   /** 构筑阶段持续生效的属性修正。 */
   readonly modifiers?: readonly EquipmentModifierDefinition[];
   /** 装备能力注册的战斗事件响应。 */
   readonly eventHandlers?: readonly EquipmentEventHandlerDefinition[];
-  /** 该贡献安装行为所引用的 Buff 蓝图；与干员 Buff 共用同一运行时。 */
-  readonly buffDefinitions?: OperatorBuffDefinitions;
   /** 配装能力的初始黑板，按词条等级解析；初始化与全部事件响应共享同一实例。 */
   readonly blackboard?: Readonly<Record<string, LevelValues>>;
   /** 能力启用前执行一次；期间自身事件响应关闭，典型用途为原生普通启动 Buff。 */
-  readonly enableSequence?: ActionSequenceDefinition;
+  readonly enableSequence?: ActionGraphReference;
   /** 能力启用后在帧 0 执行一次；Toggle 初次安装及固定构筑刷新程序使用此入口。 */
-  readonly initializationSequence?: ActionSequenceDefinition;
+  readonly initializationSequence?: ActionGraphReference;
 }
 
 /** 一条按武器词条等级解析的能力。三星武器可只有两条，四星及以上通常为三条。 */
 export interface WeaponTraitDefinition extends EquipmentContributionDefinition {
   /** 词条在该武器中的唯一名称。 */
   readonly key: string;
+  /** 原生 SkillData 身份，仅用于来源记录；程序始终归属于本武器。 */
+  readonly skillId?: string;
   /** 这条词条可以解析的等级数量。 */
   readonly levelCount: number;
 }
@@ -155,6 +164,8 @@ export interface WeaponDefinition {
   readonly baseAttackAtLevelNodes: readonly number[];
   /** 按武器词条槽顺序保存的被动能力。 */
   readonly traits: readonly WeaponTraitDefinition[];
+  /** 整把武器的 Buff 定义闭包；各词条引用它，不由某条技能代持。 */
+  readonly buffDefinitions?: OperatorBuffDefinitions;
 }
 
 /** 装备定义使用的三个槽位类型。 */
@@ -163,12 +174,14 @@ export const GEAR_SLOT_TYPES = ['armor', 'gloves', 'accessory'] as const;
 /** 装备自身的槽位类型；两个配件槽共享同一种定义类型。 */
 export type GearSlotType = (typeof GEAR_SLOT_TYPES)[number];
 
-/** 一条按精锻等级解析的装备能力；build 中的 0 表示初始档。 */
-export interface GearTraitDefinition extends EquipmentContributionDefinition {
+/** 一条按精锻等级解析的装备静态词条；build 中的 0 表示初始档。 */
+export interface GearTraitDefinition {
   /** 词条在该装备中的唯一名称。 */
   readonly key: string;
   /** 这条词条可以解析的精锻等级数量。 */
   readonly levelCount: number;
+  /** 构筑阶段持续生效的属性修正。 */
+  readonly modifiers?: readonly EquipmentModifierDefinition[];
   /** 每条原生装备词条都有且只有一份 displayAttrModifiers 展示定义。 */
   readonly display: EquipmentTraitDisplayDefinition;
 }
@@ -200,8 +213,12 @@ export interface GearDefinition {
  * 三件触发属于全局装备规则，因此不在每项定义中重复保存 requiredCount。
  */
 export interface GearSetDefinition extends EquipmentContributionDefinition {
+  /** 套装对象持有的 Buff 定义，套装效果通过 ID 引用。 */
+  readonly buffDefinitions?: OperatorBuffDefinitions;
   /** 游戏原生套装 ID。 */
   readonly slug: string;
+  /** 套装效果的原生 SkillData 身份；不同于套装对象 ID。 */
+  readonly skillId?: string;
   /** 缺少本地化资源时可使用的套装名称。 */
   readonly displayName?: string;
   /** 套装效果在时间轴上的展示图标；独立于效果自身的原生图标。 */

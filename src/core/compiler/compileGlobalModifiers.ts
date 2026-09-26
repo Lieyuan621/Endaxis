@@ -1,7 +1,9 @@
+import type { SkillBuffDefinition } from '../../../packages/game-data-contract/src/buffs.ts';
 import type { CombatBuffDefinitionAttributeModifier } from '../../../packages/game-data-contract/src/buffs';
-import type { SkillBuffDefinition } from '../game-data/operatorDefinition';
+import type { ActionGraphDefinition } from '../../../packages/game-data-contract/src/actionGraph';
 import type { GlobalConfigDocument, GlobalOperatorStatModifier } from '../project/schema';
-import { compileActionSequence, compileOperatorBuffDefinitions } from './compileSkill';
+import { compileIndependentBuffResource } from './compileSkill';
+import { ActionGraphDefinitionRepository } from './actionGraphDefinitionRepository';
 import { GLOBAL_CONFIG_PRESETS } from '../project/globalConfigPresets';
 
 const BUFF_ID = 'scenario:global-attribute-modifiers';
@@ -18,7 +20,10 @@ const ATTRIBUTE_SLOTS = {
 >;
 
 /** 用户配置只在此翻译为普通 GlobalBuff；执行、属性叠加与切面恢复均走公共路径。 */
-export function compileGlobalModifiers(config: GlobalConfigDocument) {
+export function compileGlobalModifiers(
+  config: GlobalConfigDocument,
+  programs = new ActionGraphDefinitionRepository(),
+) {
   const presetModifiers = (config.enabledPresetIds ?? []).flatMap(id => {
     const preset = GLOBAL_CONFIG_PRESETS.find(item => item.id === id);
     if (!preset) throw new Error(`unknown global preset '${id}'`);
@@ -50,6 +55,7 @@ export function compileGlobalModifiers(config: GlobalConfigDocument) {
             stackingType: 'unlimited',
             presentation: { visible: false },
             attributeModifiers,
+            actionGraph: { main: { nodes: {} }, macros: {} },
           },
         };
   const activeIds = attributeModifiers.length ? [BUFF_ID] : [];
@@ -58,14 +64,17 @@ export function compileGlobalModifiers(config: GlobalConfigDocument) {
     if (buff.enabled) activeIds.push(buff.id);
   }
   return {
-    buffDefinitions: compileOperatorBuffDefinitions(definitions),
-    initializationPrograms: activeIds.map(buffId => ({
-      key: buffId,
-      initialBlackboard: {},
-      sequence: compileActionSequence(
-        {
-          steps: [
-            {
+    buffDefinitions: Object.fromEntries(
+      Object.entries(definitions).map(([id, definition]) => [
+        id,
+        compileIndependentBuffResource(definition, id, programs),
+      ]),
+    ),
+    initializationPrograms: activeIds.map(buffId => {
+      const graph: ActionGraphDefinition = {
+        nodes: {
+          initialize: {
+            action: {
               kind: 'createGlobalBuff',
               parameters: {
                 globalBuffId: buffId,
@@ -78,11 +87,17 @@ export function compileGlobalModifiers(config: GlobalConfigDocument) {
                 },
               },
             },
-          ],
+            next: null,
+          },
         },
-        0,
-        `GlobalModifiers.${buffId}.initialization`,
-      ),
-    })),
+      };
+      return {
+        key: buffId,
+        initialBlackboard: {},
+        sequence: programs
+          .compile(graph, 0)
+          .compileEntry({ $sequence: 'initialize' }, `GlobalModifiers.${buffId}.initialization`),
+      };
+    }),
   };
 }

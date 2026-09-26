@@ -3,9 +3,7 @@ import { createLegacyProjectImporter } from './projectConversion';
 import { parseProjectDocument } from '../../core/project/serialization';
 import type { GameDataRepository } from '../../core/game-data/gameDataRepository';
 import { resolveScenarioBuilds } from '../../core/compiler/resolveScenarioBuilds';
-import { resolveScenarioOperatorPanels } from '../../core/compiler/resolveOperatorPanel';
-import { compileOperatorDefinitionSkills } from '../../core/compiler/compileScenarioTimeline';
-import { resolveScenarioOperatorResourceRules } from '../../core/compiler/resolveScenarioResourceRules';
+import { resolveOperatorMaxUltimateEnergy } from '../../core/compiler/resolveScenarioResourceRules';
 import type { EndaxisProjectDocument } from '../../core/project/schema';
 import {
   retimeLegacyProjectBySimulation,
@@ -160,22 +158,15 @@ function normalizeInitialUltimateEnergy(
   const adjustments: LegacyResourceAdjustment[] = [];
   for (const [scenarioIndex, scenario] of project.scenarios.entries()) {
     const builds = resolveScenarioBuilds(scenario, repository);
-    const panels = resolveScenarioOperatorPanels(builds);
-    const programs = builds.map(build => ({
-      operatorId: build.track.id,
-      skills: compileOperatorDefinitionSkills(
+    const maximums = new Map(
+      builds.map(build => [
         build.track.id,
-        build.operatorInstance,
-        build.operator,
-        repository.getCommonAbilityEntityDefinitions?.(),
-        panels.find(panel => panel.operatorId === build.track.id)?.attributes,
-      ),
-    }));
-    const rules = resolveScenarioOperatorResourceRules(programs, panels);
+        resolveOperatorMaxUltimateEnergy(build.operator, build.operatorInstance),
+      ]),
+    );
     scenario.tracks.forEach((track, trackIndex) => {
       if (track === null) return;
-      const maximum =
-        track.initialState.maxUltimateEnergyOverride ?? rules.get(track.id)?.maxUltimateEnergy;
+      const maximum = track.initialState.maxUltimateEnergyOverride ?? maximums.get(track.id);
       if (maximum !== undefined && track.initialState.ultimateEnergy > maximum) {
         adjustments.push({
           path: `scenarioList[${scenarioIndex}].data.tracks[${trackIndex}].initialGauge`,

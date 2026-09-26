@@ -1,4 +1,5 @@
 import type { ScenarioDocument } from '../../core/project/schema';
+
 import {
   getSkillCastPlacementChains,
   getDodgeMarkerHistory,

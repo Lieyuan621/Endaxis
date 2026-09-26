@@ -1,4 +1,5 @@
 import type { ScenarioDocument, SkillCastDocument } from '../../core/project/schema';
+
 import type { CombatReceiptEntry } from '../../core/combat/receipt/combatReceipt';
 
 /** 编辑建议使用预留的文档身份；不进入存档，不改技能定义。 */

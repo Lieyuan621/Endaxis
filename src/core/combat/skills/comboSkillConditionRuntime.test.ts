@@ -12,12 +12,22 @@ import {
   type ElementalInflictionEvent,
 } from '../infliction/elementalInflictionOperationExecutor';
 import type { CombatOperationContext } from './skillRuntime';
-import { compileActionSequence } from '../../compiler/compileSkill';
-import type { ActionSequenceDefinition } from '../../game-data/operatorDefinition';
-import { validateSkillDefinition } from '../../game-data/validateSkillDefinition';
-import { parseComboSkillConditionsSource } from '../../../../tools/game-data-compiler/src/source/comboSkillConditions.ts';
-import { compilePendingComboConditionSource } from '../../../../tools/game-data-compiler/src/compiler/conditions/comboSkillConditions.ts';
+import type { ResolvedActionSequence } from '../../compiler/combatProgram';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import type { ActionGraphDefinition } from '../../../../packages/game-data-contract/src/actionGraph';
 import { TargetContextOperationExecutor } from '../abilities/targetContextOperationExecutor';
+
+const compileGraphEntry = (
+  revision: string,
+  entry: string | null,
+  nodes: ActionGraphDefinition['nodes'],
+): ResolvedActionSequence => ({
+  graph: createActionGraphCompilation({ nodes }, 1, revision).compileAll(),
+  entry,
+  callSite: revision,
+});
+
+const emptySequence = compileGraphEntry('combo-empty', null, {});
 
 function event(
   event: ElementalInflictionEvent = 'beforeTakeInfliction',
@@ -112,7 +122,7 @@ function options(overrides: Partial<ComboConditionRegistration> = {}): ComboCond
     event: 'beforeTakeInfliction',
     ownerId: 'owner',
     sourceId: 'source',
-    sequence: { steps: [] },
+    sequence: emptySequence,
     entityBlackboard: new ActionBlackboard(),
     initialValues: {},
     operations,
@@ -128,46 +138,28 @@ function options(overrides: Partial<ComboConditionRegistration> = {}): ComboCond
     ...overrides,
   };
 }
-function compileElementCondition(mask: number, savedKey = '') {
-  const source = parseComboSkillConditionsSource(
-    [
-      {
-        comboSkillEvent: 121,
-        comboSkillConditionImmediately: false,
-        comboSkillCheckAction: {
-          onlyExecuteWhenSourceIsMainChar: false,
-          onlyExecuteWhenSourceIsGuard: false,
-          actionData: [
-            {
-              $type:
-                'Beyond.Gameplay.Core.Conditions.CheckSpellInflictionType+Data, Gameplay.Beyond',
-              isEnable: true,
-              priorityLevel: 'Default',
-              priorityOffset: 0,
-              serverActionIndex: 1013,
-              mask,
-              savedKey,
-            },
-          ],
+// 与原生 CheckSpellInflictionType 投影等价的图：mask 位序 heat/electric/cryo/nature，
+// 条件命中时把原生元素值写入 savedKey（空 savedKey 时不写）。
+function elementConditionSequence(mask: number, savedKey = ''): ResolvedActionSequence {
+  const elements = (['heat', 'electric', 'cryo', 'nature'] as const).filter(
+    (_, index) => (mask & (1 << index)) !== 0,
+  );
+  return compileGraphEntry(`combo-element-${mask}-${savedKey}`, 'guard', {
+    guard: {
+      action: {
+        kind: 'conditional',
+        parameters: {
+          condition: {
+            kind: 'eventInflictionElementIn',
+            elements,
+            ...(savedKey === '' ? {} : { outputKey: savedKey }),
+          },
         },
+        whenTrue: { $sequence: null },
       },
-    ],
-    'character.combo.conditions',
-    {},
-  )[0]!;
-  const projected = compilePendingComboConditionSource(source, {
-    actionOwnerTarget: 'caster',
-    actionSourceTarget: 'caster',
-    actionTargetTarget: 'eventTarget',
-  }).sequence;
-  expect(
-    validateSkillDefinition({
-      key: 'combo',
-      timelineBlockFrames: 1,
-      scheduledSequences: [{ startFrame: 0, sequence: projected }],
-    }),
-  ).toEqual([]);
-  return compileActionSequence(projected as ActionSequenceDefinition, 1);
+      next: null,
+    },
+  });
 }
 
 describe('原生连携条件注册环境', () => {
@@ -177,7 +169,7 @@ describe('原生连携条件注册环境', () => {
     runtime.registerPendingCondition(
       options({
         event: 'weaknessSet',
-        sequence: { steps: [] },
+        sequence: emptySequence,
         resolveTarget: id => {
           if (id === 'enemy') return { kind: 'enemy' };
           throw new Error(`unknown target '${id}'`);
@@ -224,38 +216,36 @@ describe('原生连携条件注册环境', () => {
       options({
         event: 'beforeOutputDamage',
         operations: targetOperations,
-        sequence: compileActionSequence(
-          {
-            steps: [
-              {
-                kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'actionInputTargetObjectTypeMatch',
-                    objectTypes: ['enemy'],
-                  },
-                },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'conditional',
-                      parameters: {
-                        condition: {
-                          kind: 'contextTargetIdentityMatch',
-                          contextKey: 'trigger',
-                          other: 'controlledOperator',
-                          operator: 'equal',
-                        },
-                      },
-                      whenTrue: { steps: [] },
-                    },
-                  ],
+        sequence: compileGraphEntry('combo-output-damage-targets', 'outer', {
+          outer: {
+            action: {
+              kind: 'conditional',
+              parameters: {
+                condition: {
+                  kind: 'actionInputTargetObjectTypeMatch',
+                  objectTypes: ['enemy'],
                 },
               },
-            ],
+              whenTrue: { $sequence: 'inner' },
+            },
+            next: null,
           },
-          1,
-        ),
+          inner: {
+            action: {
+              kind: 'conditional',
+              parameters: {
+                condition: {
+                  kind: 'contextTargetIdentityMatch',
+                  contextKey: 'trigger',
+                  other: 'controlledOperator',
+                  operator: 'equal',
+                },
+              },
+              whenTrue: { $sequence: null },
+            },
+            next: null,
+          },
+        }),
         onPending: pending,
       }),
     );
@@ -278,7 +268,7 @@ describe('原生连携条件注册环境', () => {
       options({
         event: type,
         onPending: pending,
-        sequence: compileElementCondition(15),
+        sequence: elementConditionSequence(15),
         operations: {
           ...operations,
           execute: (step, ctx) => operations.execute(step, ctx),
@@ -312,7 +302,7 @@ describe('原生连携条件注册环境', () => {
     const runtime = new ComboSkillConditionRuntime();
     const pending = vi.fn();
     runtime.registerPendingCondition(
-      options({ sequence: compileElementCondition(mask), onPending: pending }),
+      options({ sequence: elementConditionSequence(mask), onPending: pending }),
     );
     for (const element of ['heat', 'electric', 'cryo', 'nature'] as const)
       runtime.onAbilityEvent(event(undefined, element));
@@ -325,24 +315,22 @@ describe('原生连携条件注册环境', () => {
     runtime.registerPendingCondition(
       options({
         event: 'afterTakePhysicalInfliction',
-        sequence: compileActionSequence(
-          {
-            steps: [
-              {
-                kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventPhysicalInflictionTypeIn',
-                    types: ['knockDown'],
-                    outputKey: 'physicalType',
-                  },
+        sequence: compileGraphEntry('combo-physical-infliction', 'guard', {
+          guard: {
+            action: {
+              kind: 'conditional',
+              parameters: {
+                condition: {
+                  kind: 'eventPhysicalInflictionTypeIn',
+                  types: ['knockDown'],
+                  outputKey: 'physicalType',
                 },
-                whenTrue: { steps: [] },
               },
-            ],
+              whenTrue: { $sequence: null },
+            },
+            next: null,
           },
-          1,
-        ),
+        }),
         initialValues: { physicalType: -1 },
         onPending: pending,
       }),
@@ -385,18 +373,16 @@ describe('原生连携条件注册环境', () => {
     runtime.registerPendingCondition(
       options({
         event: event.event,
-        sequence: compileActionSequence(
-          {
-            steps: [
-              {
-                kind: 'conditional',
-                parameters: { condition },
-                whenTrue: { steps: [] },
-              },
-            ],
+        sequence: compileGraphEntry(`combo-condition-${condition.kind}`, 'guard', {
+          guard: {
+            action: {
+              kind: 'conditional',
+              parameters: { condition },
+              whenTrue: { $sequence: null },
+            },
+            next: null,
           },
-          1,
-        ),
+        }),
         onPending: pending,
       }),
     );
@@ -421,21 +407,19 @@ describe('原生连携条件注册环境', () => {
         options({
           entityBlackboard: entity,
           initialValues: { value: initial, label: 'local' },
-          sequence: compileActionSequence(
-            {
-              steps: [
-                {
-                  kind: 'modifyActionValue',
-                  parameters: {
-                    key: 'value',
-                    operation: 'add',
-                    value: { kind: 'constant', value: 1 },
-                  },
+          sequence: compileGraphEntry('combo-direct-board-write', 'add', {
+            add: {
+              action: {
+                kind: 'modifyActionValue',
+                parameters: {
+                  key: 'value',
+                  operation: 'add',
+                  value: { kind: 'constant', value: 1 },
                 },
-              ],
+              },
+              next: null,
             },
-            1,
-          ),
+          }),
           operations: {
             execute: (step, ctx) => {
               directBoards.add(ctx!.blackboard);
@@ -468,7 +452,7 @@ describe('原生连携条件注册环境', () => {
         options({
           entityBlackboard: entity,
           initialValues,
-          sequence: compileElementCondition(15, 'EntityBB_type'),
+          sequence: elementConditionSequence(15, 'EntityBB_type'),
           onPending: p => pending.push(p),
         }),
       );
@@ -491,7 +475,7 @@ describe('原生连携条件注册环境', () => {
           isOwnerAlive: () => gate !== 'dead',
           isOwnerSilenced: () => gate === 'silenced',
           currentComboCooldown: cooldown,
-          sequence: compileElementCondition(15, 'EntityBB_type'),
+          sequence: elementConditionSequence(15, 'EntityBB_type'),
           onPending: pending,
         }),
       );
@@ -548,7 +532,7 @@ describe('原生连携条件注册环境', () => {
     const pending = vi.fn();
     runtime.registerPendingCondition(
       options({
-        sequence: compileElementCondition(15),
+        sequence: elementConditionSequence(15),
         onPending: pending,
         operations: {
           execute: () => true,

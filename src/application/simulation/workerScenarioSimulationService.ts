@@ -1,4 +1,5 @@
 import type { ScenarioDocument } from '../../core/project/schema';
+
 import type { RecursiveSkillChain } from './recursiveSkillChain';
 import type {
   ScenarioSimulationRun,
@@ -22,6 +23,36 @@ type Pending = {
   cleanup(): void;
 };
 const abort = () => new DOMException('模拟请求已被较新位置替代', 'AbortError');
+
+/** 复制消息中的纯数据并剥离 Vue 代理；JSON 往返会把原生曲线使用的 Infinity 改成 null。 */
+function transferableData<T>(value: T): T {
+  const copied = new WeakMap<object, unknown>();
+  const visit = (current: unknown): unknown => {
+    if (current === null || typeof current !== 'object') {
+      if (typeof current === 'function' || typeof current === 'symbol')
+        throw new TypeError('simulation worker request contains non-transferable data');
+      return current;
+    }
+    const previous = copied.get(current);
+    if (previous !== undefined) return previous;
+    if (Array.isArray(current)) {
+      const array: unknown[] = [];
+      copied.set(current, array);
+      for (const item of current) array.push(visit(item));
+      return array;
+    }
+    if (
+      Object.getPrototypeOf(current) !== Object.prototype &&
+      Object.getPrototypeOf(current) !== null
+    )
+      throw new TypeError('simulation worker request contains a non-plain object');
+    const record: Record<string, unknown> = Object.create(null);
+    copied.set(current, record);
+    for (const [key, item] of Object.entries(current)) record[key] = visit(item);
+    return record;
+  };
+  return visit(value) as T;
+}
 
 /** 单个在途、单个最新待算请求；不向 Worker 消息队列堆积拖动中间位置。 */
 export class WorkerScenarioSimulationService {
@@ -136,7 +167,7 @@ export class WorkerScenarioSimulationService {
     this.pending = undefined;
     this.active = task;
     try {
-      // 场景和定义是 JSON 契约；发送前去掉 Vue 代理，定义集合未变化时由 Worker 复用。
+      // 场景和定义是纯数据；发送前去掉 Vue 代理，定义集合未变化时由 Worker 复用。
       const selectionKey = scenarioSimulationGameDataSelectionKey(task.request.scenario);
       const gameDataKey = `${this.revision}\u001e${selectionKey}`;
       const gameData =
@@ -147,7 +178,7 @@ export class WorkerScenarioSimulationService {
         ...task.request,
         ...(gameData === undefined ? {} : { gameData }),
       };
-      this.worker.postMessage(JSON.parse(JSON.stringify(request)));
+      this.worker.postMessage(transferableData(request));
       this.sentGameDataKey = gameDataKey;
     } catch (error) {
       this.active = undefined;

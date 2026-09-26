@@ -74,7 +74,7 @@ export function timelineSkillSegmentLabel(
   return null;
 }
 
-/** 时间轴块用星号标出名称明确声明为强化的技能；其他修饰词不改变块标签。 */
+/** 时间轴用星号区分强化技能，以及浮空普攻、浮空连携。 */
 export function timelineSkillBlockLabel(
   entry: TimelineSkillLibraryEntryViewModel,
   skillKey: string,
@@ -82,7 +82,11 @@ export function timelineSkillBlockLabel(
   fallbackLabel: string,
 ): string {
   const label = timelineSkillSegmentLabel(entry, skillKey, labels) ?? fallbackLabel;
-  return entry.nameQualifier === 'enhanced' ? `${label}*` : label;
+  const starred =
+    entry.nameQualifier === 'enhanced' ||
+    (entry.nameQualifier === 'floating' &&
+      (entry.skillType === 'basicAttack' || entry.skillType === 'comboSkill'));
+  return starred ? `${label}*` : label;
 }
 
 /** 路由实际触发的技能即使没有放在轴上，也按技能块规则命名；重名时不猜所属技能组。 */

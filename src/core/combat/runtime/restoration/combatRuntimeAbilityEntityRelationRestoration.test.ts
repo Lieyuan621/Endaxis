@@ -1,8 +1,11 @@
 import { expect, it, vi } from 'vitest';
 import type {
   CompiledAbilityEntityChildSkillProgram,
+  CompiledGraphEntry,
   ResolvedAbilityEntityDefinition,
 } from '../../../compiler/combatProgram';
+import { createActionGraphCompilation } from '../../../compiler/compileActionGraph';
+import type { ActionGraphStep } from '../../../../../packages/game-data-contract/src/actionGraph';
 import { CombatOperationPrograms } from '../../actions/combatOperationPrograms';
 import type { CombatOperatorProgram } from '../combatRuntimeAssembly';
 import type { BuffOperationTarget } from '../../buffs/buffOperationExecutor';
@@ -20,6 +23,16 @@ import { CombatClock } from '../../time/combatClock';
 import { CombatReceiptCollector } from '../../receipt/combatReceipt';
 import { createCallbackSkillHostFactory } from '../../abilities/callbackSkillHost';
 
+const stepEntry = (revision: string, action: ActionGraphStep): CompiledGraphEntry => ({
+  graph: createActionGraphCompilation(
+    { nodes: { 'step-0': { action, next: null } } },
+    1,
+    revision,
+  ).compileAll(),
+  entry: 'step-0',
+  callSite: revision,
+});
+
 const childProgram = {
   skillId: 'pulse',
   nativeSkillType: 'normalSkill',
@@ -34,18 +47,14 @@ const childProgram = {
   timelineActions: [
     {
       startFrame: 1,
-      sequence: {
-        steps: [
-          {
-            kind: 'modifyActionValue',
-            parameters: {
-              key: 'count',
-              operation: 'add',
-              value: { kind: 'constant', value: 1 },
-            },
-          },
-        ],
-      },
+      sequence: stepEntry('pulse-count', {
+        kind: 'modifyActionValue',
+        parameters: {
+          key: 'count',
+          operation: 'add',
+          value: { kind: 'constant', value: 1 },
+        },
+      }),
     },
   ],
 } satisfies CompiledAbilityEntityChildSkillProgram;

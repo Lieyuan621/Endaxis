@@ -4,7 +4,7 @@ import type { CombatCondition } from '../../game-data/operatorDefinition';
 import type { EnemyRank } from '../../game-data/enemyRank';
 import type { CombatOperationExecutor } from '../skills/skillRuntime';
 import { resolveActionValueOperand } from '../actions/actionBlackboard';
-import { compareCombatNumbers } from '../../../../packages/game-data-contract/src/primitives';
+import { compareCombatNumbers } from '../../mechanics/combatNumbers.ts';
 
 /** 读取场景敌人实例捕获的原生 rank；展示 tier 不参与条件求值。 */
 export class EnemyRankConditionExecutor implements CombatOperationExecutor {

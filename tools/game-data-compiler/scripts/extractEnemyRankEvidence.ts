@@ -198,10 +198,16 @@ export async function extractEnemyRankEvidence(args: Arguments) {
         })}\n`,
         'utf8',
       );
-      const { stdout, stderr } = await execFileAsync(args.unityWorker, ['request', requestPath], {
-        maxBuffer: 4 * 1024 * 1024,
-        windowsHide: true,
-      });
+      // 与 exportGameplayTagConfigSet 一致：.dll worker 必须经 dotnet 宿主启动，不能直接 exec。
+      const workerIsDll = args.unityWorker.endsWith('.dll');
+      const { stdout, stderr } = await execFileAsync(
+        workerIsDll ? 'dotnet' : args.unityWorker,
+        [...(workerIsDll ? [args.unityWorker] : []), 'request', requestPath],
+        {
+          maxBuffer: 4 * 1024 * 1024,
+          windowsHide: true,
+        },
+      );
       const response = JSON.parse(stdout.trim()) as WorkerResponse;
       if (response.ok !== true) {
         throw new Error(

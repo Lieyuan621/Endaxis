@@ -4,7 +4,7 @@
  * Buff、装备、技能监听和连携条件都从这里选用同一组事件名称。动作环境绑定表说明
  * 每类事件的发布者和对端对象，模拟器据此为后续动作填入正确的施法者、目标和触发者。
  */
-import type { ActionSequenceDefinition } from './actions.ts';
+import type { ActionGraphReference } from './actionGraph.ts';
 
 /** 监听到能力事件后执行的一项响应。 */
 export interface AbilityEventResponse<Event extends AbilityEvent = AbilityEvent> {
@@ -13,7 +13,7 @@ export interface AbilityEventResponse<Event extends AbilityEvent = AbilityEvent>
   /** 同一事件有多项响应时的执行优先级。 */
   priority: number;
   /** 事件触发后执行的动作序列。 */
-  sequence: ActionSequenceDefinition;
+  sequence: ActionGraphReference;
 }
 
 /** 游戏能力系统中可被数据定义监听的事件名称。 */

@@ -254,14 +254,14 @@ describe('从原始文件独立编译定义', () => {
     const before = fs.readdirSync(root, { recursive: true });
     const compiled = compileContingencyContractDefinitionsFromFiles(args);
     expect(compiled.buffDefinitions.buff_fixture).toBeDefined();
-    expect(compiled.initializationPlans).toMatchObject([
-      {
-        tagId: 1,
-        sequence: {
-          steps: [{ kind: 'applyBuff', parameters: { buffId: 'buff_fixture', target: 'enemy' } }],
-        },
-      },
-    ]);
+    const plan = compiled.initializationPlans[0];
+    expect(plan?.tagId).toBe(1);
+    const planEntry = plan?.sequence.$sequence;
+    expect(
+      planEntry !== null &&
+        planEntry !== undefined &&
+        plan?.actionGraph.main.nodes[planEntry]?.action,
+    ).toMatchObject({ kind: 'applyBuff', parameters: { buffId: 'buff_fixture', target: 'enemy' } });
     expect(compiled.enemyMaxHealthPlans).toEqual([{ tagId: 2, multiplier: 1.5 }]);
     expect(compiled.scope.supportedTagIds).toEqual(new Set([1]));
     expect(compiled.revision).toBe('fixture@1');

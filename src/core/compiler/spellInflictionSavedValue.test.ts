@@ -2,9 +2,14 @@ import { describe, expect, it, vi } from 'vitest';
 import { parseConditionLeafSource } from '../../../tools/game-data-compiler/src/source/condition.ts';
 import { parseKnownNativeActionSequenceSource } from '../../../tools/game-data-compiler/src/source/actionLeaf.ts';
 import { compileCombatActionSequenceSource } from '../../../tools/game-data-compiler/src/compiler/buffs/buffRuntimeProjection.ts';
-import { compileActionSequence } from './compileSkill';
 import { validateSkillDefinition } from '../game-data/validateSkillDefinition';
-import type { ActionSequenceDefinition } from '../game-data/operatorDefinition';
+import {
+  createActionGraphBuilder,
+  readActionGraphChain,
+} from '../../../tools/game-data-compiler/src/compiler/actions/actionGraphBuilder.ts';
+import type { CompiledBuffStepSource } from '../../../tools/game-data-compiler/src/compiler/actions/combatActionProjectionTypes.ts';
+import { ActionGraphDefinitionRepository } from './actionGraphDefinitionRepository';
+import type { ResolvedActionSequence } from './combatProgram';
 import { CombatActionSequenceRuntime } from '../combat/actions/combatActionSequenceRuntime';
 import { EventContextConditionExecutor } from '../combat/events/eventContextConditionExecutor';
 import { ActionBlackboardOperationExecutor } from '../combat/actions/actionBlackboardOperationExecutor';
@@ -33,7 +38,8 @@ const guard = () =>
     valueB: scalarFixture(1),
   });
 function compile(actions: unknown[]) {
-  return compileCombatActionSequenceSource(
+  const builder = createActionGraphBuilder<CompiledBuffStepSource>();
+  const sequence = compileCombatActionSequenceSource(
     parseKnownNativeActionSequenceSource(
       {
         onlyExecuteWhenSourceIsMainChar: false,
@@ -44,11 +50,18 @@ function compile(actions: unknown[]) {
       {},
     ),
     {
+      graph: builder,
       actionOwnerTarget: 'caster',
       actionSourceTarget: 'caster',
       actionTargetTarget: 'eventTarget',
     },
   );
+  return { sequence, graph: builder.finish() };
+}
+function compileProjected(projected: ReturnType<typeof compile>): ResolvedActionSequence {
+  return new ActionGraphDefinitionRepository()
+    .compile(projected.graph, 1)
+    .compileEntry(projected.sequence, 'spell-infliction-saved-value');
 }
 function runtime(
   actions: unknown[],
@@ -61,10 +74,10 @@ function runtime(
     validateSkillDefinition({
       key: 'test',
       timelineBlockFrames: 1,
-      scheduledSequences: [{ startFrame: 0, sequence: projected }],
+      scheduledSequences: [{ startFrame: 0, sequence: projected.sequence }],
     }),
   ).toEqual([]);
-  const resolved = compileActionSequence(projected as ActionSequenceDefinition, 1);
+  const resolved = compileProjected(projected);
   const operations = new ActionBlackboardOperationExecutor(
     new EventContextConditionExecutor({
       execute: () => {
@@ -127,9 +140,14 @@ describe('原生元素条件从公共编译到运行写回', () => {
       scheduledSequences: [
         {
           startFrame: 0,
-          sequence: {
-            steps: [
-              {
+          sequence: { $sequence: 'step-0' },
+        },
+      ],
+      actionGraph: {
+        main: {
+          nodes: {
+            'step-0': {
+              action: {
                 kind: 'conditional',
                 parameters: {
                   condition: {
@@ -138,12 +156,14 @@ describe('原生元素条件从公共编译到运行写回', () => {
                     outputKey,
                   },
                 },
-                whenTrue: { steps: [] },
+                whenTrue: { $sequence: null },
               },
-            ],
+              next: null,
+            },
           },
         },
-      ],
+        macros: {},
+      },
     });
     expect(issues).toContainEqual(
       expect.objectContaining({ path: expect.stringContaining('.outputKey') }),
@@ -304,7 +324,7 @@ describe('原生元素条件从公共编译到运行写回', () => {
     // 诀 raw 33934515...58dca0bc：第五条的 CompareFloat -> CheckSpellInflictionType。
     const entity = new ActionBlackboard({ [key]: 8, EntityBB_wisd_greater_will: 0 });
     const r = runtime([guard(), check()], entity);
-    expect(r.projected.steps).toHaveLength(1);
+    expect(readActionGraphChain(r.projected.graph, r.projected.sequence)).toHaveLength(1);
     expect(r.run(element)).toBe(true);
     expect(entity.getNumber(key)).toBe(expected);
     expect(r.direct.snapshot()).toEqual({});
@@ -312,7 +332,7 @@ describe('原生元素条件从公共编译到运行写回', () => {
       validateSkillDefinition({
         key: 'test',
         timelineBlockFrames: 1,
-        scheduledSequences: [{ startFrame: 0, sequence: r.projected }],
+        scheduledSequences: [{ startFrame: 0, sequence: r.projected.sequence }],
       }),
     ).toEqual([]);
   });
@@ -372,14 +392,15 @@ describe('原生元素条件从公共编译到运行写回', () => {
   });
 
   it('纯尾条件仍可省略，但写入空串已规范为纯条件；空 mask 的正式定义合法', () => {
-    expect(compile([check(15, '')]).steps).toEqual([]);
+    const empty = compile([check(15, '')]);
+    expect(readActionGraphChain(empty.graph, empty.sequence)).toEqual([]);
     const projected = compile([check(0)]);
-    expect(projected.steps).toHaveLength(1);
+    expect(readActionGraphChain(projected.graph, projected.sequence)).toHaveLength(1);
     expect(
       validateSkillDefinition({
         key: 'test',
         timelineBlockFrames: 1,
-        scheduledSequences: [{ startFrame: 0, sequence: projected }],
+        scheduledSequences: [{ startFrame: 0, sequence: projected.sequence }],
       }),
     ).toEqual([]);
   });

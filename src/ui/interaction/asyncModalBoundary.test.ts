@@ -4,7 +4,6 @@ import { createInteractionSession } from './interactionSession';
 import { KeyboardShortcutRouter } from '../keyboard/keyboardShortcutRouter';
 import editor from '../timeline/TimelineEditor.vue?raw';
 import hook from './useAsyncModalBoundary.ts?raw';
-import map from '../timeline/definitions/SkillStructureMindMap.vue?raw';
 
 function deferred() {
   let resolve!: (value: string) => void;
@@ -196,9 +195,8 @@ describe('service modal input lifetime', () => {
     expect(background).toHaveBeenCalledOnce();
   });
 
-  it('covers both imperative confirmations and excludes inactive map menus', () => {
+  it('covers imperative confirmations', () => {
     expect(editor.match(/serviceModalBoundary\.run\(/g)).toHaveLength(3);
     expect(hook).toContain('onScopeDispose(() => boundary.dispose())');
-    expect(map).toContain('active: () => active.value && contextMenu.value !== undefined');
   });
 });

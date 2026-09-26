@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseKnownNativeActionSequenceSource } from '../src/source/actionLeaf.ts';
 import { compileEventCondition } from '../src/compiler/conditions/combatConditionProjection.ts';
+import { withProjectionGraph } from './support/projectionContext.ts';
 import { EventContextConditionExecutor } from '../../../src/core/combat/events/eventContextConditionExecutor';
 import { ActionBlackboard } from '../../../src/core/combat/actions/actionBlackboard';
 import {
@@ -33,11 +34,11 @@ function compile(types: string[], methods: string[], checkType = true, checkMeth
   );
   const result = compileEventCondition(
     sequence.actions[0]!,
-    {
+    withProjectionGraph({
       actionOwnerTarget: 'caster',
       actionSourceTarget: 'caster',
       actionTargetTarget: 'eventTarget',
-    },
+    }),
     new Map(),
   );
   if (result?.kind !== 'eventSpGainMatch') throw new Error('expected SP condition');

@@ -6,7 +6,7 @@ import type {
 } from '../../compiler/combatProgram';
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import { ActionBlackboard, resolveActionValueOperand } from '../actions/actionBlackboard';
-import { compareCombatNumbers } from '../../../../packages/game-data-contract/src/primitives';
+import { compareCombatNumbers } from '../../mechanics/combatNumbers.ts';
 import type { LogicalAbilityEntityRuntime } from './logicalAbilityEntityRuntime';
 import type {
   CombatOperationContext,

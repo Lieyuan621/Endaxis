@@ -52,6 +52,36 @@ export function inspectProjectInput(value: unknown): ProjectInspection {
   return { kind: 'unsupported' };
 }
 
+/** JSON 无法直接表示无穷数；保留原生曲线切线，避免保存后变成 null。 */
+function encodeProjectNumber(_key: string, value: unknown): unknown {
+  if (value === Infinity) return { $endaxisNumber: 'Infinity' };
+  if (value === -Infinity) return { $endaxisNumber: '-Infinity' };
+  return value;
+}
+
+/** 文本导入与已解析的 JSON 对象导入使用同一数值编码；不修改传入对象。 */
+function decodeProjectNumbers(value: unknown): unknown {
+  const visited = new WeakMap<object, unknown>();
+  const visit = (value: unknown): unknown => {
+    if (value === null || typeof value !== 'object') return value;
+    if (visited.has(value)) return visited.get(value);
+    if (isObject(value) && Object.keys(value).length === 1) {
+      if (value.$endaxisNumber === 'Infinity') return Infinity;
+      if (value.$endaxisNumber === '-Infinity') return -Infinity;
+    }
+    visited.set(value, value);
+    const entries = Object.entries(value);
+    const decoded = entries.map(([key, item]) => [key, visit(item)] as const);
+    if (decoded.every(([, item], index) => Object.is(item, entries[index]![1]))) return value;
+    const result = Array.isArray(value)
+      ? decoded.map(([, item]) => item)
+      : Object.fromEntries(decoded);
+    visited.set(value, result);
+    return result;
+  };
+  return visit(value);
+}
+
 export function parseProjectDocument(
   input: string | unknown,
   options: ParseProjectOptions = {},
@@ -85,7 +115,7 @@ export function parseProjectDocument(
     };
   }
 
-  const validation = validateLoadedProject(value, options);
+  const validation = validateLoadedProject(decodeProjectNumbers(value), options);
   if (!validation.ok) return { ok: false, kind: 'invalid-document', issues: validation.issues };
   return validation;
 }
@@ -96,5 +126,5 @@ export function serializeProjectDocument(project: EndaxisProjectDocument, pretty
     const summary = validation.issues.map(issue => `${issue.path}: ${issue.message}`).join('\n');
     throw new Error(`cannot serialize invalid project document:\n${summary}`);
   }
-  return JSON.stringify(project, null, pretty ? 2 : undefined);
+  return JSON.stringify(project, encodeProjectNumber, pretty ? 2 : undefined);
 }

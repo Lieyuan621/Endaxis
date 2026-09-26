@@ -5,6 +5,27 @@ import { scalarFixture, targetFixture } from './sourceFixtures.ts';
 import { parseNativeSequenceSource } from '../src/source/controlFlow.ts';
 import { parseKnownNativeActionLeafSource } from '../src/source/actionLeaf.ts';
 import { compileCombatActionSequenceSource } from '../src/compiler/buffs/buffRuntimeProjection.ts';
+import type { CombatActionProjectionContextSource } from '../src/compiler/combatProjectionCommon.ts';
+import {
+  createActionGraphBuilder,
+  readActionGraphChain,
+} from '../src/compiler/actions/actionGraphBuilder.ts';
+import type { CompiledBuffStepSource } from '../src/compiler/actions/combatActionProjectionTypes.ts';
+
+/** 图编译包装：返回入口同层动作数组，保持旧断言的扁平比较形状。 */
+function projectSequence(
+  source: Parameters<typeof compileCombatActionSequenceSource>[0],
+  context: Omit<CombatActionProjectionContextSource, 'graph'>,
+  visualOnlyIds?: ReadonlySet<string>,
+) {
+  const builder = createActionGraphBuilder<CompiledBuffStepSource>();
+  const entry = compileCombatActionSequenceSource(
+    source,
+    { ...context, graph: builder },
+    visualOnlyIds,
+  );
+  return { steps: readActionGraphChain(builder.finish(), entry) };
+}
 
 const BASE = {
   $type: 'Example.HealAction+Data, Example',
@@ -63,7 +84,7 @@ describe('治疗动作公共载荷', () => {
       (value, path) => parseKnownNativeActionLeafSource(value, path, {}),
     );
     expect(
-      compileCombatActionSequenceSource(
+      projectSequence(
         source,
         { actionOwnerTarget: 'caster', actionSourceTarget: 'caster', actionTargetTarget: 'enemy' },
         new Set(),
