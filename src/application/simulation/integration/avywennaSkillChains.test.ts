@@ -99,6 +99,7 @@ async function simulate(casts: readonly (readonly [string, number])[], potential
       getWeapon: () => null,
       getGear: () => null,
       getGearSet: () => null,
+      getGlobalEffect: () => null,
     },
     resources: {
       sharedSpGain: { baseGainEfficiency: 1 },

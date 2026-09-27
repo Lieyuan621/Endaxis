@@ -55,6 +55,7 @@ it('逐帧自定义技能在图干员上保留技能块身份和覆盖黑板', (
     getWeapon: () => null,
     getGear: () => null,
     getGearSet: () => null,
+    getGlobalEffect: () => null,
     getCommonDefinitionSources: () => [],
     actionPrograms: new ActionGraphDefinitionRepository(),
   });
@@ -145,6 +146,7 @@ function options(): CompileScenarioRuntimeAssemblyOptions {
       getWeapon: () => null,
       getGear: () => null,
       getGearSet: () => null,
+      getGlobalEffect: () => null,
       getCommonDefinitionSources: () => [],
       actionPrograms: new ActionGraphDefinitionRepository(),
     },

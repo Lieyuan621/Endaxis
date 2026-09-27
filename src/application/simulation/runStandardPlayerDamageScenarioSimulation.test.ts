@@ -176,6 +176,7 @@ function standardIndex() {
     getWeapon: () => null,
     getGear: () => null,
     getGearSet: () => null,
+    getGlobalEffect: () => null,
   };
 }
 
@@ -1106,6 +1107,7 @@ function runGeneratedLifengScenario(talentLevel: number) {
         getWeapon: () => null,
         getGear: () => null,
         getGearSet: () => null,
+        getGlobalEffect: () => null,
         getCommonBuffDefinitions: () => commonBuffDefinitions,
       },
     },
@@ -1285,6 +1287,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
             getWeapon: () => null,
             getGear: () => null,
             getGearSet: () => null,
+            getGlobalEffect: () => null,
           },
         },
       });
@@ -1360,6 +1363,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
             getWeapon: () => null,
             getGear: () => null,
             getGearSet: () => null,
+            getGlobalEffect: () => null,
             getCommonBuffDefinitions: () => commonBuffDefinitions,
           },
         },
@@ -1478,6 +1482,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
             getWeapon: () => null,
             getGear: () => null,
             getGearSet: () => null,
+            getGlobalEffect: () => null,
           },
         },
       });
@@ -1576,6 +1581,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
           getWeapon: () => null,
           getGear: () => null,
           getGearSet: () => null,
+          getGlobalEffect: () => null,
         },
       },
     });
@@ -1675,6 +1681,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
             getWeapon: () => null,
             getGear: () => null,
             getGearSet: () => null,
+            getGlobalEffect: () => null,
           },
         },
       });
@@ -1753,6 +1760,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
           getWeapon: () => null,
           getGear: () => null,
           getGearSet: () => null,
+          getGlobalEffect: () => null,
         },
       },
     });
@@ -1827,6 +1835,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
           getWeapon: () => null,
           getGear: () => null,
           getGearSet: () => null,
+          getGlobalEffect: () => null,
         },
       },
     });
@@ -1890,6 +1899,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
           getWeapon: () => null,
           getGear: () => null,
           getGearSet: () => null,
+          getGlobalEffect: () => null,
         },
       },
     });
@@ -1970,6 +1980,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
             getWeapon: () => null,
             getGear: () => null,
             getGearSet: () => null,
+            getGlobalEffect: () => null,
           },
         },
       });
@@ -2128,6 +2139,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
           getWeapon: () => null,
           getGear: () => null,
           getGearSet: () => null,
+          getGlobalEffect: () => null,
         },
       },
     });
@@ -2217,6 +2229,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
             getWeapon: () => null,
             getGear: () => null,
             getGearSet: () => null,
+            getGlobalEffect: () => null,
           },
         },
       });
@@ -2255,6 +2268,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
           getWeapon: () => null,
           getGear: () => null,
           getGearSet: () => null,
+          getGlobalEffect: () => null,
         },
       },
     });
@@ -2306,6 +2320,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
             getWeapon: () => null,
             getGear: () => null,
             getGearSet: () => null,
+            getGlobalEffect: () => null,
           },
         },
       });
@@ -2346,6 +2361,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
             getWeapon: () => null,
             getGear: () => null,
             getGearSet: () => null,
+            getGlobalEffect: () => null,
           },
         },
       });
@@ -2423,6 +2439,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
             getWeapon: () => null,
             getGear: () => null,
             getGearSet: () => null,
+            getGlobalEffect: () => null,
           },
         },
       });
@@ -2455,6 +2472,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
           getWeapon: () => null,
           getGear: () => null,
           getGearSet: () => null,
+          getGlobalEffect: () => null,
         },
       },
     });
@@ -2516,6 +2534,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
           getWeapon: () => null,
           getGear: () => null,
           getGearSet: () => null,
+          getGlobalEffect: () => null,
         },
       },
     });
@@ -2575,6 +2594,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
           getWeapon: () => null,
           getGear: () => null,
           getGearSet: () => null,
+          getGlobalEffect: () => null,
         },
       },
     });
@@ -2613,6 +2633,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
           getWeapon: () => null,
           getGear: () => null,
           getGearSet: () => null,
+          getGlobalEffect: () => null,
         },
       },
     });
@@ -2668,6 +2689,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
           getWeapon: () => null,
           getGear: () => null,
           getGearSet: () => null,
+          getGlobalEffect: () => null,
         },
       },
     });
@@ -2708,6 +2730,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
             getWeapon: () => null,
             getGear: () => null,
             getGearSet: () => null,
+            getGlobalEffect: () => null,
           },
         },
       });
@@ -2759,6 +2782,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
             getWeapon: () => null,
             getGear: () => null,
             getGearSet: () => null,
+            getGlobalEffect: () => null,
           },
         },
       });
@@ -2796,6 +2820,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
           getWeapon: () => null,
           getGear: () => null,
           getGearSet: () => null,
+          getGlobalEffect: () => null,
           getCommonBuffDefinitions: () => commonBuffDefinitions,
         },
       },
@@ -2843,6 +2868,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
           getWeapon: () => null,
           getGear: () => null,
           getGearSet: () => null,
+          getGlobalEffect: () => null,
           getCommonBuffDefinitions: () => commonBuffDefinitions,
         },
       },
@@ -2896,6 +2922,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
           getWeapon: () => null,
           getGear: () => null,
           getGearSet: () => null,
+          getGlobalEffect: () => null,
           getCommonBuffDefinitions: () => commonBuffDefinitions,
         },
       },
@@ -2961,6 +2988,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
             getWeapon: () => null,
             getGear: () => null,
             getGearSet: () => null,
+            getGlobalEffect: () => null,
           },
         },
       });
@@ -3009,6 +3037,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
           getWeapon: () => null,
           getGear: () => null,
           getGearSet: () => null,
+          getGlobalEffect: () => null,
         },
       },
     });
@@ -3112,6 +3141,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
           getWeapon: () => null,
           getGear: () => null,
           getGearSet: () => null,
+          getGlobalEffect: () => null,
           getCommonBuffDefinitions: () => commonBuffDefinitions,
         },
       },

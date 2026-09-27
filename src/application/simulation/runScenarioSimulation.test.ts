@@ -76,6 +76,7 @@ function options(): CompileScenarioRuntimeAssemblyOptions {
       getWeapon: () => null,
       getGear: () => null,
       getGearSet: () => null,
+      getGlobalEffect: () => null,
     },
     resources: {
       sharedSpGain: { baseGainEfficiency: 1 },

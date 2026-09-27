@@ -34,12 +34,6 @@ describe('definition resource navigation', () => {
 
       buff,
     };
-    const withoutBuff = listDefinitionResources('globalEffect', {
-      id: 'project:globalEffect:plain',
-    });
-    expect(withoutBuff).toEqual([
-      { kind: 'globalEffect', path: [], identity: 'project:globalEffect:plain' },
-    ]);
     const resources = listDefinitionResources('globalEffect', effect);
     expect(resources[0]).toEqual({
       kind: 'globalEffect',

@@ -932,6 +932,7 @@ describe('ScenarioSimulationService', () => {
         getWeapon: () => null,
         getGear: () => null,
         getGearSet: () => null,
+        getGlobalEffect: () => null,
         getCommonBuffDefinitions: () => commonBuffDefinitions,
       },
       resources: {
@@ -987,6 +988,7 @@ describe('ScenarioSimulationService', () => {
         getWeapon: () => null,
         getGear: () => null,
         getGearSet: () => null,
+        getGlobalEffect: () => null,
       },
       resources: {
         sharedSpGain: { baseGainEfficiency: 1 },

@@ -72,6 +72,7 @@ const index = {
   getOperator: (slug: string) => (slug === perlica.slug ? perlica : null),
   getWeapon: () => null,
   getGearSet: () => null,
+  getGlobalEffect: () => null,
   getCommonBuffDefinitions: () => commonBuffDefinitions,
   getGear: (slug: string) => candidateById.get(slug) ?? null,
 };

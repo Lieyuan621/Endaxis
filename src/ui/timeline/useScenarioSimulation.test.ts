@@ -29,6 +29,7 @@ const service = new ScenarioSimulationService({
     getWeapon: () => null,
     getGear: () => null,
     getGearSet: () => null,
+    getGlobalEffect: () => null,
     actionPrograms: new ActionGraphDefinitionRepository(),
     getCommonDefinitionSources: () => [],
   },

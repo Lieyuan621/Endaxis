@@ -94,6 +94,7 @@ describe.skipIf(!sourceRoot || !globalBuffCatalog)('真实整名 HideUI 转换�
           getWeapon: () => null,
           getGear: () => null,
           getGearSet: () => null,
+          getGlobalEffect: () => null,
         },
         resources: {
           sharedSpGain: { baseGainEfficiency: 1 },

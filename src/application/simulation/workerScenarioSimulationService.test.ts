@@ -35,6 +35,7 @@ function harness() {
     enemies: [],
     mechanics: [],
     consumables: [],
+    globalEffects: [],
   };
   const captureGameData = vi.fn(() => gameData);
   const service = new WorkerScenarioSimulationService(worker as unknown as Worker, captureGameData);

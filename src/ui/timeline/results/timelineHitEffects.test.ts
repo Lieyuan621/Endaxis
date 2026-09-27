@@ -261,7 +261,7 @@ function scenarioWithCast(): ScenarioDocument {
       controlSwitches: [],
     },
     mechanics: { selections: [] },
-    globalConfig: { modifiers: [] },
+    globalConfig: {},
     editor: { trackHeightWeights: [1, 1, 1, 1], prepExpanded: true },
   };
 }

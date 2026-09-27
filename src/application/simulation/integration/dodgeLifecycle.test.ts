@@ -69,6 +69,7 @@ function prepare(value = scenario(), live = false) {
         getWeapon: () => null,
         getGear: () => null,
         getGearSet: () => null,
+        getGlobalEffect: () => null,
         getCommonBuffDefinitions: () => commonBuffDefinitions,
       },
       resources: {
