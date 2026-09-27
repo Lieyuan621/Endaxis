@@ -15,6 +15,8 @@ import type { SkillDefinition } from '../../../core/game-data/operatorDefinition
 import { PROJECT_FPS, type SkillCastDocument } from '../../../core/project/schema';
 import { connectionPortI18nKey, type TimelineConnectionPort } from './timelineConnections';
 
+const isDev = import.meta.env.DEV;
+
 interface InspectorConnection {
   readonly id: string;
   readonly outgoing: boolean;
@@ -224,6 +226,7 @@ function commitRandomSeed(value: number | undefined): void {
             <small class="field-help">{{ t('timeline.random.castSeedHelp') }}</small>
           </div>
           <EaButton
+            v-if="isDev"
             class="attribute-grid__wide"
             size="sm"
             :disabled="inputReadOnly || currentDefinition === null"

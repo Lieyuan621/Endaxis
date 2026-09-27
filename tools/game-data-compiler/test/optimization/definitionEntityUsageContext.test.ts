@@ -1,3 +1,4 @@
+import { skillFixture } from '../../../../src/test/skillFixture';
 /** 跨定义的实体黑板用途汇总；全部夹具为图形态，序列入口与节点表成对给出。 */
 import { describe, expect, it } from 'vitest';
 import type {
@@ -82,13 +83,13 @@ function skill(
   blackboard: SkillDefinition['blackboard'],
 ): SkillDefinition {
   const nodes: Record<string, ActionGraphNode> = {};
-  return {
+  return skillFixture({
     key: 'fixture',
     timelineBlockFrames: 10,
     blackboard,
     scheduledSequences: [{ startFrame: 0, sequence: chain(nodes, 'main', steps) }],
     actionGraph: { main: { nodes }, macros: {} },
-  };
+  });
 }
 
 /** 子技能持有自己的图；模板不持有图。 */

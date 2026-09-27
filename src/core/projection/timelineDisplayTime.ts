@@ -45,7 +45,7 @@ export function projectCastTimeDilationSegments(
   const castEndFrame = castStartFrame + castDurationFrames;
   return Object.freeze(
     bands.flatMap(band => {
-      if (band.kind !== 'global' || band.sourceCastId !== castId) return [];
+      if (band.sourceCastId !== castId) return [];
       const startFrame = Math.max(castStartFrame, band.startFrame);
       const endFrame = Math.min(castEndFrame, band.endFrame);
       if (endFrame <= startFrame) return [];
@@ -109,8 +109,8 @@ export function projectSkillCastActualDurationFrames(
 
 /**
  * 把需要在整条时间轴上表达的时间实例配对为实际帧区间。
- * 只有全局实例影响时间轴整体观感，才进入特殊显示和交互。终结技时间膨胀
- * 由运行时记录为 global/ultimate，因此也会保留。实体实例仍参与模拟，但不在轴上装饰。
+ * 只展示公共命名曲线 ComboSkill 与终结技时间膨胀，不依据来源技能的类型推断。
+ * 其他实例仍参与模拟并校验生命周期，但不在轴上装饰。
  */
 export function projectTimelineTimeDilationBands(
   entries: readonly CombatReceiptEntry[],
@@ -121,9 +121,11 @@ export function projectTimelineTimeDilationBands(
   }
   const active = new Map<number, Omit<TimelineTimeDilationBand, 'endFrame'>>();
   const bands: TimelineTimeDilationBand[] = [];
+  const visible = new Set<number>();
   for (const entry of entries) {
     if (entry.event === 'TimeDilationStarted') {
       const instance = readTimeDilationInstance(entry);
+      if (isTimelineTimeDilationVisible(entry)) visible.add(instance.instanceId);
       if (active.has(instance.instanceId)) {
         throw new Error(`time dilation instance ${instance.instanceId} started more than once`);
       }
@@ -150,11 +152,19 @@ export function projectTimelineTimeDilationBands(
   }
   return Object.freeze(
     bands
-      .filter(band => band.kind === 'global')
+      .filter(band => visible.has(band.instanceId))
       .sort(
         (left, right) => left.startFrame - right.startFrame || left.instanceId - right.instanceId,
       )
       .map(band => Object.freeze(band)),
+  );
+}
+
+/** 开始及拒绝回执共用筛选，拖动预览不能把隐藏区间重新显示出来。 */
+export function isTimelineTimeDilationVisible(entry: CombatReceiptEntry): boolean {
+  return (
+    entry.data?.curveKey === 'ComboSkill' ||
+    (entry.data?.kind === 'global' && entry.data?.slot === 'ultimate')
   );
 }
 

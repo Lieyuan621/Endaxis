@@ -1,5 +1,7 @@
 import { ActionGraphDefinitionRepository } from '../core/compiler/actionGraphDefinitionRepository';
 import { validateActionGraphOwner } from '../core/action-graph/actionGraphValidation';
+import { validateGlobalEffectDefinition } from '../core/game-data/validateGlobalEffectDefinition';
+import type { SkillDefinitionValidationIssue } from '../core/game-data/validation/definitionValues';
 import type {
   ActionGraphDefinition,
   ActionGraphResourceDefinition,
@@ -26,6 +28,7 @@ import type {
 } from '../core/game-data/operatorDefinition';
 import type { EnemyDefinition } from '../core/game-data/enemyDefinition';
 import type { ConsumableDefinition } from '../core/game-data/consumableDefinition';
+import type { GlobalEffectDefinition } from '../core/game-data/globalEffectDefinition';
 
 export interface GameDataRepositoryInput {
   /** 按需加载扩充同一仓库时保留已发布程序与编译目录。 */
@@ -45,6 +48,8 @@ export interface GameDataRepositoryInput {
   readonly enemies?: readonly EnemyDefinition[];
   readonly mechanics?: readonly MechanicDefinitionRef[];
   readonly consumables?: readonly ConsumableDefinition[];
+  /** 内置全局效果预设；项目效果由项目仓库覆盖层注入。 */
+  readonly globalEffects?: readonly GlobalEffectDefinition[];
 }
 
 function collectCommonDefinitions(sources: readonly CommonDefinitionSource[]) {
@@ -178,6 +183,14 @@ export function createGameDataRepository(
   const mechanics = indexDefinitions(input.mechanics ?? [], value => value.id, 'mechanic');
   const consumableList = Object.freeze([...(input.consumables ?? [])]);
   const consumables = indexDefinitions(consumableList, value => value.id, 'consumable');
+  const globalEffectList = Object.freeze([...(input.globalEffects ?? [])]);
+  for (const effect of globalEffectList) {
+    const issues: SkillDefinitionValidationIssue[] = [];
+    validateGlobalEffectDefinition(effect, `global effect '${effect.id}'`, issues);
+    if (issues.length)
+      throw new Error(issues.map(issue => `${issue.path}: ${issue.message}`).join('; '));
+  }
+  const globalEffects = indexDefinitions(globalEffectList, value => value.id, 'global effect');
 
   return Object.freeze({
     revision: input.revision,
@@ -200,5 +213,7 @@ export function createGameDataRepository(
     getMechanic: (id: string) => mechanics.get(id) ?? null,
     getConsumable: (id: string) => consumables.get(id) ?? null,
     getConsumables: () => consumableList,
+    getGlobalEffect: (id: string) => globalEffects.get(id) ?? null,
+    getGlobalEffects: () => globalEffectList,
   });
 }

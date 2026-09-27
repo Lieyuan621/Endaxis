@@ -1,3 +1,4 @@
+import { skillFixture } from '../../../test/skillFixture';
 import type { SkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
 import { describe, expect, it } from 'vitest';
 import type { OperatorDefinition } from '../../../core/game-data/operatorDefinition';
@@ -36,12 +37,12 @@ function createCast(
 ): SkillCastDocument {
   const nodes: Record<string, ActionGraphNode> = {};
   const sequence = build(nodes);
-  const customDefinition: SkillDefinition = {
+  const customDefinition: SkillDefinition = skillFixture({
     key: 'battleSkill',
     timelineBlockFrames: 30,
     scheduledSequences: [{ startFrame: 10, sequence }],
     actionGraph: { main: { nodes }, macros: {} },
-  };
+  });
   return {
     id: 'cast:1',
     source: { kind: 'operatorSkill', skillGroupKey: 'battleSkill', skillKey: 'battleSkill' },
@@ -146,7 +147,7 @@ describe('projectCastGraphHitMarkers', () => {
 
   it('独立技能预览读取宏图，同名局部节点不与主图冲突', () => {
     const cast = createCast(() => ({ $sequence: null }));
-    const skill: SkillDefinition = {
+    const skill: SkillDefinition = skillFixture({
       key: 'battleSkill',
       timelineBlockFrames: 30,
       scheduledSequences: [{ startFrame: 4, sequence: { $sequence: 'entry' } }],
@@ -165,7 +166,7 @@ describe('projectCastGraphHitMarkers', () => {
           },
         },
       },
-    };
+    });
     const operator = prepareActionGraphIdentities(perlica);
     expect(projectCastGraphHitMarkers(cast, skill, operator)).toEqual([
       {

@@ -1,3 +1,4 @@
+import { skillFixture } from '../../test/skillFixture';
 import type { AbilityEntityDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import type { OperatorPassiveSkillDefinition } from '../../../packages/game-data-contract/src/operators.ts';
 import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
@@ -77,7 +78,7 @@ describe('compileScenarioTimeline', () => {
   it('Switch 的候选伤害保留步骤 key，不预写施放 hitId', () => {
     const scenario = place(createScenario(), 'battleSkill', 0);
     const cast = scenario.tracks[0]!.skillCasts[0]!;
-    cast.customDefinition = {
+    cast.customDefinition = skillFixture({
       key: 'chr_0004_pelica_normal_skill',
       skillType: 'battleSkill',
       levelSource: 'battleSkill',
@@ -117,7 +118,7 @@ describe('compileScenarioTimeline', () => {
         },
         macros: {},
       },
-    };
+    });
     const program = compileScenarioTimeline(scenario, index()).operators[0]!.skillCasts!.find(
       binding => binding.castId === cast.id,
     )!.program;
@@ -177,7 +178,7 @@ describe('compileScenarioTimeline', () => {
 
   it('compiles ability entity additions and overrides from a project operator template', () => {
     const scenario = place(createScenario(), 'battleSkill', 0);
-    scenario.tracks[0]!.skillCasts[0]!.customDefinition = {
+    scenario.tracks[0]!.skillCasts[0]!.customDefinition = skillFixture({
       key: 'chr_0004_pelica_normal_skill',
       skillType: 'battleSkill',
       levelSource: 'battleSkill',
@@ -204,7 +205,7 @@ describe('compileScenarioTimeline', () => {
         },
         macros: {},
       },
-    };
+    });
     const operator = {
       ...perlica,
       abilityEntityDefinitions: {
@@ -394,7 +395,7 @@ describe('compileScenarioTimeline', () => {
     const scenario = place(createScenario(), 'battleSkill', 60);
     scenario.tracks[0]!.operator!.skillLevels.battleSkill = 3;
     scenario.tracks[0]!.operator!.skillLevels.comboSkill = 7;
-    const routed: SkillDefinition = {
+    const routed: SkillDefinition = skillFixture({
       key: 'battleSkillRoutedToCombo',
       skillType: 'comboSkill',
       levelSource: 'comboSkill',
@@ -420,7 +421,7 @@ describe('compileScenarioTimeline', () => {
         },
         macros: {},
       },
-    };
+    });
     const operator = {
       ...perlica,
       skillSlots: perlica.skillSlots?.map(slot =>
@@ -647,7 +648,7 @@ describe('compileScenarioTimeline', () => {
   it('keeps local step keys through root and child sequences without binding cast hit IDs', () => {
     const scenario = place(createScenario(), 'battleSkill', 60);
     const cast = scenario.tracks[0]!.skillCasts[0]!;
-    cast.customDefinition = {
+    cast.customDefinition = skillFixture({
       key: 'chr_0004_pelica_normal_skill',
       skillType: 'battleSkill',
       levelSource: 'battleSkill',
@@ -709,7 +710,7 @@ describe('compileScenarioTimeline', () => {
         },
         macros: {},
       },
-    };
+    });
 
     const program = compileScenarioTimeline(scenario, index()).operators[0]!.skillCasts![0]!
       .program;
@@ -796,7 +797,7 @@ it('compiles the complete graph operator skill catalog through the formal entry'
 it('场景中的技能、Buff 和实体各自编译自己的图', () => {
   const scenario = place(createScenario(), 'battleSkill', 30);
   const sourceSkill = requireSingleSkill('battleSkill');
-  const independentSkill: SkillDefinition = {
+  const independentSkill: SkillDefinition = skillFixture({
     ...sourceSkill,
     scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'spawnLocal' } }],
     actionGraph: {
@@ -813,7 +814,7 @@ it('场景中的技能、Buff 和实体各自编译自己的图', () => {
       },
       macros: {},
     },
-  };
+  });
   const graphOperator: OperatorDefinition = {
     ...perlica,
     abilityEntityDefinitions: {
@@ -955,10 +956,10 @@ it('binds graph timeline casts and custom overrides without losing cast or input
   const scenario = place(createScenario(), 'battleSkill', 30);
   const track = scenario.tracks[0]!;
   const source = track.skillCasts[0]!;
-  const customSkill: SkillDefinition = {
+  const customSkill: SkillDefinition = skillFixture({
     ...requireSingleSkill('battleSkill'),
     blackboard: { custom_marker: 42 },
-  };
+  });
   const casts = [
     source,
     { ...source, id: 'custom-cast', customDefinition: customSkill },

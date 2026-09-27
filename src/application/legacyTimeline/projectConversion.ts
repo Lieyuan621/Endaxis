@@ -5,6 +5,7 @@
  * 搬运用户输入：养成、配装、场景参数、技能身份和放置帧。游戏数据仓库只负责解析稳定身份，
  * 不能为旧文件补当前编辑器默认值。
  */
+import { convertLegacyGlobalConfig } from './globalConfigConversion';
 import type { GameDataRepository } from '../../core/game-data/gameDataRepository';
 import {
   layoutSkillGroupPlacement,
@@ -511,7 +512,9 @@ function migrateScenario(
       externalEventMarkers: [],
     },
     mechanics: { selections: [] },
-    globalConfig: { modifiers: [] },
+    globalConfig: convertLegacyGlobalConfig(source.globalConfig, message =>
+      warnings.push(`${scenarioId}: ${message}`),
+    ),
     editor: {
       trackHeightWeights: (() => {
         const values = Array.isArray(source.trackRowHeightWeights)

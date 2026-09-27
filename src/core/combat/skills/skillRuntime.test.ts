@@ -1,3 +1,4 @@
+import { skillFixture } from '../../../test/skillFixture';
 import type { SkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
 import { createTestBuffReference } from '../buffs/buffTestFixtures';
 import { describe, expect, it, vi } from 'vitest';
@@ -101,7 +102,7 @@ function defineSkillFixture(options: {
             : { asSkillCast: options.switchToBuffCast.asSkillCast }),
           sequence: { $sequence: chain('switch', options.switchToBuffCast.steps) },
         };
-  return {
+  return skillFixture({
     key: options.key,
     ...(options.skillType === undefined ? {} : { skillType: options.skillType }),
     ...(options.nativeSkillType === undefined ? {} : { nativeSkillType: options.nativeSkillType }),
@@ -122,7 +123,7 @@ function defineSkillFixture(options: {
     })),
     ...(switchToBuffCast === undefined ? {} : { switchToBuffCast }),
     actionGraph: { main: { nodes }, macros: {} },
-  };
+  });
 }
 
 function createBattleSkillRuntime(

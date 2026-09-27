@@ -281,21 +281,13 @@ export type ComboSkillPriority = (typeof COMBO_SKILL_PRIORITIES)[number];
  * 一个可独立释放或触发的技能定义。
  * 它描述战斗身份和时序，不承载翻译后的名称或编辑器布局。
  */
-export interface SkillDefinition extends SkillActionProgramDefinition {
+export interface SkillDefinitionProperties extends SkillActionProgramDefinition {
   /** 该技能完整的节点和宏；所有入口均在此图中解析。 */
   readonly actionGraph: ActionGraphResourceDefinition;
   /** 原生 SkillData.skillId，也是干员定义和时间轴引用此技能时使用的唯一 ID。 */
   key: string;
-  /**
-   * 此技能执行体参与战斗事件与中断优先级判断时使用的分类。
-   * 它属于单个技能，不能从编辑器技能库分组反推。当前枚举是 Endaxis 已支持的战斗分类；
-   * 原生可变 SkillType 后续由运行时状态覆盖此初值。
-   */
-  skillType?: SkillType;
   /** `_InitSkills` 创建实例时得到的原生初值；之后可由 ChangeSkillType 改写。 */
-  nativeSkillType?: NativeSkillType;
-  /** 从原生 CharGrowthTable 技能组成员关系得到的等级来源；不属于编辑器分组。 */
-  levelSource?: SkillLevelSource;
+  nativeSkillType: NativeSkillType;
   /**
    * 该次释放所创建的强化状态 Buff 身份。时间轴只按实际 Buff 回执投影生命周期；
    * 省略表示没有已取证的强化状态，不能把任意自身 Buff 猜成强化条。
@@ -317,11 +309,11 @@ export interface SkillDefinition extends SkillActionProgramDefinition {
    * 原生 `SkillData.durationFrame` 的运行时自然结束周期，已按原生 getter 钳制为至少 1 帧。
    * 它不决定技能块宽度，也不能用 `exclusiveFrame` 或最后一个可见战斗动作代替。
    */
-  naturalDurationFrames?: number;
+  naturalDurationFrames: number;
   /** 原生 SkillData.exclusiveFrame；只在需要读取当前技能可中断状态时参与运行时判断。 */
-  exclusiveFrame?: number;
+  exclusiveFrame: number;
   /** 原生 SkillData.offsetRecordFrame；到达时把下一段普攻提交为连段偏移目标。 */
-  offsetRecordFrame?: number;
+  offsetRecordFrame: number;
   /**
    * 从原生顶层直连输入 Action 保留的操作解析证据。两类窗口职责不同：
    * commandMappings 选择该操作当前指向的技能，allowedNextSkills 只决定能否提前中断。
@@ -365,6 +357,18 @@ export interface SkillDefinition extends SkillActionProgramDefinition {
   /** 技能启用期间注册的战斗事件响应。 */
   eventHandlers?: readonly CombatEventHandlerDefinition[];
 }
+
+/** 闪避不参与技能养成；其他干员技能必须明确等级来源。 */
+export type SkillDefinition = SkillDefinitionProperties &
+  (
+    | {
+        /** 技能的战斗分类，不由技能库分组推测。 */
+        skillType: Exclude<SkillType, 'dodge'>;
+        /** 技能使用哪一项养成等级；由原生技能组成员关系确定。 */
+        levelSource: SkillLevelSource;
+      }
+    | { skillType: 'dodge'; levelSource?: never }
+  );
 
 /** 编辑器整组放置策略；技能执行与单段放置不读取此元数据。 */
 export interface SkillGroupPlacementPolicy {

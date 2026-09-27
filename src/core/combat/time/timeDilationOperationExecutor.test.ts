@@ -81,6 +81,7 @@ describe('TimeDilationOperationExecutor', () => {
       true,
     );
     expect(timeDilation.currentGlobalScale).toBe(0.5);
+    expect(timeDilation.globalInstances[0]?.source?.curveKey).toBe('constant-half');
     expect(timeDilation.getOperatorScale('operator')).toBe(1);
     expect(timeDilation.getOperatorScale('enemy')).toBe(0.5);
   });

@@ -12,6 +12,7 @@ import { commonBuffDefinitions } from './buffs/commonDefinitions';
 import { contingencyContractBuffDefinitions } from './mechanics/generated/contingencyContractDefinitions.generated';
 import { contingencyContractMechanicDefinitions } from './mechanics/contingencyContractAdapter';
 import { consumableBuffDefinitions, consumableDefinitions } from './consumables';
+import { GLOBAL_EFFECT_PRESETS } from './globalEffectPresets';
 
 export { createGameDataRepository } from './createGameDataRepository';
 export type { GameDataRepositoryInput } from './createGameDataRepository';
@@ -31,4 +32,5 @@ export const gameDataRepository = createGameDataRepository({
   enemies: generatedEnemyDefinitions,
   mechanics: contingencyContractMechanicDefinitions,
   consumables: consumableDefinitions,
+  globalEffects: GLOBAL_EFFECT_PRESETS,
 });

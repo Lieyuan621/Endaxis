@@ -3,7 +3,7 @@
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { scopeName, scopeHelp } from './editorNodeText';
-import EditorHelp from './EditorHelp.vue';
+import EditorHelp from '../editor/EditorHelp.vue';
 const { t } = useI18n();
 import type {
   analyzeGraphBlackboard,

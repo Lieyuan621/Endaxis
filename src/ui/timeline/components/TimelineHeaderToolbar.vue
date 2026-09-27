@@ -18,6 +18,8 @@ import type { OperationKeycapMode } from '../timelineOperationMarkers';
 import { useInteractionSession } from '../../interaction/interactionSessionContext';
 import { usePopoverInteractionBoundary } from '../../interaction/usePopoverInteractionBoundary';
 
+const isDev = import.meta.env.DEV;
+
 const props = defineProps<{
   scenarioName: string;
   scenarios: readonly { readonly id: string; readonly name: string }[];
@@ -76,6 +78,7 @@ const emit = defineEmits<{
   reset: [];
   open: [];
   receive: [];
+  assetWorkspace: [];
   export: [];
   rename: [name: string];
   duplicate: [];
@@ -145,10 +148,11 @@ function cancelRename(): void {
   renameDraft.value = props.scenarioName;
 }
 
-function runProjectAction(action: 'open' | 'receive' | 'reset'): void {
+function runProjectAction(action: 'open' | 'receive' | 'reset' | 'assetWorkspace'): void {
   moreMenuOpen.value = false;
   if (action === 'open') emit('open');
   else if (action === 'receive') emit('receive');
+  else if (action === 'assetWorkspace') emit('assetWorkspace');
   else emit('reset');
 }
 
@@ -615,6 +619,19 @@ onBeforeUnmount(() => {
               </EaButton>
             </div>
           </section>
+          <section v-if="isDev" class="header-more-section">
+            <EaButton
+              size="sm"
+              type="button"
+              class="header-more-action"
+              @click="runProjectAction('assetWorkspace')"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m12 3 9 5v8l-9 5-9-5V8z M3 8l9 5 9-5 M12 13v8" />
+              </svg>
+              <span>{{ t('assetWorkspace.title') }}</span>
+            </EaButton>
+          </section>
           <section class="header-more-section">
             <h4 class="header-more-section__title">{{ labels.preferences }}</h4>
             <div class="header-more-mode-row">
@@ -925,7 +942,7 @@ onBeforeUnmount(() => {
 
 .ts-header-group .ea-button svg,
 .header-controls .ea-button svg,
-.header-more-actions .ea-button svg {
+.header-more-action.ea-button svg {
   width: 14px;
   height: 14px;
   flex-shrink: 0;

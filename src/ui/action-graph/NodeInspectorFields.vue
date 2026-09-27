@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { EaButton } from '@/design-system';
-import EditorHelp from './EditorHelp.vue';
+import EditorHelp from '../editor/EditorHelp.vue';
 import NodeLevelValues from './NodeLevelValues.vue';
 import type { NodeFieldSchema } from './nodeSchema';
 import { fieldName, fieldHelp, optionName } from './editorNodeText';
@@ -185,6 +185,23 @@ defineExpose({ apply });
 </template>
 
 <style scoped>
+.node-field > input,
+.node-field > select,
+.node-field > textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 7px;
+  border: 1px solid var(--ea-border);
+  border-radius: 3px;
+  background: var(--ea-fill-input);
+  color: var(--ea-fg);
+  font: 12px/1.5 var(--ea-font-family, sans-serif);
+}
+.node-field > textarea {
+  resize: vertical;
+  font-family: Consolas, monospace;
+}
 .field-options {
   display: flex;
   flex-wrap: wrap;

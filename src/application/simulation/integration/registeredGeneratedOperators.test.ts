@@ -1,3 +1,4 @@
+import { skillFixture, type SkillFixtureProperties } from '../../../test/skillFixture';
 import type { SkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
 import { describe, expect, it } from 'vitest';
 import { ExplicitCriticalSampleSource } from '../../../core/combat/random/criticalSampleSource';
@@ -62,7 +63,7 @@ const laevatainBasicAttack1 = findSkill(laevatain, 'chr_0016_laevat_attack1');
 
 /** 线性链夹具技能：调用处显式给出每段排程的步骤列表，节点铺入技能自己的 main 图。 */
 function graphFixtureSkill(
-  fixture: Omit<SkillDefinition, 'scheduledSequences' | 'actionGraph'> & {
+  fixture: Omit<SkillFixtureProperties, 'scheduledSequences' | 'actionGraph'> & {
     readonly sequences: readonly { startFrame: number; steps: readonly ActionGraphStep[] }[];
   },
 ): SkillDefinition {
@@ -81,7 +82,11 @@ function graphFixtureSkill(
       sequence: { $sequence: scheduledSequence.steps.length === 0 ? null : `${prefix}-0` },
     };
   });
-  return { ...fields, scheduledSequences, actionGraph: { main: { nodes }, macros: {} } };
+  return skillFixture({
+    ...fields,
+    scheduledSequences,
+    actionGraph: { main: { nodes }, macros: {} },
+  });
 }
 import { projectTimelineEditor } from '../../../ui/timeline/timelineEditorViewModel';
 import {

@@ -1,3 +1,4 @@
+import { skillFixture, type SkillFixtureProperties } from '../../test/skillFixture';
 import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import { describe, expect, it } from 'vitest';
 import type { ActionGraphReference } from '../../../packages/game-data-contract/src/actionGraph';
@@ -52,17 +53,17 @@ function projectGraphSequences(sequences: readonly FixtureSequence[]): {
 
 /** 单图夹具技能：调用处显式给出每段排程的步骤列表。 */
 function graphFixtureSkill(
-  fixture: Omit<SkillDefinition, 'scheduledSequences' | 'actionGraph'> & {
+  fixture: Omit<SkillFixtureProperties, 'scheduledSequences' | 'actionGraph'> & {
     readonly sequences: readonly FixtureSequence[];
   },
 ): SkillDefinition {
   const { sequences, ...fields } = fixture;
   const projected = projectGraphSequences(sequences);
-  return {
+  return skillFixture({
     ...fields,
     scheduledSequences: projected.scheduledSequences,
     actionGraph: { main: { nodes: projected.nodes }, macros: {} },
-  };
+  });
 }
 
 function findSkill(operator: OperatorDefinition, key: string) {
@@ -80,7 +81,7 @@ function prependGraphSequences(
   sequences: readonly FixtureSequence[],
 ): SkillDefinition {
   const projected = projectGraphSequences(sequences);
-  return {
+  return skillFixture({
     ...skill,
     scheduledSequences: [...projected.scheduledSequences, ...skill.scheduledSequences],
     actionGraph: {
@@ -92,7 +93,7 @@ function prependGraphSequences(
       },
       macros: skill.actionGraph.macros,
     },
-  };
+  });
 }
 
 /** 沿图入口可达的动作中是否出现指定文本；迁移期夹具用它按内容定位子程序。 */

@@ -1,4 +1,9 @@
 import type { GameDataBrowser, GameDataRepository } from '../game-data/gameDataRepository';
+import type { OperatorDefinition } from '../game-data/operatorDefinition';
+import { validateOperatorDefinition } from '../game-data/validateOperatorDefinition';
+import type { GlobalEffectDefinition } from '../game-data/globalEffectDefinition';
+import { validateGlobalEffectDefinition } from '../game-data/validateGlobalEffectDefinition';
+import type { ValidationIssue } from './validationHelpers';
 import type {
   GearDefinition,
   GearSetDefinition,
@@ -34,6 +39,23 @@ function assertValidEquipmentDefinition(
   throw new Error(`invalid project ${kind} definition: ${summary}`);
 }
 
+function assertValidOperatorDefinition(definition: OperatorDefinition, path: string): void {
+  const issues = validateOperatorDefinition(definition, path);
+  if (issues.length === 0) return;
+  throw new Error(
+    `invalid project operator definition: ${issues.map(issue => `${issue.path}: ${issue.message}`).join('; ')}`,
+  );
+}
+
+function assertValidGlobalEffectDefinition(definition: GlobalEffectDefinition, path: string): void {
+  const issues: ValidationIssue[] = [];
+  validateGlobalEffectDefinition(definition, path, issues);
+  if (issues.length === 0) return;
+  throw new Error(
+    `invalid project global effect definition: ${issues.map(issue => `${issue.path}: ${issue.message}`).join('; ')}`,
+  );
+}
+
 export function getProjectDefinitionLibrary(
   project: EndaxisProjectDocument,
 ): ProjectDefinitionLibraryDocument {
@@ -55,6 +77,112 @@ interface DeriveEquipmentTemplateInput<T> {
   name: string;
   baseTemplateId: string;
   definition: T;
+}
+
+export interface DeriveOperatorTemplateInput {
+  id: string;
+  name: string;
+  baseTemplateId: string;
+  definition: OperatorDefinition;
+}
+
+/** 创建项目干员模板，保持内置定义及其附属图只读。 */
+export function deriveProjectOperatorTemplateInLibrary(
+  library: ProjectDefinitionLibraryDocument,
+  input: DeriveOperatorTemplateInput,
+): ProjectDefinitionLibraryDocument {
+  requireProjectTemplateId(input.id, 'operator');
+  if (!input.name.trim()) throw new Error('project operator template name must not be empty');
+  if (library.operators[input.id] !== undefined)
+    throw new Error(`project operator template '${input.id}' already exists`);
+  if (input.definition.slug !== input.baseTemplateId)
+    throw new Error(
+      `operator source '${input.definition.slug}' does not match '${input.baseTemplateId}'`,
+    );
+  assertValidOperatorDefinition(input.definition, '$.source.operator');
+  const definition = clone({
+    ...input.definition,
+    slug: input.id,
+    displayName: input.name.trim(),
+    assetSlug: input.definition.assetSlug ?? input.definition.slug,
+  });
+  return {
+    ...library,
+    operators: {
+      ...library.operators,
+      [input.id]: {
+        id: input.id,
+        name: input.name.trim(),
+        origin: { templateId: input.baseTemplateId },
+        definition,
+      },
+    },
+  };
+}
+
+export function deriveProjectOperatorTemplate(
+  project: EndaxisProjectDocument,
+  input: DeriveOperatorTemplateInput,
+): EndaxisProjectDocument {
+  return {
+    ...project,
+    definitionLibrary: deriveProjectOperatorTemplateInLibrary(
+      getProjectDefinitionLibrary(project),
+      input,
+    ),
+  };
+}
+
+/** 新模板从同一干员派生时保留轨道构筑和已放置技能，只替换定义身份。 */
+export function switchTrackToCompatibleOperatorTemplate(
+  scenario: ScenarioDocument,
+  trackIndex: TrackIndex,
+  sourceTemplateId: string,
+  nextTemplateId: string,
+): ScenarioDocument {
+  const track = scenario.tracks[trackIndex];
+  if (track?.operator?.operatorSlug !== sourceTemplateId)
+    throw new Error(`track ${trackIndex} does not use operator '${sourceTemplateId}'`);
+  const tracks = [...scenario.tracks] as ScenarioDocument['tracks'];
+  tracks[trackIndex] = {
+    ...track,
+    operator: { ...track.operator, operatorSlug: nextTemplateId },
+  };
+  return { ...scenario, tracks };
+}
+
+/** 在项目历史边界校验并保存整个干员定义；外部传入对象不会成为可变存档引用。 */
+export function replaceProjectOperatorTemplateDefinition(
+  project: EndaxisProjectDocument,
+  templateId: string,
+  definition: OperatorDefinition,
+): EndaxisProjectDocument {
+  const library = getProjectDefinitionLibrary(project);
+  const template = library.operators[templateId];
+  if (template === undefined) throw new Error(`missing project operator template '${templateId}'`);
+  if (definition.slug !== templateId)
+    throw new Error(
+      `project operator definition slug '${definition.slug}' does not match template '${templateId}'`,
+    );
+  assertValidOperatorDefinition(
+    definition,
+    `$.definitionLibrary.operators['${templateId}'].definition`,
+  );
+  const nextDefinition = clone(definition);
+  return {
+    ...project,
+    definitionLibrary: {
+      ...library,
+      operators: {
+        ...library.operators,
+        [templateId]: {
+          ...template,
+          name: nextDefinition.displayName?.trim() || template.name,
+          definition: nextDefinition,
+        },
+      },
+    },
+  };
 }
 
 function deriveEquipmentTemplate<T extends { readonly slug: string }>(
@@ -370,6 +498,90 @@ export function replaceProjectGearSetTemplateDefinition(
   };
 }
 
+export interface DeriveGlobalEffectTemplateInput {
+  id: string;
+  name: string;
+  baseTemplateId: string;
+  definition: GlobalEffectDefinition;
+}
+
+/** 创建项目全局效果资产，保持内置定义及其附属图只读。 */
+export function deriveProjectGlobalEffectTemplateInLibrary(
+  library: ProjectDefinitionLibraryDocument,
+  input: DeriveGlobalEffectTemplateInput,
+): ProjectDefinitionLibraryDocument {
+  requireProjectTemplateId(input.id, 'globalEffect');
+  if (!input.name.trim()) throw new Error('project global effect template name must not be empty');
+  if (library.globalEffects?.[input.id] !== undefined)
+    throw new Error(`project global effect template '${input.id}' already exists`);
+  if (input.definition.id !== input.baseTemplateId)
+    throw new Error(
+      `global effect source '${input.definition.id}' does not match '${input.baseTemplateId}'`,
+    );
+  assertValidGlobalEffectDefinition(input.definition, '$.source.globalEffect');
+  const definition = clone({ ...input.definition, id: input.id });
+  return {
+    ...library,
+    globalEffects: {
+      ...library.globalEffects,
+      [input.id]: {
+        id: input.id,
+        name: input.name.trim(),
+        origin: { templateId: input.baseTemplateId },
+        definition,
+      },
+    },
+  };
+}
+
+export function deriveProjectGlobalEffectTemplate(
+  project: EndaxisProjectDocument,
+  input: DeriveGlobalEffectTemplateInput,
+): EndaxisProjectDocument {
+  return {
+    ...project,
+    definitionLibrary: deriveProjectGlobalEffectTemplateInLibrary(
+      getProjectDefinitionLibrary(project),
+      input,
+    ),
+  };
+}
+
+/** 在项目历史边界校验并保存整个全局效果定义；外部传入对象不会成为可变存档引用。 */
+export function replaceProjectGlobalEffectTemplateDefinition(
+  project: EndaxisProjectDocument,
+  templateId: string,
+  definition: GlobalEffectDefinition,
+  name?: string,
+): EndaxisProjectDocument {
+  const library = getProjectDefinitionLibrary(project);
+  const template = library.globalEffects?.[templateId];
+  if (template === undefined)
+    throw new Error(`missing project global effect template '${templateId}'`);
+  if (definition.id !== templateId)
+    throw new Error(
+      `project global effect definition id '${definition.id}' does not match template '${templateId}'`,
+    );
+  assertValidGlobalEffectDefinition(
+    definition,
+    `$.definitionLibrary.globalEffects['${templateId}'].definition`,
+  );
+  return {
+    ...project,
+    definitionLibrary: {
+      ...library,
+      globalEffects: {
+        ...library.globalEffects,
+        [templateId]: {
+          ...template,
+          name: name?.trim() || template.name,
+          definition: clone(definition),
+        },
+      },
+    },
+  };
+}
+
 export type ProjectGameData = GameDataRepository & GameDataBrowser;
 
 export function createProjectGameDataIndex(
@@ -388,6 +600,12 @@ export function createProjectGameDataIndex(
   const gearSets = new Map(
     Object.values(library.gearSets).map(value => [value.definition.slug, value.definition]),
   );
+  const globalEffects = new Map(
+    Object.values(library.globalEffects ?? {}).map(value => [
+      value.definition.id,
+      value.definition,
+    ]),
+  );
   for (const [id] of operators) {
     if (base.getOperator(id) !== null)
       throw new Error(`project operator template '${id}' conflicts with built-in data`);
@@ -404,12 +622,17 @@ export function createProjectGameDataIndex(
     if (base.getGearSet(id) !== null)
       throw new Error(`project gear set template '${id}' conflicts with built-in data`);
   }
+  for (const [id] of globalEffects) {
+    if (base.getGlobalEffect(id) !== null)
+      throw new Error(`project global effect template '${id}' conflicts with built-in data`);
+  }
   return {
     ...base,
     getOperator: id => operators.get(id) ?? base.getOperator(id),
     getWeapon: id => weapons.get(id) ?? base.getWeapon(id),
     getGear: id => gears.get(id) ?? base.getGear(id),
     getGearSet: id => gearSets.get(id) ?? base.getGearSet(id),
+    getGlobalEffect: id => globalEffects.get(id) ?? base.getGlobalEffect(id),
   };
 }
 
@@ -422,6 +645,7 @@ export function createProjectGameDataRepository(
   const weapons = Object.values(library.weapons).map(value => value.definition);
   const gears = Object.values(library.gears).map(value => value.definition);
   const gearSets = Object.values(library.gearSets).map(value => value.definition);
+  const globalEffects = Object.values(library.globalEffects ?? {}).map(value => value.definition);
 
   const index = createProjectGameDataIndex(base, library);
   return {
@@ -431,5 +655,6 @@ export function createProjectGameDataRepository(
     getGears: () => [...base.getGears(), ...gears],
     getGearSets: () => [...base.getGearSets(), ...gearSets],
     getEnemies: () => base.getEnemies(),
+    getGlobalEffects: () => [...base.getGlobalEffects(), ...globalEffects],
   };
 }

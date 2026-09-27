@@ -45,7 +45,9 @@ export class InputRegions {
     const current = this.path();
     const modal = current.find(item => item.modal);
     if (modal && !this.#descendsFrom(region, modal)) {
-      throw new Error('Cannot activate a background region through a modal boundary');
+      throw new Error(
+        `Cannot activate input region '${region.id.description}' while modal '${modal.id.description}' is active`,
+      );
     }
     const entry = { region, token: Symbol('input-region-activation') };
     this.#activations.push(entry);

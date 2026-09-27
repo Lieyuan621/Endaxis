@@ -6,7 +6,7 @@ import type { ActionGraphNode } from '../../../packages/game-data-contract/src/a
 import { actionNodeSchemas } from './actionNodeSchemas.generated';
 import { actionNodeTitle } from './nodePresentation';
 import { nodeHelp, fieldName } from './editorNodeText';
-import EditorHelp from './EditorHelp.vue';
+import EditorHelp from '../editor/EditorHelp.vue';
 import NodeInspector from './NodeInspector.vue';
 import type { BlackboardScope } from '../../application/editor/graphBlackboard';
 import NodeInspectorFields from './NodeInspectorFields.vue';

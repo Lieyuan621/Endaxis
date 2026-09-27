@@ -74,13 +74,14 @@ describe('timeline display time', () => {
     ]);
   });
 
-  it('projects global time dilation and omits entity-only instances from timeline effects', () => {
+  it('only displays the named ComboSkill curve and ultimate time dilation', () => {
     const entries: CombatReceiptEntry[] = [
       {
         ...receipt(0, 10, 'TimeDilationStarted', {
           instanceId: 1,
           kind: 'global',
           sourceCastId: 'cast:ultimate',
+          slot: 'ultimate',
         }),
       },
       {
@@ -91,8 +92,20 @@ describe('timeline display time', () => {
         instanceId: 3,
         kind: 'global',
         sourceCastId: 'cast:global',
+        curveKey: 'ComboSkill',
       }),
       receipt(3, 20, 'TimeDilationEnded', { instanceId: 1, kind: 'global' }),
+      receipt(4, 21, 'TimeDilationStarted', {
+        instanceId: 4,
+        kind: 'global',
+        sourceCastId: 'cast:comboSkill',
+        curveKey: 'Other',
+      }),
+      receipt(5, 22, 'TimeDilationStarted', {
+        instanceId: 5,
+        kind: 'global',
+        sourceCastId: 'cast:comboSkill',
+      }),
     ];
     expect(projectTimelineTimeDilationBands(entries, 30)).toEqual([
       {
@@ -142,7 +155,10 @@ describe('timeline display time', () => {
         10,
         12,
       ),
-    ).toEqual([{ offsetFrames: 0, durationFrames: 4 }]);
+    ).toEqual([
+      { offsetFrames: 0, durationFrames: 4 },
+      { offsetFrames: 8, durationFrames: 4 },
+    ]);
   });
 
   it('rejects an end receipt without its matching start', () => {

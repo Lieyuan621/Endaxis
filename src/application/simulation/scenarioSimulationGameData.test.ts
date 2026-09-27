@@ -9,6 +9,7 @@ import { compileResolvedScenarioEquipment } from '../../core/compiler/compileSce
 import { compileScenarioTimeline } from '../../core/compiler/compileScenarioTimeline';
 import { resolveScenarioBuilds } from '../../core/compiler/resolveScenarioBuilds';
 import { createEmptyScenario } from '../../core/project/createProject';
+import type { GlobalEffectDefinition } from '../../core/game-data/globalEffectDefinition';
 import { createGameDataRepository } from '../../data/createGameDataRepository';
 import { perlica } from '../../data/operators/perlica.generated';
 import { placeSkillGroup } from '../../ui/timeline/interaction/placeSkillGroup';
@@ -208,4 +209,85 @@ it('图干员和图装备经 Worker 数据包恢复后编译同一构筑', () =>
   expect(
     contributions[0]?.contributions.map(item => item.initializationSequence !== undefined),
   ).toEqual([true, false, false, false, true]);
+});
+
+it('数据包携带方案引用的全部全局效果（含禁用引用）并进入选择键', () => {
+  const effect = (id: string, value: number): GlobalEffectDefinition => ({
+    id,
+    buff: {
+      stackingType: 'unlimited',
+      attributeModifiers: [
+        { attribute: 'criticalRate', slot: 'baseAddition' as const, value: value },
+      ],
+    },
+  });
+  const scenario = createEmptyScenario('effect-transfer', 'effect-transfer');
+  scenario.globalConfig.effects = [
+    { effectId: 'project:globalEffect:enabled', enabled: true },
+    { effectId: 'project:globalEffect:disabled', enabled: false },
+  ];
+  const repository = createGameDataRepository({
+    revision: 'effect-transfer',
+    globalEffects: [
+      effect('project:globalEffect:enabled', 0.1),
+      effect('project:globalEffect:disabled', 0.2),
+      effect('project:globalEffect:unreferenced', 0.3),
+    ],
+  });
+  const packet = captureScenarioSimulationGameData(scenario, repository);
+  expect(packet.globalEffects.map(item => item.id)).toEqual([
+    'project:globalEffect:enabled',
+    'project:globalEffect:disabled',
+  ]);
+  expect(packet.selectionKey).toContain('globalEffect:project:globalEffect:enabled');
+  expect(packet.selectionKey).toContain('globalEffect:project:globalEffect:disabled');
+  expect(packet.selectionKey).not.toContain('globalEffect:project:globalEffect:unreferenced');
+  const restored = restoreScenarioSimulationGameData(structuredClone(packet));
+  expect(
+    restored.getGlobalEffect('project:globalEffect:disabled')?.buff.attributeModifiers![0]?.value,
+  ).toBe(0.2);
+  expect(restored.getGlobalEffect('project:globalEffect:unreferenced')).toBeNull();
+  expect(() =>
+    captureScenarioSimulationGameData(
+      {
+        ...scenario,
+        globalConfig: {
+          effects: [{ effectId: 'project:globalEffect:missing', enabled: true }],
+        },
+      },
+      repository,
+    ),
+  ).toThrow("global effect definition 'project:globalEffect:missing' does not exist");
+});
+
+it('同 ID 定义更新后新捕获使用新版本，已捕获数据包保持旧版本', () => {
+  const scenario = createEmptyScenario('effect-version', 'effect-version');
+  scenario.globalConfig.effects = [{ effectId: 'project:globalEffect:shared', enabled: true }];
+  const versioned = (value: number) =>
+    createGameDataRepository({
+      revision: `effect-version-${value}`,
+      globalEffects: [
+        {
+          id: 'project:globalEffect:shared',
+          buff: {
+            stackingType: 'unlimited',
+            attributeModifiers: [
+              { attribute: 'criticalRate', slot: 'baseAddition' as const, value: value },
+            ],
+          },
+        },
+      ],
+    });
+  const firstPacket = captureScenarioSimulationGameData(scenario, versioned(0.1));
+  const secondPacket = captureScenarioSimulationGameData(scenario, versioned(0.2));
+  expect(
+    restoreScenarioSimulationGameData(structuredClone(firstPacket)).getGlobalEffect(
+      'project:globalEffect:shared',
+    )?.buff.attributeModifiers![0]?.value,
+  ).toBe(0.1);
+  expect(
+    restoreScenarioSimulationGameData(structuredClone(secondPacket)).getGlobalEffect(
+      'project:globalEffect:shared',
+    )?.buff.attributeModifiers![0]?.value,
+  ).toBe(0.2);
 });

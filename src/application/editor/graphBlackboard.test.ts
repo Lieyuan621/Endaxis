@@ -5,6 +5,35 @@ import type {
 } from '../../../packages/game-data-contract/src/actionGraph';
 import { analyzeGraphBlackboard, blackboardScopeWarnings } from './graphBlackboard';
 
+it('所属对象变量的读写出现在同一项，不把读取误记成局部变量', () => {
+  const graph: ActionGraphDefinition = {
+    nodes: {
+      write: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'EntityBB_count',
+            operation: 'assign',
+            value: { kind: 'valueNode', nodeId: 'read' },
+          },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      read: { type: 'number', expression: { kind: 'blackboard', key: 'EntityBB_count' } },
+    },
+  };
+  const analysis = analyzeGraphBlackboard(graph, ['write']);
+  expect(analysis.variables).toHaveLength(1);
+  expect(analysis.variables[0]).toMatchObject({
+    key: 'EntityBB_count',
+    layer: 'entity',
+    reads: ['read'],
+    writes: ['write'],
+  });
+});
+
 const scope = (
   body: string,
   inheritParent = false,

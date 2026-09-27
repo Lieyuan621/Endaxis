@@ -1,4 +1,5 @@
 import { validateActionGraphReferenceDefinition } from '../game-data/validation/actionPrograms';
+import { validateGlobalEffectDefinition } from '../game-data/validateGlobalEffectDefinition';
 /**
  * 不可信 JSON 进入新版项目模型的顶层校验边界。
  * 加载、导入和迁移结果都必须先通过这里，业务代码不能直接断言外部对象是存档。
@@ -177,6 +178,51 @@ function validateProjectTemplateRecord(
   }
 }
 
+function validateProjectGlobalEffectRecord(
+  value: unknown,
+  path: string,
+  issues: ValidationIssue[],
+): void {
+  if (value === undefined) return;
+  if (!isObject(value)) {
+    issues.push({ path, message: 'expected an object' });
+    return;
+  }
+  for (const [id, template] of Object.entries(value)) {
+    const templatePath = `${path}.${JSON.stringify(id)}`;
+    if (!id.startsWith('project:globalEffect:') || id.length === 'project:globalEffect:'.length) {
+      issues.push({ path: templatePath, message: 'expected project:globalEffect: template id' });
+    }
+    if (!isObject(template)) {
+      issues.push({ path: templatePath, message: 'expected an object' });
+      continue;
+    }
+    const declaredId = requireString(template, 'id', templatePath, issues);
+    if (declaredId !== null && declaredId !== id) {
+      issues.push({ path: `${templatePath}.id`, message: 'template id must match record key' });
+    }
+    requireString(template, 'name', templatePath, issues);
+    if (template.origin !== undefined) {
+      if (!isObject(template.origin)) {
+        issues.push({ path: `${templatePath}.origin`, message: 'expected an object' });
+      } else {
+        requireString(template.origin, 'templateId', `${templatePath}.origin`, issues);
+      }
+    }
+    if (!isObject(template.definition)) {
+      issues.push({ path: `${templatePath}.definition`, message: 'expected an object' });
+      continue;
+    }
+    if (template.definition.id !== id) {
+      issues.push({
+        path: `${templatePath}.definition.id`,
+        message: 'definition identity mismatch',
+      });
+    }
+    validateGlobalEffectDefinition(template.definition, `${templatePath}.definition`, issues);
+  }
+}
+
 function validateProjectDefinitionLibrary(
   value: unknown,
   path: string,
@@ -190,6 +236,7 @@ function validateProjectDefinitionLibrary(
   validateProjectTemplateRecord(value.weapons, `${path}.weapons`, 'weapon', issues);
   validateProjectTemplateRecord(value.gears, `${path}.gears`, 'gear', issues);
   validateProjectTemplateRecord(value.gearSets, `${path}.gearSets`, 'gearSet', issues);
+  validateProjectGlobalEffectRecord(value.globalEffects, `${path}.globalEffects`, issues);
 }
 
 /** 严格校验后的项目或完整问题列表；失败值不得进入领域层。 */

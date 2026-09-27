@@ -10,7 +10,7 @@ describe('logical input regions', () => {
     const picker = regions.create('picker', dialog);
     regions.activate(root);
     const releaseDialog = regions.activate(dialog);
-    expect(() => regions.activate(root)).toThrow('modal boundary');
+    expect(() => regions.activate(root)).toThrow(Error);
     const releasePicker = regions.activate(picker);
     expect(regions.path()).toEqual([picker, dialog]);
     releasePicker();

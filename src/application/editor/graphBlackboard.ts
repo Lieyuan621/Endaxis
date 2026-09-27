@@ -105,7 +105,7 @@ export function analyzeGraphBlackboard(
       const item = variable(
         scope,
         e.kind === 'parameter' ? e.parameter : e.key,
-        e.kind === 'parameter' ? 'parameter' : 'direct',
+        e.kind === 'parameter' ? 'parameter' : e.key.startsWith('EntityBB_') ? 'entity' : 'direct',
       );
       item.reads.push(id);
       if (e.kind === 'blackboard' && e.fallback === undefined) item.requiredReads.push(id);

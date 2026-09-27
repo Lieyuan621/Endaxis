@@ -1,3 +1,4 @@
+import { skillFixture } from '../../../../src/test/skillFixture';
 import { describe, expect, it } from 'vitest';
 import { createActionGraphBuilder } from '../../src/compiler/actions/actionGraphBuilder.ts';
 import { optimizeResourceGraphs } from '../../src/compiler/optimization/resourceGraphOptimization.ts';
@@ -141,12 +142,12 @@ describe('独立资源图构建与优化', () => {
 
   it.each(['apply', 'report'] as const)('%s 在提取宏前裁掉无用写入并重新去重', mode => {
     const resource = repeatedMiddleResource();
-    const definition: SkillDefinition = {
+    const definition: SkillDefinition = skillFixture({
       key: 'skill',
       timelineBlockFrames: 30,
       scheduledSequences: resource.entries.map(sequence => ({ startFrame: 0, sequence })),
       actionGraph: resource.actionGraph,
-    };
+    });
     let removedWrites = 0;
     const result = optimizeDefinitionResources(definition, mode, simplified => {
       expect(Object.keys(simplified.actionGraph.macros)).toHaveLength(0);

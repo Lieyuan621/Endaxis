@@ -1,3 +1,4 @@
+import { skillFixture } from '../../test/skillFixture';
 import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import { createProgramDefinitionCompiler } from './compileProgramDefinitions';
 import { expect, it } from 'vitest';
@@ -17,12 +18,13 @@ it('同一仓库跨技能入口共享已编译节点，修订和等级隔离', (
   const programs = new ActionGraphDefinitionRepository();
   const actionGraph = definition();
   const resource = { main: actionGraph, macros: {} };
-  const skill = (key: string): SkillDefinition => ({
-    key,
-    timelineBlockFrames: 1,
-    scheduledSequences: [{ startFrame: 0, sequence: { $sequence: key } }],
-    actionGraph: resource,
-  });
+  const skill = (key: string): SkillDefinition =>
+    skillFixture({
+      key,
+      timelineBlockFrames: 1,
+      scheduledSequences: [{ startFrame: 0, sequence: { $sequence: key } }],
+      actionGraph: resource,
+    });
   const compile = (key: string) =>
     compileSkill({
       operatorId: 'operator',
@@ -124,12 +126,12 @@ it('imported entity entries retain their owning graph when local node IDs collid
     skillGroupKey: 'battleSkill',
     skillType: 'battleSkill',
     skillLevel: 1,
-    skill: {
+    skill: skillFixture({
       key: 'skill',
       timelineBlockFrames: 1,
       scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'same' } }],
       actionGraph: localResource,
-    },
+    }),
     programs,
     importedAbilityEntityDefinitions: imports,
   });

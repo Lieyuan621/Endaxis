@@ -1,3 +1,4 @@
+import { skillFixture } from '../../../test/skillFixture';
 import type { SkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
 import type {
   ActionGraphNode,
@@ -252,7 +253,7 @@ async function simulate(slug: string, tier: number, sequences: readonly ProbeSeq
               Object.assign(nodes, chain.nodes);
               return { startFrame: probe.startFrame, sequence: { $sequence: chain.entry } };
             });
-          const probe: SkillDefinition = {
+          const probe: SkillDefinition = skillFixture({
             skillType: 'basicAttack' as const,
             levelSource: 'basicAttack' as const,
             key: 'state-probe',
@@ -269,7 +270,7 @@ async function simulate(slug: string, tier: number, sequences: readonly ProbeSeq
               },
               macros: {},
             },
-          };
+          });
           return probe;
         })(),
       },

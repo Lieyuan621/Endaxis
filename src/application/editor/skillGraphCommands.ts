@@ -10,14 +10,10 @@ import type { ScenarioDocument } from '../../core/project/schema';
 import type { ScenarioCommand } from './scenarioEditorSession';
 import type { SkillGraphPresentation } from '../../core/project/graphPresentation';
 import { copyCustomGraphDocument, freezeGraphDocument } from './immutableGraphDocument';
+import { updateResourceGraph, type ActionGraphAddress } from './actionGraphResourceEditing';
 
 /** 宏名称只在该技能自己的资源内解析，不能跨宿主编辑同名技能。 */
-export type SkillGraphAddress =
-  | { readonly kind: 'main' }
-  | {
-      readonly kind: 'macro';
-      readonly macroId: string;
-    };
+export type SkillGraphAddress = ActionGraphAddress;
 
 function requireSkillActionGraph(skill: SkillDefinition): void {
   if (
@@ -38,31 +34,13 @@ export function updateSkillGraph(
   update: (graph: ActionGraphDefinition) => ActionGraphDefinition,
 ): SkillDefinition {
   requireSkillActionGraph(skill);
-  const resource = skill.actionGraph;
-  const macro =
-    address.kind === 'macro' && Object.hasOwn(resource.macros, address.macroId)
-      ? resource.macros[address.macroId]
-      : undefined;
-  if (address.kind === 'macro' && macro === undefined)
-    throw new Error(`skill '${skill.key}' has no macro '${address.macroId}'`);
-  const previous = macro?.graph ?? resource.main;
-  // 与 ScenarioCommand 相同：调用方必须不可变更新，原引用表示没有改动。
-  const next = update(freezeGraphDocument(previous));
-  if (next === previous) return skill;
-  const changed: SkillDefinition = {
-    ...skill,
-    actionGraph:
-      address.kind === 'main'
-        ? { ...resource, main: next }
-        : {
-            ...resource,
-            macros: { ...resource.macros, [address.macroId]: { ...macro!, graph: next } },
-          },
-  };
+  const changed = updateResourceGraph(skill, address, previous =>
+    update(freezeGraphDocument(previous)),
+  );
+  if (changed === skill) return skill;
   const issues = validateSkillDefinition(changed, `skill.${skill.key}`);
   if (issues.length)
     throw new Error(issues.map(issue => `${issue.path}: ${issue.message}`).join('\n'));
-  validateActionGraphOwner(changed, `skill.${skill.key}`);
   return changed;
 }
 

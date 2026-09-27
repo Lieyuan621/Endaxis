@@ -1,3 +1,4 @@
+import { skillFixture } from '../../test/skillFixture';
 import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import { expect, it } from 'vitest';
 import type { ActionGraphDefinition } from '../../../packages/game-data-contract/src/actionGraph';
@@ -101,7 +102,7 @@ it('库图命令不能隐式开启自定义，显式自定义产生独立不可�
 });
 
 function fixture(custom = true) {
-  const definition: SkillDefinition = {
+  const definition: SkillDefinition = skillFixture({
     key: 'editable',
     skillType: 'basicAttack',
     levelSource: 'basicAttack',
@@ -126,7 +127,7 @@ function fixture(custom = true) {
         },
       },
     },
-  };
+  });
   const repository = createGameDataRepository({
     revision: 'edit',
     operators: [
@@ -282,7 +283,7 @@ it('重接边与删除节点可以原子提交，缺失的宏不能误编辑主�
 it('完整技能保存一次提交元数据和图，克隆的打开快照支持撤销、重做与序列化', () => {
   const { project, scenario, repository, definition } = fixture();
   const session = new ScenarioEditorSession(scenario);
-  const replacement: SkillDefinition = {
+  const replacement: SkillDefinition = skillFixture({
     ...definition,
     timelineBlockFrames: 60,
     blackboard: { scale: 3 },
@@ -290,7 +291,7 @@ it('完整技能保存一次提交元数据和图，克隆的打开快照支持�
       ...definition.actionGraph,
       main: { nodes: { a: { ...definition.actionGraph.main.nodes.a!, next: null } } },
     },
-  };
+  });
   expect(
     session.commit(
       'save-resource',

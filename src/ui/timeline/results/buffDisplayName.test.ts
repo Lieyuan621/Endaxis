@@ -21,7 +21,7 @@ const i18n = {
 describe('Buff display name', () => {
   it.each([zh, en])('names global modifiers without exposing the internal Buff ID', messages => {
     expect(
-      resolveBuffDisplayName('scenario:global-attribute-modifiers', {
+      resolveBuffDisplayName('scenario:custom-values', {
         te: key => key === 'timeline.globalModifiers.title',
         t: () => messages.timeline.globalModifiers.title,
       }),

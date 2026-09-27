@@ -4,6 +4,7 @@ import { editSkillCastGraph } from '../editor/skillGraphCommands';
 import { projectTimelineEditor } from '../../ui/timeline/timelineEditorViewModel';
 import { listSkillGroupDefinitionBindings } from '../../core/game-data/operatorSkillDefinitions';
 import { gameDataRepository } from '../../data/gameDataRepository';
+import { createProjectGameDataRepository } from '../../core/project/projectDefinitionLibrary';
 import { createEmptyProject } from '../../core/project/createProject';
 import { parseProjectDocument, serializeProjectDocument } from '../../core/project/serialization';
 import { createScenarioSimulationService } from './createScenarioSimulationService';
@@ -16,31 +17,43 @@ it('方案自定义局部图保存重开、Worker 传输和执行中切面恢复
   const project = createEmptyProject({ createdWith: 'graph-round-trip' });
   const scenario = project.scenarios[0]!;
   scenario.battle.durationFrames = 120;
-  scenario.globalConfig.customBuffs = [
-    {
-      id: 'scenario:custom-global:delayed',
-      name: 'Delayed graph Buff',
-      enabled: true,
-      definition: {
-        stackingType: 'unlimited',
-        scheduledSequences: [{ startFrame: 75, sequence: { $sequence: 'hit' } }],
-        actionGraph: {
-          main: {
-            nodes: {
-              hit: {
-                action: {
-                  kind: 'dealFixedDamage',
-                  parameters: { damageType: 'physical', value: 7, tags: [] },
+  const effectId = 'project:globalEffect:delayed';
+  project.definitionLibrary = {
+    operators: {},
+    weapons: {},
+    gears: {},
+    gearSets: {},
+    globalEffects: {
+      [effectId]: {
+        id: effectId,
+        name: 'Delayed graph Buff',
+        definition: {
+          id: effectId,
+
+          buff: {
+            stackingType: 'unlimited',
+            scheduledSequences: [{ startFrame: 75, sequence: { $sequence: 'hit' } }],
+            actionGraph: {
+              main: {
+                nodes: {
+                  hit: {
+                    action: {
+                      kind: 'dealFixedDamage',
+                      parameters: { damageType: 'physical', value: 7, tags: [] },
+                    },
+                    next: null,
+                  },
                 },
-                next: null,
               },
+              macros: {},
             },
           },
-          macros: {},
         },
       },
     },
-  ];
+  };
+  scenario.globalConfig.effects = [{ effectId, enabled: true }];
+  const repository = createProjectGameDataRepository(gameDataRepository, project.definitionLibrary);
   const operator = gameDataRepository.getOperator('perlica')!;
   const skill = listSkillGroupDefinitionBindings(
     operator.skillGroups.find(group => group.key === 'battleSkill')!,
@@ -99,33 +112,27 @@ it('方案自定义局部图保存重开、Worker 传输和执行中切面恢复
   const session = new ScenarioEditorSession(scenario);
   session.commit(
     'edit-damage-macro',
-    editSkillCastGraph(
-      gameDataRepository,
-      'custom-cast',
-      { kind: 'macro', macroId: 'damage' },
-      graph => ({
-        ...graph,
-        nodes: {
-          ...graph.nodes,
-          hit: {
-            action: {
-              kind: 'dealFixedDamage',
-              parameters: { damageType: 'physical', value: 456, tags: ['normalSkill'] },
-            },
-            next: null,
+    editSkillCastGraph(repository, 'custom-cast', { kind: 'macro', macroId: 'damage' }, graph => ({
+      ...graph,
+      nodes: {
+        ...graph.nodes,
+        hit: {
+          action: {
+            kind: 'dealFixedDamage',
+            parameters: { damageType: 'physical', value: 456, tags: ['normalSkill'] },
           },
+          next: null,
         },
-      }),
-    ),
+      },
+    })),
   );
   project.scenarios[0] = session.snapshot.scenario;
   const loaded = parseProjectDocument(serializeProjectDocument(project));
   expect(loaded.ok).toBe(true);
   if (!loaded.ok) throw new Error(JSON.stringify(loaded));
   const restoredScenario = loaded.value.scenarios[0]!;
-  expect(projectTimelineEditor(restoredScenario, gameDataRepository).tracks[0]!.issues).toEqual([]);
-  const direct =
-    createScenarioSimulationService(gameDataRepository).createCombatSession(restoredScenario);
+  expect(projectTimelineEditor(restoredScenario, repository).tracks[0]!.issues).toEqual([]);
+  const direct = createScenarioSimulationService(repository).createCombatSession(restoredScenario);
   direct.advanceToFrame(60);
   const fork = direct.fork(direct.runtime.save());
   direct.advanceToFrame(120);
@@ -138,9 +145,7 @@ it('方案自定义局部图保存重开、Worker 传输和执行中切面恢复
   ).toEqual([0, 75, 90]);
   expect(fork.collectResult()).toEqual(expected);
 
-  const packet = structuredClone(
-    captureScenarioSimulationGameData(restoredScenario, gameDataRepository),
-  );
+  const packet = structuredClone(captureScenarioSimulationGameData(restoredScenario, repository));
   const worker = createScenarioSimulationService(
     restoreScenarioSimulationGameData(packet),
   ).createCombatSession(restoredScenario);

@@ -1,3 +1,4 @@
+import { skillFixture } from '../../test/skillFixture';
 import { describe, expect, it } from 'vitest';
 import type { ActionGraphNode } from '../../../packages/game-data-contract/src/actionGraph';
 import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills';
@@ -37,7 +38,7 @@ it('结束时间线没有继续出口，也不能通过编辑命令接出后续�
 });
 
 function fixture(): SkillDefinition {
-  return {
+  return skillFixture({
     key: 'editable',
     skillType: 'basicAttack',
     levelSource: 'basicAttack',
@@ -70,7 +71,7 @@ function fixture(): SkillDefinition {
         shared: { entry: { $sequence: 'a' }, graph: { nodes: { a: { action: hit, next: null } } } },
       },
     },
-  };
+  });
 }
 
 describe('正式动作图编辑', () => {
@@ -245,14 +246,14 @@ describe('正式动作图编辑', () => {
 
 describe('主技能调度列表编辑', () => {
   function timelineFixture(): SkillDefinition {
-    const skill: SkillDefinition = {
+    const skill: SkillDefinition = skillFixture({
       ...fixture(),
       scheduledSequences: [
         { startFrame: 30, endFrame: 35, sequence: { $sequence: 'a' } },
         { startFrame: 0, sequence: { $sequence: 'b' } },
         { startFrame: 10, sequence: { $sequence: null } },
       ],
-    };
+    });
     Object.freeze(skill.scheduledSequences);
     return Object.freeze(skill);
   }
@@ -338,7 +339,7 @@ describe('主技能调度列表编辑', () => {
 
 describe('正式时间线与图入口编辑', () => {
   function scheduledFixture(): SkillDefinition {
-    return {
+    return skillFixture({
       ...fixture(),
       scheduledSequences: [
         { startFrame: 0, sequence: { $sequence: null } },
@@ -357,7 +358,7 @@ describe('正式时间线与图入口编辑', () => {
           scheduledSequences: [{ startFrame: 3, sequence: { $sequence: null } }],
         },
       ],
-    };
+    });
   }
 
   it('入口按正式调度路径投影，事件来源独立成组，同目标调度保留全部调用', () => {
@@ -489,7 +490,7 @@ describe('正式时间线与图入口编辑', () => {
 
   it('入口更改仍校验整个正式技能与图资源，不忽略另一张宏图的非法引用', () => {
     const skill = scheduledFixture();
-    const invalid: SkillDefinition = {
+    const invalid: SkillDefinition = skillFixture({
       ...skill,
       actionGraph: {
         ...skill.actionGraph,
@@ -500,7 +501,7 @@ describe('正式时间线与图入口编辑', () => {
           },
         },
       },
-    };
+    });
     expect(() => editGraphEntries(invalid, main, ['timeline:0'], { targetId: 'b' })).toThrow(
       'missing action graph node',
     );

@@ -59,7 +59,7 @@ export function createEmptyScenario(id: string, name: string): ScenarioDocument 
       dodgeMarkers: [],
     },
     mechanics: { selections: [] },
-    globalConfig: { modifiers: [] },
+    globalConfig: {},
     editor: {
       trackHeightWeights: [1, 1, 1, 1],
       prepExpanded: false,

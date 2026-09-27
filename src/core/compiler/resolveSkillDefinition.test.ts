@@ -1,3 +1,4 @@
+import { skillFixture } from '../../test/skillFixture';
 import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import { describe, expect, it } from 'vitest';
 import type { OperatorDefinition, SkillGroupDefinition } from '../game-data/operatorDefinition';
@@ -9,15 +10,15 @@ import {
 } from './resolveSkillDefinition';
 import { listOperatorSkillDefinitionBindings } from '../game-data/operatorSkillDefinitions';
 
-const catalogSkill: SkillDefinition = {
+const catalogSkill: SkillDefinition = skillFixture({
   key: 'battleSkill',
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   timelineBlockFrames: 45,
   scheduledSequences: [],
   actionGraph: { main: { nodes: {} }, macros: {} },
-};
-const customSkill: SkillDefinition = {
+});
+const customSkill: SkillDefinition = skillFixture({
   key: 'battleSkill',
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
@@ -27,7 +28,7 @@ const customSkill: SkillDefinition = {
   costFrame: 0,
   scheduledSequences: [{ startFrame: 0, sequence: { $sequence: null } }],
   actionGraph: { main: { nodes: {} }, macros: {} },
-};
+});
 
 const skillGroup: SkillGroupDefinition = {
   key: 'battleSkill',
@@ -104,14 +105,14 @@ describe('resolveEffectiveSkillDefinition', () => {
   });
 
   it('resolves a named group variant with its own level source', () => {
-    const enhanced: SkillDefinition = {
+    const enhanced: SkillDefinition = skillFixture({
       key: 'enhancedBattleSkill',
       skillType: 'battleSkill',
       levelSource: 'ultimate',
       timelineBlockFrames: 30,
       scheduledSequences: [],
       actionGraph: { main: { nodes: {} }, macros: {} },
-    };
+    });
     const groupWithVariant: SkillGroupDefinition = {
       ...skillGroup,
       variants: [{ key: 'enhanced', levelSource: 'ultimate', skills: enhanced }],
@@ -206,7 +207,7 @@ describe('resolveEffectiveSkillDefinition', () => {
 
   it('returns custom definition when present', () => {
     const resolved = resolveEffectiveSkillDefinition(
-      createCast({ customDefinition: { ...customSkill, levelSource: 'ultimate' } }),
+      createCast({ customDefinition: skillFixture({ ...customSkill, levelSource: 'ultimate' }) }),
       operator,
     );
 

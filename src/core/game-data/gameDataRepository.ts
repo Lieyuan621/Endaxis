@@ -12,6 +12,7 @@ import type {
 import type { GearDefinition, GearSetDefinition, WeaponDefinition } from './equipmentDefinition';
 import type { EnemyDefinition } from './enemyDefinition';
 import type { ConsumableDefinition } from './consumableDefinition';
+import type { GlobalEffectDefinition } from './globalEffectDefinition';
 
 export const MECHANIC_FAMILIES = ['stage', 'contingencyContract', 'seasonTower', 'custom'] as const;
 /** 决定一项场景机制由哪类 Adapter 解释。 */
@@ -66,6 +67,8 @@ export interface GameDataRepository {
   getConsumable(id: string): ConsumableDefinition | null;
   /** 消耗品互斥需要同版本完整目录，不能从当前场景引用反推。 */
   getConsumables(): readonly ConsumableDefinition[];
+  /** 按稳定 id 查询一条内置或项目全局效果定义。 */
+  getGlobalEffect(id: string): GlobalEffectDefinition | null;
 }
 
 /** 编辑器选择器在只读查询端口之外需要的定义枚举能力。编译器仅依赖 `GameDataRepository`。 */
@@ -76,4 +79,6 @@ export interface GameDataBrowser {
   getGearSets(): readonly GearSetDefinition[];
   getEnemies(): readonly EnemyDefinition[];
   getConsumables(): readonly ConsumableDefinition[];
+  /** 枚举内置与项目全局效果，供资产目录与配置面板使用。 */
+  getGlobalEffects(): readonly GlobalEffectDefinition[];
 }

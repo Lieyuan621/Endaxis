@@ -138,11 +138,12 @@ export function validateSkillDefinition(
     );
 
   requireString(record, 'key', path, out);
-  if (record.skillType !== undefined) requireEnum(record, 'skillType', SKILL_TYPES_SET, path, out);
-  if (record.levelSource !== undefined)
+  requireEnum(record, 'skillType', SKILL_TYPES_SET, path, out);
+  if (record.skillType !== 'dodge')
     requireEnum(record, 'levelSource', SKILL_LEVEL_SOURCES_SET, path, out);
-  if (record.nativeSkillType !== undefined)
-    requireEnum(record, 'nativeSkillType', NATIVE_SKILL_TYPES_SET, path, out);
+  else if (record.levelSource !== undefined)
+    push(out, `${path}.levelSource`, 'dodge does not use skill levels');
+  requireEnum(record, 'nativeSkillType', NATIVE_SKILL_TYPES_SET, path, out);
   requireNonNegativeInteger(record, 'timelineBlockFrames', path, out);
   if (record.timelineBlockFollowUpSkillId !== undefined) {
     requireString(record, 'timelineBlockFollowUpSkillId', path, out);
@@ -150,9 +151,7 @@ export function validateSkillDefinition(
   if (record.timelineContinuationSkillId !== undefined) {
     requireString(record, 'timelineContinuationSkillId', path, out);
   }
-  if (record.naturalDurationFrames !== undefined) {
-    requirePositiveInteger(record, 'naturalDurationFrames', path, out);
-  }
+  requirePositiveInteger(record, 'naturalDurationFrames', path, out);
   if (record.enhancementStateBuffId !== undefined) {
     requireString(record, 'enhancementStateBuffId', path, out);
   }
@@ -187,12 +186,11 @@ export function validateSkillDefinition(
       });
     }
   }
-  if (record.costFrame !== undefined) {
+  if (record.costFrame !== undefined || (Array.isArray(record.costs) && record.costs.length > 0)) {
     requireNonNegativeInteger(record, 'costFrame', path, out);
   }
-  if (record.exclusiveFrame !== undefined) {
-    requireNonNegativeInteger(record, 'exclusiveFrame', path, out);
-  }
+  requireNonNegativeInteger(record, 'exclusiveFrame', path, out);
+  requireNonNegativeInteger(record, 'offsetRecordFrame', path, out);
   if (record.inputWindows !== undefined) {
     const windows = asRecord(record.inputWindows, `${path}.inputWindows`, out);
     if (windows !== null) {

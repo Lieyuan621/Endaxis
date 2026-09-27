@@ -1,3 +1,4 @@
+import { skillFixture } from '../../test/skillFixture';
 import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import { createProgramDefinitionCompiler } from './compileProgramDefinitions';
 import type { CompiledGraphEntry } from './combatProgram';
@@ -180,7 +181,7 @@ describe('嵌套宿主直接图编译', () => {
     );
   });
   it('正式技能编译共用等级费用和调度规则，拒绝缺失费用帧', () => {
-    const skill: SkillDefinition = {
+    const skill: SkillDefinition = skillFixture({
       key: 'skill',
       timelineBlockFrames: 10,
       naturalDurationFrames: 30,
@@ -192,7 +193,7 @@ describe('嵌套宿主直接图编译', () => {
         { startFrame: 0, sequence: { $sequence: 'spawn' } },
       ],
       actionGraph: { main: graph, macros: {} },
-    };
+    });
     const program = compileSkill({
       operatorId: 'operator',
       skillGroupKey: 'battleSkill',

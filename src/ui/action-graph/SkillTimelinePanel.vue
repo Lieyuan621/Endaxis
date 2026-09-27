@@ -10,6 +10,7 @@ const props = defineProps<{
   entries: readonly GraphEntry[];
   graph: ActionGraphDefinition;
   selectedEntryId: string | null;
+  readonly?: boolean;
   disabled?: boolean;
   selectEntry: (id: string) => boolean;
   applyTime: (id: string, startFrame: number, endFrame: number | null) => boolean;
@@ -71,7 +72,9 @@ const selected = computed(() => rows.value.find(entry => entry.id === props.sele
 const selectedIndex = computed(() =>
   rows.value.findIndex(entry => entry.id === props.selectedEntryId),
 );
-const busy = computed(() => Boolean(props.disabled || gesture.value || formPending.value));
+const busy = computed(() =>
+  Boolean(props.readonly || props.disabled || gesture.value || formPending.value),
+);
 const durationExtent = computed(() => {
   let latest = 120;
   for (const entry of rows.value)
@@ -143,6 +146,7 @@ function resetForm(): void {
   error.value = '';
 }
 function changeFrame(which: 'start' | 'end', value: string): void {
+  if (props.readonly || props.disabled) return;
   if (which === 'start') startInput.value = value;
   else endInput.value = value;
   setPending(
@@ -153,6 +157,7 @@ function changeFrame(which: 'start' | 'end', value: string): void {
   error.value = '';
 }
 function submitTime(id: string, start: number, end: number | null): boolean {
+  if (props.readonly || props.disabled) return false;
   try {
     if (props.applyTime(id, start, end)) {
       error.value = '';
@@ -165,7 +170,7 @@ function submitTime(id: string, start: number, end: number | null): boolean {
   return false;
 }
 function applyForm(): void {
-  if (!selected.value || props.disabled || gesture.value) return;
+  if (!selected.value || props.readonly || props.disabled || gesture.value) return;
   const start = startInput.value.trim() === '' ? NaN : Number(startInput.value);
   const end = endInput.value.trim() === '' ? null : Number(endInput.value);
   if (
@@ -287,7 +292,7 @@ function finishPointer(event: PointerEvent): void {
   if (gesture.value?.pointerId !== event.pointerId) return;
   movePointer(event);
   const active = releaseGesture();
-  if (!active || props.disabled) return;
+  if (!active || props.readonly || props.disabled) return;
   if (active.kind === 'order') {
     if (active.toIndex !== active.fromIndex) emit('reorder', active.id, active.toIndex);
   } else if (active.start !== active.originalStart || active.end !== active.originalEnd) {
@@ -393,7 +398,7 @@ watch(() => [props.selectedEntryId, rows.value.length] as const, revealSelection
   flush: 'post',
 });
 watch(
-  () => props.disabled,
+  () => props.disabled || props.readonly,
   disabled => {
     if (disabled) cancelGesture();
   },
@@ -485,6 +490,7 @@ onBeforeUnmount(() => {
             type="number"
             min="0"
             step="1"
+            :readonly="readonly"
             :disabled="disabled || Boolean(gesture)"
             :value="startInput"
             @input="changeFrame('start', ($event.target as HTMLInputElement).value)"
@@ -495,6 +501,7 @@ onBeforeUnmount(() => {
             min="0"
             step="1"
             placeholder="无结束"
+            :readonly="readonly"
             :disabled="disabled || Boolean(gesture)"
             :value="endInput"
             @input="changeFrame('end', ($event.target as HTMLInputElement).value)"
@@ -503,18 +510,21 @@ onBeforeUnmount(() => {
           type="submit"
           size="sm"
           variant="primary"
-          :disabled="!formPending || disabled || Boolean(gesture)"
+          :disabled="!formPending || readonly || disabled || Boolean(gesture)"
           >应用</EaButton
         >
         <EaButton
           size="sm"
-          :disabled="!formPending || disabled || Boolean(gesture)"
+          :disabled="!formPending || readonly || disabled || Boolean(gesture)"
           @click="resetForm"
           >放弃修改</EaButton
         >
       </form>
       <div class="entry-controls">
-        <EaButton size="sm" :disabled="busy" @click="emit('focusEntry', selected.id)"
+        <EaButton
+          size="sm"
+          :disabled="disabled || Boolean(gesture) || formPending"
+          @click="emit('focusEntry', selected.id)"
           >定位画布</EaButton
         >
         <EaButton size="sm" :disabled="busy" @click="emit('duplicate', selected.id)">复制</EaButton>
@@ -567,7 +577,7 @@ onBeforeUnmount(() => {
             <button
               type="button"
               class="order-grip"
-              :disabled="disabled || formPending"
+              :disabled="readonly || disabled || formPending"
               :aria-label="`拖动调整第 ${index + 1} 项顺序`"
               title="只调整调度顺序，不改变时间"
               @pointerdown="startOrder($event, entry, index)"
@@ -632,7 +642,7 @@ onBeforeUnmount(() => {
               <button
                 type="button"
                 class="range-handle start-handle"
-                :disabled="disabled || formPending"
+                :disabled="readonly || disabled || formPending"
                 :aria-label="`调整第 ${index + 1} 项开始帧`"
                 title="调整开始帧"
                 @pointerdown="startTime($event, entry, 'start')"
@@ -644,7 +654,7 @@ onBeforeUnmount(() => {
               <button
                 type="button"
                 class="range-handle end-handle"
-                :disabled="disabled || formPending"
+                :disabled="readonly || disabled || formPending"
                 :aria-label="`调整第 ${index + 1} 项结束帧`"
                 title="调整结束帧"
                 @pointerdown="startTime($event, entry, 'end')"

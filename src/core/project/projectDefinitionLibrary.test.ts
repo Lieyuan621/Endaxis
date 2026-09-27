@@ -8,8 +8,13 @@ import { parseProjectDocument, serializeProjectDocument } from './serialization'
 import type { GearDefinition, WeaponDefinition } from '../game-data/equipmentDefinition';
 
 import { withProjectOperatorTemplate } from '../../test/projectOperatorTemplateFixture';
+import { GLOBAL_EFFECT_PRESETS } from '../../data/globalEffectPresets';
+import type { GlobalEffectDefinition } from '../game-data/globalEffectDefinition';
+import type { ScenarioDocument } from './schema';
 import {
   createProjectGameDataRepository,
+  deriveProjectGlobalEffectTemplate,
+  deriveProjectOperatorTemplate,
   deriveProjectGearTemplate,
   deriveProjectGearSetTemplateInLibrary,
   deriveProjectGearSetTemplate,
@@ -19,6 +24,8 @@ import {
   getProjectDefinitionLibrary,
   replaceProjectGearTemplateDefinition,
   replaceProjectGearSetTemplateDefinition,
+  replaceProjectGlobalEffectTemplateDefinition,
+  replaceProjectOperatorTemplateDefinition,
   replaceProjectWeaponTemplateDefinition,
   switchTrackToCompatibleGearTemplate,
   switchTrackToCompatibleWeaponTemplate,
@@ -37,6 +44,34 @@ function operatorInstance(operatorSlug: string) {
 }
 
 describe('projectDefinitionLibrary', () => {
+  it('derives an isolated operator resource graph and validates edits before project commit', () => {
+    const source = createEmptyProject({ createdWith: 'test' });
+    const project = deriveProjectOperatorTemplate(source, {
+      id: 'project:operator:edited',
+      name: '自定义佩丽卡',
+      baseTemplateId: perlica.slug,
+      definition: perlica,
+    });
+    const template = getProjectDefinitionLibrary(project).operators['project:operator:edited']!;
+    expect(template.definition.slug).toBe(template.id);
+    expect(template.definition.assetSlug).toBe(perlica.slug);
+    expect(template.definition.skillGroups).not.toBe(perlica.skillGroups);
+    expect(source.definitionLibrary?.operators[template.id]).toBeUndefined();
+
+    const replacement = { ...template.definition, displayName: '新的名称' };
+    const updated = replaceProjectOperatorTemplateDefinition(project, template.id, replacement);
+    expect(updated.definitionLibrary?.operators[template.id]?.definition.displayName).toBe(
+      '新的名称',
+    );
+    expect(updated.definitionLibrary?.operators[template.id]?.definition).not.toBe(replacement);
+    expect(template.definition.displayName).toBe('自定义佩丽卡');
+    expect(() =>
+      replaceProjectOperatorTemplateDefinition(project, template.id, {
+        ...replacement,
+        slug: perlica.slug,
+      }),
+    ).toThrow(/does not match template/);
+  });
   it('reads a saved operator template with its project identity and provenance', () => {
     const project = createEmptyProject({
       createdWith: 'test',
@@ -342,5 +377,153 @@ describe('projectDefinitionLibrary', () => {
     expect(parsed.value.definitionLibrary?.operators['project:operator:persisted']?.name).toBe(
       '项目干员',
     );
+  });
+
+  it('derives and replaces a project global effect with validation at the commit boundary', () => {
+    const preset = GLOBAL_EFFECT_PRESETS[0]!;
+    const source = createEmptyProject({ createdWith: 'test' });
+    const project = deriveProjectGlobalEffectTemplate(source, {
+      id: 'project:globalEffect:edited',
+      name: '自定义全局效果',
+      baseTemplateId: preset.id,
+      definition: preset,
+    });
+    const template =
+      getProjectDefinitionLibrary(project).globalEffects!['project:globalEffect:edited']!;
+    expect(template.id).toBe('project:globalEffect:edited');
+    expect(template.definition.id).toBe(template.id);
+    expect(template.definition.buff.attributeModifiers!).not.toBe(preset.buff.attributeModifiers);
+    expect(template.origin).toEqual({ templateId: preset.id });
+    expect(source.definitionLibrary?.globalEffects?.[template.id]).toBeUndefined();
+    expect(preset.id).toBe('combo-cdr-50');
+
+    const replacement: GlobalEffectDefinition = {
+      ...template.definition,
+      buff: {
+        stackingType: 'unlimited',
+        attributeModifiers: [
+          { attribute: 'criticalRate', slot: 'baseAddition' as const, value: 0.15 },
+        ],
+      },
+    };
+    const updated = replaceProjectGlobalEffectTemplateDefinition(
+      project,
+      template.id,
+      replacement,
+      '新的名称',
+    );
+    const saved = getProjectDefinitionLibrary(updated).globalEffects![template.id]!;
+    expect(saved.name).toBe('新的名称');
+    expect(saved.definition.buff.attributeModifiers![0]!.value).toBe(0.15);
+    expect(saved.definition).not.toBe(replacement);
+    expect(template.definition.buff.attributeModifiers!).toHaveLength(1);
+
+    expect(() =>
+      deriveProjectGlobalEffectTemplate(project, {
+        id: 'project:globalEffect:edited',
+        name: '重复',
+        baseTemplateId: preset.id,
+        definition: preset,
+      }),
+    ).toThrow(/already exists/);
+    expect(() =>
+      deriveProjectGlobalEffectTemplate(source, {
+        id: 'combo-cdr-50-copy',
+        name: '错误命名空间',
+        baseTemplateId: preset.id,
+        definition: preset,
+      }),
+    ).toThrow(/project:globalEffect:/);
+    expect(() =>
+      replaceProjectGlobalEffectTemplateDefinition(project, template.id, {
+        ...replacement,
+        id: preset.id,
+      }),
+    ).toThrow(/does not match template/);
+    expect(() =>
+      replaceProjectGlobalEffectTemplateDefinition(project, template.id, {
+        ...replacement,
+        buff: { stackingType: 'invalid' as never },
+      }),
+    ).toThrow(/invalid project global effect definition/);
+  });
+
+  it('keeps scenario effect references unchanged when saving a shared effect definition', () => {
+    const preset = GLOBAL_EFFECT_PRESETS[0]!;
+    let project = deriveProjectGlobalEffectTemplate(createEmptyProject({ createdWith: 'test' }), {
+      id: 'project:globalEffect:shared',
+      name: '共享效果',
+      baseTemplateId: preset.id,
+      definition: preset,
+    });
+    const first = project.scenarios[0]!;
+    const second: ScenarioDocument = {
+      ...structuredClone(first),
+      id: 'scenario:second',
+      name: '第二方案',
+    };
+    first.globalConfig = {
+      effects: [{ effectId: 'project:globalEffect:shared', enabled: true }],
+    };
+    second.globalConfig = {
+      effects: [{ effectId: 'project:globalEffect:shared', enabled: false }],
+    };
+    project = { ...project, scenarios: [first, second] };
+
+    const template =
+      getProjectDefinitionLibrary(project).globalEffects!['project:globalEffect:shared']!;
+    const updated = replaceProjectGlobalEffectTemplateDefinition(project, template.id, {
+      ...template.definition,
+    });
+    expect(updated.scenarios[0]!.globalConfig.effects).toEqual([
+      { effectId: 'project:globalEffect:shared', enabled: true },
+    ]);
+    expect(updated.scenarios[1]!.globalConfig.effects).toEqual([
+      { effectId: 'project:globalEffect:shared', enabled: false },
+    ]);
+    // 移除方案引用不删除库条目。
+    const removed = {
+      ...second,
+      globalConfig: { ...second.globalConfig, effects: [] },
+    };
+    project = {
+      ...updated,
+      scenarios: [updated.scenarios[0]!, removed],
+    };
+    expect(
+      getProjectDefinitionLibrary(project).globalEffects!['project:globalEffect:shared'],
+    ).toBeDefined();
+  });
+
+  it('exposes project global effects through the repository and rejects identity collisions', () => {
+    const preset = GLOBAL_EFFECT_PRESETS[0]!;
+    const base = createGameDataRepository({
+      revision: 'definitions:test',
+      globalEffects: GLOBAL_EFFECT_PRESETS,
+    });
+    const project = deriveProjectGlobalEffectTemplate(createEmptyProject({ createdWith: 'test' }), {
+      id: 'project:globalEffect:catalog',
+      name: '目录效果',
+      baseTemplateId: preset.id,
+      definition: preset,
+    });
+    const repository = createProjectGameDataRepository(base, getProjectDefinitionLibrary(project));
+    expect(repository.getGlobalEffect('combo-cdr-50')?.id).toBe('combo-cdr-50');
+    expect(repository.getGlobalEffect('project:globalEffect:catalog')?.id).toBe(
+      'project:globalEffect:catalog',
+    );
+    expect(repository.getGlobalEffects().map(effect => effect.id)).toEqual([
+      'combo-cdr-50',
+      'project:globalEffect:catalog',
+    ]);
+    expect(repository.getGlobalEffect('missing')).toBeNull();
+
+    const collidingBase = createGameDataRepository({
+      revision: 'definitions:test',
+      globalEffects: [{ id: 'project:globalEffect:catalog', buff: { stackingType: 'unlimited' } }],
+    });
+    expect(() =>
+      createProjectGameDataRepository(collidingBase, getProjectDefinitionLibrary(project)),
+    ).toThrow(/conflicts with built-in data/);
   });
 });

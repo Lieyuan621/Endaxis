@@ -10,6 +10,8 @@
   "scripts": {
     "dev": "vite",
     "generate:editor-nodes": "node --experimental-strip-types tools/editor/generateActionNodeSchema.ts",
+    "generate:definition-fields": "node --experimental-strip-types tools/editor/generateDefinitionSchemas.ts",
+    "check:definition-fields": "node --experimental-strip-types tools/editor/generateDefinitionSchemas.ts --check",
     "check:editor-nodes": "node --experimental-strip-types tools/editor/generateActionNodeSchema.ts --check",
     "test:editor-schema": "node --experimental-strip-types --test tools/editor/generateActionNodeSchema.test.ts",
     "convert:legacy-timeline": "node --experimental-strip-types tools/legacy-timeline/cli.ts",

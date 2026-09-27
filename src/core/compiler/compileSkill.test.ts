@@ -1,3 +1,4 @@
+import { skillFixture, type SkillFixtureProperties } from '../../test/skillFixture';
 import type { SkillBuffDefinition } from '../../../packages/game-data-contract/src/buffs.ts';
 import type { AbilityEntityDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
@@ -48,29 +49,29 @@ function linearChain(
 
 /** 单段调度技能：整条 main 图只有一条线性链，其余字段原样保留。 */
 function linearSkill(
-  fixture: Omit<SkillDefinition, 'scheduledSequences' | 'actionGraph'> & {
+  fixture: Omit<SkillFixtureProperties, 'scheduledSequences' | 'actionGraph'> & {
     readonly startFrame?: number;
     readonly steps: readonly ActionGraphStep[];
   },
 ): SkillDefinition {
   const { startFrame = 0, steps, ...fields } = fixture;
   const chain = linearChain('s0', steps);
-  return {
+  return skillFixture({
     ...fields,
     scheduledSequences: [{ startFrame, sequence: { $sequence: chain.entry } }],
     actionGraph: { main: { nodes: chain.nodes }, macros: {} },
-  };
+  });
 }
 
 /** 无调度序列的技能仍需持有自己的（空）资源图。 */
 function emptyGraphSkill(
-  fixture: Omit<SkillDefinition, 'scheduledSequences' | 'actionGraph'>,
+  fixture: Omit<SkillFixtureProperties, 'scheduledSequences' | 'actionGraph'>,
 ): SkillDefinition {
-  return {
+  return skillFixture({
     ...fixture,
     scheduledSequences: [],
     actionGraph: { main: { nodes: {} }, macros: {} },
-  };
+  });
 }
 
 it('keeps step kind, parameters and sequence fields correlated through the public member type', () => {
@@ -247,7 +248,7 @@ describe('compileSkill', () => {
       },
       [`${prefix}-1`]: { action: { kind: 'finishTimeline', parameters: {} }, next: null },
     });
-    const skill: SkillDefinition = {
+    const skill: SkillDefinition = skillFixture({
       key: 'independent',
       timelineBlockFrames: 10,
       scheduledSequences: [
@@ -255,7 +256,7 @@ describe('compileSkill', () => {
         { startFrame: 2, sequence: { $sequence: 'b-0' } },
       ],
       actionGraph: { main: { nodes: { ...chain('a'), ...chain('b') } }, macros: {} },
-    };
+    });
     const program = compileSkill({
       operatorId: 'owner',
       skillGroupKey: 'battleSkill',
@@ -272,7 +273,7 @@ describe('compileSkill', () => {
   });
 
   it('正式技能编译共享重复入口的节点，宿主入口保留各自调用位置', () => {
-    const skill: SkillDefinition = {
+    const skill: SkillDefinition = skillFixture({
       key: 'shared',
       timelineBlockFrames: 5,
       scheduledSequences: [
@@ -287,7 +288,7 @@ describe('compileSkill', () => {
         },
         macros: {},
       },
-    };
+    });
     const program = compileSkill({
       operatorId: 'owner',
       skillGroupKey: 'battleSkill',
@@ -762,7 +763,7 @@ describe('compileSkill', () => {
   });
 
   it('rejects legacy top-level handlers because they do not preserve listener lifetime', () => {
-    const skill: SkillDefinition = {
+    const skill: SkillDefinition = skillFixture({
       key: 'legacy-listener',
       timelineBlockFrames: 1,
       scheduledSequences: [],
@@ -774,7 +775,7 @@ describe('compileSkill', () => {
         },
       ],
       actionGraph: { main: { nodes: {} }, macros: {} },
-    };
+    });
 
     expect(() =>
       compileSkill({

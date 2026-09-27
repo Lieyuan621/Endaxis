@@ -1,3 +1,4 @@
+import { skillFixture } from '../../../src/test/skillFixture';
 /**
  * 检查干员与公共 Buff 共用一次逐人规划后，仍独立复验全部文件。
  * 替换原始规划和消费者编译；最终优化、用途汇总、公共定义渲染和文件检查均执行真实代码。
@@ -188,7 +189,7 @@ async function setup(slugs: readonly string[] = ['one', 'two']) {
 describe('干员与公共 Buff 共用规划', () => {
   it('复用完整外部摘要时不重编译且文本不变，未提供摘要的下一轮重新编译来源', async () => {
     const args = { ...(await setup(['one'])), includeCommonBuffs: true };
-    const skill: SkillDefinition = {
+    const skill: SkillDefinition = skillFixture({
       key: 'spawn',
       timelineBlockFrames: 10,
       blackboard: { equipmentValue: 7, changed: 8, unused: 99 },
@@ -211,7 +212,7 @@ describe('干员与公共 Buff 共用规划', () => {
         },
         macros: {},
       },
-    };
+    });
     const operator: OperatorDefinition = {
       ...planned('one').operator,
       abilityEntityDefinitions: { fixture: { lifetime: { kind: 'infinite' } } },
@@ -252,7 +253,7 @@ describe('干员与公共 Buff 共用规划', () => {
     '正式单人 %s 生成与联合候选文本相同，复验重新收齐闭包且只写目标',
     async optimization => {
       const input = { ...(await setup()), optimization };
-      const skill: SkillDefinition = {
+      const skill: SkillDefinition = skillFixture({
         key: 'spawn',
         timelineBlockFrames: 10,
         blackboard: { teammateValue: 7, unused: 99 },
@@ -275,7 +276,7 @@ describe('干员与公共 Buff 共用规划', () => {
           },
           macros: {},
         },
-      };
+      });
       planOperatorDefinition.mockImplementation(({ slug }: { slug: string }) => {
         const result = planned(slug);
         const operator: OperatorDefinition =
@@ -536,7 +537,7 @@ describe('干员与公共 Buff 共用规划', () => {
         ...base,
         commonBuffOutput: withCommonBuffs ? base.commonBuffOutput : undefined,
       };
-      const skill: SkillDefinition = {
+      const skill: SkillDefinition = skillFixture({
         key: 'spawn',
         timelineBlockFrames: 10,
         blackboard: { equipmentValue: 7, mechanicValue: 9, unused: 99 },
@@ -559,7 +560,7 @@ describe('干员与公共 Buff 共用规划', () => {
           },
           macros: {},
         },
-      };
+      });
       const operator: OperatorDefinition = {
         ...planned('one').operator,
         abilityEntityDefinitions: { fixture: { lifetime: { kind: 'infinite' } } },

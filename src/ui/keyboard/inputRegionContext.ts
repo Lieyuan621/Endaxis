@@ -29,21 +29,34 @@ export function useInputRegion(regions: InputRegions, options: InputRegionOption
   const region = regions.create(options.label, parent, options.modal ?? false);
   if (getCurrentInstance()) provide(inputRegionKey, region);
   let release: (() => void) | undefined;
+  let revision = 0;
+  let disposed = false;
   const stop = watch(
     options.active,
     active => {
-      if (!regions.contains(region)) return;
-      if (active) release ??= regions.activate(region);
-      else {
-        release?.();
+      if (disposed || !regions.contains(region)) return;
+      const attempt = ++revision;
+      if (active) {
+        if (release) return;
+        // 激活通知可能同步关闭面板；返回的句柄不能留给已经关闭的区域。
+        const acquired = regions.activate(region);
+        if (disposed || attempt !== revision || !options.active()) acquired();
+        else release = acquired;
+      } else {
+        const previous = release;
         release = undefined;
+        previous?.();
       }
     },
     { immediate: true, flush: 'sync' },
   );
   onScopeDispose(() => {
+    disposed = true;
+    revision++;
     stop();
-    release?.();
+    const previous = release;
+    release = undefined;
+    previous?.();
     regions.dispose(region);
   });
   return region;

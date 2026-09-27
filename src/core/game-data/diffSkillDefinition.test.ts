@@ -1,3 +1,4 @@
+import { skillFixture } from '../../test/skillFixture';
 import { describe, expect, it } from 'vitest';
 import {
   diffSkillDefinition,
@@ -31,15 +32,16 @@ function skill(
       next: index + 1 < steps.length ? `step-${index + 1}` : null,
     };
   });
-  return {
+  return skillFixture({
     key: 'skill',
     timelineBlockFrames: 30,
+    naturalDurationFrames: 30,
     scheduledSequences: [
       { startFrame: 0, sequence: { $sequence: steps.length === 0 ? null : 'step-0' } },
     ],
     actionGraph: { main: { nodes }, macros: {} },
     ...overrides,
-  };
+  });
 }
 
 /** 事件处理器是技能定义中仍带稳定 key 的数组；用它保留 key 匹配语义覆盖。 */

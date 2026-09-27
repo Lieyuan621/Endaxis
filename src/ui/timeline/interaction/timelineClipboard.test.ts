@@ -1,3 +1,4 @@
+import { skillFixture } from '../../../test/skillFixture';
 import { describe, expect, it } from 'vitest';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import type { ScenarioDocument, SkillCastDocument } from '../../../core/project/schema';
@@ -28,7 +29,7 @@ function cast(id: string, startFrame: number): SkillCastDocument {
       locked: false,
       disabled: false,
     },
-    customDefinition: {
+    customDefinition: skillFixture({
       key: id,
       timelineBlockFrames: 10,
       scheduledSequences: [
@@ -52,7 +53,7 @@ function cast(id: string, startFrame: number): SkillCastDocument {
         },
         macros: {},
       },
-    },
+    }),
   };
 }
 

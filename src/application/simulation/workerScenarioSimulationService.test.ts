@@ -1,3 +1,4 @@
+import { skillFixture } from '../../test/skillFixture';
 import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import { expect, it, vi } from 'vitest';
 
@@ -46,14 +47,14 @@ it('图场景通过 Worker 数据包往返后仍执行技能', async () => {
   const nodes: Record<string, ActionGraphNode> = {
     'step-0': { action: { kind: 'dealStagger', parameters: { value: 1 } }, next: null },
   };
-  const graphSkill: SkillDefinition = {
+  const graphSkill: SkillDefinition = skillFixture({
     key: 'worker-graph-skill',
     skillType: 'battleSkill',
     levelSource: 'battleSkill',
     timelineBlockFrames: 1,
     scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'step-0' } }],
     actionGraph: { main: { nodes }, macros: {} },
-  };
+  });
   const definition: OperatorDefinition = {
     ...perlica,
     talents: [],

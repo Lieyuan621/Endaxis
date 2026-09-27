@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { skillFixture } from '../../test/skillFixture';
 import type { OperatorDefinition } from '../../core/game-data/operatorDefinition';
 
 import { createEmptyScenario } from '../../core/project/createProject';
@@ -144,12 +145,12 @@ describe('projectTimelineEditor', () => {
       skillGroups: [
         {
           ...perlica.skillGroups.find(group => group.key === 'battleSkill')!,
-          skills: {
+          skills: skillFixture({
             key: 'new-key',
             timelineBlockFrames: 30,
             scheduledSequences: [],
             actionGraph: { main: { nodes: {} }, macros: {} },
-          },
+          }),
         },
       ],
     };

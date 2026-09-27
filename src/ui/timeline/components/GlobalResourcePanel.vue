@@ -1,167 +1,120 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { EaButton, EaDialog, EaDialogActions, EaNumberInput } from '@/design-system';
-import type {
-  GlobalConfigDocument,
-  GlobalBuffDocument,
-  GlobalOperatorStatModifier,
-  GlobalOperatorStatModifierDocument,
-} from '../../../core/project/schema';
-import { GLOBAL_CONFIG_PRESETS } from '../../../core/project/globalConfigPresets';
+import { EaButton, EaDialog, EaDialogActions } from '@/design-system';
+import type { GlobalConfigDocument } from '../../../core/project/schema';
+import type { CombatBuffDefinitionAttributeModifier } from '../../../../packages/game-data-contract/src/buffs';
+import ScenarioBuffAttributeFields from '../../editor/ScenarioBuffAttributeFields.vue';
 import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
+
+export interface GlobalEffectChoice {
+  readonly id: string;
+  readonly name: string;
+  readonly description?: string;
+  readonly custom: boolean;
+}
 
 const props = defineProps<{
   readOnly?: boolean;
   mode?: 'modifiers' | 'presets';
   config: GlobalConfigDocument;
+  /** 可选全局效果目录；名称与描述由宿主解析，面板不读取资产库。 */
+  effects?: readonly GlobalEffectChoice[];
 }>();
 const emit = defineEmits<{
-  setModifiers: [modifiers: readonly GlobalOperatorStatModifierDocument[]];
+  setModifiers: [modifiers: readonly CombatBuffDefinitionAttributeModifier[]];
   setConfig: [config: GlobalConfigDocument];
 }>();
 const { t } = useI18n({ useScope: 'global' });
 const editorVisible = ref(false);
-interface ModifierChoice {
-  modifier: GlobalOperatorStatModifier;
-  nameKey: string;
-  percentage: boolean;
-  skillType?: 'comboSkill';
-}
-const choices: readonly ModifierChoice[] = [
-  {
-    modifier: 'skillCooldownReduction',
-    nameKey: 'statDetail.comboCdReduction',
-    percentage: true,
-    skillType: 'comboSkill',
-  },
-  {
-    modifier: 'ultimateEnergyGainEfficiency',
-    nameKey: 'effects.name.ultimateGainEfficiency',
-    percentage: true,
-  },
-  { modifier: 'artsIntensity', nameKey: 'effects.name.artsIntensity', percentage: false },
-  { modifier: 'attackPercent', nameKey: 'effects.name.atkPercent', percentage: true },
-  { modifier: 'criticalRate', nameKey: 'effects.name.critRate', percentage: true },
-  { modifier: 'criticalDamage', nameKey: 'effects.name.critDmg', percentage: true },
-];
-const groups = computed(() =>
-  choices.map(choice => ({
-    ...choice,
-    entries: props.config.modifiers.filter(item => item.modifier === choice.modifier),
-  })),
+const effects = computed(() => props.effects ?? []);
+const effectReferences = computed(() => props.config.effects ?? []);
+const unknownReferences = computed(() =>
+  effectReferences.value.filter(
+    reference => !effects.value.some(effect => effect.id === reference.effectId),
+  ),
 );
-const modifiers = computed(() => props.config.modifiers);
-function togglePreset(id: string) {
+function referenceFor(effectId: string) {
+  return effectReferences.value.find(reference => reference.effectId === effectId);
+}
+function effectEnabled(effectId: string): boolean {
+  return referenceFor(effectId)?.enabled ?? false;
+}
+function toggleEffect(effectId: string) {
   if (props.readOnly) return;
-  const ids = props.config.enabledPresetIds ?? [];
+  const references = effectReferences.value;
   emit('setConfig', {
     ...props.config,
-    enabledPresetIds: ids.includes(id) ? ids.filter(value => value !== id) : [...ids, id],
+    effects: referenceFor(effectId)
+      ? references.map(reference =>
+          reference.effectId === effectId
+            ? { ...reference, enabled: !reference.enabled }
+            : reference,
+        )
+      : [...references, { effectId, enabled: true }],
   });
 }
-function toggleBuff(buff: GlobalBuffDocument) {
+/** 只删除方案中的引用；效果资产本身不受影响。 */
+function removeEffectReference(effectId: string) {
   if (props.readOnly) return;
   emit('setConfig', {
     ...props.config,
-    customBuffs: (props.config.customBuffs ?? []).map(item =>
-      item.id === buff.id ? { ...item, enabled: !item.enabled } : item,
-    ),
+    effects: effectReferences.value.filter(reference => reference.effectId !== effectId),
   });
-}
-function deleteBuff(id: string) {
-  if (!props.readOnly)
-    emit('setConfig', {
-      ...props.config,
-      customBuffs: (props.config.customBuffs ?? []).filter(buff => buff.id !== id),
-    });
-}
-function choiceFor(modifier: GlobalOperatorStatModifierDocument) {
-  return choices.find(choice => choice.modifier === modifier.modifier)!;
-}
-function formatValue(modifier: GlobalOperatorStatModifierDocument) {
-  const choice = choiceFor(modifier);
-  const value = Number((choice.percentage ? modifier.value * 100 : modifier.value).toFixed(3));
-  return `${value > 0 && !choice.skillType ? '+' : ''}${value}${choice.percentage ? '%' : ''}`;
-}
-function addModifier(choice: ModifierChoice) {
-  if (props.readOnly) return;
-  let index = 1;
-  const ids = new Set(props.config.modifiers.map(item => item.id));
-  while (ids.has(`global:modifier:${index}`)) index++;
-  emit('setModifiers', [
-    ...props.config.modifiers,
-    {
-      id: `global:modifier:${index}`,
-      kind: 'operatorStat',
-      modifier: choice.modifier,
-      value: 0,
-      ...(choice.skillType ? { skillType: choice.skillType } : {}),
-    },
-  ]);
-}
-function updateModifierValue(
-  modifier: GlobalOperatorStatModifierDocument,
-  displayValue: number | undefined,
-) {
-  if (props.readOnly || displayValue === undefined || !Number.isFinite(displayValue)) return;
-  const value = choiceFor(modifier).percentage ? displayValue / 100 : displayValue;
-  if (modifier.modifier === 'skillCooldownReduction' && value >= 1) return;
-  emit(
-    'setModifiers',
-    props.config.modifiers.map(item => (item.id === modifier.id ? { ...item, value } : item)),
-  );
-}
-function removeModifier(id: string) {
-  if (!props.readOnly)
-    emit(
-      'setModifiers',
-      props.config.modifiers.filter(item => item.id !== id),
-    );
 }
 </script>
 
 <template>
   <section v-if="mode === 'presets'" class="global-config-presets">
-    <div class="preset-title">{{ t('globalConfig.buffsTitle') }}</div>
-    <div class="preset-grid" role="group" :aria-label="t('globalConfig.buffsTitle')">
-      <EaButton
-        v-for="preset in GLOBAL_CONFIG_PRESETS"
-        :key="preset.id"
-        class="preset-tile"
-        :pressed="config.enabledPresetIds?.includes(preset.id) ?? false"
-        :disabled="readOnly"
-        @click="togglePreset(preset.id)"
-      >
-        <strong>{{ t(preset.nameKey) }}</strong
-        ><small>{{ t(preset.descriptionKey) }}</small>
-      </EaButton>
-      <article v-for="buff in config.customBuffs ?? []" :key="buff.id" class="custom-buff-card">
+    <div class="preset-title">{{ t('globalConfig.effectsTitle') }}</div>
+    <p v-if="effects.length === 0" class="empty-hint">{{ t('globalConfig.effectsEmpty') }}</p>
+    <div v-else class="preset-grid" role="group" :aria-label="t('globalConfig.effectsTitle')">
+      <article v-for="effect in effects" :key="effect.id" class="effect-card">
         <EaButton
           class="preset-tile"
-          :pressed="buff.enabled"
+          :pressed="effectEnabled(effect.id)"
           :disabled="readOnly"
-          @click="toggleBuff(buff)"
+          @click="toggleEffect(effect.id)"
         >
-          <strong>{{ buff.name }}</strong
-          ><small>{{ t(buff.enabled ? 'globalConfig.enabled' : 'globalConfig.disabled') }}</small>
+          <strong>{{ effect.name }}</strong
+          ><small v-if="effect.description">{{ effect.description }}</small>
         </EaButton>
-        <div class="buff-actions">
-          <EaButton size="sm" variant="danger" :disabled="readOnly" @click="deleteBuff(buff.id)">{{
-            t('common.delete')
-          }}</EaButton>
+        <div v-if="referenceFor(effect.id)" class="effect-actions">
+          <EaButton
+            v-if="referenceFor(effect.id)"
+            size="sm"
+            variant="danger"
+            :disabled="readOnly"
+            @click="removeEffectReference(effect.id)"
+            >{{ t('common.delete') }}</EaButton
+          >
         </div>
       </article>
+    </div>
+    <div v-if="unknownReferences.length" class="unknown-effects">
+      <div
+        v-for="reference in unknownReferences"
+        :key="reference.effectId"
+        class="unknown-effect-row"
+      >
+        <span>{{ t('globalConfig.unknownEffect', { id: reference.effectId }) }}</span>
+        <EaButton
+          size="sm"
+          variant="danger"
+          :disabled="readOnly"
+          @click="removeEffectReference(reference.effectId)"
+          >{{ t('common.delete') }}</EaButton
+        >
+      </div>
     </div>
   </section>
   <section v-else class="global-config-settings">
     <div class="panel-title">{{ t('globalConfig.customSection') }}</div>
     <div class="stats-summary">
-      <p v-if="modifiers.length === 0" class="empty-hint">{{ t('globalConfig.customEmpty') }}</p>
-      <div v-for="modifier in modifiers" :key="modifier.id" class="summary-row">
-        <span>{{ t(choiceFor(modifier).nameKey) }}</span
-        ><strong>{{ formatValue(modifier) }}</strong>
-      </div>
+      <ScenarioBuffAttributeFields
+        :modifiers="config.customBuff?.attributeModifiers ?? []"
+        summary
+      />
       <EaButton size="sm" class="stats-edit-btn" @click="editorVisible = true">{{
         t('globalConfig.editCustom')
       }}</EaButton>
@@ -175,44 +128,11 @@ function removeModifier(id: string) {
         class="armory-dialog global-modifiers-dialog"
         :title="t('globalConfig.editCustomTitle')"
       >
-        <div class="stat-blocks">
-          <section
-            v-for="group in groups"
-            :key="group.modifier"
-            class="stat-block"
-            :class="{ 'has-entries': group.entries.length }"
-          >
-            <div class="stat-block-head">
-              <span>{{ t(group.nameKey) }}</span>
-              <EaButton size="sm" :disabled="readOnly" @click="addModifier(group)">{{
-                t('globalConfig.addEntry')
-              }}</EaButton>
-            </div>
-            <div v-if="group.entries.length" class="stat-block-body">
-              <div v-for="(modifier, index) in group.entries" :key="modifier.id" class="stat-entry">
-                <span class="affix">{{ group.percentage && !group.skillType ? '+' : '' }}</span>
-                <EaNumberInput
-                  size="sm"
-                  controls-position="right"
-                  :aria-label="`${t(group.nameKey)} ${index + 1}`"
-                  :disabled="readOnly"
-                  :max="group.skillType ? 99.999 : undefined"
-                  :step="group.percentage ? 0.1 : 1"
-                  :model-value="group.percentage ? modifier.value * 100 : modifier.value"
-                  @change="updateModifierValue(modifier, $event)"
-                />
-                <span class="affix">{{ group.percentage ? '%' : '' }}</span>
-                <EaButton
-                  variant="danger"
-                  size="sm"
-                  :disabled="readOnly"
-                  @click="removeModifier(modifier.id)"
-                  >{{ t('common.delete') }}</EaButton
-                >
-              </div>
-            </div>
-          </section>
-        </div>
+        <ScenarioBuffAttributeFields
+          :modifiers="config.customBuff?.attributeModifiers ?? []"
+          :read-only="readOnly"
+          @change="emit('setModifiers', $event)"
+        />
         <template #footer>
           <EaDialogActions>
             <EaButton size="sm" @click="editorVisible = false">{{ t('common.close') }}</EaButton>
@@ -243,26 +163,6 @@ function removeModifier(id: string) {
   flex-direction: column;
   gap: 8px;
 }
-.summary-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 8px 10px;
-  background: var(--ea-fill-soft);
-  border: 1px solid var(--ea-border-soft);
-  font-size: 12px;
-}
-.summary-row span {
-  min-width: 0;
-  flex: 1;
-  color: var(--ea-fg-secondary);
-}
-.summary-row strong {
-  flex: none;
-  font-weight: normal;
-  font-variant-numeric: tabular-nums;
-}
 .empty-hint {
   margin: 0;
   padding: 4px 0 2px;
@@ -287,6 +187,7 @@ function removeModifier(id: string) {
   grid-template-columns: repeat(auto-fill, minmax(140px, 160px));
   gap: 8px;
   max-width: none;
+  align-items: start;
 }
 .preset-tile {
   height: 64px;
@@ -302,6 +203,7 @@ function removeModifier(id: string) {
 .preset-tile strong {
   font-size: 13px;
   line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 .preset-tile small {
   color: var(--ea-fg-muted);
@@ -315,86 +217,37 @@ function removeModifier(id: string) {
   background: var(--ea-control-pressed-bg-hover);
   box-shadow: none;
 }
-.stat-blocks {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-height: 65vh;
-  overflow: hidden auto;
-}
-.stat-block {
-  background: var(--ea-fill-soft);
-  border: 1px solid transparent;
-}
-.stat-block.has-entries {
-  border-color: var(--ea-border-soft);
-}
-.stat-block-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 10px;
-}
-.stat-block-head > span {
-  min-width: 0;
-  flex: 1;
-  font-size: 13px;
-  color: var(--ea-fg-secondary);
-}
-.stat-block-head .ea-button {
-  flex: none;
-  min-width: 52px;
-}
-.stat-block-body {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 10px 10px 8px;
-  border-top: 1px solid var(--ea-border-soft);
-}
-.stat-entry {
-  display: grid;
-  grid-template-columns: 14px 96px 14px 52px;
-  align-items: center;
-  gap: 6px;
-  margin-left: auto;
-}
-.affix {
-  text-align: center;
-  font-size: 12px;
-  color: var(--ea-fg-muted);
-}
-.stat-entry :deep(.ea-number-input) {
-  width: 96px;
-  min-width: 0;
-}
-.stat-entry .ea-button {
-  padding: 0;
-}
-.custom-buff-card {
+.effect-card {
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
-.custom-buff-card .preset-tile {
+.effect-card .preset-tile {
   width: 100%;
 }
-.buff-actions {
+.effect-actions {
   display: flex;
   gap: 6px;
   padding-top: 6px;
 }
-.buff-actions > * {
+.effect-actions > * {
   flex: 1;
 }
-.preset-grid {
-  align-items: start;
+.unknown-effects {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
 }
-.preset-tile strong {
-  overflow-wrap: anywhere;
-}
-.add-buff {
-  border-style: dashed;
+.unknown-effect-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 10px;
+  background: var(--ea-fill-soft);
+  border: 1px solid var(--ea-border-soft);
+  font-size: 12px;
+  color: var(--ea-fg-secondary);
 }
 </style>

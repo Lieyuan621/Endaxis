@@ -1,3 +1,4 @@
+import { skillFixture } from '../../../test/skillFixture';
 import { describe, expect, it } from 'vitest';
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
 import type { ScenarioDocument } from '../../../core/project/schema';
@@ -187,7 +188,7 @@ function scenarioWithCast(): ScenarioDocument {
               locked: false,
               disabled: false,
             },
-            customDefinition: {
+            customDefinition: skillFixture({
               key: 'battleSkill',
               timelineBlockFrames: 30,
               scheduledSequences: [
@@ -219,7 +220,7 @@ function scenarioWithCast(): ScenarioDocument {
                 },
                 macros: {},
               },
-            },
+            }),
           },
         ],
       },

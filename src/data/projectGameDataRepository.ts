@@ -12,6 +12,7 @@ import type {
 } from '../core/game-data/equipmentDefinition';
 import type { OperatorDefinition } from '../core/game-data/operatorDefinition';
 import { createGameDataRepository } from './createGameDataRepository';
+import { GLOBAL_EFFECT_PRESETS } from './globalEffectPresets';
 
 type DefinitionModule<T> = Readonly<Record<string, unknown>> & { readonly default?: T };
 type TimelineGameDataRepository = GameDataRepository & GameDataBrowser;
@@ -186,6 +187,7 @@ export async function createProjectGameDataRepository(
     enemies: enemies.generatedEnemyDefinitions,
     mechanics: mechanics.contingencyContractMechanicDefinitions,
     consumables: consumables.consumableDefinitions,
+    globalEffects: GLOBAL_EFFECT_PRESETS,
   } as const;
   let current = createGameDataRepository({ ...fixed, ...selected });
   let allDefinitionsTask: Promise<void> | undefined;
@@ -233,6 +235,8 @@ export async function createProjectGameDataRepository(
     getMechanic: (id: string) => current.getMechanic(id),
     getConsumable: (id: string) => current.getConsumable(id),
     getConsumables: () => current.getConsumables(),
+    getGlobalEffect: (id: string) => current.getGlobalEffect(id),
+    getGlobalEffects: () => current.getGlobalEffects(),
     ensureAllDefinitions,
     hasAllDefinitions: () => allDefinitionsLoaded,
   });

@@ -26,6 +26,7 @@ const entries = [
     kind: 'global',
     sourceCastId: 'a',
     slot: 'combo',
+    curveKey: 'ComboSkill',
     priority: 30,
     durationSeconds: 1,
   }),
@@ -43,6 +44,7 @@ const entries = [
     kind: 'global',
     sourceCastId: 'b',
     slot: 'combo',
+    curveKey: 'ComboSkill',
     priority: 30,
     durationSeconds: 1,
   }),
@@ -90,6 +92,7 @@ describe('time-dilation drag preview', () => {
         kind: 'global',
         sourceCastId: 'a',
         slot: 'combo',
+        curveKey: 'ComboSkill',
         priority: 50,
         durationSeconds: 1,
       }),
@@ -99,6 +102,7 @@ describe('time-dilation drag preview', () => {
         kind: 'global',
         sourceCastId: 'b',
         slot: 'combo',
+        curveKey: 'ComboSkill',
         priority: 30,
         durationSeconds: 1,
       }),
@@ -123,6 +127,7 @@ describe('time-dilation drag preview', () => {
         kind: 'global',
         sourceCastId: 'a',
         slot: 'combo',
+        curveKey: 'ComboSkill',
         priority: 50,
         durationSeconds: 1,
       }),
@@ -131,6 +136,7 @@ describe('time-dilation drag preview', () => {
         kind: 'global',
         sourceCastId: 'b',
         slot: 'combo',
+        curveKey: 'ComboSkill',
         priority: 30,
         durationSeconds: 1,
       }),
@@ -150,5 +156,22 @@ describe('time-dilation drag preview', () => {
 
   it('returns published bands unchanged without a move', () => {
     expect(projectTimeDilationDragPreview(bands, facts, new Map())).toBe(bands);
+  });
+  it('does not reveal other curves when a rejected instance becomes available during dragging', () => {
+    const rejected = entry(7, 20, 'TimeDilationRejected', {
+      instanceId: 9,
+      kind: 'global',
+      sourceCastId: 'hidden',
+      slot: 'other',
+      curveKey: 'Other',
+      priority: 30,
+      durationSeconds: 1,
+    });
+    const preview = projectTimeDilationDragPreview(
+      bands,
+      prepareTimeDilationDragPreview([...entries, rejected], bands, 100),
+      new Map([['a', 40]]),
+    );
+    expect(preview.some(band => band.instanceId === 9)).toBe(false);
   });
 });

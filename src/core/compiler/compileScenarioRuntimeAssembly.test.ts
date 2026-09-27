@@ -491,30 +491,25 @@ describe('compileScenarioRuntimeAssembly', () => {
 
   it('compiles global modifiers into initialization Buffs without changing the build panel', () => {
     const scenario = createScenario();
-    scenario.globalConfig.modifiers = [
-      {
-        id: 'global:critical-rate',
-        kind: 'operatorStat',
-        modifier: 'criticalRate',
-        value: 0.2,
-      },
-      {
-        id: 'global:combo-cooldown',
-        kind: 'operatorStat',
-        modifier: 'skillCooldownReduction',
-        value: 0.25,
-        skillType: 'comboSkill',
-      },
-    ];
+    scenario.globalConfig.customBuff = {
+      stackingType: 'unlimited',
+      presentation: { visible: false },
+      attributeModifiers: [
+        { attribute: 'criticalRate', slot: 'baseAddition' as const, value: 0.2 },
+        {
+          attribute: 'ComboSkillCooldownScalar',
+          slot: 'finalMultiplier' as const,
+          value: 1 - 0.25,
+        },
+      ],
+    };
 
     const compiled = compileScenarioRuntimeAssembly(scenario, options());
     expect(compiled.operators[0]!.panel).toMatchObject({
       criticalRate: 0.05,
       combatModifiers: [],
     });
-    expect(
-      compiled.operators[0]!.buffDefinitions?.['scenario:global-attribute-modifiers'],
-    ).toMatchObject({
+    expect(compiled.operators[0]!.buffDefinitions?.['scenario:custom-values']).toMatchObject({
       presentation: { visible: false },
       attributeModifiers: [
         { attribute: 'criticalRate', slot: 'baseAddition', value: 0.2 },

@@ -29,7 +29,7 @@ import {
   setSkillCastRandomSeed,
   setUnifiedInitialUltimateEnergy,
   updateDodgeMarker,
-  setGlobalOperatorStatModifiers,
+  setScenarioBuffAttributes,
   setGlobalConfig,
   setSimulationRangeBoundary,
   setControlSwitchTrack,
@@ -117,62 +117,26 @@ describe('updateBattleResourceRule', () => {
   });
 });
 
-describe('setGlobalOperatorStatModifiers', () => {
+describe('setScenarioBuffAttributes', () => {
   it('stores a cloned semantic list and keeps the source scenario immutable', () => {
     const original = scenario();
     const modifiers = [
-      {
-        id: 'global:modifier:1',
-        kind: 'operatorStat' as const,
-        modifier: 'criticalRate' as const,
-        value: 0.2,
-      },
-      {
-        id: 'global:modifier:2',
-        kind: 'operatorStat' as const,
-        modifier: 'skillCooldownReduction' as const,
-        value: 0.5,
-        skillType: 'comboSkill' as const,
-      },
+      { attribute: 'criticalRate', slot: 'baseAddition' as const, value: 0.2 },
+      { attribute: 'ComboSkillCooldownScalar', slot: 'finalMultiplier' as const, value: 1 - 0.5 },
     ];
-    const updated = setGlobalOperatorStatModifiers(original, modifiers);
+    const updated = setScenarioBuffAttributes(original, modifiers);
 
-    expect(original.globalConfig.modifiers).toEqual([]);
-    expect(updated.globalConfig.modifiers).toEqual(modifiers);
-    expect(updated.globalConfig.modifiers).not.toBe(modifiers);
-    expect(setGlobalOperatorStatModifiers(updated, modifiers)).toBe(updated);
+    expect(original.globalConfig.customBuff).toBeUndefined();
+    expect(updated.globalConfig.customBuff?.attributeModifiers).toEqual(modifiers);
+    expect(updated.globalConfig.customBuff?.attributeModifiers).not.toBe(modifiers);
   });
 
-  it('rejects duplicate ids, unsupported scopes, and invalid cooldown ratios', () => {
-    const original = scenario();
+  it('rejects non-finite Buff attributes', () => {
     expect(() =>
-      setGlobalOperatorStatModifiers(original, [
-        { id: 'same', kind: 'operatorStat', modifier: 'criticalRate', value: 0.1 },
-        { id: 'same', kind: 'operatorStat', modifier: 'criticalDamage', value: 0.1 },
+      setScenarioBuffAttributes(scenario(), [
+        { attribute: 'criticalRate', slot: 'baseAddition', value: NaN },
       ]),
-    ).toThrow('unique');
-    expect(() =>
-      setGlobalOperatorStatModifiers(original, [
-        {
-          id: 'scoped',
-          kind: 'operatorStat',
-          modifier: 'criticalRate',
-          value: 0.1,
-          skillType: 'comboSkill',
-        },
-      ]),
-    ).toThrow('does not support');
-    expect(() =>
-      setGlobalOperatorStatModifiers(original, [
-        {
-          id: 'cooldown',
-          kind: 'operatorStat',
-          modifier: 'skillCooldownReduction',
-          value: 1,
-          skillType: 'comboSkill',
-        },
-      ]),
-    ).toThrow('less than 1');
+    ).toThrow(/attributeModifiers/);
   });
 });
 
@@ -910,35 +874,31 @@ describe('timeline marker commands', () => {
   });
 });
 
-describe('global Buff selection commands', () => {
-  it('keeps custom definitions when toggling and editing numeric modifiers, without aliasing drafts', () => {
+describe('global effect reference commands', () => {
+  it('keeps effect references when editing numeric modifiers, without aliasing drafts', () => {
     const original = scenario();
     const config = {
-      modifiers: [],
-      enabledPresetIds: ['combo-cdr-50'],
-      customBuffs: [
-        {
-          id: 'scenario:custom-global:1',
-          name: 'Custom',
-          enabled: false,
-          definition: {
-            stackingType: 'unlimited' as const,
-            actionGraph: { main: { nodes: {} }, macros: {} },
-          },
-        },
+      effects: [
+        { effectId: 'combo-cdr-50', enabled: true },
+        { effectId: 'project:globalEffect:1', enabled: false },
       ],
     };
     const updated = setGlobalConfig(original, config);
-    config.customBuffs[0]!.name = 'Changed draft';
-    expect(updated.globalConfig.customBuffs![0]!.name).toBe('Custom');
-    const edited = setGlobalOperatorStatModifiers(updated, [
-      { id: 'attack', kind: 'operatorStat', modifier: 'attackPercent', value: 0.1 },
+    config.effects[1]!.enabled = true;
+    expect(updated.globalConfig.effects![1]!.enabled).toBe(false);
+    const edited = setScenarioBuffAttributes(updated, [
+      { attribute: 'Atk', slot: 'baseMultiplier' as const, value: 0.1 },
     ]);
-    expect(edited.globalConfig.customBuffs).toEqual(updated.globalConfig.customBuffs);
-    expect(edited.globalConfig.enabledPresetIds).toEqual(['combo-cdr-50']);
-    expect(original.globalConfig.customBuffs).toBeUndefined();
-    expect(() => setGlobalConfig(original, { ...config, enabledPresetIds: ['missing'] })).toThrow(
-      'unknown',
-    );
+    expect(edited.globalConfig.effects).toEqual(updated.globalConfig.effects);
+    expect(original.globalConfig.effects).toBeUndefined();
+    expect(() =>
+      setGlobalConfig(original, {
+        ...config,
+        effects: [
+          { effectId: 'combo-cdr-50', enabled: true },
+          { effectId: 'combo-cdr-50', enabled: false },
+        ],
+      }),
+    ).toThrow('duplicate');
   });
 });

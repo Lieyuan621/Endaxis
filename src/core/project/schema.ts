@@ -1,4 +1,5 @@
-import type { SkillBuffDefinition } from '../../../packages/game-data-contract/src/buffs.ts';
+import type { GlobalEffectDefinition } from '../game-data/globalEffectDefinition';
+import type { SkillBuffDefinition } from '../../../packages/game-data-contract/src/buffs';
 import type { SkillGraphPresentation } from './graphPresentation';
 /**
  * 项目存档的数据结构。
@@ -9,7 +10,6 @@ import type {
   DamageElement,
   OperatorDefinition,
   SkillDefinition,
-  SkillType,
 } from '../game-data/operatorDefinition';
 
 import type {
@@ -70,6 +70,8 @@ export interface ProjectOperatorTemplateDocument {
   name: string;
   origin?: ProjectTemplateOriginDocument;
   definition: OperatorDefinition;
+  /** 项目自定义资源的画布坐标，以对象内路径为键；不参与战斗。 */
+  graphPresentations?: Readonly<Record<string, SkillGraphPresentation>>;
 }
 
 export interface ProjectWeaponTemplateDocument {
@@ -77,6 +79,7 @@ export interface ProjectWeaponTemplateDocument {
   name: string;
   origin?: ProjectTemplateOriginDocument;
   definition: WeaponDefinition;
+  graphPresentations?: Readonly<Record<string, SkillGraphPresentation>>;
 }
 
 export interface ProjectGearTemplateDocument {
@@ -84,6 +87,7 @@ export interface ProjectGearTemplateDocument {
   name: string;
   origin?: ProjectTemplateOriginDocument;
   definition: GearDefinition;
+  graphPresentations?: Readonly<Record<string, SkillGraphPresentation>>;
 }
 
 export interface ProjectGearSetTemplateDocument {
@@ -91,6 +95,15 @@ export interface ProjectGearSetTemplateDocument {
   name: string;
   origin?: ProjectTemplateOriginDocument;
   definition: GearSetDefinition;
+  graphPresentations?: Readonly<Record<string, SkillGraphPresentation>>;
+}
+
+export interface ProjectGlobalEffectTemplateDocument {
+  id: string;
+  name: string;
+  origin?: ProjectTemplateOriginDocument;
+  definition: GlobalEffectDefinition;
+  graphPresentations?: Readonly<Record<string, SkillGraphPresentation>>;
 }
 
 /** 随项目保存、由全部场景实例共享的自定义模板库。 */
@@ -99,6 +112,8 @@ export interface ProjectDefinitionLibraryDocument {
   weapons: Record<string, ProjectWeaponTemplateDocument>;
   gears: Record<string, ProjectGearTemplateDocument>;
   gearSets: Record<string, ProjectGearSetTemplateDocument>;
+  /** 自定义全局效果；目录可省略表示空库。 */
+  globalEffects?: Record<string, ProjectGlobalEffectTemplateDocument>;
 }
 
 /** 可从版本化游戏数据恢复身份和默认行为的技能来源。武器效果是被动行为，不产生时间轴释放。 */
@@ -333,41 +348,18 @@ export interface ScenarioInheritanceDocument {
   frame: number;
 }
 
-export const GLOBAL_OPERATOR_STAT_MODIFIERS = [
-  'attackPercent',
-  'criticalRate',
-  'criticalDamage',
-  'artsIntensity',
-  'ultimateEnergyGainEfficiency',
-  'skillCooldownReduction',
-] as const;
-/** 可以作用于全部干员或指定技能类型的全局属性修正。 */
-export type GlobalOperatorStatModifier = (typeof GLOBAL_OPERATOR_STAT_MODIFIERS)[number];
-
-/** 用户配置的一条全局干员属性修正。 */
-export interface GlobalOperatorStatModifierDocument {
-  id: string;
-  kind: 'operatorStat';
-  modifier: GlobalOperatorStatModifier;
-  /** 百分比类使用小数，artsIntensity 使用绝对值；允许负数表达反向修正。 */
-  value: number;
-  /** 冷却修正只支持 comboSkill；所有修正由战斗初始化的全队 Buff 生效。 */
-  skillType?: SkillType;
-}
-
-/** 方案自有的全队 Buff 定义；启停不删除定义。 */
-export interface GlobalBuffDocument {
-  id: string;
-  name: string;
+/** 方案对一条全局效果资产的引用；定义只由项目资产库或内置仓库持有。 */
+export interface GlobalEffectReferenceDocument {
+  effectId: string;
   enabled: boolean;
-  definition: SkillBuffDefinition;
 }
 
 /** 场景级全局修正配置。 */
 export interface GlobalConfigDocument {
-  enabledPresetIds?: string[];
-  customBuffs?: GlobalBuffDocument[];
-  modifiers: GlobalOperatorStatModifierDocument[];
+  /** 内置与自定义全局效果均走这个引用列表；省略等价于空列表。 */
+  effects?: GlobalEffectReferenceDocument[];
+  /** 自定义数值直接保存为 Buff，由场景机制施加到全队。 */
+  customBuff?: SkillBuffDefinition;
 }
 
 /** 场景机制参数允许持久化的标量类型。 */

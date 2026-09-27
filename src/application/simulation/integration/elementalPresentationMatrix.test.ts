@@ -1,3 +1,4 @@
+import { skillFixture } from '../../../test/skillFixture';
 import { expect, it } from 'vitest';
 import type {
   InflictionElement,
@@ -122,14 +123,14 @@ async function run(
             nodes[nodeId] = { action: spec.action, next: null };
             return { startFrame: spec.startFrame, sequence: { $sequence: nodeId } };
           });
-          return {
+          return skillFixture({
             key: 'probe',
             skillType: 'basicAttack' as const,
             levelSource: 'basicAttack' as const,
             timelineBlockFrames: 1500,
             scheduledSequences,
             actionGraph: { main: { nodes }, macros: {} },
-          };
+          });
         })(),
       },
     ],

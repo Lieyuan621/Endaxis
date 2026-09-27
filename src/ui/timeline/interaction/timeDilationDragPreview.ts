@@ -1,6 +1,9 @@
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
 import { PROJECT_FPS } from '../../../core/project/schema';
-import type { TimelineTimeDilationBand } from '../../../core/projection/timelineDisplayTime';
+import {
+  isTimelineTimeDilationVisible,
+  type TimelineTimeDilationBand,
+} from '../../../core/projection/timelineDisplayTime';
 
 interface PreviewBandFact {
   readonly band: TimelineTimeDilationBand;
@@ -63,6 +66,7 @@ export function prepareTimeDilationDragPreview(
   });
   for (const entry of rejected) {
     if (entry.data?.kind !== 'global') continue;
+    if (!isTimelineTimeDilationVisible(entry)) continue;
     const instanceId = entry.data.instanceId;
     const sourceCastId = entry.data.sourceCastId;
     if (typeof instanceId !== 'number' || typeof sourceCastId !== 'string') continue;

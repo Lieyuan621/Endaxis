@@ -36,6 +36,10 @@ export interface MechanicAdapter {
 
 /** 一组机制选择编译后的来源版本和可执行贡献。 */
 export interface CompiledMechanics {
+  /** 机制初始化与后续行为使用的普通 Buff 资源。 */
+  readonly buffDefinitions?: Readonly<
+    Record<string, import('../compiler/combatProgram').ResolvedSkillBuffDefinition>
+  >;
   readonly sources: readonly {
     readonly selectionId: string;
     readonly mechanicId: string;

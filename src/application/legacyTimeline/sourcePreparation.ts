@@ -234,8 +234,6 @@ export function prepareLegacySource(input: unknown, mappings: ConversionMappings
     }
     // 局部失败不再阻塞整个项目；迁移器只能收到已经验证的连接，不能把 Hit 端点猜成技能块。
     d.connections = validConnections;
-    if (d.globalConfig?.presetId || d.globalConfig?.customModifiers?.length)
-      issues.push({ path: prefix + '.globalConfig', message: '全局配置尚未转换' });
     // 项目加载先应用根级常量，再应用方案局部覆盖；每个方案独立复制后换算时间。
     const inheritedConstants =
       root.systemConstants == null ? undefined : object(root.systemConstants);

@@ -1,3 +1,4 @@
+import { skillFixture } from '../../../test/skillFixture';
 import type { SkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
 import { expect, it } from 'vitest';
 import type {
@@ -43,12 +44,12 @@ function damage(key?: string): ActionGraphStep {
 }
 
 function skill(action: ActionGraphStep): SkillDefinition {
-  return {
+  return skillFixture({
     key: 'test',
     timelineBlockFrames: 30,
     scheduledSequences: [{ startFrame: 4, sequence: { $sequence: 'entry' } }],
     actionGraph: resource(action),
-  };
+  });
 }
 
 it('Buff 的同名节点和宏属于自己的资源，返回后仍能继续技能入口', () => {
@@ -138,7 +139,7 @@ it('没有静态 key 的伤害按调用位置与宏节点身份分配预览身�
 });
 
 it('抽取宏的两处中间段保留原始匿名命中身份与各自后续命中', () => {
-  const source: SkillDefinition = {
+  const source: SkillDefinition = skillFixture({
     key: 'test',
     timelineBlockFrames: 30,
     scheduledSequences: [{ startFrame: 4, sequence: { $sequence: 'first' } }],
@@ -153,8 +154,8 @@ it('抽取宏的两处中间段保留原始匿名命中身份与各自后续命�
       },
       macros: {},
     },
-  };
-  const extracted: SkillDefinition = {
+  });
+  const extracted: SkillDefinition = skillFixture({
     ...source,
     actionGraph: {
       main: {
@@ -177,7 +178,7 @@ it('抽取宏的两处中间段保留原始匿名命中身份与各自后续命�
         },
       },
     },
-  };
+  });
   expect(projectCastGraphHitMarkers(cast, extracted, perlica)).toEqual(
     projectCastGraphHitMarkers(cast, source, perlica),
   );

@@ -251,6 +251,8 @@ export function createOrdinaryKnockDownState(): OrdinaryKnockDownState {
 }
 
 export interface TimeDilationSource {
+  /** 原始命名曲线的键；内联曲线和终结技固定倍率不填。 */
+  readonly curveKey?: string;
   readonly sourceId: string;
   readonly sourceActionId: string;
   readonly sourceCastId?: string;

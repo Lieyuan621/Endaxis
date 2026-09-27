@@ -1,3 +1,4 @@
+import { skillFixture } from '../../test/skillFixture';
 import { describe, expect, it } from 'vitest';
 
 import type { SkillGroupDefinition } from '../../core/game-data/operatorDefinition';
@@ -37,7 +38,7 @@ it('图技能组仅凭技能元数据决定技能库与放置链', () => {
     skillType: 'basicAttack',
     levelSource: 'basicAttack',
     skills: [
-      {
+      skillFixture({
         key: 'attack1',
         levelSource: 'basicAttack',
         timelineBlockFrames: 16,
@@ -50,8 +51,8 @@ it('图技能组仅凭技能元数据决定技能库与放置链', () => {
           },
           macros: {},
         },
-      },
-      {
+      }),
+      skillFixture({
         key: 'attack2',
         levelSource: 'basicAttack',
         timelineBlockFrames: 18,
@@ -64,7 +65,7 @@ it('图技能组仅凭技能元数据决定技能库与放置链', () => {
           },
           macros: {},
         },
-      },
+      }),
     ],
   };
   const [entry] = listSkillGroupLibraryPlacements(group);

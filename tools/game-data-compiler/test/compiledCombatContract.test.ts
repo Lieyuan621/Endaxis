@@ -227,7 +227,8 @@ it('套装阶段输出符合正式契约但不自动纳入未支持事件', () =
 
 it('主动技能及实体共用调度子集，结束帧和技能来源信息保持必填', () => {
   type Active = CompiledOperatorActiveSkillRuntimeDefinitionSource;
-  expectTypeOf<Active>().toExtend<SkillDefinition>();
+  // 投影结果尚未装配战斗分类与养成来源，不能冒充完整技能。
+  expectTypeOf<Active>().not.toExtend<SkillDefinition>();
   expectTypeOf<CompiledActiveSkillTimelineSequenceSource>().toExtend<ScheduledSequenceDefinition>();
   expectTypeOf<
     Active['scheduledSequences'][number]

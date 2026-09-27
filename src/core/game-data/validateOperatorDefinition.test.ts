@@ -1,5 +1,7 @@
+import { skillFixture } from '../../test/skillFixture';
 import { describe, expect, it } from 'vitest';
 import { validateOperatorDefinition } from './validateOperatorDefinition';
+import { validateSkillDefinition } from './validateSkillDefinition';
 import type { OperatorDefinition } from './operatorDefinition';
 import type { ActionGraphReference } from '../../../packages/game-data-contract/src/actionGraph';
 
@@ -35,6 +37,35 @@ function graphOperator(overrides: Partial<OperatorDefinition> = {}): OperatorDef
 }
 
 describe('validateOperatorDefinition', () => {
+  it('完整技能缺少必填时序或身份时拒绝保存，扣费帧随消耗必填', () => {
+    const skill = skillFixture({
+      key: 'required-fields',
+      timelineBlockFrames: 1,
+      scheduledSequences: [],
+      actionGraph: { main: { nodes: {} }, macros: {} },
+    });
+    expect(validateSkillDefinition(skill)).toEqual([]);
+    for (const field of [
+      'skillType',
+      'nativeSkillType',
+      'levelSource',
+      'naturalDurationFrames',
+      'exclusiveFrame',
+      'offsetRecordFrame',
+    ]) {
+      const missing: Record<string, unknown> = { ...skill };
+      delete missing[field];
+      expect(validateSkillDefinition(missing)).toContainEqual(
+        expect.objectContaining({ path: `$.${field}` }),
+      );
+    }
+    expect(
+      validateSkillDefinition({ ...skill, costs: [{ resource: 'sp', value: 100 }] }),
+    ).toContainEqual(expect.objectContaining({ path: '$.costFrame' }));
+    expect(
+      validateSkillDefinition({ ...skill, skillType: 'dodge', levelSource: undefined }),
+    ).toEqual([]);
+  });
   it('校验被动能力事件的身份、优先级和入口引用', () => {
     const definition = graphOperator({
       passiveSkills: [
@@ -114,20 +145,20 @@ describe('validateOperatorDefinition', () => {
           key: 'basicAttack',
           skillType: 'basicAttack' as const,
           levelSource: 'basicAttack' as const,
-          skills: {
+          skills: skillFixture({
             key: 'basic-route',
             timelineBlockFrames: 0,
             scheduledSequences: [],
             actionGraph: { main: { nodes: {} }, macros: {} },
-          },
+          }),
           routedReplacementSkills: [
             {
-              skill: {
+              skill: skillFixture({
                 key: 'custom-route',
                 timelineBlockFrames: 0,
                 scheduledSequences: [],
                 actionGraph: { main: { nodes: {} }, macros: {} },
-              },
+              }),
               skillType: 'basicAttack' as const,
               levelSource: 'basicAttack' as const,
               executionSkillKey: '',

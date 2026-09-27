@@ -1,14 +1,15 @@
+import { skillFixture } from '../../test/skillFixture';
 import { describe, expect, it } from 'vitest';
 import { emptyActionGraph } from '../../test/compiledGraphEntry';
 import type { OperatorDefinition, SkillDefinition } from './operatorDefinition';
 import { installCompiledSkillDefinition } from './installCompiledSkillDefinition';
 
-const original: SkillDefinition = {
+const original: SkillDefinition = skillFixture({
   key: 'skill_source',
   timelineBlockFrames: 1,
   scheduledSequences: [],
   actionGraph: emptyActionGraph(),
-};
+});
 
 const operator = {
   slug: 'fixture',

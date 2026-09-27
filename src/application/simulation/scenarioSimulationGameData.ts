@@ -18,6 +18,7 @@ import type { EnemyDefinition } from '../../core/game-data/enemyDefinition';
 import type { OperatorDefinition } from '../../core/game-data/operatorDefinition';
 import type { ScenarioDocument } from '../../core/project/schema';
 import type { ConsumableDefinition } from '../../core/game-data/consumableDefinition';
+import type { GlobalEffectDefinition } from '../../core/game-data/globalEffectDefinition';
 import { createGameDataRepository } from '../../data/createGameDataRepository';
 
 /** 可通过 Worker 消息传输、足以编译一个场景的纯数据。 */
@@ -32,6 +33,8 @@ export interface ScenarioSimulationGameData {
   readonly enemies: readonly EnemyDefinition[];
   readonly mechanics: readonly MechanicDefinitionRef[];
   readonly consumables: readonly ConsumableDefinition[];
+  /** 方案引用的全部全局效果（含禁用但保存的引用），保证解析与保存一致。 */
+  readonly globalEffects: readonly GlobalEffectDefinition[];
 }
 
 function requireDefinition<T>(value: T | null, kind: string, id: string): T {
@@ -62,6 +65,8 @@ export function scenarioSimulationGameDataSelectionKey(scenario: ScenarioDocumen
     identities.add(`enemy:${scenario.enemy.source.enemyId}`);
   for (const selection of scenario.mechanics.selections)
     identities.add(`mechanic:${selection.mechanicId}`);
+  for (const effect of scenario.globalConfig.effects ?? [])
+    identities.add(`globalEffect:${effect.effectId}`);
   return [...identities].sort().join('\u001f');
 }
 
@@ -76,6 +81,7 @@ export function captureScenarioSimulationGameData(
   const gearSets = new Map<string, GearSetDefinition>();
   const enemies = new Map<string, EnemyDefinition>();
   const mechanics = new Map<string, MechanicDefinitionRef>();
+  const globalEffects = new Map<string, GlobalEffectDefinition>();
 
   for (const track of scenario.tracks) {
     if (track?.operator !== null && track?.operator !== undefined) {
@@ -110,6 +116,14 @@ export function captureScenarioSimulationGameData(
     const id = selection.mechanicId;
     addDefinition(mechanics, id, requireDefinition(repository.getMechanic(id), 'mechanic', id));
   }
+  for (const reference of scenario.globalConfig.effects ?? []) {
+    const id = reference.effectId;
+    addDefinition(
+      globalEffects,
+      id,
+      requireDefinition(repository.getGlobalEffect(id), 'global effect', id),
+    );
+  }
 
   const commonDefinitionSources = repository.getCommonDefinitionSources?.();
   if (
@@ -136,6 +150,7 @@ export function captureScenarioSimulationGameData(
     enemies: [...enemies.values()],
     mechanics: [...mechanics.values()],
     consumables: repository.getConsumables(),
+    globalEffects: [...globalEffects.values()],
   };
 }
 
@@ -153,5 +168,6 @@ export function restoreScenarioSimulationGameData(
     enemies: data.enemies,
     mechanics: data.mechanics,
     consumables: data.consumables,
+    globalEffects: data.globalEffects,
   });
 }

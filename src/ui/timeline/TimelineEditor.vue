@@ -107,7 +107,10 @@ import EnemySettingsPanel from './components/EnemySettingsPanel.vue';
 import GlobalResourcePanel from './components/GlobalResourcePanel.vue';
 import ContingencyContractPanel from './components/ContingencyContractPanel.vue';
 import { CONTINGENCY_CONTRACT_MECHANIC_PREFIX } from '../../data/mechanics/contingencyContractAdapter';
-import { contingencyContractMechanicId } from '../../data/mechanics/contingencyContractCatalog';
+import {
+  contingencyContractMechanicId,
+  contingencyContractTags,
+} from '../../data/mechanics/contingencyContractCatalog';
 import {
   formatContingencyContractBuffSourceName,
   localizedContingencyContractTagName,
@@ -172,6 +175,8 @@ import {
   type TrackIndex,
 } from '../../core/project/schema';
 import { getProjectDefinitionLibrary } from '../../core/project/projectDefinitionLibrary';
+import { saveProjectTemplateDefinition } from '../../application/editor/projectTemplateCommands';
+import type { WorkspaceAssetSave, WorkspaceAssetSource } from '../asset-workspace/workspaceSession';
 import { createEmptyProject } from '../../core/project/createProject';
 import {
   inspectProjectInput,
@@ -281,7 +286,7 @@ import {
   setBattleDurationFrames,
   setBattlePrepFrames,
   setTimelinePrepExpanded,
-  setGlobalOperatorStatModifiers,
+  setScenarioBuffAttributes,
   setGlobalConfig,
   type EditableBattleResourceRule,
   updateTrackInitialUltimateEnergy,
@@ -423,6 +428,7 @@ const GearSelectionDialog = defineLazyDialog(() => import('./library/GearSelecti
 const SkillGraphEditorDialog = defineLazyDialog(
   () => import('../action-graph/SkillGraphEditorDialog.vue'),
 );
+const AssetWorkspace = defineLazyDialog(() => import('../asset-workspace/AssetWorkspace.vue'));
 const GearLoadoutBuildDialog = defineLazyDialog(
   () => import('./library/GearLoadoutBuildDialog.vue'),
 );
@@ -1259,13 +1265,25 @@ const editorGameDataRepository = {
   ],
 };
 
+/** 全局效果的展示名称：项目资产用条目名，内置效果用语言键；未解析时返回 null。 */
+function globalEffectDisplayName(id: string): string | null {
+  const template = projectDefinitionLibrary.value.globalEffects?.[id];
+  if (template !== undefined) return template.name;
+  const definition = gameDataRepository.getGlobalEffect(id);
+  if (definition === null) return null;
+  return definition.nameKey !== undefined && te(definition.nameKey) ? t(definition.nameKey) : id;
+}
+
 const operatorBuffDisplayNameKeys = computed(() => {
   operatorDefinitionRevision.value;
   const names = new Map<string, BuffDisplayName>(
     collectOperatorBuffDisplayNameKeys(editorGameDataRepository.getOperators()),
   );
-  for (const buff of scenario.value.globalConfig.customBuffs ?? [])
-    names.set(buff.id, { text: buff.name });
+  // 全局效果的 Buff 以效果 ID 编译；显示名沿用效果名。
+  for (const reference of scenario.value.globalConfig.effects ?? []) {
+    const name = globalEffectDisplayName(reference.effectId);
+    if (name !== null) names.set(`scenario:effect:${reference.effectId}`, { text: name });
+  }
   return names;
 });
 
@@ -1735,6 +1753,168 @@ const skillGraphEditorTarget = shallowRef<{
   readonly label: string;
   readonly definition: SkillDefinition;
 } | null>(null);
+
+const assetWorkspaceOpen = ref(false);
+const workspaceAssets = computed<readonly WorkspaceAssetSource[]>(() => {
+  if (!assetWorkspaceOpen.value) return [];
+  void operatorDefinitionRevision.value;
+  const library = projectDefinitionLibrary.value;
+  return [
+    ...editorGameDataRepository.getOperators().map(definition => ({
+      id: `operator:${definition.slug}`,
+      kind: 'operator',
+      kindName: t('definitionEditor.kinds.operator'),
+      name:
+        library.operators[definition.slug]?.name ??
+        definition.displayName ??
+        operatorName(definition.slug),
+      custom: !!library.operators[definition.slug],
+      iconPath: getOperatorAvatarPath(definition.assetSlug ?? definition.slug),
+      edit: { kind: 'operator' as const, definition },
+      graphPresentations: library.operators[definition.slug]?.graphPresentations,
+    })),
+    ...editorGameDataRepository.getWeapons().map(definition => ({
+      id: `weapon:${definition.slug}`,
+      kind: 'weapon',
+      kindName: t('definitionEditor.kinds.weapon'),
+      name:
+        library.weapons[definition.slug]?.name ??
+        definition.displayName ??
+        getWeaponGameName(definition.assetSlug ?? definition.slug, locale.value),
+      custom: !!library.weapons[definition.slug],
+      iconPath: definition.iconPath,
+      edit: { kind: 'weapon' as const, definition },
+      graphPresentations: library.weapons[definition.slug]?.graphPresentations,
+    })),
+    ...editorGameDataRepository.getGears().map(definition => ({
+      id: `gear:${definition.slug}`,
+      kind: 'gear',
+      kindName: t('definitionEditor.kinds.gear'),
+      name:
+        library.gears[definition.slug]?.name ??
+        definition.displayName ??
+        getGearPieceGameName(definition.slug, locale.value),
+      custom: !!library.gears[definition.slug],
+      iconPath: definition.iconPath,
+      edit: { kind: 'gear' as const, definition },
+      graphPresentations: library.gears[definition.slug]?.graphPresentations,
+    })),
+    ...editorGameDataRepository.getGearSets().map(definition => ({
+      id: `gearSet:${definition.slug}`,
+      kind: 'gearSet',
+      kindName: t('definitionEditor.kinds.gearSet'),
+      name:
+        library.gearSets[definition.slug]?.name ??
+        definition.displayName ??
+        getGearSetGameName(definition.slug, locale.value),
+      custom: !!library.gearSets[definition.slug],
+      iconPath: definition.iconPath,
+      edit: { kind: 'gearSet' as const, definition },
+      graphPresentations: library.gearSets[definition.slug]?.graphPresentations,
+    })),
+    ...editorGameDataRepository.getConsumables().map(definition => ({
+      id: `consumable:${definition.id}`,
+      kind: 'consumable',
+      kindName: t('assetWorkspace.types.consumable'),
+      name: getConsumableGameName(definition.id, locale.value),
+      custom: false,
+      iconPath: definition.iconPath,
+      edit: { kind: 'consumable' as const, definition },
+    })),
+    ...editorGameDataRepository.getCommonDefinitionSources().flatMap(source =>
+      Object.entries(source.buffDefinitions ?? {}).map(([id, definition]) => ({
+        id: `buff:${id}`,
+        kind: 'buff',
+        kindName: t('assetWorkspace.types.commonBuff'),
+        name: resolveBuffDisplayName(id, { t, te }),
+        custom: false,
+        iconPath:
+          definition.presentation?.iconPath ??
+          (definition.presentation?.iconId
+            ? getIconAssetPath(definition.presentation.iconId)
+            : undefined) ??
+          undefined,
+        edit: { kind: 'buff' as const, id, definition },
+      })),
+    ),
+    ...editorGameDataRepository.getEnemies().map(definition => ({
+      id: `enemy:${definition.id}`,
+      kind: 'enemy',
+      kindName: t('assetWorkspace.types.enemy'),
+      name: getEnemyGameName(definition.id, locale.value),
+      custom: false,
+      iconPath: definition.iconPath,
+      edit: { kind: 'enemy' as const, definition },
+    })),
+    ...gameDataRepository.getGlobalEffects().map(definition => ({
+      id: `globalEffect:${definition.id}`,
+      kind: 'globalEffect',
+      kindName: t('assetWorkspace.types.globalEffect'),
+      name: globalEffectDisplayName(definition.id) ?? definition.id,
+      custom: false,
+      edit: { kind: 'globalEffect' as const, definition },
+    })),
+    ...Object.values(library.globalEffects ?? {}).map(template => ({
+      id: `globalEffect:${template.id}`,
+      kind: 'globalEffect',
+      kindName: t('assetWorkspace.types.globalEffect'),
+      name: template.name,
+      custom: true,
+      edit: { kind: 'globalEffect' as const, definition: template.definition },
+      graphPresentations: template.graphPresentations,
+    })),
+    ...contingencyContractTags.map(definition => ({
+      id: `contract:${definition.tagId}`,
+      kind: 'contract',
+      kindName: t('assetWorkspace.types.contract'),
+      name: localizedContingencyContractTagName(definition, locale.value),
+      custom: false,
+      iconPath: definition.iconPath,
+      edit: { kind: 'contract' as const, definition },
+    })),
+  ];
+});
+
+async function openAssetWorkspace(): Promise<void> {
+  await ensureAllGameData();
+  assetWorkspaceOpen.value = true;
+}
+
+/** 供全局配置面板展示的可选效果目录；名称与描述在此解析，面板不读取资产库。 */
+const globalEffectChoices = computed(() => [
+  ...gameDataRepository.getGlobalEffects().map(definition => ({
+    id: definition.id,
+    name: globalEffectDisplayName(definition.id) ?? definition.id,
+    description:
+      definition.descriptionKey !== undefined && te(definition.descriptionKey)
+        ? t(definition.descriptionKey)
+        : undefined,
+    custom: false,
+  })),
+  ...Object.values(projectDefinitionLibrary.value.globalEffects ?? {}).map(template => ({
+    id: template.id,
+    name: template.name,
+    description: undefined,
+    custom: true,
+  })),
+]);
+
+function saveWorkspaceAsset(request: WorkspaceAssetSave): void {
+  const { draft, sourceId, targetId, replace } = request;
+  const changed = projectSession.commit('saveDefinitionTemplate', project =>
+    saveProjectTemplateDefinition(
+      project,
+      draft.edit,
+      sourceId,
+      targetId,
+      draft.name,
+      replace,
+      draft.graphPresentations,
+    ),
+  );
+  // 保存资产只更新项目资产库；队伍成员只能由干员选择界面切换。
+  if (changed) refreshSimulationAfterDefinitionChange();
+}
 
 function openSkillGraphEditor(): void {
   const selected = selectedCastModel.value;
@@ -5703,9 +5883,9 @@ function updateGlobalConfig(config: Parameters<typeof setGlobalConfig>[1]): void
   commitScenario('setGlobalConfig', current => setGlobalConfig(current, config));
 }
 
-function setGlobalModifiers(modifiers: Parameters<typeof setGlobalOperatorStatModifiers>[1]): void {
-  commitScenario('setGlobalOperatorStatModifiers', current =>
-    setGlobalOperatorStatModifiers(current, modifiers),
+function setGlobalModifiers(modifiers: Parameters<typeof setScenarioBuffAttributes>[1]): void {
+  commitScenario('setScenarioBuffAttributes', current =>
+    setScenarioBuffAttributes(current, modifiers),
   );
 }
 
@@ -6076,6 +6256,7 @@ function setPanelDialogVisible(visible: boolean): void {
         @select="selectScenario"
         @open="requestOpenProject"
         @receive="requestReceiveProject"
+        @asset-workspace="openAssetWorkspace"
         @export="showExportDialog = true"
         @reset="resetDialogVisible = true"
         @toggle-view-layer="toggleTimelineViewLayer"
@@ -6989,6 +7170,7 @@ function setPanelDialogVisible(visible: boolean): void {
         v-if="tool === 'global'"
         mode="presets"
         :config="scenario.globalConfig"
+        :effects="globalEffectChoices"
         @set-modifiers="setGlobalModifiers"
         @set-config="updateGlobalConfig"
       />
@@ -7512,6 +7694,13 @@ function setPanelDialogVisible(visible: boolean): void {
     :build-attributes="operatorBuildPanel?.attributes ?? null"
     @update:visible="showOperatorBuildDialog = $event"
     @change="updateOperatorBuild"
+  />
+  <AssetWorkspace
+    v-if="assetWorkspaceOpen && workspaceAssets.length"
+    :initial-asset="workspaceAssets[0]!.id"
+    :assets="workspaceAssets"
+    :save-asset="saveWorkspaceAsset"
+    @close="assetWorkspaceOpen = false"
   />
   <GearLoadoutBuildDialog
     v-if="showGearBuildDialog"

@@ -653,7 +653,7 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
   const blocked = buffClosure.diagnostics.filter(item => item.status === 'blocked');
   if (blocked.length) throw new Error(`operator Buff closure blocked: ${JSON.stringify(blocked)}`);
   const hydrate = createPhysicalInflictionDefinitionHydrator(buffClosure.definitions);
-  const definitions = new Map<string, SkillDefinition>(
+  const runtimeDefinitions = new Map(
     [...compiledDefinitions].map(([key, definition]) => [
       key,
       hydrate(stripSkillGroupCompilationEvidence(definition)),
@@ -669,12 +669,12 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
         };
   const routedSkills = new Map((input.routedSkills ?? []).map(item => [item.key, item] as const));
   for (const routed of routedSkills.values()) {
-    const wrapper = definitions.get(routed.key);
-    const target = definitions.get(routed.targetSkillKey);
+    const wrapper = runtimeDefinitions.get(routed.key);
+    const target = runtimeDefinitions.get(routed.targetSkillKey);
     if (wrapper === undefined || target === undefined) {
       throw new Error(`routed skill '${routed.key}' has an unknown wrapper or target`);
     }
-    definitions.set(routed.key, {
+    runtimeDefinitions.set(routed.key, {
       ...target,
       key: routed.key,
       costs: routed.costs,
@@ -720,18 +720,22 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
       }
     }
   }
-  for (const [key, definition] of definitions) {
+  const definitions = new Map<string, SkillDefinition>();
+  for (const [key, definition] of runtimeDefinitions) {
     const identity = skillIdentityByKey.get(key);
     if (identity === undefined) throw new Error(`skill '${key}' has no runtime identity`);
+    if (identity.skillType === 'dodge')
+      throw new Error(`skill '${key}' cannot use dodge as a growth skill type`);
     const executionSkillId = routedSkills.get(key)?.targetSkillKey ?? key;
     const nativeSkillType = input.nativeSkillTypeBySkillId?.[executionSkillId];
-    if (input.nativeSkillTypeBySkillId !== undefined && nativeSkillType === undefined) {
+    if (nativeSkillType === undefined) {
       throw new Error(`skill '${key}' has no native SkillType initialization evidence`);
     }
     definitions.set(key, {
       ...definition,
       ...identity,
-      ...(nativeSkillType === undefined ? {} : { nativeSkillType }),
+      skillType: identity.skillType,
+      nativeSkillType,
     });
   }
   const abilityEntityDefinitions = hydrate(compiledAbilityEntityDefinitions);
@@ -1205,7 +1209,7 @@ export function selectBasicAttackTimelineBlockFrames(
 
 function stripSkillGroupCompilationEvidence(
   definition: CompiledOperatorActiveSkillRuntimeDefinitionSource,
-): SkillDefinition {
+) {
   const { allowNextSkillTransitions: _allowNextSkillTransitions, ...runtimeDefinition } =
     definition;
   return runtimeDefinition;

@@ -12,7 +12,7 @@ const { t } = useI18n();
       class="editor-help"
       tabindex="0"
       role="img"
-      :aria-label="`${t('actionGraphEditor.help')}: ${text}`"
+      :aria-label="`${t('editor.help')}: ${text}`"
       @pointerdown.stop
       @click.stop
       >?</span

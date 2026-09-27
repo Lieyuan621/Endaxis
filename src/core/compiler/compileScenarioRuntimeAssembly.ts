@@ -41,13 +41,13 @@ import {
 } from './compileScenarioTimeline';
 import type { ResolvedOperatorPanel } from './resolveOperatorPanel';
 import { resolveScenarioOperatorPanels } from './resolveOperatorPanel';
-import { compileGlobalModifiers } from './compileGlobalModifiers';
+import { compileGlobalEffects } from './compileGlobalEffects';
 import { resolveScenarioBuilds } from './resolveScenarioBuilds';
 import { resolveScenarioOperatorResourceRules } from './resolveScenarioResourceRules';
 
 export type ScenarioRuntimeBuildIndex = Pick<
   GameDataRepository,
-  'getOperator' | 'getWeapon' | 'getGear' | 'getGearSet'
+  'getOperator' | 'getWeapon' | 'getGear' | 'getGearSet' | 'getGlobalEffect'
 > &
   Required<Pick<GameDataRepository, 'actionPrograms' | 'getCommonDefinitionSources'>> &
   Partial<
@@ -86,7 +86,10 @@ export interface CompileScenarioRuntimeAssemblyOptions {
 }
 
 type CompileScenarioMechanicsOptions = {
-  readonly index: Pick<ScenarioRuntimeBuildIndex, 'getMechanic'>;
+  readonly index: Pick<
+    ScenarioRuntimeBuildIndex,
+    'getMechanic' | 'getGlobalEffect' | 'actionPrograms'
+  >;
   readonly mechanicAdapters?: MechanicAdapterRegistry;
 };
 
@@ -95,13 +98,19 @@ export function compileScenarioMechanics(
   scenario: ScenarioDocument,
   options: CompileScenarioMechanicsOptions,
 ): CompiledMechanics {
-  return compileMechanics(
+  const selected = compileMechanics(
     scenario.mechanics,
     {
       getMechanic: id => options.index.getMechanic?.(id) ?? null,
     },
     options.mechanicAdapters ?? new MechanicAdapterRegistry(),
   );
+  const global = compileGlobalEffects(scenario.globalConfig, options.index);
+  return {
+    sources: selected.sources,
+    contributions: [...selected.contributions, ...global.contributions],
+    buffDefinitions: global.buffDefinitions,
+  };
 }
 
 export function compileOperatorEntityBlackboardInitialValues(
@@ -325,10 +334,6 @@ export function compileScenarioRuntimeAssembly(
     );
   }
   const mechanics = compileScenarioMechanics(scenario, options);
-  const globalModifiers = compileGlobalModifiers(
-    scenario.globalConfig,
-    options.index.actionPrograms,
-  );
   const mechanicInitializations = mechanics.contributions.flatMap(entry =>
     entry.contribution.kind === 'battleInitializationSequence'
       ? [{ ...entry, contribution: entry.contribution }]
@@ -427,7 +432,7 @@ export function compileScenarioRuntimeAssembly(
       const equipmentContributions = compiledEquipment?.contributions ?? [];
       const equipmentBuffDefinitions = mergeEquipmentBuffDefinitions(
         operator.operatorId,
-        { ...operator.buffDefinitions, ...globalModifiers.buffDefinitions },
+        { ...operator.buffDefinitions, ...mechanics.buffDefinitions },
         equipmentContributions,
         compiledEquipment?.buffDefinitions,
       );
@@ -487,7 +492,6 @@ export function compileScenarioRuntimeAssembly(
           ? {}
           : { buffDefinitions: equipmentBuffDefinitions }),
         initializationPrograms: [
-          ...(operatorIndex === 0 ? globalModifiers.initializationPrograms : []),
           ...(operator.initializationPrograms ?? []),
           ...equipmentInitializationPrograms,
           ...(operatorIndex === 0

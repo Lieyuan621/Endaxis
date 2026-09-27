@@ -1,3 +1,4 @@
+import { skillFixture } from '../../test/skillFixture';
 import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -10,6 +11,8 @@ import { createGameDataRepository } from '../../data/createGameDataRepository';
 import { createEmptyScenario } from '../../core/project/createProject';
 import type { ScenarioDocument } from '../../core/project/schema';
 import type { OperatorDefinition } from '../../core/game-data/operatorDefinition';
+import type { GlobalEffectDefinition } from '../../core/game-data/globalEffectDefinition';
+import { GLOBAL_EFFECT_PRESETS } from '../../data/globalEffectPresets';
 
 import { perlica } from '../../data/operators/perlica.generated';
 
@@ -28,7 +31,7 @@ function graphFixtureSkillOf(fixture: {
       next: index + 1 < fixture.steps.length ? `step-${index + 1}` : null,
     };
   });
-  return {
+  return skillFixture({
     key: fixture.key,
     skillType: fixture.skillType,
     levelSource: fixture.levelSource,
@@ -37,7 +40,7 @@ function graphFixtureSkillOf(fixture: {
       { startFrame: 0, sequence: { $sequence: fixture.steps.length === 0 ? null : 'step-0' } },
     ],
     actionGraph: { main: { nodes }, macros: {} },
-  };
+  });
 }
 
 function findSkill(operator: OperatorDefinition, key: string) {
@@ -151,6 +154,7 @@ const testIndex = {
   getWeapon: () => null,
   getGear: () => null,
   getGearSet: () => null,
+  getGlobalEffect: () => null,
 };
 
 describe('ScenarioSimulationService', () => {
@@ -221,21 +225,43 @@ describe('ScenarioSimulationService', () => {
     );
   });
 
-  it('自定义全局 Buff 与预设同时生效，停用保留定义且不影响同组其他 Buff', () => {
+  it('引用的全局效果与内置预设同时生效，停用保留定义且不影响同组其他效果', () => {
     const scenario = createPerlicaScenario();
     scenario.tracks[1] = { ...structuredClone(scenario.tracks[0]!), id: 'track:1' };
-    scenario.globalConfig.enabledPresetIds = ['combo-cdr-50'];
-    scenario.globalConfig.customBuffs = [true, false].map((enabled, index) => ({
-      id: `scenario:custom-global:${index}`,
-      name: 'Critical Rate',
-      enabled,
-      definition: {
+    const criticalEffect = (id: string): GlobalEffectDefinition => ({
+      id,
+      buff: {
         stackingType: 'unlimited',
         attributeModifiers: [{ attribute: 'criticalRate', slot: 'baseAddition', value: 0.2 }],
         actionGraph: { main: { nodes: {} }, macros: {} },
       },
-    }));
-    const service = createService();
+    });
+    const effects = [
+      ...GLOBAL_EFFECT_PRESETS,
+      criticalEffect('project:globalEffect:critical-a'),
+      criticalEffect('project:globalEffect:critical-b'),
+    ];
+    scenario.globalConfig.effects = [
+      { effectId: 'combo-cdr-50', enabled: true },
+      { effectId: 'project:globalEffect:critical-a', enabled: true },
+      { effectId: 'project:globalEffect:critical-b', enabled: false },
+    ];
+    const service = new ScenarioSimulationService(
+      {
+        index: {
+          ...testIndex,
+          getGlobalEffect: (id: string) => effects.find(effect => effect.id === id) ?? null,
+        },
+        repositoryRevision: 'test-definitions',
+        resources: {
+          sharedSpGain: { baseGainEfficiency: 1 },
+          spRecoveryPauseDuration: 1.5,
+          ultimateEnergySystemUnlocked: true,
+          normalSkillUltimateEnergy: { selfGainPerSp: 0.065, otherGainPerSp: 0.065 },
+        },
+      },
+      undefined,
+    );
     const session = service.createInputCombatSession(scenario, -30);
     const check = (runtime: typeof session.runtime, rate: number) => {
       for (const operator of runtime.readState().operators.values()) {
@@ -246,39 +272,32 @@ describe('ScenarioSimulationService', () => {
     };
     check(session.runtime, 0.25);
     check(session.fork(session.runtime.save()).runtime, 0.25);
-    scenario.globalConfig.customBuffs[0]!.enabled = false;
+    scenario.globalConfig.effects[1]!.enabled = false;
     check(service.createInputCombatSession(scenario, -30).runtime, 0.05);
   });
   it('全局修正经全队 Buff 生效，负帧输入前已安装，切面恢复不重复施加', () => {
     const scenario = createPerlicaScenario();
     scenario.tracks[1] = { ...structuredClone(scenario.tracks[0]!), id: 'track:1' };
-    scenario.globalConfig.modifiers = [
-      { id: 'attack', kind: 'operatorStat', modifier: 'attackPercent', value: 0.2 },
-      { id: 'crit', kind: 'operatorStat', modifier: 'criticalRate', value: 0.3 },
-      { id: 'damage', kind: 'operatorStat', modifier: 'criticalDamage', value: 0.4 },
-      { id: 'arts', kind: 'operatorStat', modifier: 'artsIntensity', value: 50 },
-      { id: 'energy', kind: 'operatorStat', modifier: 'ultimateEnergyGainEfficiency', value: 0.2 },
-      {
-        id: 'cd1',
-        kind: 'operatorStat',
-        modifier: 'skillCooldownReduction',
-        skillType: 'comboSkill',
-        value: 0.2,
-      },
-      {
-        id: 'cd2',
-        kind: 'operatorStat',
-        modifier: 'skillCooldownReduction',
-        skillType: 'comboSkill',
-        value: 0.2,
-      },
-    ];
+    scenario.globalConfig.customBuff = {
+      stackingType: 'unlimited',
+      attributeModifiers: [
+        { attribute: 'Atk', slot: 'baseMultiplier' as const, value: 0.2 },
+        { attribute: 'criticalRate', slot: 'baseAddition' as const, value: 0.3 },
+        { attribute: 'criticalDamageIncrease', slot: 'baseAddition' as const, value: 0.4 },
+        {
+          attribute: 'PhysicalAndSpellInflictionEnhance',
+          slot: 'baseAddition' as const,
+          value: 50,
+        },
+        { attribute: 'UltimateSpGainScalar', slot: 'baseAddition' as const, value: 0.2 },
+        { attribute: 'ComboSkillCooldownScalar', slot: 'finalMultiplier' as const, value: 1 - 0.2 },
+        { attribute: 'ComboSkillCooldownScalar', slot: 'finalMultiplier' as const, value: 1 - 0.2 },
+      ],
+    };
     const session = createService().createInputCombatSession(scenario, -30);
     const check = (runtime: typeof session.runtime) => {
       const state = runtime.readState();
-      expect(
-        state.instances.globalBuffs.groups.get('scenario:global-attribute-modifiers'),
-      ).toHaveLength(1);
+      expect(state.instances.globalBuffs.groups.get('scenario:custom-values')).toHaveLength(1);
       for (const [operatorId, operator] of state.operators) {
         const attributes = new CombatAttributeSet(operator.buffs!.attributes);
         expect(attributes.get('criticalRate')).toBeCloseTo(0.35);
@@ -295,7 +314,7 @@ describe('ScenarioSimulationService', () => {
         );
         expect(
           [...operator.buffs!.instances.values()].filter(
-            buff => buff.identity.definitionId === 'scenario:global-attribute-modifiers',
+            buff => buff.identity.definitionId === 'scenario:custom-values',
           ),
         ).toHaveLength(1);
       }
@@ -1146,9 +1165,12 @@ describe('ScenarioSimulationService', () => {
     async mode => {
       const empty = createPerlicaScenario();
       empty.battle.random = { mode, globalSeed: 123 };
-      empty.globalConfig.modifiers = [
-        { id: 'global:crit', kind: 'operatorStat', modifier: 'criticalRate', value: 0.3 },
-      ];
+      empty.globalConfig.customBuff = {
+        stackingType: 'unlimited',
+        attributeModifiers: [
+          { attribute: 'criticalRate', slot: 'baseAddition' as const, value: 0.3 },
+        ],
+      };
       const later = placeSkillGroup({
         scenario: empty,
         trackIndex: 0,

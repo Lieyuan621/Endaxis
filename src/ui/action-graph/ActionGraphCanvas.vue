@@ -14,11 +14,13 @@ import {
 } from '../../core/action-graph/actionGraphDataNodes';
 import { fieldName } from './editorNodeText';
 import GraphNodeHeader from './GraphNodeHeader.vue';
+import { createGraphCanvasView, type GraphCanvasView } from './graphCanvasView';
 import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 
 const props = defineProps<{
   graph: ActionGraphDefinition;
+  view?: GraphCanvasView;
   readonly?: boolean;
   creationItems: readonly { key: string; label: string; group: string }[];
   selectedDataId?: string | null;
@@ -73,7 +75,8 @@ const MIN_ZOOM = 0.12;
 const MAX_ZOOM = 2;
 const viewport = ref<HTMLDivElement>();
 const viewportSize = reactive({ width: 0, height: 0 });
-const camera = reactive({ x: 0, y: 0, zoom: 1 });
+const view = reactive(props.view ?? createGraphCanvasView());
+const camera = view.camera;
 const positions = reactive(new Map<string, { x: number; y: number }>());
 // 显示节点与正式节点分别登记身份；布局库从不接收原始节点 ID。
 const actionLayoutIds = new Map<string, string>();
@@ -142,7 +145,6 @@ let dragCapture: HTMLElement | undefined;
 let suppressContextMenu = false;
 const pointer = reactive({ x: 0, y: 0 });
 let resizeObserver: ResizeObserver | undefined;
-let cameraInteracted = false;
 let drag:
   | {
       kind: 'pan';
@@ -634,14 +636,14 @@ function fitToBounds(): void {
 }
 
 function fit(): void {
-  cameraInteracted = true;
+  view.positioned = true;
   fitToBounds();
 }
 
 function focusNode(id: string): void {
   const node = nodeById.value.get(id);
   if (node === undefined) return;
-  cameraInteracted = true;
+  view.positioned = true;
   camera.zoom = Math.max(0.75, camera.zoom);
   camera.x = viewportSize.width / 2 - (node.x + NODE_WIDTH / 2) * camera.zoom;
   camera.y = viewportSize.height / 2 - (node.y + node.height / 2) * camera.zoom;
@@ -649,7 +651,7 @@ function focusNode(id: string): void {
 function focusData(id: string): void {
   const node = dataModels.value.find(node => node.id === id);
   if (!node) return;
-  cameraInteracted = true;
+  view.positioned = true;
   camera.zoom = Math.max(0.75, camera.zoom);
   camera.x = viewportSize.width / 2 - (node.x + NODE_WIDTH / 2) * camera.zoom;
   camera.y = viewportSize.height / 2 - (node.y + node.height / 2) * camera.zoom;
@@ -659,7 +661,7 @@ function focusEntry(id: string): void {
   for (const group of entryModels.value) {
     const row = group.rows.find(row => row.entryIds.includes(id));
     if (row === undefined) continue;
-    cameraInteracted = true;
+    view.positioned = true;
     camera.zoom = Math.max(0.75, camera.zoom);
     camera.x = viewportSize.width / 2 - (group.x + ENTRY_WIDTH / 2) * camera.zoom;
     camera.y = viewportSize.height / 2 - (group.y + row.top + row.height / 2) * camera.zoom;
@@ -693,7 +695,7 @@ watch(
 function focusTimeline(): void {
   const timeline = entryModels.value.find(group => group.isTimeline);
   if (timeline === undefined) return;
-  if (focusEntryGroup(timeline)) cameraInteracted = true;
+  if (focusEntryGroup(timeline)) view.positioned = true;
 }
 
 function openTimelineEditor(): void {
@@ -962,7 +964,7 @@ function startPan(event: PointerEvent): void {
   }
   if (event.button !== 0 && event.button !== 1 && event.button !== 2) return;
   contextMenu.value = null;
-  cameraInteracted = true;
+  view.positioned = true;
   event.preventDefault();
   viewport.value?.focus({ preventScroll: true });
   updatePointer(event);
@@ -989,7 +991,7 @@ function startItemDrag(event: PointerEvent, id: string, actionId?: string): void
   if (event.button !== 0 || drag || pinGesture || !props.beforeInteraction()) return;
   contextMenu.value = null;
   selectedWire.value = null;
-  cameraInteracted = true;
+  view.positioned = true;
   event.preventDefault();
   viewport.value?.focus({ preventScroll: true });
   if (actionId !== undefined) emit('select', actionId);
@@ -1386,7 +1388,7 @@ function canvasKeydown(event: KeyboardEvent): void {
 }
 
 function zoomAt(factor: number, x: number, y: number): void {
-  cameraInteracted = true;
+  view.positioned = true;
   const next = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, camera.zoom * factor));
   const ratio = next / camera.zoom;
   camera.x = x - (x - camera.x) * ratio;
@@ -1410,14 +1412,14 @@ onMounted(async () => {
   if (!viewport.value) return;
   viewportSize.width = viewport.value.clientWidth;
   viewportSize.height = viewport.value.clientHeight;
-  focusFirstEntryGroup();
+  if (!view.positioned) focusFirstEntryGroup();
   if (props.selectedEntryId !== null) revealEntryIfOutside(props.selectedEntryId);
   resizeObserver = new ResizeObserver(entries => {
     const entry = entries[0];
     if (!entry) return;
     viewportSize.width = entry.contentRect.width;
     viewportSize.height = entry.contentRect.height;
-    if (!cameraInteracted) focusFirstEntryGroup();
+    if (!view.positioned) focusFirstEntryGroup();
   });
   resizeObserver.observe(viewport.value);
 });

@@ -16,7 +16,7 @@ const compoundNameKeys: Readonly<Record<string, string>> = Object.fromEntries(
 );
 
 const scenarioBuffNameKeys: Readonly<Record<string, string>> = {
-  'scenario:global-attribute-modifiers': 'timeline.globalModifiers.title',
+  'scenario:custom-values': 'timeline.globalModifiers.title',
 };
 
 export function collectOperatorBuffDisplayNameKeys(

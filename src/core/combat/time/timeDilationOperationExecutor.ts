@@ -73,6 +73,9 @@ export class TimeDilationOperationExecutor implements CombatOperationExecutor {
       return true;
     }
     const source = {
+      ...(step.kind === 'startTimeDilation' && step.parameters.curve.kind === 'named'
+        ? { curveKey: step.parameters.curve.key }
+        : {}),
       sourceId: this.dependencies.sourceId,
       sourceActionId: this.dependencies.sourceActionId,
       producedBy: operationProducer(context),

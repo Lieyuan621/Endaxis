@@ -1,3 +1,4 @@
+import { skillFixture } from '../../../test/skillFixture';
 import { describe, expect, it } from 'vitest';
 
 import type {
@@ -372,14 +373,14 @@ function fixtureOperator(
       ]),
     })),
   );
-  const probeSkill: SkillDefinition = {
+  const probeSkill: SkillDefinition = skillFixture({
     key: 'probe',
     skillType: 'basicAttack',
     levelSource: 'basicAttack',
     timelineBlockFrames: 1050,
     scheduledSequences: scheduledSequences.sort((a, b) => a.startFrame - b.startFrame),
     actionGraph: { main: { nodes }, macros: {} },
-  };
+  });
   return {
     slug: `reaction-fixture-${index}`,
     gameId: `reaction-fixture-${index}`,

@@ -4725,6 +4725,7 @@ export class CombatRuntimeAssembly {
         slot: instance.slot,
         priority: instance.priority,
         currentScale: instance.currentScale,
+        ...(instance.source?.curveKey === undefined ? {} : { curveKey: instance.source.curveKey }),
         ...(instance.source?.sourceActionId === undefined
           ? {}
           : { sourceActionId: instance.source.sourceActionId }),

@@ -1,3 +1,4 @@
+import type { CombatBuffDefinitionAttributeModifier } from '../../../../packages/game-data-contract/src/buffs';
 import { validateGlobalConfig } from '../../../core/project/scenarioValidation';
 import type { GlobalConfigDocument } from '../../../core/project/schema';
 /**
@@ -17,7 +18,6 @@ import type {
   ExternalEventMarkerDocument,
   ExternalEventTargetDocument,
   DodgeMarkerDocument,
-  GlobalOperatorStatModifierDocument,
   SkillCastDocument,
 } from '../../../core/project/schema';
 import {
@@ -121,42 +121,26 @@ export function setGlobalConfig(
   return { ...scenario, globalConfig: JSON.parse(JSON.stringify(config)) as GlobalConfigDocument };
 }
 
-/**
- * 替换场景级全局属性修正。比率字段使用核心统一的小数；技能类型范围目前只允许用于冷却缩减。
- * 完整列表形成一个撤销命令，UI 不得直接修改场景数组。
- */
-export function setGlobalOperatorStatModifiers(
+/** 编辑自定义数值时直接更新场景 Buff，执行统一交给机制初始化。 */
+export function setScenarioBuffAttributes(
   scenario: ScenarioDocument,
-  modifiers: readonly GlobalOperatorStatModifierDocument[],
+  modifiers: readonly CombatBuffDefinitionAttributeModifier[],
 ): ScenarioDocument {
-  const ids = new Set<string>();
-  for (const modifier of modifiers) {
-    if (modifier.id.length === 0 || ids.has(modifier.id)) {
-      throw new TypeError('global modifier ids must be non-empty and unique');
-    }
-    ids.add(modifier.id);
-    if (!Number.isFinite(modifier.value)) {
-      throw new TypeError(`global modifier '${modifier.id}' value must be finite`);
-    }
-    if (modifier.modifier === 'skillCooldownReduction') {
-      if (modifier.skillType !== 'comboSkill' || modifier.value >= 1) {
-        throw new RangeError(
-          `global cooldown reduction '${modifier.id}' requires comboSkill and a value less than 1`,
-        );
-      }
-    } else if (modifier.skillType !== undefined) {
-      throw new Error(`global modifier '${modifier.id}' does not support a skill-type scope`);
-    }
-  }
-  if (JSON.stringify(scenario.globalConfig.modifiers) === JSON.stringify(modifiers))
+  if (
+    JSON.stringify(scenario.globalConfig.customBuff?.attributeModifiers ?? []) ===
+    JSON.stringify(modifiers)
+  )
     return scenario;
-  return {
-    ...scenario,
-    globalConfig: {
-      ...scenario.globalConfig,
-      modifiers: modifiers.map(modifier => ({ ...modifier })),
+  return setGlobalConfig(scenario, {
+    ...scenario.globalConfig,
+    customBuff: {
+      stackingType: 'unlimited',
+      presentation: { visible: false },
+      actionGraph: { main: { nodes: {} }, macros: {} },
+      ...scenario.globalConfig.customBuff,
+      attributeModifiers: [...modifiers],
     },
-  };
+  });
 }
 
 /**

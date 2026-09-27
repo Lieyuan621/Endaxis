@@ -1,3 +1,4 @@
+import { skillFixture } from '../../test/skillFixture';
 import { describe, expect, it } from 'vitest';
 import { createEmptyProject, createEmptyScenario } from './createProject';
 import {
@@ -35,7 +36,7 @@ it('独立技能图的自定义覆盖按自身节点校验，保存时不展开�
       id: 'cast:graph',
       source: { kind: 'operatorSkill', skillGroupKey: 'battleSkill', skillKey: 'battleSkill' },
       placement: { startFrame: 30 },
-      customDefinition: {
+      customDefinition: skillFixture({
         key: 'battleSkill',
         timelineBlockFrames: 30,
         scheduledSequences: [{ startFrame: 0, sequence: { $sequence: entry } }],
@@ -50,7 +51,7 @@ it('独立技能图的自定义覆盖按自身节点校验，保存时不展开�
           },
           macros: {},
         },
-      },
+      }),
     });
     project.scenarios[0]!.tracks[0] = track;
     return project;
@@ -71,7 +72,7 @@ it('preserves infinite curve tangents through text and parsed JSON without mutat
     id: 'curve',
     source: { kind: 'operatorSkill', skillGroupKey: 'battleSkill', skillKey: 'battleSkill' },
     placement: { startFrame: 0 },
-    customDefinition: {
+    customDefinition: skillFixture({
       key: 'battleSkill',
       timelineBlockFrames: 30,
       scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'curve' } }],
@@ -110,7 +111,7 @@ it('preserves infinite curve tangents through text and parsed JSON without mutat
         },
         macros: {},
       },
-    },
+    }),
   });
   project.scenarios[0]!.tracks[0] = track;
   const text = serializeProjectDocument(project);
@@ -133,23 +134,34 @@ describe('current project document', () => {
     });
     expect(validateProjectDocument({ ...project, createdAt: 'yesterday' }).ok).toBe(false);
   });
-  it('round-trips scenario-owned global Buff definitions and independent selections', () => {
+  it('round-trips global effect references and project effect definitions', () => {
     const project = createEmptyProject({ createdWith: 'test' });
     project.scenarios[0]!.globalConfig = {
-      modifiers: [],
-      enabledPresetIds: ['combo-cdr-50'],
-      customBuffs: [
-        {
-          id: 'scenario:custom-global:1',
+      effects: [
+        { effectId: 'combo-cdr-50', enabled: true },
+        { effectId: 'project:globalEffect:1', enabled: false },
+      ],
+    };
+    project.definitionLibrary = {
+      operators: {},
+      weapons: {},
+      gears: {},
+      gearSets: {},
+      globalEffects: {
+        'project:globalEffect:1': {
+          id: 'project:globalEffect:1',
           name: 'Custom Buff',
-          enabled: false,
           definition: {
-            actionGraph: { main: { nodes: {} }, macros: {} },
-            stackingType: 'unlimited',
-            attributeModifiers: [{ attribute: 'criticalRate', slot: 'baseAddition', value: 0.1 }],
+            id: 'project:globalEffect:1',
+
+            buff: {
+              actionGraph: { main: { nodes: {} }, macros: {} },
+              stackingType: 'unlimited',
+              attributeModifiers: [{ attribute: 'criticalRate', slot: 'baseAddition', value: 0.1 }],
+            },
           },
         },
-      ],
+      },
     };
     expect(parseProjectDocument(serializeProjectDocument(project))).toEqual({
       ok: true,
@@ -199,7 +211,7 @@ describe('current project document', () => {
     const parsed = parseProjectDocument(serializeProjectDocument(project));
 
     expect(parsed).toEqual({ ok: true, value: project });
-    expect(project.scenarios[0]!.globalConfig).toEqual({ modifiers: [] });
+    expect(project.scenarios[0]!.globalConfig).toEqual({});
   });
 
   it('rejects malformed and duplicate mechanic selections', () => {
@@ -314,12 +326,7 @@ describe('current project document', () => {
       },
     ];
     malformed.scenarios[0].editor.trackHeightWeights = [1, 1, 1];
-    malformed.scenarios[0].globalConfig.modifiers.push({
-      id: 'modifier:1',
-      kind: 'operatorStat',
-      modifier: 'skillCooldownReduction',
-      value: 50,
-    });
+    malformed.scenarios[0].globalConfig.customBuff = { stackingType: 'invalid' };
 
     const result = validateProjectDocument(malformed);
 
@@ -364,8 +371,8 @@ describe('current project document', () => {
             message: 'expected exactly four weights',
           },
           {
-            path: '$.scenarios[0].globalConfig.modifiers[0].skillType',
-            message: 'skill cooldown reduction requires comboSkill',
+            path: '$.scenarios[0].globalConfig.customBuff',
+            message: "$.scenarios[0].globalConfig.customBuff.stackingType: unknown value 'invalid'",
           },
         ]),
       );
@@ -443,7 +450,7 @@ describe('current project document', () => {
       id: 'cast:1',
       source: { kind: 'operatorSkill', skillGroupKey: 'battleSkill', skillKey: 'battleSkill' },
       placement: { startFrame: 30 },
-      customDefinition: {
+      customDefinition: skillFixture({
         key: 'battleSkill',
         timelineBlockFrames: 30,
         scheduledSequences: [{ startFrame: 8, sequence: { $sequence: 'buff' } }],
@@ -505,7 +512,7 @@ describe('current project document', () => {
             },
           },
         },
-      },
+      }),
     });
     project.scenarios[0]!.tracks[0] = track;
     const serialized = serializeProjectDocument(project);

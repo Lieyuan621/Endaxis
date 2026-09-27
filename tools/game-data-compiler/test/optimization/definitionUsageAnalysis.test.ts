@@ -1,3 +1,4 @@
+import { skillFixture } from '../../../../src/test/skillFixture';
 /** 对照执行器验证黑板用途摘要，防止把条件的旧值读取或外部对象读取漏掉。 */
 import { describe, expect, it } from 'vitest';
 import type { CombatCondition } from '../../../../packages/game-data-contract/src/conditions.ts';
@@ -231,7 +232,7 @@ describe('黑板用途的读取对象', () => {
         circularOrder: { indexBlackboardKey: 'slot', desiredCount: 3, reverseFlag: 1 },
       },
     };
-    const input: SkillDefinition = {
+    const input: SkillDefinition = skillFixture({
       key: 'fixture',
       timelineBlockFrames: 1,
       blackboard: { slot: 99 },
@@ -240,7 +241,7 @@ describe('黑板用途的读取对象', () => {
         main: { nodes: { entry: { action: query, next: null } } },
         macros: {},
       },
-    };
+    });
     const result = pruneUnusedGraphSkillValues(input);
     expect(result.report.removedInitialKeys).toEqual(['slot']);
     const usage = analyzeStepUsage(query);

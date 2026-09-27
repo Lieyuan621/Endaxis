@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { skillFixture } from '../../test/skillFixture';
 import { emptyActionGraph } from '../../test/compiledGraphEntry';
 import { createEmptyProject } from '../project/createProject';
 import type { EndaxisProjectDocument, TrackDocument } from '../project/schema';
@@ -18,42 +19,44 @@ const operator = {
       key: 'battleSkill',
       skillType: 'battleSkill',
       levelSource: 'battleSkill',
-      skills: {
+      skills: skillFixture({
         key: 'current-skill',
         timelineBlockFrames: 30,
         scheduledSequences: [],
         actionGraph: emptyActionGraph(),
-      },
+      }),
       variants: [
         {
           key: 'variant',
           levelSource: 'battleSkill',
-          skills: {
+          skills: skillFixture({
             key: 'variant-skill',
             timelineBlockFrames: 30,
             scheduledSequences: [],
             actionGraph: emptyActionGraph(),
-          },
+          }),
         },
       ],
       replacementSkills: [
         {
-          key: 'replacement-skill',
-          timelineBlockFrames: 30,
-          scheduledSequences: [],
-          actionGraph: emptyActionGraph(),
+          ...skillFixture({
+            key: 'replacement-skill',
+            timelineBlockFrames: 30,
+            scheduledSequences: [],
+            actionGraph: emptyActionGraph(),
+          }),
         },
       ],
       routedReplacementSkills: [
         {
-          skill: {
+          skill: skillFixture({
             key: 'routed-skill',
             skillType: 'comboSkill',
             levelSource: 'comboSkill',
             timelineBlockFrames: 30,
             scheduledSequences: [],
             actionGraph: emptyActionGraph(),
-          },
+          }),
           skillType: 'comboSkill',
           levelSource: 'comboSkill',
           executionSkillGroupKey: 'comboSkill',

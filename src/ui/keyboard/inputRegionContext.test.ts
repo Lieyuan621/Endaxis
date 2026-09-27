@@ -4,6 +4,34 @@ import { InputRegions } from './inputRegions';
 import { useInputRegion } from './inputRegionContext';
 
 describe('Vue input region lifecycle', () => {
+  it('releases an activation when its notification synchronously closes the panel', () => {
+    const regions = new InputRegions();
+    const scope = effectScope();
+    const open = ref(false);
+    scope.run(() =>
+      useInputRegion(regions, {
+        label: 'dialog',
+        modal: true,
+        active: () => open.value,
+      }),
+    );
+    const unsubscribe = regions.onChange(() => {
+      if (regions.path().length) open.value = false;
+    });
+    try {
+      open.value = true;
+      expect(open.value).toBe(false);
+      expect(regions.path()).toEqual([]);
+      unsubscribe();
+      open.value = true;
+      expect(regions.path()).toHaveLength(1);
+      open.value = false;
+      expect(regions.path()).toEqual([]);
+    } finally {
+      unsubscribe();
+      scope.stop();
+    }
+  });
   it('opens/closes children synchronously and restores the parent without stale activation', () => {
     const regions = new InputRegions();
     const owner = effectScope();
