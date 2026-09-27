@@ -73,6 +73,12 @@ function runtime(
   expect(
     validateSkillDefinition({
       key: 'test',
+      skillType: 'basicAttack',
+      levelSource: 'basicAttack',
+      nativeSkillType: 'attack',
+      naturalDurationFrames: 1,
+      exclusiveFrame: 0,
+      offsetRecordFrame: 0,
       timelineBlockFrames: 1,
       scheduledSequences: [{ startFrame: 0, sequence: projected.sequence }],
     }),
@@ -135,6 +141,12 @@ describe('原生元素条件从公共编译到运行写回', () => {
 
   it.each(['', 1, null])('正式条件拒绝无效输出键 %j', outputKey => {
     const issues = validateSkillDefinition({
+      skillType: 'basicAttack',
+      levelSource: 'basicAttack',
+      nativeSkillType: 'attack',
+      naturalDurationFrames: 30,
+      exclusiveFrame: 0,
+      offsetRecordFrame: 0,
       key: 'test',
       timelineBlockFrames: 1,
       scheduledSequences: [
@@ -330,6 +342,12 @@ describe('原生元素条件从公共编译到运行写回', () => {
     expect(r.direct.snapshot()).toEqual({});
     expect(
       validateSkillDefinition({
+        skillType: 'basicAttack',
+        levelSource: 'basicAttack',
+        nativeSkillType: 'attack',
+        naturalDurationFrames: 30,
+        exclusiveFrame: 0,
+        offsetRecordFrame: 0,
         key: 'test',
         timelineBlockFrames: 1,
         scheduledSequences: [{ startFrame: 0, sequence: r.projected.sequence }],
@@ -398,6 +416,12 @@ describe('原生元素条件从公共编译到运行写回', () => {
     expect(readActionGraphChain(projected.graph, projected.sequence)).toHaveLength(1);
     expect(
       validateSkillDefinition({
+        skillType: 'basicAttack',
+        levelSource: 'basicAttack',
+        nativeSkillType: 'attack',
+        naturalDurationFrames: 30,
+        exclusiveFrame: 0,
+        offsetRecordFrame: 0,
         key: 'test',
         timelineBlockFrames: 1,
         scheduledSequences: [{ startFrame: 0, sequence: projected.sequence }],

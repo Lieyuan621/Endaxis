@@ -9,6 +9,12 @@ const graph = (
 ): ActionGraphResourceDefinition => ({ main: { nodes }, macros });
 const skill = (actionGraph: ActionGraphResourceDefinition, endFrame?: number) => ({
   key: 'context-test',
+  skillType: 'basicAttack',
+  levelSource: 'basicAttack',
+  nativeSkillType: 'attack',
+  naturalDurationFrames: 30,
+  exclusiveFrame: 0,
+  offsetRecordFrame: 0,
   timelineBlockFrames: 30,
   actionGraph,
   scheduledSequences: [

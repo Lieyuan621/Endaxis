@@ -388,6 +388,12 @@ describe('普通根倒地：复用真实 Buff 目标与控制标签', () => {
   it('根契约可校验与编译，但未装配的标准场景仍失败关闭', () => {
     const skill = {
       key: 'battle',
+      skillType: 'battleSkill',
+      levelSource: 'battleSkill',
+      nativeSkillType: 'normalSkill',
+      naturalDurationFrames: 1,
+      exclusiveFrame: 0,
+      offsetRecordFrame: 0,
       timelineBlockFrames: 1,
       costs: [],
       scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'step-0' } }],

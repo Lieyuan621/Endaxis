@@ -16,6 +16,12 @@ const nodeActionPath = (id: string) => `$.actionGraph.main.nodes.${JSON.stringif
 function baseSkill(): Record<string, unknown> {
   return {
     key: 'testSkill',
+    skillType: 'basicAttack',
+    levelSource: 'basicAttack',
+    nativeSkillType: 'attack',
+    naturalDurationFrames: 30,
+    exclusiveFrame: 0,
+    offsetRecordFrame: 0,
     timelineBlockFrames: 30,
     scheduledSequences: [{ startFrame: 0, sequence: { $sequence: null } }],
     actionGraph: { main: { nodes: {} }, macros: {} },
@@ -137,7 +143,7 @@ describe('validateSkillDefinition', () => {
     expect(validateSkillDefinition(skill('unknown'))).not.toEqual([]);
     expect(validateSkillDefinition(skill(undefined))).not.toEqual([]);
   });
-  it('requires a positive native natural duration when present', () => {
+  it('requires a positive native natural duration', () => {
     expect(validateSkillDefinition({ ...baseSkill(), naturalDurationFrames: 1 })).toEqual([]);
     expect(validateSkillDefinition({ ...baseSkill(), naturalDurationFrames: 0 })).toEqual(
       expect.arrayContaining([expect.objectContaining({ path: '$.naturalDurationFrames' })]),

@@ -1935,6 +1935,12 @@ describe('StandardPlayerDamageEnvironment', () => {
           expect(
             validateSkillDefinition({
               key: 'check',
+              skillType: 'basicAttack',
+              levelSource: 'basicAttack',
+              nativeSkillType: 'attack',
+              naturalDurationFrames: 1,
+              exclusiveFrame: 0,
+              offsetRecordFrame: 0,
               timelineBlockFrames: 1,
               scheduledSequences: [{ startFrame: 0, sequence: compiled.sequence }],
             }),

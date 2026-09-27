@@ -193,6 +193,12 @@ describe('BuffOperationExecutor', () => {
       expect(
         validateSkillDefinition({
           key: 'finish',
+          skillType: 'basicAttack',
+          levelSource: 'basicAttack',
+          nativeSkillType: 'attack',
+          naturalDurationFrames: 1,
+          exclusiveFrame: 0,
+          offsetRecordFrame: 0,
           timelineBlockFrames: 1,
           scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'step-0' } }],
           actionGraph: { main: { nodes: { 'step-0': { action: step, next: null } } }, macros: {} },
