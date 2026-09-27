@@ -8,7 +8,10 @@ import { gameDataRepository } from '../../data/gameDataRepository';
 import { skillSettings } from '../../data/combat/skillSettings';
 import { placeSkillGroup } from './interaction/placeSkillGroup';
 import { projectSkillCastActualDurationFrames } from '../../core/projection/timelineDisplayTime';
-import { ScenarioSimulationService } from '../../application/simulation/scenarioSimulationService';
+import {
+  ScenarioSimulationService,
+  type ScenarioSimulationRun,
+} from '../../application/simulation/scenarioSimulationService';
 import { useScenarioSimulation, type UseScenarioSimulationResult } from './useScenarioSimulation';
 import {
   CombatReceiptCollector,
@@ -756,6 +759,41 @@ describe('useScenarioSimulation', () => {
 
       expect(result.run.value).not.toBeNull();
       expect(result.stale.value).toBe(true);
+    } finally {
+      scope.stop();
+    }
+  });
+
+  it('运行期间对同一输入的重复请求共用本次发布，不再启动第二次模拟', async () => {
+    const scenario = shallowRef<ScenarioDocument>(createPerlicaScenario());
+    let finish!: (run: ScenarioSimulationRun) => void;
+    let calls = 0;
+    const fakeService = {
+      simulate: () => {
+        calls += 1;
+        return new Promise<ScenarioSimulationRun>(resolve => {
+          finish = resolve;
+        });
+      },
+    } as unknown as ScenarioSimulationService;
+    const scope = effectScope();
+    let result!: UseScenarioSimulationResult;
+    scope.run(() => {
+      result = useScenarioSimulation({ scenario, service: fakeService });
+    });
+    try {
+      const duplicate = result.simulateNow();
+      const another = result.simulateNow();
+      finish({
+        availabilityDiagnostics: [],
+        executionDiagnostics: [],
+        comboWindowDiagnostics: [],
+      } as unknown as ScenarioSimulationRun);
+      expect(await duplicate).toBe(true);
+      expect(await another).toBe(true);
+      expect(calls).toBe(1);
+      expect(result.running.value).toBe(false);
+      expect(result.stale.value).toBe(false);
     } finally {
       scope.stop();
     }

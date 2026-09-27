@@ -7,7 +7,6 @@ export interface SimulationPerformanceSummary {
   readonly latestMs: number | null;
   readonly p95Ms: number | null;
   readonly maximumMs: number | null;
-  readonly cacheHitRate: number | null;
   readonly overBudgetCount: number;
 }
 
@@ -30,19 +29,16 @@ export function summarizeSimulationPerformance(
       latestMs: null,
       p95Ms: null,
       maximumMs: null,
-      cacheHitRate: null,
       overBudgetCount: 0,
     });
   }
   const durations = samples.map(sample => sample.totalMs).sort((a, b) => a - b);
   const p95Index = Math.max(0, Math.ceil(durations.length * 0.95) - 1);
-  const cacheHits = samples.filter(sample => sample.cacheHit).length;
   return Object.freeze({
     sampleCount: samples.length,
     latestMs: samples[samples.length - 1]!.totalMs,
     p95Ms: durations[p95Index]!,
     maximumMs: durations[durations.length - 1]!,
-    cacheHitRate: cacheHits / samples.length,
     overBudgetCount: samples.filter(sample => sample.totalMs > budgetMs).length,
   });
 }

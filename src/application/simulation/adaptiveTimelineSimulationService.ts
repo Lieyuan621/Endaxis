@@ -21,7 +21,7 @@ type WorkerBackend = Pick<
 export const INTERACTIVE_SIMULATION_BUDGET_MS = 1000 / 20;
 
 /**
- * 普通编辑始终放到 Worker。拖动开始时，如果最近一次完整、非缓存模拟足够快，整段拖动
+ * 普通编辑始终放到 Worker。拖动开始时，如果最近一次完整模拟足够快，整段拖动
  * 改在主线程运行同一套模拟器，使场景和完整投影能在约一帧的预算内一起更新。
  */
 export class AdaptiveTimelineSimulationService {
@@ -105,7 +105,7 @@ export class AdaptiveTimelineSimulationService {
   }
 
   private acceptSample(sample: ScenarioSimulationPerformanceSample): void {
-    if (sample.outcome === 'completed' && !sample.cacheHit) {
+    if (sample.outcome === 'completed') {
       this.lastCompletedDurationMs = sample.totalMs;
     }
     for (const listener of this.subscribers) listener(sample);

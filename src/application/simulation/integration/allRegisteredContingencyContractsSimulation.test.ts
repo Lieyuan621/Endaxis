@@ -34,7 +34,6 @@ describe('所有正式干员与危机合约生效词条的开局装配', () => {
     expect(supportedTags.length).toBeGreaterThan(0);
     const service = new ScenarioSimulationService({
       index: gameDataRepository,
-      repositoryRevision: `${gameDataRepository.revision}:contingency-contract-matrix`,
       resources,
       spellInflictionSettings: skillSettings,
     });

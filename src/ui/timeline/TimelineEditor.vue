@@ -7469,8 +7469,6 @@ function setPanelDialogVisible(visible: boolean): void {
           title: t('timeline.performance.title'),
           latest: t('timeline.performance.latest'),
           p95: t('timeline.performance.p95'),
-          cacheHit: t('timeline.performance.cacheHit'),
-          cacheLookup: t('timeline.performance.cacheLookup'),
           simulation: t('timeline.performance.simulation'),
           projection: t('timeline.performance.projection'),
           budget: t('timeline.performance.budget'),

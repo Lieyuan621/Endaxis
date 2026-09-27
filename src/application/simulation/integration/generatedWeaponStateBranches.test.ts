@@ -318,7 +318,6 @@ async function simulate(slug: string, tier: number, sequences: readonly ProbeSeq
           getOperator: key => (key === operator.slug ? operator : null),
           getWeapon: key => (key === slug ? definition : null),
         },
-        repositoryRevision: gameDataRepository.revision,
         resources: {
           sharedSpGain: { baseGainEfficiency: 1 },
           spRecoveryPauseDuration: 1.5,

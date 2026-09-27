@@ -146,15 +146,14 @@ export async function auditCandidateEquipment(args: AuditArguments) {
       },
     };
     const spellInflictionSettings = runtimeSkillSettings.skillSettings;
-    const createService = (index: any, revision: string) =>
+    const createService = (index: any) =>
       new serviceModule.ScenarioSimulationService({
         index,
-        repositoryRevision: revision,
         resources: serviceResources,
         elementalInflictionDocument: attachmentModule.elementalAttachments,
         spellInflictionSettings,
       });
-    const service = createService(repository, 'candidate-equipment-simulation-audit');
+    const service = createService(repository);
 
     const failures: { identity: string; message: string; stack?: string }[] = [];
     for (const weapon of weapons) {
@@ -390,7 +389,7 @@ async function auditGearSetCase(input: {
   readonly projectModule: any;
   readonly placementModule: any;
   readonly service: any;
-  readonly createService: (index: any, revision: string) => any;
+  readonly createService: (index: any) => any;
   readonly createRepositoryWithoutGearSet: (slug: string) => any;
   readonly createRepositoryWithoutGearSetRuntime: (slug: string) => any;
   readonly failures: { identity: string; message: string; stack?: string }[];
@@ -442,10 +441,7 @@ async function auditGearSetCase(input: {
     }
     const active = await input.service.simulate(scenario, 1200);
     const withoutSet = await input
-      .createService(
-        input.createRepositoryWithoutGearSet(input.gearSet.slug),
-        `${identity}:without-set`,
-      )
+      .createService(input.createRepositoryWithoutGearSet(input.gearSet.slug))
       .simulate(scenario, 1200);
     if (
       sameObservableResult(observableEquipmentResult(active), observableEquipmentResult(withoutSet))
@@ -454,10 +450,7 @@ async function auditGearSetCase(input: {
     }
     if (installationSteps(input.gearSet).length > 0) {
       const staticOnly = await input
-        .createService(
-          input.createRepositoryWithoutGearSetRuntime(input.gearSet.slug),
-          `${identity}:static-only`,
-        )
+        .createService(input.createRepositoryWithoutGearSetRuntime(input.gearSet.slug))
         .simulate(scenario, 1200);
       if (
         sameObservableResult(

@@ -680,7 +680,6 @@ async function simulateWeapon(
       getWeapon: slug => (slug === weapon.slug ? weapon : repository.getWeapon(slug)),
       getOperator: slug => (slug === operator.slug ? operator : repository.getOperator(slug)),
     },
-    repositoryRevision: repository.revision,
     resources: {
       sharedSpGain: { baseGainEfficiency: 1 },
       spRecoveryPauseDuration: 1.5,

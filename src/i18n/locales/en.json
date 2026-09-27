@@ -4283,8 +4283,6 @@
       "title": "Simulation performance",
       "latest": "Latest",
       "p95": "P95",
-      "cacheHit": "Cache hit",
-      "cacheLookup": "Cache & scenario key",
       "simulation": "Core simulation",
       "projection": "Projection",
       "budget": "Drag budget",

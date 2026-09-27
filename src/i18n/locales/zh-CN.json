@@ -4300,8 +4300,6 @@
       "title": "模拟性能",
       "latest": "最近",
       "p95": "P95",
-      "cacheHit": "缓存命中",
-      "cacheLookup": "缓存与场景键",
       "simulation": "核心模拟",
       "projection": "结果投影",
       "budget": "拖动预算",

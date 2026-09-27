@@ -152,9 +152,20 @@ export function useScenarioSimulation(
       if (activeRunCount === 0 && rerunRequested) {
         rerunRequested = false;
         const resolvers = queuedResolvers.splice(0);
-        void runSimulation().then(published => {
-          for (const resolve of resolvers) resolve(published);
-        });
+        // 等待期间没有新的模拟输入时，本次发布已经满足请求，不再重复计算。
+        const current = publishedState.value;
+        if (
+          error.value === null &&
+          current &&
+          sameScenarioExceptGraphPresentation(current.scenario, options.scenario.value)
+        ) {
+          stale.value = false;
+          for (const resolve of resolvers) resolve(true);
+        } else {
+          void runSimulation().then(published => {
+            for (const resolve of resolvers) resolve(published);
+          });
+        }
       }
     }
   }

@@ -93,7 +93,6 @@ export function optimizationSimulationService(
     index,
     criticalSamples: random.criticalSamples,
     probabilitySamples: random.probabilitySamples,
-    repositoryRevision: 'optimization-differential',
     spellInflictionSettings: skillSettings,
     resources: {
       sharedSpGain: { baseGainEfficiency: skillSettingResources.atbGainEfficiency },

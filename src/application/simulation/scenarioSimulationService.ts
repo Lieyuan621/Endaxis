@@ -9,9 +9,8 @@ import { InheritedScenarioSimulation } from './inheritedScenarioSimulation';
 /**
  * 给页面提供"跑一次模拟"的入口。
  *
- * 同样的场景内容只算一次，之后再要就直接返回上次结果；模拟进行中页面把场景改掉了，
- * 这次结果就作废。跑完会把资源曲线、敌人生命、失衡、技能警告都算好再返回，
- * 页面拿来直接用，不用自己再算一遍。
+ * 跑完会把资源曲线、敌人生命、失衡、技能警告都算好再返回。
+ * 完整结果由调用方持有，服务不缓存；请求调度与过期结果处理由页面调度层负责。
  */
 import type { CombatBuffDefinitionsDocument } from '../../core/combat/buffs/combatBuffDefinitions';
 import type { PlayerDamageNonRandomRuntimeSnapshot } from '../../core/combat/damage/playerActiveDamageInput';
@@ -100,8 +99,6 @@ function resolveScenarioRandomSettings(scenario: ScenarioDocument): {
 export interface ScenarioSimulationServiceOptions {
   readonly index: CompileScenarioRuntimeAssemblyOptions['index'];
   readonly resources: Omit<CompileScenarioResourcesOptions, 'operators'>;
-  /** 缓存键的一部分：游戏数据变了要改这个值，不然会拿到旧数据算出来的结果。 */
-  readonly repositoryRevision?: string;
   readonly criticalSamples?: CriticalSampleSource;
   readonly probabilitySamples?: ProbabilitySampleSource;
   readonly resolveNonRandomRuntimeSnapshot?: (
@@ -123,10 +120,8 @@ export type ScenarioSimulationPerformanceOutcome = 'completed' | 'aborted' | 'fa
 /** 一次 simulate 调用的墙钟耗时；各阶段互斥，可直接堆叠展示。 */
 export interface ScenarioSimulationPerformanceSample {
   readonly totalMs: number;
-  readonly cacheLookupMs: number;
   readonly simulationMs: number;
   readonly projectionMs: number;
-  readonly cacheHit: boolean;
   readonly outcome: ScenarioSimulationPerformanceOutcome;
   readonly endFrame: number;
   readonly receiptCount: number | null;
@@ -145,13 +140,6 @@ export interface ScenarioSimulationRun extends StandardPlayerDamageScenarioResul
   readonly executionDiagnostics: readonly SkillExecutionDiagnostic[];
   readonly comboWindowDiagnostics: readonly ComboWindowDiagnostic[];
 }
-
-interface MutableCacheEntry {
-  readonly key: string;
-  readonly run: ScenarioSimulationRun;
-}
-
-const DEFAULT_CACHE_LIMIT = 16;
 
 function createAbortError(reason?: unknown): Error {
   if (reason !== undefined) return reason as Error;
@@ -177,30 +165,19 @@ function freezeDiagnostics<T extends { readonly receiptSequences: readonly numbe
   );
 }
 
-function buildScenarioRevision(scenario: ScenarioDocument): string {
-  // 场景文档由 schema 保证只含 JSON 值；序列化结果即稳定身份。
-  return JSON.stringify(scenario);
-}
-
 /**
  * 一个服务实例绑定一套固定的游戏数据和规则。
- * 同样内容算过的场景直接返回上次结果；想换数据或规则就新建一个实例。
+ * 每次调用都重新模拟；想换数据或规则就新建一个实例。
  */
 export class ScenarioSimulationService {
   readonly #options: ScenarioSimulationServiceOptions & {
     readonly elementalInflictionDocument: CombatBuffDefinitionsDocument;
   };
-  readonly #repositoryRevision: string;
-  readonly #cache = new Map<string, MutableCacheEntry>();
   readonly #inheritedSimulation = new InheritedScenarioSimulation();
-  readonly #cacheLimit: number;
   readonly #performanceNow: () => number;
   readonly #performanceSubscribers = new Set<ScenarioSimulationPerformanceSubscriber>();
 
-  constructor(options: ScenarioSimulationServiceOptions, cacheLimit: number = DEFAULT_CACHE_LIMIT) {
-    if (!Number.isInteger(cacheLimit) || cacheLimit < 1) {
-      throw new RangeError('simulation cache limit must be a positive integer');
-    }
+  constructor(options: ScenarioSimulationServiceOptions) {
     this.#options = {
       ...options,
       resolveNonRandomRuntimeSnapshot:
@@ -211,8 +188,6 @@ export class ScenarioSimulationService {
         options.mechanicAdapters ??
         new MechanicAdapterRegistry([contingencyContractMechanicAdapter]),
     };
-    this.#repositoryRevision = options.repositoryRevision ?? 'definitions';
-    this.#cacheLimit = cacheLimit;
     this.#performanceNow = options.performanceNow ?? (() => globalThis.performance.now());
   }
 
@@ -362,7 +337,7 @@ export class ScenarioSimulationService {
     );
   }
 
-  /** 创建不进入结果缓存的完整战斗会话，供真实轴检查点和后缀试探使用。 */
+  /** 创建完整战斗会话，供真实轴检查点和后续输入试探使用。 */
   createCombatSession(
     scenario: ScenarioDocument,
     endFrame = scenario.battle.durationFrames,
@@ -457,37 +432,13 @@ export class ScenarioSimulationService {
     signal?: AbortSignal,
   ): Promise<ScenarioSimulationRun> {
     const startedAt = this.#performanceNow();
-    let lookupEndedAt: number | null = null;
     let simulationStartedAt: number | null = null;
     let simulationEndedAt: number | null = null;
     let projectionStartedAt: number | null = null;
-    let cacheHit = false;
     let receiptCount: number | null = null;
     try {
       assertNotAborted(signal);
-      const key = this.#cacheKey(scenario, endFrame);
-      const cached = this.#cache.get(key);
-      lookupEndedAt = this.#performanceNow();
-      if (cached !== undefined) {
-        cacheHit = true;
-        receiptCount = cached.run.receiptHistory.length;
-        this.#cache.delete(key);
-        this.#cache.set(key, cached);
-        const endedAt = this.#performanceNow();
-        this.#publishPerformance({
-          totalMs: endedAt - startedAt,
-          cacheLookupMs: endedAt - startedAt,
-          simulationMs: 0,
-          projectionMs: 0,
-          cacheHit,
-          outcome: 'completed',
-          endFrame,
-          receiptCount,
-        });
-        return cached.run;
-      }
-
-      simulationStartedAt = lookupEndedAt;
+      simulationStartedAt = startedAt;
       const result = this.#runSimulation(scenario, endFrame);
       simulationEndedAt = this.#performanceNow();
       projectionStartedAt = simulationEndedAt;
@@ -524,19 +475,11 @@ export class ScenarioSimulationService {
       }) as ScenarioSimulationRun;
 
       assertNotAborted(signal);
-      this.#cache.set(key, { key, run });
-      while (this.#cache.size > this.#cacheLimit) {
-        const oldest = this.#cache.keys().next().value as string | undefined;
-        if (oldest === undefined) break;
-        this.#cache.delete(oldest);
-      }
       const endedAt = this.#performanceNow();
       this.#publishPerformance({
         totalMs: endedAt - startedAt,
-        cacheLookupMs: lookupEndedAt - startedAt,
         simulationMs: simulationEndedAt - simulationStartedAt,
         projectionMs: endedAt - projectionStartedAt,
-        cacheHit,
         outcome: 'completed',
         endFrame,
         receiptCount,
@@ -544,12 +487,10 @@ export class ScenarioSimulationService {
       return run;
     } catch (error) {
       const endedAt = this.#performanceNow();
-      const lookupEnd = lookupEndedAt ?? endedAt;
       const simulationEnd = simulationEndedAt ?? (simulationStartedAt === null ? null : endedAt);
       const projectionEnd = projectionStartedAt === null ? null : endedAt;
       this.#publishPerformance({
         totalMs: endedAt - startedAt,
-        cacheLookupMs: lookupEnd - startedAt,
         simulationMs:
           simulationStartedAt === null || simulationEnd === null
             ? 0
@@ -558,7 +499,6 @@ export class ScenarioSimulationService {
           projectionStartedAt === null || projectionEnd === null
             ? 0
             : projectionEnd - projectionStartedAt,
-        cacheHit,
         outcome: signal?.aborted === true ? 'aborted' : 'failed',
         endFrame,
         receiptCount,
@@ -567,26 +507,15 @@ export class ScenarioSimulationService {
     }
   }
 
-  /** 按场景内容与目标帧查找已冻结运行结果，供需要同步读取的投影复用。 */
-  findCached(scenario: ScenarioDocument, endFrame: number): ScenarioSimulationRun | null {
-    const cached = this.#cache.get(this.#cacheKey(scenario, endFrame));
-    return cached?.run ?? null;
-  }
-
+  /** 释放继承方案复用的前缀检查点；不涉及完整结果。 */
   clearCache(): void {
-    this.#cache.clear();
     this.#inheritedSimulation.clear();
-  }
-
-  #cacheKey(scenario: ScenarioDocument, endFrame: number): string {
-    return `${this.#repositoryRevision}\u0000${buildScenarioRevision(scenario)}\u0000${endFrame}`;
   }
 
   #publishPerformance(sample: ScenarioSimulationPerformanceSample): void {
     const frozen = Object.freeze({
       ...sample,
       totalMs: Math.max(0, sample.totalMs),
-      cacheLookupMs: Math.max(0, sample.cacheLookupMs),
       simulationMs: Math.max(0, sample.simulationMs),
       projectionMs: Math.max(0, sample.projectionMs),
     });

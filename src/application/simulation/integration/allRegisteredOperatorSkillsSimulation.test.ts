@@ -142,7 +142,6 @@ describe('所有正式干员技能逐项放置与模拟', () => {
       }).scenario;
       const service = new ScenarioSimulationService({
         index: gameDataRepository,
-        repositoryRevision: `${gameDataRepository.revision}:all-skill-placement-audit`,
         resources,
         elementalInflictionDocument: elementalAttachments,
         spellInflictionSettings: skillSettings,

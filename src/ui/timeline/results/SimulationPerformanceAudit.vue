@@ -7,8 +7,6 @@ interface AuditLabels {
   readonly title: string;
   readonly latest: string;
   readonly p95: string;
-  readonly cacheHit: string;
-  readonly cacheLookup: string;
   readonly simulation: string;
   readonly projection: string;
   readonly budget: string;
@@ -46,10 +44,10 @@ function phaseHeight(durationMs: number): number {
 
 function phaseY(
   sample: ScenarioSimulationPerformanceSample,
-  phase: 'lookup' | 'simulation' | 'projection',
+  phase: 'simulation' | 'projection',
 ): number {
-  const phases = [sample.cacheLookupMs, sample.simulationMs, sample.projectionMs];
-  const phaseIndex = phase === 'lookup' ? 0 : phase === 'simulation' ? 1 : 2;
+  const phases = [sample.simulationMs, sample.projectionMs];
+  const phaseIndex = phase === 'simulation' ? 0 : 1;
   return (
     CHART_HEIGHT -
     phaseHeight(phases.slice(0, phaseIndex + 1).reduce((sum, value) => sum + value, 0))
@@ -59,10 +57,6 @@ function phaseY(
 function formatMs(value: number | null): string {
   if (value === null) return '—';
   return `${value < 10 ? value.toFixed(1) : Math.round(value)} ms`;
-}
-
-function formatPercent(value: number | null): string {
-  return value === null ? '—' : `${Math.round(value * 100)}%`;
 }
 </script>
 
@@ -88,10 +82,6 @@ function formatPercent(value: number | null): string {
           {{ formatMs(summary.p95Ms) }}
         </dd>
       </div>
-      <div>
-        <dt>{{ labels.cacheHit }}</dt>
-        <dd>{{ formatPercent(summary.cacheHitRate) }}</dd>
-      </div>
     </dl>
 
     <div v-if="recentSamples.length > 0" class="performance-audit__chart-section">
@@ -116,17 +106,9 @@ function formatPercent(value: number | null): string {
         <g v-for="(sample, index) in recentSamples" :key="index">
           <title>
             {{
-              `${formatMs(sample.totalMs)} · ${labels.cacheLookup} ${formatMs(sample.cacheLookupMs)} · ${labels.simulation} ${formatMs(sample.simulationMs)} · ${labels.projection} ${formatMs(sample.projectionMs)}`
+              `${formatMs(sample.totalMs)} · ${labels.simulation} ${formatMs(sample.simulationMs)} · ${labels.projection} ${formatMs(sample.projectionMs)}`
             }}
           </title>
-          <rect
-            class="performance-audit__bar performance-audit__bar--lookup"
-            :class="{ 'is-cache-hit': sample.cacheHit }"
-            :x="barX(index)"
-            :y="phaseY(sample, 'lookup')"
-            :width="barWidth"
-            :height="Math.max(phaseHeight(sample.cacheLookupMs), 0.7)"
-          />
           <rect
             class="performance-audit__bar performance-audit__bar--simulation"
             :x="barX(index)"
@@ -155,7 +137,6 @@ function formatPercent(value: number | null): string {
     <div v-else class="performance-audit__empty">{{ labels.noSamples }}</div>
 
     <div class="performance-audit__legend" aria-hidden="true">
-      <span><i class="legend-dot legend-dot--lookup"></i>{{ labels.cacheLookup }}</span>
       <span><i class="legend-dot legend-dot--simulation"></i>{{ labels.simulation }}</span>
       <span><i class="legend-dot legend-dot--projection"></i>{{ labels.projection }}</span>
     </div>
@@ -221,7 +202,7 @@ function formatPercent(value: number | null): string {
 
 .performance-audit__metrics {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
   margin: 14px 0 0;
 }
@@ -289,14 +270,6 @@ function formatPercent(value: number | null): string {
   opacity: 0.72;
 }
 
-.performance-audit__bar--lookup {
-  fill: #8c8c8c;
-}
-
-.performance-audit__bar--lookup.is-cache-hit {
-  fill: #73d13d;
-}
-
 .performance-audit__bar--simulation {
   fill: #36cfc9;
 }
@@ -337,10 +310,6 @@ function formatPercent(value: number | null): string {
   width: 6px;
   height: 6px;
   border-radius: 1px;
-}
-
-.legend-dot--lookup {
-  background: #8c8c8c;
 }
 
 .legend-dot--simulation {

@@ -125,24 +125,17 @@ function createTwoOperatorComboScenario(): {
   return { scenario, attacker };
 }
 
-function createService(
-  cacheLimit?: number,
-  performanceNow?: () => number,
-): ScenarioSimulationService {
-  return new ScenarioSimulationService(
-    {
-      index: testIndex,
-      repositoryRevision: 'test-definitions',
-      resources: {
-        sharedSpGain: { baseGainEfficiency: 1 },
-        spRecoveryPauseDuration: 1.5,
-        ultimateEnergySystemUnlocked: true,
-        normalSkillUltimateEnergy: { selfGainPerSp: 0.065, otherGainPerSp: 0.065 },
-      },
-      ...(performanceNow === undefined ? {} : { performanceNow }),
+function createService(performanceNow?: () => number): ScenarioSimulationService {
+  return new ScenarioSimulationService({
+    index: testIndex,
+    resources: {
+      sharedSpGain: { baseGainEfficiency: 1 },
+      spRecoveryPauseDuration: 1.5,
+      ultimateEnergySystemUnlocked: true,
+      normalSkillUltimateEnergy: { selfGainPerSp: 0.065, otherGainPerSp: 0.065 },
     },
-    cacheLimit,
-  );
+    ...(performanceNow === undefined ? {} : { performanceNow }),
+  });
 }
 
 const testIndex = {
@@ -158,7 +151,7 @@ const testIndex = {
 };
 
 describe('ScenarioSimulationService', () => {
-  it('图干员通过正式服务编译输入并复用模拟结果', async () => {
+  it('图干员通过正式服务编译输入且重复模拟结果一致', async () => {
     const graphFixtureSkill = graphFixtureSkillOf({
       key: 'service-graph-skill',
       skillType: 'battleSkill',
@@ -204,7 +197,7 @@ describe('ScenarioSimulationService', () => {
     const graph = await graphService.simulate(scenario, 4);
     expect(graph.receiptEntries.some(entry => entry.event === 'SkillInputProcessed')).toBe(true);
     expect(graph.enemyVitals.finalPoise).toBeLessThan(graph.enemyVitals.initialPoise);
-    expect(await graphService.simulate(scenario, 4)).toBe(graph);
+    expect((await graphService.simulate(scenario, 4)).receiptEntries).toEqual(graph.receiptEntries);
     const graphInherited = structuredClone(scenario);
     graphInherited.inheritance = { frame: 2, sourceScenarioId: 'source' };
     const inheritedGraphRun = await graphService.simulate(graphInherited, 4);
@@ -246,22 +239,18 @@ describe('ScenarioSimulationService', () => {
       { effectId: 'project:globalEffect:critical-a', enabled: true },
       { effectId: 'project:globalEffect:critical-b', enabled: false },
     ];
-    const service = new ScenarioSimulationService(
-      {
-        index: {
-          ...testIndex,
-          getGlobalEffect: (id: string) => effects.find(effect => effect.id === id) ?? null,
-        },
-        repositoryRevision: 'test-definitions',
-        resources: {
-          sharedSpGain: { baseGainEfficiency: 1 },
-          spRecoveryPauseDuration: 1.5,
-          ultimateEnergySystemUnlocked: true,
-          normalSkillUltimateEnergy: { selfGainPerSp: 0.065, otherGainPerSp: 0.065 },
-        },
+    const service = new ScenarioSimulationService({
+      index: {
+        ...testIndex,
+        getGlobalEffect: (id: string) => effects.find(effect => effect.id === id) ?? null,
       },
-      undefined,
-    );
+      resources: {
+        sharedSpGain: { baseGainEfficiency: 1 },
+        spRecoveryPauseDuration: 1.5,
+        ultimateEnergySystemUnlocked: true,
+        normalSkillUltimateEnergy: { selfGainPerSp: 0.065, otherGainPerSp: 0.065 },
+      },
+    });
     const session = service.createInputCombatSession(scenario, -30);
     const check = (runtime: typeof session.runtime, rate: number) => {
       for (const operator of runtime.readState().operators.values()) {
@@ -1049,20 +1038,21 @@ describe('ScenarioSimulationService', () => {
     expect(Number(hits[0]!.data!.value)).toBeGreaterThan(0);
   });
 
-  it('相同场景内容与目标帧复用已冻结运行结果', async () => {
+  it('相同输入重新计算，结果一致且回执保持冻结', async () => {
     const scenario = createPerlicaScenario();
     const service = createService();
 
     const first = await service.simulate(scenario, 30);
     const second = await service.simulate(scenario, 30);
 
-    expect(second).toBe(first);
+    expect(second).not.toBe(first);
+    expect(second.receiptEntries).toEqual(first.receiptEntries);
     expect(Object.isFrozen(second.receiptEntries)).toBe(true);
   });
 
-  it('发布可堆叠的模拟阶段耗时并区分缓存命中', async () => {
+  it('每次重新模拟并发布模拟与投影耗时', async () => {
     let now = 0;
-    const service = createService(undefined, () => now++);
+    const service = createService(() => now++);
     const samples: ScenarioSimulationPerformanceSample[] = [];
     const unsubscribe = service.subscribePerformance(sample => samples.push(sample));
 
@@ -1072,24 +1062,20 @@ describe('ScenarioSimulationService', () => {
 
     expect(samples).toHaveLength(2);
     expect(samples[0]).toMatchObject({
-      totalMs: 3,
-      cacheLookupMs: 1,
+      totalMs: 2,
       simulationMs: 1,
       projectionMs: 1,
-      cacheHit: false,
       outcome: 'completed',
     });
     expect(samples[1]).toMatchObject({
       totalMs: 2,
-      cacheLookupMs: 2,
-      simulationMs: 0,
-      projectionMs: 0,
-      cacheHit: true,
+      simulationMs: 1,
+      projectionMs: 1,
       outcome: 'completed',
     });
   });
 
-  it('场景内容变化后不再命中旧缓存', async () => {
+  it('场景内容变化后计算新场景的结果', async () => {
     const service = createService();
     const scenario = createPerlicaScenario();
     const placed = placeSkillGroup({
@@ -1116,15 +1102,20 @@ describe('ScenarioSimulationService', () => {
     ).rejects.toThrow('aborted');
   });
 
-  it('超过容量时淘汰最早完成的运行结果', async () => {
-    const service = createService(1);
-    const first = await service.simulate(createPerlicaScenario(), 30);
+  it('回到旧场景时重新模拟且结果一致', async () => {
+    const service = createService();
+    const firstScenario = createPerlicaScenario();
+    const first = await service.simulate(firstScenario, 30);
     const secondScenario = createPerlicaScenario();
     secondScenario.enemy.editable.hp = 200000;
     const second = await service.simulate(secondScenario, 30);
 
     expect(second).not.toBe(first);
-    expect(service.findCached(secondScenario, 30)).toBe(second);
+    expect(await service.simulate(secondScenario, 30)).not.toBe(second);
+
+    const replayed = await service.simulate(firstScenario, 30);
+    expect(replayed).not.toBe(first);
+    expect(replayed.receiptEntries).toEqual(first.receiptEntries);
   });
 
   it('完整会话仅在输入时提交技能种子，未来候选换种子不改父分支', () => {

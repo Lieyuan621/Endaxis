@@ -220,7 +220,6 @@ function simulate(
   }).scenario;
   const service = new ScenarioSimulationService({
     index: gameDataRepository,
-    repositoryRevision: `${gameDataRepository.revision}:all-equipment-audit`,
     resources,
     elementalInflictionDocument: elementalAttachments,
     spellInflictionSettings: skillSettings,
@@ -336,7 +335,6 @@ async function simulateScenario(
   }
   const service = new ScenarioSimulationService({
     index,
-    repositoryRevision: `${index.revision}:all-gear-set-audit`,
     resources,
     elementalInflictionDocument: elementalAttachments,
     spellInflictionSettings: skillSettings,

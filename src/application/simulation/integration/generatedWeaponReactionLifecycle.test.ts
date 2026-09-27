@@ -321,7 +321,6 @@ async function simulatePair(slug: string, tier: number, plans: readonly ActorPla
         getOperator: slug => operators.find(operator => operator.slug === slug) ?? null,
         getWeapon: requested => (requested === slug ? definition : null),
       },
-      repositoryRevision: gameDataRepository.revision,
       resources: {
         sharedSpGain: { baseGainEfficiency: 1 },
         spRecoveryPauseDuration: 1.5,

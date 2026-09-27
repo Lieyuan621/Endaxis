@@ -6,10 +6,8 @@ import { createEmptyScenario } from '../../core/project/createProject';
 function sample(totalMs: number): ScenarioSimulationPerformanceSample {
   return {
     totalMs,
-    cacheLookupMs: 0,
     simulationMs: totalMs,
     projectionMs: 0,
-    cacheHit: false,
     outcome: 'completed',
     endFrame: 60,
     receiptCount: 0,
@@ -66,7 +64,7 @@ it('replaces a slow startup sample after one fast complete run, starting with th
   const scenario = createEmptyScenario('adaptive:startup', 'startup');
 
   worker.publish(sample(200));
-  worker.publish({ ...sample(1), cacheHit: true });
+  worker.publish({ ...sample(1), outcome: 'aborted' });
   service.beginInteractiveSession();
   expect(await service.simulate(scenario, 60)).toEqual({ label: 'worker' });
   worker.publish(sample(20));

@@ -182,7 +182,6 @@ export async function auditCandidateOperatorSkills(args: AuditArguments) {
     const nativeResources = runtimeSkillSettings.skillSettingResources;
     const service = new serviceModule.ScenarioSimulationService({
       index: repository,
-      repositoryRevision: 'candidate-operator-simulation-audit',
       resources: {
         sharedSpGain: { baseGainEfficiency: nativeResources.atbGainEfficiency },
         spRecoveryPauseDuration: nativeResources.atbRecoverInterval,
