@@ -13,6 +13,20 @@ export default defineConfig({
     vueDevTools(),
   ],
   base: '/',
+  build: {
+    rollupOptions: {
+      output: {
+        onlyExplicitManualChunks: true,
+        manualChunks(id) {
+          const path = id.replaceAll('\\', '/');
+          if (path.includes('/src/data/equipment/generated-weapons/')) return 'weapon-definitions';
+          if (path.includes('/src/data/equipment/generated-gear-sets/'))
+            return 'gear-set-definitions';
+          if (path.includes('/src/data/equipment/generated/')) return 'gear-definitions';
+        },
+      },
+    },
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

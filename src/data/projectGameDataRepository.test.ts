@@ -9,6 +9,27 @@ import generatedGear from './equipment/generated/suit_wisdwill01/item_equip_t1_s
 import { createProjectGameDataRepository } from './projectGameDataRepository';
 
 describe('project game data repository', () => {
+  it('loads the operator catalog without equipment and merges concurrent equipment loads', async () => {
+    const repository = await createProjectGameDataRepository(undefined);
+    const task = repository.ensureDefinitions('operators');
+    expect(repository.ensureDefinitions('operators')).toBe(task);
+    await task;
+    expect(repository.getOperator('perlica')).not.toBeNull();
+    expect(repository.getWeapons()).toEqual([]);
+    expect(repository.getGears()).toEqual([]);
+    expect(repository.getGearSets()).toEqual([]);
+    expect(repository.hasDefinitions('operators')).toBe(true);
+    expect(repository.hasAllDefinitions()).toBe(false);
+    await Promise.all([
+      repository.ensureDefinitions('weapons'),
+      repository.ensureDefinitions('gears'),
+    ]);
+    expect(repository.getOperator('perlica')).not.toBeNull();
+    expect(repository.getWeapon('wpn_sword_0026')).not.toBeNull();
+    expect(repository.getGears().length).toBeGreaterThan(0);
+    expect(repository.getGearSets().length).toBeGreaterThan(0);
+    expect(repository.hasAllDefinitions()).toBe(true);
+  });
   it('creates an empty-page repository without local preview files', async () => {
     const repository = await createProjectGameDataRepository(undefined);
     expect(repository.getOperators()).toEqual([]);

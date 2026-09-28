@@ -1339,16 +1339,20 @@ async function ensureAllGameData(): Promise<void> {
 }
 
 let gameDataDialogOpening = false;
-async function openAfterGameDataLoad(open: () => void): Promise<void> {
+async function openAfterGameDataLoad(
+  kind: 'operators' | 'weapons' | 'gears',
+  open: () => void,
+): Promise<void> {
   if (gameDataDialogOpening) return;
-  if (fullGameDataRevisionApplied) {
+  if (gameDataRepository.hasDefinitions(kind)) {
     open();
     return;
   }
   gameDataDialogOpening = true;
   const loading = ElLoading.service({ lock: true, text: t('timeline.loading') });
   try {
-    await ensureAllGameData();
+    await gameDataRepository.ensureDefinitions(kind);
+    operatorDefinitionRevision.value += 1;
     open();
     await nextTick();
   } catch (error) {
@@ -1360,15 +1364,15 @@ async function openAfterGameDataLoad(open: () => void): Promise<void> {
 }
 
 async function openOperatorDialog(trackIndex?: TrackIndex): Promise<void> {
-  await openAfterGameDataLoad(() => openOperatorDialogNow(trackIndex));
+  await openAfterGameDataLoad('operators', () => openOperatorDialogNow(trackIndex));
 }
 
 async function openWeaponDialog(trackIndex?: TrackIndex): Promise<void> {
-  await openAfterGameDataLoad(() => openWeaponDialogNow(trackIndex));
+  await openAfterGameDataLoad('weapons', () => openWeaponDialogNow(trackIndex));
 }
 
 async function openGearDialog(trackIndex?: TrackIndex, slot?: TrackGearSlot): Promise<void> {
-  await openAfterGameDataLoad(() => openGearDialogNow(trackIndex, slot));
+  await openAfterGameDataLoad('gears', () => openGearDialogNow(trackIndex, slot));
 }
 const {
   enemies,
@@ -1576,7 +1580,7 @@ const {
       (name.assetSlug === null
         ? t('timeline.emptyTrack')
         : getOperatorGameName(name.assetSlug, locale.value)),
-    color: (cast, track) => skillAccentColor(cast.skillType, track.operatorSlug),
+    color: (cast, track) => skillAccentColor(cast.operationType, track.operatorSlug),
   },
   () => editorGameDataRepository.getGears(),
   () => editorGameDataRepository.getGearSets(),
@@ -3614,15 +3618,15 @@ const OPERATOR_ELEMENT_SKILL_COLORS: Readonly<Record<string, string>> = {
  * 照录旧版技能块配色边界：普攻、连携、处决和下落攻击由技能类型定色，
  * 战技与终结技继承干员属性色。轮廓差异仍由 TimelineActionBlock 的技能类型样式负责。
  */
-function skillAccentColor(skillType: string | null, operatorSlug: string | null): string {
+function skillAccentColor(operationType: string | null, operatorSlug: string | null): string {
   const typeColor =
-    skillType === 'basicAttack'
+    operationType === 'basicAttack'
       ? '#aaaaaa'
-      : skillType === 'comboSkill'
+      : operationType === 'comboSkill'
         ? '#fdd900'
-        : skillType === 'finisher'
+        : operationType === 'finisher'
           ? '#a61d24'
-          : skillType === 'plungingAttack'
+          : operationType === 'plungingAttack'
             ? '#69c0ff'
             : null;
   if (typeColor !== null) return typeColor;
@@ -3632,7 +3636,11 @@ function skillAccentColor(skillType: string | null, operatorSlug: string | null)
   if (element !== null && element !== undefined) {
     return OPERATOR_ELEMENT_SKILL_COLORS[element] ?? '#8c8c8c';
   }
-  return skillType === 'ultimate' ? '#00e5ff' : skillType === 'battleSkill' ? '#ffffff' : '#8c8c8c';
+  return operationType === 'ultimate'
+    ? '#00e5ff'
+    : operationType === 'battleSkill'
+      ? '#ffffff'
+      : '#8c8c8c';
 }
 
 function skillDisplayIcon(skillType: string, operatorSlug: string | null): string {

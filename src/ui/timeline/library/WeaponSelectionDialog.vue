@@ -14,8 +14,6 @@ import { Search } from '@element-plus/icons-vue';
 import { useI18n } from 'vue-i18n';
 import { getWeaponGameName } from '../../gameText';
 import '../../presentation';
-import { getEquipmentSupport, type EquipmentSupport } from '../../../data/equipment/index';
-import { weaponDefinitions } from '../../../data/equipment/weaponDefinitions';
 import type { WeaponDefinition } from '../../../core/game-data/equipmentDefinition';
 import WeaponSelectionTooltip from './WeaponSelectionTooltip.vue';
 import { DEFAULT_WEAPON_ICON_PATH } from '../../gameAssetPaths';
@@ -47,8 +45,6 @@ const emit = defineEmits<{
 interface WeaponListItem {
   readonly definition: WeaponDefinition;
   readonly name: string;
-  readonly support: EquipmentSupport | null;
-  readonly supportSummary: string;
 }
 
 interface WeaponRarityGroup {
@@ -91,23 +87,12 @@ function rarityColor(rarity: number): string {
   return '#a0a0a0';
 }
 
-function summarizeSupport(support: EquipmentSupport | null): string {
-  if (!support || support.completeness !== 'partial') return '';
-  return [...new Set(support.issues.map(issue => `${issue.path}: ${issue.message}`))].join('\n');
-}
-
 const weaponItems = computed<readonly WeaponListItem[]>(() =>
   props.weapons.map(definition => {
     const presentationSlug = definition.assetSlug ?? definition.slug;
-    // 正式生成武器不沿用旧适配器的部分转换标记；自定义/其他来源仍使用各自诊断。
-    const support = weaponDefinitions.some(item => item.slug === definition.slug)
-      ? null
-      : getEquipmentSupport('weapon', definition.slug);
     return {
       definition,
       name: definition.displayName ?? getWeaponGameName(presentationSlug, locale.value),
-      support,
-      supportSummary: summarizeSupport(support),
     };
   }),
 );
@@ -188,7 +173,6 @@ function handleDialogVisibility(value: boolean): void {
             :key="weapon.definition.slug"
             class="roster-card"
             :class="`rarity-${weapon.definition.rarity}-style`"
-            :title="weapon.supportSummary || undefined"
             @click="select(weapon.definition.slug)"
             variant="ghost"
             :pressed="selectedSlug === weapon.definition.slug"

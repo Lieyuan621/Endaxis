@@ -1,7 +1,7 @@
 import { ActionGraphDefinitionRepository } from '../core/compiler/actionGraphDefinitionRepository';
 /**
  * 为时间轴页面按项目加载正式游戏定义。
- * 首次进入只读取项目实际引用的干员和装备；打开选择器或导入项目时再扩充为完整目录。
+ * 首次进入读取项目引用的定义，选择器按类别扩充目录；完整目录供导入和资产编辑使用。
  * 对核心暴露的查询仍是同步接口，异步加载不会进入编译、模拟和投影层。
  */
 import type { GameDataBrowser, GameDataRepository } from '../core/game-data/gameDataRepository';
@@ -31,11 +31,15 @@ const gearSetLoaders = import.meta.glob<DefinitionModule<GearSetDefinition>>(
 );
 
 export interface ProjectGameDataRepository extends TimelineGameDataRepository {
-  /** 加载选择器需要的完整干员和装备目录；重复调用复用同一个任务。 */
+  ensureDefinitions(kind: DefinitionCatalog): Promise<void>;
+  hasDefinitions(kind: DefinitionCatalog): boolean;
+  /** 加载完整目录；重复调用复用各类别的加载任务。 */
   ensureAllDefinitions(): Promise<void>;
   /** 当前是否已经扩充成完整目录。 */
   hasAllDefinitions(): boolean;
 }
+
+export type DefinitionCatalog = 'operators' | 'weapons' | 'gears';
 
 interface ProjectDefinitionReferences {
   readonly operators: Set<string>;
@@ -190,27 +194,40 @@ export async function createProjectGameDataRepository(
     globalEffects: GLOBAL_EFFECT_PRESETS,
   } as const;
   let current = createGameDataRepository({ ...fixed, ...selected });
-  let allDefinitionsTask: Promise<void> | undefined;
-  let allDefinitionsLoaded = false;
-
-  const ensureAllDefinitions = (): Promise<void> => {
-    if (allDefinitionsTask !== undefined) return allDefinitionsTask;
-    allDefinitionsTask = (async () => {
-      const { operatorDefinitions } = await import('./operators');
-      const equipment = await import('./equipment');
+  const loaded = new Set<DefinitionCatalog>();
+  const tasks = new Map<DefinitionCatalog, Promise<void>>();
+  const ensureDefinitions = (kind: DefinitionCatalog): Promise<void> => {
+    const existing = tasks.get(kind);
+    if (existing) return existing;
+    const task = (async () => {
+      const additions =
+        kind === 'operators'
+          ? { operators: (await import('./operators')).operatorDefinitions }
+          : kind === 'weapons'
+            ? { weapons: (await import('./equipment/weaponDefinitions')).weaponDefinitions }
+            : await Promise.all([
+                import('./equipment/generated/index.generated'),
+                import('./equipment/generated-gear-sets/index.generated'),
+              ]).then(([gears, sets]) => ({
+                gears: gears.generatedGearDefinitions,
+                gearSets: sets.generatedGearSetDefinitions,
+              }));
+      // Read the current collections after awaiting so concurrent category loads cannot overwrite each other.
       current = createGameDataRepository({
         ...fixed,
-        operators: operatorDefinitions,
-        weapons: equipment.weaponDefinitions,
-        gears: equipment.gearDefinitions,
-        gearSets: equipment.gearSetDefinitions,
+        operators: current.getOperators(),
+        weapons: current.getWeapons(),
+        gears: current.getGears(),
+        gearSets: current.getGearSets(),
+        ...additions,
       });
-      allDefinitionsLoaded = true;
+      loaded.add(kind);
     })().catch(error => {
-      allDefinitionsTask = undefined;
+      tasks.delete(kind);
       throw error;
     });
-    return allDefinitionsTask;
+    tasks.set(kind, task);
+    return task;
   };
 
   return Object.freeze({
@@ -237,7 +254,11 @@ export async function createProjectGameDataRepository(
     getConsumables: () => current.getConsumables(),
     getGlobalEffect: (id: string) => current.getGlobalEffect(id),
     getGlobalEffects: () => current.getGlobalEffects(),
-    ensureAllDefinitions,
-    hasAllDefinitions: () => allDefinitionsLoaded,
+    ensureDefinitions,
+    hasDefinitions: (kind: DefinitionCatalog) => loaded.has(kind),
+    ensureAllDefinitions: async () => {
+      await Promise.all((['operators', 'weapons', 'gears'] as const).map(ensureDefinitions));
+    },
+    hasAllDefinitions: () => loaded.size === 3,
   });
 }

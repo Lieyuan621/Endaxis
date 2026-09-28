@@ -21,7 +21,6 @@ import {
   getGearSetGameName,
 } from '../../gameText';
 import { getEquipmentLevelColor } from '../../progression';
-import { getEquipmentSupport } from '../../../data/equipment/index';
 import type { GearDefinition } from '../../../core/game-data/equipmentDefinition';
 import type { OperatorDefinition } from '../../../core/game-data/operatorDefinition';
 import EquipmentSelectionTooltip from './EquipmentSelectionTooltip.vue';
@@ -80,8 +79,6 @@ interface GearListItem {
   readonly name: string;
   readonly gearSetSlug: string | null;
   readonly gearSetName: string;
-  readonly isPartial: boolean;
-  readonly supportSummary: string;
   readonly matchesOperatorAttributes: boolean;
   readonly legacyPreviewIdentity: {
     readonly id: string;
@@ -129,9 +126,6 @@ const gearItems = computed<readonly GearListItem[]>(() =>
       definition.gearSetSlug && definition.gearSetSlug !== 'no-set-bonuses'
         ? definition.gearSetSlug
         : null;
-    const gearSupport = getEquipmentSupport('gear', definition.slug);
-    const setSupport = gearSetSlug ? getEquipmentSupport('gearSet', gearSetSlug) : null;
-    const issues = [...(gearSupport?.issues ?? []), ...(setSupport?.issues ?? [])];
     return {
       definition,
       name: definition.displayName ?? getGearPieceGameName(definition.slug, locale.value),
@@ -139,10 +133,6 @@ const gearItems = computed<readonly GearListItem[]>(() =>
       gearSetName: gearSetSlug
         ? (props.gearSetNames[gearSetSlug] ?? getGearSetGameName(gearSetSlug, locale.value))
         : props.labels.noSet,
-      isPartial: gearSupport?.completeness === 'partial' || setSupport?.completeness === 'partial',
-      supportSummary: [
-        ...new Set(issues.map(issue => `${issue.sourceKind}.${issue.path}: ${issue.message}`)),
-      ].join('\n'),
       matchesOperatorAttributes: gearMatchesOperatorAttributes(
         definition,
         props.operatorDefinition,
@@ -390,13 +380,6 @@ function clearGear(): void {
                         : ''
                     "
                   />
-                  <div
-                    v-if="gear.isPartial"
-                    class="next-gear-preview__warning"
-                    :title="gear.supportSummary"
-                  >
-                    {{ labels.partialSupport }}
-                  </div>
                 </template>
                 <div class="selection-card-tooltip-target">
                   <div
