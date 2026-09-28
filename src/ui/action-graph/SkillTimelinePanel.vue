@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /** 调度项始终按源数组排列；拖动预览与正式时间提交分离。 */
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue';
-import { EaButton } from '@/design-system';
+import { EaButton, EaInput } from '@/design-system';
 import type { ActionGraphDefinition } from '../../../packages/game-data-contract/src/actionGraph';
 import type { GraphEntry } from '../../application/editor/actionGraphEditing';
 import { actionNodeTitle } from './nodePresentation';
@@ -486,25 +486,29 @@ onBeforeUnmount(() => {
       >
       <form class="frame-form" @submit.prevent="applyForm">
         <label
-          >开始帧<input
+          >开始帧<EaInput
+            class="frame-form__input"
+            size="sm"
             type="number"
             min="0"
             step="1"
             :readonly="readonly"
             :disabled="disabled || Boolean(gesture)"
-            :value="startInput"
-            @input="changeFrame('start', ($event.target as HTMLInputElement).value)"
+            :model-value="startInput"
+            @input="changeFrame('start', $event)"
         /></label>
         <label
-          >结束帧<input
+          >结束帧<EaInput
+            class="frame-form__input"
+            size="sm"
             type="number"
             min="0"
             step="1"
             placeholder="无结束"
             :readonly="readonly"
             :disabled="disabled || Boolean(gesture)"
-            :value="endInput"
-            @input="changeFrame('end', ($event.target as HTMLInputElement).value)"
+            :model-value="endInput"
+            @input="changeFrame('end', $event)"
         /></label>
         <EaButton
           type="submit"
@@ -758,15 +762,12 @@ onBeforeUnmount(() => {
   white-space: nowrap;
   color: var(--ea-fg-muted);
 }
-.frame-form input {
+.frame-form__input {
   box-sizing: border-box;
   width: 76px;
-  height: 28px;
-  padding: 3px 6px;
-  border: 1px solid var(--ea-border);
-  border-radius: 0;
-  color: var(--ea-fg);
-  background: var(--ea-fill-input);
+  min-width: 0;
+}
+.frame-form__input :deep(input) {
   font:
     12px Consolas,
     monospace;
@@ -1013,7 +1014,8 @@ onBeforeUnmount(() => {
 .selected .range-handle {
   background: var(--ea-accent);
 }
-button:disabled {
+.order-grip:disabled,
+.row-choice:disabled {
   cursor: default;
 }
 .point-marker:disabled,
@@ -1021,8 +1023,11 @@ button:disabled {
 .range-handle:disabled {
   opacity: 0.75;
 }
-button:focus-visible,
-input:focus-visible {
+.order-grip:focus-visible,
+.row-choice:focus-visible,
+.point-marker:focus-visible,
+.range-body:focus-visible,
+.range-handle:focus-visible {
   outline: 1px solid var(--ea-accent);
   outline-offset: 2px;
 }

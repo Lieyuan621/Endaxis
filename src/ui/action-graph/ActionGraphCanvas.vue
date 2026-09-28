@@ -2,6 +2,7 @@
 /** 独立动作图画布。节点位置和视口只用于显示，所有程序修改都交给父级校验与提交。 */
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import * as dagre from '@dagrejs/dagre';
+import { EaButton, EaInput, EaSelect } from '@/design-system';
 import type { ActionGraphDefinition } from '../../../packages/game-data-contract/src/actionGraph';
 import type { GraphEntryGroup } from '../../application/editor/actionGraphEditing';
 import { actionNodeTitle, dataNodeTitle, compactDataSymbol } from './nodePresentation';
@@ -1513,23 +1514,25 @@ defineExpose({
       <span class="node-count"
         >{{ nodeModels.length }} 个动作 · {{ entryModels.length }} 组入口</span
       >
-      <button
-        type="button"
+      <EaButton
+        size="sm"
+        icon-only
         title="缩小"
         @click="zoomAt(1 / 1.2, viewportSize.width / 2, viewportSize.height / 2)"
       >
         −
-      </button>
+      </EaButton>
       <span class="zoom-label">{{ Math.round(camera.zoom * 100) }}%</span>
-      <button
-        type="button"
+      <EaButton
+        size="sm"
+        icon-only
         title="放大"
         @click="zoomAt(1.2, viewportSize.width / 2, viewportSize.height / 2)"
       >
         +
-      </button>
-      <button type="button" @click="fit">适应视口</button>
-      <button type="button" :disabled="readonly" @click="autoLayout">自动布局</button>
+      </EaButton>
+      <EaButton size="sm" @click="fit">适应视口</EaButton>
+      <EaButton size="sm" :disabled="readonly" @click="autoLayout">自动布局</EaButton>
     </div>
 
     <div v-if="!nodeModels.length && !entryModels.length" class="empty-graph">
@@ -1651,41 +1654,30 @@ defineExpose({
             @contextmenu.prevent.stop="pinMenu($event, dataInputPin('data', node.id, input))"
           />
           <span v-if="!node.symbol">{{ fieldName(input.path) }}</span>
-          <input
+          <EaInput
             v-if="input.source === null && input.type === 'number'"
+            class="data-input-row__control"
+            size="sm"
             :disabled="readonly"
             type="number"
-            :value="(input.value as { value: number }).value"
+            :model-value="(input.value as { value: number }).value"
             :aria-label="`${node.title} ${input.path.join('.')} 常量`"
             @pointerdown.stop
-            @change="
-              emit(
-                'constantData',
-                'data',
-                node.id,
-                input.path,
-                +($event.target as HTMLInputElement).value,
-              )
-            "
+            @change="emit('constantData', 'data', node.id, input.path, Number($event))"
           />
-          <select
+          <EaSelect
             v-else-if="input.source === null"
+            class="data-input-row__control"
+            size="sm"
             :disabled="readonly"
-            :value="String((input.value as { value: boolean }).value)"
+            :model-value="String((input.value as { value: boolean }).value)"
+            :options="[
+              { value: 'true', label: '成立' },
+              { value: 'false', label: '不成立' },
+            ]"
             @pointerdown.stop
-            @change="
-              emit(
-                'constantData',
-                'data',
-                node.id,
-                input.path,
-                ($event.target as HTMLSelectElement).value === 'true',
-              )
-            "
-          >
-            <option value="true">成立</option>
-            <option value="false">不成立</option>
-          </select>
+            @change="emit('constantData', 'data', node.id, input.path, $event === 'true')"
+          />
         </div>
       </article>
       <article
@@ -1864,47 +1856,36 @@ defineExpose({
             @contextmenu.prevent.stop="pinMenu($event, dataInputPin('action', node.id, input))"
           />
           <span>{{ dataInputLabel('action', node.id, input.path) }}</span>
-          <input
+          <EaInput
             v-if="input.source === null && input.type === 'number'"
+            class="data-input-row__control"
+            size="sm"
             :disabled="readonly"
             type="number"
-            :value="(input.value as { value: number }).value"
+            :model-value="(input.value as { value: number }).value"
             @pointerdown.stop
-            @change="
-              emit(
-                'constantData',
-                'action',
-                node.id,
-                input.path,
-                +($event.target as HTMLInputElement).value,
-              )
-            "
+            @change="emit('constantData', 'action', node.id, input.path, Number($event))"
           />
-          <select
+          <EaSelect
             v-else-if="input.source === null"
+            class="data-input-row__control"
+            size="sm"
             :disabled="readonly"
-            :value="String((input.value as { value: boolean }).value)"
+            :model-value="String((input.value as { value: boolean }).value)"
+            :options="[
+              { value: 'true', label: '成立' },
+              { value: 'false', label: '不成立' },
+            ]"
             @pointerdown.stop
-            @change="
-              emit(
-                'constantData',
-                'action',
-                node.id,
-                input.path,
-                ($event.target as HTMLSelectElement).value === 'true',
-              )
-            "
-          >
-            <option value="true">成立</option>
-            <option value="false">不成立</option>
-          </select>
+            @change="emit('constantData', 'action', node.id, input.path, $event === 'true')"
+          />
         </div>
       </article>
     </div>
 
     <div v-if="pendingConnection" class="connection-status" @pointerdown.stop>
       <span>{{ pendingConnection.label }} · 拖到另一端引脚接线，Esc 取消</span>
-      <button type="button" @click="cancelGesture">取消</button>
+      <EaButton size="sm" @click="cancelGesture">取消</EaButton>
     </div>
     <div
       v-else
@@ -1918,7 +1899,7 @@ defineExpose({
     <div
       v-if="contextMenu"
       role="menu"
-      class="graph-context-menu"
+      class="graph-context-menu ea-floating-surface"
       :class="{ 'node-creation-menu': contextMenu.searchable }"
       :style="{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }"
       @pointerdown.stop
@@ -1926,7 +1907,8 @@ defineExpose({
       @keydown.stop="menuKeydown"
       @wheel.stop
     >
-      <input
+      <EaInput
+        class="node-creation-menu__search"
         v-if="contextMenu.searchable"
         v-model="menuQuery"
         :placeholder="t('actionGraphEditor.searchNodes')"
@@ -1979,14 +1961,14 @@ defineExpose({
   border-color: #548f86;
 }
 .compact-operation {
-  background: linear-gradient(#30343d, #20242c);
+  background: var(--graph-operation-bg);
 }
 .operation-symbol {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: #d6dce4;
+  color: var(--graph-text);
   font: 600 24px/1 sans-serif;
   pointer-events: none;
 }
@@ -1995,14 +1977,14 @@ defineExpose({
 }
 .data-node.variable {
   border-radius: 18px;
-  background: linear-gradient(#2d3937, #192220);
+  background: var(--graph-variable-bg);
 }
 .variable-name {
   display: block;
   padding: 0 22px 0 14px;
   line-height: 34px;
   font-size: 12px;
-  color: #d7e8e1;
+  color: var(--graph-variable-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2011,22 +1993,22 @@ defineExpose({
   border-color: #e39b4a;
 }
 .data-node.boolean:not(.effectful) .node-header {
-  background: #434047;
+  background: var(--graph-boolean-header);
 }
 .data-node.effectful .node-header {
-  background: #614728;
+  background: var(--graph-effect-header);
 }
 .graph-node.variable-write .node-header {
-  background: #315346;
+  background: var(--graph-write-header);
 }
 .graph-node.scope-node .node-header {
-  background: #53406c;
+  background: var(--graph-scope-header);
 }
 .graph-node.branch .node-header {
-  background: #4d5058;
+  background: var(--graph-branch-header);
 }
 .graph-node.call .node-header {
-  background: #344b6b;
+  background: var(--graph-call-header);
 }
 .data-node.boolean {
   border-color: #ad5961;
@@ -2034,11 +2016,11 @@ defineExpose({
 .data-wire {
   fill: none;
   stroke-width: 2;
-  stroke: #62c5a7;
+  stroke: var(--graph-data-wire);
   pointer-events: none;
 }
 .data-wire.boolean {
-  stroke: #e07987;
+  stroke: var(--graph-boolean-wire);
 }
 .data-wire.highlighted {
   stroke-width: 4;
@@ -2048,18 +2030,18 @@ defineExpose({
   width: 16px;
   height: 16px;
   padding: 0;
-  border: 3px solid #193039;
+  border: 3px solid var(--graph-data-pin-border);
   border-radius: 50%;
-  background: #62c5a7;
+  background: var(--graph-data-wire);
   z-index: 4;
   transform: translateY(-50%);
   cursor: crosshair;
 }
 .data-pin.boolean {
-  background: #e07987;
+  background: var(--graph-boolean-wire);
 }
-.data-pin:hover {
-  outline: 2px solid #fff;
+.data-pin:focus-visible {
+  outline: 2px solid var(--graph-text);
 }
 .data-pin.input {
   left: -8px;
@@ -2088,15 +2070,59 @@ defineExpose({
   white-space: nowrap;
   pointer-events: none;
 }
-.data-input-row input,
-.data-input-row select {
+.data-input-row__control {
   width: 60px;
   min-width: 40px;
-  background: #171f2b;
-  border: 1px solid #4c647a;
-  color: #e0e7ed;
 }
 .action-graph-canvas {
+  /* 图形语义色独立于主题，表面与文字随工作台主题切换。 */
+  --graph-canvas-bg: #151920;
+  --graph-grid-dot: #323944;
+  --graph-text: #dce2eb;
+  --graph-muted: #8798ad;
+  --graph-toolbar-bg: #202630ed;
+  --graph-toolbar-border: #3c4551;
+  --graph-toolbar-text: #aeb9c9;
+  --graph-node-bg: #252c37;
+  --graph-node-border: #506076;
+  --graph-node-header: #30455b;
+  --graph-node-header-border: #526075;
+  --graph-header-title: #eef4ff;
+  --graph-header-id: #8fa5bc;
+  --graph-entry-header: #663743;
+  --graph-entry-header-border: #955563;
+  --graph-row-bg: #282e38;
+  --graph-row-alt-bg: #252b35;
+  --graph-row-border: #3b4554;
+  --graph-row-selected-bg: #393d36;
+  --graph-row-hover: #43596e44;
+  --graph-entry-text: #d7e7fa;
+  --graph-entry-number: #9bafc8;
+  --graph-entry-title: #c3e2ff;
+  --graph-entry-subtitle: #b8c7d8;
+  --graph-operation-bg: linear-gradient(#30343d, #20242c);
+  --graph-variable-bg: linear-gradient(#2d3937, #192220);
+  --graph-variable-text: #d7e8e1;
+  --graph-boolean-header: #434047;
+  --graph-effect-header: #614728;
+  --graph-write-header: #315346;
+  --graph-scope-header: #53406c;
+  --graph-branch-header: #4d5058;
+  --graph-call-header: #344b6b;
+  --graph-data-pin-border: #193039;
+  --graph-wire: #94a6ba;
+  --graph-entry-wire: #91badb;
+  --graph-data-wire: #62c5a7;
+  --graph-boolean-wire: #e07987;
+  --graph-highlight: #ffd26d;
+  --graph-pending-wire: #79ceff;
+  --graph-hover-wire: #ffe5a0;
+  --graph-port: #ccd9e9;
+  --graph-port-connected: #d7e7f9;
+  --graph-menu-hover: #414d5e;
+  --graph-help-bg: #151920d9;
+  --graph-status-bg: #243e51;
+  --graph-status-text: #bbdfff;
   position: relative;
   width: 100%;
   height: 100%;
@@ -2105,9 +2131,9 @@ defineExpose({
   /* 画布由 camera 平移；聚焦菜单或节点不能触发浏览器自身滚动。 */
   overflow: clip;
   outline: none;
-  background-color: #151920;
-  background-image: radial-gradient(circle, #323944 1px, transparent 1px);
-  color: #dce2eb;
+  background-color: var(--graph-canvas-bg);
+  background-image: radial-gradient(circle, var(--graph-grid-dot) 1px, transparent 1px);
+  color: var(--graph-text);
   font-family: inherit;
   user-select: none;
   touch-action: none;
@@ -2115,6 +2141,55 @@ defineExpose({
 }
 .action-graph-canvas:active {
   cursor: grabbing;
+}
+:global(html[data-theme='light'] .action-graph-canvas) {
+  --graph-canvas-bg: #e8eaed;
+  --graph-grid-dot: #c6cbd2;
+  --graph-text: #28313d;
+  --graph-muted: #647386;
+  --graph-toolbar-bg: #fffffff2;
+  --graph-toolbar-border: #bdc5ce;
+  --graph-toolbar-text: #526171;
+  --graph-node-bg: #ffffff;
+  --graph-node-border: #9eacba;
+  --graph-node-header: #dce8f3;
+  --graph-node-header-border: #afc3d7;
+  --graph-header-title: #203449;
+  --graph-header-id: #63778e;
+  --graph-entry-header: #f1dfe3;
+  --graph-entry-header-border: #cca4af;
+  --graph-row-bg: #fafbfc;
+  --graph-row-alt-bg: #f2f5f8;
+  --graph-row-border: #d3dce6;
+  --graph-row-selected-bg: #fff6d9;
+  --graph-row-hover: #e4eef7;
+  --graph-entry-text: #28384b;
+  --graph-entry-number: #64778c;
+  --graph-entry-title: #205b88;
+  --graph-entry-subtitle: #52677c;
+  --graph-operation-bg: linear-gradient(#ffffff, #e7ebef);
+  --graph-variable-bg: linear-gradient(#f2faf6, #e0eee7);
+  --graph-variable-text: #245846;
+  --graph-boolean-header: #ede2e5;
+  --graph-effect-header: #f8e7ce;
+  --graph-write-header: #d8eee2;
+  --graph-scope-header: #ebddf5;
+  --graph-branch-header: #e1e5ea;
+  --graph-call-header: #dce8f7;
+  --graph-data-pin-border: #ffffff;
+  --graph-wire: #65778a;
+  --graph-entry-wire: #447aa5;
+  --graph-data-wire: #24866b;
+  --graph-boolean-wire: #bd4f60;
+  --graph-highlight: #a67000;
+  --graph-pending-wire: #267da8;
+  --graph-hover-wire: #b18014;
+  --graph-port: #61778d;
+  --graph-port-connected: #527da5;
+  --graph-menu-hover: var(--ea-menu-hover-bg);
+  --graph-help-bg: #ffffffde;
+  --graph-status-bg: #deeffb;
+  --graph-status-text: #245777;
 }
 .canvas-toolbar {
   position: absolute;
@@ -2125,42 +2200,26 @@ defineExpose({
   align-items: center;
   gap: 6px;
   padding: 5px 7px;
-  border: 1px solid #3c4551;
+  border: 1px solid var(--graph-toolbar-border);
   border-radius: 6px;
-  background: #202630ed;
+  background: var(--graph-toolbar-bg);
   font-size: 12px;
   cursor: default;
-  box-shadow: 0 3px 14px #0005;
+  box-shadow: 0 3px 14px var(--ea-shadow);
 }
-.canvas-toolbar button,
-.connection-status button {
-  padding: 5px 9px;
-  border: 1px solid transparent;
-  border-radius: 3px;
-  background: transparent;
-  color: #dce2eb;
-  font: inherit;
-  cursor: pointer;
-}
-.canvas-toolbar button:hover,
-.connection-status button:hover {
-  background: #3b4655;
-}
-.canvas-toolbar button:focus-visible,
-.connection-status button:focus-visible,
 .port-button:focus-visible {
-  outline: 2px solid #84c4ff;
+  outline: 2px solid var(--ea-gold);
   outline-offset: -2px;
 }
 .node-count {
   padding: 0 9px 0 4px;
-  border-right: 1px solid #495362;
-  color: #aeb9c9;
+  border-right: 1px solid var(--graph-toolbar-border);
+  color: var(--graph-toolbar-text);
 }
 .zoom-label {
   min-width: 35px;
   text-align: center;
-  color: #b6c3d3;
+  color: var(--graph-toolbar-text);
   font-variant-numeric: tabular-nums;
 }
 .graph-world {
@@ -2179,17 +2238,17 @@ defineExpose({
 }
 .execution-wire {
   fill: none;
-  stroke: #94a6ba;
+  stroke: var(--graph-wire);
   stroke-width: 2;
   opacity: 0.72;
 }
 .execution-wire.selected {
-  stroke: #ffd26d;
+  stroke: var(--graph-highlight);
   stroke-width: 2.5;
   opacity: 1;
 }
 .execution-wire.entry-wire:not(.selected) {
-  stroke: #91badb;
+  stroke: var(--graph-entry-wire);
   opacity: 0.88;
 }
 .execution-wire.faded {
@@ -2199,13 +2258,13 @@ defineExpose({
   opacity: 0.12;
 }
 .execution-wire.pending {
-  stroke: #79ceff;
+  stroke: var(--graph-pending-wire);
   stroke-width: 2.5;
   stroke-dasharray: 7 5;
   opacity: 1;
 }
 .execution-wire.hovered {
-  stroke: #ffe5a0;
+  stroke: var(--graph-hover-wire);
   opacity: 1;
   stroke-width: 3;
 }
@@ -2222,10 +2281,6 @@ defineExpose({
   z-index: 10;
   min-width: 190px;
   padding: 5px;
-  background: #252c37;
-  border: 1px solid #596779;
-  border-radius: 4px;
-  box-shadow: 0 4px 16px #0008;
 }
 .graph-context-menu button {
   display: block;
@@ -2245,14 +2300,10 @@ defineExpose({
   flex-direction: column;
   overflow: hidden;
 }
-.node-creation-menu > input {
+.node-creation-menu__search {
   box-sizing: border-box;
   width: 100%;
   margin-bottom: 6px;
-  padding: 7px;
-  background: #151920;
-  border: 1px solid #455168;
-  color: inherit;
 }
 .menu-panels {
   display: flex;
@@ -2261,14 +2312,14 @@ defineExpose({
 .menu-groups {
   flex: 0 0 135px;
   overflow-y: auto;
-  border-right: 1px solid #455168;
+  border-right: 1px solid var(--ea-border);
 }
 .menu-groups button {
   display: flex;
   justify-content: space-between;
 }
 .menu-groups .active {
-  background: #414d5e;
+  background: var(--graph-menu-hover);
 }
 .menu-results {
   flex: 1;
@@ -2278,33 +2329,32 @@ defineExpose({
 .menu-empty {
   display: block;
   padding: 10px;
-  color: #9aa8bc;
+  color: var(--graph-muted);
 }
-.graph-context-menu button:hover,
 .graph-context-menu button:focus-visible {
-  background: #414d5e;
+  background: var(--graph-menu-hover);
 }
 .graph-node {
   position: absolute;
   box-sizing: border-box;
-  border: 1px solid #506076;
+  border: 1px solid var(--graph-node-border);
   border-radius: 7px;
-  background: #252c37;
-  box-shadow: 0 4px 12px #0008;
+  background: var(--graph-node-bg);
+  box-shadow: 0 4px 12px var(--ea-shadow);
   cursor: default;
 }
 .graph-node.selected {
-  border-color: #ffd26d;
+  border-color: var(--graph-highlight);
   box-shadow:
-    0 0 0 2px #ffd26d,
-    0 5px 16px #0008;
+    0 0 0 2px var(--graph-highlight),
+    0 5px 16px var(--ea-shadow);
   z-index: 1;
 }
 .graph-node.entry-target {
-  border-color: #ffd26d;
+  border-color: var(--graph-highlight);
   box-shadow:
-    0 0 0 2px #ffd26d88,
-    0 5px 16px #0008;
+    0 0 0 2px color-mix(in srgb, var(--graph-highlight) 53%, transparent),
+    0 5px 16px var(--ea-shadow);
 }
 .node-header {
   position: relative;
@@ -2315,14 +2365,14 @@ defineExpose({
   height: var(--node-header-height);
   padding: 9px 12px 8px;
   border-radius: 6px 6px 0 0;
-  border-bottom: 1px solid #526075;
-  background: #30455b;
+  border-bottom: 1px solid var(--graph-node-header-border);
+  background: var(--graph-node-header);
   cursor: move;
 }
 .entry-header {
   position: relative;
-  background: #663743;
-  border-bottom-color: #955563;
+  background: var(--graph-entry-header);
+  border-bottom-color: var(--graph-entry-header-border);
 }
 .timeline-header {
   padding-right: 112px;
@@ -2341,26 +2391,23 @@ defineExpose({
   line-height: 18px;
   cursor: pointer;
 }
-.edit-timeline-button:hover {
-  background: #996474;
-}
 .entry-row {
   position: absolute;
   left: 0;
   right: 0;
   box-sizing: border-box;
   padding: 0;
-  box-shadow: inset 0 -1px #3b4554;
-  background: #282e38;
+  box-shadow: inset 0 -1px var(--graph-row-border);
+  background: var(--graph-row-bg);
 }
 .entry-row:nth-of-type(even) {
-  background: #252b35;
+  background: var(--graph-row-alt-bg);
 }
 .entry-row.selected-entry-row {
-  background: #393d36;
+  background: var(--graph-row-selected-bg);
   box-shadow:
-    inset 3px 0 #ffd26d,
-    inset 0 -1px #3b4554;
+    inset 3px 0 var(--graph-highlight),
+    inset 0 -1px var(--graph-row-border);
 }
 .entry-item {
   display: flex;
@@ -2373,16 +2420,13 @@ defineExpose({
   padding: 6px 22px 6px 12px;
   border: none;
   background: transparent;
-  color: #d7e7fa;
+  color: var(--graph-entry-text);
   text-align: left;
   cursor: pointer;
 }
-.entry-item:hover {
-  background: #43596e44;
-}
 .entry-number {
   flex: 0 0 24px;
-  color: #9bafc8;
+  color: var(--graph-entry-number);
   font:
     11px/18px ui-monospace,
     monospace;
@@ -2401,18 +2445,18 @@ defineExpose({
   text-overflow: ellipsis;
 }
 .entry-summary > strong {
-  color: #c3e2ff;
+  color: var(--graph-entry-title);
   font:
     12px/18px ui-monospace,
     monospace;
 }
 .entry-summary > span {
-  color: #b8c7d8;
+  color: var(--graph-entry-subtitle);
   font-size: 11px;
 }
 .entry-item:focus-visible,
 .edit-timeline-button:focus-visible {
-  outline: 2px solid #84c4ff;
+  outline: 2px solid var(--ea-gold);
   outline-offset: -2px;
 }
 .entry-output {
@@ -2436,7 +2480,7 @@ defineExpose({
   box-sizing: border-box;
   border: none;
   background: transparent;
-  color: #c8d5e5;
+  color: var(--graph-text);
   font: inherit;
   font-size: 11px;
   cursor: crosshair;
@@ -2487,18 +2531,14 @@ defineExpose({
   width: 10px;
   height: 10px;
   box-sizing: border-box;
-  border: 2px solid #ccd9e9;
+  border: 2px solid var(--graph-port);
   border-radius: 2px;
-  background: #252c37;
+  background: var(--graph-node-bg);
   transform: rotate(45deg);
 }
 .connected .port-pin {
-  background: #d7e7f9;
+  background: var(--graph-port-connected);
 }
-.port-button:hover {
-  color: #fff;
-}
-.port-button:hover .port-pin,
 .port-button.pending .port-pin,
 .input-port.available .port-pin {
   border-color: #7ed1ff;
@@ -2514,14 +2554,14 @@ defineExpose({
   position: absolute;
   pointer-events: none;
   font-size: 12px;
-  color: #8798ad;
+  color: var(--graph-muted);
 }
 .canvas-help {
   right: 10px;
   bottom: 8px;
   padding: 4px 7px;
   border-radius: 3px;
-  background: #151920d9;
+  background: var(--graph-help-bg);
   pointer-events: auto;
   cursor: help;
 }
@@ -2549,11 +2589,33 @@ defineExpose({
   padding: 6px 10px 6px 15px;
   border: 1px solid #527e9e;
   border-radius: 5px;
-  background: #243e51;
-  color: #bbdfff;
+  background: var(--graph-status-bg);
+  color: var(--graph-status-text);
   font-size: 12px;
   white-space: nowrap;
   cursor: default;
+}
+@media (hover: hover) and (pointer: fine) {
+  .data-pin:hover {
+    outline: 2px solid var(--graph-text);
+  }
+  .graph-context-menu button:hover {
+    background: var(--graph-menu-hover);
+  }
+  .edit-timeline-button:hover {
+    background: #996474;
+  }
+  .entry-item:hover {
+    background: var(--graph-row-hover);
+  }
+  .port-button:hover {
+    color: var(--graph-text);
+  }
+  .port-button:hover .port-pin {
+    border-color: #7ed1ff;
+    background: #347698;
+    box-shadow: 0 0 7px #60c7ff99;
+  }
 }
 @media (max-width: 700px) {
   .node-count {

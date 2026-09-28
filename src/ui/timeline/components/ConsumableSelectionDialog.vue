@@ -127,7 +127,7 @@ const filtered = computed(() => {
   padding: 8px;
   border: 1px solid var(--ea-border);
   border-radius: 7px;
-  background: var(--ea-bg-soft);
+  background: var(--ea-surface-soft);
   color: inherit;
   line-height: normal;
   text-align: left;

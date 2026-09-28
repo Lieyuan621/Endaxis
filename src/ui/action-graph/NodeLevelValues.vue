@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { EaButton } from '@/design-system';
+import { EaButton, EaInput, EaSelect, type EaSelectValue } from '@/design-system';
 
 const props = defineProps<{ text: string; required: boolean; label: string }>();
 const emit = defineEmits<{ change: [text: string] }>();
@@ -15,43 +15,53 @@ const mode = computed(() =>
 const values = computed<readonly number[]>(() =>
   Array.isArray(value.value) ? value.value : [value.value ?? 0],
 );
-function switchMode(mode: string) {
+const drafts = ref<string[]>([]);
+watch(values, current => (drafts.value = current.map(String)), { immediate: true });
+
+function switchMode(mode: EaSelectValue | EaSelectValue[]) {
+  if (mode !== 'unset' && mode !== 'single' && mode !== 'levels') return;
   if (mode === 'unset') emit('change', '');
   else emit('change', JSON.stringify(mode === 'levels' ? values.value : (values.value[0] ?? 0)));
 }
-function update(index: number, event: Event) {
-  const input = event.target as HTMLInputElement;
-  if (input.value === '' || !Number.isFinite(input.valueAsNumber)) {
-    input.value = String(values.value[index]);
+function update(index: number, raw: string) {
+  const nextValue = Number(raw);
+  if (raw.trim() === '' || !Number.isFinite(nextValue)) {
+    drafts.value[index] = String(values.value[index]);
     return;
   }
   const next = [...values.value];
-  next[index] = input.valueAsNumber;
+  next[index] = nextValue;
   emit('change', JSON.stringify(mode.value === 'levels' ? next : next[0]));
 }
 </script>
 
 <template>
   <div class="level-values">
-    <select
+    <EaSelect
+      class="level-values__mode"
       :aria-label="label"
-      :value="mode"
-      @change="switchMode(($event.target as HTMLSelectElement).value)"
-    >
-      <option v-if="!required" value="unset">{{ t('actionGraphEditor.unset') }}</option>
-      <option value="single">{{ t('actionGraphEditor.singleValue') }}</option>
-      <option value="levels">{{ t('actionGraphEditor.levelValues') }}</option>
-    </select>
+      size="sm"
+      :model-value="mode"
+      :options="[
+        ...(!required ? [{ value: 'unset', label: t('actionGraphEditor.unset') }] : []),
+        { value: 'single', label: t('actionGraphEditor.singleValue') },
+        { value: 'levels', label: t('actionGraphEditor.levelValues') },
+      ]"
+      @change="switchMode"
+    />
     <template v-if="mode !== 'unset'">
       <label v-for="(item, index) in values" :key="index" class="level-row">
         <span v-if="mode === 'levels'">{{
           t('actionGraphEditor.levelIndex', { index: index + 1 })
         }}</span>
-        <input
+        <EaInput
+          class="level-row__input"
+          size="sm"
           type="number"
           step="any"
           :aria-label="`${label} ${index + 1}`"
-          :value="item"
+          :model-value="drafts[index] ?? String(item)"
+          @input="drafts[index] = $event"
           @change="update(index, $event)"
         />
         <EaButton
@@ -87,7 +97,10 @@ function update(index: number, event: Event) {
 .level-row span {
   flex: 0 0 auto;
 }
-.level-row input {
+.level-values__mode {
+  width: 100%;
+}
+.level-row__input {
   flex: 1;
   min-width: 0;
 }

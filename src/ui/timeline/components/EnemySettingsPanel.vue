@@ -722,7 +722,7 @@ function removeKnotThreshold(index: number): void {
   gap: 14px;
   margin-bottom: 16px;
 }
-.selector-header .el-input {
+.selector-header .ea-input {
   width: 180px;
 }
 .enemy-level-picker {

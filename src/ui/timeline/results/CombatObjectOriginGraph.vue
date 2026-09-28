@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, useId, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { EaButton, EaDialog } from '../../../design-system/index';
+import { EaButton, EaDialog, EaSelect, type EaSelectValue } from '../../../design-system/index';
 import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
 import { CombatObjectOrigins } from '../../../core/projection/combatObjectOrigins';
 import type {
@@ -66,6 +66,14 @@ const relations: readonly CombatObjectRelation[] = [
   'modifiedBy',
   'providedBy',
 ];
+const relationOptions = computed(() => [
+  { value: 'buffChanges', label: t('objectOrigins.buffChanges') },
+  { value: 'all', label: t('objectOrigins.all') },
+  ...relations.map(relation => ({ value: relation, label: t(`objectOrigins.${relation}`) })),
+]);
+function selectRelation(value: EaSelectValue | EaSelectValue[]) {
+  if (typeof value === 'string') filter.value = value as OriginRelationFilter;
+}
 const graph = computed(() =>
   open.value && origins.value
     ? layoutCombatOriginGraph(origins.value, props.sequence, filter.value, 128, props.root)
@@ -248,15 +256,15 @@ function changeSummary(node: CombatObjectNode): string | undefined {
       @opened="focusRoot"
     >
       <div class="graph-toolbar">
-        <label
-          >{{ t('objectOrigins.relation') }}
-          <select v-model="filter">
-            <option value="buffChanges">{{ t('objectOrigins.buffChanges') }}</option>
-            <option value="all">{{ t('objectOrigins.all') }}</option>
-            <option v-for="relation in relations" :key="relation" :value="relation">
-              {{ t(`objectOrigins.${relation}`) }}
-            </option>
-          </select>
+        <label>
+          {{ t('objectOrigins.relation') }}
+          <EaSelect
+            size="sm"
+            :aria-label="t('objectOrigins.relation')"
+            :model-value="filter"
+            :options="relationOptions"
+            @change="selectRelation"
+          />
         </label>
         <div class="zoom-controls">
           <EaButton size="sm" :aria-label="t('objectOrigins.zoomOut')" @click="scaleBy(1 / 1.25)"
@@ -419,12 +427,8 @@ function changeSummary(node: CombatObjectNode): string | undefined {
   align-items: center;
   gap: 8px;
 }
-select {
-  padding: 6px 10px;
-  border: 1px solid var(--ea-border-strong);
-  border-radius: 4px;
-  background: var(--ea-panel-elevated);
-  color: inherit;
+.graph-toolbar :deep(.ea-select) {
+  min-width: 200px;
 }
 .graph-hint {
   font-size: 12px;

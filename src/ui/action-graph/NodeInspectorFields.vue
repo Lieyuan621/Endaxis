@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { EaButton } from '@/design-system';
+import {
+  EaButton,
+  EaCheckbox,
+  EaInput,
+  EaSelect,
+  EaTextarea,
+  type EaSelectValue,
+} from '@/design-system';
 import EditorHelp from '../editor/EditorHelp.vue';
 import NodeLevelValues from './NodeLevelValues.vue';
 import type { NodeFieldSchema } from './nodeSchema';
@@ -44,6 +51,11 @@ function change(key: string, value: string) {
   inputs.value[key] = value;
   pending.value = true;
   emit('pending', true);
+}
+function selectValue(key: string, value: EaSelectValue | EaSelectValue[]) {
+  if (typeof value !== 'string') return;
+  change(key, value);
+  apply();
 }
 function selectedOptions(field: NodeFieldSchema): unknown[] {
   const text = inputs.value[field.path.join('.')];
@@ -104,14 +116,15 @@ defineExpose({ apply });
         "
       />
       <div v-else-if="field.control === 'multiselect'" class="field-options">
-        <label v-for="option in field.options" :key="String(option)">
-          <input
-            type="checkbox"
-            :checked="selectedOptions(field).includes(option)"
-            @change="toggleOption(field, option, ($event.target as HTMLInputElement).checked)"
-          />
+        <EaCheckbox
+          v-for="option in field.options"
+          :key="String(option)"
+          class="field-options__checkbox"
+          :model-value="selectedOptions(field).includes(option)"
+          @change="toggleOption(field, option, $event)"
+        >
           {{ optionName(option, field.type) }}
-        </label>
+        </EaCheckbox>
         <EaButton
           v-if="!field.required && inputs[field.path.join('.')]"
           size="sm"
@@ -122,53 +135,51 @@ defineExpose({ apply });
           >{{ t('actionGraphEditor.unset') }}</EaButton
         >
       </div>
-      <select
+      <EaSelect
         v-else-if="choices?.[field.path.join('.')]"
+        class="node-field__control"
         :aria-label="fieldName(field.path, kind)"
-        :value="inputs[field.path.join('.')]"
-        @change="
-          change(field.path.join('.'), ($event.target as HTMLSelectElement).value);
-          apply();
-        "
-      >
-        <option v-for="value in choices[field.path.join('.')]" :key="value" :value="value">
-          {{ value }}
-        </option>
-      </select>
-      <select
+        size="sm"
+        :model-value="inputs[field.path.join('.')]"
+        :options="(choices?.[field.path.join('.')] ?? []).map(value => ({ value, label: value }))"
+        @change="selectValue(field.path.join('.'), $event)"
+      />
+      <EaSelect
         v-else-if="field.control === 'select' || field.control === 'boolean'"
+        class="node-field__control"
         :aria-label="fieldName(field.path, kind)"
-        :value="inputs[field.path.join('.')]"
-        @change="
-          change(field.path.join('.'), ($event.target as HTMLSelectElement).value);
-          apply();
-        "
-      >
-        <option v-if="!field.required" value="">{{ t('actionGraphEditor.unset') }}</option>
-        <option
-          v-for="option in field.control === 'boolean' ? [true, false] : field.options"
-          :key="String(option)"
-          :value="JSON.stringify(option)"
-        >
-          {{ optionName(option, field.type) }}
-        </option>
-      </select>
-      <input
+        size="sm"
+        :model-value="inputs[field.path.join('.')]"
+        :options="[
+          ...(!field.required ? [{ value: '', label: t('actionGraphEditor.unset') }] : []),
+          ...(field.control === 'boolean' ? [true, false] : (field.options ?? [])).map(option => ({
+            value: JSON.stringify(option),
+            label: optionName(option, field.type),
+          })),
+        ]"
+        @change="selectValue(field.path.join('.'), $event)"
+      />
+      <EaInput
         v-else-if="field.control === 'number' || field.control === 'string'"
+        class="node-field__control"
         :aria-label="fieldName(field.path, kind)"
+        size="sm"
         :type="field.control === 'number' ? 'number' : 'text'"
         step="any"
-        :value="inputs[field.path.join('.')]"
-        @input="change(field.path.join('.'), ($event.target as HTMLInputElement).value)"
+        :model-value="inputs[field.path.join('.')]"
+        @input="change(field.path.join('.'), $event)"
         @blur="apply"
       />
-      <textarea
+      <EaTextarea
         v-else
+        class="node-field__control node-field__textarea"
         :aria-label="fieldName(field.path, kind)"
+        size="sm"
+        variant="code"
         spellcheck="false"
         :rows="Math.min(8, Math.max(2, (inputs[field.path.join('.')] ?? '').split('\n').length))"
-        :value="inputs[field.path.join('.')]"
-        @input="change(field.path.join('.'), ($event.target as HTMLTextAreaElement).value)"
+        :model-value="inputs[field.path.join('.')]"
+        @input="change(field.path.join('.'), $event)"
         @blur="apply"
         @keydown.ctrl.enter.prevent="apply"
         @keydown.meta.enter.prevent="apply"
@@ -185,21 +196,11 @@ defineExpose({ apply });
 </template>
 
 <style scoped>
-.node-field > input,
-.node-field > select,
-.node-field > textarea {
-  box-sizing: border-box;
+.node-field__control {
   width: 100%;
   min-width: 0;
-  padding: 7px;
-  border: 1px solid var(--ea-border);
-  border-radius: 3px;
-  background: var(--ea-fill-input);
-  color: var(--ea-fg);
-  font: 12px/1.5 var(--ea-font-family, sans-serif);
 }
-.node-field > textarea {
-  resize: vertical;
+.node-field__textarea :deep(textarea) {
   font-family: Consolas, monospace;
 }
 .field-options {
@@ -207,16 +208,7 @@ defineExpose({ apply });
   flex-wrap: wrap;
   gap: 6px 12px;
 }
-.field-options label {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
+.field-options__checkbox {
   font-size: 12px;
-}
-.field-options input[type='checkbox'] {
-  width: 14px;
-  height: 14px;
-  margin: 0;
-  padding: 0;
 }
 </style>

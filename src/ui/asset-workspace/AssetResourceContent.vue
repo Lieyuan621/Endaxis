@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { EaButton } from '@/design-system';
 import type { WorkspaceAssetDefinition } from './workspaceAssetDefinition';
 import type { WorkspaceResource } from './workspaceResources';
 import { fieldValueAt } from '../definition-editor/definitionFieldRuntime';
@@ -93,12 +94,9 @@ const value = computed(
       <p class="ap-muted">{{ tr('globalEffect.hint') }}</p>
       <h2>{{ tr('globalEffect.buff') }}</h2>
       <p class="ap-muted">{{ tr('globalEffect.buffHint') }}</p>
-      <button
-        class="rw-native-button ap-reference-row"
-        @click="emit('open', JSON.stringify(['buff']))"
-      >
+      <EaButton class="ap-reference-row" @click="emit('open', JSON.stringify(['buff']))">
         {{ tr('globalEffect.openBuff') }}<WorkspaceIcon name="arrow" />
-      </button>
+      </EaButton>
     </template>
     <ResourceProperties
       v-else

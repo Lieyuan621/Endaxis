@@ -286,7 +286,7 @@ const damageTypeChartOption = computed(() => pieOption(props.analysis.byDamageTy
 
 .analysis-mode {
   margin: -12px 0 20px;
-  color: var(--ea-dialog-text);
+  color: var(--ea-dialog-body);
   font-size: 13px;
   line-height: 1.5;
 }

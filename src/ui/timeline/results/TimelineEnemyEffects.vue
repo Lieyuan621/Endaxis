@@ -533,7 +533,11 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
   box-sizing: border-box;
   transform: rotate(45deg);
   pointer-events: none;
-  transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition:
+    background-color 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    border-color 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    box-shadow 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 .standalone-damage-icon {
   position: absolute;
@@ -542,19 +546,27 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
   left: 3px;
   bottom: 6px;
   object-fit: contain;
-  background: var(--ea-bg-panel, #252525);
+  background: var(--ea-workbench-panel);
   border: 1px solid var(--ea-border, #666);
-}
-.enemy-damage-hit:hover .enemy-damage-diamond {
-  background: var(--ea-gold);
-  border-color: #fff;
-  box-shadow: 0 0 4px color-mix(in srgb, var(--ea-gold) 80%, transparent);
-  transform: rotate(45deg) scale(1.3);
 }
 .enemy-damage-hit.is-critical .enemy-damage-diamond {
   background: #ff6b6b;
   border-color: #ffd166;
   box-shadow: 0 0 8px rgba(255, 209, 102, 0.9);
+}
+.enemy-damage-hit:focus-visible {
+  outline: none;
+}
+.enemy-damage-hit:focus-visible .enemy-damage-diamond {
+  box-shadow: var(--ea-focus-ring);
+}
+@media (hover: hover) and (pointer: fine) {
+  .enemy-damage-hit:hover .enemy-damage-diamond {
+    background: var(--ea-gold);
+    border-color: #fff;
+    box-shadow: 0 0 4px color-mix(in srgb, var(--ea-gold) 80%, transparent);
+    transform: rotate(45deg) scale(1.3);
+  }
 }
 </style>
 
@@ -667,16 +679,12 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
     box-shadow 0.12s ease;
 }
 
-.anomaly-icon-box:hover {
-  filter: brightness(1.18);
-  border-color: rgb(255 255 255 / 95%);
-  box-shadow:
-    0 0 0 1px rgb(255 255 255 / 22%),
-    0 4px 12px rgb(0 0 0 / 46%);
-}
-
 .anomaly-icon-box.is-clickable {
   cursor: pointer;
+}
+.anomaly-icon-box:focus-visible {
+  outline: none;
+  box-shadow: var(--ea-focus-ring);
 }
 
 .anomaly-icon {
@@ -684,10 +692,6 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
   height: 100%;
   object-fit: cover;
   transition: filter 0.12s ease;
-}
-
-.anomaly-icon-box:hover .anomaly-icon {
-  filter: brightness(1.12) saturate(1.08);
 }
 
 .buff-fallback {
@@ -726,15 +730,26 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
     box-shadow 0.12s ease;
 }
 
-.anomaly-duration-bar:hover {
-  filter: brightness(1.16) saturate(1.08);
-  box-shadow:
-    0 0 0 1px rgb(255 255 255 / 18%),
-    0 2px 8px rgb(0 0 0 / 50%);
-}
-
 .generic-buff-bar {
-  background: var(--ea-mark-soft, #596a7a);
+  background: color-mix(in srgb, var(--ea-fg) 30%, var(--ea-workbench-main));
+}
+@media (hover: hover) and (pointer: fine) {
+  .anomaly-icon-box:hover {
+    filter: brightness(1.18);
+    border-color: rgb(255 255 255 / 95%);
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 22%),
+      0 4px 12px rgb(0 0 0 / 46%);
+  }
+  .anomaly-icon-box:hover .anomaly-icon {
+    filter: brightness(1.12) saturate(1.08);
+  }
+  .anomaly-duration-bar:hover {
+    filter: brightness(1.16) saturate(1.08);
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 18%),
+      0 2px 8px rgb(0 0 0 / 50%);
+  }
 }
 
 .striped-bg {

@@ -74,7 +74,7 @@ defineProps<{
   margin: 0;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  color: #ff9999;
+  color: color-mix(in srgb, var(--ea-control-error) 75%, var(--ea-fg));
   font-size: 12px;
 }
 .editor-inspector :deep(.actions) {

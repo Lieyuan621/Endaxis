@@ -102,7 +102,7 @@ function applyGaugeDraft(): void {
         <form
           v-if="gaugeEditorOpen"
           id="timeline-initial-gauge-editor"
-          class="gauge-popover"
+          class="gauge-popover ea-floating-surface"
           @submit.prevent="applyGaugeDraft"
         >
           <EaNumberInput
@@ -214,13 +214,10 @@ function applyGaugeDraft(): void {
   background: var(--ea-fill-input);
   color: var(--ea-fg-muted);
   cursor: pointer;
-  transition: all 0.2s;
-}
-
-.mini-tool-button:hover {
-  border-color: var(--ea-border-strong, #777);
-  background: var(--ea-hover-fill, #444);
-  color: var(--ea-fg-secondary, #ccc);
+  transition:
+    border-color 0.2s,
+    background-color 0.2s,
+    color 0.2s;
 }
 
 .mini-tool-button:disabled {
@@ -264,9 +261,6 @@ function applyGaugeDraft(): void {
   display: flex;
   align-items: center;
   padding: 6px 8px;
-  border: 1px solid var(--ea-border-strong);
-  background: var(--ea-tooltip-bg);
-  box-shadow: 0 10px 25px var(--ea-shadow-strong);
   transform: translateY(-50%);
 }
 
@@ -350,15 +344,11 @@ function applyGaugeDraft(): void {
 }
 
 .zoom-info > span {
-  color: #555;
+  color: var(--ea-fg-faint);
   font-size: 8px;
   font-weight: 700;
   letter-spacing: 0.5px;
 }
-.zoom-step:hover {
-  color: var(--ea-gold);
-}
-
 .zoom-slider-row {
   width: 100%;
   gap: 4px;
@@ -373,7 +363,7 @@ function applyGaugeDraft(): void {
   flex: 1 1 auto;
   margin: 2px;
   appearance: none;
-  background: #555;
+  background: var(--ea-border-strong);
   outline: none;
   border-radius: 1px;
 }
@@ -385,8 +375,8 @@ function applyGaugeDraft(): void {
   background: var(--ea-gold);
   border-radius: 50%;
   cursor: pointer;
-  border: 1px solid #333;
-  box-shadow: 0 0 2px rgb(0 0 0 / 50%);
+  border: 1px solid var(--ea-border-strong);
+  box-shadow: 0 0 2px var(--ea-shadow);
   transition: transform 0.1s;
 }
 .zoom-slider-row input::-moz-range-thumb {
@@ -398,6 +388,14 @@ function applyGaugeDraft(): void {
   border: none;
 }
 @media (hover: hover) and (pointer: fine) {
+  .mini-tool-button:hover:not(:disabled) {
+    border-color: var(--ea-border-strong);
+    background: var(--ea-hover-fill);
+    color: var(--ea-fg-secondary);
+  }
+  .zoom-step:hover:not(:disabled) {
+    color: var(--ea-gold);
+  }
   .mini-tool-button[aria-pressed='true']:hover:not(:disabled) {
     border-color: var(--ea-gold);
     background: color-mix(in srgb, var(--ea-gold) 10%, transparent);

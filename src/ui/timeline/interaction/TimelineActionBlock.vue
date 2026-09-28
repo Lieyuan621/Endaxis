@@ -525,8 +525,7 @@ function formatDurationFrames(frames: number): string {
 }
 
 .timeline-action-block[data-selected='true'] {
-  border: 2px dashed var(--ea-action-selected, #fff);
-  border-color: var(--action-selected, #fff);
+  border: 2px dashed var(--action-selected, var(--ea-action-fg));
   background-image: linear-gradient(var(--action-fill), var(--action-fill));
   color: var(--ea-action-fg, rgba(255, 255, 255, 0.9));
   box-shadow: 0 0 10px color-mix(in srgb, var(--action-accent) 50%, transparent);
@@ -617,7 +616,7 @@ function formatDurationFrames(frames: number): string {
   height: 8px;
   border-radius: 50%;
   background: var(--action-accent);
-  box-shadow: 0 0 0 1px var(--ea-workbench-bg);
+  box-shadow: 0 0 0 1px var(--ea-workbench-main);
   cursor: crosshair;
 }
 

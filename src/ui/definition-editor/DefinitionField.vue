@@ -1,7 +1,15 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { EaInput, EaNumberInput, EaSelect } from '@/design-system';
+import {
+  EaButton,
+  EaCheckbox,
+  EaInput,
+  EaNumberInput,
+  EaSelect,
+  type EaSelectOption,
+  type EaSelectValue,
+} from '@/design-system';
 import type { DefinitionFieldSchema } from './fieldSchema';
 import { REFERENCE_FIELD_KIND, type ReferenceChoices } from './fieldInputConfig';
 import {
@@ -78,9 +86,9 @@ const isContainer = computed(() =>
     fieldSchemaForValue(props.schema, props.value ?? optionalDraft.value, props.name).kind,
   ),
 );
-function toggleOptional(event: Event): void {
+function toggleOptional(checked: boolean): void {
   if (readonlyField.value) return;
-  optionalEnabled.value = (event.target as HTMLInputElement).checked;
+  optionalEnabled.value = checked;
   if (!optionalEnabled.value) update(undefined);
   else if (optionalDraft.value !== undefined) update(optionalDraft.value);
 }
@@ -94,6 +102,28 @@ const label = computed(() =>
 function optionLabel(option: string | number): string {
   const key = `definitionEditor.options.${String(option)}`;
   return te(key) ? t(key) : String(option);
+}
+function choiceOptions(schema: DefinitionFieldSchema, stringValues = false): EaSelectOption[] {
+  const placeholder: EaSelectOption = {
+    value: '',
+    label: t('definitionEditor.chooseValue'),
+    disabled: true,
+  };
+  if (schema.kind === 'boolean')
+    return [
+      placeholder,
+      { value: 'true', label: t('definitionEditor.yes') },
+      { value: 'false', label: t('definitionEditor.no') },
+    ];
+  if (schema.kind === 'enum')
+    return [
+      placeholder,
+      ...schema.options.map(option => ({
+        value: stringValues ? String(option) : option,
+        label: optionLabel(option),
+      })),
+    ];
+  return [placeholder];
 }
 const referenceKind = computed(() => props.referenceKind ?? REFERENCE_FIELD_KIND[props.name]);
 const choices = computed(() => props.referenceChoices?.[referenceKind.value ?? ''] ?? []);
@@ -197,8 +227,7 @@ function canAddEntry(schema: DefinitionFieldSchema): boolean {
 function removeArrayEntry(index: number) {
   update((props.value as readonly unknown[]).filter((_, current) => current !== index));
 }
-function updateNumber(event: Event) {
-  const raw = (event.target as HTMLInputElement).value;
+function updateNumber(raw: string) {
   if (raw === '') return;
   const number = Number(raw);
   if (Number.isFinite(number)) update(number);
@@ -206,11 +235,11 @@ function updateNumber(event: Event) {
 function updateNumberValue(value: number | undefined): void {
   if (value !== undefined && Number.isFinite(value)) update(value);
 }
-function updateOptionalChoice(event: Event): void {
-  const chosen = (event.target as HTMLSelectElement).value;
+function updateOptionalChoice(chosen: EaSelectValue | EaSelectValue[]): void {
+  if (Array.isArray(chosen)) return;
   if (shape.value.kind === 'boolean') update(chosen === 'true');
   if (shape.value.kind === 'enum')
-    update(shape.value.options.find(option => String(option) === chosen));
+    update(shape.value.options.find(option => String(option) === String(chosen)));
 }
 function variantLabel(variant: DefinitionFieldSchema): string {
   if (variant.kind === 'enum')
@@ -225,8 +254,9 @@ function variantLabel(variant: DefinitionFieldSchema): string {
     return optionLabel(variant.fields.kind.options[0]!);
   return t(`definitionEditor.valueTypes.${variant.kind}`);
 }
-function switchVariant(event: Event): void {
-  const index = Number((event.target as HTMLSelectElement).value);
+function switchVariant(chosen: EaSelectValue | EaSelectValue[]): void {
+  if (Array.isArray(chosen)) return;
+  const index = Number(chosen);
   const variant = union.value?.variants[index];
   if (!variant) return;
   pendingVariantIndex.value = null;
@@ -269,15 +299,13 @@ function applyPendingVariant(): void {
     }"
   >
     <template v-if="schema?.optional">
-      <label class="definition-field__enable">
-        <input
-          type="checkbox"
-          :checked="optionalEnabled"
-          :disabled="readonlyField || schema.kind === 'condition' || schema.kind === 'opaque'"
-          @change="toggleOptional"
-        />
-        <span>{{ label }}</span>
-      </label>
+      <EaCheckbox
+        class="definition-field__enable"
+        :model-value="optionalEnabled"
+        :disabled="readonlyField || schema.kind === 'condition' || schema.kind === 'opaque'"
+        @change="toggleOptional"
+        >{{ label }}</EaCheckbox
+      >
       <DefinitionField
         :name="name"
         :value="value ?? optionalDraft"
@@ -300,28 +328,26 @@ function applyPendingVariant(): void {
       :class="{ 'definition-field__value-only': hideLabel }"
     >
       <span v-if="!hideLabel">{{ label }}</span>
-      <select
+      <EaSelect
         v-if="union && canSwitchUnion"
         :disabled="!editable"
-        :value="pendingVariantIndex ?? ''"
+        :model-value="pendingVariantIndex ?? ''"
+        :options="[
+          { value: '', label: t('definitionEditor.chooseValue'), disabled: true },
+          ...union.variants.map((variant, index) => ({
+            value: index,
+            label: variantLabel(variant),
+            disabled: !canChooseVariant(variant),
+          })),
+        ]"
         @change="switchVariant"
-      >
-        <option value="" disabled>{{ t('definitionEditor.chooseValue') }}</option>
-        <option
-          v-for="(variant, index) in union.variants"
-          :key="index"
-          :value="index"
-          :disabled="!canChooseVariant(variant)"
-        >
-          {{ variantLabel(variant) }}
-        </option>
-      </select>
-      <input
+      />
+      <EaInput
         v-else-if="shape.kind === 'number'"
         type="number"
         :disabled="!editable"
         :placeholder="t('definitionEditor.enterValue')"
-        @change="updateNumber($event)"
+        @change="updateNumber"
       />
       <EaSelect
         v-else-if="shape.kind === 'string' && choices.length"
@@ -337,41 +363,23 @@ function applyPendingVariant(): void {
         :placeholder="t('definitionEditor.enterValue')"
         @change="update($event)"
       />
-      <select
+      <EaSelect
         v-else-if="shape.kind === 'enum' || shape.kind === 'boolean'"
         :disabled="!editable"
-        value=""
+        model-value=""
+        :options="choiceOptions(shape)"
         @change="updateOptionalChoice"
-      >
-        <option value="" disabled>{{ t('definitionEditor.chooseValue') }}</option>
-        <option v-if="shape.kind === 'boolean'" value="true">
-          {{ t('definitionEditor.yes') }}
-        </option>
-        <option v-if="shape.kind === 'boolean'" value="false">
-          {{ t('definitionEditor.no') }}
-        </option>
-        <template v-if="shape.kind === 'enum'"
-          ><option v-for="option in shape.options" :key="option" :value="option">
-            {{ optionLabel(option) }}
-          </option></template
-        >
-      </select>
-      <button
-        v-else-if="shape.kind === 'graph'"
-        type="button"
-        :disabled="!editable"
-        @click="addEmptyGraph"
-      >
+      />
+      <EaButton v-else-if="shape.kind === 'graph'" :disabled="!editable" @click="addEmptyGraph">
         {{ t('definitionEditor.addGraph') }}
-      </button>
-      <button
+      </EaButton>
+      <EaButton
         v-else-if="shape.kind === 'array' || shape.kind === 'record' || shape.kind === 'object'"
-        type="button"
         :disabled="!editable"
         @click="shape.kind === 'object' ? (creatingValue = true) : addEmptyContainer()"
       >
         {{ t('definitionEditor.addField', { name: label }) }}
-      </button>
+      </EaButton>
       <span v-else class="definition-field__unsupported">{{
         t(
           shape.kind === 'condition'
@@ -381,19 +389,21 @@ function applyPendingVariant(): void {
       }}</span>
     </label>
     <template v-else-if="union">
-      <label v-if="canSwitchUnion" class="definition-field__variant"
-        ><span>{{ label }}</span
-        ><select :value="unionIndex" :disabled="!editable" @change="switchVariant">
-          <option
-            v-for="(variant, index) in union.variants"
-            :key="index"
-            :value="index"
-            :disabled="!canChooseVariant(variant)"
-          >
-            {{ variantLabel(variant) }}
-          </option>
-        </select></label
-      >
+      <label v-if="canSwitchUnion" class="definition-field__variant">
+        <span>{{ label }}</span>
+        <EaSelect
+          :model-value="unionIndex"
+          :disabled="!editable"
+          :options="
+            union.variants.map((variant, index) => ({
+              value: index,
+              label: variantLabel(variant),
+              disabled: !canChooseVariant(variant),
+            }))
+          "
+          @change="switchVariant"
+        />
+      </label>
       <DefinitionField
         v-if="!pendingVariant"
         :name="name"
@@ -451,18 +461,18 @@ function applyPendingVariant(): void {
                 @change="(childPath, next) => emit('change', childPath, next)"
                 @open-graph="emit('openGraph', $event)"
               />
-              <button type="button" :disabled="!editable" @click="removeRecordEntry(key)">
+              <EaButton :disabled="!editable" @click="removeRecordEntry(key)">
                 {{ t('common.delete') }}
-              </button>
+              </EaButton>
             </div>
             <div class="definition-field__item">
-              <input
+              <EaInput
                 v-model="recordKey"
                 :aria-label="t('definitionEditor.newKey')"
                 :placeholder="t('definitionEditor.newKey')"
                 :disabled="!editable"
               />
-              <input
+              <EaInput
                 v-if="shape.value.kind === 'string' || shape.value.kind === 'number'"
                 v-model="newItemValue"
                 :type="shape.value.kind === 'number' ? 'number' : 'text'"
@@ -470,25 +480,14 @@ function applyPendingVariant(): void {
                 :placeholder="t('definitionEditor.enterValue')"
                 :disabled="!editable"
               />
-              <select
+              <EaSelect
                 v-else-if="shape.value.kind === 'boolean' || shape.value.kind === 'enum'"
                 v-model="newItemValue"
                 :aria-label="t('definitionEditor.chooseValue')"
                 :disabled="!editable"
-              >
-                <option value="" disabled>{{ t('definitionEditor.chooseValue') }}</option>
-                <template v-if="shape.value.kind === 'boolean'">
-                  <option value="true">{{ t('definitionEditor.yes') }}</option>
-                  <option value="false">{{ t('definitionEditor.no') }}</option>
-                </template>
-                <template v-else-if="shape.value.kind === 'enum'">
-                  <option v-for="option in shape.value.options" :key="option" :value="option">
-                    {{ optionLabel(option) }}
-                  </option>
-                </template>
-              </select>
-              <button
-                type="button"
+                :options="choiceOptions(shape.value, true)"
+              />
+              <EaButton
                 :disabled="
                   !editable ||
                   !recordKey.trim() ||
@@ -497,7 +496,7 @@ function applyPendingVariant(): void {
                 @click="addRecordEntry"
               >
                 {{ t('definitionEditor.add') }}
-              </button>
+              </EaButton>
             </div>
             <DefinitionValueCreator
               v-if="creatingEntry"
@@ -526,37 +525,31 @@ function applyPendingVariant(): void {
                 @change="(childPath, next) => emit('change', childPath, next)"
                 @open-graph="emit('openGraph', $event)"
               />
-              <button
-                type="button"
-                :disabled="!editable || index === 0"
-                @click="moveArray(index, -1)"
-              >
+              <EaButton :disabled="!editable || index === 0" @click="moveArray(index, -1)">
                 ↑
-              </button>
-              <button
-                type="button"
+              </EaButton>
+              <EaButton
                 :disabled="!editable || index === (value as readonly unknown[]).length - 1"
                 @click="moveArray(index, 1)"
               >
                 ↓
-              </button>
-              <button type="button" :disabled="!editable" @click="removeArrayEntry(index)">
+              </EaButton>
+              <EaButton :disabled="!editable" @click="removeArrayEntry(index)">
                 {{ t('common.delete') }}
-              </button>
+              </EaButton>
             </div>
             <div class="definition-field__item">
-              <select
+              <EaSelect
                 v-if="shape.element.kind === 'string' && choices.length"
                 v-model="newItemValue"
                 :aria-label="t('definitionEditor.chooseValue')"
                 :disabled="!editable"
-              >
-                <option value="" disabled>{{ t('definitionEditor.chooseValue') }}</option>
-                <option v-for="choice in choices" :key="choice.value" :value="choice.value">
-                  {{ choice.label }}
-                </option>
-              </select>
-              <input
+                :options="[
+                  { value: '', label: t('definitionEditor.chooseValue'), disabled: true },
+                  ...choices,
+                ]"
+              />
+              <EaInput
                 v-else-if="shape.element.kind === 'string' || shape.element.kind === 'number'"
                 v-model="newItemValue"
                 :type="shape.element.kind === 'number' ? 'number' : 'text'"
@@ -564,30 +557,19 @@ function applyPendingVariant(): void {
                 :placeholder="t('definitionEditor.enterValue')"
                 :disabled="!editable"
               />
-              <select
+              <EaSelect
                 v-else-if="shape.element.kind === 'boolean' || shape.element.kind === 'enum'"
                 v-model="newItemValue"
                 :aria-label="t('definitionEditor.chooseValue')"
                 :disabled="!editable"
-              >
-                <option value="" disabled>{{ t('definitionEditor.chooseValue') }}</option>
-                <template v-if="shape.element.kind === 'boolean'">
-                  <option value="true">{{ t('definitionEditor.yes') }}</option>
-                  <option value="false">{{ t('definitionEditor.no') }}</option>
-                </template>
-                <template v-else-if="shape.element.kind === 'enum'">
-                  <option v-for="option in shape.element.options" :key="option" :value="option">
-                    {{ optionLabel(option) }}
-                  </option>
-                </template>
-              </select>
-              <button
-                type="button"
+                :options="choiceOptions(shape.element, true)"
+              />
+              <EaButton
                 :disabled="!editable || (!needsForm(shape.element) && !canAddEntry(shape.element))"
                 @click="addArrayEntry"
               >
                 {{ t('definitionEditor.add') }}
-              </button>
+              </EaButton>
             </div>
             <DefinitionValueCreator
               v-if="creatingEntry"
@@ -602,10 +584,11 @@ function applyPendingVariant(): void {
       </details>
     </template>
     <template v-else>
-      <label :class="{ 'definition-field__value-only': hideLabel }">
+      <div class="definition-field__value" :class="{ 'definition-field__value-only': hideLabel }">
         <span v-if="!hideLabel">{{ label }}</span>
         <EaSelect
           v-if="shape.kind === 'enum'"
+          :aria-label="label"
           :model-value="value as string | number"
           :options="shape.options.map(option => ({ value: option, label: optionLabel(option) }))"
           :disabled="readonlyField"
@@ -613,20 +596,22 @@ function applyPendingVariant(): void {
         />
         <EaNumberInput
           v-else-if="shape.kind === 'number'"
+          :aria-label="label"
           :model-value="value as number"
           :controls="false"
           :disabled="readonlyField"
           @update:model-value="updateNumberValue"
         />
-        <input
+        <EaCheckbox
           v-else-if="shape.kind === 'boolean'"
-          type="checkbox"
-          :checked="value as boolean"
+          :aria-label="label"
+          :model-value="value as boolean"
           :disabled="readonlyField"
-          @change="update(($event.target as HTMLInputElement).checked)"
+          @change="update($event)"
         />
         <EaSelect
           v-else-if="shape.kind === 'string' && choices.length"
+          :aria-label="label"
           :model-value="value as string"
           :options="[
             ...(value && !choices.some(choice => choice.value === value)
@@ -639,13 +624,14 @@ function applyPendingVariant(): void {
         />
         <EaInput
           v-else-if="shape.kind === 'string'"
+          :aria-label="label"
           :model-value="value as string"
           :disabled="readonlyField"
           @change="update($event)"
         />
-        <button v-else-if="shape.kind === 'graph'" type="button" @click="emit('openGraph', path)">
+        <EaButton v-else-if="shape.kind === 'graph'" @click="emit('openGraph', path)">
           {{ t('definitionEditor.openGraph') }}
-        </button>
+        </EaButton>
         <span v-else-if="shape.kind === 'null'">{{ t('definitionEditor.valueTypes.null') }}</span>
         <span v-else-if="shape.kind === 'condition'" class="definition-field__unsupported">{{
           t('definitionEditor.conditionReadOnly', {
@@ -655,7 +641,7 @@ function applyPendingVariant(): void {
         <span v-else class="definition-field__unsupported">{{
           t('definitionEditor.specialField')
         }}</span>
-      </label>
+      </div>
     </template>
     <DefinitionValueCreator
       v-if="creatingValue || pendingVariant?.kind === 'object'"
@@ -669,41 +655,43 @@ function applyPendingVariant(): void {
       "
     />
     <div v-else-if="pendingVariant" class="definition-field__pending">
-      <input
+      <EaInput
         v-if="pendingVariant.kind === 'number' || pendingVariant.kind === 'string'"
         v-model="pendingValue"
         :type="pendingVariant.kind === 'number' ? 'number' : 'text'"
         :disabled="!editable"
         :aria-label="t('definitionEditor.enterValue')"
       />
-      <select
+      <EaSelect
         v-else-if="pendingVariant.kind === 'boolean'"
         v-model="pendingValue"
         :disabled="!editable"
         :aria-label="t('definitionEditor.chooseValue')"
-      >
-        <option value="" disabled>{{ t('definitionEditor.chooseValue') }}</option>
-        <option value="true">{{ t('definitionEditor.yes') }}</option>
-        <option value="false">{{ t('definitionEditor.no') }}</option>
-      </select>
-      <select
+        :options="[
+          { value: '', label: t('definitionEditor.chooseValue'), disabled: true },
+          { value: 'true', label: t('definitionEditor.yes') },
+          { value: 'false', label: t('definitionEditor.no') },
+        ]"
+      />
+      <EaSelect
         v-else-if="pendingVariant.kind === 'enum'"
         v-model="pendingValue"
         :disabled="!editable"
         :aria-label="t('definitionEditor.chooseValue')"
-      >
-        <option value="" disabled>{{ t('definitionEditor.chooseValue') }}</option>
-        <option v-for="option in pendingVariant.options" :key="option" :value="option">
-          {{ optionLabel(option) }}
-        </option>
-      </select>
-      <button
-        type="button"
+        :options="[
+          { value: '', label: t('definitionEditor.chooseValue'), disabled: true },
+          ...pendingVariant.options.map(option => ({
+            value: String(option),
+            label: optionLabel(option),
+          })),
+        ]"
+      />
+      <EaButton
         :disabled="!editable || pendingParsedValue === undefined"
         @click="applyPendingVariant"
       >
         {{ t('definitionEditor.applyValue') }}
-      </button>
+      </EaButton>
     </div>
   </section>
 </template>
@@ -730,44 +718,35 @@ function applyPendingVariant(): void {
   display: grid;
   gap: 4px;
 }
-.definition-field label {
+.definition-field label,
+.definition-field__value {
   display: grid;
   grid-template-columns: 200px minmax(0, 1fr);
   align-items: center;
   gap: 12px;
 }
-.definition-field label span {
+.definition-field label span,
+.definition-field__value > span {
   overflow-wrap: anywhere;
 }
-.definition-field label.definition-field__value-only {
+.definition-field label.definition-field__value-only,
+.definition-field__value-only {
   grid-template-columns: 1fr;
 }
 .definition-field label :deep(.ea-input),
 .definition-field label :deep(.ea-number-input),
-.definition-field label :deep(.ea-select) {
+.definition-field label :deep(.ea-select),
+.definition-field__value :deep(.ea-input),
+.definition-field__value :deep(.ea-number-input),
+.definition-field__value :deep(.ea-select) {
   width: 100%;
 }
-.definition-field input,
-.definition-field select {
+.definition-field :deep(.ea-input),
+.definition-field :deep(.ea-select),
+.definition-field :deep(.ea-number-input) {
   min-width: 0;
-  width: 100%;
-  background: #242424;
-  color: #eee;
-  border: 1px solid #555;
-  padding: 5px 7px;
 }
-.definition-field input[type='checkbox'] {
-  min-width: auto;
-  width: auto;
-}
-.definition-field button {
-  color: inherit;
-  background: #303030;
-  border: 1px solid #555;
-  padding: 4px 8px;
-  cursor: pointer;
-}
-.definition-field label.definition-field__enable {
+.definition-field .definition-field__enable {
   display: flex;
   gap: 6px;
   margin: 0;
@@ -792,7 +771,7 @@ function applyPendingVariant(): void {
 }
 .definition-field__item {
   padding: 8px;
-  background: var(--ea-bg-subtle, #ffffff04);
+  background: var(--ea-fill-soft);
   border: 1px solid var(--ea-border, #ffffff12);
 }
 .definition-field__item {
@@ -809,10 +788,11 @@ function applyPendingVariant(): void {
   margin-top: 6px;
 }
 .definition-field__unsupported {
-  color: #aaa;
+  color: var(--ea-fg-muted);
 }
 @media (max-width: 700px) {
   .definition-field label,
+  .definition-field__value,
   .definition-field--optional:not(.definition-field--container) {
     grid-template-columns: minmax(100px, 140px) minmax(0, 1fr);
   }

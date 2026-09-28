@@ -71,20 +71,26 @@ const nodes = computed(() =>
     />
     <template v-else-if="toolTab === 'content'">
       <EaButton size="sm" @click="emit('page', 'overview')">{{ t('editor.backToAsset') }}</EaButton>
-      <button
-        class="rw-native-button rw-nav"
+      <EaButton
+        class="rw-nav"
+        variant="ghost"
+        :pressed="editor.resource.address.kind === 'main'"
         @click="editor.resource.changeGraph({ kind: 'main' })"
       >
         {{ t('definitionEditor.mainGraph') }}
-      </button>
-      <button
+      </EaButton>
+      <EaButton
         v-for="(_, id) in editor.resource.draft.actionGraph.macros"
         :key="id"
-        class="rw-native-button rw-nav"
+        class="rw-nav"
+        variant="ghost"
+        :pressed="
+          editor.resource.address.kind === 'macro' && editor.resource.address.macroId === id
+        "
         @click="editor.resource.changeGraph({ kind: 'macro', macroId: id })"
       >
         {{ id }}
-      </button>
+      </EaButton>
     </template>
     <template v-else-if="toolTab === 'find'">
       <EaInput
@@ -92,14 +98,15 @@ const nodes = computed(() =>
         v-model="query"
         :placeholder="t('assetWorkspace.workspace.findPlaceholder')"
       />
-      <button
+      <EaButton
         v-for="node in nodes"
         :key="node.id"
-        class="rw-native-button rw-nav"
+        class="rw-nav"
+        variant="ghost"
         @click="editor.resource.focusNode(node.id)"
       >
         {{ node.name }}<small>{{ node.id }}</small>
-      </button>
+      </EaButton>
     </template>
   </template>
   <template v-else-if="area === 'content'">

@@ -29,18 +29,20 @@ const { t } = useI18n();
   width: 12px;
   height: 12px;
   margin-left: 4px;
-  border: 1px solid #687383;
+  border: 1px solid var(--ea-border-strong);
   border-radius: 50%;
-  color: #8e99a8;
+  color: var(--ea-fg-muted);
   font: 9px/1 sans-serif;
   cursor: help;
   vertical-align: middle;
 }
-.editor-help:hover {
-  color: #d0d8e2;
-  border-color: currentColor;
+@media (hover: hover) and (pointer: fine) {
+  .editor-help:hover {
+    color: var(--ea-fg);
+    border-color: currentColor;
+  }
 }
 .editor-help:focus-visible {
-  outline: 2px solid #ffd26d;
+  outline: 2px solid var(--ea-gold);
 }
 </style>

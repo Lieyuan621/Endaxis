@@ -133,7 +133,7 @@ async function save(): Promise<void> {
     :title="labels.title"
     width="880px"
     align-center
-    class="custom-dialog small-image-export-dialog"
+    class="small-image-export-dialog"
     :append-to-body="true"
     destroy-on-close
     @update:model-value="emit('update:visible', $event)"
@@ -407,42 +407,28 @@ async function save(): Promise<void> {
   .small-export {
     grid-template-columns: 1fr;
     grid-template-rows: minmax(240px, 55vh) auto;
+    height: auto;
+  }
+  .small-export__preview,
+  .small-export__controls {
+    height: auto;
+  }
+  .small-export__controls {
+    overflow: visible;
   }
 }
 </style>
 
 <style>
-.small-image-export-dialog.el-dialog {
-  max-height: 90vh;
-  margin-top: 5vh !important;
-  margin-bottom: 5vh !important;
+.small-image-export-dialog.ea-dialog {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background-color: var(--ea-dialog-bg);
-  border: 1px solid var(--ea-dialog-border);
 }
 
 .small-image-export-dialog .el-dialog__header,
 .small-image-export-dialog .el-dialog__footer {
   flex: 0 0 auto;
-}
-
-.small-image-export-dialog .el-dialog__header {
-  margin-right: 0;
-  padding: 15px 20px;
-  border-bottom: 1px solid var(--ea-dialog-divider);
-}
-
-.small-image-export-dialog .el-dialog__title {
-  color: var(--ea-dialog-title);
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.small-image-export-dialog .el-dialog__footer {
-  padding: 15px 25px 20px;
-  border-top: 1px solid var(--ea-dialog-divider);
 }
 
 .small-image-export-dialog .el-dialog__body {
@@ -451,7 +437,21 @@ async function save(): Promise<void> {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  padding: 16px 20px 10px;
-  color: var(--ea-dialog-body);
+}
+@media (min-width: 769px) {
+  .small-image-export-dialog.ea-dialog {
+    max-height: 90vh;
+  }
+}
+@media (min-width: 801px) {
+  .small-image-export-dialog.ea-dialog {
+    margin-top: 5vh !important;
+    margin-bottom: 5vh !important;
+  }
+}
+@media (max-width: 800px) {
+  .small-image-export-dialog .el-dialog__body {
+    overflow-y: auto;
+  }
 }
 </style>

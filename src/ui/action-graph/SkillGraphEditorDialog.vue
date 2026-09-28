@@ -194,7 +194,7 @@ async function save() {
   align-items: center;
   gap: 8px;
   padding: 8px;
-  border-bottom: 1px solid #45494d;
+  border-bottom: 1px solid var(--ea-border);
 }
 .spacer {
   flex: 1;

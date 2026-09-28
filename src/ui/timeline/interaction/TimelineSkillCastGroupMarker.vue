@@ -43,13 +43,18 @@ defineEmits<{ select: [] }>();
 }
 
 .skill-cast-group-marker.is-selected {
-  border-color: var(--ea-action-selected, #fff);
-  color: var(--ea-action-selected, #fff);
+  border-color: var(--ea-action-fg);
+  color: var(--ea-action-fg);
 }
 
-.skill-cast-group-marker:hover,
 .skill-cast-group-marker:focus-within {
-  border-color: var(--ea-action-selected, #fff);
+  border-color: var(--ea-action-fg);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .skill-cast-group-marker:hover {
+    border-color: var(--ea-action-fg);
+  }
 }
 
 .group-select-hitbox {

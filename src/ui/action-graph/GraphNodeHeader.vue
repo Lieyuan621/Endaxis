@@ -22,12 +22,12 @@ strong {
   font-size: 13px;
   line-height: 20px;
   font-weight: 600;
-  color: #eef4ff;
+  color: var(--graph-header-title);
 }
 small {
   font-size: 10px;
   line-height: 16px;
-  color: #8fa5bc;
+  color: var(--graph-header-id);
   font-family: ui-monospace, monospace;
 }
 </style>

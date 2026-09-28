@@ -2,6 +2,7 @@
 /** 变量清单只展示定义和引用；拖放携带清单身份，不传递运行时黑板对象。 */
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { EaButton, EaInput } from '@/design-system';
 import { scopeName, scopeHelp } from './editorNodeText';
 import EditorHelp from '../editor/EditorHelp.vue';
 const { t } = useI18n();
@@ -50,7 +51,8 @@ defineExpose({ resolve: (id: string) => props.analysis.variables.find(v => ident
         :text="t(`actionGraphEditor.${readonly ? 'readonlyVariableHelp' : 'variableHelp'}`)"
       />
     </h3>
-    <input
+    <EaInput
+      class="blackboard-panel__search"
       v-model="query"
       :placeholder="t('actionGraphEditor.searchVariables')"
       :aria-label="t('actionGraphEditor.searchVariables')"
@@ -58,6 +60,7 @@ defineExpose({ resolve: (id: string) => props.analysis.variables.find(v => ident
     <template v-for="scope in analysis.scopes.values()" :key="scope.id">
       <details open>
         <summary>{{ scopeName(scope) }}<EditorHelp :text="scopeHelp(scope)" /></summary>
+        <!-- 可拖拽变量卡片需要在按钮根节点上捕获指针，保留专用交互表面。 -->
         <button
           v-for="v in analysis.variables.filter(
             v => v.scope === scope.id && v.key.toLowerCase().includes(query.toLowerCase()),
@@ -101,14 +104,14 @@ defineExpose({ resolve: (id: string) => props.analysis.variables.find(v => ident
         }}
       </p>
       <div v-for="id in detail.reads" :key="`r:${id}`">
-        <button @click="emit('locate', id, true)">
+        <EaButton size="sm" @click="emit('locate', id, true)">
           {{ t('actionGraphEditor.read') }} · {{ id }}
-        </button>
+        </EaButton>
       </div>
       <div v-for="id in detail.writes" :key="`w:${id}`">
-        <button @click="emit('locate', id, false)">
+        <EaButton size="sm" @click="emit('locate', id, false)">
           {{ t('actionGraphEditor.write') }} · {{ id }}
-        </button>
+        </EaButton>
       </div>
     </div>
   </section>
@@ -116,10 +119,10 @@ defineExpose({ resolve: (id: string) => props.analysis.variables.find(v => ident
 <style scoped>
 .blackboard-panel {
   margin-top: 14px;
-  border-top: 1px solid #444;
+  border-top: 1px solid var(--ea-border);
   padding-top: 8px;
 }
-input {
+.blackboard-panel__search {
   width: 100%;
   box-sizing: border-box;
 }
@@ -127,7 +130,7 @@ summary {
   cursor: pointer;
   font-size: 12px;
   padding: 8px 0;
-  color: #bbb;
+  color: var(--ea-fg-secondary);
   overflow-wrap: anywhere;
 }
 .variable-item {
@@ -140,9 +143,9 @@ summary {
   text-align: left;
   width: 100%;
   padding: 6px;
-  background: #26292e;
+  background: var(--ea-surface-row);
   border: 1px solid transparent;
-  color: #eee;
+  color: var(--ea-fg);
   cursor: grab;
 }
 .variable-item span:nth-child(2) {
@@ -150,40 +153,32 @@ summary {
   min-width: 0;
 }
 .variable-item.active {
-  border-color: #dbaf55;
+  border-color: var(--ea-gold);
 }
 .variable-item small {
   width: 100%;
   padding-left: 12px;
-  color: #9ca8b2;
+  color: var(--ea-fg-muted);
   font-size: 10px;
 }
 .variable-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #73cda3;
+  background: var(--ea-gear-accent);
 }
 .hint,
 .variable-detail {
   font-size: 11px;
-  color: #aeb8c2;
+  color: var(--ea-fg-muted);
   line-height: 1.6;
   overflow-wrap: anywhere;
 }
 .variable-detail {
-  border-top: 1px solid #444;
+  border-top: 1px solid var(--ea-border);
   padding-top: 8px;
 }
-.variable-detail button {
-  color: #dce8ef;
-  background: #30363b;
-  border: 1px solid #4a535a;
+.variable-detail :deep(.ea-button) {
   margin: 3px;
-  cursor: pointer;
-}
-.variable-detail button:disabled {
-  opacity: 0.4;
-  cursor: default;
 }
 </style>
