@@ -26,7 +26,6 @@ export interface WeaponSelectionDialogLabels {
   readonly unequip: string;
   readonly close: string;
   readonly empty: string;
-  readonly partialSupport: string;
 }
 
 const props = defineProps<{

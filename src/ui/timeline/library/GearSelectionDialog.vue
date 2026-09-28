@@ -41,7 +41,6 @@ export interface GearSelectionDialogLabels {
   readonly unequip: string;
   readonly close: string;
   readonly empty: string;
-  readonly partialSupport: string;
   readonly defense: string;
   readonly noSet: string;
 }
@@ -454,13 +453,3 @@ function clearGear(): void {
     </EaDialog>
   </InputRegionBoundary>
 </template>
-
-<style scoped>
-.next-gear-preview__warning {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.14);
-  color: #facc15;
-  font-size: 12px;
-}
-</style>

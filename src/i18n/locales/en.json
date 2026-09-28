@@ -4324,14 +4324,12 @@
     "weaponDialog": {
       "title": "Select weapon",
       "searchPlaceholder": "Search by name, type, or rarity",
-      "empty": "No matching weapons",
-      "partialSupport": "Some effects are not supported yet"
+      "empty": "No matching weapons"
     },
     "gearDialog": {
       "title": "Configure gear",
       "searchPlaceholder": "Search by name, set, or defense",
       "empty": "No matching gear",
-      "partialSupport": "Some effects are not supported yet",
       "defense": "Defense",
       "noSet": "No set",
       "slots": {

@@ -7605,7 +7605,6 @@ function setPanelDialogVisible(visible: boolean): void {
       unequip: t('common.unequip'),
       close: t('common.close'),
       empty: t('timeline.weaponDialog.empty'),
-      partialSupport: t('timeline.weaponDialog.partialSupport'),
     }"
     @close="weaponDialogTrack = null"
     @select="selectWeapon"
@@ -7628,7 +7627,6 @@ function setPanelDialogVisible(visible: boolean): void {
       unequip: t('common.unequip'),
       close: t('common.close'),
       empty: t('timelineGrid.equipmentDialog.empty'),
-      partialSupport: t('timeline.gearDialog.partialSupport'),
       defense: t('timeline.gearDialog.defense'),
       noSet: t('timeline.gearDialog.noSet'),
     }"

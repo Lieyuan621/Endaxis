@@ -19,10 +19,18 @@ export default defineConfig({
         onlyExplicitManualChunks: true,
         manualChunks(id) {
           const path = id.replaceAll('\\', '/');
-          if (path.includes('/src/data/equipment/generated-weapons/')) return 'weapon-definitions';
-          if (path.includes('/src/data/equipment/generated-gear-sets/'))
-            return 'gear-set-definitions';
-          if (path.includes('/src/data/equipment/generated/')) return 'gear-definitions';
+          // A saved project imports individual definitions. Keep those imports smaller than the
+          // full catalogs, while avoiding hundreds of requests when a selector loads everything.
+          const weaponFamily = path.match(
+            /\/src\/data\/equipment\/generated-weapons\/([^/]+)\//,
+          )?.[1];
+          if (weaponFamily) return `weapon-${weaponFamily}`;
+          const gearFamily = path.match(/\/src\/data\/equipment\/generated\/([^/]+)\//)?.[1];
+          if (gearFamily === '_standalone') {
+            const tier = path.match(/\/item_equip_t(\d+)_/)?.[1] ?? 'other';
+            return `gear-standalone-t${tier}`;
+          }
+          if (gearFamily) return `gear-${gearFamily}`;
         },
       },
     },

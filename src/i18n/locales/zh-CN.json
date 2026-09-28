@@ -4341,14 +4341,12 @@
     "weaponDialog": {
       "title": "选择武器",
       "searchPlaceholder": "搜索武器名称、类型或星级",
-      "empty": "没有符合条件的武器",
-      "partialSupport": "部分效果尚未支持"
+      "empty": "没有符合条件的武器"
     },
     "gearDialog": {
       "title": "配置装备",
       "searchPlaceholder": "搜索装备名称、套装或防御力",
       "empty": "没有符合条件的装备",
-      "partialSupport": "部分效果尚未支持",
       "defense": "防御力",
       "noSet": "无套装",
       "slots": {
