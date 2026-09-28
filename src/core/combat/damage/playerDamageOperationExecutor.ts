@@ -7,12 +7,17 @@ import type { CombatCondition } from '../../game-data/operatorDefinition';
 import { NATIVE_SKILL_HAS_HIT_BLACKBOARD_KEY } from '../../../../packages/game-data-contract/src/conditions';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 import type { ActionValueOperand, SkillType } from '../../game-data/operatorDefinition';
-import { resolveActionValueOperand } from '../actions/actionBlackboard';
+import {
+  resolveActionValueOperand,
+  resolveArtsIntensityFactor,
+  resolveArtsIntensityValue,
+} from '../actions/actionBlackboard';
 import { attributeModifierValues } from '../attributes/combatAttributes';
 import type { CriticalSampleSource } from '../random/criticalSampleSource';
 import type { SimulationRandomMode } from '../random/simulationRandom';
 import type { CombatReceiptSink } from '../receipt/combatReceipt';
 import { operationProducer } from '../receipt/combatObjectIdentity';
+import { reactionDamageKind, type ReactionDamageIdentity } from './reactionDamageCritical';
 import type { CombatVitals } from '../resources/combatVitals';
 import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
 import type { CombatClock } from '../time/combatClock';
@@ -49,6 +54,18 @@ type RuntimeOperation = ResolvedCombatOperationStep;
 type DamageStep = ResolvedCombatStepForKind<'dealDamage' | 'dealFixedDamage'>;
 type StaggerStep = ResolvedCombatStepForKind<'dealStagger'>;
 type PoiseStep = DamageStep | StaggerStep;
+
+// 原生 IgniteDamageSet：四种爆发、法术异常初次伤害、燃烧和碎冰。
+const IGNITE_DAMAGE_TAGS = new Set<string>([
+  'fireBurst',
+  'electricBurst',
+  'cryoBurst',
+  'natureBurst',
+  'fireAbnormal',
+  'electricAbnormal',
+  'cryoAbnormal',
+  'natureAbnormal',
+]);
 
 export const PLAYER_DAMAGE_PREPARATION_EVENTS = [
   'beforeDamageAction',
@@ -91,6 +108,10 @@ export interface PlayerDamageOperationDependencies {
   readonly attackDetail?: AttackReceiptSnapshot;
   /** 场景显式指定的命中覆盖；返回 undefined 才取样，且不污染公式中的原始暴击率。 */
   readonly resolveCriticalOverride?: (step: DamageStep) => boolean | undefined;
+  readonly resolveReactionCriticalOverride?: (identity: ReactionDamageIdentity) => {
+    readonly key: string;
+    readonly value: boolean | undefined;
+  };
   readonly resolveNonRandomRuntimeSnapshot: (
     step: DamageStep,
   ) => PlayerDamageNonRandomRuntimeSnapshot;
@@ -154,6 +175,25 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       attack: attributes.attack,
       ...(attributes.attackDetail === undefined ? {} : { attackDetail: attributes.attackDetail }),
       attackScale,
+      skillMultiplierCalculation:
+        typeof step.parameters.attackScale !== 'number' &&
+        step.parameters.attackScale.kind === 'blackboard'
+          ? operationContext.blackboard.getValueCalculation(step.parameters.attackScale.key)
+          : undefined,
+      skillSettingBaseValue:
+        typeof step.parameters.attackScale !== 'number' &&
+        step.parameters.attackScale.kind === 'blackboard'
+          ? operationContext.blackboard.getArtsIntensityDetail(step.parameters.attackScale.key)
+              ?.baseValue
+          : undefined,
+      artsIntensity: resolveArtsIntensityValue(
+        step.parameters.attackScale,
+        operationContext.blackboard,
+      ),
+      artsIntensityMultiplier: resolveArtsIntensityFactor(
+        step.parameters.attackScale,
+        operationContext.blackboard,
+      ),
       baseValue: attributes.attack * attackScale,
     });
   }
@@ -268,6 +308,36 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
           ),
         );
       };
+      const artsIntensityMultiplier =
+        step.kind === 'dealDamage' &&
+        operationContext !== undefined &&
+        (step.parameters.calculation === undefined || step.parameters.calculation === 'standard')
+          ? step.parameters.takeAttackSnapshot
+            ? operationContext.damageCalculationSnapshots?.get(step)?.artsIntensityMultiplier
+            : resolveArtsIntensityFactor(step.parameters.attackScale, operationContext.blackboard)
+          : undefined;
+      const skillMultiplierCalculation =
+        step.kind === 'dealDamage' && operationContext !== undefined
+          ? step.parameters.takeAttackSnapshot
+            ? operationContext.damageCalculationSnapshots?.get(step)?.skillMultiplierCalculation
+            : typeof step.parameters.attackScale !== 'number' &&
+                step.parameters.attackScale.kind === 'blackboard'
+              ? operationContext.blackboard.getValueCalculation(step.parameters.attackScale.key)
+              : undefined
+          : undefined;
+      const skillSettingBaseAtCalculation =
+        step.kind === 'dealDamage' &&
+        typeof step.parameters.attackScale !== 'number' &&
+        step.parameters.attackScale.kind === 'blackboard'
+          ? operationContext?.blackboard.getArtsIntensityDetail(step.parameters.attackScale.key)
+              ?.baseValue
+          : undefined;
+      const artsIntensity =
+        step.kind === 'dealDamage' && operationContext !== undefined
+          ? step.parameters.takeAttackSnapshot
+            ? operationContext.damageCalculationSnapshots?.get(step)?.artsIntensity
+            : resolveArtsIntensityValue(step.parameters.attackScale, operationContext.blackboard)
+          : undefined;
       context.setCalculationResult(
         this.#resolveCalculationResult(step, context, operationContext, recordAttribute),
       );
@@ -313,8 +383,28 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       }
       const finalAttackValue = context.resolveFinalAttackValue();
       const runtimeSnapshot = this.dependencies.resolveNonRandomRuntimeSnapshot(step);
-      const criticalOverride = this.dependencies.resolveCriticalOverride?.(step);
+      const reactionKind = reactionDamageKind(step.parameters.tags, step.parameters.features);
+      const reactionOverride =
+        reactionKind === undefined
+          ? undefined
+          : this.dependencies.resolveReactionCriticalOverride?.({
+              sourceId: this.dependencies.sourceOperatorId,
+              targetId: this.dependencies.targetId,
+              castId: skillCastInfo?.originCastId ?? this.dependencies.castId,
+              actionId:
+                operationContext?.executingBuff?.buffId ??
+                this.dependencies.executingSkillId ??
+                this.dependencies.sourceActionId ??
+                operationContext?.executionActionId,
+              stepKey: step.key,
+              kind: reactionKind,
+            });
       const canCritical = this.dependencies.canCritical !== false;
+      const criticalOverride = !canCritical
+        ? undefined
+        : reactionKind === undefined
+          ? this.dependencies.resolveCriticalOverride?.(step)
+          : reactionOverride?.value;
       const resolvedFormulaInput = resolvePlayerActiveDamageInput(
         {
           step,
@@ -326,6 +416,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
             // DamageEnums：Shatter 属于 IgniteDamageSet，不属于 PhysicalInfliction。
             appliesIgniteDamageMultiplier:
               runtimeSnapshot.appliesIgniteDamageMultiplier ||
+              step.parameters.tags.some(tag => IGNITE_DAMAGE_TAGS.has(tag)) ||
               (step.parameters.features ?? []).includes('shatter'),
             appliesPhysicalInflictionDamageMultiplier:
               runtimeSnapshot.appliesPhysicalInflictionDamageMultiplier ||
@@ -388,6 +479,28 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
         step.kind === 'dealDamage' && step.parameters.takeAttackSnapshot === true
           ? operationContext?.damageCalculationSnapshots?.get(step)
           : undefined;
+      const skillSettingBase =
+        attackSnapshot?.skillSettingBaseValue ?? skillSettingBaseAtCalculation;
+      const reactionScale =
+        standardCalculation && (attackSnapshot?.attack ?? calculationAttackAttributes.attack) !== 0
+          ? context.baseValue /
+            (attackSnapshot?.attack ?? calculationAttackAttributes.attack) /
+            (artsIntensityMultiplier ?? 1)
+          : undefined;
+      const effectivenessMultiplier =
+        (formulaInput.appliesIgniteDamageMultiplier ||
+          formulaInput.appliesPhysicalInflictionDamageMultiplier) &&
+        skillSettingBase !== undefined &&
+        skillSettingBase !== 0 &&
+        reactionScale !== undefined
+          ? reactionScale / skillSettingBase
+          : 1;
+      const finisherMultiplier =
+        step.kind === 'dealDamage' && step.parameters.calculation === 'breakingAttack'
+          ? context.defenderAttributes.breakingAttackDamageTakenMultiplier
+          : 1;
+      const displayBaseDivisor =
+        (artsIntensityMultiplier ?? 1) * effectivenessMultiplier * finisherMultiplier;
       const receiptAttack = attackSnapshot?.attack ?? calculationAttackAttributes.attack;
       const unscaledCalculationValue = context.baseValue * damageScaleMultiplier;
       const calculationMultiplier =
@@ -397,9 +510,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       const directDamageMultiplier =
         calculationMultiplier *
         damageResult.weaknessShelterMultiplier *
-        damageResult.runtimeExtensionMultiplier *
-        damageResult.igniteMultiplier *
-        damageResult.physicalInflictionMultiplier;
+        damageResult.runtimeExtensionMultiplier;
       const resistancePercentMultiplier =
         step.parameters.damageType === 'true'
           ? 1
@@ -414,6 +525,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
           ? undefined
           : deriveHitId(this.dependencies.castId, step.key));
       executeHealthDamage({
+        skillMultiplierCalculation,
         producedBy: operationProducer(operationContext, {
           ownerId: this.dependencies.sourceOperatorId,
           actionId: this.dependencies.sourceActionId,
@@ -458,15 +570,47 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
                 usesAttackSnapshot: true,
                 currentAttack: context.attackerAttributes.attack,
               }),
-          baseDamage: context.baseValue,
+          baseDamage:
+            displayBaseDivisor === 0
+              ? effectivenessMultiplier === 0
+                ? receiptAttack * (skillSettingBase ?? 0)
+                : context.baseValue
+              : context.baseValue / displayBaseDivisor,
+          ...(effectivenessMultiplier === 1 ? {} : { effectivenessMultiplier }),
+          ...(finisherMultiplier === 1 ? {} : { finisherMultiplier }),
+          ...(reactionKind === undefined ? {} : { reactionDamageKind: reactionKind }),
+          ...(reactionOverride === undefined
+            ? {}
+            : {
+                reactionCriticalKey: reactionOverride.key,
+                forcedCritical: reactionOverride.value === true,
+              }),
+          ...(artsIntensityMultiplier === undefined
+            ? {}
+            : {
+                artsIntensityMultiplier,
+                ...(artsIntensity === undefined ? {} : { artsIntensity }),
+              }),
+          ...(calculationAttackAttributes.level === undefined
+            ? {}
+            : { sourceLevel: calculationAttackAttributes.level }),
           finalAttackValue,
           standardCalculation,
           ...(standardCalculation && (attackSnapshot !== undefined || receiptAttack !== 0)
             ? {
                 skillMultiplierPercent:
-                  attackSnapshot === undefined
-                    ? (context.baseValue / receiptAttack) * 100
-                    : attackSnapshot.attackScale * 100,
+                  effectivenessMultiplier === 0
+                    ? (skillSettingBase ?? 0) * 100
+                    : attackSnapshot === undefined
+                      ? (context.baseValue /
+                          receiptAttack /
+                          (artsIntensityMultiplier ?? 1) /
+                          effectivenessMultiplier) *
+                        100
+                      : (attackSnapshot.attackScale /
+                          (artsIntensityMultiplier ?? 1) /
+                          effectivenessMultiplier) *
+                        100,
               }
             : {}),
           calculationMultiplier,
@@ -493,10 +637,20 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
           expectedDamage,
           enemyDefense: context.defenderAttributes.defense,
           enemyResistancePercent: formulaInput.resistancePercent,
+          ...(context.defenderAttributes.baseResistancePercent === undefined
+            ? {}
+            : { enemyBaseResistancePercent: context.defenderAttributes.baseResistancePercent }),
           damageTakenMultiplier: formulaInput.damageTakenMultiplier,
           weaknessDamageMultiplier: formulaInput.weaknessDamageMultiplier,
           shelterDamageMultiplier: formulaInput.shelterDamageMultiplier,
           directDamageMultiplier,
+          ...(formulaInput.appliesIgniteDamageMultiplier ||
+          formulaInput.appliesPhysicalInflictionDamageMultiplier
+            ? {
+                levelCoefficient:
+                  damageResult.igniteMultiplier * damageResult.physicalInflictionMultiplier,
+              }
+            : {}),
           resistancePercentMultiplier,
         },
         target: this.dependencies.targetVitals,

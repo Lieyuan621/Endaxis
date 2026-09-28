@@ -124,6 +124,11 @@ export class CombatReceiptHistory {
         ? {}
         : { runtimeSource: Object.freeze({ ...entry.runtimeSource }) }),
       ...(entry.data === undefined ? {} : { data: Object.freeze({ ...entry.data }) }),
+      ...(entry.skillMultiplierCalculation === undefined
+        ? {}
+        : {
+            skillMultiplierCalculation: Object.freeze({ ...entry.skillMultiplierCalculation }),
+          }),
       ...(entry.appliedDamageModifiers === undefined
         ? {}
         : {

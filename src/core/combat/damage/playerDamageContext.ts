@@ -41,9 +41,11 @@ export interface PlayerDamageAttributeSnapshots {
     DamageScaleAttributeSnapshot & {
       readonly modifierDetails?: readonly import('./damageScale').AppliedDamageModifier[];
       readonly attackDetail?: import('../state/foundationState').AttackReceiptSnapshot;
+      readonly level?: number;
     };
   readonly defender: PlayerDamageDefenderSnapshot &
     DamageScaleAttributeSnapshot & {
+      readonly baseResistancePercent?: number;
       readonly modifierDetails?: readonly import('./damageScale').AppliedDamageModifier[];
     };
 }

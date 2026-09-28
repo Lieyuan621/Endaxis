@@ -315,6 +315,8 @@ export interface DodgeMarkerDocument {
 
 /** 一次模拟的时间范围、共享资源规则与控制事件。敌人失衡规则归敌人实例所有。 */
 export interface BattleDocument {
+  /** 法术爆发、物理异常的逐次命中覆盖，与技能块本身的覆盖分开。 */
+  reactionCriticalOverrides?: Record<string, boolean>;
   prepFrames: number;
   durationFrames: number;
   /** 模拟起始线和模拟终止线 */

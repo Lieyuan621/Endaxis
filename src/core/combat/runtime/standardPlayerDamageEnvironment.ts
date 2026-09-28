@@ -1,4 +1,8 @@
 import { ABILITY_EVENTS } from '../../../../packages/game-data-contract/src/abilityEvents';
+import {
+  nextReactionDamageKey,
+  type ReactionDamageIdentity,
+} from '../damage/reactionDamageCritical';
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
 import { evaluateDamageModifierEnvironmentCondition } from '../damage/damageModifierExecution';
 import type { AbilityEventPayloadMap, CombatAbilityEvent } from '../events/combatAbilityEvent';
@@ -195,6 +199,7 @@ export interface StandardPlayerDamagePayloadMap
 }
 
 export interface StandardPlayerDamageEnvironmentOptions {
+  readonly reactionCriticalOverrides?: Readonly<Record<string, boolean>>;
   /** 暴击样本和命中特殊倍率必须由具有证据的上层策略提供。 */
   readonly criticalSamples: CriticalSampleSource;
   /** RandomUtil.Dice 的独立样本源，不与暴击随机流混用。 */
@@ -436,6 +441,7 @@ export class StandardPlayerDamageEnvironment {
       restored?.poiseBreakBuffs,
     );
     this.runtimeState = restored ?? {
+      reactionDamageCounts: new Map(),
       random: options.randomState ?? null,
       enemyVitals: this.#enemyVitals.runtimeState,
       operatorVitals: new Map(),
@@ -818,6 +824,7 @@ export class StandardPlayerDamageEnvironment {
           : 'program' in context
             ? context.readSimulationInputs?.()?.criticalOverrides?.[step.key]
             : undefined,
+      resolveReactionCriticalOverride: identity => this.#resolveReactionCriticalOverride(identity),
       resolveNonRandomRuntimeSnapshot: step =>
         this.options.resolveNonRandomRuntimeSnapshot(context, step),
       ...this.#damagePreparationPorts(operatorId, operatorBuffs),
@@ -1534,6 +1541,11 @@ export class StandardPlayerDamageEnvironment {
   }
 
   /** 独立伤害共用来源属性、准备事件、伤害处理器和护盾，不伪造技能运行上下文。 */
+  #resolveReactionCriticalOverride(identity: ReactionDamageIdentity) {
+    const key = nextReactionDamageKey(this.runtimeState.reactionDamageCounts, identity);
+    return { key, value: this.options.reactionCriticalOverrides?.[key] };
+  }
+
   #auxiliaryDamageDependencies(
     sourceId: string,
     skillCastInfo?: import('../state/foundationState').CombatSkillCastInfo,
@@ -1545,6 +1557,7 @@ export class StandardPlayerDamageEnvironment {
     return {
       ...this.#damagePreparationPorts(sourceId, operatorBuffs),
       sourceOperatorId: sourceId,
+      resolveReactionCriticalOverride: identity => this.#resolveReactionCriticalOverride(identity),
       ...(skillCastInfo === undefined
         ? {}
         : {
@@ -1612,6 +1625,8 @@ export class StandardPlayerDamageEnvironment {
       ...dependencies,
       sourceActionId: payload.sourceActionId,
       canCritical: payload.canCritical,
+      resolveReactionCriticalOverride: identity =>
+        this.#resolveReactionCriticalOverride({ ...identity, actionId: payload.buffId }),
       receipt: {
         record: entry => {
           if (entry.event === 'DamageApplied') {

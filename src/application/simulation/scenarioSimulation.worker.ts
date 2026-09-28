@@ -14,10 +14,13 @@ let service: ScenarioSimulationService | undefined;
 // 主线程保证单个在途请求；此处只执行正式模拟与投影，不维护另一套模型。
 self.onmessage = async (event: MessageEvent<SimulationWorkerRequest>) => {
   const request = event.data;
-  if (request.gameData !== undefined)
+  if (request.gameData !== undefined) {
+    service?.clearCache();
     service = createScenarioSimulationService(
       restoreScenarioSimulationGameData(request.gameData),
+      true,
     );
+  }
   const samples: ScenarioSimulationPerformanceSample[] = [];
   const currentService = service;
   let response: SimulationWorkerResponse;

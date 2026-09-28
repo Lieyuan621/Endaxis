@@ -55,6 +55,8 @@ export type DamageModifierResult =
 
 /** 已实际应用的伤害修正快照。 */
 export type AppliedDamageModifier = {
+  /** 连击修正实际消费的层数；不是承载该修正的临时 Buff 的层数。 */
+  readonly consumedStacks?: number;
   readonly panelSource?: OperatorPanelContributionSource;
   readonly buff?: BuffReference;
   readonly buffId?: string;
@@ -94,7 +96,26 @@ export interface SkillCastEventData extends AbilityOriginPayload {
 /** 黑板数据节点。entity 指向同一实体共享的黑板节点。 */
 export interface ActionBlackboardState {
   readonly values: Map<string, ActionBlackboardValue>;
+  /** 数值中已包含的源石技艺强度倍率，仅用于伤害详情拆分，随切面一起保存。 */
+  artsIntensityFactors?: Map<string, ArtsIntensityFactor>;
+  /** 只记录最近一次赋值的实际算式，不保存不断增长的变量执行历史。 */
+  valueCalculations?: Map<string, ActionValueCalculation>;
   readonly entity?: ActionBlackboardState;
+}
+
+/** 已计入变量数值的技艺强度倍率，以及读取倍率时的属性值。 */
+export interface ArtsIntensityFactor {
+  readonly multiplier: number;
+  readonly intensity?: number;
+  /** 读取技能表时未乘技艺强度的基础值；后续纯乘除不改变它。 */
+  readonly baseValue?: number;
+}
+
+export interface ActionValueCalculation {
+  readonly operation: 'add' | 'multiply' | 'divide' | 'floor' | 'ceil' | 'roundToInt' | 'assign';
+  readonly left: number;
+  readonly right: number;
+  readonly result: number;
 }
 
 export function createActionBlackboardState(

@@ -8,10 +8,18 @@
 import type { CombatBuffSpellBurstDefinition } from '../buffs/combatBuffDefinitions';
 import type { CompoundStatusSkillSettingSource } from './skillSettings';
 import type { CombatReceiptEntry } from '../receipt/combatReceipt';
+import type { DamageTag } from '../../game-data/operatorDefinition';
 import {
   PlayerDamageOperationExecutor,
   type PlayerDamageOperationDependencies,
 } from '../damage/playerDamageOperationExecutor';
+
+const BURST_TAGS: Readonly<Record<string, DamageTag>> = {
+  Fire: 'fireBurst',
+  Pulse: 'electricBurst',
+  Cryst: 'cryoBurst',
+  Natural: 'natureBurst',
+};
 
 /** 一次爆发伤害需要的全部输入。 */
 export interface ExecuteSpellBurstInput {
@@ -82,13 +90,16 @@ export function executeSpellBurst(input: ExecuteSpellBurstInput): SpellBurstResu
     input.enhance,
   );
   const scale = skillScale * enhanceFactor;
+  const burstTag = BURST_TAGS[input.definition.burstType];
+  if (burstTag === undefined)
+    throw new Error(`unsupported spell burst '${input.definition.burstType}'`);
 
   const step = {
     kind: 'dealDamage' as const,
     parameters: {
       damageType: input.definition.damageType,
       attackScale: scale,
-      tags: [] as const,
+      tags: [burstTag],
     },
   };
   let applied: CombatReceiptEntry['data'];
@@ -107,6 +118,14 @@ export function executeSpellBurst(input: ExecuteSpellBurstInput): SpellBurstResu
             ...entry.data,
             spellBurstType: input.definition.burstType,
             spellBurstEnhanceFactor: enhanceFactor,
+            artsIntensityMultiplier: enhanceFactor,
+            ...(input.enhance === null ? {} : { artsIntensity: input.enhance }),
+            ...(typeof entry.data?.skillMultiplierPercent === 'number'
+              ? { skillMultiplierPercent: entry.data.skillMultiplierPercent / enhanceFactor }
+              : {}),
+            ...(typeof entry.data?.baseDamage === 'number'
+              ? { baseDamage: entry.data.baseDamage / enhanceFactor }
+              : {}),
           },
         });
       },

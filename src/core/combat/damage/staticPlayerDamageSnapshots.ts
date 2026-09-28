@@ -207,11 +207,16 @@ export function resolveStaticPlayerDamageSnapshots(
           : [],
       ),
       criticalDamageIncrease: operatorAttributes.get('criticalDamageIncrease'),
+      level: context.panel?.level,
       weaknessDamageMultiplier: operatorAttributes.get('weaknessDamageMultiplier'),
-      igniteDamageMultiplier: 1,
-      physicalInflictionDamageMultiplier: 1,
+      igniteDamageMultiplier: operatorAttributes.get('IgniteDamageScalar'),
+      physicalInflictionDamageMultiplier: operatorAttributes.get('PhysicalInflictionDamageScalar'),
     },
     defender: {
+      baseResistancePercent:
+        context.enemy.defenderAttributes.resistances[
+          step.parameters.damageType as keyof typeof context.enemy.defenderAttributes.resistances
+        ]?.percent,
       ...emptyDamageScaleSnapshot(),
       ...context.enemy.defenderAttributes,
       ...(enemyAttributes === undefined

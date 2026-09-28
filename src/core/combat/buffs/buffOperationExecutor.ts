@@ -34,7 +34,13 @@ type RuntimeOperation = ResolvedCombatOperationStep;
 
 /** Buff 查询结果只暴露当前动作需要读取的数值黑板。 */
 export interface BuffQueryResult {
-  readonly blackboard: Pick<ActionBlackboard, 'getNumber'>;
+  readonly blackboard: Pick<ActionBlackboard, 'getNumber'> &
+    Partial<
+      Pick<
+        ActionBlackboard,
+        'getArtsIntensityFactor' | 'getArtsIntensityDetail' | 'getValueCalculation'
+      >
+    >;
   readonly remainingDuration?: number | null;
 }
 
@@ -208,6 +214,9 @@ export type { BuffApplicationHandle } from './combatBuffs';
 
 /** 定义身份与本次施加覆盖值已经分离求值后的运行时请求。 */
 export interface BuffApplicationRequest {
+  readonly blackboardValueCalculations?: Readonly<
+    Record<string, import('../state/foundationState').ActionValueCalculation>
+  >;
   readonly physicalInflictionType?: BuffAppliedEvent['physicalInflictionType'];
   readonly producedBy?: import('../receipt/combatReceipt').CombatObjectRef;
   readonly buffId: string;
@@ -218,6 +227,9 @@ export interface BuffApplicationRequest {
   readonly definitionOwnerId?: string;
   readonly sourceActionId?: string;
   readonly blackboardValues: Readonly<Record<string, ActionBlackboardValue>>;
+  readonly blackboardArtsIntensityFactors?: Readonly<
+    Record<string, import('../state/foundationState').ArtsIntensityFactor>
+  >;
   readonly skillCastInfo?: CombatSkillCastInfo;
   readonly isExtra?: boolean;
   /** 已在执行点解析为稳定实例身份的原生图标倒计时来源。 */
@@ -602,6 +614,69 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
               return [targetKey, value] as const;
             }),
           ]),
+          ...(context === undefined
+            ? {}
+            : (() => {
+                const factors = Object.fromEntries(
+                  Object.entries(
+                    Object.fromEntries([
+                      ...Object.entries(assignments).map(
+                        ([key, operand]) =>
+                          [
+                            key,
+                            operand.kind === 'blackboard'
+                              ? context.blackboard.getArtsIntensityDetail(operand.key)
+                              : undefined,
+                          ] as const,
+                      ),
+                      ...Object.keys(stringAssignments).map(key => [key, undefined] as const),
+                      ...Object.entries(copiedAssignments).map(
+                        ([key, sourceKey]) =>
+                          [key, context.blackboard.getArtsIntensityDetail(sourceKey)] as const,
+                      ),
+                    ]),
+                  ).filter(
+                    (
+                      entry,
+                    ): entry is [string, import('../state/foundationState').ArtsIntensityFactor] =>
+                      entry[1] !== undefined,
+                  ),
+                );
+                return Object.keys(factors).length
+                  ? { blackboardArtsIntensityFactors: factors }
+                  : {};
+              })()),
+          ...(context === undefined
+            ? {}
+            : (() => {
+                const calculations = Object.fromEntries(
+                  Object.entries(
+                    Object.fromEntries([
+                      ...Object.entries(assignments).map(([key, operand]) => [
+                        key,
+                        operand.kind === 'blackboard'
+                          ? context.blackboard.getValueCalculation(operand.key)
+                          : undefined,
+                      ]),
+                      ...Object.keys(stringAssignments).map(key => [key, undefined]),
+                      ...Object.entries(copiedAssignments).map(([key, sourceKey]) => [
+                        key,
+                        context.blackboard.getValueCalculation(sourceKey),
+                      ]),
+                    ]),
+                  ).filter(
+                    (
+                      entry,
+                    ): entry is [
+                      string,
+                      import('../state/foundationState').ActionValueCalculation,
+                    ] => entry[1] !== undefined,
+                  ),
+                );
+                return Object.keys(calculations).length
+                  ? { blackboardValueCalculations: calculations }
+                  : {};
+              })()),
           ...(step.parameters.inheritSourceSkillCastInfo && inheritedSkillCastInfo !== undefined
             ? { skillCastInfo: inheritedSkillCastInfo }
             : {}),
@@ -670,6 +745,16 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
         step.parameters.outputKey,
         buff.blackboard.getNumber(step.parameters.desiredKey) ?? 0,
       );
+      context.blackboard.setArtsIntensityFactor(
+        step.parameters.outputKey,
+        buff.blackboard.getArtsIntensityFactor?.(step.parameters.desiredKey),
+        buff.blackboard.getArtsIntensityDetail?.(step.parameters.desiredKey)?.intensity,
+        buff.blackboard.getArtsIntensityDetail?.(step.parameters.desiredKey)?.baseValue,
+      );
+      context.blackboard.setValueCalculation(
+        step.parameters.outputKey,
+        buff.blackboard.getValueCalculation?.(step.parameters.desiredKey),
+      );
       return true;
     }
 
@@ -694,6 +779,16 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
       context.blackboard.assignDynamic(
         step.parameters.outputKey,
         typeof value === 'number' ? value : 0,
+      );
+      context.blackboard.setArtsIntensityFactor(
+        step.parameters.outputKey,
+        event.payload.buff.blackboard.getArtsIntensityFactor(step.parameters.desiredKey),
+        event.payload.buff.blackboard.getArtsIntensityDetail(step.parameters.desiredKey)?.intensity,
+        event.payload.buff.blackboard.getArtsIntensityDetail(step.parameters.desiredKey)?.baseValue,
+      );
+      context.blackboard.setValueCalculation(
+        step.parameters.outputKey,
+        event.payload.buff.blackboard.getValueCalculation(step.parameters.desiredKey),
       );
       return true;
     }

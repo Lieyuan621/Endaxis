@@ -21,6 +21,7 @@ import {
   type DamageModifierSide,
 } from '../../../../packages/game-data-contract/src/modifiers';
 import type { OperatorPanelContributionReceipt } from '../../../core/compiler/resolveOperatorPanel';
+import { POISE_BREAK_BUFF_ID } from '../../../core/combat/buffs/poiseBreakBuffRuntime';
 
 const props = defineProps<{
   visible: boolean;
@@ -90,6 +91,17 @@ const props = defineProps<{
     nonCriticalHit: string;
     cannotCritical: string;
     directMultiplier: string;
+    levelCoefficient: string;
+    artsIntensity: string;
+    levelDetail: (value: number) => string;
+    artsIntensityDetail: (value: number) => string;
+    staggerMultiplier: string;
+    finisherMultiplier: string;
+    effectiveness: string;
+    stacksDetail: (value: number) => string;
+    baseMultiplier: string;
+    multiplierCalculation: string;
+    separatedMultiplier: (name: string) => string;
     damageTaken: string;
     defenseMultiplier: string;
     resistanceMultiplier: string;
@@ -101,6 +113,7 @@ const emit = defineEmits<{ close: []; toggleForceCritical: [forced: boolean] }>(
 const origins = computed(() => new CombatObjectOrigins(props.receiptEntries ?? props.entries));
 
 interface DetailRow {
+  readonly order?: number;
   readonly kind?: 'crit';
   readonly factor?: number;
   readonly tooltip?: string;
@@ -110,6 +123,7 @@ interface DetailRow {
 }
 
 interface DamageDetail {
+  readonly skillMultiplierRows: readonly DetailRow[];
   readonly attackFormulaTooltip?: string;
   readonly attributeSources: Readonly<Record<string, readonly DetailRow[]>>;
   readonly formulaTooltip?: string;
@@ -160,12 +174,14 @@ interface AttackDetail {
 
 const openAttackDetails = ref<ReadonlySet<number>>(new Set());
 const openCriticalDetails = ref<ReadonlySet<number>>(new Set());
+const openMultiplierDetails = ref<ReadonlySet<number>>(new Set());
 // 回执序号只在当前结果内有效；换一组结果后不能继承上一组的展开状态。
 watch(
   () => props.entries,
   () => {
     openAttackDetails.value = new Set();
     openCriticalDetails.value = new Set();
+    openMultiplierDetails.value = new Set();
   },
 );
 
@@ -439,6 +455,13 @@ function toggleAttackDetail(key: number): void {
   openAttackDetails.value = next;
 }
 
+function toggleMultiplierDetail(key: number): void {
+  const next = new Set(openMultiplierDetails.value);
+  if (next.has(key)) next.delete(key);
+  else next.add(key);
+  openMultiplierDetails.value = next;
+}
+
 function toggleCriticalDetail(key: number): void {
   const next = new Set(openCriticalDetails.value);
   if (next.has(key)) next.delete(key);
@@ -473,7 +496,11 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
     if (sourceDescription && props.sourceLabel) {
       contextRows.push({ label: props.sourceLabel, value: sourceDescription });
     }
-    if (skillType !== null) {
+    if (
+      skillType !== null &&
+      data.reactionDamageKind === undefined &&
+      data.spellBurstType === undefined
+    ) {
       contextRows.push({ label: props.labels.skillType, value: props.skillTypeLabel(skillType) });
     }
     if (damageType !== null) {
@@ -523,6 +550,25 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
     const hasZones = DAMAGE_SCALE_ZONES.some(
       zone => typeof data[`damageScale:${zone}`] === 'number',
     );
+    const staggerSources = modifiers.filter(
+      item =>
+        item.kind === 'damageScale' &&
+        item.zone === 'product' &&
+        item.buffId === POISE_BREAK_BUFF_ID,
+    );
+    const staggerMultiplier = staggerSources.reduce(
+      (value, item) => value * (item.kind === 'damageScale' ? 1 + item.addition : 1),
+      1,
+    );
+    const zoneOrder: Record<DamageScaleZone, number> = {
+      normal: 0,
+      abnormalAndBurst: 1,
+      race: 2,
+      enhanced: 4,
+      product: 5,
+      vulnerable: 7,
+      combo: 9,
+    };
     if (hasZones) {
       for (const zone of DAMAGE_SCALE_ZONES) {
         if (zone === 'normal' && typeof data['damageScale:normal:attacker'] === 'number') {
@@ -534,6 +580,8 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
             if (!differsFromOne(value) && sources.length === 0) continue;
             multiplierRows.push({
               label: side === 'attacker' ? props.labels.damageBonus : props.labels.damageTaken,
+              order: side === 'attacker' ? 0 : 8,
+              detail: `${value >= 1 ? '+' : ''}${pct(value - 1)}`,
               value: mult(value),
               factor: value,
               tooltip: modifierTooltip(sources),
@@ -541,13 +589,34 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
           }
           continue;
         }
-        const value = finiteNumber(data[`damageScale:${zone}`], 1);
+        const value =
+          finiteNumber(data[`damageScale:${zone}`], 1) /
+          (zone === 'product' && staggerMultiplier !== 0 ? staggerMultiplier : 1);
         const sources = modifiers.filter(
-          item => item.kind !== 'multiplyValue' && item.zone === zone,
+          item =>
+            item.kind !== 'multiplyValue' && item.zone === zone && !staggerSources.includes(item),
         );
         if (!differsFromOne(value) && sources.length === 0) continue;
+        const comboInstances = new Map(
+          sources
+            .filter(item => item.consumedStacks !== undefined)
+            .map(
+              item =>
+                [
+                  item.buff ? `${item.buff.ownerId}:${item.buff.instanceId}` : item,
+                  item.consumedStacks!,
+                ] as const,
+            ),
+        );
         multiplierRows.push({
           label: props.damageZoneLabel?.(zone) ?? props.labels.damageBonus,
+          order: zoneOrder[zone],
+          detail:
+            zone === 'combo' && comboInstances.size > 0
+              ? props.labels.stacksDetail(
+                  [...comboInstances.values()].reduce((sum, count) => sum + count, 0),
+                )
+              : `${value >= 1 ? '+' : ''}${pct(value - 1)}`,
           value: mult(value),
           factor: value,
           tooltip: modifierTooltip(sources),
@@ -556,6 +625,7 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
     } else if (differsFromOne(damageScaleMultiplier)) {
       multiplierRows.push({
         label: props.labels.damageBonus,
+        order: 0,
         detail: damageScaleMultiplier >= 1 ? `+${pct(damageScaleMultiplier - 1)}` : undefined,
         value: mult(damageScaleMultiplier),
         factor: damageScaleMultiplier,
@@ -566,8 +636,9 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
       multiplierRows.push({
         kind: 'crit',
         label: props.labels.criticalExpectation,
+        order: 3,
         tooltip: criticalTooltip,
-        detail: `${props.labels.criticalRate} ${pct(criticalRateEffective)} × ${pct(criticalDamageIncrease)}`,
+        detail: `${pct(criticalRateEffective)} × ${pct(criticalDamageIncrease)}`,
         value: mult(criticalExpectation),
         factor: criticalExpectation,
       });
@@ -582,6 +653,7 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
       multiplierRows.push({
         kind: 'crit',
         label: props.labels.criticalResult,
+        order: 3,
         tooltip: criticalTooltip,
         detail: `${props.labels.criticalRate} ${pct(criticalRateEffective)} · ${criticalResult}`,
         value: mult(criticalMultiplier),
@@ -591,6 +663,7 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
     if (differsFromOne(directMultiplier)) {
       multiplierRows.push({
         label: props.labels.directMultiplier,
+        order: 6,
         tooltip: modifierTooltip([
           ...modifiers.filter(item => item.kind === 'multiplyValue'),
           ...attributes('attacker', ['weaknessDamageMultiplier']),
@@ -603,6 +676,7 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
     if (differsFromOne(damageTakenMultiplier)) {
       multiplierRows.push({
         label: props.labels.damageTaken,
+        order: 8,
         detail: damageTakenMultiplier >= 1 ? `+${pct(damageTakenMultiplier - 1)}` : undefined,
         value: mult(damageTakenMultiplier),
         factor: damageTakenMultiplier,
@@ -610,13 +684,42 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
     }
     multiplierRows.push({
       label: props.labels.defenseMultiplier,
+      order: 10,
       detail: props.labels.defenseDetail(Math.floor(finiteNumber(data.enemyDefense))),
       value: mult(data.defenseMultiplier),
       factor: finiteNumber(data.defenseMultiplier, 1),
     });
+    if (typeof data.levelCoefficient === 'number') {
+      multiplierRows.push({
+        label: props.labels.levelCoefficient,
+        order: 14,
+        detail:
+          typeof data.sourceLevel === 'number'
+            ? props.labels.levelDetail(data.sourceLevel)
+            : undefined,
+        value: `x${data.levelCoefficient.toFixed(3)}`,
+        factor: data.levelCoefficient,
+        tooltip: modifierTooltip(
+          attributes('attacker', ['IgniteDamageScalar', 'PhysicalInflictionDamageScalar']),
+        ),
+      });
+    }
+    if (typeof data.artsIntensityMultiplier === 'number') {
+      multiplierRows.push({
+        label: props.labels.artsIntensity,
+        order: 15,
+        detail:
+          typeof data.artsIntensity === 'number'
+            ? props.labels.artsIntensityDetail(data.artsIntensity)
+            : undefined,
+        value: `x${data.artsIntensityMultiplier.toFixed(3)}`,
+        factor: data.artsIntensityMultiplier,
+      });
+    }
     if (differsFromOne(resistanceMultiplier)) {
       multiplierRows.push({
         label: props.labels.resistanceMultiplier,
+        order: 11,
         tooltip: modifierTooltip(
           attributes('defender', [
             (
@@ -631,10 +734,67 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
             )[damageType ?? ''] ?? '',
           ]),
         ),
-        detail: pct(finiteNumber(data.enemyResistancePercent) / 100),
+        detail:
+          typeof data.enemyBaseResistancePercent === 'number' &&
+          data.enemyBaseResistancePercent !== data.enemyResistancePercent
+            ? `${pct(data.enemyBaseResistancePercent / 100)} → ${pct(finiteNumber(data.enemyResistancePercent) / 100)}`
+            : pct(finiteNumber(data.enemyResistancePercent) / 100),
         value: mult(resistanceMultiplier),
         factor: resistanceMultiplier,
       });
+    }
+    for (const row of [
+      {
+        label: props.labels.staggerMultiplier,
+        order: 12,
+        factor: staggerMultiplier,
+        tooltip: modifierTooltip(staggerSources),
+      },
+      {
+        label: props.labels.finisherMultiplier,
+        order: 13,
+        factor: finiteNumber(data.finisherMultiplier, 1),
+      },
+      {
+        label: props.labels.effectiveness,
+        order: 16,
+        factor: finiteNumber(data.effectivenessMultiplier, 1),
+      },
+    ]) {
+      if (differsFromOne(row.factor)) multiplierRows.push({ ...row, value: mult(row.factor) });
+    }
+    multiplierRows.sort((left, right) => (left.order ?? 0) - (right.order ?? 0));
+    const calculation = entry.skillMultiplierCalculation;
+    const operationSign = {
+      add: '+',
+      multiply: '×',
+      divide: '÷',
+      assign: '=',
+      floor: '⌊ ⌋',
+      ceil: '⌈ ⌉',
+      roundToInt: '≈',
+    };
+    const skillMultiplierRows: DetailRow[] = [];
+    if (calculation !== undefined) {
+      const scalar = (value: number) =>
+        value.toLocaleString(undefined, { maximumFractionDigits: 6 });
+      const operands = ['add', 'multiply', 'divide'].includes(calculation.operation)
+        ? `${scalar(calculation.left)} ${operationSign[calculation.operation]} ${scalar(calculation.right)}`
+        : `${operationSign[calculation.operation]} ${scalar(calculation.right)}`;
+      skillMultiplierRows.push({
+        label: props.labels.multiplierCalculation,
+        value: `${operands} = ${scalar(calculation.result)}`,
+      });
+      for (const [label, factor] of [
+        [props.labels.artsIntensity, finiteNumber(data.artsIntensityMultiplier, 1)],
+        [props.labels.effectiveness, finiteNumber(data.effectivenessMultiplier, 1)],
+      ] as const) {
+        if (differsFromOne(factor) && factor !== 0)
+          skillMultiplierRows.push({
+            label: props.labels.separatedMultiplier(label),
+            value: `÷ ${scalar(factor)}`,
+          });
+      }
     }
     const forced =
       props.resultForceCritical &&
@@ -702,6 +862,7 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
           ]),
         ),
         key: entry.sequence,
+        skillMultiplierRows,
         headline: props.randomMode === 'expected' ? expectedDamage : actualValue,
         expectedDamage,
         criticalDamage,
@@ -753,6 +914,7 @@ const canForceCritical = computed(() =>
 );
 
 function onClose(): void {
+  openMultiplierDetails.value = new Set();
   openAttackDetails.value = new Set();
   openCriticalDetails.value = new Set();
   emit('close');
@@ -975,14 +1137,46 @@ function onClose(): void {
                   </tr>
                 </template>
               </template>
-              <tr
-                v-for="row in detail.baseRows"
-                :key="row.label"
-                :class="{ bold: row.label === labels.baseDamage }"
-              >
-                <td class="label-cell">{{ row.label }}</td>
-                <td class="value-cell">{{ row.value }}</td>
-              </tr>
+              <template v-for="row in detail.baseRows" :key="row.label">
+                <tr
+                  :class="{
+                    bold: row.label === labels.baseDamage,
+                    'expandable-row':
+                      row.label === labels.skillMultiplier && detail.skillMultiplierRows.length,
+                  }"
+                  @click="
+                    row.label === labels.skillMultiplier &&
+                    detail.skillMultiplierRows.length &&
+                    toggleMultiplierDetail(detail.key)
+                  "
+                >
+                  <td class="label-cell">
+                    <ElIcon
+                      v-if="
+                        row.label === labels.skillMultiplier && detail.skillMultiplierRows.length
+                      "
+                      class="expand-icon"
+                      :class="{ 'is-open': openMultiplierDetails.has(detail.key) }"
+                      ><ArrowRight /></ElIcon
+                    >{{ row.label }}
+                  </td>
+                  <td class="value-cell">{{ row.value }}</td>
+                </tr>
+                <template
+                  v-if="
+                    row.label === labels.skillMultiplier && openMultiplierDetails.has(detail.key)
+                  "
+                >
+                  <tr
+                    v-for="(part, index) in detail.skillMultiplierRows"
+                    :key="index"
+                    class="sub-row dim"
+                  >
+                    <td class="label-cell indent-1">{{ part.label }}</td>
+                    <td class="value-cell">{{ part.value }}</td>
+                  </tr>
+                </template>
+              </template>
             </tbody>
           </table>
 
@@ -1061,6 +1255,7 @@ function onClose(): void {
             </tbody>
           </table>
           <CombatObjectOriginGraph
+            kind="damage"
             :action-presentation="actionPresentation"
             :object-icon="objectIcon"
             :origins="origins"

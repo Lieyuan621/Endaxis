@@ -192,6 +192,8 @@ export class BuffDefinitionOperationTarget<Key extends string>
         request.sourceId,
         {
           blackboardValues: request.blackboardValues,
+          blackboardArtsIntensityFactors: request.blackboardArtsIntensityFactors,
+          blackboardValueCalculations: request.blackboardValueCalculations,
           producedBy: request.producedBy,
           sourceActionId: request.sourceActionId ?? request.buffId,
           definitionOwnerId: request.definitionOwnerId ?? request.sourceId,

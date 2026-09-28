@@ -7,6 +7,31 @@ import type { ScenarioSimulationRun } from '../../../application/simulation/scen
 const run = (value: number) =>
   ({ receiptEntries: [{ sequence: 1, data: { value } }] }) as unknown as ScenarioSimulationRun;
 
+it('强制暴击重算后按稳定命中身份重新定位，不复用旧序号', () => {
+  const scope = effectScope();
+  try {
+    scope.run(() => {
+      const first = {
+        receiptEntries: [{ sequence: 1, data: { reactionCriticalKey: 'burst' } }],
+      } as unknown as ScenarioSimulationRun;
+      const published = shallowRef<ScenarioSimulationRun | null>(first);
+      const selected = useSimulationReceiptSelection(published);
+      selected.value = 1;
+      published.value = {
+        receiptEntries: [
+          { sequence: 1, data: { reactionCriticalKey: 'other' } },
+          { sequence: 8, data: { reactionCriticalKey: 'burst' } },
+        ],
+      } as unknown as ScenarioSimulationRun;
+      expect(selected.value).toBe(8);
+      published.value = run(100);
+      expect(selected.value).toBeNull();
+    });
+  } finally {
+    scope.stop();
+  }
+});
+
 it('clears a reused sequence synchronously before a new run can supply different damage', () => {
   const scope = effectScope();
   try {

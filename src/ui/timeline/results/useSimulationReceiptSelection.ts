@@ -1,13 +1,19 @@
 import { ref, watch, type WatchSource } from 'vue';
 import type { ScenarioSimulationRun } from '../../../application/simulation/scenarioSimulationService';
 
-/** 回执序号只属于一次已发布模拟；新结果发布时不能借用旧序号读取另一笔伤害。 */
+/** 有稳定命中身份时重新定位；其他回执在新结果发布后取消选择，不能复用旧序号。 */
 export function useSimulationReceiptSelection(run: WatchSource<ScenarioSimulationRun | null>) {
   const sequence = ref<number | null>(null);
   watch(
     run,
-    () => {
-      sequence.value = null;
+    (next, previous) => {
+      const key = previous?.receiptEntries.find(entry => entry.sequence === sequence.value)?.data
+        ?.reactionCriticalKey;
+      sequence.value =
+        typeof key === 'string'
+          ? (next?.receiptEntries.find(entry => entry.data?.reactionCriticalKey === key)
+              ?.sequence ?? null)
+          : null;
     },
     { flush: 'sync' },
   );

@@ -39,12 +39,12 @@ it('uses the local simulator for an entire drag when the latest worker run is fa
   const service = new AdaptiveTimelineSimulationService(worker as never, () => local as never);
   const scenario = createEmptyScenario('adaptive:fast', 'fast');
 
-  worker.publish(sample(50));
+  worker.publish(sample(200));
   service.beginInteractiveSession();
   expect(((await service.simulate(scenario, 60)) as unknown as { label: string }).label).toBe(
     'local',
   );
-  local.publish(sample(51));
+  local.publish(sample(201));
   expect(((await service.simulate(scenario, 60)) as unknown as { label: string }).label).toBe(
     'local',
   );
@@ -63,7 +63,7 @@ it('replaces a slow startup sample after one fast complete run, starting with th
   const service = new AdaptiveTimelineSimulationService(worker as never, () => local as never);
   const scenario = createEmptyScenario('adaptive:startup', 'startup');
 
-  worker.publish(sample(200));
+  worker.publish(sample(201));
   worker.publish({ ...sample(1), outcome: 'aborted' });
   service.beginInteractiveSession();
   expect(await service.simulate(scenario, 60)).toEqual({ label: 'worker' });
@@ -92,7 +92,7 @@ it('keeps slow and unmeasured scenarios in the worker', async () => {
     'worker',
   );
   service.endInteractiveSession();
-  worker.publish(sample(51));
+  worker.publish(sample(201));
   service.beginInteractiveSession();
   expect(((await service.simulate(scenario, 60)) as unknown as { label: string }).label).toBe(
     'worker',

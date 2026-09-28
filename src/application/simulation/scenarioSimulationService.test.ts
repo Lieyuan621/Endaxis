@@ -125,8 +125,12 @@ function createTwoOperatorComboScenario(): {
   return { scenario, attacker };
 }
 
-function createService(performanceNow?: () => number): ScenarioSimulationService {
+function createService(
+  performanceNow?: () => number,
+  reuseCheckpoint = false,
+): ScenarioSimulationService {
   return new ScenarioSimulationService({
+    reuseCheckpoint,
     index: testIndex,
     resources: {
       sharedSpGain: { baseGainEfficiency: 1 },
@@ -151,6 +155,150 @@ const testIndex = {
 };
 
 describe('ScenarioSimulationService', () => {
+  it.each(['expected', 'sampled'] as const)('单切面续算与完整重算一致：%s', async mode => {
+    let now = 0;
+    const incremental = createService(() => (now += 30), true);
+    const full = createService();
+    let scenario = createPerlicaScenario();
+    scenario.battle.random = { mode, globalSeed: 123 };
+    for (const frame of [1, 210]) {
+      scenario = placeSkillGroup({
+        scenario,
+        trackIndex: 0,
+        operator: perlica,
+        skillGroupKey: 'plungingAttack',
+        startFrame: frame,
+        ids: { allocate: kind => `${kind}:${frame}` },
+      }).scenario;
+    }
+    const samples: ScenarioSimulationPerformanceSample[] = [];
+    incremental.subscribePerformance(sample => samples.push(sample));
+    const check = async (candidate: ScenarioDocument, resumed: number | null) => {
+      const actual = await incremental.simulate(candidate, 300);
+      const expected = await full.simulate(candidate, 300);
+      const { receiptHistory: actualHistory, ...actualData } = actual;
+      const { receiptHistory: expectedHistory, ...expectedData } = expected;
+      expect(actualData).toEqual(expectedData);
+      expect([...actualHistory.entries()]).toEqual([...expectedHistory.entries()]);
+      expect(samples.at(-1)?.resumedFromFrame).toBe(resumed);
+    };
+    await check(scenario, null);
+    const moved = structuredClone(scenario);
+    moved.tracks[0]!.skillCasts.at(-1)!.placement = { startFrame: 220 };
+    await check(moved, 150);
+    await check(scenario, 150);
+    const early = structuredClone(scenario);
+    early.tracks[0]!.skillCasts[0]!.placement = { startFrame: 2 };
+    await check(early, null);
+    const build = structuredClone(early);
+    build.battle.resourceRules.initialSp -= 1;
+    await check(build, null);
+    incremental.clearCache();
+    await check(build, null);
+    incremental.clearCache();
+  });
+
+  it('跨切面的连续组和极限闪避续算一致，修改历史组会失效，闲置释放切面', async () => {
+    vi.useFakeTimers();
+    let now = 0;
+    const service = createService(() => (now += 30), true);
+    const samples: ScenarioSimulationPerformanceSample[] = [];
+    service.subscribePerformance(sample => samples.push(sample));
+    let id = 0;
+    let scenario = placeSkillGroup({
+      scenario: createPerlicaScenario(),
+      trackIndex: 0,
+      operator: perlica,
+      skillGroupKey: 'basicAttack',
+      startFrame: 120,
+      ids: { allocate: kind => `${kind}:${id++}` },
+    }).scenario;
+    const casts = scenario.tracks[0]!.skillCasts;
+    casts.forEach((cast, index) => {
+      if (index > 0) cast.placement = { afterCastId: casts[index - 1]!.id };
+    });
+    scenario.battle.dodgeMarkers = [
+      {
+        id: 'dodge',
+        frame: 148,
+        trackIndex: 0,
+        direction: 'forward',
+        mode: { kind: 'perfectDodge', successDelayFrames: 5 },
+      },
+    ];
+    const check = async (resumed: number | null) => {
+      const actual = await service.simulate(scenario, 300);
+      const expected = await createService().simulate(scenario, 300);
+      expect(actual.receiptEntries).toEqual(expected.receiptEntries);
+      expect(actual.finalResources).toEqual(expected.finalResources);
+      expect(samples.at(-1)?.resumedFromFrame).toBe(resumed);
+    };
+    try {
+      await check(null);
+      scenario = structuredClone(scenario);
+      scenario.battle.dodgeMarkers![0]!.mode = { kind: 'perfectDodge', successDelayFrames: 6 };
+      await check(150);
+      scenario.tracks[0]!.skillCasts.at(-1)!.simulationInputs = { randomSeed: 42 };
+      await check(null);
+      await check(89);
+      vi.advanceTimersByTime(15_000);
+      await check(null);
+    } finally {
+      service.clearCache();
+      vi.useRealTimers();
+    }
+  });
+
+  it('负帧输入与初始切人保持完整重算语义，快轴不保留切面', async () => {
+    const scenario = createPerlicaScenario();
+    scenario.battle.prepFrames = 60;
+    scenario.battle.controlSwitches = [{ id: 'initial-switch', frame: -20, trackIndex: 0 }];
+    const service = createService(() => 0, true);
+    const samples: ScenarioSimulationPerformanceSample[] = [];
+    service.subscribePerformance(sample => samples.push(sample));
+    const expected = await createService().simulate(scenario, 100);
+    for (let i = 0; i < 2; i++) {
+      const actual = await service.simulate(scenario, 100);
+      expect(actual.receiptEntries).toEqual(expected.receiptEntries);
+      expect(actual.finalResources).toEqual(expected.finalResources);
+      expect(samples.at(-1)?.resumedFromFrame).toBeNull();
+    }
+  });
+
+  it('切面移到最近拖动位置之前，小幅拖动复用，越过切面重新建立', async () => {
+    let now = 0;
+    const service = createService(() => (now += 30), true);
+    const samples: ScenarioSimulationPerformanceSample[] = [];
+    service.subscribePerformance(sample => samples.push(sample));
+    let scenario = placeSkillGroup({
+      scenario: createPerlicaScenario(),
+      trackIndex: 0,
+      operator: perlica,
+      skillGroupKey: 'plungingAttack',
+      startFrame: 800,
+      ids: { allocate: kind => `${kind}:drag` },
+    }).scenario;
+    scenario.battle.durationFrames = 1000;
+    const check = async (frame: number, resumed: number | null) => {
+      scenario = structuredClone(scenario);
+      scenario.tracks[0]!.skillCasts[0]!.placement = { startFrame: frame };
+      const actual = await service.simulate(scenario, 1000);
+      const expected = await createService().simulate(scenario, 1000);
+      expect(actual.receiptEntries).toEqual(expected.receiptEntries);
+      expect(samples.at(-1)?.resumedFromFrame).toBe(resumed);
+    };
+    try {
+      await check(800, null);
+      await check(801, 500); // 本次从旧中点恢复，并在 769 帧留下新切面。
+      await check(802, 769);
+      await check(790, 769); // 一秒余量内向左拖动，不重新保存。
+      await check(740, null); // 越过 769，须重算并在 709 帧保存。
+      await check(739, 709);
+    } finally {
+      service.clearCache();
+    }
+  });
+
   it('图干员通过正式服务编译输入且重复模拟结果一致', async () => {
     const graphFixtureSkill = graphFixtureSkillOf({
       key: 'service-graph-skill',

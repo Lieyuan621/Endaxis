@@ -90,6 +90,9 @@ export function resolvePlayerActiveDamageInput(
   recordAttribute?.('attacker', 'criticalRate');
   recordAttribute?.('attacker', 'criticalDamageIncrease');
   recordAttribute?.('attacker', 'weaknessDamageMultiplier');
+  if (runtime.appliesIgniteDamageMultiplier) recordAttribute?.('attacker', 'IgniteDamageScalar');
+  if (runtime.appliesPhysicalInflictionDamageMultiplier)
+    recordAttribute?.('attacker', 'PhysicalInflictionDamageScalar');
   recordAttribute?.('defender', 'shelterDamageMultiplier');
   if (usesDamageResistance(step.parameters.damageType))
     recordAttribute?.('defender', ENEMY_RESISTANCE_ATTRIBUTES[step.parameters.damageType]);

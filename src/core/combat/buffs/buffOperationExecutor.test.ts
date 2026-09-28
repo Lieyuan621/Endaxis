@@ -1812,6 +1812,7 @@ describe('BuffOperationExecutor', () => {
       delegate,
     });
     const blackboard = new ActionBlackboard({ rate: 4 });
+    blackboard.setArtsIntensityFactor('rate', 2);
 
     expect(
       executor.execute(
@@ -1838,6 +1839,7 @@ describe('BuffOperationExecutor', () => {
         definitionOwnerId: 'operator',
         sourceId: 'operator',
         blackboardValues: { duration: 25, comboRate: 4, child_buff_id: 'buff:icon' },
+        blackboardArtsIntensityFactors: { comboRate: { multiplier: 2 } },
       },
     ]);
 

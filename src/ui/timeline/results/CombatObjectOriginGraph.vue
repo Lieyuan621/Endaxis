@@ -15,6 +15,7 @@ import { projectHitDamageContribution } from '../../../core/projection/damageCon
 import { runtimeTargetFromEntityId } from '../../../core/game-data/logicalAbilityEntity';
 
 const props = defineProps<{
+  kind?: 'damage' | 'status';
   origins?: CombatObjectOrigins;
   /** 未提供现成索引时，首次打开图再为这份固定结果建立索引。 */
   receiptEntries?: readonly CombatReceiptEntry[];
@@ -28,6 +29,9 @@ const props = defineProps<{
   ) => { name: string; kind: string } | undefined;
 }>();
 const { t, te } = useI18n();
+const title = computed(() =>
+  t(props.kind === 'damage' ? 'objectOrigins.damageTitle' : 'objectOrigins.statusTitle'),
+);
 const open = ref(false);
 const origins = computed(
   () =>
@@ -242,13 +246,11 @@ function changeSummary(node: CombatObjectNode): string | undefined {
 </script>
 
 <template>
-  <EaButton size="sm" class="open-origin-graph" @click="open = true"
-    >{{ t('objectOrigins.title') }} ↗</EaButton
-  >
+  <EaButton size="sm" class="open-origin-graph" @click="open = true">{{ title }} ↗</EaButton>
   <InputRegionBoundary label="CombatObjectOriginGraph" :active="open" modal>
     <EaDialog
       v-model="open"
-      :title="t('objectOrigins.title')"
+      :title="title"
       width="min(1320px, 96vw)"
       top="3vh"
       append-to-body
@@ -282,7 +284,7 @@ function changeSummary(node: CombatObjectNode): string | undefined {
         <svg
           ref="canvas"
           class="graph-canvas"
-          :aria-label="t('objectOrigins.title')"
+          :aria-label="title"
           @pointerdown="startPan"
           @pointermove="pan"
           @pointerup="stopPan"

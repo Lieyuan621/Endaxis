@@ -16,7 +16,11 @@ export function assignActionBlackboard(
   values?: Readonly<Record<string, ActionBlackboardValue>>,
 ): void {
   if (values === undefined) return;
-  for (const [key, value] of Object.entries(values)) state.values.set(key, value);
+  for (const [key, value] of Object.entries(values)) {
+    state.values.set(key, value);
+    state.artsIntensityFactors?.delete(key);
+    state.valueCalculations?.delete(key);
+  }
 }
 
 function dynamicTarget(state: ActionBlackboardState, key: string): ActionBlackboardState {
@@ -32,6 +36,8 @@ export function assignDynamicBlackboard(
   const current = target.values.get(key);
   if (typeof current === 'number' && Math.abs(current - value) <= 0.00001) return false;
   target.values.set(key, value);
+  target.artsIntensityFactors?.delete(key);
+  target.valueCalculations?.delete(key);
   return true;
 }
 
@@ -41,7 +47,10 @@ export function assignDynamicBlackboardUnconditionally(
   key: string,
   value: number,
 ): void {
-  dynamicTarget(state, key).values.set(key, value);
+  const target = dynamicTarget(state, key);
+  target.values.set(key, value);
+  target.artsIntensityFactors?.delete(key);
+  target.valueCalculations?.delete(key);
 }
 
 export function resolveBlackboardOperand(
@@ -82,10 +91,26 @@ export function createLocalBlackboardState(
       : Object.fromEntries(
           Object.entries(entityAssignments).map(([key, operand]) => [key, resolveOperand(operand)]),
         );
-  return createActionBlackboardState(
+  const result = createActionBlackboardState(
     inheritDirect ? { ...initialValues, ...Object.fromEntries(parent.values) } : initialValues,
     entityInitialValues === undefined && assigned === undefined
       ? parent.entity
       : createActionBlackboardState({ ...entityInitialValues, ...assigned }),
   );
+  if (inheritDirect && parent.artsIntensityFactors)
+    result.artsIntensityFactors = new Map(parent.artsIntensityFactors);
+  if (inheritDirect && parent.valueCalculations)
+    result.valueCalculations = new Map(parent.valueCalculations);
+  if (assigned && result.entity) {
+    for (const [key, operand] of Object.entries(entityAssignments ?? {})) {
+      if (operand.kind !== 'blackboard') continue;
+      const source = parent.values.has(operand.key) ? parent : parent.entity;
+      const factor = source?.artsIntensityFactors?.get(operand.key);
+      if (factor !== undefined) (result.entity.artsIntensityFactors ??= new Map()).set(key, factor);
+      const calculation = source?.valueCalculations?.get(operand.key);
+      if (calculation !== undefined)
+        (result.entity.valueCalculations ??= new Map()).set(key, calculation);
+    }
+  }
+  return result;
 }

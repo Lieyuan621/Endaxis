@@ -595,6 +595,8 @@ describe('ActionBlackboardOperationExecutor', () => {
 
     expect(blackboard.getNumber('linear')).toBeCloseTo(15);
     expect(blackboard.getNumber('saturating')).toBeCloseTo(20);
+    expect(blackboard.getArtsIntensityFactor('linear')).toBeCloseTo(1.5);
+    expect(blackboard.getArtsIntensityFactor('saturating')).toBeCloseTo(2);
     expect(reads).toEqual(['akekuri', 'party-member']);
   });
 

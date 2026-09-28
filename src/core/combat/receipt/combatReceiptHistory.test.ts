@@ -13,13 +13,23 @@ it('freezes direct bonus results and includes them in the common export', () => 
     zone: 'normal' as const,
     addition: 0.2,
   };
-  collector.record({ event: 'DamageApplied', frame: 0, time: 0, appliedDamageModifiers: [item] });
+  const calculation = { operation: 'multiply' as const, left: 1.5, right: 2, result: 3 };
+  collector.record({
+    event: 'DamageApplied',
+    frame: 0,
+    time: 0,
+    appliedDamageModifiers: [item],
+    skillMultiplierCalculation: calculation,
+  });
+  calculation.result = 9;
   item.addition = 0.9;
   const saved = collector.history.snapshot();
   expect(saved.get(0)?.appliedDamageModifiers?.[0]).toMatchObject({ addition: 0.2 });
   expect(Object.isFrozen(saved.get(0)?.appliedDamageModifiers?.[0])).toBe(true);
   const exported = [...exportCombatReceiptJsonLines(saved, 0)].map(line => JSON.parse(line));
   expect(exported[1].appliedDamageModifiers[0].addition).toBe(0.2);
+  expect(exported[1].skillMultiplierCalculation.result).toBe(3);
+  expect(Object.isFrozen(saved.get(0)?.skillMultiplierCalculation)).toBe(true);
 });
 
 it('写入冻结事实，父分支继续追加不改变固定视图，分叉共享前缀但不共享后缀', () => {

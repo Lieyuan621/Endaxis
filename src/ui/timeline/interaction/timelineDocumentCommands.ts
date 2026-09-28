@@ -715,6 +715,30 @@ export function setSkillCastRandomSeed(
   return { ...scenario, tracks };
 }
 
+/** 修改当前选中的反应伤害；取消时删除覆盖，恢复场景的期望或随机策略。 */
+export function setReactionDamageForcedCritical(
+  scenario: ScenarioDocument,
+  keys: readonly string[],
+  forced: boolean,
+): ScenarioDocument {
+  const current = scenario.battle.reactionCriticalOverrides ?? {};
+  if (keys.length === 0 || keys.every(key => (current[key] === true) === forced)) return scenario;
+  const overrides = { ...current };
+  for (const key of keys) {
+    if (key.length === 0) throw new TypeError('forced-critical hit key must not be empty');
+    if (forced) overrides[key] = true;
+    else delete overrides[key];
+  }
+  const { reactionCriticalOverrides: _old, ...battle } = scenario.battle;
+  return {
+    ...scenario,
+    battle: {
+      ...battle,
+      ...(Object.keys(overrides).length ? { reactionCriticalOverrides: overrides } : {}),
+    },
+  };
+}
+
 /** 切换一次释放中某个稳定伤害步骤的强制暴击输入。 */
 export function setSkillCastForcedCritical(
   scenario: ScenarioDocument,

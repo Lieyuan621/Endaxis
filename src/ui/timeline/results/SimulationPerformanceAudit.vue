@@ -7,6 +7,8 @@ interface AuditLabels {
   readonly title: string;
   readonly latest: string;
   readonly p95: string;
+  readonly resumePoint: string;
+  readonly fullRun: string;
   readonly simulation: string;
   readonly projection: string;
   readonly budget: string;
@@ -80,6 +82,16 @@ function formatMs(value: number | null): string {
         <dt>{{ labels.p95 }}</dt>
         <dd :class="{ 'is-over-budget': (summary.p95Ms ?? 0) > budgetMs }">
           {{ formatMs(summary.p95Ms) }}
+        </dd>
+      </div>
+      <div>
+        <dt>{{ labels.resumePoint }}</dt>
+        <dd>
+          {{
+            recentSamples.at(-1)?.resumedFromFrame == null
+              ? labels.fullRun
+              : `${(recentSamples.at(-1)!.resumedFromFrame! / 30).toFixed(2)} s`
+          }}
         </dd>
       </div>
     </dl>
@@ -202,7 +214,7 @@ function formatMs(value: number | null): string {
 
 .performance-audit__metrics {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
   margin: 14px 0 0;
 }

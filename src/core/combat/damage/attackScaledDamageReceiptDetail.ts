@@ -31,11 +31,10 @@ export function freezeAttackScaledDamageReceiptDetail(
     enemyDefense: input.defense,
     enemyResistancePercent: input.resistancePercent,
     damageTakenMultiplier: input.damageTakenMultiplier,
-    directDamageMultiplier:
-      damage.weaknessShelterMultiplier *
-      damage.runtimeExtensionMultiplier *
-      damage.igniteMultiplier *
-      damage.physicalInflictionMultiplier,
+    directDamageMultiplier: damage.weaknessShelterMultiplier * damage.runtimeExtensionMultiplier,
+    ...(input.appliesIgniteDamageMultiplier || input.appliesPhysicalInflictionDamageMultiplier
+      ? { levelCoefficient: damage.igniteMultiplier * damage.physicalInflictionMultiplier }
+      : {}),
     resistancePercentMultiplier:
       input.damageType === 'true' ? 1 : Math.max(0, 1 - input.resistancePercent / 100),
     weaknessDamageMultiplier: input.weaknessDamageMultiplier,

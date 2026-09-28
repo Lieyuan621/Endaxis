@@ -77,6 +77,29 @@ const panel: ResolvedOperatorPanel = {
   receipt: [],
 };
 
+it('freezes level-derived reaction scalars after runtime attribute modifiers', () => {
+  const leveledPanel = { ...panel, level: 90 };
+  const attributes = createOperatorAttackAttributes(leveledPanel);
+  attributes.addModifier(
+    createCombatAttributeModifier(
+      'IgniteDamageScalar',
+      attributeModifierValues('finalMultiplier', 2),
+      ATTRIBUTE_MODIFIER_SOURCES.buff,
+      'runtime',
+    ),
+  );
+  const snapshot = resolveStaticPlayerDamageSnapshots(
+    { operatorId: panel.operatorId, panel: leveledPanel, enemy },
+    {
+      kind: 'dealDamage',
+      parameters: { damageType: 'nature', attackScale: 1, tags: ['natureBurst'] },
+    },
+    attributes,
+  );
+  expect(snapshot.attacker.igniteDamageMultiplier).toBeCloseTo((1 + 89 / 196) * 2);
+  expect(snapshot.attacker.physicalInflictionDamageMultiplier).toBeCloseTo(1 + 89 / 392);
+});
+
 function createContext(overrides: Partial<CombatOperationExecutorContext> = {}) {
   return {
     program: {
@@ -164,7 +187,7 @@ describe('resolveStaticPlayerDamageSnapshots', () => {
     const normal = resolveStaticPlayerDamageSnapshots(
       {
         ...context,
-      program: { ...context.program, skillType: 'basicAttack' },
+        program: { ...context.program, skillType: 'basicAttack' },
       },
       electricDamage,
       attributes,

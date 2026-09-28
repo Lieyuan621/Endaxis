@@ -47,6 +47,9 @@ export interface HealthDamageEventPayload {
 
 /** 旧版伤害详情能够直接显示、且已经由本次公式确定的冻结值。 */
 export interface HealthDamageReceiptDetail {
+  readonly reactionDamageKind?: 'spellBurst' | 'physicalInfliction';
+  readonly reactionCriticalKey?: string;
+  readonly forcedCritical?: boolean;
   readonly 'damageScale:normal:attacker'?: number;
   readonly 'damageScale:normal:defender'?: number;
   readonly attackDetailRawBase?: number;
@@ -103,10 +106,19 @@ export interface HealthDamageReceiptDetail {
   readonly expectedDamage?: number;
   readonly enemyDefense?: number;
   readonly enemyResistancePercent?: number;
+  readonly enemyBaseResistancePercent?: number;
   readonly damageTakenMultiplier?: number;
   readonly weaknessDamageMultiplier?: number;
   readonly shelterDamageMultiplier?: number;
-  /** 除暴击、防御、抗性与承伤外，本次伤害实际使用的合并倍率。 */
+  /** 本次命中实际使用的等级系数，独立于其他伤害乘区。 */
+  readonly levelCoefficient?: number;
+  /** 已包含在原生倍率中的源石技艺强度乘数；展示时从技能倍率拆出。 */
+  readonly artsIntensityMultiplier?: number;
+  readonly artsIntensity?: number;
+  readonly sourceLevel?: number;
+  readonly effectivenessMultiplier?: number;
+  readonly finisherMultiplier?: number;
+  /** 除等级系数、暴击、防御、抗性与承伤外，本次伤害实际使用的合并倍率。 */
   readonly directDamageMultiplier?: number;
   /** 仅由伤害类型和抗性百分比得到的倍率，不含独立承伤倍率。 */
   readonly resistancePercentMultiplier?: number;
@@ -114,6 +126,7 @@ export interface HealthDamageReceiptDetail {
 
 /** 在正确事件边界写入一次生命伤害所需的状态和端口。 */
 export interface ExecuteHealthDamageInput {
+  readonly skillMultiplierCalculation?: import('../state/foundationState').ActionValueCalculation;
   readonly producedBy?: import('../receipt/combatReceipt').CombatObjectRef;
   readonly executingSkillId?: HealthDamageEventPayload['executingSkillId'];
   readonly skillCastInfo?: CombatSkillCastInfo | null;
@@ -188,6 +201,9 @@ export function executeHealthDamage(input: ExecuteHealthDamageInput): HealthDama
     frame: input.clock.frame,
     time: input.clock.time,
     event: 'DamageApplied',
+    ...(input.skillMultiplierCalculation === undefined
+      ? {}
+      : { skillMultiplierCalculation: input.skillMultiplierCalculation }),
     ...(input.appliedDamageModifiers?.length
       ? { appliedDamageModifiers: input.appliedDamageModifiers }
       : {}),

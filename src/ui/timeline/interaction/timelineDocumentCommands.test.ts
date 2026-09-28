@@ -1,4 +1,17 @@
 import { describe, expect, it } from 'vitest';
+
+it('反应伤害覆盖独立保存，取消时不修改技能块或其他命中', () => {
+  const original = createEmptyScenario('reaction', '反应');
+  const forced = setReactionDamageForcedCritical(original, ['first', 'second'], true);
+  expect(forced.tracks).toBe(original.tracks);
+  expect(original.battle.reactionCriticalOverrides).toBeUndefined();
+  const saved = JSON.parse(JSON.stringify(forced)) as ScenarioDocument;
+  const cleared = setReactionDamageForcedCritical(saved, ['first'], false);
+  expect(cleared.battle.reactionCriticalOverrides).toEqual({ second: true });
+  expect(
+    setReactionDamageForcedCritical(cleared, ['second'], false).battle.reactionCriticalOverrides,
+  ).toBeUndefined();
+});
 import { createEmptyScenario } from '../../../core/project/createProject';
 import type { ScenarioDocument, SkillCastDocument } from '../../../core/project/schema';
 import {
@@ -25,6 +38,7 @@ import {
   setSkillCastColor,
   setSkillCastDisabled,
   setSkillCastForcedCritical,
+  setReactionDamageForcedCritical,
   setSkillCastLocked,
   setSkillCastRandomSeed,
   setUnifiedInitialUltimateEnergy,

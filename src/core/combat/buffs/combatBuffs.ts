@@ -260,8 +260,14 @@ export interface CombatBuffDefinition<Key extends string> {
 
 /** 添加 Buff 实例时由具体行为提供的初始黑板和层数。 */
 export interface CombatBuffAddOptions {
+  readonly blackboardValueCalculations?: Readonly<
+    Record<string, import('../state/foundationState').ActionValueCalculation>
+  >;
   readonly producedBy?: import('../receipt/combatReceipt').CombatObjectRef;
   readonly blackboardValues?: Readonly<Record<string, ActionBlackboardValue>>;
+  readonly blackboardArtsIntensityFactors?: Readonly<
+    Record<string, import('../state/foundationState').ArtsIntensityFactor>
+  >;
   /** 创建该实例的技能、被动或配装动作身份，用于解释后续生命周期步骤。 */
   readonly sourceActionId?: string;
   /** 创建该定义的 AbilitySystem；跨实体挂载和事件触发都不改变它。 */
@@ -464,7 +470,11 @@ export class CombatBuff<Key extends string> {
       { ownerId: owner.ownerId, instanceId, definitionId: definition.id, sourceId },
       this.blackboard.runtimeState,
     );
-    this.blackboard.assign(options?.blackboardValues);
+    this.blackboard.assign(
+      options?.blackboardValues,
+      options?.blackboardArtsIntensityFactors,
+      options?.blackboardValueCalculations,
+    );
     // 对应原生 Buff.Reset：本次赋值完成后收集来源修正，早于寿命/修正器求值。
     // 仅初始化新实例执行；刷新旧实例不会因此重播收集事件。
     owner.collectOutputBlackboard?.(definition, sourceId, this.blackboard);
@@ -946,11 +956,21 @@ export class CombatBuff<Key extends string> {
   /** 原生 Modify 只合并输入黑板，并据旧定义重建已注册的属性修正。 */
   modify(options?: CombatBuffAddOptions): void {
     const previousBlackboard = this.blackboard.snapshot();
-    this.blackboard.assign(options?.blackboardValues);
+    const previousCalculations = Object.fromEntries(
+      this.blackboard.runtimeState.valueCalculations ?? [],
+    );
+    const previousFactors = Object.fromEntries(
+      this.blackboard.runtimeState.artsIntensityFactors ?? [],
+    );
+    this.blackboard.assign(
+      options?.blackboardValues,
+      options?.blackboardArtsIntensityFactors,
+      options?.blackboardValueCalculations,
+    );
     try {
       this.replaceAttributeModifiers(this.createAttributeModifiers());
     } catch (error) {
-      this.blackboard.restore(previousBlackboard);
+      this.blackboard.restore(previousBlackboard, previousFactors, previousCalculations);
       throw error;
     }
   }
@@ -1843,6 +1863,12 @@ export class CombatBuffContainer<Key extends string> {
           sourceActionId: buff.sourceActionId,
           side,
           ...result,
+          ...(buff.definition.id === 'buff_common_affixes_skillimbue_atk' &&
+          result.kind === 'damageScale' &&
+          result.zone === 'combo'
+            ? // 每层连击分别生成一个修正 Buff；count 默认值不表示消费层数。
+              { consumedStacks: 1 }
+            : {}),
         });
       });
     }

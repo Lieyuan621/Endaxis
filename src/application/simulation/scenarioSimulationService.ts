@@ -6,6 +6,7 @@ import {
 } from './compileFixedCombatInputSchedule';
 import { planRecursiveSkillChain, type RecursiveSkillChain } from './recursiveSkillChain';
 import { InheritedScenarioSimulation } from './inheritedScenarioSimulation';
+import { IncrementalScenarioSimulation } from './incrementalScenarioSimulation';
 /**
  * 给页面提供"跑一次模拟"的入口。
  *
@@ -97,6 +98,8 @@ function resolveScenarioRandomSettings(scenario: ScenarioDocument): {
 }
 
 export interface ScenarioSimulationServiceOptions {
+  /** 慢轴单切面复用试验；只在 Worker 中开启，完整重算保留作对照。 */
+  readonly reuseCheckpoint?: boolean;
   readonly index: CompileScenarioRuntimeAssemblyOptions['index'];
   readonly resources: Omit<CompileScenarioResourcesOptions, 'operators'>;
   readonly criticalSamples?: CriticalSampleSource;
@@ -119,6 +122,7 @@ export type ScenarioSimulationPerformanceOutcome = 'completed' | 'aborted' | 'fa
 
 /** 一次 simulate 调用的墙钟耗时；各阶段互斥，可直接堆叠展示。 */
 export interface ScenarioSimulationPerformanceSample {
+  readonly resumedFromFrame?: number | null;
   readonly totalMs: number;
   readonly simulationMs: number;
   readonly projectionMs: number;
@@ -167,13 +171,14 @@ function freezeDiagnostics<T extends { readonly receiptSequences: readonly numbe
 
 /**
  * 一个服务实例绑定一套固定的游戏数据和规则。
- * 每次调用都重新模拟；想换数据或规则就新建一个实例。
+ * 不缓存完整结果；可选复用未变化的前缀切面。想换数据或规则就新建一个实例。
  */
 export class ScenarioSimulationService {
   readonly #options: ScenarioSimulationServiceOptions & {
     readonly elementalInflictionDocument: CombatBuffDefinitionsDocument;
   };
   readonly #inheritedSimulation = new InheritedScenarioSimulation();
+  readonly #incrementalSimulation: IncrementalScenarioSimulation;
   readonly #performanceNow: () => number;
   readonly #performanceSubscribers = new Set<ScenarioSimulationPerformanceSubscriber>();
 
@@ -189,6 +194,7 @@ export class ScenarioSimulationService {
         new MechanicAdapterRegistry([contingencyContractMechanicAdapter]),
     };
     this.#performanceNow = options.performanceNow ?? (() => globalThis.performance.now());
+    this.#incrementalSimulation = new IncrementalScenarioSimulation(this.#performanceNow);
   }
 
   /** 订阅每次模拟调用的耗时样本；返回值用于解除订阅。 */
@@ -318,6 +324,7 @@ export class ScenarioSimulationService {
     continuationPlanMode: 'continuation' | 'compact' = 'continuation',
   ): StandardPlayerDamageScenarioResult {
     if (scenario.inheritance !== undefined) {
+      this.#incrementalSimulation.clear();
       return this.#inheritedSimulation.run(
         this,
         scenario,
@@ -327,6 +334,16 @@ export class ScenarioSimulationService {
           : { castIds: continuationPlanCastIds, mode: continuationPlanMode },
       );
     }
+    this.#inheritedSimulation.clear();
+    if (
+      this.#options.reuseCheckpoint &&
+      continuationPlanCastIds === undefined &&
+      this.#options.criticalSamples === undefined &&
+      this.#options.probabilitySamples === undefined
+    ) {
+      return this.#incrementalSimulation.run(this, scenario, endFrame);
+    }
+    this.#incrementalSimulation.clear();
     return runStandardPlayerDamageScenarioSimulation(
       this.#createStandardSimulationInput(
         scenario,
@@ -481,6 +498,7 @@ export class ScenarioSimulationService {
         simulationMs: simulationEndedAt - simulationStartedAt,
         projectionMs: endedAt - projectionStartedAt,
         outcome: 'completed',
+        resumedFromFrame: this.#incrementalSimulation.resumedFromFrame,
         endFrame,
         receiptCount,
       });
@@ -509,6 +527,7 @@ export class ScenarioSimulationService {
 
   /** 释放继承方案复用的前缀检查点；不涉及完整结果。 */
   clearCache(): void {
+    this.#incrementalSimulation.clear();
     this.#inheritedSimulation.clear();
   }
 

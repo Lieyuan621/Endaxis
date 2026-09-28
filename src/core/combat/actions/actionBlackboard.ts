@@ -36,8 +36,60 @@ export class ActionBlackboard {
       entityBlackboard === undefined ? undefined : entityBlackboard.#state,
     );
   }
-  assign(values?: Readonly<Record<string, ActionBlackboardValue>>): void {
+  assign(
+    values?: Readonly<Record<string, ActionBlackboardValue>>,
+    factors?: Readonly<Record<string, import('../state/foundationState').ArtsIntensityFactor>>,
+    calculations?: Readonly<
+      Record<string, import('../state/foundationState').ActionValueCalculation>
+    >,
+  ): void {
     assignActionBlackboard(this.#state, values);
+    for (const [key, factor] of Object.entries(factors ?? {})) {
+      if (Number.isFinite(factor.multiplier) && factor.multiplier > 0)
+        (this.#state.artsIntensityFactors ??= new Map()).set(key, factor);
+    }
+    for (const [key, calculation] of Object.entries(calculations ?? {}))
+      (this.#state.valueCalculations ??= new Map()).set(key, calculation);
+  }
+  getValueCalculation(
+    key: string,
+  ): import('../state/foundationState').ActionValueCalculation | undefined {
+    return (this.#state.values.has(key) ? this.#state : this.#state.entity)?.valueCalculations?.get(
+      key,
+    );
+  }
+  setValueCalculation(
+    key: string,
+    calculation: import('../state/foundationState').ActionValueCalculation | undefined,
+  ): void {
+    const state = key.startsWith('EntityBB_') ? (this.#state.entity ?? this.#state) : this.#state;
+    if (calculation === undefined) state.valueCalculations?.delete(key);
+    else (state.valueCalculations ??= new Map()).set(key, calculation);
+  }
+  getArtsIntensityFactor(key: string): number | undefined {
+    return this.getArtsIntensityDetail(key)?.multiplier;
+  }
+  getArtsIntensityDetail(
+    key: string,
+  ): import('../state/foundationState').ArtsIntensityFactor | undefined {
+    const state = this.#state.values.has(key) ? this.#state : this.#state.entity;
+    return state?.artsIntensityFactors?.get(key);
+  }
+  setArtsIntensityFactor(
+    key: string,
+    factor: number | undefined,
+    intensity?: number,
+    baseValue?: number,
+  ): void {
+    const state = key.startsWith('EntityBB_') ? (this.#state.entity ?? this.#state) : this.#state;
+    if (factor === undefined || !Number.isFinite(factor) || factor <= 0)
+      state.artsIntensityFactors?.delete(key);
+    else
+      (state.artsIntensityFactors ??= new Map()).set(key, {
+        multiplier: factor,
+        intensity,
+        baseValue,
+      });
   }
   getString(key: string): string | undefined {
     const value = readActionBlackboard(this.#state, key);
@@ -62,11 +114,24 @@ export class ActionBlackboard {
   }
   /** 复制 direct 值，实体板仍共享，不是整场切面。 */
   detachedSnapshot(): ActionBlackboard {
-    return ActionBlackboard.#bind(createActionBlackboardState(this.snapshot(), this.#state.entity));
+    const state = createActionBlackboardState(this.snapshot(), this.#state.entity);
+    if (this.#state.artsIntensityFactors)
+      state.artsIntensityFactors = new Map(this.#state.artsIntensityFactors);
+    if (this.#state.valueCalculations)
+      state.valueCalculations = new Map(this.#state.valueCalculations);
+    return ActionBlackboard.#bind(state);
   }
-  restore(values: Readonly<Record<string, ActionBlackboardValue>>): void {
+  restore(
+    values: Readonly<Record<string, ActionBlackboardValue>>,
+    factors?: Readonly<Record<string, import('../state/foundationState').ArtsIntensityFactor>>,
+    calculations?: Readonly<
+      Record<string, import('../state/foundationState').ActionValueCalculation>
+    >,
+  ): void {
     this.#state.values.clear();
-    this.assign(values);
+    this.#state.artsIntensityFactors?.clear();
+    this.#state.valueCalculations?.clear();
+    this.assign(values, factors, calculations);
   }
   createLocalScope(
     initialValues: Readonly<Record<string, ActionBlackboardValue>>,
@@ -98,4 +163,23 @@ export function resolveActionValueOperand(
   blackboard: ActionBlackboard,
 ): number {
   return resolveActionOperand(operand, key => blackboard.getNumber(key));
+}
+
+/** 只拆分已明确记录的乘数，不用命中时的属性反推先前读取的值。 */
+export function resolveArtsIntensityFactor(
+  operand: ActionValueOperand | number,
+  blackboard: ActionBlackboard,
+): number | undefined {
+  return typeof operand !== 'number' && operand.kind === 'blackboard'
+    ? blackboard.getArtsIntensityFactor(operand.key)
+    : undefined;
+}
+
+export function resolveArtsIntensityValue(
+  operand: ActionValueOperand | number,
+  blackboard: ActionBlackboard,
+): number | undefined {
+  return typeof operand !== 'number' && operand.kind === 'blackboard'
+    ? blackboard.getArtsIntensityDetail(operand.key)?.intensity
+    : undefined;
 }

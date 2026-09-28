@@ -150,6 +150,18 @@ export function validateBattle(value: unknown, path: string, issues: ValidationI
   }
   requireNonNegativeInteger(value.prepFrames, `${path}.prepFrames`, issues);
   requirePositiveInteger(value.durationFrames, `${path}.durationFrames`, issues);
+  if (
+    value.reactionCriticalOverrides !== undefined &&
+    (!isObject(value.reactionCriticalOverrides) ||
+      Object.entries(value.reactionCriticalOverrides).some(
+        ([key, flag]) => key.length === 0 || typeof flag !== 'boolean',
+      ))
+  ) {
+    issues.push({
+      path: `${path}.reactionCriticalOverrides`,
+      message: 'expected non-empty hit keys mapped to booleans',
+    });
+  }
 
   if (value.random !== undefined) {
     const randomPath = `${path}.random`;

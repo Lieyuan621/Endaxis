@@ -11,8 +11,10 @@ import { ScenarioSimulationService } from './scenarioSimulationService';
 
 export function createScenarioSimulationService(
   repository: GameDataRepository,
+  reuseCheckpoint = false,
 ): ScenarioSimulationService {
   return new ScenarioSimulationService({
+    reuseCheckpoint,
     index: repository,
     spellInflictionSettings: skillSettings,
     resources: {

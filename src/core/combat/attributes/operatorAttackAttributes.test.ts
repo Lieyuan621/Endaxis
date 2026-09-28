@@ -8,6 +8,7 @@ import {
 } from './operatorAttackAttributes';
 
 const input: OperatorAttackDerivationInput = {
+  level: 1,
   attributes: { strength: 100, agility: 80, intellect: 120, will: 200 },
   attackBeforeAttributeScalar: 500,
   artsIntensity: 16,
@@ -16,6 +17,11 @@ const input: OperatorAttackDerivationInput = {
 };
 
 describe('operator attack attributes', () => {
+  it.each([1, 60, 90])('derives reaction damage scalars from operator level %i', level => {
+    const attributes = createOperatorAttackAttributes({ ...input, level });
+    expect(attributes.get('IgniteDamageScalar')).toBeCloseTo(1 + (level - 1) / 196, 12);
+    expect(attributes.get('PhysicalInflictionDamageScalar')).toBeCloseTo(1 + (level - 1) / 392, 12);
+  });
   it('adds build and runtime attack multipliers in one native slot and preserves flat additions', () => {
     const build = {
       ...input,

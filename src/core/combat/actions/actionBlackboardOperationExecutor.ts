@@ -14,7 +14,11 @@ import type {
   OperatorAttribute,
   OperatorRole,
 } from '../../game-data/operatorDefinition';
-import { resolveActionValueOperand } from './actionBlackboard';
+import {
+  resolveActionValueOperand,
+  resolveArtsIntensityFactor,
+  resolveArtsIntensityValue,
+} from './actionBlackboard';
 import { compareCombatNumbers } from '../../mechanics/combatNumbers.ts';
 import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
 import type { ProbabilitySampleSource } from '../random/probabilitySampleSource';
@@ -135,9 +139,45 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
         resolveActionValueOperand(step.parameters.value, context.blackboard),
       );
       const oldValue = Math.fround(context.blackboard.getNumber(step.parameters.key) ?? 0);
+      const copiedCalculation =
+        step.parameters.value.kind === 'blackboard'
+          ? context.blackboard.getValueCalculation(step.parameters.value.key)
+          : undefined;
+      const rightBase =
+        typeof step.parameters.value !== 'number' && step.parameters.value.kind === 'blackboard'
+          ? context.blackboard.getArtsIntensityDetail(step.parameters.value.key)?.baseValue
+          : undefined;
+      const baseValue =
+        step.parameters.operation === 'assign'
+          ? rightBase
+          : step.parameters.operation === 'multiply' || step.parameters.operation === 'divide'
+            ? context.blackboard.getArtsIntensityDetail(step.parameters.key)?.baseValue
+            : undefined;
+      const intensity =
+        step.parameters.operation === 'assign'
+          ? resolveArtsIntensityValue(step.parameters.value, context.blackboard)
+          : (context.blackboard.getArtsIntensityDetail(step.parameters.key)?.intensity ??
+            resolveArtsIntensityValue(step.parameters.value, context.blackboard));
+      const factor = combineArtsIntensityFactors(
+        step.parameters.operation,
+        context.blackboard.getArtsIntensityFactor(step.parameters.key),
+        resolveArtsIntensityFactor(step.parameters.value, context.blackboard),
+      );
       context.blackboard.assignDynamic(
         step.parameters.key,
         evaluateActionValueOperation(step.parameters.operation, oldValue, operand),
+      );
+      context.blackboard.setArtsIntensityFactor(step.parameters.key, factor, intensity, baseValue);
+      context.blackboard.setValueCalculation(
+        step.parameters.key,
+        step.parameters.operation === 'assign'
+          ? copiedCalculation
+          : {
+              operation: step.parameters.operation,
+              left: oldValue,
+              right: operand,
+              result: context.blackboard.getNumber(step.parameters.key)!,
+            },
       );
       context.refreshCurrentBuffAttributeModifiers?.();
       return true;
@@ -147,13 +187,33 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
         throw new Error('calculateActionValue requires a combat operation context');
       }
       const left = Math.fround(resolveActionValueOperand(step.parameters.left, context.blackboard));
+      const baseValue =
+        (step.parameters.operation === 'multiply' || step.parameters.operation === 'divide') &&
+        step.parameters.left.kind === 'blackboard'
+          ? context.blackboard.getArtsIntensityDetail(step.parameters.left.key)?.baseValue
+          : undefined;
+      const intensity =
+        resolveArtsIntensityValue(step.parameters.left, context.blackboard) ??
+        resolveArtsIntensityValue(step.parameters.right, context.blackboard);
       const right = Math.fround(
         resolveActionValueOperand(step.parameters.right, context.blackboard),
+      );
+      const factor = combineArtsIntensityFactors(
+        step.parameters.operation,
+        resolveArtsIntensityFactor(step.parameters.left, context.blackboard),
+        resolveArtsIntensityFactor(step.parameters.right, context.blackboard),
       );
       context.blackboard.assignDynamic(
         step.parameters.key,
         evaluateActionValueCalculation(step.parameters.operation, left, right),
       );
+      context.blackboard.setArtsIntensityFactor(step.parameters.key, factor, intensity, baseValue);
+      context.blackboard.setValueCalculation(step.parameters.key, {
+        operation: step.parameters.operation,
+        left,
+        right,
+        result: context.blackboard.getNumber(step.parameters.key)!,
+      });
       context.refreshCurrentBuffAttributeModifiers?.();
       return true;
     }
@@ -232,6 +292,8 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
         const column = roundToEven(resolveActionValueOperand(item.column, context.blackboard)) - 1;
         if (column < 0 || column >= item.values.length) continue;
         let value = item.values[column]!;
+        let artsIntensityFactor: number | undefined;
+        let intensity: number | undefined;
         if (item.enhance !== undefined) {
           if (this.sourceAttributes === undefined) {
             throw new Error('enhanced readSkillSettingData requires a source attribute reader');
@@ -257,12 +319,20 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
             targetKey: item.storeKey,
           });
           const formula = item.enhance.formula;
-          value *=
+          intensity = enhance;
+          artsIntensityFactor =
             formula.kind === 'linear'
               ? 1 + formula.paramA * enhance
               : 1 + (formula.paramA * enhance) / (formula.paramB + enhance);
+          value *= artsIntensityFactor;
         }
         context.blackboard.assignDynamic(item.storeKey, value);
+        context.blackboard.setArtsIntensityFactor(
+          item.storeKey,
+          artsIntensityFactor,
+          intensity,
+          item.values[column],
+        );
         context.refreshCurrentBuffAttributeModifiers?.();
       }
       return true;
@@ -389,6 +459,20 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
       ? this.delegate.evaluate(condition)
       : this.delegate.evaluate(condition, context);
   }
+}
+
+/** 加法只有两侧含相同乘数时才能提取；取整等操作不能保持独立乘区。 */
+function combineArtsIntensityFactors(
+  operation: ActionValueOperation | ActionValueCalculationOperation,
+  left: number | undefined,
+  right: number | undefined,
+): number | undefined {
+  if (operation === 'assign') return right;
+  if (left === undefined && right === undefined) return undefined;
+  if (operation === 'multiply') return (left ?? 1) * (right ?? 1);
+  if (operation === 'divide') return (left ?? 1) / (right ?? 1);
+  if (operation === 'add' && (left ?? 1) === (right ?? 1)) return left ?? right;
+  return undefined;
 }
 
 function evaluateActionValueCalculation(

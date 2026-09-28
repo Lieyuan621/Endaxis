@@ -45,6 +45,8 @@ export type OperatorRuntimeAttribute =
   | 'Atk'
   | 'Def'
   | 'PhysicalAndSpellInflictionEnhance'
+  | 'IgniteDamageScalar'
+  | 'PhysicalInflictionDamageScalar'
   | 'AtbCostAddition'
   | 'ComboSkillCooldownScalar'
   | 'ComboSkillCooldownRecoveryScalar'
@@ -62,6 +64,7 @@ export type OperatorRuntimeAttribute =
   | PlayerDamageTakenAttribute;
 
 export interface OperatorAttackDerivationInput {
+  readonly level: number;
   readonly attributes: Readonly<Record<OperatorAttribute, number>>;
   readonly attackBeforeAttributeScalar: number;
   /** 正式构筑保留原生基础槽位；仅提供预计算基数的合成环境可省略。 */
@@ -92,6 +95,9 @@ export function createOperatorAttackAttributes(
   input: OperatorAttackDerivationInput,
 ): CombatAttributeSet<OperatorRuntimeAttribute> {
   const result = new CombatAttributeSet<OperatorRuntimeAttribute>();
+  // CharacterTable 的全部干员等级记录遵循同一成长公式；保留为原生属性以接受 Buff 修正。
+  result.define('IgniteDamageScalar', 1 + (input.level - 1) / 196, { minimum: 0 });
+  result.define('PhysicalInflictionDamageScalar', 1 + (input.level - 1) / 392, { minimum: 0 });
   // 原生 Atk/BaseMultiplier Buff（例如佩丽卡潜能 3）修正的是属性换算前攻击基数。
   result.define('Atk', input.attackBase?.rawValue ?? input.attackBeforeAttributeScalar, {
     minimum: 0,

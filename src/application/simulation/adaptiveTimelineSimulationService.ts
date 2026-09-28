@@ -18,11 +18,11 @@ type WorkerBackend = Pick<
   'simulate' | 'planSkillChain' | 'subscribePerformance' | 'clearCache' | 'dispose'
 >;
 
-export const INTERACTIVE_SIMULATION_BUDGET_MS = 1000 / 20;
+export const INTERACTIVE_SIMULATION_BUDGET_MS = 200;
 
 /**
  * 普通编辑始终放到 Worker。拖动开始时，如果最近一次完整模拟足够快，整段拖动
- * 改在主线程运行同一套模拟器，使场景和完整投影能在约一帧的预算内一起更新。
+ * 改在主线程运行同一套模拟器，使场景和完整投影一起更新。
  */
 export class AdaptiveTimelineSimulationService {
   private local: SimulationBackend;

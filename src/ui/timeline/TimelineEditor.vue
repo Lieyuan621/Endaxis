@@ -283,6 +283,7 @@ import {
   setSkillCastColor,
   setSkillCastRandomSeed,
   setSkillCastForcedCritical,
+  setReactionDamageForcedCritical,
   updateBattleResourceRule,
   setBattleDurationFrames,
   setBattlePrepFrames,
@@ -3191,6 +3192,20 @@ const enemyDamageDetailEntries = computed(() => {
   );
 });
 function enemyDamageSourceDescription(entry: CombatReceiptEntry) {
+  if (
+    entry.data?.reactionDamageKind !== undefined ||
+    typeof entry.data?.spellBurstType === 'string'
+  ) {
+    return typeof entry.data?.spellBurstType === 'string'
+      ? t(`timeline.skillEditing.spellBurstTypes.${entry.data.spellBurstType}`)
+      : resolveBuffDisplayName(
+          String(entry.data?.buffId ?? ''),
+          { t, te },
+          undefined,
+          undefined,
+          operatorBuffDisplayNameKeys.value,
+        );
+  }
   const sourceActionId =
     typeof entry.data?.sourceActionId === 'string' ? entry.data.sourceActionId : undefined;
   const track = publishedSimulation.value?.scenario.tracks.find(
@@ -3233,7 +3248,30 @@ const hitDetail = computed(() => {
   if (marker === null) return null;
   return { cast, marker };
 });
+const hitDetailEntries = computed(() =>
+  hitDetailTarget.value !== null
+    ? (publishedHitDetail.value?.entries ?? [])
+    : enemyDamageDetailEntries.value,
+);
+const reactionCriticalKeys = computed(() =>
+  hitDetailEntries.value.flatMap(entry =>
+    typeof entry.data?.reactionCriticalKey === 'string' && entry.data.canCritical !== false
+      ? [entry.data.reactionCriticalKey]
+      : [],
+  ),
+);
+const hitDetailResultForceCritical = computed(() =>
+  reactionCriticalKeys.value.length > 0
+    ? reactionCriticalKeys.value.every(
+        key => publishedSimulation.value?.scenario.battle.reactionCriticalOverrides?.[key] === true,
+      )
+    : (publishedHitDetail.value?.forcedCritical ?? false),
+);
 const hitDetailForceCritical = computed(() => {
+  if (reactionCriticalKeys.value.length > 0)
+    return reactionCriticalKeys.value.every(
+      key => scenario.value.battle.reactionCriticalOverrides?.[key] === true,
+    );
   const detail = hitDetail.value;
   return detail?.cast.simulationInputs?.criticalOverrides?.[detail.marker.stepKey] === true;
 });
@@ -3263,6 +3301,13 @@ function hitDetailContributionSourceLabel(
 }
 
 function toggleHitDetailForceCritical(forced: boolean): void {
+  if (reactionCriticalKeys.value.length > 0) {
+    const changed = commitScenario('setReactionDamageForcedCritical', current =>
+      setReactionDamageForcedCritical(current, reactionCriticalKeys.value, forced),
+    );
+    if (changed) void simulateNow();
+    return;
+  }
   const target = hitDetailTarget.value;
   const detail = hitDetail.value;
   if (target === null || detail === null) return;
@@ -7436,6 +7481,8 @@ function setPanelDialogVisible(visible: boolean): void {
           title: t('timeline.performance.title'),
           latest: t('timeline.performance.latest'),
           p95: t('timeline.performance.p95'),
+          resumePoint: t('timeline.performance.resumePoint'),
+          fullRun: t('timeline.performance.fullRun'),
           simulation: t('timeline.performance.simulation'),
           projection: t('timeline.performance.projection'),
           budget: t('timeline.performance.budget'),
@@ -7708,12 +7755,10 @@ function setPanelDialogVisible(visible: boolean): void {
     "
     :source-description="hitDetailTarget === null ? enemyDamageSourceDescription : undefined"
     :visible="hitDetailTarget !== null || enemyDamageDetailSequence !== null"
-    :allow-force-critical="hitDetailTarget !== null"
+    :allow-force-critical="hitDetail !== null || reactionCriticalKeys.length > 0"
     :force-critical="hitDetailForceCritical"
-    :result-force-critical="publishedHitDetail?.forcedCritical ?? false"
-    :entries="
-      hitDetailTarget !== null ? (publishedHitDetail?.entries ?? []) : enemyDamageDetailEntries
-    "
+    :result-force-critical="hitDetailResultForceCritical"
+    :entries="hitDetailEntries"
     :contribution-source-label="hitDetailContributionSourceLabel"
     :damage-type-label="damageElementLabel"
     :skill-type-label="skillTypeLabel"
@@ -7758,6 +7803,17 @@ function setPanelDialogVisible(visible: boolean): void {
       nonCriticalHit: t('hitDetail.nonCriticalHit'),
       cannotCritical: t('hitDetail.cannotCritical'),
       directMultiplier: t('hitDetail.directMult'),
+      levelCoefficient: t('hitDetail.levelCoeff'),
+      artsIntensity: t('hitDetail.artsIntensity'),
+      staggerMultiplier: t('hitDetail.staggerMult'),
+      finisherMultiplier: t('hitDetail.finisherMult'),
+      effectiveness: t('hitDetail.effectiveness'),
+      stacksDetail: (stacks: number) => t('hitDetail.linkDetail', { stacks }),
+      baseMultiplier: t('hitDetail.baseMultiplier'),
+      multiplierCalculation: t('hitDetail.multiplierCalculation'),
+      separatedMultiplier: (name: string) => t('hitDetail.separatedMultiplier', { name }),
+      levelDetail: (level: number) => t('hitDetail.levelCoeffDetail', { level }),
+      artsIntensityDetail: (value: number) => t('hitDetail.artsIntensityDetail', { value }),
       damageTaken: t('hitDetail.dmgTaken'),
       defenseMultiplier: t('hitDetail.defMult'),
       resistanceMultiplier: t('hitDetail.resMult'),

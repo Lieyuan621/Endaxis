@@ -671,6 +671,28 @@ function createDefinition(
   };
 }
 
+it('连击层数按实际生效的修正实例记录，不读取默认为零的 count', () => {
+  const attributes = new CombatAttributeSet<Attribute>();
+  attributes.define('attack', 100, { minimum: 0, maximum: 1000 });
+  const container = new CombatBuffContainer('operator', attributes);
+  const definition: CombatBuffDefinition<Attribute> = {
+    id: 'buff_common_affixes_skillimbue_atk',
+    stackingType: 'unlimited',
+    blackboard: { count: 0 },
+    damageModifiers: [
+      {
+        enabledSide: 'attacker',
+        processors: [{ kind: 'damageScale', side: 'attacker', zone: 'combo', addition: 0.3 }],
+      },
+    ],
+  };
+  container.add(definition, 'operator');
+  container.add(definition, 'operator');
+  const context = createDamageContext(attributes, container);
+  context.applyModifiers('afterCalculation');
+  expect(context.appliedDamageModifiers.map(item => item.consumedStacks)).toEqual([1, 1]);
+});
+
 describe('CombatBuffContainer', () => {
   it('records explicit SkillAffix identity from source cast without changing provenance', () => {
     const container = new CombatBuffContainer('operator', new CombatAttributeSet<string>());

@@ -2,6 +2,29 @@ import { describe, expect, it } from 'vitest';
 import { ActionBlackboard, resolveActionValueOperand } from './actionBlackboard';
 
 describe('ActionBlackboard', () => {
+  it('preserves enhancement factors through scope and checkpoint copies, clearing overwritten values', () => {
+    const board = new ActionBlackboard({ scale: 3 });
+    board.setArtsIntensityFactor('scale', 1.5, 50);
+    board.setValueCalculation('scale', { operation: 'multiply', left: 2, right: 1.5, result: 3 });
+    const fork = ActionBlackboard.bindRuntimeState(structuredClone(board.runtimeState));
+    expect(fork.getArtsIntensityFactor('scale')).toBe(1.5);
+    expect(fork.getArtsIntensityDetail('scale')?.intensity).toBe(50);
+    expect(board.detachedSnapshot().getArtsIntensityFactor('scale')).toBe(1.5);
+    expect(board.createLocalScope({}, true).getArtsIntensityFactor('scale')).toBe(1.5);
+    expect(fork.getValueCalculation('scale')).toEqual({
+      operation: 'multiply',
+      left: 2,
+      right: 1.5,
+      result: 3,
+    });
+    expect(board.createLocalScope({}, true).getValueCalculation('scale')).toEqual(
+      fork.getValueCalculation('scale'),
+    );
+    board.assignDynamic('scale', 4);
+    expect(board.getArtsIntensityFactor('scale')).toBeUndefined();
+    expect(board.getValueCalculation('scale')).toBeUndefined();
+    expect(fork.getArtsIntensityFactor('scale')).toBe(1.5);
+  });
   it('applies runtime values over definition defaults with typed reads', () => {
     const blackboard = new ActionBlackboard({ count: 1, label: 'default', empty: null });
     blackboard.assign({ count: 3, label: 5 });

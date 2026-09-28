@@ -101,16 +101,24 @@ export interface PreparedStandardPlayerDamageScenarioRuntime {
   readonly restoredEnvironment: RestoredCombatEnvironmentInput;
 }
 
+/** 完整重算与切面续算使用同一终点约束。 */
+export function assertScenarioSimulationEndFrame(
+  scenario: ScenarioDocument,
+  endFrame: number,
+): void {
+  if (!Number.isInteger(endFrame) || endFrame < 0) {
+    throw new RangeError('endFrame must be a non-negative integer');
+  }
+  if (endFrame > scenario.battle.durationFrames) {
+    throw new RangeError('endFrame must not exceed scenario battle duration');
+  }
+}
+
 /** 执行一次不会跨场景复用状态的标准玩家生命伤害模拟。 */
 export function runStandardPlayerDamageScenarioSimulation(
   input: RunStandardPlayerDamageScenarioInput,
 ): StandardPlayerDamageScenarioResult {
-  if (!Number.isInteger(input.endFrame) || input.endFrame < 0) {
-    throw new RangeError('endFrame must be a non-negative integer');
-  }
-  if (input.endFrame > input.scenario.battle.durationFrames) {
-    throw new RangeError('endFrame must not exceed scenario battle duration');
-  }
+  assertScenarioSimulationEndFrame(input.scenario, input.endFrame);
 
   const prepared = prepareStandardPlayerDamageScenarioRuntime(input);
   const assembly = createCompiledScenarioRuntime(prepared.compiled);
@@ -122,12 +130,7 @@ export function runStandardPlayerDamageScenarioSimulation(
 export function prepareStandardPlayerDamageScenarioRuntime(
   input: RunStandardPlayerDamageScenarioInput,
 ): PreparedStandardPlayerDamageScenarioRuntime {
-  if (!Number.isInteger(input.endFrame) || input.endFrame < 0) {
-    throw new RangeError('endFrame must be a non-negative integer');
-  }
-  if (input.endFrame > input.scenario.battle.durationFrames) {
-    throw new RangeError('endFrame must not exceed scenario battle duration');
-  }
+  assertScenarioSimulationEndFrame(input.scenario, input.endFrame);
   const mechanics = compileScenarioMechanics(input.scenario, input.options);
   const enemy = applyMechanicsToScenarioEnemy(
     compileScenarioEnemy(input.scenario.enemy),
@@ -151,6 +154,7 @@ export function prepareStandardPlayerDamageScenarioRuntime(
   }
 
   const restoredEnvironmentBase = {
+    reactionCriticalOverrides: input.scenario.battle.reactionCriticalOverrides,
     resolveNonRandomRuntimeSnapshot: input.resolveNonRandomRuntimeSnapshot,
     tagRegistry: gameplayTagRegistry,
     knockDown: {
