@@ -6,8 +6,18 @@ import type {
 export interface TimelineBattleLogEntrySummaryOptions {
   readonly damageTypeLabel: (damageType: string) => string;
   readonly formatValue: (value: CombatReceiptValue) => string;
+  readonly formatDamage: (value: number) => string;
   readonly overhealingLabel: (value: string) => string;
-  readonly semanticLabel: (group: 'flag' | 'inflictionOutcome' | 'reason', value: string) => string;
+  readonly semanticLabel: (
+    group: 'flag' | 'inflictionOutcome' | 'reason' | 'condition',
+    value: string,
+  ) => string;
+  /** 技能等未知身份不猜测；Buff 无显示名时允许稳定 ID 回退。 */
+  readonly identityLabel: (
+    kind: 'skill' | 'buff' | 'reaction' | 'status',
+    id: string,
+    entry: CombatReceiptEntry,
+  ) => string | null;
 }
 
 function number(data: CombatReceiptEntry['data'], key: string): number | null {
@@ -20,8 +30,12 @@ function string(data: CombatReceiptEntry['data'], key: string): string | null {
   return typeof value === 'string' && value.length > 0 ? value : null;
 }
 
-function transition(previous: number | null, current: number | null): string | null {
-  return previous === null || current === null ? null : `${previous} → ${current}`;
+function transition(
+  previous: number | null,
+  current: number | null,
+  format: (value: number) => string,
+): string | null {
+  return previous === null || current === null ? null : `${format(previous)} → ${format(current)}`;
 }
 
 function signed(value: number | null, format: (value: number) => string): string | null {
@@ -36,8 +50,8 @@ function compact(parts: readonly (string | null | undefined)[]): string {
 }
 
 /**
- * 将一条已发生回执压缩为日志行摘要。这里只选择并排版现有标量；缺字段时回退到通用键值，
- * 不根据事件时间或邻近技能推断来源。
+ * 将已发生回执压缩为用户可读摘要。未知字段保留在可展开的原始详情，
+ * 不根据邻近技能推断来源；Buff 没有显示名时保留可辨认的 ID。
  */
 export function summarizeTimelineBattleLogEntry(
   entry: CombatReceiptEntry,
@@ -45,52 +59,71 @@ export function summarizeTimelineBattleLogEntry(
 ): string {
   const data = entry.data;
   const formatNumber = (value: number): string => options.formatValue(value);
+  const identity = (kind: 'skill' | 'buff' | 'reaction' | 'status', key: string): string | null => {
+    const id = string(data, key);
+    return id === null ? null : options.identityLabel(kind, id, entry);
+  };
   switch (entry.event) {
-    case 'DamageApplied':
-    case 'BuffDamageApplied':
-      return compact([
-        string(data, 'damageType') === null
-          ? null
-          : options.damageTypeLabel(string(data, 'damageType')!),
-        number(data, 'value') === null ? null : formatNumber(number(data, 'value')!),
-      ]);
+    case 'SkillInterrupted':
+      return string(data, 'reason') === null
+        ? ''
+        : options.semanticLabel('reason', string(data, 'reason')!);
+    case 'CombatConditionEvaluated':
+      return typeof data?.passed === 'boolean'
+        ? options.semanticLabel('condition', data.passed ? 'passed' : 'failed')
+        : '';
+    case 'PoiseRecovered':
+      return number(data, 'poise') === null ? '' : formatNumber(number(data, 'poise')!);
     case 'SpellBurstApplied':
       return compact([
-        string(data, 'burstType'),
-        number(data, 'value') === null ? null : formatNumber(number(data, 'value')!),
+        number(data, 'value') === null ? null : options.formatDamage(number(data, 'value')!),
       ]);
     case 'HealingApplied':
       return compact([
-        signed(number(data, 'actualHealing'), formatNumber),
+        signed(number(data, 'actualHealing'), options.formatDamage),
         number(data, 'overhealing') === null
           ? null
-          : options.overhealingLabel(formatNumber(number(data, 'overhealing')!)),
+          : options.overhealingLabel(options.formatDamage(number(data, 'overhealing')!)),
       ]);
     case 'PoiseApplied':
       return compact([
-        transition(number(data, 'previousPoise'), number(data, 'currentPoise')),
+        transition(number(data, 'previousPoise'), number(data, 'currentPoise'), formatNumber),
         data?.brokePoise === true ? options.semanticLabel('flag', 'poiseBreak') : null,
         data?.cancelled === true ? options.semanticLabel('flag', 'cancelled') : null,
       ]);
     case 'SpChanged':
     case 'UltimateEnergyChanged':
       return compact([
-        transition(number(data, 'previousValue'), number(data, 'currentValue')),
+        transition(number(data, 'previousValue'), number(data, 'currentValue'), formatNumber),
         signed(number(data, 'actualValue'), formatNumber),
       ]);
+    case 'BuffCreated':
     case 'BuffApplied':
     case 'BuffPresentationStarted':
       return compact([
-        string(data, 'buffId'),
+        identity('buff', 'buffId'),
         number(data, 'layers') === null ? null : `×${formatNumber(number(data, 'layers')!)}`,
       ]);
     case 'BuffFinished':
+    case 'BuffReleased':
     case 'BuffPresentationFinished':
       return compact([
-        string(data, 'buffId'),
+        identity('buff', 'buffId'),
         string(data, 'reason') === null
           ? null
           : options.semanticLabel('reason', string(data, 'reason')!),
+      ]);
+    case 'BuffEnhanceAttempted':
+      return compact([
+        identity('buff', 'buffId'),
+        number(data, 'attemptedLayers') === null
+          ? null
+          : `+${formatNumber(number(data, 'attemptedLayers')!)}`,
+      ]);
+    case 'BuffStackChanged':
+      return compact([
+        identity('buff', 'buffId'),
+        transition(number(data, 'previousLayers'), number(data, 'layers'), formatNumber),
       ]);
     case 'ElementalInflictionApplied': {
       const requested = string(data, 'requestedElement');
@@ -107,7 +140,7 @@ export function summarizeTimelineBattleLogEntry(
     }
     case 'ElementalReactionApplied':
       return compact([
-        string(data, 'reaction'),
+        identity('reaction', 'reaction'),
         number(data, 'level') === null ? null : `Lv.${formatNumber(number(data, 'level')!)}`,
         number(data, 'durationSeconds') === null
           ? null
@@ -115,31 +148,29 @@ export function summarizeTimelineBattleLogEntry(
       ]);
     case 'ElementalReactionConsumed':
       return compact([
-        string(data, 'reaction'),
+        identity('reaction', 'reaction'),
         number(data, 'level') === null ? null : `Lv.${formatNumber(number(data, 'level')!)}`,
         data?.consumed === false ? options.semanticLabel('flag', 'notConsumed') : null,
       ]);
     case 'StatusChanged':
       return compact([
-        string(data, 'statusKey'),
-        transition(number(data, 'previousStacks'), number(data, 'currentStacks')),
+        identity('status', 'statusKey'),
+        transition(number(data, 'previousStacks'), number(data, 'currentStacks'), formatNumber),
         string(data, 'reason') === null
           ? null
           : options.semanticLabel('reason', string(data, 'reason')!),
       ]);
     case 'AbilityEntitySpawned':
       return compact([
-        string(data, 'abilityEntityId'),
-        string(data, 'childSkillId'),
+        identity('skill', 'childSkillId'),
         number(data, 'remainingDurationSeconds') === null
           ? null
           : `${options.formatValue(number(data, 'remainingDurationSeconds')!)}s`,
       ]);
     case 'AbilityEntityChildSkillRequested':
-      return compact([string(data, 'abilityEntityId'), string(data, 'childSkillId')]);
+      return compact([identity('skill', 'childSkillId')]);
     case 'AbilityEntityFinished':
       return compact([
-        string(data, 'abilityEntityId'),
         string(data, 'reason') === null
           ? null
           : options.semanticLabel('reason', string(data, 'reason')!),
@@ -159,16 +190,12 @@ export function summarizeTimelineBattleLogEntry(
         : `→ ${formatNumber(number(data, 'destinationFrame')!)}f`;
     case 'SkillCooldownAdjusted':
       return compact([
-        string(data, 'skillId'),
+        identity('skill', 'skillId'),
         number(data, 'remainingFrames') === null
           ? null
           : `${formatNumber(number(data, 'remainingFrames')!)}f`,
       ]);
     default:
-      if (data === undefined) return '';
-      return Object.entries(data)
-        .slice(0, 2)
-        .map(([key, value]) => `${key}=${options.formatValue(value)}`)
-        .join(' · ');
+      return '';
   }
 }

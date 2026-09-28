@@ -30,7 +30,15 @@ describe('projectTimelineBattleLogGroups', () => {
         entry(1, 'SkillInputProcessed', { castId: 'cast:1', sourceId: 'track:1' }),
         entry(2, 'DamageApplied', { castId: 'cast:1', sourceId: 'entity:child', value: 120 }),
       ],
-      [{ castId: 'cast:1', label: '战技', operatorLabel: '佩里卡', sourceId: 'track:1' }],
+      [
+        {
+          castId: 'cast:1',
+          label: '战技',
+          operatorLabel: '佩里卡',
+          sourceId: 'track:1',
+          color: '#ff4d4f',
+        },
+      ],
     );
     expect(groups).toHaveLength(1);
     expect(groups[0]).toMatchObject({
@@ -40,6 +48,7 @@ describe('projectTimelineBattleLogGroups', () => {
       secondaryLabel: '佩里卡',
       damage: 120,
       castId: 'cast:1',
+      accentColor: '#ff4d4f',
     });
     expect(groups[0]?.entries).toHaveLength(2);
   });
@@ -57,5 +66,6 @@ describe('projectTimelineBattleLogGroups', () => {
       ['runtime', 'BuffFinished'],
     ]);
     expect(groups.every(group => group.castId === null)).toBe(true);
+    expect(groups.every(group => group.accentColor === undefined)).toBe(true);
   });
 });

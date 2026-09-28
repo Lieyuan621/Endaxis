@@ -20,10 +20,7 @@ import {
   type AttributeModifierSlot,
   type DamageModifierSide,
 } from '../../../../packages/game-data-contract/src/modifiers';
-import type {
-  OperatorPanelContributionReceipt,
-  ResolvedOperatorPanel,
-} from '../../../core/compiler/resolveOperatorPanel';
+import type { OperatorPanelContributionReceipt } from '../../../core/compiler/resolveOperatorPanel';
 
 const props = defineProps<{
   visible: boolean;
@@ -46,8 +43,6 @@ const props = defineProps<{
     ownerId: string,
     actionId: string,
   ) => { name: string; kind: string } | undefined;
-  operatorPanel: ResolvedOperatorPanel | null;
-  operatorPanelForEntry?: (entry: CombatReceiptEntry) => ResolvedOperatorPanel | null;
   contributionSourceLabel: (
     entry: Pick<OperatorPanelContributionReceipt, 'source'>,
     sequence?: number,
@@ -69,8 +64,13 @@ const props = defineProps<{
     criticalDamage: string;
     nonCriticalDamage: string;
     attack: string;
-    staticBuildAttack: string;
     basicTotal: string;
+    baseAttack: string;
+    operatorAttack: string;
+    weaponAttack: string;
+    attackBonus: string;
+    flatAttack: string;
+    percentageAttack: string;
     attackSlot: (slot: AttributeModifierSlot) => string;
     attributeBonus: string;
     scalingCoefficient: string;
@@ -82,6 +82,10 @@ const props = defineProps<{
     criticalExpectation: string;
     criticalResult: string;
     criticalRate: string;
+    criticalRateStat: string;
+    criticalDamageStat: string;
+    rawCriticalRate: string;
+    criticalRateCap: string;
     criticalHit: string;
     nonCriticalHit: string;
     cannotCritical: string;
@@ -97,6 +101,7 @@ const emit = defineEmits<{ close: []; toggleForceCritical: [forced: boolean] }>(
 const origins = computed(() => new CombatObjectOrigins(props.receiptEntries ?? props.entries));
 
 interface DetailRow {
+  readonly kind?: 'crit';
   readonly factor?: number;
   readonly tooltip?: string;
   readonly label: string;
@@ -116,8 +121,13 @@ interface DamageDetail {
   readonly canCritical: boolean;
   readonly canForceCritical: boolean;
   readonly attackValue: string;
-  readonly staticAttack: number | null;
+  readonly criticalRateRaw: number;
+  readonly criticalRateEffective: number;
+  readonly criticalDamageIncrease: number;
+  readonly criticalRateSources: readonly DetailRow[];
+  readonly criticalDamageSources: readonly DetailRow[];
   readonly attackSources: readonly DetailRow[];
+  readonly attackSlotValues: Readonly<Record<AttributeModifierSlot, number | null>>;
   readonly attackSlotSources: Readonly<Record<AttributeModifierSlot, readonly DetailRow[]>>;
   readonly otherAttackSlots: readonly AttributeModifierSlot[];
   readonly attackDetail: AttackDetail | null;
@@ -137,15 +147,25 @@ interface AttackAttributeContribution {
 
 interface AttackDetail {
   readonly formula: string;
+  readonly basicTotal: number;
+  readonly baseAttackTotal: number;
+  readonly operatorBaseAttack: number;
+  readonly weaponBaseAttack: number;
+  readonly attackBonus: number;
+  readonly flatAttack: number;
+  readonly attackPercent: number;
+  readonly attributeBonus: number;
   readonly attributeContributions: readonly AttackAttributeContribution[];
 }
 
 const openAttackDetails = ref<ReadonlySet<number>>(new Set());
+const openCriticalDetails = ref<ReadonlySet<number>>(new Set());
 // 回执序号只在当前结果内有效；换一组结果后不能继承上一组的展开状态。
 watch(
   () => props.entries,
   () => {
     openAttackDetails.value = new Set();
+    openCriticalDetails.value = new Set();
   },
 );
 
@@ -155,6 +175,10 @@ function finiteNumber(value: unknown, fallback = 0): number {
 
 function num(value: unknown): string {
   return Math.floor(finiteNumber(value)).toLocaleString();
+}
+
+function ceilNum(value: number): string {
+  return Math.ceil(value).toLocaleString();
 }
 
 function pct(value: unknown): string {
@@ -381,8 +405,31 @@ function projectAttackDetail(data: CombatReceiptEntry['data']): AttackDetail | n
   }
   return {
     formula: formula.join('\n'),
+    basicTotal,
+    baseAttackTotal,
+    operatorBaseAttack,
+    weaponBaseAttack,
+    attackBonus: baseAttackTotal * attackPercent + flatAttack,
+    flatAttack,
+    attackPercent,
+    attributeBonus: attributeContributions.reduce((sum, row) => sum + row.contribution, 0),
     attributeContributions,
   };
+}
+
+function signedNumber(value: number): string {
+  return `${value >= 0 ? '+' : ''}${Math.ceil(value).toLocaleString()}`;
+}
+
+function signedPercent(value: number): string {
+  return `${value >= 0 ? '+' : ''}${(value * 100).toFixed(1)}%`;
+}
+
+function attackSlotValue(slot: AttributeModifierSlot, value: number | null): string {
+  if (value === null) return '—';
+  if (slot === 'baseFinalMultiplier' || slot === 'finalMultiplier') return mult(value);
+  if (slot === 'baseMultiplier' || slot === 'multiplier') return signedPercent(value);
+  return signedNumber(value);
 }
 
 function toggleAttackDetail(key: number): void {
@@ -392,13 +439,17 @@ function toggleAttackDetail(key: number): void {
   openAttackDetails.value = next;
 }
 
+function toggleCriticalDetail(key: number): void {
+  const next = new Set(openCriticalDetails.value);
+  if (next.has(key)) next.delete(key);
+  else next.add(key);
+  openCriticalDetails.value = next;
+}
+
 const damageDetails = computed<readonly DamageDetail[]>(() =>
   props.entries.flatMap(entry => {
     if (entry.event !== 'DamageApplied') return [];
     const data = entry.data ?? {};
-    const panel = props.operatorPanelForEntry
-      ? props.operatorPanelForEntry(entry)
-      : props.operatorPanel;
     const actualValue = finiteNumber(data.value);
     const expectedDamage = finiteNumber(data.expectedDamage, actualValue);
     const nonCriticalDamage = finiteNumber(data.nonCriticalDamage, actualValue);
@@ -408,6 +459,8 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
     const standardCalculation = data.standardCalculation === true;
     const damageScaleMultiplier = finiteNumber(data.damageScaleMultiplier, 1);
     const criticalRate = finiteNumber(data.criticalRate);
+    const criticalRateEffective =
+      data.canCritical === false ? 0 : Math.min(Math.max(criticalRate, 0), 1);
     const criticalDamageIncrease = finiteNumber(data.criticalDamageIncrease);
     const criticalExpectation = finiteNumber(data.criticalExpectationMultiplier, 1);
     const criticalMultiplier = finiteNumber(data.criticalMultiplier, 1);
@@ -453,6 +506,20 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
       [...modifierRows(attributes('attacker', ['criticalRate', 'criticalDamageIncrease']))]
         .map(row => `${row.label} ${row.value}`)
         .join('\n') || undefined;
+    const criticalSources = (attribute: 'criticalRate' | 'criticalDamageIncrease') =>
+      attributes('attacker', [attribute]).map(item => {
+        const row = modifierRows([item])[0]!;
+        const value =
+          item.kind === 'attribute' &&
+          (item.slot === 'finalMultiplier' || item.slot === 'baseFinalMultiplier')
+            ? mult(item.value)
+            : item.kind === 'attribute'
+              ? `${item.value >= 0 ? '+' : ''}${pct(item.value)}`
+              : row.value;
+        return { label: row.label, value };
+      });
+    const criticalRateSources = criticalSources('criticalRate');
+    const criticalDamageSources = criticalSources('criticalDamageIncrease');
     const hasZones = DAMAGE_SCALE_ZONES.some(
       zone => typeof data[`damageScale:${zone}`] === 'number',
     );
@@ -497,9 +564,10 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
     }
     if (props.randomMode === 'expected') {
       multiplierRows.push({
+        kind: 'crit',
         label: props.labels.criticalExpectation,
         tooltip: criticalTooltip,
-        detail: `${props.labels.criticalRate} ${pct(criticalRate)} × ${pct(criticalDamageIncrease)}`,
+        detail: `${props.labels.criticalRate} ${pct(criticalRateEffective)} × ${pct(criticalDamageIncrease)}`,
         value: mult(criticalExpectation),
         factor: criticalExpectation,
       });
@@ -512,9 +580,10 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
             ? props.labels.criticalHit
             : props.labels.nonCriticalHit;
       multiplierRows.push({
+        kind: 'crit',
         label: props.labels.criticalResult,
         tooltip: criticalTooltip,
-        detail: `${props.labels.criticalRate} ${pct(criticalRate)} · ${criticalResult}`,
+        detail: `${props.labels.criticalRate} ${pct(criticalRateEffective)} · ${criticalResult}`,
         value: mult(criticalMultiplier),
         factor: criticalMultiplier,
       });
@@ -601,6 +670,12 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
         : undefined;
     const attackDetail = projectAttackDetail(entry.data);
     const attackModifiers = attributes('attacker', ['Atk']);
+    const attackSlotValues = Object.fromEntries(
+      ATTRIBUTE_MODIFIER_SLOTS.map(slot => {
+        const value = data[`attackDetailSlot:${slot}`];
+        return [slot, typeof value === 'number' && Number.isFinite(value) ? value : null];
+      }),
+    ) as Record<AttributeModifierSlot, number | null>;
     const attackSlotSources = Object.fromEntries(
       ATTRIBUTE_MODIFIER_SLOTS.map(slot => [
         slot,
@@ -635,8 +710,13 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
         canForceCritical:
           data.canCritical !== false && Math.abs(criticalDamage - nonCriticalDamage) > 0.000_001,
         attackValue: num(data.attack),
-        staticAttack: panel?.attack ?? null,
+        criticalRateRaw: criticalRate,
+        criticalRateEffective,
+        criticalDamageIncrease,
+        criticalRateSources,
+        criticalDamageSources,
         attackSources: modifierRows(attackModifiers),
+        attackSlotValues,
         attackSlotSources,
         otherAttackSlots: (
           [
@@ -649,7 +729,16 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
             'finalAddition',
             'finalMultiplier',
           ] as const
-        ).filter(slot => attackSlotSources[slot].length > 0),
+        ).filter(
+          slot =>
+            (attackSlotSources[slot].length > 0 ||
+              (attackSlotValues[slot] !== null &&
+                Math.abs(
+                  attackSlotValues[slot] -
+                    (slot === 'baseFinalMultiplier' || slot === 'finalMultiplier' ? 1 : 0),
+                ) > 0.000_001)) &&
+            (attackDetail === null || (slot !== 'baseMultiplier' && slot !== 'baseFinalAddition')),
+        ),
         attackDetail,
         contextRows,
         baseRows,
@@ -665,6 +754,7 @@ const canForceCritical = computed(() =>
 
 function onClose(): void {
   openAttackDetails.value = new Set();
+  openCriticalDetails.value = new Set();
   emit('close');
 }
 </script>
@@ -792,14 +882,88 @@ function onClose(): void {
                 <td class="value-cell">{{ detail.attackValue }}</td>
               </tr>
               <template v-if="openAttackDetails.has(detail.key)">
-                <tr v-if="detail.staticAttack !== null" class="sub-row">
-                  <td class="label-cell indent-1">{{ labels.staticBuildAttack }}</td>
-                  <td class="value-cell">{{ num(detail.staticAttack) }}</td>
-                </tr>
+                <template v-if="detail.attackDetail !== null">
+                  <tr class="sub-row">
+                    <td class="label-cell indent-1">{{ labels.basicTotal }}</td>
+                    <td class="value-cell">{{ ceilNum(detail.attackDetail.basicTotal) }}</td>
+                  </tr>
+                  <tr class="sub-row">
+                    <td class="label-cell indent-2">{{ labels.baseAttack }}</td>
+                    <td class="value-cell">{{ ceilNum(detail.attackDetail.baseAttackTotal) }}</td>
+                  </tr>
+                  <tr class="sub-row dim">
+                    <td class="label-cell indent-3">{{ labels.operatorAttack }}</td>
+                    <td class="value-cell">
+                      {{ ceilNum(detail.attackDetail.operatorBaseAttack) }}
+                    </td>
+                  </tr>
+                  <tr class="sub-row dim">
+                    <td class="label-cell indent-3">{{ labels.weaponAttack }}</td>
+                    <td class="value-cell">{{ ceilNum(detail.attackDetail.weaponBaseAttack) }}</td>
+                  </tr>
+                  <tr class="sub-row">
+                    <td class="label-cell indent-2">{{ labels.attackBonus }}</td>
+                    <td class="value-cell">{{ signedNumber(detail.attackDetail.attackBonus) }}</td>
+                  </tr>
+                  <tr class="sub-row dim">
+                    <td class="label-cell indent-3">{{ labels.flatAttack }}</td>
+                    <td class="value-cell">{{ signedNumber(detail.attackDetail.flatAttack) }}</td>
+                  </tr>
+                  <tr
+                    v-for="(source, index) in detail.attackSlotSources.baseFinalAddition"
+                    :key="`flat-${index}`"
+                    class="sub-row dim"
+                  >
+                    <td class="label-cell indent-4">{{ labels.fromSource(source.label) }}</td>
+                    <td class="value-cell">{{ source.value }}</td>
+                  </tr>
+                  <tr class="sub-row dim">
+                    <td class="label-cell indent-3">{{ labels.percentageAttack }}</td>
+                    <td class="value-cell">{{ pct(detail.attackDetail.attackPercent) }}</td>
+                  </tr>
+                  <tr
+                    v-for="(source, index) in detail.attackSlotSources.baseMultiplier"
+                    :key="`percent-${index}`"
+                    class="sub-row dim"
+                  >
+                    <td class="label-cell indent-4">{{ labels.fromSource(source.label) }}</td>
+                    <td class="value-cell">{{ source.value }}</td>
+                  </tr>
+                  <tr class="sub-row">
+                    <td class="label-cell indent-1">{{ labels.attributeBonus }}</td>
+                    <td class="value-cell">
+                      {{ signedPercent(detail.attackDetail.attributeBonus) }}
+                    </td>
+                  </tr>
+                  <template
+                    v-for="attribute in detail.attackDetail.attributeContributions"
+                    :key="attribute.key"
+                  >
+                    <tr
+                      class="sub-row dim"
+                      :class="{ 'is-main': attribute.isMain, 'is-sub': attribute.isSecondary }"
+                    >
+                      <td class="label-cell indent-2">
+                        {{ labels.fromSource(labels.attributeLabel(attribute.key)) }}
+                      </td>
+                      <td class="value-cell">{{ signedPercent(attribute.contribution) }}</td>
+                    </tr>
+                    <tr
+                      v-for="(source, index) in detail.attributeSources[attribute.key]"
+                      :key="index"
+                      class="sub-row dim"
+                    >
+                      <td class="label-cell indent-3">{{ labels.fromSource(source.label) }}</td>
+                      <td class="value-cell">{{ source.value }}</td>
+                    </tr>
+                  </template>
+                </template>
                 <template v-for="slot in detail.otherAttackSlots" :key="slot">
                   <tr class="sub-row dim">
                     <td class="label-cell indent-1">{{ labels.attackSlot(slot) }}</td>
-                    <td class="value-cell"></td>
+                    <td class="value-cell">
+                      {{ attackSlotValue(slot, detail.attackSlotValues[slot]) }}
+                    </td>
                   </tr>
                   <tr
                     v-for="(source, index) in detail.attackSlotSources[slot]"
@@ -807,12 +971,6 @@ function onClose(): void {
                     class="sub-row dim"
                   >
                     <td class="label-cell indent-2">{{ labels.fromSource(source.label) }}</td>
-                    <td class="value-cell">{{ source.value }}</td>
-                  </tr>
-                </template>
-                <template v-for="(sources, attribute) in detail.attributeSources" :key="attribute">
-                  <tr v-for="(source, index) in sources" :key="index" class="sub-row dim">
-                    <td class="label-cell indent-1">{{ labels.fromSource(source.label) }}</td>
                     <td class="value-cell">{{ source.value }}</td>
                   </tr>
                 </template>
@@ -831,22 +989,75 @@ function onClose(): void {
           <div class="section-label">{{ labels.multipliers }}</div>
           <table class="stat-table">
             <tbody>
-              <tr v-for="row in detail.multiplierRows" :key="row.label">
-                <td class="label-cell">
-                  {{ row.label }}
-                  <EaTooltip
-                    v-if="row.tooltip"
-                    :content="row.tooltip"
-                    placement="top"
-                    :show-after="80"
-                    popper-class="hit-detail-source-tooltip"
+              <template v-for="row in detail.multiplierRows" :key="row.label">
+                <tr
+                  :class="{ 'expandable-row': row.kind === 'crit' }"
+                  @click="row.kind === 'crit' ? toggleCriticalDetail(detail.key) : undefined"
+                >
+                  <td class="label-cell">
+                    <el-icon
+                      v-if="row.kind === 'crit'"
+                      class="expand-icon"
+                      :class="{ 'is-open': openCriticalDetails.has(detail.key) }"
+                    >
+                      <ArrowRight />
+                    </el-icon>
+                    {{ row.label }}
+                    <EaTooltip
+                      v-if="row.tooltip"
+                      :content="row.tooltip"
+                      placement="top"
+                      :show-after="80"
+                      popper-class="hit-detail-source-tooltip"
+                    >
+                      <span class="hint-icon" aria-hidden="true">ⓘ</span>
+                    </EaTooltip>
+                    <span v-if="row.detail" class="mult-detail">{{ row.detail }}</span>
+                  </td>
+                  <td class="value-cell mult-value">{{ row.value }}</td>
+                </tr>
+                <template v-if="row.kind === 'crit' && openCriticalDetails.has(detail.key)">
+                  <tr class="sub-row">
+                    <td class="label-cell indent-1">{{ labels.criticalRateStat }}</td>
+                    <td class="value-cell">{{ pct(detail.criticalRateEffective) }}</td>
+                  </tr>
+                  <tr v-if="detail.canCritical && detail.criticalRateRaw > 1" class="sub-row dim">
+                    <td class="label-cell indent-2">{{ labels.rawCriticalRate }}</td>
+                    <td class="value-cell">{{ pct(detail.criticalRateRaw) }}</td>
+                  </tr>
+                  <tr
+                    v-for="(source, index) in detail.criticalRateSources"
+                    :key="`critical-rate-${index}`"
+                    class="sub-row dim"
                   >
-                    <span class="hint-icon" aria-hidden="true">ⓘ</span>
-                  </EaTooltip>
-                  <span v-if="row.detail" class="mult-detail">{{ row.detail }}</span>
-                </td>
-                <td class="value-cell mult-value">{{ row.value }}</td>
-              </tr>
+                    <td
+                      class="label-cell"
+                      :class="
+                        detail.canCritical && detail.criticalRateRaw > 1 ? 'indent-3' : 'indent-2'
+                      "
+                    >
+                      {{ source.label }}
+                    </td>
+                    <td class="value-cell">{{ source.value }}</td>
+                  </tr>
+                  <tr v-if="detail.canCritical && detail.criticalRateRaw > 1" class="sub-row dim">
+                    <td class="label-cell indent-2">{{ labels.criticalRateCap }}</td>
+                    <td class="value-cell">{{ pct(detail.criticalRateEffective) }}</td>
+                  </tr>
+                  <tr class="sub-row">
+                    <td class="label-cell indent-1">{{ labels.criticalDamageStat }}</td>
+                    <td class="value-cell">{{ pct(detail.criticalDamageIncrease) }}</td>
+                  </tr>
+                  <tr
+                    v-for="(source, index) in detail.criticalDamageSources"
+                    :key="`critical-damage-${index}`"
+                    class="sub-row dim"
+                  >
+                    <td class="label-cell indent-2">{{ source.label }}</td>
+                    <td class="value-cell">{{ source.value }}</td>
+                  </tr>
+                </template>
+              </template>
             </tbody>
           </table>
           <CombatObjectOriginGraph
@@ -1032,45 +1243,6 @@ tr.is-sub {
   max-width: min(320px, calc(100vw - 48px));
   white-space: pre-line;
   line-height: 1.45;
-}
-/* 旧版 dark 主题的 Element Plus 提示框；不采用新版通用浮层三角箭头。 */
-html body .el-popper.hit-detail-source-tooltip.is-dark {
-  color: #141414;
-  background: #e5eaf3;
-  border: 1px solid #e5eaf3;
-  border-radius: 4px;
-  padding: 5px 11px;
-  font-size: 12px;
-  box-shadow: none;
-}
-html
-  body
-  .el-popper.el-popper.el-popper.hit-detail-source-tooltip[data-popper-placement]
-  > .el-popper__arrow {
-  width: 10px !important;
-  height: 10px !important;
-}
-html
-  body
-  .el-popper.el-popper.el-popper.hit-detail-source-tooltip[data-popper-placement]
-  > .el-popper__arrow::before {
-  width: 10px !important;
-  height: 10px !important;
-  background: #e5eaf3 !important;
-  transform: rotate(45deg) !important;
-  clip-path: none !important;
-}
-html
-  body
-  .el-popper.el-popper.el-popper.hit-detail-source-tooltip[data-popper-placement^='top']
-  > .el-popper__arrow {
-  bottom: -5px !important;
-}
-html
-  body
-  .el-popper.el-popper.el-popper.hit-detail-source-tooltip[data-popper-placement^='bottom']
-  > .el-popper__arrow {
-  top: -5px !important;
 }
 html[data-theme='dark'] .hit-damage-detail-dialog .damage-value {
   color: #ff6b6b;
