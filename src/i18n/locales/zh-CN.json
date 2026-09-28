@@ -5365,8 +5365,6 @@
     "attack": "攻击",
     "multiplier": "技能倍率",
     "baseMultiplier": "基础倍率",
-    "multiplierCalculation": "倍率计算",
-    "separatedMultiplier": "{name}（另列乘区）",
     "fixedMultiplier": "额外倍率",
     "conditionalMultiplier": "条件倍率",
     "attributeMultiplier": "属性加成",
@@ -5396,7 +5394,7 @@
     "levelCoeffDetail": "等级 {level}",
     "artsIntensity": "源石技艺强度",
     "artsIntensityDetail": "{value} 点",
-    "effectiveness": "异常效能"
+    "additionalScale": "额外倍率"
   },
   "skillNames": {
     "enhanced": {

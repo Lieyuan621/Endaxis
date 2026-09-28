@@ -31,12 +31,11 @@ it('按旧版顺序展示独立乘区，失衡只从独立增伤中拆出一次'
       finisherMultiplier: 1.5,
       levelCoefficient: 1.454,
       artsIntensityMultiplier: 1.72,
-      effectivenessMultiplier: 1.1,
+      additionalScaleMultiplier: 1.1,
       criticalExpectationMultiplier: 1.025,
       criticalRate: 0.05,
       criticalDamageIncrease: 0.5,
     },
-    skillMultiplierCalculation: { operation: 'multiply', left: 1, right: 2, result: 2 },
     appliedDamageModifiers: [
       {
         kind: 'damageScale',
@@ -109,11 +108,9 @@ it('按旧版顺序展示独立乘区，失衡只从独立增伤中拆出一次'
               finisherMultiplier: 'finisher',
               levelCoefficient: 'level',
               artsIntensity: 'arts',
-              effectiveness: 'effectiveness',
+              additionalScale: 'effectiveness',
               defenseDetail: () => '',
               stacksDetail: (count: number) => `${count} 层`,
-              multiplierCalculation: '倍率计算',
-              separatedMultiplier: (name: string) => `${name}（另列乘区）`,
             },
           },
         ),
@@ -137,19 +134,15 @@ it('按旧版顺序展示独立乘区，失衡只从独立增伤中拆出一次'
     'arts',
     'effectiveness',
   ]);
-  expect(rows.find((row: any) => row.label === 'bonus').detail).toBe('+32.0%');
+  expect(rows.find((row: any) => row.label === 'bonus').detail).toBe('+32%');
   expect(rows.find((row: any) => row.label === 'combo').detail).toBe('3 层');
-  expect(rows.find((row: any) => row.label === 'critical').detail).toBe('5.0% × 50.0%');
-  expect(rows.find((row: any) => row.label === 'resistance').detail).toBe('40.0% → 20.0%');
+  expect(rows.find((row: any) => row.label === 'critical').detail).toBe('5% × 50%');
+  expect(rows.find((row: any) => row.label === 'resistance').detail).toBe('40% → 20%');
   expect(rows.find((row: any) => row.label === 'product').factor).toBeCloseTo(1.2);
   expect(rows.find((row: any) => row.label === 'stagger').factor).toBeCloseTo(1.3);
   expect(rows.reduce((value: number, row: any) => value * row.factor, 1)).toBeCloseTo(
     1.452 * 1.025 * 1.2 * 1.56 * 1.05 * 1.1 * 1.3 * 0.5 * 0.8 * 1.5 * 1.454 * 1.72 * 1.1,
   );
-  expect(state.damageDetails.value[0].skillMultiplierRows[0]).toEqual({
-    label: '倍率计算',
-    value: '1 × 2 = 2',
-  });
 });
 
 it('keeps flat, additive percentage and independent attack sources separate without changing receipts', async () => {
@@ -263,17 +256,17 @@ it('keeps flat, additive percentage and independent attack sources separate with
         value: 'x1.454',
         factor: 1 + 89 / 196,
       }),
-      expect.objectContaining({ label: '源石技艺强度', detail: '50 点', value: 'x1.500' }),
+      expect.objectContaining({ label: '源石技艺强度', detail: '50 点', value: 'x1.5' }),
       expect.objectContaining({ label: '其他倍率', factor: 1.2 }),
     ]),
   );
   expect(detail.attributeSources).toEqual({});
   expect(detail.attackSlotSources.baseFinalAddition).toEqual([{ label: 'flat', value: 'ATK -20' }]);
   expect(detail.attackSlotSources.baseMultiplier).toEqual([
-    { label: 'percent', value: 'ATK +18.0%' },
+    { label: 'percent', value: 'ATK +18%' },
   ]);
   expect(detail.attackSlotSources.finalMultiplier).toEqual([
-    { label: 'product', value: 'ATK x1.200' },
+    { label: 'product', value: 'ATK x1.2' },
   ]);
   expect(detail.attackSlotValues.baseMultiplier).toBe(0.18);
   expect(detail.attackSlotValues.baseAddition).toBe(15);
@@ -433,15 +426,15 @@ it('projects expandable crit rows from the frozen hit facts', async () => {
     }),
   );
   const detail = state.damageDetails.value[0];
-  expect(detail.baseRows[0]).toEqual({ label: 'Skill Multiplier', value: '400.0%' });
+  expect(detail.baseRows[0]).toEqual({ label: 'Skill Multiplier', value: '400%' });
   expect(detail.criticalRateRaw).toBe(1.25);
   expect(detail.criticalRateEffective).toBe(1);
   expect(detail.multiplierRows.find((row: { kind?: string }) => row.kind === 'crit')?.detail).toBe(
-    '100.0% × 60.0%',
+    '100% × 60%',
   );
   expect(detail.criticalDamageIncrease).toBe(0.6);
-  expect(detail.criticalRateSources).toEqual([{ label: 'rate-buff', value: '+25.0%' }]);
-  expect(detail.criticalDamageSources).toEqual([{ label: 'damage-buff', value: '+10.0%' }]);
+  expect(detail.criticalRateSources).toEqual([{ label: 'rate-buff', value: '+25%' }]);
+  expect(detail.criticalDamageSources).toEqual([{ label: 'damage-buff', value: '+10%' }]);
   expect(detail.multiplierRows.find((row: { kind?: string }) => row.kind === 'crit')).toBeDefined();
   state.toggleCriticalDetail(3);
   expect(state.openCriticalDetails.value.has(3)).toBe(true);

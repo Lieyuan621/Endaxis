@@ -600,6 +600,97 @@ describe('ActionBlackboardOperationExecutor', () => {
     expect(reads).toEqual(['akekuri', 'party-member']);
   });
 
+  it('保留技能表基础倍率，逐次记录实际乘数，零倍率与切面恢复不需要反除', () => {
+    const executor = new ActionBlackboardOperationExecutor(delegate, undefined, {
+      sourceId: 'caster',
+      read: () => 72,
+    });
+    const context = { blackboard: new ActionBlackboard() };
+    executor.execute(
+      {
+        kind: 'readSkillSettingData',
+        parameters: {
+          items: [
+            {
+              values: [1.6],
+              column: { kind: 'constant', value: 1 },
+              storeKey: 'scale',
+              enhance: { target: 'caster', formula: { kind: 'linear', paramA: 0.01 } },
+            },
+          ],
+        },
+      },
+      context,
+    );
+    for (const multiplier of [1.3, 2])
+      executor.execute(
+        {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'scale',
+            operation: 'multiply',
+            left: { kind: 'blackboard', key: 'scale' },
+            right: { kind: 'constant', value: multiplier },
+          },
+        },
+        context,
+      );
+    expect(context.blackboard.getArtsIntensityDetail('scale')).toMatchObject({
+      baseValue: 1.6,
+      multiplier: 1.72,
+      intensity: 72,
+    });
+    expect(context.blackboard.getArtsIntensityDetail('scale')?.additionalMultiplier).toBeCloseTo(
+      2.6,
+    );
+    const restored = ActionBlackboard.bindRuntimeState(
+      structuredClone(context.blackboard.runtimeState),
+    );
+    expect(restored.getArtsIntensityDetail('scale')).toEqual(
+      context.blackboard.getArtsIntensityDetail('scale'),
+    );
+    const copied = { blackboard: restored.createLocalScope({}, true) };
+    executor.execute(
+      {
+        kind: 'modifyActionValue',
+        parameters: {
+          key: 'copy',
+          operation: 'assign',
+          value: { kind: 'blackboard', key: 'scale' },
+        },
+      },
+      copied,
+    );
+    executor.execute(
+      {
+        kind: 'modifyActionValue',
+        parameters: {
+          key: 'copy',
+          operation: 'multiply',
+          value: { kind: 'constant', value: 0 },
+        },
+      },
+      copied,
+    );
+    expect(copied.blackboard.getNumber('copy')).toBe(0);
+    expect(copied.blackboard.getArtsIntensityDetail('copy')).toMatchObject({
+      baseValue: 1.6,
+      additionalMultiplier: 0,
+    });
+    executor.execute(
+      {
+        kind: 'modifyActionValue',
+        parameters: {
+          key: 'copy',
+          operation: 'add',
+          value: { kind: 'constant', value: 1 },
+        },
+      },
+      copied,
+    );
+    expect(copied.blackboard.getArtsIntensityDetail('copy')).toBeUndefined();
+  });
+
   it('compares dynamic action values with native float tolerance', () => {
     const executor = new ActionBlackboardOperationExecutor(delegate);
     const context = { blackboard: new ActionBlackboard({ swordCount: 3 }) };

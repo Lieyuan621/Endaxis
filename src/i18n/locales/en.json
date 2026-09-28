@@ -5348,8 +5348,6 @@
     "attack": "Attack",
     "multiplier": "Skill Multiplier",
     "baseMultiplier": "Base Multiplier",
-    "multiplierCalculation": "Multiplier Calculation",
-    "separatedMultiplier": "{name} (separate factor)",
     "fixedMultiplier": "Bonus Multiplier",
     "conditionalMultiplier": "Conditional Multiplier",
     "attributeMultiplier": "Attribute Bonus",
@@ -5379,7 +5377,7 @@
     "levelCoeffDetail": "Level {level}",
     "artsIntensity": "Arts Intensity",
     "artsIntensityDetail": "{value} pts",
-    "effectiveness": "Effectiveness"
+    "additionalScale": "Additional multiplier"
   },
   "skillNames": {
     "enhanced": {

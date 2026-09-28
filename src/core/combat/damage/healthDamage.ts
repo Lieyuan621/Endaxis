@@ -112,11 +112,12 @@ export interface HealthDamageReceiptDetail {
   readonly shelterDamageMultiplier?: number;
   /** 本次命中实际使用的等级系数，独立于其他伤害乘区。 */
   readonly levelCoefficient?: number;
-  /** 已包含在原生倍率中的源石技艺强度乘数；展示时从技能倍率拆出。 */
+  /** 读取基础倍率时实际应用的源石技艺强度乘数，与基础倍率分别记录。 */
   readonly artsIntensityMultiplier?: number;
   readonly artsIntensity?: number;
   readonly sourceLevel?: number;
-  readonly effectivenessMultiplier?: number;
+  /** 技能表基础倍率之后实际执行的额外倍率，不通过最终伤害反推。 */
+  readonly additionalScaleMultiplier?: number;
   readonly finisherMultiplier?: number;
   /** 除等级系数、暴击、防御、抗性与承伤外，本次伤害实际使用的合并倍率。 */
   readonly directDamageMultiplier?: number;
@@ -126,7 +127,6 @@ export interface HealthDamageReceiptDetail {
 
 /** 在正确事件边界写入一次生命伤害所需的状态和端口。 */
 export interface ExecuteHealthDamageInput {
-  readonly skillMultiplierCalculation?: import('../state/foundationState').ActionValueCalculation;
   readonly producedBy?: import('../receipt/combatReceipt').CombatObjectRef;
   readonly executingSkillId?: HealthDamageEventPayload['executingSkillId'];
   readonly skillCastInfo?: CombatSkillCastInfo | null;
@@ -201,9 +201,6 @@ export function executeHealthDamage(input: ExecuteHealthDamageInput): HealthDama
     frame: input.clock.frame,
     time: input.clock.time,
     event: 'DamageApplied',
-    ...(input.skillMultiplierCalculation === undefined
-      ? {}
-      : { skillMultiplierCalculation: input.skillMultiplierCalculation }),
     ...(input.appliedDamageModifiers?.length
       ? { appliedDamageModifiers: input.appliedDamageModifiers }
       : {}),

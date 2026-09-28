@@ -640,7 +640,7 @@ describe('PlayerDamageOperationExecutor', () => {
     expect(targetVitals.poise).toBe(10);
 
     const enhancedBlackboard = new ActionBlackboard({ attackScale: 1 });
-    enhancedBlackboard.setArtsIntensityFactor('attackScale', 2, 100, 0.25);
+    enhancedBlackboard.setArtsIntensityFactor('attackScale', 2, 100, 0.25, 2);
     executor.execute(
       {
         ...DAMAGE_STEP,
@@ -656,11 +656,23 @@ describe('PlayerDamageOperationExecutor', () => {
     expect(targetVitals.health).toBe(500);
     expect(receipt.entries.at(-1)?.data).toMatchObject({
       skillMultiplierPercent: 25,
-      artsIntensityMultiplier: 2,
-      effectivenessMultiplier: 2,
       baseDamage: 25,
+      artsIntensityMultiplier: 2,
+      additionalScaleMultiplier: 2,
       expectedDamage: 100,
     });
+    // 倍率来自节点输入，攻击力为零也不能丢失或产生反除误差。
+    runtimeAttack = 0;
+    executor.execute({
+      ...DAMAGE_STEP,
+      parameters: { ...DAMAGE_STEP.parameters, attackScale: 3.14, stagger: undefined },
+    });
+    expect(receipt.entries.at(-1)?.data).toMatchObject({
+      attack: 0,
+      skillMultiplierPercent: 314,
+      baseDamage: 0,
+    });
+    runtimeAttack = 100;
     expect(nextCriticalSample).not.toHaveBeenCalled();
 
     executor.execute({

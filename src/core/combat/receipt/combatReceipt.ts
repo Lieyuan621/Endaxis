@@ -24,7 +24,6 @@ export interface CombatReceiptEntry {
   readonly runtimeSource?: RuntimeTargetRef;
   readonly data?: Readonly<Record<string, CombatReceiptValue>>;
   readonly appliedDamageModifiers?: readonly AppliedDamageModifier[];
-  readonly skillMultiplierCalculation?: import('../state/foundationState').ActionValueCalculation;
 }
 
 /** 运行时追加事实的最小端口，投影层只读取其最终结果。 */

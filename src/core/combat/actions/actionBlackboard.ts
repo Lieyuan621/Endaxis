@@ -80,6 +80,7 @@ export class ActionBlackboard {
     factor: number | undefined,
     intensity?: number,
     baseValue?: number,
+    additionalMultiplier?: number,
   ): void {
     const state = key.startsWith('EntityBB_') ? (this.#state.entity ?? this.#state) : this.#state;
     if (factor === undefined || !Number.isFinite(factor) || factor <= 0)
@@ -89,6 +90,7 @@ export class ActionBlackboard {
         multiplier: factor,
         intensity,
         baseValue,
+        ...(additionalMultiplier === undefined ? {} : { additionalMultiplier }),
       });
   }
   getString(key: string): string | undefined {
@@ -181,5 +183,35 @@ export function resolveArtsIntensityValue(
 ): number | undefined {
   return typeof operand !== 'number' && operand.kind === 'blackboard'
     ? blackboard.getArtsIntensityDetail(operand.key)?.intensity
+    : undefined;
+}
+
+/** 记录技能表基础值之后实际执行的乘除；不从运算结果反推基础值。 */
+export function combineSkillSettingFactors(
+  operation: import('../state/foundationState').ActionValueCalculation['operation'],
+  left: import('../state/foundationState').ArtsIntensityFactor | undefined,
+  right: import('../state/foundationState').ArtsIntensityFactor | undefined,
+  leftValue: number,
+  rightValue: number,
+): import('../state/foundationState').ArtsIntensityFactor | undefined {
+  if (operation === 'assign') return right;
+  if (operation === 'multiply') {
+    if (left && !right)
+      return { ...left, additionalMultiplier: (left.additionalMultiplier ?? 1) * rightValue };
+    if (right && !left)
+      return { ...right, additionalMultiplier: (right.additionalMultiplier ?? 1) * leftValue };
+  }
+  if (operation === 'divide' && left && !right && rightValue !== 0)
+    return { ...left, additionalMultiplier: (left.additionalMultiplier ?? 1) / rightValue };
+  // 加法、取整或两个独立基础值相乘不能再表示为同一个表格基础值的乘积。
+  return undefined;
+}
+
+export function resolveSkillSettingFactor(
+  operand: ActionValueOperand | number,
+  blackboard: ActionBlackboard,
+): import('../state/foundationState').ArtsIntensityFactor | undefined {
+  return typeof operand !== 'number' && operand.kind === 'blackboard'
+    ? blackboard.getArtsIntensityDetail(operand.key)
     : undefined;
 }

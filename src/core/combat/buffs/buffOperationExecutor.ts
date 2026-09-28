@@ -750,6 +750,7 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
         buff.blackboard.getArtsIntensityFactor?.(step.parameters.desiredKey),
         buff.blackboard.getArtsIntensityDetail?.(step.parameters.desiredKey)?.intensity,
         buff.blackboard.getArtsIntensityDetail?.(step.parameters.desiredKey)?.baseValue,
+        buff.blackboard.getArtsIntensityDetail?.(step.parameters.desiredKey)?.additionalMultiplier,
       );
       context.blackboard.setValueCalculation(
         step.parameters.outputKey,
@@ -785,6 +786,8 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
         event.payload.buff.blackboard.getArtsIntensityFactor(step.parameters.desiredKey),
         event.payload.buff.blackboard.getArtsIntensityDetail(step.parameters.desiredKey)?.intensity,
         event.payload.buff.blackboard.getArtsIntensityDetail(step.parameters.desiredKey)?.baseValue,
+        event.payload.buff.blackboard.getArtsIntensityDetail(step.parameters.desiredKey)
+          ?.additionalMultiplier,
       );
       context.blackboard.setValueCalculation(
         step.parameters.outputKey,

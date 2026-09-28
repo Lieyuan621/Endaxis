@@ -7,11 +7,7 @@ import type { CombatCondition } from '../../game-data/operatorDefinition';
 import { NATIVE_SKILL_HAS_HIT_BLACKBOARD_KEY } from '../../../../packages/game-data-contract/src/conditions';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 import type { ActionValueOperand, SkillType } from '../../game-data/operatorDefinition';
-import {
-  resolveActionValueOperand,
-  resolveArtsIntensityFactor,
-  resolveArtsIntensityValue,
-} from '../actions/actionBlackboard';
+import { resolveActionValueOperand, resolveSkillSettingFactor } from '../actions/actionBlackboard';
 import { attributeModifierValues } from '../attributes/combatAttributes';
 import type { CriticalSampleSource } from '../random/criticalSampleSource';
 import type { SimulationRandomMode } from '../random/simulationRandom';
@@ -175,22 +171,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       attack: attributes.attack,
       ...(attributes.attackDetail === undefined ? {} : { attackDetail: attributes.attackDetail }),
       attackScale,
-      skillMultiplierCalculation:
-        typeof step.parameters.attackScale !== 'number' &&
-        step.parameters.attackScale.kind === 'blackboard'
-          ? operationContext.blackboard.getValueCalculation(step.parameters.attackScale.key)
-          : undefined,
-      skillSettingBaseValue:
-        typeof step.parameters.attackScale !== 'number' &&
-        step.parameters.attackScale.kind === 'blackboard'
-          ? operationContext.blackboard.getArtsIntensityDetail(step.parameters.attackScale.key)
-              ?.baseValue
-          : undefined,
-      artsIntensity: resolveArtsIntensityValue(
-        step.parameters.attackScale,
-        operationContext.blackboard,
-      ),
-      artsIntensityMultiplier: resolveArtsIntensityFactor(
+      skillSettingFactor: resolveSkillSettingFactor(
         step.parameters.attackScale,
         operationContext.blackboard,
       ),
@@ -308,39 +289,13 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
           ),
         );
       };
-      const artsIntensityMultiplier =
-        step.kind === 'dealDamage' &&
-        operationContext !== undefined &&
-        (step.parameters.calculation === undefined || step.parameters.calculation === 'standard')
-          ? step.parameters.takeAttackSnapshot
-            ? operationContext.damageCalculationSnapshots?.get(step)?.artsIntensityMultiplier
-            : resolveArtsIntensityFactor(step.parameters.attackScale, operationContext.blackboard)
-          : undefined;
-      const skillMultiplierCalculation =
-        step.kind === 'dealDamage' && operationContext !== undefined
-          ? step.parameters.takeAttackSnapshot
-            ? operationContext.damageCalculationSnapshots?.get(step)?.skillMultiplierCalculation
-            : typeof step.parameters.attackScale !== 'number' &&
-                step.parameters.attackScale.kind === 'blackboard'
-              ? operationContext.blackboard.getValueCalculation(step.parameters.attackScale.key)
-              : undefined
-          : undefined;
-      const skillSettingBaseAtCalculation =
-        step.kind === 'dealDamage' &&
-        typeof step.parameters.attackScale !== 'number' &&
-        step.parameters.attackScale.kind === 'blackboard'
-          ? operationContext?.blackboard.getArtsIntensityDetail(step.parameters.attackScale.key)
-              ?.baseValue
-          : undefined;
-      const artsIntensity =
-        step.kind === 'dealDamage' && operationContext !== undefined
-          ? step.parameters.takeAttackSnapshot
-            ? operationContext.damageCalculationSnapshots?.get(step)?.artsIntensity
-            : resolveArtsIntensityValue(step.parameters.attackScale, operationContext.blackboard)
-          : undefined;
-      context.setCalculationResult(
-        this.#resolveCalculationResult(step, context, operationContext, recordAttribute),
+      const calculation = this.#resolveCalculationResult(
+        step,
+        context,
+        operationContext,
+        recordAttribute,
       );
+      context.setCalculationResult(calculation.value);
       const scaleAttributeDetails: import('./damageScale').AppliedDamageModifier[] = [];
       injectDamageScaleAttributes(
         context.damageScales,
@@ -479,28 +434,16 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
         step.kind === 'dealDamage' && step.parameters.takeAttackSnapshot === true
           ? operationContext?.damageCalculationSnapshots?.get(step)
           : undefined;
-      const skillSettingBase =
-        attackSnapshot?.skillSettingBaseValue ?? skillSettingBaseAtCalculation;
-      const reactionScale =
-        standardCalculation && (attackSnapshot?.attack ?? calculationAttackAttributes.attack) !== 0
-          ? context.baseValue /
-            (attackSnapshot?.attack ?? calculationAttackAttributes.attack) /
-            (artsIntensityMultiplier ?? 1)
+      const skillSettingFactor =
+        standardCalculation && reactionKind !== undefined
+          ? calculation.skillSettingFactor
           : undefined;
-      const effectivenessMultiplier =
-        (formulaInput.appliesIgniteDamageMultiplier ||
-          formulaInput.appliesPhysicalInflictionDamageMultiplier) &&
-        skillSettingBase !== undefined &&
-        skillSettingBase !== 0 &&
-        reactionScale !== undefined
-          ? reactionScale / skillSettingBase
-          : 1;
+      const baseScale = skillSettingFactor?.baseValue ?? calculation.attackScale;
+      const separateScale = skillSettingFactor?.baseValue !== undefined;
       const finisherMultiplier =
         step.kind === 'dealDamage' && step.parameters.calculation === 'breakingAttack'
           ? context.defenderAttributes.breakingAttackDamageTakenMultiplier
           : 1;
-      const displayBaseDivisor =
-        (artsIntensityMultiplier ?? 1) * effectivenessMultiplier * finisherMultiplier;
       const receiptAttack = attackSnapshot?.attack ?? calculationAttackAttributes.attack;
       const unscaledCalculationValue = context.baseValue * damageScaleMultiplier;
       const calculationMultiplier =
@@ -525,7 +468,6 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
           ? undefined
           : deriveHitId(this.dependencies.castId, step.key));
       executeHealthDamage({
-        skillMultiplierCalculation,
         producedBy: operationProducer(operationContext, {
           ownerId: this.dependencies.sourceOperatorId,
           actionId: this.dependencies.sourceActionId,
@@ -570,13 +512,20 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
                 usesAttackSnapshot: true,
                 currentAttack: context.attackerAttributes.attack,
               }),
-          baseDamage:
-            displayBaseDivisor === 0
-              ? effectivenessMultiplier === 0
-                ? receiptAttack * (skillSettingBase ?? 0)
-                : context.baseValue
-              : context.baseValue / displayBaseDivisor,
-          ...(effectivenessMultiplier === 1 ? {} : { effectivenessMultiplier }),
+          baseDamage: separateScale
+            ? receiptAttack * baseScale!
+            : finisherMultiplier === 0
+              ? context.baseValue
+              : context.baseValue / finisherMultiplier,
+          ...(separateScale
+            ? {
+                artsIntensityMultiplier: skillSettingFactor!.multiplier,
+                ...(skillSettingFactor!.intensity === undefined
+                  ? {}
+                  : { artsIntensity: skillSettingFactor!.intensity }),
+                additionalScaleMultiplier: skillSettingFactor!.additionalMultiplier ?? 1,
+              }
+            : {}),
           ...(finisherMultiplier === 1 ? {} : { finisherMultiplier }),
           ...(reactionKind === undefined ? {} : { reactionDamageKind: reactionKind }),
           ...(reactionOverride === undefined
@@ -585,33 +534,13 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
                 reactionCriticalKey: reactionOverride.key,
                 forcedCritical: reactionOverride.value === true,
               }),
-          ...(artsIntensityMultiplier === undefined
-            ? {}
-            : {
-                artsIntensityMultiplier,
-                ...(artsIntensity === undefined ? {} : { artsIntensity }),
-              }),
           ...(calculationAttackAttributes.level === undefined
             ? {}
             : { sourceLevel: calculationAttackAttributes.level }),
           finalAttackValue,
           standardCalculation,
-          ...(standardCalculation && (attackSnapshot !== undefined || receiptAttack !== 0)
-            ? {
-                skillMultiplierPercent:
-                  effectivenessMultiplier === 0
-                    ? (skillSettingBase ?? 0) * 100
-                    : attackSnapshot === undefined
-                      ? (context.baseValue /
-                          receiptAttack /
-                          (artsIntensityMultiplier ?? 1) /
-                          effectivenessMultiplier) *
-                        100
-                      : (attackSnapshot.attackScale /
-                          (artsIntensityMultiplier ?? 1) /
-                          effectivenessMultiplier) *
-                        100,
-              }
+          ...(standardCalculation && baseScale !== undefined
+            ? { skillMultiplierPercent: baseScale * 100 }
             : {}),
           calculationMultiplier,
           damageScaleMultiplier,
@@ -701,19 +630,33 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
     context: PlayerDamageContext,
     operationContext: CombatOperationContext | undefined,
     recordAttribute: (side: DamageModifierSide, attribute: string) => void,
-  ): number {
+  ): {
+    readonly value: number;
+    readonly attackScale?: number;
+    readonly skillSettingFactor?: import('../state/foundationState').ArtsIntensityFactor;
+  } {
     if (step.kind === 'dealFixedDamage') {
-      return this.#resolveActionValue(
-        step.parameters.value,
-        operationContext,
-        'dynamic fixed damage value',
-      );
+      return {
+        value: this.#resolveActionValue(
+          step.parameters.value,
+          operationContext,
+          'dynamic fixed damage value',
+        ),
+      };
     }
     if (step.parameters.takeAttackSnapshot === true) {
       const snapshot = operationContext?.damageCalculationSnapshots?.get(step);
       if (snapshot === undefined) throw new Error('attack snapshot was not prepared');
-      return snapshot.baseValue;
+      return {
+        value: snapshot.baseValue,
+        attackScale: snapshot.attackScale,
+        skillSettingFactor: snapshot.skillSettingFactor,
+      };
     }
+    const skillSettingFactor =
+      operationContext === undefined
+        ? undefined
+        : resolveSkillSettingFactor(step.parameters.attackScale, operationContext.blackboard);
     const attackScale = this.#resolveActionValue(
       step.parameters.attackScale,
       operationContext,
@@ -733,19 +676,26 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       );
       if (step.parameters.calculationAttribute !== undefined)
         recordAttribute('attacker', step.parameters.calculationAttribute);
-      return attributeValue * attackScale + addition;
+      return { value: attributeValue * attackScale + addition, attackScale };
     }
     for (const attribute of attackReceiptAttributes(context.attackerAttributes.attackDetail))
       recordAttribute('attacker', attribute);
     if (step.parameters.calculation !== 'breakingAttack') {
-      return context.attackerAttributes.attack * attackScale;
+      return {
+        value: context.attackerAttributes.attack * attackScale,
+        attackScale,
+        skillSettingFactor,
+      };
     }
-    return calculateBreakingAttackValue({
-      attack: context.attackerAttributes.attack,
-      targetDamageTakenMultiplier: context.defenderAttributes.breakingAttackDamageTakenMultiplier,
-      calculationMultiplier: step.parameters.calculationMultiplier ?? 1,
+    return {
+      value: calculateBreakingAttackValue({
+        attack: context.attackerAttributes.attack,
+        targetDamageTakenMultiplier: context.defenderAttributes.breakingAttackDamageTakenMultiplier,
+        calculationMultiplier: step.parameters.calculationMultiplier ?? 1,
+        attackScale,
+      }),
       attackScale,
-    });
+    };
   }
 
   #executePoise(step: PoiseStep, calculationValue: number): void {

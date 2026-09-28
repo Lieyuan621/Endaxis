@@ -120,11 +120,9 @@ export function executeSpellBurst(input: ExecuteSpellBurstInput): SpellBurstResu
             spellBurstEnhanceFactor: enhanceFactor,
             artsIntensityMultiplier: enhanceFactor,
             ...(input.enhance === null ? {} : { artsIntensity: input.enhance }),
-            ...(typeof entry.data?.skillMultiplierPercent === 'number'
-              ? { skillMultiplierPercent: entry.data.skillMultiplierPercent / enhanceFactor }
-              : {}),
-            ...(typeof entry.data?.baseDamage === 'number'
-              ? { baseDamage: entry.data.baseDamage / enhanceFactor }
+            skillMultiplierPercent: skillScale * 100,
+            ...(typeof entry.data?.attack === 'number'
+              ? { baseDamage: entry.data.attack * skillScale }
               : {}),
           },
         });

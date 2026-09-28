@@ -97,11 +97,9 @@ const props = defineProps<{
     artsIntensityDetail: (value: number) => string;
     staggerMultiplier: string;
     finisherMultiplier: string;
-    effectiveness: string;
+    additionalScale: string;
     stacksDetail: (value: number) => string;
     baseMultiplier: string;
-    multiplierCalculation: string;
-    separatedMultiplier: (name: string) => string;
     damageTaken: string;
     defenseMultiplier: string;
     resistanceMultiplier: string;
@@ -123,7 +121,6 @@ interface DetailRow {
 }
 
 interface DamageDetail {
-  readonly skillMultiplierRows: readonly DetailRow[];
   readonly attackFormulaTooltip?: string;
   readonly attributeSources: Readonly<Record<string, readonly DetailRow[]>>;
   readonly formulaTooltip?: string;
@@ -174,14 +171,12 @@ interface AttackDetail {
 
 const openAttackDetails = ref<ReadonlySet<number>>(new Set());
 const openCriticalDetails = ref<ReadonlySet<number>>(new Set());
-const openMultiplierDetails = ref<ReadonlySet<number>>(new Set());
 // 回执序号只在当前结果内有效；换一组结果后不能继承上一组的展开状态。
 watch(
   () => props.entries,
   () => {
     openAttackDetails.value = new Set();
     openCriticalDetails.value = new Set();
-    openMultiplierDetails.value = new Set();
   },
 );
 
@@ -200,16 +195,14 @@ function ceilNum(value: number): string {
 function pct(value: unknown): string {
   return `${(finiteNumber(value) * 100).toLocaleString(undefined, {
     useGrouping: false,
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 6,
+    maximumFractionDigits: 3,
   })}%`;
 }
 
 function mult(value: unknown): string {
   return `x${finiteNumber(value).toLocaleString(undefined, {
     useGrouping: false,
-    minimumFractionDigits: 3,
-    maximumFractionDigits: 6,
+    maximumFractionDigits: 3,
   })}`;
 }
 
@@ -455,13 +448,6 @@ function toggleAttackDetail(key: number): void {
   openAttackDetails.value = next;
 }
 
-function toggleMultiplierDetail(key: number): void {
-  const next = new Set(openMultiplierDetails.value);
-  if (next.has(key)) next.delete(key);
-  else next.add(key);
-  openMultiplierDetails.value = next;
-}
-
 function toggleCriticalDetail(key: number): void {
   const next = new Set(openCriticalDetails.value);
   if (next.has(key)) next.delete(key);
@@ -511,7 +497,7 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
         ? [
             {
               label: props.labels.skillMultiplier,
-              value: `${finiteNumber(data.skillMultiplierPercent).toFixed(1)}%`,
+              value: pct(finiteNumber(data.skillMultiplierPercent) / 100),
             },
           ]
         : []),
@@ -697,7 +683,7 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
           typeof data.sourceLevel === 'number'
             ? props.labels.levelDetail(data.sourceLevel)
             : undefined,
-        value: `x${data.levelCoefficient.toFixed(3)}`,
+        value: mult(data.levelCoefficient),
         factor: data.levelCoefficient,
         tooltip: modifierTooltip(
           attributes('attacker', ['IgniteDamageScalar', 'PhysicalInflictionDamageScalar']),
@@ -712,7 +698,7 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
           typeof data.artsIntensity === 'number'
             ? props.labels.artsIntensityDetail(data.artsIntensity)
             : undefined,
-        value: `x${data.artsIntensityMultiplier.toFixed(3)}`,
+        value: mult(data.artsIntensityMultiplier),
         factor: data.artsIntensityMultiplier,
       });
     }
@@ -756,52 +742,20 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
         factor: finiteNumber(data.finisherMultiplier, 1),
       },
       {
-        label: props.labels.effectiveness,
+        label: props.labels.additionalScale,
         order: 16,
-        factor: finiteNumber(data.effectivenessMultiplier, 1),
+        factor: finiteNumber(data.additionalScaleMultiplier, 1),
       },
     ]) {
       if (differsFromOne(row.factor)) multiplierRows.push({ ...row, value: mult(row.factor) });
     }
     multiplierRows.sort((left, right) => (left.order ?? 0) - (right.order ?? 0));
-    const calculation = entry.skillMultiplierCalculation;
-    const operationSign = {
-      add: '+',
-      multiply: '×',
-      divide: '÷',
-      assign: '=',
-      floor: '⌊ ⌋',
-      ceil: '⌈ ⌉',
-      roundToInt: '≈',
-    };
-    const skillMultiplierRows: DetailRow[] = [];
-    if (calculation !== undefined) {
-      const scalar = (value: number) =>
-        value.toLocaleString(undefined, { maximumFractionDigits: 6 });
-      const operands = ['add', 'multiply', 'divide'].includes(calculation.operation)
-        ? `${scalar(calculation.left)} ${operationSign[calculation.operation]} ${scalar(calculation.right)}`
-        : `${operationSign[calculation.operation]} ${scalar(calculation.right)}`;
-      skillMultiplierRows.push({
-        label: props.labels.multiplierCalculation,
-        value: `${operands} = ${scalar(calculation.result)}`,
-      });
-      for (const [label, factor] of [
-        [props.labels.artsIntensity, finiteNumber(data.artsIntensityMultiplier, 1)],
-        [props.labels.effectiveness, finiteNumber(data.effectivenessMultiplier, 1)],
-      ] as const) {
-        if (differsFromOne(factor) && factor !== 0)
-          skillMultiplierRows.push({
-            label: props.labels.separatedMultiplier(label),
-            value: `÷ ${scalar(factor)}`,
-          });
-      }
-    }
     const forced =
       props.resultForceCritical &&
       data.canCritical !== false &&
       Math.abs(criticalDamage - nonCriticalDamage) > 0.000_001;
     const formulaNumber = (value: number) =>
-      value.toLocaleString(undefined, { maximumFractionDigits: 6 });
+      value.toLocaleString(undefined, { maximumFractionDigits: 3 });
     const formulaFactors = multiplierRows.map(row => {
       const critical =
         row.label === props.labels.criticalExpectation || row.label === props.labels.criticalResult;
@@ -862,7 +816,6 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
           ]),
         ),
         key: entry.sequence,
-        skillMultiplierRows,
         headline: props.randomMode === 'expected' ? expectedDamage : actualValue,
         expectedDamage,
         criticalDamage,
@@ -914,7 +867,6 @@ const canForceCritical = computed(() =>
 );
 
 function onClose(): void {
-  openMultiplierDetails.value = new Set();
   openAttackDetails.value = new Set();
   openCriticalDetails.value = new Set();
   emit('close');
@@ -1137,46 +1089,14 @@ function onClose(): void {
                   </tr>
                 </template>
               </template>
-              <template v-for="row in detail.baseRows" :key="row.label">
-                <tr
-                  :class="{
-                    bold: row.label === labels.baseDamage,
-                    'expandable-row':
-                      row.label === labels.skillMultiplier && detail.skillMultiplierRows.length,
-                  }"
-                  @click="
-                    row.label === labels.skillMultiplier &&
-                    detail.skillMultiplierRows.length &&
-                    toggleMultiplierDetail(detail.key)
-                  "
-                >
-                  <td class="label-cell">
-                    <ElIcon
-                      v-if="
-                        row.label === labels.skillMultiplier && detail.skillMultiplierRows.length
-                      "
-                      class="expand-icon"
-                      :class="{ 'is-open': openMultiplierDetails.has(detail.key) }"
-                      ><ArrowRight /></ElIcon
-                    >{{ row.label }}
-                  </td>
-                  <td class="value-cell">{{ row.value }}</td>
-                </tr>
-                <template
-                  v-if="
-                    row.label === labels.skillMultiplier && openMultiplierDetails.has(detail.key)
-                  "
-                >
-                  <tr
-                    v-for="(part, index) in detail.skillMultiplierRows"
-                    :key="index"
-                    class="sub-row dim"
-                  >
-                    <td class="label-cell indent-1">{{ part.label }}</td>
-                    <td class="value-cell">{{ part.value }}</td>
-                  </tr>
-                </template>
-              </template>
+              <tr
+                v-for="row in detail.baseRows"
+                :key="row.label"
+                :class="{ bold: row.label === labels.baseDamage }"
+              >
+                <td class="label-cell">{{ row.label }}</td>
+                <td class="value-cell">{{ row.value }}</td>
+              </tr>
             </tbody>
           </table>
 

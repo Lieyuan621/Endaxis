@@ -109,6 +109,8 @@ export interface ArtsIntensityFactor {
   readonly intensity?: number;
   /** 读取技能表时未乘技艺强度的基础值；后续纯乘除不改变它。 */
   readonly baseValue?: number;
+  /** 读取基础值之后实际执行的额外乘数；只沿可分离的乘除和复制传播。 */
+  readonly additionalMultiplier?: number;
 }
 
 export interface ActionValueCalculation {
