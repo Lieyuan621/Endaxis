@@ -15,8 +15,7 @@ const source = {
   skillGroups: [
     {
       key: 'basicAttack',
-      skillType: 'basicAttack',
-      levelSource: 'basicAttack',
+      operationType: 'basicAttack',
       skills: [skill('one'), skill('two')],
     },
   ],
@@ -25,6 +24,33 @@ const source = {
 } as unknown as OperatorDefinition;
 
 describe('干员内部列表操作', () => {
+  it('新增技能沿用组内技能的等级来源，而不是展示分类', () => {
+    const operator = {
+      ...source,
+      skillGroups: [
+        {
+          key: 'floating',
+          operationType: 'basicAttack' as const,
+          skills: skillFixture({
+            ...skill('floating1'),
+            key: 'floating1',
+            skillType: 'basicAttack',
+            levelSource: 'battleSkill',
+          }),
+        },
+      ],
+    };
+    const added = editOperatorResources(operator, { kind: 'addSkill', group: 0 });
+    expect(added.skillGroups[0]!.skills).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'custom_skill_1',
+          skillType: 'basicAttack',
+          levelSource: 'battleSkill',
+        }),
+      ]),
+    );
+  });
   it('新增独立技能，重排保留完整技能，删除不修改原定义', () => {
     const added = editOperatorResources(source, { kind: 'addSkill', group: 0 });
     const addedSkills = added.skillGroups[0]!.skills;

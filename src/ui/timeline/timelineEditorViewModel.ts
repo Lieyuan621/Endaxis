@@ -2,11 +2,7 @@
  * 将新版存档和只读干员定义投影为时间轴 UI 的稳定读取模型。
  * 这里不保存编辑状态、不翻译文本，也不调用战斗模拟；组件只能把身份交给 i18n 和命令层处理。
  */
-import type {
-  OperatorDefinition,
-  SkillLibraryNameQualifier,
-  SkillType,
-} from '../../core/game-data/operatorDefinition';
+import type { OperatorDefinition, OperationType } from '../../core/game-data/operatorDefinition';
 
 import type {
   DefinitionActionSource,
@@ -43,12 +39,9 @@ export interface TimelineSkillLibraryEntryViewModel {
   readonly skillGroupKey: string;
   /** 省略表示基础链；存在时表示同一组下的具名形态链。 */
   readonly variantKey?: string;
-  readonly skillType: SkillType;
-  readonly level: number;
-  /** 来源定义明确声明的名称修饰词；不能从 variant/replacement 结构或技能键推断。 */
-  readonly nameQualifier?: SkillLibraryNameQualifier;
-  /** 独立强化技能卡片拖动整卡时显式放置的技能；顺序链省略。 */
-  readonly placementSkillKey?: string;
+  readonly operationType: OperationType;
+  /** 放置入口继承或覆盖后的 i18n 模板键；不从技能身份推断名称。 */
+  readonly nameKey?: string;
   /** 拖动整张卡片时按顺序放置的技能。 */
   readonly groupPlacementSkillKeys: readonly string[];
   readonly skills: readonly {
@@ -64,7 +57,7 @@ export interface TimelineSkillCastViewModel {
   readonly startFrame: number;
   readonly durationFrames: number;
   readonly source: SkillCastDocument['source'];
-  readonly skillType: SkillType | null;
+  readonly operationType: OperationType | null;
   /** 定义显式声明的强化状态；省略时 UI 不从普通自身 Buff 猜测。 */
   readonly enhancementStateBuffId?: string;
   /** 已投影的命中点；UI 直接消费，不再从存档或定义重新推算。 */
@@ -107,14 +100,14 @@ function projectSkillCast(
   resolutionIssue: string | undefined,
   hitMarkers: readonly TimelineHitMarker[] = [],
 ): TimelineSkillCastViewModel {
-  const skillType = resolved?.definition.skillType ?? resolved?.group.skillType ?? null;
+  const operationType = resolved?.group.operationType ?? null;
   return {
     id: skillCast.id,
     // 定义全部解析后，再统一补上连续组中各成员的预计位置。
     startFrame: skillCast.placement.startFrame ?? 0,
     durationFrames: resolved !== null ? resolved.definition.timelineBlockFrames : 0,
     source: skillCast.source,
-    skillType,
+    operationType,
     ...(resolved?.definition.enhancementStateBuffId === undefined
       ? {}
       : { enhancementStateBuffId: resolved.definition.enhancementStateBuffId }),
@@ -167,12 +160,8 @@ function projectTrack(
             entryKey: entry.entryKey,
             skillGroupKey: group.key,
             ...(entry.variantKey === undefined ? {} : { variantKey: entry.variantKey }),
-            skillType: entry.skillType,
-            level: operatorInstance.skillLevels[entry.levelSource] ?? 1,
-            ...(entry.nameQualifier === undefined ? {} : { nameQualifier: entry.nameQualifier }),
-            ...(entry.placementSkillKey === undefined
-              ? {}
-              : { placementSkillKey: entry.placementSkillKey }),
+            operationType: entry.operationType,
+            ...(entry.nameKey === undefined ? {} : { nameKey: entry.nameKey }),
             groupPlacementSkillKeys: entry.skills.map(skill => skill.key),
             skills: entry.skills.map(skill => ({
               skillKey: skill.key,

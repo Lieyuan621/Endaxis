@@ -67,13 +67,11 @@ describe('definition resource navigation', () => {
           routedReplacementSkills: [
             {
               skill,
-              skillType: group.skillType,
-              levelSource: group.levelSource,
-              executionSkillGroupKey: group.key,
+
               executionSkillKey: skill.key,
             },
           ],
-          variants: [{ key: 'alternate', levelSource: group.levelSource, skills: skill }],
+          variants: [{ key: 'alternate', skills: skill }],
         },
       ],
     };

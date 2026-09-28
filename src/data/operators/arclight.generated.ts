@@ -1748,8 +1748,7 @@ export const arclight: OperatorDefinition = {
   skillGroups: [
     {
       key: 'basicAttack',
-      skillType: 'basicAttack',
-      levelSource: 'basicAttack',
+      operationType: 'basicAttack',
       skills: [
         arclightChr_0007_ikut_attack1,
         arclightChr_0007_ikut_attack2,
@@ -1758,36 +1757,19 @@ export const arclight: OperatorDefinition = {
         arclightChr_0007_ikut_attack5,
       ],
     },
-    {
-      key: 'finisher',
-      skillType: 'finisher',
-      levelSource: 'basicAttack',
-      skills: arclightChr_0007_ikut_power_attack,
-    },
+    { key: 'finisher', operationType: 'finisher', skills: arclightChr_0007_ikut_power_attack },
     {
       key: 'plungingAttack',
-      skillType: 'plungingAttack',
-      levelSource: 'basicAttack',
+      operationType: 'plungingAttack',
       skills: arclightChr_0007_ikut_plunging_attack_end,
     },
     {
       key: 'battleSkill',
-      skillType: 'battleSkill',
-      levelSource: 'battleSkill',
+      operationType: 'battleSkill',
       skills: arclightChr_0007_ikut_normal_skill,
     },
-    {
-      key: 'ultimate',
-      skillType: 'ultimate',
-      levelSource: 'ultimate',
-      skills: arclightChr_0007_ikut_ultimate_skill,
-    },
-    {
-      key: 'comboSkill',
-      skillType: 'comboSkill',
-      levelSource: 'comboSkill',
-      skills: arclightChr_0007_ikut_combo_skill,
-    },
+    { key: 'ultimate', operationType: 'ultimate', skills: arclightChr_0007_ikut_ultimate_skill },
+    { key: 'comboSkill', operationType: 'comboSkill', skills: arclightChr_0007_ikut_combo_skill },
   ],
   dodgeSkill: arclightCommon_character_perfect_dodge,
   dashBuffs: [
@@ -1831,31 +1813,31 @@ export const arclight: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'talent_1',
           operation: 'assign',
           value: [1, 1],
+          skillKey: 'chr_0007_ikut_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'duration',
           operation: 'assign',
           value: [15, 15],
+          skillKey: 'chr_0007_ikut_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'pulse_up',
           operation: 'add',
           value: [0.0005, 0.0008],
+          skillKey: 'chr_0007_ikut_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'count',
           operation: 'assign',
           value: [3, 3],
+          skillKey: 'chr_0007_ikut_normal_skill',
         },
       ],
     },
@@ -1872,10 +1854,10 @@ export const arclight: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'atb',
           operation: 'add',
           value: 10,
+          skillKey: 'chr_0007_ikut_normal_skill',
         },
       ],
     },
@@ -1891,10 +1873,10 @@ export const arclight: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'pulse_up',
           operation: 'multiply',
           value: 1.3,
+          skillKey: 'chr_0007_ikut_normal_skill',
         },
       ],
     },
@@ -1903,9 +1885,9 @@ export const arclight: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
-          skillGroupKey: 'ultimate',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
+          skillKey: 'chr_0007_ikut_ultimate_skill',
         },
       ],
     },
@@ -1914,10 +1896,10 @@ export const arclight: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'count',
           operation: 'assign',
           value: 2,
+          skillKey: 'chr_0007_ikut_normal_skill',
         },
       ],
       attachedBuffs: [{ buffId: 'buff_chr_0007_ikut_finish_count_p5' }],

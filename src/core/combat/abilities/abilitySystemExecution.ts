@@ -12,30 +12,30 @@ export interface SkillSlotReplacementHost {
 export function replaceAbilitySkillSlot(
   state: AbilitySystemState,
   parameters: {
-    readonly skillGroupKey: string;
+    readonly skillSlotKey: string;
     readonly targetSkillKey: string;
     readonly revertedSkillKey?: string;
     readonly inheritOriginSkillCooldownProgress: boolean;
   },
   host: SkillSlotReplacementHost,
 ): number {
-  const previous = state.skillSlotReplacements.get(parameters.skillGroupKey);
+  const previous = state.skillSlotReplacements.get(parameters.skillSlotKey);
   if (previous !== undefined)
     finishAbilitySkillSlotReplacement(
       state,
-      parameters.skillGroupKey,
+      parameters.skillSlotKey,
       previous.registrationId,
       host,
     );
   const revertedSkillKey =
-    parameters.revertedSkillKey ?? host.currentSkillKey(parameters.skillGroupKey);
+    parameters.revertedSkillKey ?? host.currentSkillKey(parameters.skillSlotKey);
   host.changeSkillSlot(
-    parameters.skillGroupKey,
+    parameters.skillSlotKey,
     parameters.targetSkillKey,
     parameters.inheritOriginSkillCooldownProgress,
   );
   const registrationId = state.nextSkillSlotReplacementId++;
-  state.skillSlotReplacements.set(parameters.skillGroupKey, {
+  state.skillSlotReplacements.set(parameters.skillSlotKey, {
     registrationId,
     revertedSkillKey,
     inheritOriginSkillCooldownProgress: parameters.inheritOriginSkillCooldownProgress,

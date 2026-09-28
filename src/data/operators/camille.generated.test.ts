@@ -6,15 +6,14 @@ import { camille as camilleGeneratedOperator } from './camille.generated';
 
 describe('camille generated operator', () => {
   it('routes the transformed battle slot through combo skill 2 with wrapper cost and cooldown', () => {
-    const battle = camilleGeneratedOperator.skillGroups.find(group => group.key === 'battleSkill');
+    const battle = camilleGeneratedOperator.skillGroups.find(
+      group => group.key === 'replacementBattleSkill',
+    );
     const routed = battle?.routedReplacementSkills?.[0];
     const henshin =
       camilleGeneratedOperator.buffDefinitions?.buff_chr_0033_camille_ult_henshin_state;
 
     expect(routed).toMatchObject({
-      skillType: 'comboSkill',
-      levelSource: 'comboSkill',
-      executionSkillGroupKey: 'comboSkill',
       executionSkillKey: 'chr_0033_camille_combo_skill_2',
       skill: {
         key: 'chr_0033_camille_normal_skill_2',
@@ -26,7 +25,7 @@ describe('camille generated operator', () => {
     });
     expect(henshin?.skillSlotReplacements).toEqual([
       {
-        skillGroupKey: 'battleSkill',
+        skillSlotKey: 'battleSkill',
         targetSkillKey: 'chr_0033_camille_normal_skill_2',
         revertedSkillKey: 'chr_0033_camille_normal_skill',
         inheritOriginSkillCooldownProgress: false,
@@ -55,7 +54,7 @@ describe('camille generated operator', () => {
     ).find(skill => skill.skillId === 'chr_0033_camille_normal_skill_2');
 
     expect(program).toMatchObject({
-      skillGroupKey: 'battleSkill',
+      skillGroupKey: 'replacementBattleSkill',
       skillType: 'comboSkill',
       skillLevel: 7,
       skillId: 'chr_0033_camille_normal_skill_2',

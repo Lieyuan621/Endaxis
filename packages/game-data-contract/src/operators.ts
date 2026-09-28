@@ -108,16 +108,16 @@ export type UpgradeModifierDefinition =
   | {
       /** 启用技能中的一个可选动作分支。 */
       kind: 'enableSkillBranch';
-      /** 目标技能组。 */
-      skillGroupKey: string;
+      /** 目标执行技能；身份在所属定义宿主内唯一，与展示组无关。 */
+      skillKey: string;
       /** 目标分支。 */
       branchKey: string;
     }
   | {
       /** 乘算某个技能步骤产生效果的持续时间。 */
       kind: 'multiplyEffectDuration';
-      /** 目标技能组。 */
-      skillGroupKey: string;
+      /** 目标执行技能；身份在所属定义宿主内唯一，与展示组无关。 */
+      skillKey: string;
       /** 目标步骤。 */
       stepKey: string;
       /** 持续时间乘数。 */
@@ -126,10 +126,8 @@ export type UpgradeModifierDefinition =
   | {
       /** 乘算技能的资源费用。 */
       kind: 'multiplySkillCost';
-      /** 目标技能组。 */
-      skillGroupKey: string;
-      /** 组内存在隐藏替换技能时，明确限定原生修正指向的可养成技能。 */
-      skillKey?: string;
+      /** 目标执行技能；身份在所属定义宿主内唯一，与展示组无关。 */
+      skillKey: string;
       /** 要修改的资源。 */
       resource: CombatResource;
       /** 费用乘数。 */
@@ -138,8 +136,8 @@ export type UpgradeModifierDefinition =
   | {
       /** 设置一个技能步骤的效果系数。 */
       kind: 'setEffectiveness';
-      /** 目标技能组。 */
-      skillGroupKey: string;
+      /** 目标执行技能；身份在所属定义宿主内唯一，与展示组无关。 */
+      skillKey: string;
       /** 目标步骤。 */
       stepKey: string;
       /** 新的效果系数。 */
@@ -162,10 +160,10 @@ export type UpgradeModifierDefinition =
       value: number;
     }
   | {
-      /** 修改一个技能组的独立面板数值。 */
+      /** 修改一个技能的独立面板数值。 */
       kind: 'addSkillStat';
-      /** 目标技能组。 */
-      skillGroupKey: string;
+      /** 目标执行技能；身份在所属定义宿主内唯一，与展示组无关。 */
+      skillKey: string;
       /** 要修改的技能数值。 */
       stat: 'criticalRate';
       /** 加入的数值。 */
@@ -173,15 +171,13 @@ export type UpgradeModifierDefinition =
     }
   | {
       /**
-       * 养成效果直接修补目标技能组编译后的初始动作黑板。
+       * 养成效果直接修补目标技能编译后的初始动作黑板。
        * `operation` 使用与原生 SkillBBModifier 相同的 add/multiply/assign 语义；
        * `value` 按天赋/潜能等级解析，而不是按技能等级解析。
        */
       kind: 'patchSkillBlackboard';
-      /** 目标技能组。 */
-      skillGroupKey: string;
-      /** 多形态技能组只修改指定技能定义；省略时修改组内全部形态。 */
-      skillKey?: string;
+      /** 目标执行技能；身份在所属定义宿主内唯一，与展示组无关。 */
+      skillKey: string;
       /** 要修改的技能黑板键。 */
       blackboardKey: string;
       /** 对原值执行加算、乘算或直接赋值。 */
@@ -208,18 +204,18 @@ export type UpgradeModifierDefinition =
       value: LevelValues;
     }
   | {
-      /** 乘算整个技能组造成的伤害。 */
+      /** 乘算指定技能造成的伤害。 */
       kind: 'multiplySkillDamage';
-      /** 目标技能组。 */
-      skillGroupKey: string;
+      /** 目标执行技能；身份在所属定义宿主内唯一，与展示组无关。 */
+      skillKey: string;
       /** 伤害乘数。 */
       multiplier: number;
     }
   | {
       /** 乘算一个具体技能步骤造成的伤害。 */
       kind: 'multiplyStepDamage';
-      /** 目标技能组。 */
-      skillGroupKey: string;
+      /** 目标执行技能；身份在所属定义宿主内唯一，与展示组无关。 */
+      skillKey: string;
       /** 目标步骤。 */
       stepKey: string;
       /** 伤害乘数。 */
@@ -228,9 +224,9 @@ export type UpgradeModifierDefinition =
   | {
       /** 乘算技能冷却时间。 */
       kind: 'multiplySkillCooldown';
-      /** 目标技能组。 */
-      skillGroupKey: string;
-      /** 只修改指定分支；省略时修改整个技能组。 */
+      /** 目标执行技能；身份在所属定义宿主内唯一，与展示组无关。 */
+      skillKey: string;
+      /** 只修改指定分支；省略时修改指定技能。 */
       branchKey?: string;
       /** 冷却时间乘数。 */
       multiplier: number;
@@ -238,10 +234,8 @@ export type UpgradeModifierDefinition =
   | {
       /** 为技能冷却时间增加固定帧数。 */
       kind: 'addSkillCooldownFrames';
-      /** 目标技能组。 */
-      skillGroupKey: string;
-      /** 多形态技能组只修改指定技能定义；省略时修改组内全部形态。 */
-      skillKey?: string;
+      /** 目标执行技能；身份在所属定义宿主内唯一，与展示组无关。 */
+      skillKey: string;
       /** 增加的冷却帧数。 */
       frames: number;
       /** 构筑满足该条件时才应用。 */
@@ -537,7 +531,7 @@ export interface OperatorDefinition {
   attributes: AttributeGrowthDefinition;
   /** 仅记录偏离全局 `[10, 15, 15, 20]` 主属性规则的干员。 */
   trustAttributeBonus?: TrustAttributeBonusDefinition;
-  /** 技能库中可以放置的技能组。 */
+  /** 干员技能库的操作组集合；不包含切人、闪避、跳跃。组成员配置操作段的目标技能。 */
   skillGroups: readonly SkillGroupDefinition[];
   /** 完美闪避成功后由中心状态机施放的隐藏技能；不作为普通技能块出现在技能库。 */
   dodgeSkill?: import('./skills.ts').SkillDefinition;
@@ -563,8 +557,6 @@ export interface OperatorDefinition {
   buffDefinitions?: OperatorBuffDefinitions;
   /** 此干员附属 Buff 的名称翻译键；仅用于展示，不进入战斗回执。 */
   buffDisplayNameKeys?: Readonly<Record<string, string>>;
-  /** 干员专属技能入口的名称翻译键；按技能 key 查找，不改变技能路由。 */
-  skillDisplayNameKeys?: Readonly<Record<string, string>>;
   /** 干员级能力实体蓝图；子技能按引用它的技能等级编译。 */
   abilityEntityDefinitions?: OperatorAbilityEntityDefinitions;
   /** 原生角色常驻连携条件；多段连携的后续窗口仍由技能序列中的步骤开启。 */

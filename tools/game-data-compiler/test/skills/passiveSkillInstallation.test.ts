@@ -19,7 +19,7 @@ describe('被动技能安装实例化', () => {
     });
   });
 
-  it('原生默认等级不套补丁，武器则必须显式传入已解析等级', () => {
+  it('原生缺省等级无 1 级补丁时保留默认值，武器必须传入已解析等级', () => {
     const native = fixtureRequest({ kind: 'nativeDefault' });
     expect(materializePassiveSkillInstallation(native, fixtureDefinition())).toMatchObject({
       level: 1,
@@ -39,6 +39,32 @@ describe('被动技能安装实例化', () => {
     expect(materializePassiveSkillInstallation(weapon, fixtureDefinition(), 2)).toMatchObject({
       level: 2,
       patchApplied: true,
+    });
+  });
+
+  it('原生缺省等级应用 1 级补丁，再由养成输入覆盖，而不是使用声明等级', () => {
+    const base = fixtureDefinition();
+    const compiled = {
+      ...base,
+      definition: {
+        ...base.definition,
+        blackboard: {
+          definitionLevel: 7,
+          declaredDefaults: { damage_up: 0.1 },
+          levels: [1, 7],
+          values: { damage_up: [0.3, 0.9], patch_only: [4, 9] },
+        },
+      },
+    };
+    const request = fixtureRequest({ kind: 'nativeDefault' });
+    expect(materializePassiveSkillInstallation(request, compiled)).toMatchObject({
+      level: 1,
+      patchApplied: true,
+      blackboard: { damage_up: 0.8, patch_only: 4 },
+    });
+    expect(resolvePassiveSkillDefinitionBlackboard(request, compiled)).toEqual({
+      damage_up: 0.8,
+      patch_only: 4,
     });
   });
 

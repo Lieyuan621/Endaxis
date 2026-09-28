@@ -208,8 +208,7 @@ it('标准伤害模拟入口直接执行图干员并得到预期回执', () => {
     skillGroups: [
       {
         key: 'battleSkill',
-        skillType: 'battleSkill',
-        levelSource: 'battleSkill',
+        operationType: 'battleSkill',
         skills: graphEntrySkill,
       },
     ],
@@ -306,8 +305,7 @@ describe('标准入口普通倒地装配', () => {
         ...perlica.skillGroups.filter(group => group.key !== 'battleSkill'),
         {
           key: 'battleSkill',
-          skillType: 'battleSkill',
-          levelSource: 'battleSkill',
+          operationType: 'battleSkill',
           skills: projectedDownSkill,
         },
       ],

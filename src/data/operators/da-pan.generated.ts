@@ -2816,8 +2816,7 @@ export const daPan: OperatorDefinition = {
   skillGroups: [
     {
       key: 'basicAttack',
-      skillType: 'basicAttack',
-      levelSource: 'basicAttack',
+      operationType: 'basicAttack',
       skills: [
         daPanChr_0018_dapan_attack1,
         daPanChr_0018_dapan_attack2,
@@ -2825,36 +2824,15 @@ export const daPan: OperatorDefinition = {
         daPanChr_0018_dapan_attack4,
       ],
     },
-    {
-      key: 'finisher',
-      skillType: 'finisher',
-      levelSource: 'basicAttack',
-      skills: daPanChr_0018_dapan_power_attack,
-    },
+    { key: 'finisher', operationType: 'finisher', skills: daPanChr_0018_dapan_power_attack },
     {
       key: 'plungingAttack',
-      skillType: 'plungingAttack',
-      levelSource: 'basicAttack',
+      operationType: 'plungingAttack',
       skills: daPanChr_0018_dapan_plunging_attack_end,
     },
-    {
-      key: 'battleSkill',
-      skillType: 'battleSkill',
-      levelSource: 'battleSkill',
-      skills: daPanChr_0018_dapan_normal_skill,
-    },
-    {
-      key: 'ultimate',
-      skillType: 'ultimate',
-      levelSource: 'ultimate',
-      skills: daPanChr_0018_dapan_ultimate_skill,
-    },
-    {
-      key: 'comboSkill',
-      skillType: 'comboSkill',
-      levelSource: 'comboSkill',
-      skills: daPanChr_0018_dapan_combo_skill,
-    },
+    { key: 'battleSkill', operationType: 'battleSkill', skills: daPanChr_0018_dapan_normal_skill },
+    { key: 'ultimate', operationType: 'ultimate', skills: daPanChr_0018_dapan_ultimate_skill },
+    { key: 'comboSkill', operationType: 'comboSkill', skills: daPanChr_0018_dapan_combo_skill },
   ],
   dodgeSkill: daPanCommon_character_perfect_dodge,
   dashBuffs: [
@@ -2905,31 +2883,31 @@ export const daPan: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'talent_1',
           operation: 'assign',
           value: [1, 1],
+          skillKey: 'chr_0018_dapan_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'talent_1_stack',
           operation: 'assign',
           value: [1, 2],
+          skillKey: 'chr_0018_dapan_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'talent_1_duration',
           operation: 'assign',
           value: [20, 20],
+          skillKey: 'chr_0018_dapan_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'talent_1_cd_reduce',
           operation: 'assign',
           value: [0.4, 0.4],
+          skillKey: 'chr_0018_dapan_ultimate_skill',
         },
       ],
     },
@@ -2940,17 +2918,17 @@ export const daPan: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'potential_1_dmg_up',
           operation: 'assign',
           value: 0.3,
+          skillKey: 'chr_0018_dapan_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'potential_1_duration',
           operation: 'assign',
           value: 15,
+          skillKey: 'chr_0018_dapan_ultimate_skill',
         },
       ],
     },
@@ -2959,17 +2937,17 @@ export const daPan: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'talent_1_stack',
           operation: 'add',
           value: 1,
+          skillKey: 'chr_0018_dapan_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'talent_1_duration',
           operation: 'add',
           value: 10,
+          skillKey: 'chr_0018_dapan_ultimate_skill',
         },
       ],
     },
@@ -2985,9 +2963,9 @@ export const daPan: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
-          skillGroupKey: 'ultimate',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
+          skillKey: 'chr_0018_dapan_ultimate_skill',
         },
       ],
     },
@@ -2996,10 +2974,10 @@ export const daPan: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'potential_5_interval',
           operation: 'assign',
           value: 45,
+          skillKey: 'chr_0018_dapan_normal_skill',
         },
       ],
     },

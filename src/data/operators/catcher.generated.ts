@@ -1931,8 +1931,7 @@ export const catcher: OperatorDefinition = {
   skillGroups: [
     {
       key: 'basicAttack',
-      skillType: 'basicAttack',
-      levelSource: 'basicAttack',
+      operationType: 'basicAttack',
       skills: [
         catcherChr_0020_meurs_attack1,
         catcherChr_0020_meurs_attack2,
@@ -1940,36 +1939,19 @@ export const catcher: OperatorDefinition = {
         catcherChr_0020_meurs_attack4,
       ],
     },
-    {
-      key: 'finisher',
-      skillType: 'finisher',
-      levelSource: 'basicAttack',
-      skills: catcherChr_0020_meurs_power_attack,
-    },
+    { key: 'finisher', operationType: 'finisher', skills: catcherChr_0020_meurs_power_attack },
     {
       key: 'plungingAttack',
-      skillType: 'plungingAttack',
-      levelSource: 'basicAttack',
+      operationType: 'plungingAttack',
       skills: catcherChr_0020_meurs_plunging_attack_end,
     },
     {
       key: 'battleSkill',
-      skillType: 'battleSkill',
-      levelSource: 'battleSkill',
+      operationType: 'battleSkill',
       skills: catcherChr_0020_meurs_normal_skill,
     },
-    {
-      key: 'comboSkill',
-      skillType: 'comboSkill',
-      levelSource: 'comboSkill',
-      skills: catcherChr_0020_meurs_combo_skill,
-    },
-    {
-      key: 'ultimate',
-      skillType: 'ultimate',
-      levelSource: 'ultimate',
-      skills: catcherChr_0020_meurs_ultimate_skill,
-    },
+    { key: 'comboSkill', operationType: 'comboSkill', skills: catcherChr_0020_meurs_combo_skill },
+    { key: 'ultimate', operationType: 'ultimate', skills: catcherChr_0020_meurs_ultimate_skill },
   ],
   dodgeSkill: catcherCommon_character_perfect_dodge,
   dashBuffs: [
@@ -2017,17 +1999,17 @@ export const catcher: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'talent_1',
           operation: 'assign',
           value: [1, 2],
+          skillKey: 'chr_0020_meurs_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'atk_scale_shockwave',
           operation: 'assign',
           value: [0.3, 0.45],
+          skillKey: 'chr_0020_meurs_ultimate_skill',
         },
       ],
     },
@@ -2054,10 +2036,10 @@ export const catcher: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'potential3_duration',
           operation: 'assign',
           value: 5,
+          skillKey: 'chr_0020_meurs_combo_skill',
         },
       ],
     },
@@ -2066,9 +2048,9 @@ export const catcher: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
-          skillGroupKey: 'ultimate',
           resource: 'ultimateEnergy',
           multiplier: 0.9,
+          skillKey: 'chr_0020_meurs_ultimate_skill',
         },
       ],
     },
@@ -2077,10 +2059,10 @@ export const catcher: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'potential5_atb',
           operation: 'assign',
           value: 10,
+          skillKey: 'chr_0020_meurs_normal_skill',
         },
       ],
     },

@@ -41,7 +41,7 @@ const chainEntry = (
 
 const condition: CompiledComboSkillConditionProgram = {
   key: 'saved-element',
-  skillGroupKey: 'combo',
+  skillSlotKey: 'combo',
   skillKey: 'combo',
   event: 'beforeTakeInfliction',
   immediately: false,
@@ -88,7 +88,7 @@ function setup() {
     skills: [combo()],
     skillCasts: [] as { readonly castId: string; readonly program: CompiledSkillProgram }[],
     skillSlotGroups: [
-      { skillGroupKey: 'combo', baseSkillKey: 'combo', replacementSkillKeys: [] as string[] },
+      { skillSlotKey: 'combo', baseSkillKey: 'combo', replacementSkillKeys: [] as string[] },
     ],
     comboConditionPrograms: [condition],
   };
@@ -358,7 +358,7 @@ describe('assembly 原生常驻连携条件', () => {
         {
           kind: 'changeSkillSlot',
           parameters: {
-            skillGroupKey: 'combo',
+            skillSlotKey: 'combo',
             targetSkillKey: 'replacement',
             inheritOriginSkillCooldownProgress: false,
           },
@@ -502,7 +502,7 @@ describe('assembly 原生常驻连携条件', () => {
         {
           kind: 'changeSkillSlot',
           parameters: {
-            skillGroupKey: 'combo',
+            skillSlotKey: 'combo',
             targetSkillKey: 'variant',
             inheritOriginSkillCooldownProgress: true,
           },
@@ -755,7 +755,7 @@ describe('assembly 原生常驻连携条件', () => {
     f.owner.skills.push(combo('variant'));
     const change = (targetSkillKey: string): ActionGraphStep => ({
       kind: 'changeSkillSlot',
-      parameters: { skillGroupKey: 'combo', targetSkillKey },
+      parameters: { skillSlotKey: 'combo', targetSkillKey },
     });
     f.owner.skills.push(
       action('to-variant', [change('variant')]),

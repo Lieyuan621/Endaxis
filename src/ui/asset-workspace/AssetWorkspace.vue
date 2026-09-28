@@ -210,10 +210,6 @@ function resourceLabel(resource: WorkspaceDefinitionResource): string {
       new Map(Object.entries(names ?? {})),
     );
   }
-  if (resource.kind === 'skill' && 'skillDisplayNameKeys' in definition) {
-    const nameKey = definition.skillDisplayNameKeys?.[resource.identity];
-    if (nameKey && te(nameKey)) return t(nameKey);
-  }
   if (resource.kind === 'skill' && draft.value.edit.kind === 'operator') {
     const path = resource.path;
     if (path[0] === 'dodgeSkill') return t('skillType.dodge');
@@ -222,7 +218,7 @@ function resourceLabel(resource: WorkspaceDefinitionResource): string {
       if (group) {
         const parent = fieldValueAt(definition, path.slice(0, -1));
         const number = Array.isArray(parent) ? ` ${Number(path[path.length - 1]) + 1}` : '';
-        return `${t(skillTypeLabelKey(group.skillType))}${number}`;
+        return `${t(skillTypeLabelKey(group.operationType))}${number}`;
       }
     }
   }
@@ -295,6 +291,13 @@ const fieldPath = computed(() => [
   ...(field.value ? [field.value] : []),
 ]);
 const referenceChoices = computed(() => ({
+  skillSlot:
+    draft.value.edit.kind === 'operator'
+      ? (draft.value.edit.definition.skillSlots ?? []).map(slot => ({
+          value: slot.key,
+          label: slot.key,
+        }))
+      : [],
   gearSet: props.assets.flatMap(asset =>
     asset.edit.kind === 'gearSet' ? [{ value: asset.edit.definition.slug, label: asset.name }] : [],
   ),

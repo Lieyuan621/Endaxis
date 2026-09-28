@@ -1531,7 +1531,7 @@ it('装备末端从真实配装上下文结算伤害，不继承触发技能或�
   let skillHits = 0;
   context.semanticEvents.register({
     ownerOperatorId: 'operator',
-    trigger: { kind: 'skillHit', skillGroupKey: 'battleSkill', scope: 'operator' },
+    trigger: { kind: 'skillHit', skillKey: 'battleSkill', scope: 'operator' },
     phase: 'dataAction',
     handle: () => {
       skillHits += 1;
@@ -1771,7 +1771,7 @@ describe('StandardPlayerDamageEnvironment', () => {
           });
           return {
             key: `${index}`,
-            skillGroupKey: 'combo',
+            skillSlotKey: 'combo',
             skillKey: 'combo',
             event: compiled.event,
             immediately: source.immediately,
@@ -1813,7 +1813,7 @@ describe('StandardPlayerDamageEnvironment', () => {
                 EntityBB_wisd_greater_will: deckGate,
               },
               skillSlotGroups: [
-                { skillGroupKey: 'combo', baseSkillKey: 'combo', replacementSkillKeys: [] },
+                { skillSlotKey: 'combo', baseSkillKey: 'combo', replacementSkillKeys: [] },
               ],
               comboConditionPrograms: programs,
             },
@@ -2709,7 +2709,7 @@ describe('StandardPlayerDamageEnvironment', () => {
     });
     context.semanticEvents.register({
       ownerOperatorId: 'operator',
-      trigger: { kind: 'skillHit', skillGroupKey: 'battleSkill', scope: 'operator' },
+      trigger: { kind: 'skillHit', skillKey: 'battleSkill', scope: 'operator' },
       phase: 'dataAction',
       handle: () => events.push('semantic:skill'),
     });
@@ -3620,7 +3620,7 @@ it.each(['beforeDamageAction', 'beforeCalculateDamage'] as const)(
   },
 );
 
-it('执行程序使用自定义组键时原样随输出传递，承伤方不携带此归属', () => {
+it('输出事件携带实际技能身份而不是展示组，承伤方不携带此归属', () => {
   const environment = createEnvironment();
   const context = createContext();
   const outputs: unknown[] = [];
@@ -3638,7 +3638,7 @@ it('执行程序使用自定义组键时原样随输出传递，承伤方不携�
     })
     .execute(damageStep);
   expect(outputs).toHaveLength(1);
-  expect(outputs[0]).toHaveProperty('executingSkillGroupKey', 'custom-group');
+  expect(outputs[0]).toHaveProperty('executingSkillId', 'unrelated-id');
   expect(targets).toHaveLength(1);
-  expect(targets[0]).not.toHaveProperty('executingSkillGroupKey');
+  expect(targets[0]).not.toHaveProperty('executingSkillId');
 });

@@ -121,8 +121,8 @@ export interface SkillBuffIgniteEventResponse {
 
 /** 原生 ChangeSkillAction 随 DuringBuffEnable 动作结束而撤销的技能槽替换。 */
 export interface SkillBuffSlotReplacement {
-  /** 要修改的技能组。 */
-  readonly skillGroupKey: string;
+  /** 要修改的原生技能槽，与技能库分组无关。 */
+  readonly skillSlotKey: string;
   /** Buff 启用期间换入的技能。 */
   readonly targetSkillKey: string;
   /** Buff 停用或结束时恢复的技能。 */

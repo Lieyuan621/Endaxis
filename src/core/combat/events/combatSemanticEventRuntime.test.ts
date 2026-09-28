@@ -617,7 +617,7 @@ describe('CombatSemanticEventRuntime', () => {
     });
     runtime.register({
       ownerOperatorId: 'operator:a',
-      trigger: { kind: 'skillHit', skillGroupKey: 'battleSkill', scope: 'operator' },
+      trigger: { kind: 'skillHit', skillKey: 'battleSkill', scope: 'operator' },
       phase: 'dataAction',
       handle: () => received.push('skill'),
     });
@@ -637,7 +637,7 @@ describe('CombatSemanticEventRuntime', () => {
     );
     emitOutputDamage({
       sourceId: 'operator:a',
-      executingSkillGroupKey: 'battleSkill',
+      executingSkillId: 'battleSkill',
     });
     expect(received).toEqual(['infliction', 'skill']);
   });
@@ -1085,7 +1085,7 @@ it('技能命中按明确执行组匹配，不从继承来源或技能 ID 推断
   const received: unknown[] = [];
   semanticEvents.register({
     ownerOperatorId: 'operator',
-    trigger: { kind: 'skillHit', skillGroupKey: 'custom-group', scope: 'operator' },
+    trigger: { kind: 'skillHit', skillKey: 'custom-group', scope: 'operator' },
     phase: 'dataAction',
     handle: ({ event }) => received.push(event),
   });
@@ -1102,7 +1102,7 @@ it('技能命中按明确执行组匹配，不从继承来源或技能 ID 推断
   expect(received).toEqual([]);
   const published = {
     event: 'outputDamage' as const,
-    payload: { ...payload, executingSkillGroupKey: 'custom-group' },
+    payload: { ...payload, executingSkillId: 'custom-group' },
   };
   dispatcher.dispatch(published, []);
   dispatcher.dispatch({ event: 'outputCriticalDamage', payload: published.payload }, []);

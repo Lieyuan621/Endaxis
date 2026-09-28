@@ -16,7 +16,7 @@ export class ComboWindowOperationExecutor implements CombatOperationExecutor {
     readonly windows: ComboWindowRuntime,
     readonly delegate: CombatOperationExecutor,
     readonly resolveCurrentSkillKey: (
-      skillGroupKey: 'comboSkill',
+      skillSlotKey: 'comboSkill',
       operatorId: string,
     ) => string = () => {
       throw new Error('current combo skill slot resolver is unavailable');

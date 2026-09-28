@@ -216,9 +216,7 @@ describe('干员与公共 Buff 共用规划', () => {
     const operator: OperatorDefinition = {
       ...planned('one').operator,
       abilityEntityDefinitions: { fixture: { lifetime: { kind: 'infinite' } } },
-      skillGroups: [
-        { key: 'spawn', skillType: 'battleSkill', levelSource: 'battleSkill', skills: skill },
-      ],
+      skillGroups: [{ key: 'spawn', operationType: 'battleSkill', skills: skill }],
     };
     planOperatorDefinition.mockReturnValue({ ...planned('one'), operator });
     const equipment = (key: string) =>
@@ -287,8 +285,7 @@ describe('干员与公共 Buff 共用规划', () => {
                 skillGroups: [
                   {
                     key: 'spawn',
-                    skillType: 'battleSkill',
-                    levelSource: 'battleSkill',
+                    operationType: 'battleSkill',
                     skills: skill,
                   },
                 ],
@@ -564,9 +561,7 @@ describe('干员与公共 Buff 共用规划', () => {
       const operator: OperatorDefinition = {
         ...planned('one').operator,
         abilityEntityDefinitions: { fixture: { lifetime: { kind: 'infinite' } } },
-        skillGroups: [
-          { key: 'spawn', skillType: 'battleSkill', levelSource: 'battleSkill', skills: skill },
-        ],
+        skillGroups: [{ key: 'spawn', operationType: 'battleSkill', skills: skill }],
       };
       const gearSet: GearSetDefinition = {
         slug: 'fixture',

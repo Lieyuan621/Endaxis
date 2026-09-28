@@ -19,6 +19,39 @@ import {
   compileScenarioTimeline,
 } from './compileScenarioTimeline';
 import type { OperatorDefinition } from '../game-data/operatorDefinition';
+import { compileOperatorComboSkillConditions } from './compileOperatorComboSkillConditions';
+import { typhoeus } from '../../data/operators/typhoeus.generated';
+
+it('展示组重命名、重排不改变技能养成、费用或原生连携条件', () => {
+  const build = {
+    ...createScenario().tracks[0]!.operator!,
+    operatorSlug: typhoeus.slug,
+    talentStates: Object.fromEntries(
+      typhoeus.talents.map((talent, index) => [index, talent.levels]),
+    ),
+    potential: 5,
+  };
+  const regrouped: OperatorDefinition = {
+    ...typhoeus,
+    skillGroups: typhoeus.skillGroups
+      .map((group, index) => ({ ...group, key: `presentation-${index}` }))
+      .toReversed(),
+  };
+  const repository = new ActionGraphDefinitionRepository();
+  const compile = (operator: OperatorDefinition) =>
+    compileOperatorDefinitionSkills('track:0', build, operator, undefined, undefined, repository)
+      .map(({ skillGroupKey: _presentation, ...program }) => program)
+      .sort((a, b) => a.skillId.localeCompare(b.skillId));
+  // 编译图 revision 是按编译次序分配的内存缓存身份，不属于执行语义；Map 内容仍完整比较。
+  const semanticData = (value: unknown) =>
+    JSON.stringify(value, (key, item) =>
+      key === 'revision' ? undefined : item instanceof Map ? [...item] : item,
+    );
+  expect(semanticData(compile(regrouped))).toBe(semanticData(compile(typhoeus)));
+  expect(compileOperatorComboSkillConditions(regrouped, build, { programs: repository })).toEqual(
+    compileOperatorComboSkillConditions(typhoeus, build, { programs: repository }),
+  );
+});
 
 function createScenario(): ScenarioDocument {
   const scenario = createEmptyScenario('scenario:1', '佩丽卡编译样本');
@@ -289,7 +322,7 @@ describe('compileScenarioTimeline', () => {
     ).toEqual([['chr_0004_pelica_normal_skill', 'skillCast:1']]);
     expect(compiled.operators[0]!.skillSlotGroups).toContainEqual(
       expect.objectContaining({
-        skillGroupKey: 'battleSkill',
+        skillSlotKey: 'battleSkill',
         baseSkillKey: 'chr_0004_pelica_normal_skill',
         replacementSkillKeys: ['battleSkillVariant'],
       }),
@@ -352,7 +385,7 @@ describe('compileScenarioTimeline', () => {
 
     expect(compiled.operators[0]!.skillSlotGroups).toContainEqual(
       expect.objectContaining({
-        skillGroupKey: 'battleSkill',
+        skillSlotKey: 'battleSkill',
         baseSkillKey: 'chr_0004_pelica_normal_skill',
         replacementSkillKeys: ['battleSkillEnd'],
       }),
@@ -361,7 +394,7 @@ describe('compileScenarioTimeline', () => {
 
   it('does not infer native default input slots from library presentation groups', () => {
     const scenario = createScenario();
-    const basicGroup = perlica.skillGroups.find(group => group.skillType === 'basicAttack')!;
+    const basicGroup = perlica.skillGroups.find(group => group.operationType === 'basicAttack')!;
     const baseSkill = Array.isArray(basicGroup.skills) ? basicGroup.skills[0]! : basicGroup.skills;
     const operator = {
       ...perlica,
@@ -369,9 +402,8 @@ describe('compileScenarioTimeline', () => {
         ...perlica.skillGroups,
         {
           key: 'enhancedBasicAttack',
-          skillType: 'basicAttack' as const,
-          levelSource: 'ultimate' as const,
-          libraryNameQualifier: 'enhanced' as const,
+          operationType: 'basicAttack' as const,
+          nameKey: 'skillNames.enhanced' as const,
           skills: [{ ...baseSkill, key: 'enhancedBasicAttack1' }],
         },
       ],
@@ -437,9 +469,7 @@ describe('compileScenarioTimeline', () => {
                 {
                   skill: routed,
                   // 路由包装元数据即便滞后，也不能覆盖单个技能自己的战斗类型与等级来源。
-                  skillType: 'battleSkill' as const,
-                  levelSource: 'battleSkill' as const,
-                  executionSkillGroupKey: 'comboSkill',
+
                   executionSkillKey: 'comboSkill',
                 },
               ],
@@ -470,7 +500,7 @@ describe('compileScenarioTimeline', () => {
       skillGroupKey: 'battleSkill',
       skillType: 'comboSkill',
       costs: [{ resource: 'sp', value: 70 }],
-      executionSkillGroupKey: 'comboSkill',
+
       executionSkillId: 'comboSkill',
     });
     expect(rootActionSteps(variant.timelineActions[0]!.sequence)[0]).toMatchObject({
@@ -479,7 +509,7 @@ describe('compileScenarioTimeline', () => {
     });
     expect(compiled.operators[0]!.skillSlotGroups).toContainEqual(
       expect.objectContaining({
-        skillGroupKey: 'battleSkill',
+        skillSlotKey: 'battleSkill',
         baseSkillKey: 'chr_0004_pelica_normal_skill',
         replacementSkillKeys: ['battleSkillRoutedToCombo'],
       }),
@@ -599,7 +629,7 @@ describe('compileScenarioTimeline', () => {
           modifiers: [
             {
               kind: 'multiplySkillCost' as const,
-              skillGroupKey: 'ultimate',
+              skillKey: requireSingleSkill('ultimate').key,
               resource: 'ultimateEnergy' as const,
               multiplier: 0.85,
             },
@@ -743,7 +773,7 @@ describe('compileScenarioTimeline', () => {
           modifiers: [
             {
               kind: 'multiplySkillCost' as const,
-              skillGroupKey: 'ultimate',
+              skillKey: requireSingleSkill('ultimate').key,
               resource: 'ultimateEnergy' as const,
               multiplier: 0.85,
             },

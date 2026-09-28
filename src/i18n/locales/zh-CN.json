@@ -425,6 +425,7 @@
       "variants": "变体",
       "key": "名称",
       "skillType": "技能类型",
+      "operationType": "操作类型",
       "levelSource": "养成等级来源",
       "placementPolicy": "放置方式",
       "actionGraph": "动作图",
@@ -464,7 +465,6 @@
       "playerActionModes": "操作模式",
       "skillAliases": "技能别名",
       "buffDisplayNameKeys": "状态显示名称",
-      "skillDisplayNameKeys": "技能显示名称",
       "comboSkillConditions": "连携条件",
       "comboSkillPriority": "连携优先规则",
       "entityBlackboardInitializers": "实体变量初值",
@@ -1431,8 +1431,13 @@
         "name": "有效输入（秒）",
         "help": "可以成功命中连携时机的时间长度。"
       },
-      "skillGroupKey": {
-        "name": "技能组"
+      "skillSlotKey": {
+        "name": "技能槽",
+        "help": "接收玩家输入并选择当前技能的原生槽位。"
+      },
+      "skillKey": {
+        "name": "技能",
+        "help": "所属宿主中具体执行技能的身份。"
       },
       "targetSkillKey": {
         "name": "切换到技能"
@@ -3535,7 +3540,7 @@
       "enableCap": "设置易伤上限",
       "cap": "易伤上限",
       "multiplier": "倍率",
-      "skillGroupKey": "技能组键",
+      "skillKey": "技能键",
       "slowedNoParameters": "减速标记本身没有额外参数，具体响应由运行时机制读取。",
       "reaction": "元素反应",
       "reactions": {
@@ -3894,7 +3899,7 @@
         "scalingCoefficient": "每点所选属性提供的易伤比例，界面按百分数显示。",
         "susceptibilityCap": "限制基础易伤与属性换算易伤相加后的最大值。",
         "resourceCostMultiplier": "资源消耗最终乘数。1 表示不变，0.8 表示消耗降至 80%。",
-        "skillGroupKey": "要修改冷却的技能组稳定身份，不是显示名称。",
+        "skillKey": "要修改冷却的具体技能身份，在所属宿主内解析。",
         "cooldownMultiplier": "技能冷却时长乘数。1 表示不变，0.8 表示冷却缩短至 80%。",
         "reaction": "要创建或消费的元素反应身份。它与元素附着是不同的运行时状态。",
         "reactionTarget": "施加反应可选择施法者或敌人；消费反应按战斗模型固定作用于敌人。",
@@ -4239,7 +4244,7 @@
     "libraryInspector": {
       "operator": "所属干员",
       "skillGroupId": "技能组 ID",
-      "level": "技能等级",
+      "operationType": "操作类型",
       "durationFrames": "占轴帧数",
       "skillChain": "技能链"
     },
@@ -4631,10 +4636,6 @@
     "skill": "战技",
     "link": "连携",
     "ultimate": "终结技",
-    "nameQualifier": {
-      "enhanced": "强化{type}",
-      "floating": "浮空{type}"
-    },
     "enhancedAttack": "强化普攻",
     "enhancedSkill": "强化战技",
     "enhancedLink": "强化连携",
@@ -5337,8 +5338,22 @@
     "effectiveness": "异常效能"
   },
   "skillNames": {
-    "pursuit": "追猎",
-    "stanceTermination": "姿态中止"
+    "enhanced": {
+      "name": "强化{baseName}",
+      "shortName": "{baseName}*"
+    },
+    "floating": {
+      "name": "浮空{baseName}",
+      "shortName": "{baseName}*"
+    },
+    "replacement": {
+      "name": "替换{baseName}",
+      "shortName": "{baseName}*"
+    },
+    "stanceTermination": {
+      "name": "姿态中止",
+      "shortName": "姿态中止"
+    }
   },
   "actionItem": {
     "damageHitTooltip": "伤害: {damage}",

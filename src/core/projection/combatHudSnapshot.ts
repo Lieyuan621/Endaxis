@@ -439,7 +439,7 @@ function skillSlotsAtFrame(
     if (entry.event !== 'SkillSlotChanged' || entry.sourceId === undefined) continue;
     const operatorSlots = slots.get(entry.sourceId);
     if (operatorSlots === undefined) continue;
-    const skillSlotKey = stringData(entry.data, 'skillGroupKey');
+    const skillSlotKey = stringData(entry.data, 'skillSlotKey');
     const targetSkillKey = stringData(entry.data, 'targetSkillKey');
     if (skillSlotKey === undefined || targetSkillKey === undefined) continue;
     if (!operatorSlots.has(skillSlotKey)) {

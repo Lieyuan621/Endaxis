@@ -2560,8 +2560,7 @@ export const chenQianyu: OperatorDefinition = {
   skillGroups: [
     {
       key: 'basicAttack',
-      skillType: 'basicAttack',
-      levelSource: 'basicAttack',
+      operationType: 'basicAttack',
       skills: [
         chenQianyuChr_0005_chen_attack1,
         chenQianyuChr_0005_chen_attack2,
@@ -2570,36 +2569,19 @@ export const chenQianyu: OperatorDefinition = {
         chenQianyuChr_0005_chen_attack5,
       ],
     },
-    {
-      key: 'finisher',
-      skillType: 'finisher',
-      levelSource: 'basicAttack',
-      skills: chenQianyuChr_0005_chen_power_attack,
-    },
+    { key: 'finisher', operationType: 'finisher', skills: chenQianyuChr_0005_chen_power_attack },
     {
       key: 'plungingAttack',
-      skillType: 'plungingAttack',
-      levelSource: 'basicAttack',
+      operationType: 'plungingAttack',
       skills: chenQianyuChr_0005_chen_plunging_attack_end,
     },
     {
       key: 'battleSkill',
-      skillType: 'battleSkill',
-      levelSource: 'battleSkill',
+      operationType: 'battleSkill',
       skills: chenQianyuChr_0005_chen_normal_skill,
     },
-    {
-      key: 'comboSkill',
-      skillType: 'comboSkill',
-      levelSource: 'comboSkill',
-      skills: chenQianyuChr_0005_chen_combo_skill,
-    },
-    {
-      key: 'ultimate',
-      skillType: 'ultimate',
-      levelSource: 'ultimate',
-      skills: chenQianyuChr_0005_chen_ultimate_skill,
-    },
+    { key: 'comboSkill', operationType: 'comboSkill', skills: chenQianyuChr_0005_chen_combo_skill },
+    { key: 'ultimate', operationType: 'ultimate', skills: chenQianyuChr_0005_chen_ultimate_skill },
   ],
   dodgeSkill: chenQianyuCommon_character_perfect_dodge,
   dashBuffs: [
@@ -2676,31 +2658,31 @@ export const chenQianyu: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'atk_scale1',
           operation: 'multiply',
           value: 1.1,
+          skillKey: 'chr_0005_chen_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'atk_scale2',
           operation: 'multiply',
           value: 1.1,
+          skillKey: 'chr_0005_chen_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'atk_scale',
           operation: 'multiply',
           value: 1.1,
+          skillKey: 'chr_0005_chen_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'atk_scale',
           operation: 'multiply',
           value: 1.1,
+          skillKey: 'chr_0005_chen_combo_skill',
         },
       ],
     },
@@ -2709,22 +2691,22 @@ export const chenQianyu: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
-          skillGroupKey: 'ultimate',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
+          skillKey: 'chr_0005_chen_ultimate_skill',
         },
       ],
     },
     {
       levels: 1,
       modifiers: [
-        { kind: 'addSkillCooldownFrames', skillGroupKey: 'comboSkill', frames: -90 },
+        { kind: 'addSkillCooldownFrames', frames: -90, skillKey: 'chr_0005_chen_combo_skill' },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'potential5',
           operation: 'assign',
           value: 1,
+          skillKey: 'chr_0005_chen_ultimate_skill',
         },
       ],
     },

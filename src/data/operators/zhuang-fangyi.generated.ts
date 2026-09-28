@@ -5048,13 +5048,13 @@ const zhuangFangyiBuff14: SkillBuffDefinition = {
   actionGraph: zhuangFangyiBuff14ActionGraph,
   skillSlotReplacements: [
     {
-      skillGroupKey: 'battleSkill',
+      skillSlotKey: 'battleSkill',
       targetSkillKey: 'chr_0030_zhuangfy_normal_skill_ult',
       revertedSkillKey: 'chr_0030_zhuangfy_normal_skill',
       inheritOriginSkillCooldownProgress: false,
     },
     {
-      skillGroupKey: 'comboSkill',
+      skillSlotKey: 'comboSkill',
       targetSkillKey: 'chr_0030_zhuangfy_combo_skill_ult',
       revertedSkillKey: 'chr_0030_zhuangfy_combo_skill',
       inheritOriginSkillCooldownProgress: true,
@@ -5121,8 +5121,7 @@ export const zhuangFangyi: OperatorDefinition = {
   skillGroups: [
     {
       key: 'basicAttack',
-      skillType: 'basicAttack',
-      levelSource: 'basicAttack',
+      operationType: 'basicAttack',
       skills: [
         zhuangFangyiChr_0030_zhuangfy_attack1,
         zhuangFangyiChr_0030_zhuangfy_attack2,
@@ -5133,47 +5132,47 @@ export const zhuangFangyi: OperatorDefinition = {
     },
     {
       key: 'finisher',
-      skillType: 'finisher',
-      levelSource: 'basicAttack',
+      operationType: 'finisher',
       skills: zhuangFangyiChr_0030_zhuangfy_power_attack,
     },
     {
       key: 'plungingAttack',
-      skillType: 'plungingAttack',
-      levelSource: 'basicAttack',
+      operationType: 'plungingAttack',
       skills: zhuangFangyiChr_0030_zhuangfy_plunging_attack_end,
     },
     {
       key: 'battleSkill',
-      skillType: 'battleSkill',
-      levelSource: 'battleSkill',
+      operationType: 'battleSkill',
       skills: zhuangFangyiChr_0030_zhuangfy_normal_skill,
-      replacementSkills: [zhuangFangyiChr_0030_zhuangfy_normal_skill_ult],
-      replacementSkillPlacements: { chr_0030_zhuangfy_normal_skill_ult: 'standard' },
-      replacementSkillNameQualifiers: { chr_0030_zhuangfy_normal_skill_ult: 'enhanced' },
+    },
+    {
+      key: 'enhancedBattleSkill',
+      operationType: 'battleSkill',
+      nameKey: 'skillNames.enhanced',
+      skills: zhuangFangyiChr_0030_zhuangfy_normal_skill_ult,
     },
     {
       key: 'comboSkill',
-      skillType: 'comboSkill',
-      levelSource: 'comboSkill',
+      operationType: 'comboSkill',
       skills: zhuangFangyiChr_0030_zhuangfy_combo_skill,
-      replacementSkills: [zhuangFangyiChr_0030_zhuangfy_combo_skill_ult],
-      replacementSkillPlacements: { chr_0030_zhuangfy_combo_skill_ult: 'standard' },
-      replacementSkillNameQualifiers: { chr_0030_zhuangfy_combo_skill_ult: 'enhanced' },
+    },
+    {
+      key: 'enhancedComboSkill',
+      operationType: 'comboSkill',
+      nameKey: 'skillNames.enhanced',
+      skills: zhuangFangyiChr_0030_zhuangfy_combo_skill_ult,
     },
     {
       key: 'ultimate',
-      skillType: 'ultimate',
-      levelSource: 'ultimate',
+      operationType: 'ultimate',
       skills: zhuangFangyiChr_0030_zhuangfy_ultimate_skill,
       replacementSkills: [zhuangFangyiChr_0030_zhuangfy_ultimate_skill_end],
       replacementSkillPlacements: { chr_0030_zhuangfy_ultimate_skill_end: 'internal' },
     },
     {
       key: 'enhancedBasicAttack',
-      skillType: 'basicAttack',
-      levelSource: 'ultimate',
-      libraryNameQualifier: 'enhanced',
+      operationType: 'basicAttack',
+      nameKey: 'skillNames.enhanced',
       skills: [
         zhuangFangyiChr_0030_zhuangfy_attack1_ult,
         zhuangFangyiChr_0030_zhuangfy_attack2_ult,
@@ -5251,7 +5250,6 @@ export const zhuangFangyi: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0030_zhuangfy_normal_skill',
           blackboardKey: 'atk_scale',
           operation: 'multiply',
@@ -5259,7 +5257,6 @@ export const zhuangFangyi: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0030_zhuangfy_normal_skill',
           blackboardKey: 'atk_up_per_conduct',
           operation: 'multiply',
@@ -5267,7 +5264,6 @@ export const zhuangFangyi: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0030_zhuangfy_normal_skill_ult',
           blackboardKey: 'atk_scale',
           operation: 'multiply',
@@ -5275,7 +5271,6 @@ export const zhuangFangyi: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0030_zhuangfy_normal_skill_ult',
           blackboardKey: 'atk_up_per_conduct',
           operation: 'multiply',
@@ -5296,7 +5291,6 @@ export const zhuangFangyi: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0030_zhuangfy_normal_skill',
           blackboardKey: 'sword_duration',
           operation: 'add',
@@ -5304,7 +5298,6 @@ export const zhuangFangyi: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0030_zhuangfy_normal_skill',
           blackboardKey: 'atb_return',
           operation: 'assign',
@@ -5312,7 +5305,6 @@ export const zhuangFangyi: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0030_zhuangfy_normal_skill_ult',
           blackboardKey: 'sword_duration',
           operation: 'add',
@@ -5320,7 +5312,6 @@ export const zhuangFangyi: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0030_zhuangfy_normal_skill_ult',
           blackboardKey: 'atb_return',
           operation: 'assign',
@@ -5333,7 +5324,6 @@ export const zhuangFangyi: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
-          skillGroupKey: 'ultimate',
           skillKey: 'chr_0030_zhuangfy_ultimate_skill',
           resource: 'ultimateEnergy',
           multiplier: 0.85,

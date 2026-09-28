@@ -181,7 +181,7 @@ export type LegacyRuntimeReplacementResolver = (input: {
   readonly skillGroupKey: string;
   readonly expectedSkillKey: string;
   readonly actualSkillKey: string;
-}) => string | null;
+}) => { readonly skillGroupKey: string; readonly skillKey: string } | null;
 
 interface OrderedCast {
   readonly castId: string;
@@ -737,10 +737,10 @@ export function retimeLegacyProjectBySimulation(
                   expectedSkillKey: workingCast.source.skillKey,
                   actualSkillKey,
                 });
-                if (replacement !== null && replacement !== workingCast.source.skillKey) {
+                if (replacement !== null && replacement.skillKey !== workingCast.source.skillKey) {
                   sourceSkillKey ??= workingCast.source.skillKey;
-                  resolvedSkillKey = replacement;
-                  workingCast.source = { ...workingCast.source, skillKey: replacement };
+                  resolvedSkillKey = replacement.skillKey;
+                  workingCast.source = { ...workingCast.source, ...replacement };
                   targetCast.source = { ...workingCast.source };
                   trial?.dispose();
                   trial = beginTrial();

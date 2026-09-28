@@ -4521,7 +4521,7 @@ const laevatainBuff17: SkillBuffDefinition = {
   actionGraph: laevatainBuff17ActionGraph,
   skillSlotReplacements: [
     {
-      skillGroupKey: 'battleSkill',
+      skillSlotKey: 'battleSkill',
       targetSkillKey: 'chr_0016_laevat_normal_skill_during_ult',
       revertedSkillKey: 'chr_0016_laevat_normal_skill',
       inheritOriginSkillCooldownProgress: false,
@@ -4932,8 +4932,7 @@ export const laevatain: OperatorDefinition = {
   skillGroups: [
     {
       key: 'basicAttack',
-      skillType: 'basicAttack',
-      levelSource: 'basicAttack',
+      operationType: 'basicAttack',
       skills: [
         laevatainChr_0016_laevat_attack1,
         laevatainChr_0016_laevat_attack2,
@@ -4941,51 +4940,39 @@ export const laevatain: OperatorDefinition = {
         laevatainChr_0016_laevat_attack4,
         laevatainChr_0016_laevat_attack5,
       ],
-      variants: [
-        {
-          key: 'enhancedBasicAttack',
-          levelSource: 'ultimate',
-          libraryNameQualifier: 'enhanced',
-          skills: [
-            laevatainChr_0016_laevat_ult_attack1,
-            laevatainChr_0016_laevat_ult_attack2,
-            laevatainChr_0016_laevat_ult_attack3,
-            laevatainChr_0016_laevat_ult_attack4,
-          ],
-        },
+    },
+    {
+      key: 'enhancedBasicAttack',
+      operationType: 'basicAttack',
+      nameKey: 'skillNames.enhanced',
+      skills: [
+        laevatainChr_0016_laevat_ult_attack1,
+        laevatainChr_0016_laevat_ult_attack2,
+        laevatainChr_0016_laevat_ult_attack3,
+        laevatainChr_0016_laevat_ult_attack4,
       ],
     },
-    {
-      key: 'finisher',
-      skillType: 'finisher',
-      levelSource: 'basicAttack',
-      skills: laevatainChr_0016_laevat_power_attack,
-    },
+    { key: 'finisher', operationType: 'finisher', skills: laevatainChr_0016_laevat_power_attack },
     {
       key: 'plungingAttack',
-      skillType: 'plungingAttack',
-      levelSource: 'basicAttack',
+      operationType: 'plungingAttack',
       skills: laevatainChr_0016_laevat_plunging_attack_end,
     },
     {
       key: 'battleSkill',
-      skillType: 'battleSkill',
-      levelSource: 'battleSkill',
+      operationType: 'battleSkill',
       skills: laevatainChr_0016_laevat_normal_skill,
-      replacementSkills: [laevatainChr_0016_laevat_normal_skill_during_ult],
-      replacementSkillPlacements: { chr_0016_laevat_normal_skill_during_ult: 'standard' },
-      replacementSkillNameQualifiers: { chr_0016_laevat_normal_skill_during_ult: 'enhanced' },
     },
     {
-      key: 'ultimate',
-      skillType: 'ultimate',
-      levelSource: 'ultimate',
-      skills: laevatainChr_0016_laevat_ultimate_skill,
+      key: 'enhancedBattleSkill',
+      operationType: 'battleSkill',
+      nameKey: 'skillNames.enhanced',
+      skills: laevatainChr_0016_laevat_normal_skill_during_ult,
     },
+    { key: 'ultimate', operationType: 'ultimate', skills: laevatainChr_0016_laevat_ultimate_skill },
     {
       key: 'comboSkill',
-      skillType: 'comboSkill',
-      levelSource: 'comboSkill',
+      operationType: 'comboSkill',
       skills: laevatainChr_0016_laevat_combo_skill,
     },
   ],
@@ -5084,7 +5071,6 @@ export const laevatain: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0016_laevat_normal_skill',
           blackboardKey: 'atb',
           operation: 'add',
@@ -5092,7 +5078,6 @@ export const laevatain: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0016_laevat_normal_skill_during_ult',
           blackboardKey: 'atb',
           operation: 'add',
@@ -5100,7 +5085,6 @@ export const laevatain: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0016_laevat_normal_skill_during_ult',
           blackboardKey: 'ratio',
           operation: 'assign',
@@ -5108,7 +5092,6 @@ export const laevatain: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0016_laevat_normal_skill',
           blackboardKey: 'ratio',
           operation: 'assign',
@@ -5128,7 +5111,6 @@ export const laevatain: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0016_laevat_normal_skill',
           blackboardKey: 'duration',
           operation: 'multiply',
@@ -5136,7 +5118,6 @@ export const laevatain: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0016_laevat_normal_skill',
           blackboardKey: 'extra_scaling',
           operation: 'assign',
@@ -5144,7 +5125,6 @@ export const laevatain: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0016_laevat_normal_skill_during_ult',
           blackboardKey: 'duration',
           operation: 'multiply',
@@ -5152,7 +5132,6 @@ export const laevatain: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0016_laevat_normal_skill_during_ult',
           blackboardKey: 'extra_scaling',
           operation: 'assign',
@@ -5165,9 +5144,9 @@ export const laevatain: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
-          skillGroupKey: 'ultimate',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
+          skillKey: 'chr_0016_laevat_ultimate_skill',
         },
       ],
     },
@@ -5176,7 +5155,6 @@ export const laevatain: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'basicAttack',
           skillKey: 'chr_0016_laevat_ult_attack1',
           blackboardKey: 'ratio',
           operation: 'assign',
@@ -5184,7 +5162,6 @@ export const laevatain: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'basicAttack',
           skillKey: 'chr_0016_laevat_ult_attack2',
           blackboardKey: 'ratio',
           operation: 'assign',
@@ -5192,7 +5169,6 @@ export const laevatain: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'basicAttack',
           skillKey: 'chr_0016_laevat_ult_attack3',
           blackboardKey: 'ratio',
           operation: 'assign',
@@ -5200,7 +5176,6 @@ export const laevatain: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'basicAttack',
           skillKey: 'chr_0016_laevat_ult_attack4',
           blackboardKey: 'ratio',
           operation: 'assign',

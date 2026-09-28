@@ -237,7 +237,7 @@ describe('技能黑板和算术写入裁剪', () => {
                 responses: [
                   {
                     key: 'listener',
-                    event: { kind: 'skillHit', skillGroupKey: 'battleSkill', scope: 'operator' },
+                    event: { kind: 'skillHit', skillKey: 'battleSkill', scope: 'operator' },
                     sequence: chain(nodes, 'listener-body', [
                       {
                         kind: 'changeResourceByActionValue',

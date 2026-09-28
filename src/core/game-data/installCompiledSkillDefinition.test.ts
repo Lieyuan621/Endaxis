@@ -13,9 +13,7 @@ const original: SkillDefinition = skillFixture({
 
 const operator = {
   slug: 'fixture',
-  skillGroups: [
-    { key: 'battleSkill', skillType: 'battleSkill', levelSource: 'battleSkill', skills: original },
-  ],
+  skillGroups: [{ key: 'battleSkill', operationType: 'battleSkill', skills: original }],
 } as unknown as OperatorDefinition;
 
 describe('installCompiledSkillDefinition', () => {

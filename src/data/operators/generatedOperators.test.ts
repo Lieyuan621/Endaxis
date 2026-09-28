@@ -195,7 +195,7 @@ function hasUpgradeBehavior(
 describe('新增的完整技能转换干员', () => {
   it('卡缪的普通连携与终结技后追猎保持不同输入身份', () => {
     const combo = camille.skillGroups.find(group => group.key === 'comboSkill');
-    const battle = camille.skillGroups.find(group => group.key === 'battleSkill');
+    const battle = camille.skillGroups.find(group => group.key === 'replacementBattleSkill');
     expect(combo?.skills).toMatchObject({ key: 'chr_0033_camille_combo_skill' });
     expect(combo?.replacementSkillPlacements).toEqual({
       chr_0033_camille_combo_skill_2: 'internal',
@@ -206,9 +206,6 @@ describe('新增的完整技能转换干员', () => {
         executionSkillKey: 'chr_0033_camille_combo_skill_2',
       }),
     ]);
-    expect(camille.skillDisplayNameKeys?.chr_0033_camille_normal_skill_2).toBe(
-      'skillNames.pursuit',
-    );
   });
 
   it('梨诺终结技同时保留对敌声波与友方治疗分支', () => {
@@ -240,7 +237,7 @@ describe('新增的完整技能转换干员', () => {
     expect(ardelia.potentials[0]?.modifiers).toContainEqual(
       expect.objectContaining({
         kind: 'patchSkillBlackboard',
-        skillGroupKey: 'battleSkill',
+        skillKey: 'chr_0025_ardelia_normal_skill',
         blackboardKey: 'rate_vul_base',
         operation: 'add',
         value: 0.08,
@@ -582,14 +579,18 @@ describe('新增的完整技能转换干员', () => {
     const basicAttack = operator.skillGroups.find(group => group.key === 'basicAttack');
     expect(ultimate).toBeDefined();
     expect(Array.isArray(ultimate!.skills) ? ultimate!.skills : [ultimate!.skills]).toHaveLength(1);
-    expect(basicAttack?.variants).toHaveLength(1);
-    expect(basicAttack?.variants?.[0]?.key).toBe('enhancedBasicAttack');
-    expect(basicAttack?.variants?.[0]?.levelSource).toBe('ultimate');
+    expect(basicAttack?.variants).toBeUndefined();
+    const enhanced = operator.skillGroups.find(group => group.key === 'enhancedBasicAttack');
+    expect(enhanced).toBeDefined();
+    const variantSkills = enhanced!.skills;
     expect(
-      Array.isArray(basicAttack!.variants![0]!.skills)
-        ? basicAttack!.variants![0]!.skills
-        : [basicAttack!.variants![0]!.skills],
-    ).toHaveLength(variantLength);
+      (Array.isArray(variantSkills) ? variantSkills : [variantSkills]).every(
+        skill => skill.levelSource === 'ultimate',
+      ),
+    ).toBe(true);
+    expect(Array.isArray(variantSkills) ? variantSkills : [variantSkills]).toHaveLength(
+      variantLength,
+    );
   });
 
   it.each([

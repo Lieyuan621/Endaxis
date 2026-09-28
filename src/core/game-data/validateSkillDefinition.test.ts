@@ -658,7 +658,7 @@ describe('validateSkillDefinition', () => {
     skill.eventHandlers = [
       {
         key: 'handler:1',
-        event: { kind: 'skillHit', skillGroupKey: 'battleSkill', scope: 'all' },
+        event: { kind: 'skillHit', skillKey: 'battleSkill', scope: 'all' },
         scheduledSequences: [{ startFrame: 0, sequence: { $sequence: null } }],
       },
     ];

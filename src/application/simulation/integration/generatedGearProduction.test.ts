@@ -143,7 +143,7 @@ describe('generated gear production integration', () => {
         ? [
             { skillGroupKey: 'ultimate', startFrame: 1 },
             {
-              skillGroupKey: 'battleSkill',
+              skillGroupKey: 'stanceTermination',
               skillKey: 'chr_0035_liino_normal_skill_end',
               startFrame: 180,
             },

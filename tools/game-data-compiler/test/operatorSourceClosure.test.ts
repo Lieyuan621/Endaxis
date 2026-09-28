@@ -66,9 +66,7 @@ describe('Operator 来源闭包', () => {
       manifestSkillGroups: [
         {
           key: 'basicAttack',
-          skillType: 'basicAttack',
-          levelSource: 'basicAttack',
-          nativeGroupType: 0,
+          operationType: 'basicAttack',
           skillKeys: ['native_basic'],
         },
       ],

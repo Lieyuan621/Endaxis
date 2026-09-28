@@ -21,8 +21,8 @@ const finish: ActionGraphStep = { kind: 'finishTimeline', parameters: {} };
 
 describe('prepareActionGraphIdentities 与已生成图资源', () => {
   it('真实提弗洛斯浮空普攻已经是独立技能图资源', () => {
-    const group = typhoeus.skillGroups.find(item => item.key === 'basicAttack');
-    const skill = group?.variants?.[0]?.skills;
+    const group = typhoeus.skillGroups.find(item => item.key === 'enhancedBasicAttack');
+    const skill = group?.skills;
     if (!Array.isArray(skill)) throw new Error('missing floating attack sequence');
     const definition = skill.find(item => item.key === 'chr_0034_typhoea_floating_attack2');
     if (!definition) throw new Error('missing floating attack 2');

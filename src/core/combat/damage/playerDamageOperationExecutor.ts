@@ -73,7 +73,7 @@ export interface PlayerDamageOperationDependencies {
   readonly castId?: string;
   readonly skillId?: string;
   /** 执行程序归属，与继承的 skillCastInfo 独立。 */
-  readonly executingSkillGroupKey?: string;
+  readonly executingSkillId?: string;
   /** 非主动技能的可审计来源，不用于生成轴上技能 castId。 */
   readonly sourceActionId?: string;
   /** 只用于把本次公式已经确定的技能分类写入伤害详情回执。 */
@@ -433,7 +433,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
                 (item.slot === 'finalMultiplier' || item.slot === 'baseFinalMultiplier' ? 1 : 0),
         ),
         skillCastInfo: skillCastInfo ?? null,
-        executingSkillGroupKey: this.dependencies.executingSkillGroupKey,
+        executingSkillId: this.dependencies.executingSkillId,
         sourceId: this.dependencies.sourceOperatorId,
         targetId: this.dependencies.targetId,
         damageType: step.parameters.damageType,

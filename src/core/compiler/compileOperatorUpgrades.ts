@@ -369,12 +369,10 @@ function patchSkillBlackboard(
 ): readonly CompiledSkillProgram[] {
   const value = resolveUpgradeLevelValue(modifier.value, upgradeLevel, `${path}.value`);
   const isTarget = (program: CompiledSkillProgram): boolean =>
-    (program.executionSkillGroupKey ?? program.skillGroupKey) === modifier.skillGroupKey &&
-    (modifier.skillKey === undefined ||
-      (program.executionSkillId ?? program.skillId) === modifier.skillKey);
+    (program.executionSkillId ?? program.skillId) === modifier.skillKey;
   const targets = programs.filter(isTarget);
   if (targets.length === 0) {
-    throw new Error(`${path} references missing skill group '${modifier.skillGroupKey}'`);
+    throw new Error(`${path} references missing skill '${modifier.skillKey}'`);
   }
   if (!matchesBuildCondition(modifier.condition, buildAttributes, path)) return programs;
   return programs.map(program => {
@@ -396,22 +394,15 @@ function patchSkillBlackboard(
   });
 }
 
-export function multiplySkillCost<
-  T extends Pick<CompiledSkillProgram, 'skillId' | 'executionSkillId' | 'skillGroupKey' | 'costs'>,
->(
+export function multiplySkillCost<T extends Pick<CompiledSkillProgram, 'skillId' | 'costs'>>(
   programs: readonly T[],
   modifier: Extract<UpgradeModifierDefinition, { kind: 'multiplySkillCost' }>,
   path: string,
 ): readonly T[] {
   requireMultiplier(modifier.multiplier, `${path}.multiplier`);
-  const targets = programs.filter(
-    program =>
-      program.skillGroupKey === modifier.skillGroupKey &&
-      (modifier.skillKey === undefined ||
-        (program.executionSkillId ?? program.skillId) === modifier.skillKey),
-  );
+  const targets = programs.filter(program => program.skillId === modifier.skillKey);
   if (targets.length === 0) {
-    throw new Error(`${path} references missing skill group '${modifier.skillGroupKey}'`);
+    throw new Error(`${path} references missing skill '${modifier.skillKey}'`);
   }
   for (const target of targets) {
     if (!target.costs.some(cost => cost.resource === modifier.resource)) {
@@ -419,12 +410,7 @@ export function multiplySkillCost<
     }
   }
   return programs.map(program => {
-    if (
-      program.skillGroupKey !== modifier.skillGroupKey ||
-      (modifier.skillKey !== undefined &&
-        (program.executionSkillId ?? program.skillId) !== modifier.skillKey)
-    )
-      return program;
+    if (program.skillId !== modifier.skillKey) return program;
     return {
       ...program,
       costs: program.costs.map(cost =>
@@ -447,11 +433,10 @@ function addSkillCooldownFrames(
   }
   if (!matchesBuildCondition(modifier.condition, buildAttributes, path)) return programs;
   const isTarget = (program: CompiledSkillProgram): boolean =>
-    program.skillGroupKey === modifier.skillGroupKey &&
-    (modifier.skillKey === undefined || program.skillId === modifier.skillKey);
+    program.skillId === modifier.skillKey;
   const targets = programs.filter(isTarget);
   if (targets.length === 0) {
-    throw new Error(`${path} references missing skill group '${modifier.skillGroupKey}'`);
+    throw new Error(`${path} references missing skill '${modifier.skillKey}'`);
   }
   for (const target of targets) {
     if (target.cooldownFrames === undefined) {
@@ -472,16 +457,16 @@ type CompiledReactionStep = ResolvedCombatStepForKind<'applyElementalReaction'>;
 
 function patchKeyedReactionStep(
   programs: readonly CompiledSkillProgram[],
-  skillGroupKey: string,
+  skillKey: string,
   stepKey: string,
   path: string,
   patch: (step: CompiledReactionStep) => CompiledReactionStep,
 ): readonly CompiledSkillProgram[] {
   const isTarget = (program: CompiledSkillProgram): boolean =>
-    (program.executionSkillGroupKey ?? program.skillGroupKey) === skillGroupKey;
+    (program.executionSkillId ?? program.skillId) === skillKey;
   const targets = programs.filter(isTarget);
   if (targets.length === 0) {
-    throw new Error(`${path} references missing skill group '${skillGroupKey}'`);
+    throw new Error(`${path} references missing skill '${skillKey}'`);
   }
   let matchCount = 0;
   const result = programs.map(program => {
@@ -540,7 +525,7 @@ function multiplyEffectDuration(
   path: string,
 ): readonly CompiledSkillProgram[] {
   requireMultiplier(modifier.multiplier, `${path}.multiplier`);
-  return patchKeyedReactionStep(programs, modifier.skillGroupKey, modifier.stepKey, path, step => ({
+  return patchKeyedReactionStep(programs, modifier.skillKey, modifier.stepKey, path, step => ({
     ...step,
     parameters: {
       ...step.parameters,
@@ -555,7 +540,7 @@ function setEffectiveness(
   path: string,
 ): readonly CompiledSkillProgram[] {
   requireMultiplier(modifier.value, `${path}.value`);
-  return patchKeyedReactionStep(programs, modifier.skillGroupKey, modifier.stepKey, path, step => ({
+  return patchKeyedReactionStep(programs, modifier.skillKey, modifier.stepKey, path, step => ({
     ...step,
     parameters: { ...step.parameters, effectiveness: modifier.value },
   }));
@@ -570,10 +555,10 @@ function addSkillStat(
     throw new TypeError(`${path}.value must be finite`);
   }
   const isTarget = (program: CompiledSkillProgram): boolean =>
-    (program.executionSkillGroupKey ?? program.skillGroupKey) === modifier.skillGroupKey;
+    (program.executionSkillId ?? program.skillId) === modifier.skillKey;
   const targets = programs.filter(isTarget);
   if (targets.length === 0) {
-    throw new Error(`${path} references missing skill group '${modifier.skillGroupKey}'`);
+    throw new Error(`${path} references missing skill '${modifier.skillKey}'`);
   }
   return programs.map(program => {
     if (!isTarget(program)) return program;
@@ -618,40 +603,34 @@ export function applyOperatorUpgradeSkillPatches(
   programs: readonly CompiledSkillProgram[],
   upgrades: readonly ActiveOperatorUpgrade[],
   options: {
-    readonly skipUncompiledSkillGroups?: boolean;
+    readonly skipUncompiledSkills?: boolean;
     readonly buildAttributes?: Readonly<Record<OperatorAttribute, number>>;
   } = {},
 ): readonly CompiledSkillProgram[] {
-  if (options.skipUncompiledSkillGroups === true && programs.length === 0) return programs;
+  if (options.skipUncompiledSkills === true && programs.length === 0) return programs;
   let patched = programs;
   for (const upgrade of upgrades) {
     for (const [modifierIndex, modifier] of (upgrade.definition.modifiers ?? []).entries()) {
       const path = `${upgrade.source} '${upgrade.index}'.modifiers[${modifierIndex}]`;
       if (PANEL_MODIFIER_KINDS.has(modifier.kind)) continue;
       if (
-        options.skipUncompiledSkillGroups === true &&
-        'skillGroupKey' in modifier &&
+        options.skipUncompiledSkills === true &&
+        'skillKey' in modifier &&
         !patched.some(program => {
-          const usesExecutionIdentity =
-            modifier.kind === 'patchSkillBlackboard' ||
-            modifier.kind === 'multiplyEffectDuration' ||
-            modifier.kind === 'setEffectiveness' ||
-            modifier.kind === 'addSkillStat';
-          const groupKey = usesExecutionIdentity
-            ? (program.executionSkillGroupKey ?? program.skillGroupKey)
-            : program.skillGroupKey;
-          const skillKey = usesExecutionIdentity
-            ? (program.executionSkillId ?? program.skillId)
-            : program.skillId;
+          const usesExecutionIdentity = [
+            'patchSkillBlackboard',
+            'multiplyEffectDuration',
+            'setEffectiveness',
+            'addSkillStat',
+          ].includes(modifier.kind);
           return (
-            groupKey === modifier.skillGroupKey &&
-            (!('skillKey' in modifier) ||
-              modifier.skillKey === undefined ||
-              skillKey === modifier.skillKey)
+            (usesExecutionIdentity
+              ? (program.executionSkillId ?? program.skillId)
+              : program.skillId) === modifier.skillKey
           );
         })
       ) {
-        // 场景只编译实际放置的技能；未放置组的构筑补丁留给完整定义门禁校验。
+        // 场景只编译实际放置的技能；未编译技能的构筑补丁留给完整定义门禁校验。
         continue;
       }
       if (modifier.kind === 'multiplySkillCost') {

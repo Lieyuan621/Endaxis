@@ -14,6 +14,7 @@ import {
   COMBO_SKILL_PRIORITIES,
   DAMAGE_ELEMENTS,
   PLAYER_SKILL_INPUTS,
+  OPERATION_TYPES,
 } from '../game-data/operatorDefinition';
 import {
   validateGearDefinition,
@@ -138,6 +139,11 @@ function validateProjectTemplateRecord(
             return;
           }
           requireString(group, 'key', groupPath, issues);
+          if (!(OPERATION_TYPES as readonly unknown[]).includes(group.operationType))
+            issues.push({
+              path: `${groupPath}.operationType`,
+              message: 'expected a player operation type',
+            });
           const skills = Array.isArray(group.skills) ? group.skills : [group.skills];
           skills.forEach((skill, skillIndex) => {
             issues.push(...validateSkillDefinition(skill, `${groupPath}.skills[${skillIndex}]`));
@@ -153,7 +159,6 @@ function validateProjectTemplateRecord(
               }
               const variantPath = `${groupPath}.variants[${variantIndex}]`;
               requireString(variant, 'key', variantPath, issues);
-              requireString(variant, 'levelSource', variantPath, issues);
               const variantSkills = Array.isArray(variant.skills)
                 ? variant.skills
                 : [variant.skills];

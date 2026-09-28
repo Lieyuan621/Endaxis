@@ -2468,8 +2468,7 @@ export const gilberta: OperatorDefinition = {
   skillGroups: [
     {
       key: 'basicAttack',
-      skillType: 'basicAttack',
-      levelSource: 'basicAttack',
+      operationType: 'basicAttack',
       skills: [
         gilbertaChr_0013_aglina_attack1,
         gilbertaChr_0013_aglina_attack2,
@@ -2477,36 +2476,19 @@ export const gilberta: OperatorDefinition = {
         gilbertaChr_0013_aglina_attack4,
       ],
     },
-    {
-      key: 'finisher',
-      skillType: 'finisher',
-      levelSource: 'basicAttack',
-      skills: gilbertaChr_0013_aglina_power_attack,
-    },
+    { key: 'finisher', operationType: 'finisher', skills: gilbertaChr_0013_aglina_power_attack },
     {
       key: 'plungingAttack',
-      skillType: 'plungingAttack',
-      levelSource: 'basicAttack',
+      operationType: 'plungingAttack',
       skills: gilbertaChr_0013_aglina_plunging_attack_end,
     },
     {
       key: 'battleSkill',
-      skillType: 'battleSkill',
-      levelSource: 'battleSkill',
+      operationType: 'battleSkill',
       skills: gilbertaChr_0013_aglina_normal_skill,
     },
-    {
-      key: 'ultimate',
-      skillType: 'ultimate',
-      levelSource: 'ultimate',
-      skills: gilbertaChr_0013_aglina_ultimate_skill,
-    },
-    {
-      key: 'comboSkill',
-      skillType: 'comboSkill',
-      levelSource: 'comboSkill',
-      skills: gilbertaChr_0013_aglina_combo_skill,
-    },
+    { key: 'ultimate', operationType: 'ultimate', skills: gilbertaChr_0013_aglina_ultimate_skill },
+    { key: 'comboSkill', operationType: 'comboSkill', skills: gilbertaChr_0013_aglina_combo_skill },
   ],
   dodgeSkill: gilbertaCommon_character_perfect_dodge,
   dashBuffs: [
@@ -2549,31 +2531,31 @@ export const gilberta: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'heal_scale',
           operation: 'assign',
           value: [0.6, 0.9],
+          skillKey: 'chr_0013_aglina_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'heal_const',
           operation: 'assign',
           value: [72, 108],
+          skillKey: 'chr_0013_aglina_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'heal_scale',
           operation: 'assign',
           value: [0.6, 0.9],
+          skillKey: 'chr_0013_aglina_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'heal_const',
           operation: 'assign',
           value: [72, 108],
+          skillKey: 'chr_0013_aglina_combo_skill',
         },
       ],
     },
@@ -2584,24 +2566,24 @@ export const gilberta: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'potential',
           operation: 'assign',
           value: 1,
+          skillKey: 'chr_0013_aglina_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'radiusadd_display',
           operation: 'assign',
           value: 0.2,
+          skillKey: 'chr_0013_aglina_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'radius',
           operation: 'assign',
           value: 6.3,
+          skillKey: 'chr_0013_aglina_normal_skill',
         },
       ],
     },
@@ -2610,17 +2592,17 @@ export const gilberta: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'potential2',
           operation: 'assign',
           value: 1,
+          skillKey: 'chr_0013_aglina_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'potential2_onceadd',
           operation: 'assign',
           value: 0.1,
+          skillKey: 'chr_0013_aglina_ultimate_skill',
         },
       ],
     },
@@ -2641,22 +2623,22 @@ export const gilberta: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
-          skillGroupKey: 'ultimate',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
+          skillKey: 'chr_0013_aglina_ultimate_skill',
         },
       ],
     },
     {
       levels: 1,
       modifiers: [
-        { kind: 'addSkillCooldownFrames', skillGroupKey: 'comboSkill', frames: -60 },
+        { kind: 'addSkillCooldownFrames', frames: -60, skillKey: 'chr_0013_aglina_combo_skill' },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'atk_scale',
           operation: 'multiply',
           value: 1.3,
+          skillKey: 'chr_0013_aglina_combo_skill',
         },
       ],
     },

@@ -17,7 +17,7 @@ describe('mifu generated operator', () => {
     ]);
     expect(normalSkill2?.skillSlotReplacements).toEqual([
       {
-        skillGroupKey: 'battleSkill',
+        skillSlotKey: 'battleSkill',
         targetSkillKey: 'chr_0031_mifu_normalskill_2',
         revertedSkillKey: 'chr_0031_mifu_normalskill_1',
         inheritOriginSkillCooldownProgress: false,

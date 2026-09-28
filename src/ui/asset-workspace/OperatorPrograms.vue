@@ -81,9 +81,8 @@ function levelCount(resource: WorkspaceResource) {
         class="program-group"
       >
         <header>
-          <strong>{{ t(skillTypeLabelKey(group.skillType)) }}</strong>
+          <strong>{{ t(skillTypeLabelKey(group.operationType)) }}</strong>
           <code>{{ group.key }}</code>
-          <span>{{ tr('levelSource') }} · {{ t(skillTypeLabelKey(group.levelSource)) }}</span>
           <EaButton
             size="sm"
             :disabled="!editable"

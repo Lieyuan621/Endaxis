@@ -8,7 +8,7 @@ import { EaTooltip } from '@/design-system';
  */
 import { computed, ref } from 'vue';
 import { EditPen } from '@element-plus/icons-vue';
-import type { SkillType } from '../../../core/game-data/operatorDefinition';
+import type { OperationType } from '../../../core/game-data/operatorDefinition';
 import { PROJECT_FPS } from '../../../core/project/schema';
 import { useAppearance } from '../../appearance/useAppearance';
 import { adaptColorForLightSurface, hexToRgba, solidFillForLightTrack } from '../../gameColors';
@@ -21,7 +21,7 @@ import {
 const props = defineProps<{
   actionId: string;
   label: string;
-  skillType: SkillType | null;
+  operationType: OperationType | null;
   left: number;
   width: number;
   /** 同轨文档顺序投影出的稳定叠放序号；只参与 paint，不进入项目模型。 */
@@ -86,7 +86,7 @@ const { appearance } = useAppearance();
 const isLightAppearance = computed(() => appearance.value === 'light');
 const decorationsVisible = computed(() => props.showDecorations !== false);
 
-const TYPE_SHORTHAND: Readonly<Partial<Record<SkillType, string>>> = {
+const TYPE_SHORTHAND: Readonly<Partial<Record<OperationType, string>>> = {
   basicAttack: 'A',
   plungingAttack: 'D',
   finisher: 'X',
@@ -108,11 +108,11 @@ const MAIN_ACTION_COLORS = {
 
 const displayLabel = computed(() => {
   if (props.pxPerFrame * PROJECT_FPS >= 30) return props.label;
-  return props.skillType === null ? '?' : (TYPE_SHORTHAND[props.skillType] ?? '?');
+  return props.operationType === null ? '?' : (TYPE_SHORTHAND[props.operationType] ?? '?');
 });
 
 const defaultAccent = computed(() => {
-  switch (props.skillType) {
+  switch (props.operationType) {
     case 'comboSkill':
       return MAIN_ACTION_COLORS.comboSkill;
     case 'finisher':
@@ -156,7 +156,7 @@ const blockStyle = computed<Record<string, string>>(() => {
     '--action-accent': accent,
     '--action-surface': surface,
     '--action-fill': light
-      ? solidFillForLightTrack(accent, props.skillType === 'basicAttack' ? 0.7 : 0.48)
+      ? solidFillForLightTrack(accent, props.operationType === 'basicAttack' ? 0.7 : 0.48)
       : hexToRgba(accent, 0.15),
     '--action-ultimate-center': light
       ? solidFillForLightTrack(accent, 0.32)
@@ -179,15 +179,15 @@ const blockStyle = computed<Record<string, string>>(() => {
       : '0 0 0 1px rgba(255, 242, 168, 0.75), 0 0 14px color-mix(in srgb, var(--ea-gold) 55%, transparent)',
     '--cooldown-accent': light
       ? adaptColorForLightSurface(
-          props.skillType === 'comboSkill'
+          props.operationType === 'comboSkill'
             ? MAIN_ACTION_COLORS.comboSkill
-            : props.skillType === 'ultimate'
+            : props.operationType === 'ultimate'
               ? MAIN_ACTION_COLORS.ultimate
               : '#ff6fae',
         )
-      : props.skillType === 'comboSkill'
+      : props.operationType === 'comboSkill'
         ? 'var(--ea-gold)'
-        : props.skillType === 'ultimate'
+        : props.operationType === 'ultimate'
           ? MAIN_ACTION_COLORS.ultimate
           : '#ff6fae',
     '--enhancement-accent': light ? adaptColorForLightSurface('#b37feb') : '#b37feb',
@@ -218,7 +218,7 @@ function cooldownBarStyle(index: number): Record<string, string> {
   if (bar === undefined) return {};
   return {
     left: `${bar.offsetFrames * props.pxPerFrame}px`,
-    top: `${56 + ((props.skillType === 'ultimate' ? 1 : 0) + index) * 8}px`,
+    top: `${56 + ((props.operationType === 'ultimate' ? 1 : 0) + index) * 8}px`,
     width: `${Math.max(1, bar.durationFrames * props.pxPerFrame)}px`,
   };
 }
@@ -227,7 +227,7 @@ function enhancementBarStyle(index: number): Record<string, string> {
   const bar = props.enhancementBars?.[index];
   if (bar === undefined) return {};
   const firstRow =
-    props.skillType === 'ultimate'
+    props.operationType === 'ultimate'
       ? Math.max(2, 1 + (props.cooldownBars?.length ?? 0))
       : (props.cooldownBars?.length ?? 0);
   return {
@@ -257,7 +257,7 @@ function formatDurationFrames(frames: number): string {
       'is-duration-pending': durationPending,
       'is-connection-tool': connectionToolEnabled,
     }"
-    :data-skill-type="skillType"
+    :data-operation-type="operationType"
     :style="blockStyle"
     :draggable="false"
     @pointerdown="beginMove"
@@ -279,7 +279,7 @@ function formatDurationFrames(frames: number): string {
       </span>
     </template>
     <span class="action-label">{{ displayLabel }}</span>
-    <template v-if="decorationsVisible && skillType === 'ultimate' && !disabled">
+    <template v-if="decorationsVisible && operationType === 'ultimate' && !disabled">
       <span class="ultimate-side-bar ultimate-side-bar--left" aria-hidden="true"></span>
       <span
         v-if="!durationPending"
@@ -480,12 +480,12 @@ function formatDurationFrames(frames: number): string {
 
   .timeline-action-block:not([data-selected='true']):not(
       .is-disabled
-    )[data-skill-type='basicAttack']:hover:not(:disabled) {
+    )[data-operation-type='basicAttack']:hover:not(:disabled) {
     border: 1.5px solid color-mix(in srgb, var(--action-accent) 40%, transparent);
   }
 
-  .timeline-action-block:not(.is-disabled)[data-skill-type='comboSkill']:hover:not(:disabled),
-  .timeline-action-block:not(.is-disabled)[data-skill-type='ultimate']:hover:not(:disabled) {
+  .timeline-action-block:not(.is-disabled)[data-operation-type='comboSkill']:hover:not(:disabled),
+  .timeline-action-block:not(.is-disabled)[data-operation-type='ultimate']:hover:not(:disabled) {
     border: 1.5px solid var(--action-accent);
   }
 
@@ -496,7 +496,7 @@ function formatDurationFrames(frames: number): string {
     box-shadow: var(--action-perfect-shadow);
   }
 
-  .timeline-action-block:not(.is-disabled)[data-skill-type='ultimate']:hover:not(:disabled) {
+  .timeline-action-block:not(.is-disabled)[data-operation-type='ultimate']:hover:not(:disabled) {
     background-image: radial-gradient(
       circle at center,
       var(--action-ultimate-center) 0%,
@@ -655,7 +655,7 @@ function formatDurationFrames(frames: number): string {
   translate: 0 -50%;
 }
 
-.timeline-action-block:not(.is-disabled)[data-skill-type='ultimate'] {
+.timeline-action-block:not(.is-disabled)[data-operation-type='ultimate'] {
   padding-right: 6px;
   padding-left: 6px;
   border: 1.5px solid var(--action-accent);
@@ -671,18 +671,18 @@ function formatDurationFrames(frames: number): string {
 
 .timeline-action-block:not([data-selected='true']):not(
     .is-disabled
-  )[data-skill-type='basicAttack'] {
+  )[data-operation-type='basicAttack'] {
   border: 1.5px solid var(--action-attack-border);
 }
 
-.timeline-action-block:not(.is-disabled)[data-skill-type='comboSkill'] {
+.timeline-action-block:not(.is-disabled)[data-operation-type='comboSkill'] {
   border: 1.5px solid var(--action-accent);
   border-radius: 2px;
   background-image: linear-gradient(var(--action-fill), var(--action-fill));
   box-shadow: var(--action-edge-ring, none);
 }
 
-.timeline-action-block:not(.is-disabled)[data-skill-type='comboSkill'][data-selected='true'] {
+.timeline-action-block:not(.is-disabled)[data-operation-type='comboSkill'][data-selected='true'] {
   box-shadow: 0 0 8px var(--action-glow);
 }
 

@@ -278,7 +278,7 @@ export const COMBO_SKILL_PRIORITIES = ['default', 'firstBlackboard', 'enemyRank'
 export type ComboSkillPriority = (typeof COMBO_SKILL_PRIORITIES)[number];
 
 /**
- * 一个可独立释放或触发的技能定义。
+ * 一个可独立释放或触发的执行技能定义，不是玩家的操作段或轴上段实例。
  * 它描述战斗身份和时序，不承载翻译后的名称或编辑器布局。
  */
 export interface SkillDefinitionProperties extends SkillActionProgramDefinition {
@@ -385,25 +385,24 @@ export interface SkillGroupPlacementPolicy {
 }
 
 /**
- * 编辑器技能库中的稳定放置单元。
- * `skills` 为数组时表示一次放置所包含的有序技能链，而不是 UI 变体。
+ * 技能库中的操作组：一个或一组连续按键操作，不是原生技能槽。
+ * 每个可见成员对应操作段的目标技能；轴上放置的是该段的实例。
+ * 当前 skills 内嵌执行定义是存储布局，不意味着执行逻辑可依赖分组。
  */
 export interface SkillGroupDefinition {
   /** 编辑器一次放置整个技能组时采用的展开规则。 */
   placementPolicy?: SkillGroupPlacementPolicy;
   /** 技能组在干员定义中的唯一名称。 */
   key: string;
-  /** 技能库卡片、图标和放置操作使用的技能类别；实际执行仍读取具体技能的类别。 */
-  skillType: SkillType;
-  /** 技能组默认的养成等级来源；具体技能可以有自己的等级来源。 */
-  levelSource: SkillLevelSource;
+  /** 玩家操作类别；技能库与轴上技能块均据此展示，实际执行读取具体技能的 skillType。 */
+  operationType: import('./primitives.ts').OperationType;
   /** 单个可放置技能，或作为一个技能库条目放置的有序技能链。 */
   skills: SkillDefinition | readonly SkillDefinition[];
-  /** 基础放置项名称使用的修饰词；只影响技能库与时间轴文本，不参与技能身份或路由。 */
-  libraryNameQualifier?: SkillLibraryNameQualifier;
+  /** 操作名称模板的 i18n 键，含 name/shortName；{baseName} 为操作名称（轴上含段号）。 */
+  nameKey?: string;
   /**
    * 运行时虽以换槽形态注册、但编辑器放置时具有明确先后关系的完整技能键序列。
-   * 省略表示 replacement 是状态强化形态，应作为独立卡片；不得由 UI 按名称猜测。
+   * 独立替换操作必须直接声明独立技能组，不由 UI 从 replacement 拆出卡片。
    */
   placementSequenceSkillKeys?: readonly string[];
   /**
@@ -413,20 +412,17 @@ export interface SkillGroupDefinition {
   variants?: readonly SkillGroupVariantDefinition[];
   /**
    * 与 `skills` 共用一个稳定放置身份、仅由运行时换槽动作选中的技能形态。
-   * 编辑器必须把它们作为可显式放置的具体技能展示；运行时槽位状态只负责校验该操作
-   * 当前是否确实会解析到该技能，不能静默把基础块替换为这里的执行体。
+   * 这里只保存本组连续段或内部执行技能；独立可放置的替换操作应放在独立组的 skills 中。
    */
   replacementSkills?: readonly SkillDefinition[];
   /**
    * 每个运行时替换技能在技能库中的显式放置语义。运行时替换关系本身不能推出展示语义：
-   * `standard` 是独立操作，`internal` 不接受玩家输入。
+   * `internal` 不接受玩家输入；独立操作由独立技能组表达。
    * 有序接续技能由 `placementSequenceSkillKeys` 表达，不重复出现在这里。
    */
-  replacementSkillPlacements?: Readonly<Record<string, 'standard' | 'internal'>>;
-  /** 替换技能名称使用的修饰词；与可否放置、技能身份和运行时换槽完全无关。 */
-  replacementSkillNameQualifiers?: Readonly<Record<string, SkillLibraryNameQualifier>>;
+  replacementSkillPlacements?: Readonly<Record<string, 'internal'>>;
   /**
-   * 跨原生技能组的换槽形态。技能仍占用本组的稳定槽位，但执行时使用其原生分类与等级源。
+   * 本展示组中的转发技能。原生稳定槽位由 skillSlots 定义，与展示组独立；执行使用原生分类与等级源。
    * 仅用于原生输入旁路（例如战技包装器实际 Cast 连携技）；普通同组换槽继续使用 replacementSkills。
    */
   routedReplacementSkills?: readonly RoutedSkillReplacementDefinition[];
@@ -440,27 +436,17 @@ export interface SkillGroupVariantDefinition {
   placementPolicy?: SkillGroupPlacementPolicy;
   /** 形态在技能组中的唯一名称。 */
   key: string;
-  /** 此形态使用的养成技能等级来源。 */
-  levelSource: SkillLevelSource;
-  /** 具名形态名称使用的修饰词；不能从 variant 结构或 key 名称推断。 */
-  libraryNameQualifier?: SkillLibraryNameQualifier;
+  /** 此放置形态的名称模板覆盖；未提供时继承组的 nameKey。 */
+  nameKey?: string;
   /** 此形态包含的单个技能或有序技能链。 */
   skills: SkillDefinition | readonly SkillDefinition[];
 }
 
-/** 技能库名称的显式修饰词。它属于展示文本，不构成技能或变体身份。 */
-export type SkillLibraryNameQualifier = 'enhanced' | 'floating';
-
-/** 从其他原生技能组路由到当前稳定技能槽的替换技能。 */
+/** 包装技能到实际执行技能的绑定；两者均按技能 ID 引用，与展示组无关。 */
 export interface RoutedSkillReplacementDefinition {
   /** 已合并输入包装器资源规则、且拥有独立稳定 key 的执行定义。 */
   skill: SkillDefinition;
-  /** 替换形态在技能库中的分类；实际执行读取 `skill.skillType`。 */
-  skillType: SkillType;
-  /** 替换形态在技能库中的等级来源；实际倍率读取 `skill.levelSource`。 */
-  levelSource: SkillLevelSource;
-  /** 执行体在原生养成定义中的技能组身份。 */
-  executionSkillGroupKey: string;
+
   /** 执行体在原生养成定义中的稳定技能身份。 */
   executionSkillKey: string;
 }

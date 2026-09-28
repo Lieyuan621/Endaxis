@@ -2071,8 +2071,7 @@ export const wulfgard: OperatorDefinition = {
   skillGroups: [
     {
       key: 'basicAttack',
-      skillType: 'basicAttack',
-      levelSource: 'basicAttack',
+      operationType: 'basicAttack',
       skills: [
         wulfgardChr_0006_wolfgd_attack1,
         wulfgardChr_0006_wolfgd_attack2,
@@ -2080,36 +2079,19 @@ export const wulfgard: OperatorDefinition = {
         wulfgardChr_0006_wolfgd_attack4,
       ],
     },
-    {
-      key: 'finisher',
-      skillType: 'finisher',
-      levelSource: 'basicAttack',
-      skills: wulfgardChr_0006_wolfgd_power_attack,
-    },
+    { key: 'finisher', operationType: 'finisher', skills: wulfgardChr_0006_wolfgd_power_attack },
     {
       key: 'plungingAttack',
-      skillType: 'plungingAttack',
-      levelSource: 'basicAttack',
+      operationType: 'plungingAttack',
       skills: wulfgardChr_0006_wolfgd_plunging_attack_end,
     },
     {
       key: 'battleSkill',
-      skillType: 'battleSkill',
-      levelSource: 'battleSkill',
+      operationType: 'battleSkill',
       skills: wulfgardChr_0006_wolfgd_normal_skill,
     },
-    {
-      key: 'comboSkill',
-      skillType: 'comboSkill',
-      levelSource: 'comboSkill',
-      skills: wulfgardChr_0006_wolfgd_combo_skill,
-    },
-    {
-      key: 'ultimate',
-      skillType: 'ultimate',
-      levelSource: 'ultimate',
-      skills: wulfgardChr_0006_wolfgd_ultimate_skill,
-    },
+    { key: 'comboSkill', operationType: 'comboSkill', skills: wulfgardChr_0006_wolfgd_combo_skill },
+    { key: 'ultimate', operationType: 'ultimate', skills: wulfgardChr_0006_wolfgd_ultimate_skill },
   ],
   dodgeSkill: wulfgardCommon_character_perfect_dodge,
   dashBuffs: [
@@ -2160,17 +2142,17 @@ export const wulfgard: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'returnskillpower',
           operation: 'assign',
           value: [5, 10],
+          skillKey: 'chr_0006_wolfgd_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'talent2',
           operation: 'assign',
           value: [1, 1],
+          skillKey: 'chr_0006_wolfgd_normal_skill',
         },
       ],
     },
@@ -2188,17 +2170,17 @@ export const wulfgard: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'potential_skillpower',
           operation: 'assign',
           value: 10,
+          skillKey: 'chr_0006_wolfgd_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'potential_2',
           operation: 'assign',
           value: 1,
+          skillKey: 'chr_0006_wolfgd_normal_skill',
         },
       ],
     },
@@ -2207,17 +2189,17 @@ export const wulfgard: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'potential_3',
           operation: 'assign',
           value: 1,
+          skillKey: 'chr_0006_wolfgd_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'teammate_percent',
           operation: 'assign',
           value: 0.5,
+          skillKey: 'chr_0006_wolfgd_normal_skill',
         },
       ],
     },
@@ -2226,9 +2208,9 @@ export const wulfgard: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
-          skillGroupKey: 'ultimate',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
+          skillKey: 'chr_0006_wolfgd_ultimate_skill',
         },
       ],
     },
@@ -2237,10 +2219,10 @@ export const wulfgard: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'potential_5',
           operation: 'assign',
           value: 1,
+          skillKey: 'chr_0006_wolfgd_ultimate_skill',
         },
       ],
     },

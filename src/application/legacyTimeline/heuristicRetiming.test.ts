@@ -530,12 +530,12 @@ it('按同组原生技能槽把旧轴基础技能改写为当前替换形态', (
       skillGroupKey === 'battleSkill' &&
       expectedSkillKey === 'battleSkill' &&
       actualSkillKey === 'battleSkillDuringUltimate'
-        ? actualSkillKey
+        ? { skillGroupKey: 'enhancedBattleSkill', skillKey: actualSkillKey }
         : null,
   );
 
   expect(project.scenarios[0]!.tracks[0]!.skillCasts[0]!.source).toMatchObject({
-    skillGroupKey: 'battleSkill',
+    skillGroupKey: 'enhancedBattleSkill',
     skillKey: 'battleSkillDuringUltimate',
   });
   expect(project.scenarios[0]!.battle.durationFrames).toBe(19);

@@ -1857,8 +1857,7 @@ export const lifeng: OperatorDefinition = {
   skillGroups: [
     {
       key: 'basicAttack',
-      skillType: 'basicAttack',
-      levelSource: 'basicAttack',
+      operationType: 'basicAttack',
       skills: [
         lifengChr_0015_lifeng_attack1,
         lifengChr_0015_lifeng_attack2,
@@ -1866,36 +1865,19 @@ export const lifeng: OperatorDefinition = {
         lifengChr_0015_lifeng_attack5,
       ],
     },
-    {
-      key: 'finisher',
-      skillType: 'finisher',
-      levelSource: 'basicAttack',
-      skills: lifengChr_0015_lifeng_power_attack,
-    },
+    { key: 'finisher', operationType: 'finisher', skills: lifengChr_0015_lifeng_power_attack },
     {
       key: 'plungingAttack',
-      skillType: 'plungingAttack',
-      levelSource: 'basicAttack',
+      operationType: 'plungingAttack',
       skills: lifengChr_0015_lifeng_plunging_attack_end,
     },
     {
       key: 'battleSkill',
-      skillType: 'battleSkill',
-      levelSource: 'battleSkill',
+      operationType: 'battleSkill',
       skills: lifengChr_0015_lifeng_normal_skill,
     },
-    {
-      key: 'ultimate',
-      skillType: 'ultimate',
-      levelSource: 'ultimate',
-      skills: lifengChr_0015_lifeng_ultimate_skill,
-    },
-    {
-      key: 'comboSkill',
-      skillType: 'comboSkill',
-      levelSource: 'comboSkill',
-      skills: lifengChr_0015_lifeng_combo_skill,
-    },
+    { key: 'ultimate', operationType: 'ultimate', skills: lifengChr_0015_lifeng_ultimate_skill },
+    { key: 'comboSkill', operationType: 'comboSkill', skills: lifengChr_0015_lifeng_combo_skill },
   ],
   dodgeSkill: lifengCommon_character_perfect_dodge,
   dashBuffs: [
@@ -1949,17 +1931,17 @@ export const lifeng: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'phy_resist_down',
           operation: 'add',
           value: 0.05,
+          skillKey: 'chr_0015_lifeng_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'num',
           operation: 'assign',
           value: 2,
+          skillKey: 'chr_0015_lifeng_normal_skill',
         },
       ],
     },
@@ -1989,9 +1971,9 @@ export const lifeng: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
-          skillGroupKey: 'ultimate',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
+          skillKey: 'chr_0015_lifeng_ultimate_skill',
         },
       ],
     },

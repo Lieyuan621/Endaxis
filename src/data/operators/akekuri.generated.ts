@@ -1857,8 +1857,7 @@ export const akekuri: OperatorDefinition = {
   skillGroups: [
     {
       key: 'basicAttack',
-      skillType: 'basicAttack',
-      levelSource: 'basicAttack',
+      operationType: 'basicAttack',
       skills: [
         akekuriChr_0019_karin_attack1,
         akekuriChr_0019_karin_attack2,
@@ -1866,36 +1865,19 @@ export const akekuri: OperatorDefinition = {
         akekuriChr_0019_karin_attack4,
       ],
     },
-    {
-      key: 'finisher',
-      skillType: 'finisher',
-      levelSource: 'basicAttack',
-      skills: akekuriChr_0019_karin_power_attack,
-    },
+    { key: 'finisher', operationType: 'finisher', skills: akekuriChr_0019_karin_power_attack },
     {
       key: 'plungingAttack',
-      skillType: 'plungingAttack',
-      levelSource: 'basicAttack',
+      operationType: 'plungingAttack',
       skills: akekuriChr_0019_karin_plunging_attack_end,
     },
     {
       key: 'battleSkill',
-      skillType: 'battleSkill',
-      levelSource: 'battleSkill',
+      operationType: 'battleSkill',
       skills: akekuriChr_0019_karin_normal_skill,
     },
-    {
-      key: 'ultimate',
-      skillType: 'ultimate',
-      levelSource: 'ultimate',
-      skills: akekuriChr_0019_karin_ultimate_skill,
-    },
-    {
-      key: 'comboSkill',
-      skillType: 'comboSkill',
-      levelSource: 'comboSkill',
-      skills: akekuriChr_0019_karin_combo_skill,
-    },
+    { key: 'ultimate', operationType: 'ultimate', skills: akekuriChr_0019_karin_ultimate_skill },
+    { key: 'comboSkill', operationType: 'comboSkill', skills: akekuriChr_0019_karin_combo_skill },
   ],
   dodgeSkill: akekuriCommon_character_perfect_dodge,
   dashBuffs: [
@@ -1937,24 +1919,24 @@ export const akekuri: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'sub_ratio',
           operation: 'assign',
           value: [0.01, 0.015],
+          skillKey: 'chr_0019_karin_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'max_ratio',
           operation: 'assign',
           value: [0.5, 0.75],
+          skillKey: 'chr_0019_karin_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'rate',
           operation: 'assign',
           value: [10, 10],
+          skillKey: 'chr_0019_karin_combo_skill',
         },
       ],
     },
@@ -1963,17 +1945,17 @@ export const akekuri: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'combo',
           operation: 'assign',
           value: 1,
+          skillKey: 'chr_0019_karin_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'imbue_scale',
           operation: 'assign',
           value: 0.2,
+          skillKey: 'chr_0019_karin_ultimate_skill',
         },
       ],
     },
@@ -2000,17 +1982,17 @@ export const akekuri: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'potential_3',
           operation: 'assign',
           value: 1,
+          skillKey: 'chr_0019_karin_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'atk',
           operation: 'assign',
           value: 0.1,
+          skillKey: 'chr_0019_karin_ultimate_skill',
         },
       ],
     },
@@ -2019,9 +2001,9 @@ export const akekuri: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
-          skillGroupKey: 'ultimate',
           resource: 'ultimateEnergy',
           multiplier: 0.9,
+          skillKey: 'chr_0019_karin_ultimate_skill',
         },
       ],
     },
@@ -2030,10 +2012,10 @@ export const akekuri: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'potential_5_duration',
           operation: 'assign',
           value: 5,
+          skillKey: 'chr_0019_karin_ultimate_skill',
         },
       ],
       attachedBuffs: [{ buffId: 'buff_chr_0019_karin_potential_5' }],

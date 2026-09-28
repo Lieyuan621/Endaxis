@@ -15,7 +15,7 @@ import {
 export interface TimelineShareAction {
   readonly id: string;
   readonly label: string;
-  readonly skillType: string | null;
+  readonly operationType: string | null;
   readonly startFrame: number;
   readonly durationFrames: number;
   readonly disabled: boolean;
@@ -97,11 +97,11 @@ function durationStyle(action: TimelineShareAction): Record<string, string> {
 
 function keycap(action: TimelineShareAction, trackIndex: number): string | null {
   const kind: TimelineOperationMarkerKind | null =
-    action.skillType === 'battleSkill'
+    action.operationType === 'battleSkill'
       ? 'skill'
-      : action.skillType === 'comboSkill'
+      : action.operationType === 'comboSkill'
         ? 'combo'
-        : action.skillType === 'ultimate'
+        : action.operationType === 'ultimate'
           ? 'ultimate'
           : null;
   return kind === null
@@ -184,7 +184,10 @@ function visible(action: TimelineShareAction): boolean {
             </i>
             <div
               class="share-action"
-              :class="[`is-${action.skillType ?? 'custom'}`, { 'is-disabled': action.disabled }]"
+              :class="[
+                `is-${action.operationType ?? 'custom'}`,
+                { 'is-disabled': action.disabled },
+              ]"
               :style="actionStyle(action)"
               :title="action.label"
             >
@@ -203,7 +206,7 @@ function visible(action: TimelineShareAction): boolean {
             )"
             :key="action.id"
             class="share-keycap"
-            :class="[`is-${action.skillType ?? 'custom'}`]"
+            :class="[`is-${action.operationType ?? 'custom'}`]"
             :style="{
               top: `${top(action.startFrame)}px`,
               left: `${keycapMode === 'gamepad' ? 2 + trackIndex * 30 : 4 + trackIndex * 18}px`,

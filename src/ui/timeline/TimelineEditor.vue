@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { operationName } from './operationNames';
 import { projectDodgeMarkerDiagnostics } from '../../core/projection/dodgeMarkerDiagnostics';
 import { projectDodgeMarkerEffects } from '../../core/projection/dodgeMarkerEffects';
 import {
@@ -199,7 +200,7 @@ import { formatLegacyConversionReport } from './legacyConversionReport';
 import type { ProjectGameDataRepository } from '../../data/projectGameDataRepository';
 import { captureScenarioSimulationGameData } from '../../application/simulation/scenarioSimulationGameData';
 import { resolveSkillTemplateDefinition } from '../../core/compiler/resolveSkillDefinition';
-import type { SkillDefinition, SkillType } from '../../core/game-data/operatorDefinition';
+import type { SkillDefinition, OperationType } from '../../core/game-data/operatorDefinition';
 import {
   getIconAssetPath,
   getOperatorAvatarPath,
@@ -320,7 +321,7 @@ import {
   skillLibrarySegmentLabel,
   skillLibraryNameEntry,
   timelineSkillBlockLabel,
-  timelineSkillBlockLabelForKey,
+  indexSkillLibrarySegments,
   timelineSkillSegmentLabel,
   type TimelineSkillSegmentLabels,
 } from './timelineSkillLabels';
@@ -691,7 +692,7 @@ const trackOrderDropTarget = ref<TrackIndex | null>(null);
 interface TimelineLibraryPlacement {
   readonly entryKey: string;
   readonly skillGroupKey: string;
-  readonly skillType: SkillType;
+  readonly operationType: OperationType;
   readonly variantKey?: string;
   readonly skillKey?: string;
 }
@@ -1396,15 +1397,15 @@ const exportShareTracks = computed<readonly TimelineShareTrack[]>(() =>
       actions: track.skillCasts.map(cast => ({
         id: cast.id,
         label: timelineCastLabel(cast, track),
-        skillType: cast.skillType,
+        operationType: cast.operationType,
         startFrame: cast.startFrame,
         durationFrames: cast.durationFrames,
         disabled: cast.disabled,
         color: cast.color,
         icon:
-          track.operatorAssetSlug === null || cast.skillType === null
+          track.operatorAssetSlug === null || cast.operationType === null
             ? null
-            : getOperatorSkillIconPath(track.operatorAssetSlug, cast.skillType),
+            : getOperatorSkillIconPath(track.operatorAssetSlug, cast.operationType),
       })),
     })),
 );
@@ -1453,7 +1454,7 @@ const placementLibraryEntry = computed(() => {
   );
 });
 function librarySkillPreview(entry: TimelineSkillLibraryEntryViewModel, skillKey?: string) {
-  const placedSkillKey = skillKey ?? entry.placementSkillKey;
+  const placedSkillKey = skillKey;
   const segment = entry.skills.find(skill => skill.skillKey === placedSkillKey);
   return {
     name:
@@ -1465,7 +1466,7 @@ function librarySkillPreview(entry: TimelineSkillLibraryEntryViewModel, skillKey
       segment === undefined
         ? skillDurationSeconds(entry)
         : skillPlacementDisplayFrames(segment.timelineBlockFrames) / PROJECT_FPS,
-    color: skillAccentColor(entry.skillType, selectedTrackModel.value.operatorSlug),
+    color: skillAccentColor(entry.operationType, selectedTrackModel.value.operatorSlug),
     scale: pxPerFrame.value * PROJECT_FPS,
   };
 }
@@ -1513,10 +1514,7 @@ watch(selectedTrack, () => {
   const placement = libraryPlacement.value;
   if (placement === null) return;
   const replacement = selectedTrackModel.value.skillLibrary.find(
-    entry =>
-      entry.skillType === placement.skillType &&
-      entry.variantKey === undefined &&
-      entry.placementSkillKey === undefined,
+    entry => entry.operationType === placement.operationType && entry.variantKey === undefined,
   );
   if (replacement === undefined) {
     cancelLibraryPlacement();
@@ -1525,7 +1523,7 @@ watch(selectedTrack, () => {
   libraryPlacement.value = {
     entryKey: replacement.entryKey,
     skillGroupKey: replacement.skillGroupKey,
-    skillType: replacement.skillType,
+    operationType: replacement.operationType,
     ...(replacement.variantKey === undefined ? {} : { variantKey: replacement.variantKey }),
   };
 });
@@ -1630,7 +1628,6 @@ const selectedLibraryInspectorModel = computed(() => {
       operatorName: '',
       typeLabel: '',
       skillGroupKey: '',
-      level: 1,
       durationFrames: 0,
       segments: [] as readonly string[],
     };
@@ -1640,7 +1637,6 @@ const selectedLibraryInspectorModel = computed(() => {
     operatorName: operatorName(selectedTrackModel.value.operatorSlug),
     typeLabel: skillLibraryTypeLabel(entry),
     skillGroupKey: entry.skillGroupKey,
-    level: entry.level,
     durationFrames: selectedLibrarySkillDurationFrames(),
     segments: skillSegments(entry).map(segment => segment.label),
   };
@@ -1724,21 +1720,18 @@ const selectedCastModel = computed(() => {
           // 模板内部 key 可自由编辑；失配由技能块原地诊断，不删除时间轴内容。
         }
       }
-      const source = cast.source;
+      const currentDefinition = cast.customDefinition ?? template;
+      const levelSource = currentDefinition?.levelSource;
       const skillLevel =
-        source.kind === 'operatorSkill'
-          ? (trackModel.skillLibrary.find(
-              entry =>
-                entry.skillGroupKey === source.skillGroupKey &&
-                entry.skills.some(skill => skill.skillKey === source.skillKey),
-            )?.level ?? 1)
-          : 1;
+        levelSource === undefined
+          ? 1
+          : (scenario.value.tracks[trackModel.trackIndex]?.operator?.skillLevels[levelSource] ?? 1);
       return {
         trackIndex: trackModel.trackIndex,
         cast,
-        skillType: castModel.skillType,
+        operationType: castModel.operationType,
         label: timelineCastLabel(castModel, trackModel),
-        currentDefinition: cast.customDefinition ?? template,
+        currentDefinition,
         skillLevel,
       };
     }
@@ -2035,19 +2028,6 @@ function axisSkillBlockLabel(skillCastId: string): string | undefined {
   return undefined;
 }
 
-/** 实际路由可能指向尚未放置的技能，仍使用轴上技能块的命名规则展示。 */
-function triggeredSkillBlockLabel(skillCastId: string, skillKey: string): string | undefined {
-  const track = viewModel.value.tracks.find(candidate =>
-    candidate.skillCasts.some(cast => cast.id === skillCastId),
-  );
-  if (track === undefined) return undefined;
-  return (
-    timelineSkillBlockLabelForKey(track.skillLibrary, skillKey, skillSegmentLabels(), entry =>
-      skillTypeLabel(entry.skillType),
-    ) ?? undefined
-  );
-}
-
 function timelineCastLabelById(skillCastId: string): string {
   return axisSkillBlockLabel(skillCastId) ?? skillCastId;
 }
@@ -2218,11 +2198,11 @@ const rulerOperations = computed<TimelineOperationMarkerInput[]>(() => {
   for (const track of viewModel.value.tracks) {
     for (const cast of track.skillCasts) {
       const kind =
-        cast.skillType === 'battleSkill'
+        cast.operationType === 'battleSkill'
           ? 'skill'
-          : cast.skillType === 'comboSkill'
+          : cast.operationType === 'comboSkill'
             ? 'combo'
-            : cast.skillType === 'ultimate'
+            : cast.operationType === 'ultimate'
               ? 'ultimate'
               : null;
       if (kind === null) continue;
@@ -2599,6 +2579,10 @@ function formatGuideNumber(value: number | null): string {
   return String(Math.round(value * 1000) / 1000);
 }
 
+const skillLibraryReverseIndices = computed(() =>
+  viewModel.value.tracks.map(track => indexSkillLibrarySegments(track.skillLibrary)),
+);
+
 function castWarningTitle(castId: string, definitionUnavailable = false): string {
   if (!definitionUnavailable && !compatibleSkillCastReceiptIds.value.has(castId)) return '';
   return formatSkillBlockWarnings({
@@ -2606,7 +2590,25 @@ function castWarningTitle(castId: string, definitionUnavailable = false): string
     skillLabel: axisSkillBlockLabel(castId),
     definitionUnavailable,
     castLabel: axisSkillBlockLabel,
-    triggeredSkillLabel: skillKey => triggeredSkillBlockLabel(castId, skillKey),
+    actualSkillLabel: skillId => {
+      const trackIndex = viewModel.value.tracks.findIndex(track =>
+        track.skillCasts.some(cast => cast.id === castId),
+      );
+      const entries = skillLibraryReverseIndices.value[trackIndex]?.get(skillId);
+      if (entries === undefined) return undefined;
+      return [
+        ...new Set(
+          entries.map(entry =>
+            timelineSkillBlockLabel(
+              entry,
+              skillId,
+              skillSegmentLabels(),
+              skillTypeLabel(entry.operationType),
+            ),
+          ),
+        ),
+      ].join(' / ');
+    },
     t,
   });
 }
@@ -3537,30 +3539,14 @@ function openOperatorPassiveUiDetail(
   passiveUiDetailTitle.value = title;
 }
 
-function operatorSkillDisplayName(operatorSlug: string | null, skillKey: string): string | null {
-  const nameKey = editorGameDataRepository.getOperator(operatorSlug ?? '')?.skillDisplayNameKeys?.[
-    skillKey
-  ];
-  if (nameKey === undefined) return null;
-  const translated = t(nameKey);
-  return translated === nameKey ? null : translated;
-}
-
 function skillLibraryEntryName(entry: TimelineSkillLibraryEntryViewModel): string {
   const assetSlug = selectedTrackModel.value.operatorAssetSlug;
-  if (assetSlug === null) return entry.placementSkillKey ?? entry.variantKey ?? entry.skillGroupKey;
-  if (entry.placementSkillKey !== undefined) {
-    const displayName = operatorSkillDisplayName(
-      selectedTrackModel.value.operatorSlug,
-      entry.placementSkillKey,
-    );
-    if (displayName !== null) return displayName;
-    return getOperatorCombatSkillName(assetSlug, entry.placementSkillKey, locale.value);
-  }
+  if (assetSlug === null) return entry.variantKey ?? entry.skillGroupKey;
   const nameEntry =
-    entry.skillType === 'finisher' || entry.skillType === 'plungingAttack'
+    entry.operationType === 'finisher' || entry.operationType === 'plungingAttack'
       ? (selectedTrackModel.value.skillLibrary.find(
-          candidate => candidate.skillType === 'basicAttack' && candidate.variantKey === undefined,
+          candidate =>
+            candidate.operationType === 'basicAttack' && candidate.variantKey === undefined,
         ) ?? entry)
       : entry;
   return getOperatorCombatSkillName(
@@ -3593,21 +3579,14 @@ function skillSegmentLabels(): TimelineSkillSegmentLabels {
     heavyAttack: t('skillType.heavyAttack'),
     battleSkill: t('skillType.skill'),
     comboSkill: t('skillType.link'),
+    ultimate: t('skillType.ultimate'),
+    formatName: (nameKey, baseName, short) => operationName(nameKey, baseName, short, { t, te }),
   };
 }
 
 function skillLibraryTypeLabel(entry: TimelineSkillLibraryEntryViewModel): string {
-  if (entry.placementSkillKey !== undefined) {
-    const displayName = operatorSkillDisplayName(
-      selectedTrackModel.value.operatorSlug,
-      entry.placementSkillKey,
-    );
-    if (displayName !== null) return displayName;
-  }
-  const type = skillTypeLabel(entry.skillType);
-  return entry.nameQualifier === undefined
-    ? type
-    : t(`skillType.nameQualifier.${entry.nameQualifier}`, { type });
+  const type = skillTypeLabel(entry.operationType);
+  return operationName(entry.nameKey, type, false, { t, te });
 }
 
 function battleReceiptEventLabel(event: string): string {
@@ -3627,18 +3606,13 @@ function timelineCastLabel(
   if (source.kind === 'custom') return source.name;
   const entry = track.skillLibrary.find(
     candidate =>
-      candidate.skillGroupKey === source.skillGroupKey &&
-      candidate.skills.some(skill => skill.skillKey === source.skillKey),
+      candidate.skillGroupKey === source.skillGroupKey && candidate.variantKey === undefined,
   );
-  const fallbackLabel = cast.skillType === null ? source.skillKey : skillTypeLabel(cast.skillType);
+  const fallbackLabel =
+    cast.operationType === null ? source.skillKey : skillTypeLabel(cast.operationType);
   return entry === undefined
     ? fallbackLabel
-    : timelineSkillBlockLabel(
-        entry,
-        source.skillKey,
-        skillSegmentLabels(),
-        operatorSkillDisplayName(track.operatorSlug, source.skillKey) ?? fallbackLabel,
-      );
+    : timelineSkillBlockLabel(entry, source.skillKey, skillSegmentLabels(), fallbackLabel);
 }
 
 const OPERATOR_ELEMENT_SKILL_COLORS: Readonly<Record<string, string>> = {
@@ -4909,11 +4883,11 @@ function beginLibraryPlacement(entry: TimelineSkillLibraryEntryViewModel, skillK
     if (libraryPlacementLease === null) return;
   }
   skillPlacementTransaction.cancel();
-  const placedSkillKey = skillKey ?? entry.placementSkillKey;
+  const placedSkillKey = skillKey;
   libraryPlacement.value = {
     entryKey: entry.entryKey,
     skillGroupKey: entry.skillGroupKey,
-    skillType: entry.skillType,
+    operationType: entry.operationType,
     ...(entry.variantKey === undefined ? {} : { variantKey: entry.variantKey }),
     ...(placedSkillKey === undefined ? {} : { skillKey: placedSkillKey }),
   };
@@ -4987,7 +4961,8 @@ async function placeGroup(
   if (operator === null) return;
   const shouldAutoGroup =
     skillKey === undefined &&
-    operator.skillGroups.find(group => group.key === skillGroupKey)?.skillType === 'basicAttack';
+    operator.skillGroups.find(group => group.key === skillGroupKey)?.operationType ===
+      'basicAttack';
   const result = placeLibrarySkillGroup({
     scenario: scenario.value,
     trackIndex,
@@ -5040,7 +5015,7 @@ async function placeGroup(
   }
 }
 
-const LEGACY_SKILL_HOTKEY_TYPES: Readonly<Record<1 | 2 | 3 | 4 | 5 | 6, SkillType>> = {
+const LEGACY_SKILL_HOTKEY_TYPES: Readonly<Record<1 | 2 | 3 | 4 | 5 | 6, OperationType>> = {
   1: 'basicAttack',
   2: 'battleSkill',
   3: 'comboSkill',
@@ -5068,11 +5043,9 @@ function placeSkillByShortcut(slot: 1 | 2 | 3 | 4 | 5 | 6): boolean {
   const skillType = LEGACY_SKILL_HOTKEY_TYPES[slot];
   const entry =
     selectedTrackModel.value.skillLibrary.find(
-      candidate =>
-        candidate.skillType === skillType &&
-        candidate.variantKey === undefined &&
-        candidate.placementSkillKey === undefined,
-    ) ?? selectedTrackModel.value.skillLibrary.find(candidate => candidate.skillType === skillType);
+      candidate => candidate.operationType === skillType && candidate.variantKey === undefined,
+    ) ??
+    selectedTrackModel.value.skillLibrary.find(candidate => candidate.operationType === skillType);
   if (entry === undefined) {
     ElMessage.warning(t('timeline.shortcut.placeSkillMissing'));
     return true;
@@ -5156,7 +5129,7 @@ function beginSkillDrag(
     event.preventDefault();
     return;
   }
-  const placedSkillKey = skillKey ?? entry.placementSkillKey;
+  const placedSkillKey = skillKey;
   const lease = interactionSession.tryStart('library-drag', finishSkillDrag);
   if (lease === null) {
     event.preventDefault();
@@ -6102,8 +6075,8 @@ function setPanelDialogVisible(visible: boolean): void {
               :tooltip="skillLibraryTypeLabel(entry)"
               :type-label="skillLibraryTypeLabel(entry)"
               :duration="skillDurationSeconds(entry)"
-              :icon="skillDisplayIcon(entry.skillType, selectedTrackModel.operatorSlug)"
-              :accent-color="skillAccentColor(entry.skillType, selectedTrackModel.operatorSlug)"
+              :icon="skillDisplayIcon(entry.operationType, selectedTrackModel.operatorSlug)"
+              :accent-color="skillAccentColor(entry.operationType, selectedTrackModel.operatorSlug)"
               :selected="libraryEntrySelected(entry)"
               :segments="skillSegments(entry)"
               @dragstart="beginSkillDrag($event, entry)"
@@ -7021,7 +6994,7 @@ function setPanelDialogVisible(visible: boolean): void {
                   :key="cast.id"
                   :action-id="cast.id"
                   :label="timelineCastLabel(cast, track)"
-                  :skill-type="cast.skillType"
+                  :operation-type="cast.operationType"
                   :left="timelineFramePx(castActualStartFrame(cast.id, cast.startFrame))"
                   :width="
                     timelineFrameSpanPx(
@@ -7052,7 +7025,7 @@ function setPanelDialogVisible(visible: boolean): void {
                   :locked-text="t('actionItem.lockedTitle')"
                   :disabled-text="t('actionItem.disabledTitle')"
                   :edited-text="t('actionItem.editedTitle')"
-                  :color="cast.color ?? skillAccentColor(cast.skillType, track.operatorSlug)"
+                  :color="cast.color ?? skillAccentColor(cast.operationType, track.operatorSlug)"
                   :connection-tool-enabled="connectionToolEnabled"
                   :connection-dragging="connectionDrag !== null"
                   :connection-source-action-id="connectionDrag?.skillCastId ?? null"
@@ -7457,7 +7430,6 @@ function setPanelDialogVisible(visible: boolean): void {
         :operator-name="selectedLibraryInspectorModel.operatorName"
         :type-label="selectedLibraryInspectorModel.typeLabel"
         :skill-group-key="selectedLibraryInspectorModel.skillGroupKey"
-        :level="selectedLibraryInspectorModel.level"
         :duration-frames="selectedLibraryInspectorModel.durationFrames"
         :segments="selectedLibraryInspectorModel.segments"
       />

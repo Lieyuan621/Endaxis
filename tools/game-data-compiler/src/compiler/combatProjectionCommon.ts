@@ -219,7 +219,7 @@ export interface CombatActionProjectionExtensionsSource {
     sourcePath: string,
     context: CombatActionProjectionContextSource,
   ) => readonly CompiledBuffStepSource[];
-  /** 主动技能整名装配提供原生 skillId 到稳定技能组/技能 key 的映射。 */
+  /** 主动技能装配提供原生技能 ID 到技能槽及具体技能 key 的映射，不读取展示组。 */
   readonly compileSkillSlotReplacement?: (
     action: SkillSlotReplacementActionSource,
     sourcePath: string,

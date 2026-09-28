@@ -116,10 +116,12 @@ export interface ProjectDefinitionLibraryDocument {
   globalEffects?: Record<string, ProjectGlobalEffectTemplateDocument>;
 }
 
-/** 可从版本化游戏数据恢复身份和默认行为的技能来源。武器效果是被动行为，不产生时间轴释放。 */
+/** 操作段的配置位置及其试图释放的技能。武器被动不产生玩家操作段。 */
 export type DefinitionActionSource = {
   kind: 'operatorSkill';
+  /** 所属技能库展示组，用于解析段配置和显示，不参与原生路由。 */
   skillGroupKey: string;
+  /** 配置目标 SkillDefinition.key；输入不匹配时仍强制执行此技能并报告诊断。 */
   skillKey: string;
   /** 玩家尝试执行的四类语义动作；新放置块必须保存，旧项目可在路由唯一时恢复。 */
   action?: import('../game-data/operatorDefinition').PlayerSkillInput;
@@ -146,7 +148,7 @@ export type SkillCastSource = DefinitionActionSource | CustomActionDefinition;
 export type SkillCastPlacementDocument =
   { startFrame: number; afterCastId?: never } | { afterCastId: string; startFrame?: never };
 
-/** 用户放置在干员轨道上的一次技能释放。 */
+/** 轴上技能段实例：一次玩家输入及其配置目标，不是运行时 Skill 的实例。 */
 export interface SkillCastDocument {
   id: string;
   /** 用于找到游戏数据中的技能模板。 */

@@ -89,7 +89,7 @@ export interface PendingComboWindow {
   readonly openedFrame: number;
   readonly blackboard: Readonly<Record<string, number>>;
   readonly nativeCondition?: ComboCastParameters & {
-    readonly skillGroupKey: string;
+    readonly skillSlotKey: string;
   };
   remainingFrames: number;
 }

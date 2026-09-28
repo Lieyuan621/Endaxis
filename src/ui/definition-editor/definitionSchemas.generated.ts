@@ -114,7 +114,7 @@ export const definitionSchemas = {
               description: '编辑器一次放置整个技能组时采用的展开规则。',
             },
             key: { kind: 'string', description: '技能组在干员定义中的唯一名称。' },
-            skillType: {
+            operationType: {
               kind: 'enum',
               options: [
                 'comboSkill',
@@ -126,12 +126,7 @@ export const definitionSchemas = {
                 'dodge',
               ],
               description:
-                '技能库卡片、图标和放置操作使用的技能类别；实际执行仍读取具体技能的类别。',
-            },
-            levelSource: {
-              kind: 'enum',
-              options: ['comboSkill', 'basicAttack', 'battleSkill', 'ultimate'],
-              description: '技能组默认的养成等级来源；具体技能可以有自己的等级来源。',
+                '玩家操作类别；技能库与轴上技能块均据此展示，实际执行读取具体技能的 skillType。',
             },
             skills: {
               kind: 'union',
@@ -145,19 +140,18 @@ export const definitionSchemas = {
               ],
               description: '单个可放置技能，或作为一个技能库条目放置的有序技能链。',
             },
-            libraryNameQualifier: {
-              kind: 'enum',
-              options: ['enhanced', 'floating'],
+            nameKey: {
+              kind: 'string',
               optional: true,
               description:
-                '基础放置项名称使用的修饰词；只影响技能库与时间轴文本，不参与技能身份或路由。',
+                '操作名称模板的 i18n 键，含 name/shortName；{baseName} 为操作名称（轴上含段号）。',
             },
             placementSequenceSkillKeys: {
               kind: 'array',
               element: { kind: 'string' },
               optional: true,
               description:
-                '运行时虽以换槽形态注册、但编辑器放置时具有明确先后关系的完整技能键序列。\n省略表示 replacement 是状态强化形态，应作为独立卡片；不得由 UI 按名称猜测。',
+                '运行时虽以换槽形态注册、但编辑器放置时具有明确先后关系的完整技能键序列。\n独立替换操作必须直接声明独立技能组，不由 UI 从 replacement 拆出卡片。',
             },
             variants: {
               kind: 'array',
@@ -170,16 +164,10 @@ export const definitionSchemas = {
                     description: '此形态自己的技能链展开规则。',
                   },
                   key: { kind: 'string', description: '形态在技能组中的唯一名称。' },
-                  levelSource: {
-                    kind: 'enum',
-                    options: ['comboSkill', 'basicAttack', 'battleSkill', 'ultimate'],
-                    description: '此形态使用的养成技能等级来源。',
-                  },
-                  libraryNameQualifier: {
-                    kind: 'enum',
-                    options: ['enhanced', 'floating'],
+                  nameKey: {
+                    kind: 'string',
                     optional: true,
-                    description: '具名形态名称使用的修饰词；不能从 variant 结构或 key 名称推断。',
+                    description: '此放置形态的名称模板覆盖；未提供时继承组的 nameKey。',
                   },
                   skills: {
                     kind: 'union',
@@ -207,20 +195,14 @@ export const definitionSchemas = {
               element: { kind: 'union', variants: [{ kind: 'opaque' }, { kind: 'opaque' }] },
               optional: true,
               description:
-                '与 `skills` 共用一个稳定放置身份、仅由运行时换槽动作选中的技能形态。\n编辑器必须把它们作为可显式放置的具体技能展示；运行时槽位状态只负责校验该操作\n当前是否确实会解析到该技能，不能静默把基础块替换为这里的执行体。',
+                '与 `skills` 共用一个稳定放置身份、仅由运行时换槽动作选中的技能形态。\n这里只保存本组连续段或内部执行技能；独立可放置的替换操作应放在独立组的 skills 中。',
             },
             replacementSkillPlacements: {
               kind: 'record',
-              value: { kind: 'enum', options: ['standard', 'internal'] },
+              value: { kind: 'enum', options: ['internal'] },
               optional: true,
               description:
-                '每个运行时替换技能在技能库中的显式放置语义。运行时替换关系本身不能推出展示语义：\n`standard` 是独立操作，`internal` 不接受玩家输入。\n有序接续技能由 `placementSequenceSkillKeys` 表达，不重复出现在这里。',
-            },
-            replacementSkillNameQualifiers: {
-              kind: 'record',
-              value: { kind: 'enum', options: ['enhanced', 'floating'] },
-              optional: true,
-              description: '替换技能名称使用的修饰词；与可否放置、技能身份和运行时换槽完全无关。',
+                '每个运行时替换技能在技能库中的显式放置语义。运行时替换关系本身不能推出展示语义：\n`internal` 不接受玩家输入；独立操作由独立技能组表达。\n有序接续技能由 `placementSequenceSkillKeys` 表达，不重复出现在这里。',
             },
             routedReplacementSkills: {
               kind: 'array',
@@ -232,28 +214,6 @@ export const definitionSchemas = {
                     variants: [{ kind: 'opaque' }, { kind: 'opaque' }],
                     description: '已合并输入包装器资源规则、且拥有独立稳定 key 的执行定义。',
                   },
-                  skillType: {
-                    kind: 'enum',
-                    options: [
-                      'comboSkill',
-                      'plungingAttack',
-                      'basicAttack',
-                      'battleSkill',
-                      'ultimate',
-                      'finisher',
-                      'dodge',
-                    ],
-                    description: '替换形态在技能库中的分类；实际执行读取 `skill.skillType`。',
-                  },
-                  levelSource: {
-                    kind: 'enum',
-                    options: ['comboSkill', 'basicAttack', 'battleSkill', 'ultimate'],
-                    description: '替换形态在技能库中的等级来源；实际倍率读取 `skill.levelSource`。',
-                  },
-                  executionSkillGroupKey: {
-                    kind: 'string',
-                    description: '执行体在原生养成定义中的技能组身份。',
-                  },
                   executionSkillKey: {
                     kind: 'string',
                     description: '执行体在原生养成定义中的稳定技能身份。',
@@ -262,7 +222,7 @@ export const definitionSchemas = {
               },
               optional: true,
               description:
-                '跨原生技能组的换槽形态。技能仍占用本组的稳定槽位，但执行时使用其原生分类与等级源。\n仅用于原生输入旁路（例如战技包装器实际 Cast 连携技）；普通同组换槽继续使用 replacementSkills。',
+                '本展示组中的转发技能。原生稳定槽位由 skillSlots 定义，与展示组独立；执行使用原生分类与等级源。\n仅用于原生输入旁路（例如战技包装器实际 Cast 连携技）；普通同组换槽继续使用 replacementSkills。',
             },
             presentationVariants: {
               kind: 'array',
@@ -281,7 +241,7 @@ export const definitionSchemas = {
             },
           },
         },
-        description: '技能库中可以放置的技能组。',
+        description: '干员技能库的操作组集合；不包含切人、闪避、跳跃。组成员配置操作段的目标技能。',
       },
       dodgeSkill: {
         kind: 'union',
@@ -571,12 +531,6 @@ export const definitionSchemas = {
         value: { kind: 'string' },
         optional: true,
         description: '此干员附属 Buff 的名称翻译键；仅用于展示，不进入战斗回执。',
-      },
-      skillDisplayNameKeys: {
-        kind: 'record',
-        value: { kind: 'string' },
-        optional: true,
-        description: '干员专属技能入口的名称翻译键；按技能 key 查找，不改变技能路由。',
       },
       abilityEntityDefinitions: {
         kind: 'record',
@@ -1798,7 +1752,7 @@ export const definitionSchemas = {
                           options: ['skillHit'],
                           description: '触发器种类判别值。',
                         },
-                        skillGroupKey: { kind: 'string', description: '要匹配的技能组。' },
+                        skillKey: { kind: 'string', description: '要匹配的执行技能。' },
                         scope: {
                           kind: 'enum',
                           options: ['team', 'operator'],
@@ -2436,7 +2390,7 @@ export const definitionSchemas = {
                           options: ['skillHit'],
                           description: '触发器种类判别值。',
                         },
-                        skillGroupKey: { kind: 'string', description: '要匹配的技能组。' },
+                        skillKey: { kind: 'string', description: '要匹配的执行技能。' },
                         scope: {
                           kind: 'enum',
                           options: ['team', 'operator'],
@@ -2972,7 +2926,7 @@ export const definitionSchemas = {
                           options: ['skillHit'],
                           description: '触发器种类判别值。',
                         },
-                        skillGroupKey: { kind: 'string', description: '要匹配的技能组。' },
+                        skillKey: { kind: 'string', description: '要匹配的执行技能。' },
                         scope: {
                           kind: 'enum',
                           options: ['team', 'operator'],
@@ -3083,7 +3037,7 @@ export const definitionSchemas = {
         description: '编辑器一次放置整个技能组时采用的展开规则。',
       },
       key: { kind: 'string', description: '技能组在干员定义中的唯一名称。' },
-      skillType: {
+      operationType: {
         kind: 'enum',
         options: [
           'comboSkill',
@@ -3094,12 +3048,8 @@ export const definitionSchemas = {
           'finisher',
           'dodge',
         ],
-        description: '技能库卡片、图标和放置操作使用的技能类别；实际执行仍读取具体技能的类别。',
-      },
-      levelSource: {
-        kind: 'enum',
-        options: ['comboSkill', 'basicAttack', 'battleSkill', 'ultimate'],
-        description: '技能组默认的养成等级来源；具体技能可以有自己的等级来源。',
+        description:
+          '玩家操作类别；技能库与轴上技能块均据此展示，实际执行读取具体技能的 skillType。',
       },
       skills: {
         kind: 'union',
@@ -3113,18 +3063,18 @@ export const definitionSchemas = {
         ],
         description: '单个可放置技能，或作为一个技能库条目放置的有序技能链。',
       },
-      libraryNameQualifier: {
-        kind: 'enum',
-        options: ['enhanced', 'floating'],
+      nameKey: {
+        kind: 'string',
         optional: true,
-        description: '基础放置项名称使用的修饰词；只影响技能库与时间轴文本，不参与技能身份或路由。',
+        description:
+          '操作名称模板的 i18n 键，含 name/shortName；{baseName} 为操作名称（轴上含段号）。',
       },
       placementSequenceSkillKeys: {
         kind: 'array',
         element: { kind: 'string' },
         optional: true,
         description:
-          '运行时虽以换槽形态注册、但编辑器放置时具有明确先后关系的完整技能键序列。\n省略表示 replacement 是状态强化形态，应作为独立卡片；不得由 UI 按名称猜测。',
+          '运行时虽以换槽形态注册、但编辑器放置时具有明确先后关系的完整技能键序列。\n独立替换操作必须直接声明独立技能组，不由 UI 从 replacement 拆出卡片。',
       },
       variants: {
         kind: 'array',
@@ -3152,16 +3102,10 @@ export const definitionSchemas = {
               description: '此形态自己的技能链展开规则。',
             },
             key: { kind: 'string', description: '形态在技能组中的唯一名称。' },
-            levelSource: {
-              kind: 'enum',
-              options: ['comboSkill', 'basicAttack', 'battleSkill', 'ultimate'],
-              description: '此形态使用的养成技能等级来源。',
-            },
-            libraryNameQualifier: {
-              kind: 'enum',
-              options: ['enhanced', 'floating'],
+            nameKey: {
+              kind: 'string',
               optional: true,
-              description: '具名形态名称使用的修饰词；不能从 variant 结构或 key 名称推断。',
+              description: '此放置形态的名称模板覆盖；未提供时继承组的 nameKey。',
             },
             skills: {
               kind: 'union',
@@ -3186,20 +3130,14 @@ export const definitionSchemas = {
         element: { kind: 'union', variants: [{ kind: 'opaque' }, { kind: 'opaque' }] },
         optional: true,
         description:
-          '与 `skills` 共用一个稳定放置身份、仅由运行时换槽动作选中的技能形态。\n编辑器必须把它们作为可显式放置的具体技能展示；运行时槽位状态只负责校验该操作\n当前是否确实会解析到该技能，不能静默把基础块替换为这里的执行体。',
+          '与 `skills` 共用一个稳定放置身份、仅由运行时换槽动作选中的技能形态。\n这里只保存本组连续段或内部执行技能；独立可放置的替换操作应放在独立组的 skills 中。',
       },
       replacementSkillPlacements: {
         kind: 'record',
-        value: { kind: 'enum', options: ['standard', 'internal'] },
+        value: { kind: 'enum', options: ['internal'] },
         optional: true,
         description:
-          '每个运行时替换技能在技能库中的显式放置语义。运行时替换关系本身不能推出展示语义：\n`standard` 是独立操作，`internal` 不接受玩家输入。\n有序接续技能由 `placementSequenceSkillKeys` 表达，不重复出现在这里。',
-      },
-      replacementSkillNameQualifiers: {
-        kind: 'record',
-        value: { kind: 'enum', options: ['enhanced', 'floating'] },
-        optional: true,
-        description: '替换技能名称使用的修饰词；与可否放置、技能身份和运行时换槽完全无关。',
+          '每个运行时替换技能在技能库中的显式放置语义。运行时替换关系本身不能推出展示语义：\n`internal` 不接受玩家输入；独立操作由独立技能组表达。\n有序接续技能由 `placementSequenceSkillKeys` 表达，不重复出现在这里。',
       },
       routedReplacementSkills: {
         kind: 'array',
@@ -3211,28 +3149,6 @@ export const definitionSchemas = {
               variants: [{ kind: 'opaque' }, { kind: 'opaque' }],
               description: '已合并输入包装器资源规则、且拥有独立稳定 key 的执行定义。',
             },
-            skillType: {
-              kind: 'enum',
-              options: [
-                'comboSkill',
-                'plungingAttack',
-                'basicAttack',
-                'battleSkill',
-                'ultimate',
-                'finisher',
-                'dodge',
-              ],
-              description: '替换形态在技能库中的分类；实际执行读取 `skill.skillType`。',
-            },
-            levelSource: {
-              kind: 'enum',
-              options: ['comboSkill', 'basicAttack', 'battleSkill', 'ultimate'],
-              description: '替换形态在技能库中的等级来源；实际倍率读取 `skill.levelSource`。',
-            },
-            executionSkillGroupKey: {
-              kind: 'string',
-              description: '执行体在原生养成定义中的技能组身份。',
-            },
             executionSkillKey: {
               kind: 'string',
               description: '执行体在原生养成定义中的稳定技能身份。',
@@ -3241,7 +3157,7 @@ export const definitionSchemas = {
         },
         optional: true,
         description:
-          '跨原生技能组的换槽形态。技能仍占用本组的稳定槽位，但执行时使用其原生分类与等级源。\n仅用于原生输入旁路（例如战技包装器实际 Cast 连携技）；普通同组换槽继续使用 replacementSkills。',
+          '本展示组中的转发技能。原生稳定槽位由 skillSlots 定义，与展示组独立；执行使用原生分类与等级源。\n仅用于原生输入旁路（例如战技包装器实际 Cast 连携技）；普通同组换槽继续使用 replacementSkills。',
       },
       presentationVariants: {
         kind: 'array',
@@ -3313,16 +3229,10 @@ export const definitionSchemas = {
         description: '此形态自己的技能链展开规则。',
       },
       key: { kind: 'string', description: '形态在技能组中的唯一名称。' },
-      levelSource: {
-        kind: 'enum',
-        options: ['comboSkill', 'basicAttack', 'battleSkill', 'ultimate'],
-        description: '此形态使用的养成技能等级来源。',
-      },
-      libraryNameQualifier: {
-        kind: 'enum',
-        options: ['enhanced', 'floating'],
+      nameKey: {
+        kind: 'string',
         optional: true,
-        description: '具名形态名称使用的修饰词；不能从 variant 结构或 key 名称推断。',
+        description: '此放置形态的名称模板覆盖；未提供时继承组的 nameKey。',
       },
       skills: {
         kind: 'union',
@@ -4391,7 +4301,10 @@ export const definitionSchemas = {
             element: {
               kind: 'object',
               fields: {
-                skillGroupKey: { kind: 'string', description: '要修改的技能组。' },
+                skillSlotKey: {
+                  kind: 'string',
+                  description: '要修改的原生技能槽，与技能库分组无关。',
+                },
                 targetSkillKey: { kind: 'string', description: 'Buff 启用期间换入的技能。' },
                 revertedSkillKey: { kind: 'string', description: 'Buff 停用或结束时恢复的技能。' },
                 inheritOriginSkillCooldownProgress: {
@@ -4822,10 +4735,10 @@ export const definitionSchemas = {
                           zone: {
                             kind: 'enum',
                             options: [
-                              'enhanced',
                               'product',
                               'normal',
                               'abnormalAndBurst',
+                              'enhanced',
                               'combo',
                               'vulnerable',
                               'race',
@@ -6325,10 +6238,10 @@ export const definitionSchemas = {
                           zone: {
                             kind: 'enum',
                             options: [
-                              'enhanced',
                               'product',
                               'normal',
                               'abnormalAndBurst',
+                              'enhanced',
                               'combo',
                               'vulnerable',
                               'race',
@@ -6545,7 +6458,10 @@ export const definitionSchemas = {
             element: {
               kind: 'object',
               fields: {
-                skillGroupKey: { kind: 'string', description: '要修改的技能组。' },
+                skillSlotKey: {
+                  kind: 'string',
+                  description: '要修改的原生技能槽，与技能库分组无关。',
+                },
                 targetSkillKey: { kind: 'string', description: 'Buff 启用期间换入的技能。' },
                 revertedSkillKey: { kind: 'string', description: 'Buff 停用或结束时恢复的技能。' },
                 inheritOriginSkillCooldownProgress: {
@@ -6830,7 +6746,7 @@ export const definitionSchemas = {
         ],
         optional: true,
         description:
-          '原生效果已经取证，但在 Endaxis 固定模拟模型中没有可观察结果。\r\n这是完整转换结论，不是尚未建模；保留原因以便模型边界改变时重新审计。',
+          '原生效果已经取证，但在 Endaxis 固定模拟模型中没有可观察结果。\n这是完整转换结论，不是尚未建模；保留原因以便模型边界改变时重新审计。',
       },
       modifiers: {
         kind: 'array',
@@ -6861,7 +6777,10 @@ export const definitionSchemas = {
                   options: ['enableSkillBranch'],
                   description: '启用技能中的一个可选动作分支。',
                 },
-                skillGroupKey: { kind: 'string', description: '目标技能组。' },
+                skillKey: {
+                  kind: 'string',
+                  description: '目标执行技能；身份在所属定义宿主内唯一，与展示组无关。',
+                },
                 branchKey: { kind: 'string', description: '目标分支。' },
               },
             },
@@ -6873,7 +6792,10 @@ export const definitionSchemas = {
                   options: ['multiplyEffectDuration'],
                   description: '乘算某个技能步骤产生效果的持续时间。',
                 },
-                skillGroupKey: { kind: 'string', description: '目标技能组。' },
+                skillKey: {
+                  kind: 'string',
+                  description: '目标执行技能；身份在所属定义宿主内唯一，与展示组无关。',
+                },
                 stepKey: { kind: 'string', description: '目标步骤。' },
                 multiplier: { kind: 'number', description: '持续时间乘数。' },
               },
@@ -6886,11 +6808,9 @@ export const definitionSchemas = {
                   options: ['multiplySkillCost'],
                   description: '乘算技能的资源费用。',
                 },
-                skillGroupKey: { kind: 'string', description: '目标技能组。' },
                 skillKey: {
                   kind: 'string',
-                  optional: true,
-                  description: '组内存在隐藏替换技能时，明确限定原生修正指向的可养成技能。',
+                  description: '目标执行技能；身份在所属定义宿主内唯一，与展示组无关。',
                 },
                 resource: {
                   kind: 'enum',
@@ -6908,7 +6828,10 @@ export const definitionSchemas = {
                   options: ['setEffectiveness'],
                   description: '设置一个技能步骤的效果系数。',
                 },
-                skillGroupKey: { kind: 'string', description: '目标技能组。' },
+                skillKey: {
+                  kind: 'string',
+                  description: '目标执行技能；身份在所属定义宿主内唯一，与展示组无关。',
+                },
                 stepKey: { kind: 'string', description: '目标步骤。' },
                 value: { kind: 'number', description: '新的效果系数。' },
               },
@@ -6952,9 +6875,12 @@ export const definitionSchemas = {
                 kind: {
                   kind: 'enum',
                   options: ['addSkillStat'],
-                  description: '修改一个技能组的独立面板数值。',
+                  description: '修改一个技能的独立面板数值。',
                 },
-                skillGroupKey: { kind: 'string', description: '目标技能组。' },
+                skillKey: {
+                  kind: 'string',
+                  description: '目标执行技能；身份在所属定义宿主内唯一，与展示组无关。',
+                },
                 stat: {
                   kind: 'enum',
                   options: ['criticalRate'],
@@ -6970,13 +6896,11 @@ export const definitionSchemas = {
                   kind: 'enum',
                   options: ['patchSkillBlackboard'],
                   description:
-                    '养成效果直接修补目标技能组编译后的初始动作黑板。\r\n`operation` 使用与原生 SkillBBModifier 相同的 add/multiply/assign 语义；\r\n`value` 按天赋/潜能等级解析，而不是按技能等级解析。',
+                    '养成效果直接修补目标技能编译后的初始动作黑板。\n`operation` 使用与原生 SkillBBModifier 相同的 add/multiply/assign 语义；\n`value` 按天赋/潜能等级解析，而不是按技能等级解析。',
                 },
-                skillGroupKey: { kind: 'string', description: '目标技能组。' },
                 skillKey: {
                   kind: 'string',
-                  optional: true,
-                  description: '多形态技能组只修改指定技能定义；省略时修改组内全部形态。',
+                  description: '目标执行技能；身份在所属定义宿主内唯一，与展示组无关。',
                 },
                 blackboardKey: { kind: 'string', description: '要修改的技能黑板键。' },
                 operation: {
@@ -7064,9 +6988,12 @@ export const definitionSchemas = {
                 kind: {
                   kind: 'enum',
                   options: ['multiplySkillDamage'],
-                  description: '乘算整个技能组造成的伤害。',
+                  description: '乘算指定技能造成的伤害。',
                 },
-                skillGroupKey: { kind: 'string', description: '目标技能组。' },
+                skillKey: {
+                  kind: 'string',
+                  description: '目标执行技能；身份在所属定义宿主内唯一，与展示组无关。',
+                },
                 multiplier: { kind: 'number', description: '伤害乘数。' },
               },
             },
@@ -7078,7 +7005,10 @@ export const definitionSchemas = {
                   options: ['multiplyStepDamage'],
                   description: '乘算一个具体技能步骤造成的伤害。',
                 },
-                skillGroupKey: { kind: 'string', description: '目标技能组。' },
+                skillKey: {
+                  kind: 'string',
+                  description: '目标执行技能；身份在所属定义宿主内唯一，与展示组无关。',
+                },
                 stepKey: { kind: 'string', description: '目标步骤。' },
                 multiplier: { kind: 'number', description: '伤害乘数。' },
               },
@@ -7091,11 +7021,14 @@ export const definitionSchemas = {
                   options: ['multiplySkillCooldown'],
                   description: '乘算技能冷却时间。',
                 },
-                skillGroupKey: { kind: 'string', description: '目标技能组。' },
+                skillKey: {
+                  kind: 'string',
+                  description: '目标执行技能；身份在所属定义宿主内唯一，与展示组无关。',
+                },
                 branchKey: {
                   kind: 'string',
                   optional: true,
-                  description: '只修改指定分支；省略时修改整个技能组。',
+                  description: '只修改指定分支；省略时修改指定技能。',
                 },
                 multiplier: { kind: 'number', description: '冷却时间乘数。' },
               },
@@ -7108,11 +7041,9 @@ export const definitionSchemas = {
                   options: ['addSkillCooldownFrames'],
                   description: '为技能冷却时间增加固定帧数。',
                 },
-                skillGroupKey: { kind: 'string', description: '目标技能组。' },
                 skillKey: {
                   kind: 'string',
-                  optional: true,
-                  description: '多形态技能组只修改指定技能定义；省略时修改组内全部形态。',
+                  description: '目标执行技能；身份在所属定义宿主内唯一，与展示组无关。',
                 },
                 frames: { kind: 'number', description: '增加的冷却帧数。' },
                 condition: {
@@ -7174,7 +7105,7 @@ export const definitionSchemas = {
                   kind: 'enum',
                   options: ['modifyBasePanelStat'],
                   description:
-                    '修改静态面板属性的基础层。`flat` 在基础倍率前加算，`percent` 以小数累加到基础倍率。\r\n该边界对应原生八槽公式的基础加算与基础倍率，但名称描述实际运算，避免泄漏原生枚举名。',
+                    '修改静态面板属性的基础层。`flat` 在基础倍率前加算，`percent` 以小数累加到基础倍率。\n该边界对应原生八槽公式的基础加算与基础倍率，但名称描述实际运算，避免泄漏原生枚举名。',
                 },
                 stat: {
                   kind: 'enum',
@@ -7272,7 +7203,7 @@ export const definitionSchemas = {
                       options: ['skillHit'],
                       description: '触发器种类判别值。',
                     },
-                    skillGroupKey: { kind: 'string', description: '要匹配的技能组。' },
+                    skillKey: { kind: 'string', description: '要匹配的执行技能。' },
                     scope: {
                       kind: 'enum',
                       options: ['team', 'operator'],
@@ -7863,7 +7794,7 @@ export const definitionSchemas = {
                           options: ['skillHit'],
                           description: '触发器种类判别值。',
                         },
-                        skillGroupKey: { kind: 'string', description: '要匹配的技能组。' },
+                        skillKey: { kind: 'string', description: '要匹配的执行技能。' },
                         scope: {
                           kind: 'enum',
                           options: ['team', 'operator'],

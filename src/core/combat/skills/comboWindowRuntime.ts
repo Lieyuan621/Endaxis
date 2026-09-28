@@ -106,7 +106,7 @@ export class ComboWindowRuntime implements FrameRuntime {
     operatorId: string,
     nextSkillKey: string,
     blackboard: Readonly<Record<string, number>> = {},
-    nativeCondition?: ComboCastParameters & { readonly skillGroupKey: string },
+    nativeCondition?: ComboCastParameters & { readonly skillSlotKey: string },
   ): PendingComboWindow {
     if (operatorId.length === 0) throw new Error('combo window operatorId must not be empty');
     if (nextSkillKey.length === 0) throw new Error('combo window nextSkillKey must not be empty');
@@ -121,7 +121,7 @@ export class ComboWindowRuntime implements FrameRuntime {
         ? {}
         : {
             nativeCondition: Object.freeze({
-              skillGroupKey: nativeCondition.skillGroupKey,
+              skillSlotKey: nativeCondition.skillSlotKey,
               inputTarget: Object.freeze({ ...nativeCondition.inputTarget }),
               triggerTarget:
                 nativeCondition.triggerTarget === null
@@ -180,7 +180,7 @@ export class ComboWindowRuntime implements FrameRuntime {
   consume(
     operatorId: string,
     skillKey: string,
-    nativeSkillGroupKey?: string,
+    nativeSkillSlotKey?: string,
     skillCastId?: number,
     sourceActionId?: string,
   ): ComboWindowConsumeResult {
@@ -196,7 +196,7 @@ export class ComboWindowRuntime implements FrameRuntime {
     if (
       candidate.nativeCondition === undefined
         ? candidate.nextSkillKey !== skillKey
-        : candidate.nativeCondition.skillGroupKey !== nativeSkillGroupKey
+        : candidate.nativeCondition.skillSlotKey !== nativeSkillSlotKey
     ) {
       return { consumed: false, reason: 'skillStageMismatch', expected: candidate };
     }

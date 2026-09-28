@@ -1190,7 +1190,7 @@ describe('attachBuffLifecycleSequences', () => {
       [],
       [
         {
-          skillGroupKey: 'battleSkill',
+          skillSlotKey: 'battleSkill',
           targetSkillKey: 'battleSkillDuringUltimate',
           revertedSkillKey: 'battleSkill',
           inheritOriginSkillCooldownProgress: true,
@@ -1228,7 +1228,7 @@ describe('attachBuffLifecycleSequences', () => {
         [],
         [
           {
-            skillGroupKey: 'battleSkill',
+            skillSlotKey: 'battleSkill',
             targetSkillKey: 'ultimate-form',
             revertedSkillKey: 'normal-form',
             inheritOriginSkillCooldownProgress: true,

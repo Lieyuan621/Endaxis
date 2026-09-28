@@ -2527,7 +2527,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill2ActionGraph = {
         action: {
           kind: 'changeSkillSlot',
           parameters: {
-            skillGroupKey: 'ultimate',
+            skillSlotKey: 'ultimate',
             targetSkillKey: 'chr_0032_lizhiyan_ultimate_skill',
             inheritOriginSkillCooldownProgress: false,
             lifetime: 'infinite',
@@ -6151,7 +6151,7 @@ const arcaneBuff24: SkillBuffDefinition = {
   actionGraph: arcaneBuff24ActionGraph,
   skillSlotReplacements: [
     {
-      skillGroupKey: 'ultimate',
+      skillSlotKey: 'ultimate',
       targetSkillKey: 'chr_0032_lizhiyan_ultimate_skill2',
       revertedSkillKey: 'chr_0032_lizhiyan_ultimate_skill',
       inheritOriginSkillCooldownProgress: false,
@@ -6498,7 +6498,7 @@ const arcaneBuff26: SkillBuffDefinition = {
   actionGraph: arcaneBuff26ActionGraph,
   skillSlotReplacements: [
     {
-      skillGroupKey: 'ultimate',
+      skillSlotKey: 'ultimate',
       targetSkillKey: 'chr_0032_lizhiyan_ultimate_skill2',
       revertedSkillKey: 'chr_0032_lizhiyan_ultimate_skill',
       inheritOriginSkillCooldownProgress: false,
@@ -6760,8 +6760,7 @@ export const arcane: OperatorDefinition = {
   skillGroups: [
     {
       key: 'basicAttack',
-      skillType: 'basicAttack',
-      levelSource: 'basicAttack',
+      operationType: 'basicAttack',
       skills: [
         arcaneChr_0032_lizhiyan_attack1,
         arcaneChr_0032_lizhiyan_attack2,
@@ -6792,8 +6791,7 @@ export const arcane: OperatorDefinition = {
     },
     {
       key: 'finisher',
-      skillType: 'finisher',
-      levelSource: 'basicAttack',
+      operationType: 'finisher',
       skills: arcaneChr_0032_lizhiyan_power_attack,
       presentationVariants: [
         {
@@ -6818,8 +6816,7 @@ export const arcane: OperatorDefinition = {
     },
     {
       key: 'plungingAttack',
-      skillType: 'plungingAttack',
-      levelSource: 'basicAttack',
+      operationType: 'plungingAttack',
       skills: arcaneChr_0032_lizhiyan_plunging_attack_end,
       presentationVariants: [
         {
@@ -6844,8 +6841,7 @@ export const arcane: OperatorDefinition = {
     },
     {
       key: 'battleSkill',
-      skillType: 'battleSkill',
-      levelSource: 'battleSkill',
+      operationType: 'battleSkill',
       skills: arcaneChr_0032_lizhiyan_normal_skill,
       presentationVariants: [
         {
@@ -6870,8 +6866,7 @@ export const arcane: OperatorDefinition = {
     },
     {
       key: 'comboSkill',
-      skillType: 'comboSkill',
-      levelSource: 'comboSkill',
+      operationType: 'comboSkill',
       skills: arcaneChr_0032_lizhiyan_combo_skill,
       presentationVariants: [
         {
@@ -6896,11 +6891,13 @@ export const arcane: OperatorDefinition = {
     },
     {
       key: 'ultimate',
-      skillType: 'ultimate',
-      levelSource: 'ultimate',
+      operationType: 'ultimate',
       skills: arcaneChr_0032_lizhiyan_ultimate_skill,
+      placementSequenceSkillKeys: [
+        'chr_0032_lizhiyan_ultimate_skill',
+        'chr_0032_lizhiyan_ultimate_skill2',
+      ],
       replacementSkills: [arcaneChr_0032_lizhiyan_ultimate_skill2],
-      replacementSkillPlacements: { chr_0032_lizhiyan_ultimate_skill2: 'standard' },
       presentationVariants: [
         {
           key: 'int',
@@ -6979,7 +6976,6 @@ export const arcane: OperatorDefinition = {
       modifiers: [
         {
           kind: 'addSkillCooldownFrames',
-          skillGroupKey: 'comboSkill',
           frames: -180,
           condition: {
             kind: 'deckAttributeCompare',
@@ -6987,6 +6983,7 @@ export const arcane: OperatorDefinition = {
             operator: 'greaterOrEqual',
             right: 'will',
           },
+          skillKey: 'chr_0032_lizhiyan_combo_skill',
         },
       ],
       passiveSkills: [arcanePassive2],
@@ -7005,35 +7002,34 @@ export const arcane: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'atk_scale_touch',
           operation: 'multiply',
           value: 1.3,
+          skillKey: 'chr_0032_lizhiyan_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'atk_scale_boom',
           operation: 'multiply',
           value: 1.3,
+          skillKey: 'chr_0032_lizhiyan_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'atk_scale_laser1',
           operation: 'multiply',
           value: 1.3,
+          skillKey: 'chr_0032_lizhiyan_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'atk_scale_laser2',
           operation: 'multiply',
           value: 1.3,
+          skillKey: 'chr_0032_lizhiyan_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'atb_return_wisd',
           operation: 'add',
           value: 10,
@@ -7043,10 +7039,10 @@ export const arcane: OperatorDefinition = {
             operator: 'greaterOrEqual',
             right: 'will',
           },
+          skillKey: 'chr_0032_lizhiyan_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'rate_pre',
           operation: 'add',
           value: 0.06,
@@ -7056,6 +7052,7 @@ export const arcane: OperatorDefinition = {
             operator: 'less',
             right: 'will',
           },
+          skillKey: 'chr_0032_lizhiyan_combo_skill',
         },
       ],
     },
@@ -7079,14 +7076,12 @@ export const arcane: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
-          skillGroupKey: 'ultimate',
           skillKey: 'chr_0032_lizhiyan_ultimate_skill',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
         },
         {
           kind: 'multiplySkillCost',
-          skillGroupKey: 'ultimate',
           skillKey: 'chr_0032_lizhiyan_ultimate_skill2',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
@@ -7112,7 +7107,6 @@ export const arcane: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           skillKey: 'chr_0032_lizhiyan_ultimate_skill2',
           blackboardKey: 'atk_scale',
           operation: 'multiply',
@@ -7120,7 +7114,6 @@ export const arcane: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           skillKey: 'chr_0032_lizhiyan_ultimate_skill2',
           blackboardKey: 'cd_minus',
           operation: 'add',

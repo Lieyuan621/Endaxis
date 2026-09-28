@@ -51,7 +51,16 @@ export function compileOperatorComboSkillConditions(
     );
     if (matches.length !== 1 || matches[0]!.skill.skillType !== 'comboSkill')
       throw new Error(`${p}.skillKey must resolve to exactly one combo skill`);
-    const { group, skill } = matches[0]!;
+    const { skill } = matches[0]!;
+    const slots =
+      operator.skillSlots?.filter(
+        slot =>
+          slot.baseSkillKey === skill.key ||
+          slot.stableSkillKeys?.includes(skill.key) ||
+          slot.replacementSkillKeys.includes(skill.key),
+      ) ?? [];
+    if (slots.length !== 1)
+      throw new Error(`${p}.skillKey must belong to exactly one native skill slot`);
     if (skill.levelSource === undefined)
       throw new Error(`${p}.skillKey requires an explicit levelSource`);
     const level = build.skillLevels[skill.levelSource];
@@ -59,7 +68,7 @@ export function compileOperatorComboSkillConditions(
       throw new Error(`${p} requires a positive integer level for '${skill.levelSource}'`);
     return {
       key: condition.key,
-      skillGroupKey: group.key,
+      skillSlotKey: slots[0]!.key,
       skillKey: condition.skillKey,
       event: condition.event,
       immediately: condition.immediately,

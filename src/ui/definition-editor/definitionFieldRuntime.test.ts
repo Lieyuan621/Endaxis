@@ -9,6 +9,17 @@ import {
 import { perlica } from '../../data/operators/perlica.generated';
 
 describe('definition field command boundary', () => {
+  it('separates group operation fields from execution skill fields', () => {
+    const group = fieldSchemaForValue(definitionSchemas.skillGroup, perlica.skillGroups[0]);
+    if (group.kind !== 'object') throw new Error('expected group fields');
+    expect(group.fields.operationType?.kind).toBe('enum');
+    expect(group.fields).not.toHaveProperty('skillType');
+    expect(group.fields).not.toHaveProperty('levelSource');
+    const skill = fieldSchemaForValue(definitionSchemas.skill, { skillType: 'battleSkill' });
+    if (skill.kind !== 'object') throw new Error('expected skill fields');
+    expect(skill.fields.skillType?.kind).toBe('enum');
+    expect(skill.fields.levelSource?.kind).toBe('enum');
+  });
   it('preserves required nullable skill routes instead of treating null as a removable field', () => {
     const skillSchema = fieldSchemaForValue(definitionSchemas.skill, { skillType: 'basicAttack' });
     if (skillSchema.kind !== 'object') throw new Error('expected skill fields');

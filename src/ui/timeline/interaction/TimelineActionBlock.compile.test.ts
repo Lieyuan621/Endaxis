@@ -6,7 +6,7 @@ const source = rawSource.replace(/\r\n/g, '\n');
 
 it('matches main label visibility and exposes selection semantics', () => {
   expect(source).toContain('if (props.pxPerFrame * PROJECT_FPS >= 30) return props.label;');
-  expect(source).toContain('TYPE_SHORTHAND[props.skillType]');
+  expect(source).toContain('TYPE_SHORTHAND[props.operationType]');
   expect(source).toMatch(/<button\s+type="button"/);
   expect(source).toContain(':aria-pressed="selected"');
   expect(source).not.toContain('<EaButton');

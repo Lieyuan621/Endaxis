@@ -784,7 +784,7 @@ export class StandardPlayerDamageEnvironment {
       sourceOperatorId: operatorId,
       castId: 'program' in context ? context.castId : undefined,
       skillId: program?.skillId,
-      executingSkillGroupKey: program?.skillGroupKey || undefined,
+      executingSkillId: program?.executionSkillId ?? program?.skillId,
       skillType: program?.skillType,
       ...('program' in context
         ? {}

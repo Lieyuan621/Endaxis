@@ -36,12 +36,14 @@ export function resolveOperatorMaxUltimateEnergy(
   build: OperatorInstanceDocument,
 ): number | undefined {
   let skills = listOperatorSkillDefinitionBindings(operator).map(
-    ({ group, skill, routedReplacement }) => ({
+    ({ skill, routedReplacement }) => ({
       skillId: skill.key,
-      skillGroupKey: group.key,
       executionSkillId: routedReplacement?.executionSkillKey,
-      skillType: skill.skillType ?? group.skillType,
-      costs: compileSkillCosts(skill, build.skillLevels[skill.levelSource ?? group.key] ?? 1),
+      skillType: skill.skillType,
+      costs: compileSkillCosts(
+        skill,
+        skill.levelSource === undefined ? 1 : (build.skillLevels[skill.levelSource] ?? 1),
+      ),
     }),
   );
   if (

@@ -247,8 +247,20 @@ export const SKILL_TYPES = [
   'dodge',
 ] as const;
 
-/** 技能库、养成等级和战斗事件共同使用的技能大类。 */
+/** 实际执行技能的战斗类别；不用于判定玩家输入或技能块展示。 */
 export type SkillType = (typeof SKILL_TYPES)[number];
+
+/** 玩家可放置的操作类别，与执行技能的战斗分类独立。 */
+export const OPERATION_TYPES = [
+  'basicAttack',
+  'battleSkill',
+  'comboSkill',
+  'ultimate',
+  'finisher',
+  'plungingAttack',
+  'dodge',
+] as const;
+export type OperationType = (typeof OPERATION_TYPES)[number];
 
 /** 可从干员养成方案读取等级的四类主动技能。 */
 export const SKILL_LEVEL_SOURCES = [
@@ -262,7 +274,7 @@ export const SKILL_LEVEL_SOURCES = [
   'ultimate',
 ] as const;
 
-/** 指明一个技能组从干员养成方案的哪个字段读取等级。 */
+/** 指明具体技能从干员养成方案的哪个字段读取等级。 */
 export type SkillLevelSource = (typeof SKILL_LEVEL_SOURCES)[number];
 
 /** 宽松生成结果可能明确缺少的能力类别。 */

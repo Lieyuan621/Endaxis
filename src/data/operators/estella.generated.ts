@@ -2804,8 +2804,7 @@ export const estella: OperatorDefinition = {
   skillGroups: [
     {
       key: 'basicAttack',
-      skillType: 'basicAttack',
-      levelSource: 'basicAttack',
+      operationType: 'basicAttack',
       skills: [
         estellaChr_0021_whiten_attack1,
         estellaChr_0021_whiten_attack2,
@@ -2813,36 +2812,19 @@ export const estella: OperatorDefinition = {
         estellaChr_0021_whiten_attack4,
       ],
     },
-    {
-      key: 'finisher',
-      skillType: 'finisher',
-      levelSource: 'basicAttack',
-      skills: estellaChr_0021_whiten_power_attack,
-    },
+    { key: 'finisher', operationType: 'finisher', skills: estellaChr_0021_whiten_power_attack },
     {
       key: 'plungingAttack',
-      skillType: 'plungingAttack',
-      levelSource: 'basicAttack',
+      operationType: 'plungingAttack',
       skills: estellaChr_0021_whiten_plunging_attack_end,
     },
     {
       key: 'battleSkill',
-      skillType: 'battleSkill',
-      levelSource: 'battleSkill',
+      operationType: 'battleSkill',
       skills: estellaChr_0021_whiten_normal_skill,
     },
-    {
-      key: 'ultimate',
-      skillType: 'ultimate',
-      levelSource: 'ultimate',
-      skills: estellaChr_0021_whiten_ultimate_skill,
-    },
-    {
-      key: 'comboSkill',
-      skillType: 'comboSkill',
-      levelSource: 'comboSkill',
-      skills: estellaChr_0021_whiten_combo_skill,
-    },
+    { key: 'ultimate', operationType: 'ultimate', skills: estellaChr_0021_whiten_ultimate_skill },
+    { key: 'comboSkill', operationType: 'comboSkill', skills: estellaChr_0021_whiten_combo_skill },
   ],
   dodgeSkill: estellaCommon_character_perfect_dodge,
   dashBuffs: [
@@ -2901,17 +2883,17 @@ export const estella: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'has_potential1',
           operation: 'assign',
           value: 1,
+          skillKey: 'chr_0021_whiten_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'rate_plus',
           operation: 'assign',
           value: 3,
+          skillKey: 'chr_0021_whiten_combo_skill',
         },
       ],
     },
@@ -2920,9 +2902,9 @@ export const estella: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
-          skillGroupKey: 'ultimate',
           resource: 'ultimateEnergy',
           multiplier: 0.9,
+          skillKey: 'chr_0021_whiten_ultimate_skill',
         },
       ],
     },
@@ -2931,17 +2913,17 @@ export const estella: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'distance',
           operation: 'assign',
           value: 12,
+          skillKey: 'chr_0021_whiten_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'dmg_up',
           operation: 'assign',
           value: 0.4,
+          skillKey: 'chr_0021_whiten_normal_skill',
         },
       ],
     },

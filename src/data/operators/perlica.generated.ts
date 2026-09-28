@@ -1394,8 +1394,7 @@ export const perlica: OperatorDefinition = {
   skillGroups: [
     {
       key: 'basicAttack',
-      skillType: 'basicAttack',
-      levelSource: 'basicAttack',
+      operationType: 'basicAttack',
       skills: [
         perlicaChr_0004_pelica_attack1,
         perlicaChr_0004_pelica_attack2,
@@ -1403,36 +1402,19 @@ export const perlica: OperatorDefinition = {
         perlicaChr_0004_pelica_attack4,
       ],
     },
-    {
-      key: 'finisher',
-      skillType: 'finisher',
-      levelSource: 'basicAttack',
-      skills: perlicaChr_0004_pelica_power_attack,
-    },
+    { key: 'finisher', operationType: 'finisher', skills: perlicaChr_0004_pelica_power_attack },
     {
       key: 'plungingAttack',
-      skillType: 'plungingAttack',
-      levelSource: 'basicAttack',
+      operationType: 'plungingAttack',
       skills: perlicaChr_0004_pelica_plunging_attack_end,
     },
     {
       key: 'battleSkill',
-      skillType: 'battleSkill',
-      levelSource: 'battleSkill',
+      operationType: 'battleSkill',
       skills: perlicaChr_0004_pelica_normal_skill,
     },
-    {
-      key: 'comboSkill',
-      skillType: 'comboSkill',
-      levelSource: 'comboSkill',
-      skills: perlicaChr_0004_pelica_combo_skill,
-    },
-    {
-      key: 'ultimate',
-      skillType: 'ultimate',
-      levelSource: 'ultimate',
-      skills: perlicaChr_0004_pelica_ultimate_skill,
-    },
+    { key: 'comboSkill', operationType: 'comboSkill', skills: perlicaChr_0004_pelica_combo_skill },
+    { key: 'ultimate', operationType: 'ultimate', skills: perlicaChr_0004_pelica_ultimate_skill },
   ],
   dodgeSkill: perlicaCommon_character_perfect_dodge,
   dashBuffs: [
@@ -1480,10 +1462,10 @@ export const perlica: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'talent2',
           operation: 'assign',
           value: 1,
+          skillKey: 'chr_0004_pelica_combo_skill',
         },
       ],
     },
@@ -1494,10 +1476,10 @@ export const perlica: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'duration',
           operation: 'multiply',
           value: 1.75,
+          skillKey: 'chr_0004_pelica_combo_skill',
         },
       ],
     },
@@ -1506,9 +1488,9 @@ export const perlica: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
-          skillGroupKey: 'ultimate',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
+          skillKey: 'chr_0004_pelica_ultimate_skill',
         },
       ],
     },
@@ -1526,10 +1508,10 @@ export const perlica: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'extra_scaling',
           operation: 'assign',
           value: 1.33,
+          skillKey: 'chr_0004_pelica_combo_skill',
         },
       ],
     },
@@ -1538,10 +1520,10 @@ export const perlica: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'crit',
           operation: 'add',
           value: 0.3,
+          skillKey: 'chr_0004_pelica_ultimate_skill',
         },
       ],
     },

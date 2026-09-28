@@ -242,8 +242,7 @@ async function simulate(slug: string, tier: number, sequences: readonly ProbeSeq
     skillGroups: [
       {
         key: 'basicAttack',
-        skillType: 'basicAttack' as SkillType,
-        levelSource: 'basicAttack',
+        operationType: 'basicAttack' as SkillType,
         skills: (() => {
           const nodes: Record<string, ActionGraphNode> = {};
           const scheduledSequences = [...sequences]

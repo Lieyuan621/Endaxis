@@ -43,8 +43,8 @@ describe('基础攻击技能块窗口', () => {
     selectSingleSkillTimelineBlockFrames(
       definitions,
       [
-        { skillType: 'basicAttack', skillKeys: ['attack', 'next'], replacementPlacements: {} },
-        { skillType: 'battleSkill', skillKeys: ['battle'], replacementPlacements: {} },
+        { operationType: 'basicAttack', skillKeys: ['attack', 'next'], replacementPlacements: {} },
+        { operationType: 'battleSkill', skillKeys: ['battle'], replacementPlacements: {} },
       ],
       new Set(),
     );
@@ -70,7 +70,7 @@ describe('基础攻击技能块窗口', () => {
 
     selectBasicAttackTimelineBlockFrames(definitions, [
       {
-        skillType: 'basicAttack',
+        operationType: 'basicAttack',
         skillKeys: ['native_attack1', 'native_attack2'],
         variants: [],
       },
@@ -104,7 +104,7 @@ describe('基础攻击技能块窗口', () => {
 
     selectBasicAttackTimelineBlockFrames(definitions, [
       {
-        skillType: 'basicAttack',
+        operationType: 'basicAttack',
         skillKeys: ['native_attack1', 'native_attack2'],
         variants: [],
       },
@@ -131,7 +131,7 @@ describe('基础攻击技能块窗口', () => {
 
     selectBasicAttackTimelineBlockFrames(definitions, [
       {
-        skillType: 'basicAttack',
+        operationType: 'basicAttack',
         skillKeys: ['native_attack1', 'native_attack2'],
         variants: [],
       },
@@ -167,9 +167,9 @@ describe('单技能入口的预览宽度', () => {
     selectSingleSkillTimelineBlockFrames(
       definitions,
       [
-        { skillType: 'comboSkill', skillKeys: ['combo'], replacementPlacements: {} },
+        { operationType: 'comboSkill', skillKeys: ['combo'], replacementPlacements: {} },
         {
-          skillType: 'basicAttack',
+          operationType: 'basicAttack',
           skillKeys: ['internal'],
           variants: [{ skillKeys: ['attack'] }],
           replacementPlacements: { internal: 'internal' },
@@ -207,11 +207,11 @@ describe('单技能入口的预览宽度', () => {
       definitions,
       [
         {
-          skillType: 'comboSkill',
+          operationType: 'comboSkill',
           skillKeys: ['native.first', 'native.second'],
           replacementPlacements: { 'native.second': 'sequence' },
         },
-        { skillType: 'battleSkill', skillKeys: ['native.battle'], replacementPlacements: {} },
+        { operationType: 'battleSkill', skillKeys: ['native.battle'], replacementPlacements: {} },
       ],
       new Set(['native.second']),
     );
@@ -243,10 +243,11 @@ describe('单技能入口的预览宽度', () => {
       definitions,
       [
         {
-          skillType: 'battleSkill',
-          skillKeys: ['native.stance', 'native.internal', 'native.stop'],
-          replacementPlacements: { 'native.internal': 'internal', 'native.stop': 'standard' },
+          operationType: 'battleSkill',
+          skillKeys: ['native.stance', 'native.internal'],
+          replacementPlacements: { 'native.internal': 'internal' },
         },
+        { operationType: 'battleSkill', skillKeys: ['native.stop'], replacementPlacements: {} },
       ],
       new Set(['native.internal', 'native.stop']),
     );
@@ -260,17 +261,19 @@ describe('单技能入口的预览宽度', () => {
     });
     const groups = [
       {
-        skillType: 'battleSkill' as const,
-        skillKeys: ['native.stance', 'native.internal', 'native.stop'],
+        operationType: 'battleSkill' as const,
+        skillKeys: ['native.stance', 'native.internal'],
         replacementPlacements: {
           'native.internal': 'internal' as const,
-          'native.stop': 'standard' as const,
         },
       },
     ];
     selectSingleSkillTimelineBlockFrames(
       definitions,
-      groups,
+      [
+        ...groups,
+        { operationType: 'battleSkill', skillKeys: ['native.stop'], replacementPlacements: {} },
+      ],
       new Set(['native.internal', 'native.stop']),
     );
     expect(definitions.get('native.stance')?.timelineBlockFrames).toBe(50);
@@ -321,9 +324,9 @@ describe('单技能入口的预览宽度', () => {
       definitions,
       [
         {
-          skillType: 'comboSkill',
-          skillKeys: ['native.base', 'native.floating'],
-          replacementPlacements: { 'native.floating': 'standard' },
+          operationType: 'comboSkill',
+          skillKeys: ['native.floating'],
+          replacementPlacements: {},
         },
       ],
       new Set(['native.floating']),

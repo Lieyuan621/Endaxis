@@ -79,7 +79,7 @@ describe('generated basic attack chain input timing', () => {
       scenario: battle.scenario,
       trackIndex: 0,
       operator: operators.typhoeus,
-      skillGroupKey: 'comboSkill',
+      skillGroupKey: 'floatingComboSkill',
       skillKey: 'chr_0034_typhoea_combo_skillfloating',
       startFrame: 30,
       ids: { allocate: () => 'floating:combo' },
@@ -152,8 +152,7 @@ describe('generated basic attack chain input timing', () => {
       scenario: battleSkill.scenario,
       trackIndex: 0,
       operator: operators.typhoeus,
-      skillGroupKey: 'basicAttack',
-      variantKey: 'enhancedBasicAttack',
+      skillGroupKey: 'enhancedBasicAttack',
       startFrame: 30,
       ids: { allocate: () => `typhoeus:floating:${nextId++}` },
     });
@@ -221,8 +220,7 @@ describe('generated basic attack chain input timing', () => {
       scenario,
       trackIndex: 0,
       operator: operators.yvonne,
-      skillGroupKey: 'basicAttack',
-      variantKey: 'enhancedBasicAttack',
+      skillGroupKey: 'enhancedBasicAttack',
       startFrame: 1,
       ids: { allocate: () => `fallback:${nextId++}` },
     });
@@ -265,8 +263,7 @@ describe('generated basic attack chain input timing', () => {
         scenario,
         trackIndex: 0,
         operator: operators.yvonne,
-        skillGroupKey: 'basicAttack',
-        variantKey: 'enhancedBasicAttack',
+        skillGroupKey: 'enhancedBasicAttack',
         startFrame,
         ids: { allocate: () => `enhanced:${nextId++}` },
       });

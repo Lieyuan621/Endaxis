@@ -130,6 +130,11 @@ describe('next generated Arcane definition', () => {
 
   it('owns the arcana slot replacement in Buff lifecycle state', () => {
     const group = arcane.skillGroups.find(candidate => candidate.key === 'ultimate');
+    expect(group?.placementSequenceSkillKeys).toEqual([
+      'chr_0032_lizhiyan_ultimate_skill',
+      'chr_0032_lizhiyan_ultimate_skill2',
+    ]);
+    expect(group?.replacementSkillPlacements).toBeUndefined();
     expect(group?.replacementSkills?.map(skill => skill.key)).toEqual([
       'chr_0032_lizhiyan_ultimate_skill2',
     ]);
@@ -142,7 +147,7 @@ describe('next generated Arcane definition', () => {
         expect.objectContaining({
           skillSlotReplacements: [
             expect.objectContaining({
-              skillGroupKey: 'ultimate',
+              skillSlotKey: 'ultimate',
               targetSkillKey: 'chr_0032_lizhiyan_ultimate_skill2',
               revertedSkillKey: 'chr_0032_lizhiyan_ultimate_skill',
             }),
@@ -155,7 +160,7 @@ describe('next generated Arcane definition', () => {
   it('keeps form conditions, corrosion upgrades, and passive patches typed', () => {
     expect(arcane.talents[0]?.modifiers).toContainEqual({
       kind: 'addSkillCooldownFrames',
-      skillGroupKey: 'comboSkill',
+      skillKey: 'chr_0032_lizhiyan_combo_skill',
       frames: -180,
       condition: {
         kind: 'deckAttributeCompare',

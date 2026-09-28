@@ -1302,7 +1302,7 @@ describe('CombatRuntimeAssembly', () => {
           sequence: chainEntry('slot-rewrite-source-identity', [
             {
               kind: 'changeSkillSlot',
-              parameters: { skillGroupKey: 'battleSkill', targetSkillKey: 'replacement' },
+              parameters: { skillSlotKey: 'battleSkill', targetSkillKey: 'replacement' },
             },
           ]),
         },
@@ -1313,7 +1313,7 @@ describe('CombatRuntimeAssembly', () => {
     const args: Parameters<typeof createAssembly> = [[base, followup, replacement]];
     args[9] = [
       {
-        skillGroupKey: 'battleSkill',
+        skillSlotKey: 'battleSkill',
         baseSkillKey: 'base',
         stableInputSkillKeys: ['base', 'followup'],
         replacementSkillKeys: ['replacement'],
@@ -1797,7 +1797,7 @@ describe('CombatRuntimeAssembly', () => {
       undefined,
       [
         {
-          skillGroupKey: 'battleSkill',
+          skillSlotKey: 'battleSkill',
           baseSkillKey: 'battleSkill',
           replacementSkillKeys: ['battleSkillDuringUltimate'],
         },
@@ -1861,7 +1861,7 @@ describe('CombatRuntimeAssembly', () => {
       undefined,
       [
         {
-          skillGroupKey: 'comboSkill',
+          skillSlotKey: 'comboSkill',
           baseSkillKey: 'combo-stage-1',
           stableInputSkillKeys: ['combo-stage-1', 'combo-stage-2'],
           replacementSkillKeys: [],
@@ -1896,7 +1896,7 @@ describe('CombatRuntimeAssembly', () => {
             {
               kind: 'changeSkillSlot',
               parameters: {
-                skillGroupKey: 'comboSkill',
+                skillSlotKey: 'comboSkill',
                 targetSkillKey: 'enhancedComboSkill',
                 inheritOriginSkillCooldownProgress: true,
               },
@@ -1923,7 +1923,7 @@ describe('CombatRuntimeAssembly', () => {
       undefined,
       [
         {
-          skillGroupKey: 'comboSkill',
+          skillSlotKey: 'comboSkill',
           baseSkillKey: 'comboSkill',
           replacementSkillKeys: ['enhancedComboSkill'],
         },
@@ -1942,7 +1942,7 @@ describe('CombatRuntimeAssembly', () => {
       'comboSkill',
       {},
       {
-        skillGroupKey: 'comboSkill',
+        skillSlotKey: 'comboSkill',
         inputTarget: { kind: 'enemy' },
         triggerTarget: null,
         assignPairs: null,
@@ -2151,7 +2151,7 @@ describe('CombatRuntimeAssembly', () => {
           sequence: chainEntry('frame-zero-slot-arcana', [
             {
               kind: 'changeSkillSlot',
-              parameters: { skillGroupKey: 'ultimate', targetSkillKey: 'arcana' },
+              parameters: { skillSlotKey: 'ultimate', targetSkillKey: 'arcana' },
             },
           ]),
         },
@@ -2171,7 +2171,7 @@ describe('CombatRuntimeAssembly', () => {
           sequence: chainEntry('frame-zero-slot-ultimate', [
             {
               kind: 'changeSkillSlot',
-              parameters: { skillGroupKey: 'ultimate', targetSkillKey: 'ultimate' },
+              parameters: { skillSlotKey: 'ultimate', targetSkillKey: 'ultimate' },
             },
           ]),
         },
@@ -2189,7 +2189,7 @@ describe('CombatRuntimeAssembly', () => {
       undefined,
       [
         {
-          skillGroupKey: 'ultimate',
+          skillSlotKey: 'ultimate',
           baseSkillKey: 'ultimate',
           replacementSkillKeys: ['arcana'],
         },
@@ -2211,7 +2211,7 @@ describe('CombatRuntimeAssembly', () => {
     expect(
       assembly.receipt.entries
         .filter(entry => entry.event === 'SkillSlotChanged')
-        .map(entry => [entry.data?.skillGroupKey, entry.data?.targetSkillKey]),
+        .map(entry => [entry.data?.skillSlotKey, entry.data?.targetSkillKey]),
     ).toEqual([
       ['ultimate', 'arcana'],
       ['ultimate', 'ultimate'],
@@ -3094,7 +3094,7 @@ describe('CombatRuntimeAssembly', () => {
             {
               kind: 'changeSkillSlot',
               parameters: {
-                skillGroupKey: 'battleSkill',
+                skillSlotKey: 'battleSkill',
                 targetSkillKey: 'battleSkillEnd',
                 inheritOriginSkillCooldownProgress: true,
               },
@@ -3122,7 +3122,7 @@ describe('CombatRuntimeAssembly', () => {
       undefined,
       [
         {
-          skillGroupKey: 'battleSkill',
+          skillSlotKey: 'battleSkill',
           baseSkillKey: 'battleSkill',
           replacementSkillKeys: ['battleSkillEnd'],
         },
@@ -3165,7 +3165,7 @@ describe('CombatRuntimeAssembly', () => {
             {
               kind: 'changeSkillSlot',
               parameters: {
-                skillGroupKey: 'battle',
+                skillSlotKey: 'battle',
                 targetSkillKey: 'enhanced',
                 lifetime: 'finishByAction',
                 inheritOriginSkillCooldownProgress: true,
@@ -3186,7 +3186,7 @@ describe('CombatRuntimeAssembly', () => {
       undefined,
       undefined,
       undefined,
-      [{ skillGroupKey: 'battle', baseSkillKey: 'base', replacementSkillKeys: ['enhanced'] }],
+      [{ skillSlotKey: 'battle', baseSkillKey: 'base', replacementSkillKeys: ['enhanced'] }],
     );
     expect(assembly.tryStartSkill('operator', 'base', 'cast')).toBe(true);
     const state = assembly.stateGraph.operators.get('operator')!.ability;
@@ -3218,7 +3218,7 @@ describe('CombatRuntimeAssembly', () => {
             {
               kind: 'changeSkillSlot',
               parameters: {
-                skillGroupKey: 'comboSkill',
+                skillSlotKey: 'comboSkill',
                 targetSkillKey: 'enhancedComboSkill',
                 inheritOriginSkillCooldownProgress: true,
               },
@@ -3239,7 +3239,7 @@ describe('CombatRuntimeAssembly', () => {
       undefined,
       [
         {
-          skillGroupKey: 'comboSkill',
+          skillSlotKey: 'comboSkill',
           baseSkillKey: 'comboSkill',
           replacementSkillKeys: ['enhancedComboSkill'],
         },
@@ -3251,7 +3251,7 @@ describe('CombatRuntimeAssembly', () => {
       expect.objectContaining({
         event: 'SkillSlotChanged',
         data: expect.objectContaining({
-          skillGroupKey: 'comboSkill',
+          skillSlotKey: 'comboSkill',
           previousSkillKey: 'comboSkill',
           targetSkillKey: 'enhancedComboSkill',
           inheritOriginSkillCooldownProgress: true,
@@ -4695,7 +4695,7 @@ describe('CombatRuntimeAssembly', () => {
       undefined,
       undefined,
       undefined,
-      [{ skillGroupKey: 'battleSkill', baseSkillKey: 'pursuit', replacementSkillKeys: [] }],
+      [{ skillSlotKey: 'battleSkill', baseSkillKey: 'pursuit', replacementSkillKeys: [] }],
       undefined,
       undefined,
       undefined,
@@ -5662,7 +5662,7 @@ describe('CombatRuntimeAssembly', () => {
           skills: [program],
           skillSlotGroups: [
             {
-              skillGroupKey: 'battleSkill',
+              skillSlotKey: 'battleSkill',
               baseSkillKey: 'skill',
               replacementSkillKeys: [],
             },

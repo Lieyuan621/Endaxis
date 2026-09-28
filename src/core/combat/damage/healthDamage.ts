@@ -30,8 +30,8 @@ export type HealthDamageTargetEvent = Extract<HealthDamageEvent, 'beforeTakeDama
 
 /** 生命伤害事件共享的伤害包、请求值和实际值。 */
 export interface HealthDamageEventPayload {
-  /** Endaxis 执行程序的组键，不是原生字段或继承来源；仅输出方携带，不按 skillId 推断。 */
-  readonly executingSkillGroupKey?: string;
+  /** 当前执行技能身份；仅输出方携带，不以展示分组匹配事件。 */
+  readonly executingSkillId?: string;
   /** 来源动作的施法身份；null 表示确实没有继承，undefined 表示生产端尚未接入。 */
   readonly skillCastInfo?: CombatSkillCastInfo | null;
   readonly sourceId: string;
@@ -115,7 +115,7 @@ export interface HealthDamageReceiptDetail {
 /** 在正确事件边界写入一次生命伤害所需的状态和端口。 */
 export interface ExecuteHealthDamageInput {
   readonly producedBy?: import('../receipt/combatReceipt').CombatObjectRef;
-  readonly executingSkillGroupKey?: HealthDamageEventPayload['executingSkillGroupKey'];
+  readonly executingSkillId?: HealthDamageEventPayload['executingSkillId'];
   readonly skillCastInfo?: CombatSkillCastInfo | null;
   readonly sourceId: string;
   readonly targetId: string;
@@ -166,9 +166,7 @@ export function executeHealthDamage(input: ExecuteHealthDamageInput): HealthDama
   // TakeDamageContext 不含施法身份；只为原生 OutputDamageContext 分支附加来源。
   const sourceBeforePayload = {
     ...beforePayload,
-    ...(input.executingSkillGroupKey === undefined
-      ? {}
-      : { executingSkillGroupKey: input.executingSkillGroupKey }),
+    ...(input.executingSkillId === undefined ? {} : { executingSkillId: input.executingSkillId }),
     ...(input.skillCastInfo === undefined ? {} : { skillCastInfo: input.skillCastInfo }),
   };
 

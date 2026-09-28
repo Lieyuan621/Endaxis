@@ -2396,8 +2396,7 @@ export const fluorite: OperatorDefinition = {
   skillGroups: [
     {
       key: 'basicAttack',
-      skillType: 'basicAttack',
-      levelSource: 'basicAttack',
+      operationType: 'basicAttack',
       skills: [
         fluoriteChr_0022_bounda_attack1,
         fluoriteChr_0022_bounda_attack2,
@@ -2406,36 +2405,19 @@ export const fluorite: OperatorDefinition = {
         fluoriteChr_0022_bounda_attack4_1,
       ],
     },
-    {
-      key: 'finisher',
-      skillType: 'finisher',
-      levelSource: 'basicAttack',
-      skills: fluoriteChr_0022_bounda_power_attack,
-    },
+    { key: 'finisher', operationType: 'finisher', skills: fluoriteChr_0022_bounda_power_attack },
     {
       key: 'plungingAttack',
-      skillType: 'plungingAttack',
-      levelSource: 'basicAttack',
+      operationType: 'plungingAttack',
       skills: fluoriteChr_0022_bounda_plunging_attack_end,
     },
     {
       key: 'battleSkill',
-      skillType: 'battleSkill',
-      levelSource: 'battleSkill',
+      operationType: 'battleSkill',
       skills: fluoriteChr_0022_bounda_normal_skill,
     },
-    {
-      key: 'ultimate',
-      skillType: 'ultimate',
-      levelSource: 'ultimate',
-      skills: fluoriteChr_0022_bounda_ultimate_skill,
-    },
-    {
-      key: 'comboSkill',
-      skillType: 'comboSkill',
-      levelSource: 'comboSkill',
-      skills: fluoriteChr_0022_bounda_combo_skill,
-    },
+    { key: 'ultimate', operationType: 'ultimate', skills: fluoriteChr_0022_bounda_ultimate_skill },
+    { key: 'comboSkill', operationType: 'comboSkill', skills: fluoriteChr_0022_bounda_combo_skill },
   ],
   dodgeSkill: fluoriteCommon_character_perfect_dodge,
   dashBuffs: [
@@ -2501,17 +2483,17 @@ export const fluorite: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'duration_potential',
           operation: 'assign',
           value: 6,
+          skillKey: 'chr_0022_bounda_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'potential_lv',
           operation: 'assign',
           value: 3,
+          skillKey: 'chr_0022_bounda_normal_skill',
         },
       ],
     },
@@ -2520,9 +2502,9 @@ export const fluorite: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
-          skillGroupKey: 'ultimate',
           resource: 'ultimateEnergy',
           multiplier: 0.9,
+          skillKey: 'chr_0022_bounda_ultimate_skill',
         },
       ],
     },

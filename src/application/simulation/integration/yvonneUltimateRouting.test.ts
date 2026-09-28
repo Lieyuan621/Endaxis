@@ -35,8 +35,12 @@ function simulate(attacks: readonly { key: string; frame: number }[] = []) {
       scenario,
       trackIndex: 0,
       operator: yvonne,
-      skillGroupKey: cast.key === 'chr_0017_yvonne_ultimate_skill' ? 'ultimate' : 'basicAttack',
-      ...(cast.key.includes('_ult_attack') ? { variantKey: 'enhancedBasicAttack' } : {}),
+      skillGroupKey:
+        cast.key === 'chr_0017_yvonne_ultimate_skill'
+          ? 'ultimate'
+          : cast.key.includes('_ult_attack')
+            ? 'enhancedBasicAttack'
+            : 'basicAttack',
       skillKey: cast.key,
       startFrame: cast.frame,
       ids: { allocate: kind => `${kind}:${index}` },

@@ -552,7 +552,7 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
   const comboConditionPrograms = [
     {
       key: 'damage-condition',
-      skillGroupKey: 'combo',
+      skillSlotKey: 'combo',
       skillKey: 'combo',
       event: 'beforeOutputDamage' as const,
       immediately: false,
@@ -640,7 +640,7 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
       key: 'potential:skill-hit-buff:0',
       event: {
         kind: 'skillHit' as const,
-        skillGroupKey: 'battleSkill',
+        skillKey: 'skill',
         scope: 'operator' as const,
       },
       initialBlackboard: {},
@@ -655,7 +655,7 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
   const operatorProgram = {
     operatorId: 'operator',
     skills: [program, comboProgram],
-    skillSlotGroups: [{ skillGroupKey: 'combo', baseSkillKey: 'combo', replacementSkillKeys: [] }],
+    skillSlotGroups: [{ skillSlotKey: 'combo', baseSkillKey: 'combo', replacementSkillKeys: [] }],
     comboConditionPrograms,
     abilityEntityDefinitions: { restored_entity: abilityEntityDefinition },
     buffDefinitions,

@@ -2304,8 +2304,7 @@ export const ardelia: OperatorDefinition = {
   skillGroups: [
     {
       key: 'basicAttack',
-      skillType: 'basicAttack',
-      levelSource: 'basicAttack',
+      operationType: 'basicAttack',
       skills: [
         ardeliaChr_0025_ardelia_attack1,
         ardeliaChr_0025_ardelia_attack2,
@@ -2313,36 +2312,19 @@ export const ardelia: OperatorDefinition = {
         ardeliaChr_0025_ardelia_attack4,
       ],
     },
-    {
-      key: 'finisher',
-      skillType: 'finisher',
-      levelSource: 'basicAttack',
-      skills: ardeliaChr_0025_ardelia_power_attack,
-    },
+    { key: 'finisher', operationType: 'finisher', skills: ardeliaChr_0025_ardelia_power_attack },
     {
       key: 'plungingAttack',
-      skillType: 'plungingAttack',
-      levelSource: 'basicAttack',
+      operationType: 'plungingAttack',
       skills: ardeliaChr_0025_ardelia_plunging_attack_end,
     },
     {
       key: 'battleSkill',
-      skillType: 'battleSkill',
-      levelSource: 'battleSkill',
+      operationType: 'battleSkill',
       skills: ardeliaChr_0025_ardelia_normal_skill,
     },
-    {
-      key: 'comboSkill',
-      skillType: 'comboSkill',
-      levelSource: 'comboSkill',
-      skills: ardeliaChr_0025_ardelia_combo_skill,
-    },
-    {
-      key: 'ultimate',
-      skillType: 'ultimate',
-      levelSource: 'ultimate',
-      skills: ardeliaChr_0025_ardelia_ultimate_skill,
-    },
+    { key: 'comboSkill', operationType: 'comboSkill', skills: ardeliaChr_0025_ardelia_combo_skill },
+    { key: 'ultimate', operationType: 'ultimate', skills: ardeliaChr_0025_ardelia_ultimate_skill },
   ],
   dodgeSkill: ardeliaCommon_character_perfect_dodge,
   dashBuffs: [
@@ -2384,45 +2366,45 @@ export const ardelia: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'heal_scale',
           operation: 'assign',
           value: [0.38, 0.53, 0.75],
+          skillKey: 'chr_0025_ardelia_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'heal_value',
           operation: 'assign',
           value: [45, 63, 90],
+          skillKey: 'chr_0025_ardelia_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'heal_scale',
           operation: 'assign',
           value: [0.38, 0.53, 0.75],
+          skillKey: 'chr_0025_ardelia_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'heal_value',
           operation: 'assign',
           value: [45, 63, 90],
+          skillKey: 'chr_0025_ardelia_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'sheep_num',
           operation: 'assign',
           value: [3, 3, 3],
+          skillKey: 'chr_0025_ardelia_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'effect_prob',
           operation: 'assign',
           value: [0.1, 0.1, 0.1],
+          skillKey: 'chr_0025_ardelia_ultimate_skill',
         },
       ],
     },
@@ -2431,10 +2413,10 @@ export const ardelia: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'talent1',
           operation: 'assign',
           value: 1,
+          skillKey: 'chr_0025_ardelia_normal_skill',
         },
       ],
     },
@@ -2445,10 +2427,10 @@ export const ardelia: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'rate_vul_base',
           operation: 'add',
           value: 0.08,
+          skillKey: 'chr_0025_ardelia_normal_skill',
         },
       ],
     },
@@ -2457,17 +2439,17 @@ export const ardelia: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'potential2',
           operation: 'assign',
           value: 1,
+          skillKey: 'chr_0025_ardelia_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'potential2',
           operation: 'assign',
           value: 1,
+          skillKey: 'chr_0025_ardelia_ultimate_skill',
         },
       ],
     },
@@ -2476,17 +2458,17 @@ export const ardelia: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'potential3_duration',
           operation: 'assign',
           value: 1,
+          skillKey: 'chr_0025_ardelia_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'effect_prob',
           operation: 'multiply',
           value: 1.2,
+          skillKey: 'chr_0025_ardelia_ultimate_skill',
         },
       ],
     },
@@ -2495,9 +2477,9 @@ export const ardelia: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
-          skillGroupKey: 'ultimate',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
+          skillKey: 'chr_0025_ardelia_ultimate_skill',
         },
       ],
     },
@@ -2506,19 +2488,19 @@ export const ardelia: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'potential5_duration',
           operation: 'assign',
           value: 4,
+          skillKey: 'chr_0025_ardelia_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'potential5_dmg_rate',
           operation: 'add',
           value: 1.2,
+          skillKey: 'chr_0025_ardelia_combo_skill',
         },
-        { kind: 'addSkillCooldownFrames', skillGroupKey: 'comboSkill', frames: -60 },
+        { kind: 'addSkillCooldownFrames', frames: -60, skillKey: 'chr_0025_ardelia_combo_skill' },
       ],
     },
   ],

@@ -17,11 +17,7 @@ const gearDisplay = {
 
 describe('loadoutBuildFactory', () => {
   it('按干员技能等级来源建立一次默认值', () => {
-    const build = createDefaultOperatorInstance({
-      ...perlica,
-      // 组级字段只负责迁移期展示；养成实例必须从每个技能读取等级来源。
-      skillGroups: perlica.skillGroups.map(group => ({ ...group, levelSource: 'basicAttack' })),
-    });
+    const build = createDefaultOperatorInstance(perlica);
 
     expect(build.operatorSlug).toBe(perlica.slug);
     expect(build.skillLevels).toEqual({

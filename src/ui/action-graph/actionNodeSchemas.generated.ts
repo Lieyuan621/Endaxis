@@ -4156,7 +4156,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
   },
   changeSkillSlot: {
     kind: 'changeSkillSlot',
-    description: '切换稳定技能组后续释放所使用的技能形态；当前已启动的释放不受影响。',
+    description: '切换原生技能槽后续选择的技能；当前已启动的释放不受影响。',
     fields: [
       {
         path: ['key'],
@@ -4167,9 +4167,9 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         control: 'string',
       },
       {
-        path: ['parameters', 'skillGroupKey'],
-        label: 'skillGroupKey',
-        description: '要修改的技能组或稳定槽位键。',
+        path: ['parameters', 'skillSlotKey'],
+        label: 'skillSlotKey',
+        description: '原生槽位键，不是技能库展示组。',
         type: 'string',
         required: true,
         control: 'string',

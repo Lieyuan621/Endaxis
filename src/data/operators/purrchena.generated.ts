@@ -6190,7 +6190,7 @@ const purrchenaBuff3: SkillBuffDefinition = {
   actionGraph: purrchenaBuff3ActionGraph,
   skillSlotReplacements: [
     {
-      skillGroupKey: 'battleSkill',
+      skillSlotKey: 'battleSkill',
       targetSkillKey: 'chr_0038_purrche_normal_skill_counter',
       revertedSkillKey: 'chr_0038_purrche_normal_skill',
       inheritOriginSkillCooldownProgress: false,
@@ -7575,30 +7575,22 @@ export const purrchena: OperatorDefinition = {
   skillGroups: [
     {
       key: 'basicAttack',
-      skillType: 'basicAttack',
-      levelSource: 'basicAttack',
+      operationType: 'basicAttack',
       skills: [
         purrchenaChr_0038_purrche_attack1,
         purrchenaChr_0038_purrche_attack2,
         purrchenaChr_0038_purrche_attack3,
       ],
     },
-    {
-      key: 'finisher',
-      skillType: 'finisher',
-      levelSource: 'basicAttack',
-      skills: purrchenaChr_0038_purrche_power_attack,
-    },
+    { key: 'finisher', operationType: 'finisher', skills: purrchenaChr_0038_purrche_power_attack },
     {
       key: 'plungingAttack',
-      skillType: 'plungingAttack',
-      levelSource: 'basicAttack',
+      operationType: 'plungingAttack',
       skills: purrchenaChr_0038_purrche_plunging_attack_end,
     },
     {
       key: 'battleSkill',
-      skillType: 'battleSkill',
-      levelSource: 'battleSkill',
+      operationType: 'battleSkill',
       skills: purrchenaChr_0038_purrche_normal_skill,
       placementSequenceSkillKeys: [
         'chr_0038_purrche_normal_skill',
@@ -7620,14 +7612,12 @@ export const purrchena: OperatorDefinition = {
     },
     {
       key: 'comboSkill',
-      skillType: 'comboSkill',
-      levelSource: 'comboSkill',
+      operationType: 'comboSkill',
       skills: purrchenaChr_0038_purrche_combo_skill,
     },
     {
       key: 'ultimate',
-      skillType: 'ultimate',
-      levelSource: 'ultimate',
+      operationType: 'ultimate',
       skills: purrchenaChr_0038_purrche_ultimate_skill,
     },
   ],
@@ -7673,7 +7663,6 @@ export const purrchena: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0038_purrche_normal_skill_block_1',
           blackboardKey: 'talent_1_usp',
           operation: 'assign',
@@ -7681,14 +7670,13 @@ export const purrchena: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'talent1_prob_up',
           operation: 'assign',
           value: [0.1, 0.1],
+          skillKey: 'chr_0038_purrche_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0038_purrche_normal_skill_block_1',
           blackboardKey: 'talent_1_stack',
           operation: 'assign',
@@ -7704,10 +7692,10 @@ export const purrchena: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'prob',
           operation: 'multiply',
           value: 1.5,
+          skillKey: 'chr_0038_purrche_ultimate_skill',
         },
       ],
     },
@@ -7723,38 +7711,38 @@ export const purrchena: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'potential_3',
           operation: 'assign',
           value: 1,
+          skillKey: 'chr_0038_purrche_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'heal_static_value_fish',
           operation: 'multiply',
           value: 1.2,
+          skillKey: 'chr_0038_purrche_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'heal_scale_fish',
           operation: 'multiply',
           value: 1.2,
+          skillKey: 'chr_0038_purrche_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'atk_scale_boom',
           operation: 'multiply',
           value: 1.2,
+          skillKey: 'chr_0038_purrche_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'radiusadd_display',
           operation: 'multiply',
           value: 0.2,
+          skillKey: 'chr_0038_purrche_combo_skill',
         },
       ],
     },
@@ -7763,9 +7751,9 @@ export const purrchena: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
-          skillGroupKey: 'ultimate',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
+          skillKey: 'chr_0038_purrche_ultimate_skill',
         },
       ],
     },
@@ -7774,17 +7762,17 @@ export const purrchena: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'atk_scale_ult',
           operation: 'multiply',
           value: 1.2,
+          skillKey: 'chr_0038_purrche_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'rate_vul',
           operation: 'multiply',
           value: 1.2,
+          skillKey: 'chr_0038_purrche_ultimate_skill',
         },
       ],
     },

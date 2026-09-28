@@ -3327,8 +3327,7 @@ export const antal: OperatorDefinition = {
   skillGroups: [
     {
       key: 'basicAttack',
-      skillType: 'basicAttack',
-      levelSource: 'basicAttack',
+      operationType: 'basicAttack',
       skills: [
         antalChr_0023_antal_attack1,
         antalChr_0023_antal_attack2,
@@ -3336,36 +3335,15 @@ export const antal: OperatorDefinition = {
         antalChr_0023_antal_attack4,
       ],
     },
-    {
-      key: 'finisher',
-      skillType: 'finisher',
-      levelSource: 'basicAttack',
-      skills: antalChr_0023_antal_power_attack,
-    },
+    { key: 'finisher', operationType: 'finisher', skills: antalChr_0023_antal_power_attack },
     {
       key: 'plungingAttack',
-      skillType: 'plungingAttack',
-      levelSource: 'basicAttack',
+      operationType: 'plungingAttack',
       skills: antalChr_0023_antal_plunging_attack_end,
     },
-    {
-      key: 'battleSkill',
-      skillType: 'battleSkill',
-      levelSource: 'battleSkill',
-      skills: antalChr_0023_antal_normal_skill,
-    },
-    {
-      key: 'comboSkill',
-      skillType: 'comboSkill',
-      levelSource: 'comboSkill',
-      skills: antalChr_0023_antal_combo_skill,
-    },
-    {
-      key: 'ultimate',
-      skillType: 'ultimate',
-      levelSource: 'ultimate',
-      skills: antalChr_0023_antal_ultimate_skill,
-    },
+    { key: 'battleSkill', operationType: 'battleSkill', skills: antalChr_0023_antal_normal_skill },
+    { key: 'comboSkill', operationType: 'comboSkill', skills: antalChr_0023_antal_combo_skill },
+    { key: 'ultimate', operationType: 'ultimate', skills: antalChr_0023_antal_ultimate_skill },
   ],
   dodgeSkill: antalCommon_character_perfect_dodge,
   dashBuffs: [
@@ -3431,10 +3409,10 @@ export const antal: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'rate',
           operation: 'multiply',
           value: 1.1,
+          skillKey: 'chr_0023_antal_ultimate_skill',
         },
       ],
     },
@@ -3443,9 +3421,9 @@ export const antal: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
-          skillGroupKey: 'ultimate',
           resource: 'ultimateEnergy',
           multiplier: 0.9,
+          skillKey: 'chr_0023_antal_ultimate_skill',
         },
       ],
     },
@@ -3454,17 +3432,17 @@ export const antal: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'potential_3',
           operation: 'assign',
           value: 1,
+          skillKey: 'chr_0023_antal_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'potential_3_atb',
           operation: 'add',
           value: 15,
+          skillKey: 'chr_0023_antal_normal_skill',
         },
       ],
     },
@@ -3480,24 +3458,24 @@ export const antal: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'potential_5',
           operation: 'assign',
           value: 1,
+          skillKey: 'chr_0023_antal_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'delay_time',
           operation: 'add',
           value: 20,
+          skillKey: 'chr_0023_antal_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'potential_5_rate',
           operation: 'add',
           value: 0.04,
+          skillKey: 'chr_0023_antal_normal_skill',
         },
       ],
     },

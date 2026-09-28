@@ -2461,8 +2461,7 @@ export const avywenna: OperatorDefinition = {
   skillGroups: [
     {
       key: 'basicAttack',
-      skillType: 'basicAttack',
-      levelSource: 'basicAttack',
+      operationType: 'basicAttack',
       skills: [
         avywennaChr_0012_avywen_attack1,
         avywennaChr_0012_avywen_attack2,
@@ -2471,36 +2470,19 @@ export const avywenna: OperatorDefinition = {
         avywennaChr_0012_avywen_attack5,
       ],
     },
-    {
-      key: 'finisher',
-      skillType: 'finisher',
-      levelSource: 'basicAttack',
-      skills: avywennaChr_0012_avywen_power_attack,
-    },
+    { key: 'finisher', operationType: 'finisher', skills: avywennaChr_0012_avywen_power_attack },
     {
       key: 'plungingAttack',
-      skillType: 'plungingAttack',
-      levelSource: 'basicAttack',
+      operationType: 'plungingAttack',
       skills: avywennaChr_0012_avywen_plunging_attack_end,
     },
     {
       key: 'battleSkill',
-      skillType: 'battleSkill',
-      levelSource: 'battleSkill',
+      operationType: 'battleSkill',
       skills: avywennaChr_0012_avywen_normal_skill,
     },
-    {
-      key: 'comboSkill',
-      skillType: 'comboSkill',
-      levelSource: 'comboSkill',
-      skills: avywennaChr_0012_avywen_combo_skill,
-    },
-    {
-      key: 'ultimate',
-      skillType: 'ultimate',
-      levelSource: 'ultimate',
-      skills: avywennaChr_0012_avywen_ultimate_skill,
-    },
+    { key: 'comboSkill', operationType: 'comboSkill', skills: avywennaChr_0012_avywen_combo_skill },
+    { key: 'ultimate', operationType: 'ultimate', skills: avywennaChr_0012_avywen_ultimate_skill },
   ],
   dodgeSkill: avywennaCommon_character_perfect_dodge,
   dashBuffs: [
@@ -2544,24 +2526,24 @@ export const avywenna: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'talent0_usp',
           operation: 'assign',
           value: [3, 4],
+          skillKey: 'chr_0012_avywen_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'talent0_usp',
           operation: 'assign',
           value: [3, 4],
+          skillKey: 'chr_0012_avywen_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'talent0_usp',
           operation: 'assign',
           value: [3, 4],
+          skillKey: 'chr_0012_avywen_ultimate_skill',
         },
       ],
       attachedBuffs: [{ buffId: 'buff_chr_0012_avywen_talent_0' }],
@@ -2571,17 +2553,17 @@ export const avywenna: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'pulse_vul_rate',
           operation: 'assign',
           value: [0.06, 0.1],
+          skillKey: 'chr_0012_avywen_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'pulse_vul_duration',
           operation: 'assign',
           value: [10, 10],
+          skillKey: 'chr_0012_avywen_ultimate_skill',
         },
       ],
     },
@@ -2592,24 +2574,24 @@ export const avywenna: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'talent0_usp',
           operation: 'add',
           value: 2,
+          skillKey: 'chr_0012_avywen_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'talent0_usp',
           operation: 'add',
           value: 2,
+          skillKey: 'chr_0012_avywen_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'talent0_usp',
           operation: 'add',
           value: 2,
+          skillKey: 'chr_0012_avywen_ultimate_skill',
         },
       ],
     },
@@ -2618,17 +2600,17 @@ export const avywenna: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'potential_2',
           operation: 'assign',
           value: 20,
+          skillKey: 'chr_0012_avywen_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'potential_2',
           operation: 'assign',
           value: 20,
+          skillKey: 'chr_0012_avywen_ultimate_skill',
         },
       ],
     },
@@ -2644,9 +2626,9 @@ export const avywenna: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
-          skillGroupKey: 'ultimate',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
+          skillKey: 'chr_0012_avywen_ultimate_skill',
         },
       ],
     },
@@ -2655,10 +2637,10 @@ export const avywenna: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'potential_5_rate',
           operation: 'assign',
           value: 1.15,
+          skillKey: 'chr_0012_avywen_normal_skill',
         },
       ],
     },

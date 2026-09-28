@@ -164,14 +164,14 @@ export interface AbilitySystemRuntimeOptions {
   }[];
   /** 同一放置身份下可由战斗动作切换的技能形态。 */
   readonly skillSlotGroups?: readonly {
-    readonly skillGroupKey: string;
+    readonly skillSlotKey: string;
     readonly input?: PlayerSkillInput;
     readonly defaultForInput?: boolean;
     readonly baseSkillKey: string;
     readonly stableInputSkillKeys?: readonly string[];
     readonly replacementSkillKeys: readonly string[];
   }[];
-  /** 四类语义动作的显式原生路由；存在时完全取代技能组推导。 */
+  /** 四类语义动作的显式原生路由；禁止从技能库展示组推导。 */
   readonly playerActionRoutes?: import('../../game-data/operatorDefinition').OperatorPlayerActionRoutes;
   readonly playerActionModes?: readonly import('../../game-data/operatorDefinition').OperatorPlayerActionModeDefinition[];
   readonly actionRuntime?: FrameRuntime;
@@ -341,10 +341,10 @@ export class AbilitySystemRuntime implements FrameRuntime {
     }
     const slotGroupKeys = new Set<string>();
     for (const group of options.skillSlotGroups ?? []) {
-      if (slotGroupKeys.has(group.skillGroupKey)) {
-        throw new Error(`duplicate ability skill slot group '${group.skillGroupKey}'`);
+      if (slotGroupKeys.has(group.skillSlotKey)) {
+        throw new Error(`duplicate ability skill slot group '${group.skillSlotKey}'`);
       }
-      slotGroupKeys.add(group.skillGroupKey);
+      slotGroupKeys.add(group.skillSlotKey);
       const stableInputSkillKeys = group.stableInputSkillKeys ?? [group.baseSkillKey];
       const baseSkill = this.#skills.find(skill => skill.skillId === group.baseSkillKey);
       const input =
@@ -354,7 +354,7 @@ export class AbilitySystemRuntime implements FrameRuntime {
           : baseSkill.skillType === undefined
             ? (() => {
                 throw new Error(
-                  `ability skill slot '${group.skillGroupKey}' references a skill without player type`,
+                  `ability skill slot '${group.skillSlotKey}' references a skill without player type`,
                 );
               })()
             : baseSkill.skillType === 'basicAttack' ||
@@ -371,7 +371,7 @@ export class AbilitySystemRuntime implements FrameRuntime {
       const defaultForInput = group.defaultForInput ?? false;
       if (!stableInputSkillKeys.includes(group.baseSkillKey)) {
         throw new Error(
-          `ability skill slot group '${group.skillGroupKey}' does not include its base skill`,
+          `ability skill slot group '${group.skillSlotKey}' does not include its base skill`,
         );
       }
       const allowedSkillKeys = new Set([...stableInputSkillKeys, ...group.replacementSkillKeys]);
@@ -379,22 +379,22 @@ export class AbilitySystemRuntime implements FrameRuntime {
         allowedSkillKeys.size !==
         stableInputSkillKeys.length + group.replacementSkillKeys.length
       ) {
-        throw new Error(`ability skill slot group '${group.skillGroupKey}' has duplicate variants`);
+        throw new Error(`ability skill slot group '${group.skillSlotKey}' has duplicate variants`);
       }
       for (const skillKey of stableInputSkillKeys) {
         if (this.#slotGroupByStableInputSkill.has(skillKey)) {
           throw new Error(`ability skill '${skillKey}' owns multiple slot groups`);
         }
-        this.#slotGroupByStableInputSkill.set(skillKey, group.skillGroupKey);
+        this.#slotGroupByStableInputSkill.set(skillKey, group.skillSlotKey);
       }
       for (const skillKey of allowedSkillKeys) {
         if (this.#slotGroupByAllowedSkill.has(skillKey)) {
           throw new Error(`ability skill '${skillKey}' owns multiple slot groups`);
         }
-        this.#slotGroupByAllowedSkill.set(skillKey, group.skillGroupKey);
+        this.#slotGroupByAllowedSkill.set(skillKey, group.skillSlotKey);
       }
       if (restored !== undefined) {
-        const saved = restored.skillSlotGroups.get(group.skillGroupKey);
+        const saved = restored.skillSlotGroups.get(group.skillSlotKey);
         if (
           saved === undefined ||
           saved.baseSkillKey !== group.baseSkillKey ||
@@ -406,9 +406,9 @@ export class AbilitySystemRuntime implements FrameRuntime {
           [...allowedSkillKeys].some(key => !saved.allowedSkillKeys.has(key)) ||
           !allowedSkillKeys.has(saved.currentSkillKey)
         )
-          throw new Error(`restored skill slot '${group.skillGroupKey}' does not match program`);
+          throw new Error(`restored skill slot '${group.skillSlotKey}' does not match program`);
       } else
-        this.runtimeState.skillSlotGroups.set(group.skillGroupKey, {
+        this.runtimeState.skillSlotGroups.set(group.skillSlotKey, {
           baseSkillKey: group.baseSkillKey,
           input,
           defaultForInput,
@@ -420,7 +420,7 @@ export class AbilitySystemRuntime implements FrameRuntime {
         if (this.#defaultSlotGroupByInput.has(input)) {
           throw new Error(`multiple default ability skill slots use input '${input}'`);
         }
-        this.#defaultSlotGroupByInput.set(input, group.skillGroupKey);
+        this.#defaultSlotGroupByInput.set(input, group.skillSlotKey);
       }
     }
     if (restored !== undefined) {
@@ -559,24 +559,29 @@ export class AbilitySystemRuntime implements FrameRuntime {
       : undefined;
   }
 
-  /** 读取当前槽位身份；未知组不回退为基础技能。 */
-  currentSkillKeyForSlot(skillGroupKey: string): string {
-    const group = this.runtimeState.skillSlotGroups.get(skillGroupKey);
+  /** 原生槽位成员关系；与技能库的展示组无关。 */
+  skillSlotKeyForSkill(skillId: string): string | undefined {
+    return this.#slotGroupByAllowedSkill.get(skillId);
+  }
+
+  /** 读取当前槽位身份；未知槽位不回退为基础技能。 */
+  currentSkillKeyForSlot(skillSlotKey: string): string {
+    const group = this.runtimeState.skillSlotGroups.get(skillSlotKey);
     if (group === undefined) {
-      throw new Error(`unknown ability skill slot group '${skillGroupKey}'`);
+      throw new Error(`unknown ability skill slot group '${skillSlotKey}'`);
     }
     return group.currentSkillKey;
   }
 
   /** 只改变后续释放的槽位解析；已经进入 casting 的实例保持原引用。 */
-  changeSkillSlot(skillGroupKey: string, targetSkillKey: string): string {
-    const group = this.runtimeState.skillSlotGroups.get(skillGroupKey);
+  changeSkillSlot(skillSlotKey: string, targetSkillKey: string): string {
+    const group = this.runtimeState.skillSlotGroups.get(skillSlotKey);
     if (group === undefined) {
-      throw new Error(`unknown ability skill slot group '${skillGroupKey}'`);
+      throw new Error(`unknown ability skill slot group '${skillSlotKey}'`);
     }
     if (!group.allowedSkillKeys.has(targetSkillKey)) {
       throw new Error(
-        `skill '${targetSkillKey}' is not a variant of ability skill slot group '${skillGroupKey}'`,
+        `skill '${targetSkillKey}' is not a variant of ability skill slot group '${skillSlotKey}'`,
       );
     }
     const previousSkillKey = group.currentSkillKey;

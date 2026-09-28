@@ -51,7 +51,7 @@ export function capturePublishedOperatorMetadata(
       skillIcons: Object.fromEntries(
         bindings.map(({ group, skill }) => [
           skill.key,
-          getOperatorSkillIconPath(definition.assetSlug ?? slug, group.skillType) ??
+          getOperatorSkillIconPath(definition.assetSlug ?? slug, group.operationType) ??
             getWeaponActionIconPath(definition.weaponType),
         ]),
       ),

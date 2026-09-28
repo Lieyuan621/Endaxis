@@ -4411,7 +4411,7 @@ const mifuBuff4: SkillBuffDefinition = {
   actionGraph: mifuBuff4ActionGraph,
   skillSlotReplacements: [
     {
-      skillGroupKey: 'battleSkill',
+      skillSlotKey: 'battleSkill',
       targetSkillKey: 'chr_0031_mifu_normalskill_2',
       revertedSkillKey: 'chr_0031_mifu_normalskill_1',
       inheritOriginSkillCooldownProgress: false,
@@ -4511,7 +4511,7 @@ const mifuBuff5: SkillBuffDefinition = {
   actionGraph: mifuBuff5ActionGraph,
   skillSlotReplacements: [
     {
-      skillGroupKey: 'battleSkill',
+      skillSlotKey: 'battleSkill',
       targetSkillKey: 'chr_0031_mifu_normalskill_3',
       revertedSkillKey: 'chr_0031_mifu_normalskill_1',
       inheritOriginSkillCooldownProgress: false,
@@ -4697,8 +4697,7 @@ export const mifu: OperatorDefinition = {
   skillGroups: [
     {
       key: 'basicAttack',
-      skillType: 'basicAttack',
-      levelSource: 'basicAttack',
+      operationType: 'basicAttack',
       skills: [
         mifuChr_0031_mifu_attack1,
         mifuChr_0031_mifu_attack2,
@@ -4708,20 +4707,13 @@ export const mifu: OperatorDefinition = {
     },
     {
       key: 'plungingAttack',
-      skillType: 'plungingAttack',
-      levelSource: 'basicAttack',
+      operationType: 'plungingAttack',
       skills: mifuChr_0031_mifu_plunging_attack_end,
     },
-    {
-      key: 'finisher',
-      skillType: 'finisher',
-      levelSource: 'basicAttack',
-      skills: mifuChr_0031_mifu_powerattack,
-    },
+    { key: 'finisher', operationType: 'finisher', skills: mifuChr_0031_mifu_powerattack },
     {
       key: 'battleSkill',
-      skillType: 'battleSkill',
-      levelSource: 'battleSkill',
+      operationType: 'battleSkill',
       skills: mifuChr_0031_mifu_normalskill_1,
       placementSequenceSkillKeys: [
         'chr_0031_mifu_normalskill_1',
@@ -4730,18 +4722,8 @@ export const mifu: OperatorDefinition = {
       ],
       replacementSkills: [mifuChr_0031_mifu_normalskill_2, mifuChr_0031_mifu_normalskill_3],
     },
-    {
-      key: 'ultimate',
-      skillType: 'ultimate',
-      levelSource: 'ultimate',
-      skills: mifuChr_0031_mifu_ultimate_skill,
-    },
-    {
-      key: 'comboSkill',
-      skillType: 'comboSkill',
-      levelSource: 'comboSkill',
-      skills: mifuChr_0031_mifu_combo_skill,
-    },
+    { key: 'ultimate', operationType: 'ultimate', skills: mifuChr_0031_mifu_ultimate_skill },
+    { key: 'comboSkill', operationType: 'comboSkill', skills: mifuChr_0031_mifu_combo_skill },
   ],
   dodgeSkill: mifuCommon_character_perfect_dodge,
   dashBuffs: [
@@ -4787,7 +4769,6 @@ export const mifu: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0031_mifu_normalskill_3',
           blackboardKey: 'talent',
           operation: 'assign',
@@ -4795,7 +4776,6 @@ export const mifu: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0031_mifu_normalskill_3',
           blackboardKey: 'crushmultiadd_talent',
           operation: 'assign',
@@ -4808,31 +4788,31 @@ export const mifu: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'talent',
           operation: 'assign',
           value: [1, 1],
+          skillKey: 'chr_0031_mifu_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'talent_shield_hppercent',
           operation: 'assign',
           value: [0.15, 0.3],
+          skillKey: 'chr_0031_mifu_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'talent_shield_duration',
           operation: 'assign',
           value: [10, 10],
+          skillKey: 'chr_0031_mifu_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'talent_shield_cd',
           operation: 'assign',
           value: [60, 60],
+          skillKey: 'chr_0031_mifu_combo_skill',
         },
       ],
     },
@@ -4843,26 +4823,26 @@ export const mifu: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'potential',
           operation: 'assign',
           value: 1,
+          skillKey: 'chr_0031_mifu_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'extra_effect',
           operation: 'assign',
           value: 0.05,
+          skillKey: 'chr_0031_mifu_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'extra_time',
           operation: 'assign',
           value: 4,
+          skillKey: 'chr_0031_mifu_combo_skill',
         },
-        { kind: 'addSkillCooldownFrames', skillGroupKey: 'comboSkill', frames: -60 },
+        { kind: 'addSkillCooldownFrames', frames: -60, skillKey: 'chr_0031_mifu_combo_skill' },
       ],
     },
     {
@@ -4877,38 +4857,38 @@ export const mifu: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'potential',
           operation: 'assign',
           value: 1,
+          skillKey: 'chr_0031_mifu_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'talent_shield_cd',
           operation: 'add',
           value: -15,
+          skillKey: 'chr_0031_mifu_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'talent_shield_duration',
           operation: 'add',
           value: 5,
+          skillKey: 'chr_0031_mifu_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'potential_addattack_effect',
           operation: 'assign',
           value: 0.06,
+          skillKey: 'chr_0031_mifu_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'potential_addattack_duration',
           operation: 'assign',
           value: 20,
+          skillKey: 'chr_0031_mifu_combo_skill',
         },
       ],
     },
@@ -4917,9 +4897,9 @@ export const mifu: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
-          skillGroupKey: 'ultimate',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
+          skillKey: 'chr_0031_mifu_ultimate_skill',
         },
       ],
     },
@@ -4928,14 +4908,13 @@ export const mifu: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'poise2',
           operation: 'add',
           value: 5,
+          skillKey: 'chr_0031_mifu_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0031_mifu_normalskill_1',
           blackboardKey: 'atk_scale',
           operation: 'multiply',
@@ -4943,7 +4922,6 @@ export const mifu: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0031_mifu_normalskill_2',
           blackboardKey: 'atk_scale',
           operation: 'multiply',
@@ -4951,7 +4929,6 @@ export const mifu: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0031_mifu_normalskill_2',
           blackboardKey: 'atk_scale2',
           operation: 'multiply',
@@ -4959,7 +4936,6 @@ export const mifu: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0031_mifu_normalskill_3',
           blackboardKey: 'atk_scale',
           operation: 'multiply',

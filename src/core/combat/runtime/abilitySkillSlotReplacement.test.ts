@@ -36,7 +36,7 @@ describe('技能槽替换恢复', () => {
     const first = replaceAbilitySkillSlot(
       state,
       {
-        skillGroupKey: 'battle',
+        skillSlotKey: 'battle',
         targetSkillKey: 'first',
         inheritOriginSkillCooldownProgress: true,
       },
@@ -57,7 +57,7 @@ describe('技能槽替换恢复', () => {
     const second = replaceAbilitySkillSlot(
       saved.ability,
       {
-        skillGroupKey: 'battle',
+        skillSlotKey: 'battle',
         targetSkillKey: 'second',
         inheritOriginSkillCooldownProgress: true,
       },
