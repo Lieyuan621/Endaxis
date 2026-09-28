@@ -151,6 +151,15 @@ function bindResourceGraphs(resource: ActionGraphResourceDefinition) {
   };
 }
 
+/** 图结构准备与等级、实体导入无关；调用方只可对已冻结的定义复用结果。 */
+export function prepareActionGraphDefinition(
+  definition: ActionGraphDefinition | ActionGraphResourceDefinition,
+) {
+  const resource = 'main' in definition ? bindResourceGraphs(definition) : undefined;
+  const graph = resource?.graph ?? resolveGraphData(definition as ActionGraphDefinition);
+  return { resource, graph, dependencies: validateActionGraph(graph) };
+}
+
 /** 同一来源图与等级的一份编译目录；入口按需加入，共享节点只解析一次。 */
 export function createActionGraphCompilation(
   definition: ActionGraphDefinition | ActionGraphResourceDefinition,
@@ -159,13 +168,12 @@ export function createActionGraphCompilation(
   abilityEntityDefinitions: Readonly<Record<string, AbilityEntityDefinition>> = {},
   importedAbilityEntityDefinitions: Readonly<Record<string, ResolvedAbilityEntityDefinition>> = {},
   childResources = new WeakMap<ActionGraphResourceDefinition, ActionGraphCompilation>(),
+  prepare: typeof prepareActionGraphDefinition = prepareActionGraphDefinition,
 ): ActionGraphCompilation {
   if (!revision) throw new Error('action graph requires a revision');
   if (!Number.isInteger(skillLevel) || skillLevel < 0)
     throw new Error('action graph requires a non-negative integer skill level');
-  const resource = 'main' in definition ? bindResourceGraphs(definition) : undefined;
-  const graph = resource?.graph ?? resolveGraphData(definition as ActionGraphDefinition);
-  const dependencies = validateActionGraph(graph);
+  const { resource, graph, dependencies } = prepare(definition);
   const pending = new Set<string>();
   const nodes = new Map<string, CompiledActionGraphNode>();
   const entities: Record<string, ResolvedAbilityEntityDefinition> = {};
@@ -196,6 +204,7 @@ export function createActionGraphCompilation(
         abilityEntityDefinitions,
         importedAbilityEntityDefinitions,
         childResources,
+        prepare,
       );
       childResources.set(graph, child);
     }

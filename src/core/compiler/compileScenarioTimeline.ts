@@ -36,7 +36,7 @@ import type {
 import { getSkillCastPlacementChains } from '../project/skillCastPlacement';
 import type { CompiledSkillProgram, CompiledSkillSlotGroup } from './combatProgram';
 import { createIndependentAbilityEntityImportResolver } from './compileCommonAbilityEntityImports';
-import { compileCommonDefinitionSources } from './compileCommonDefinitionSources';
+import type { compileCommonDefinitionSources } from './compileCommonDefinitionSources';
 import { compileOperatorComboSkillConditions } from './compileOperatorComboSkillConditions';
 import {
   applyOperatorUpgradeSkillPatches,
@@ -82,20 +82,18 @@ function createOperatorSkillCompiler(
   importsForLevel?: (level: number) => ImportedAbilityEntityDefinitions,
   localEntitiesForLevelOverride?: (level: number) => ImportedAbilityEntityDefinitions,
 ) {
-  const skillImportsByLevel = new Map<number, ImportedAbilityEntityDefinitions>();
   const localEntitiesForLevel =
     localEntitiesForLevelOverride ??
     createIndependentAbilityEntityImportResolver(
-      abilityEntityDefinitions ?? {},
+      abilityEntityDefinitions,
       programs,
       importsForLevel,
     );
   const resolveSkillImports = (level: number): ImportedAbilityEntityDefinitions => {
-    const cached = skillImportsByLevel.get(level);
-    if (cached) return cached;
-    const imports = { ...importsForLevel?.(level), ...localEntitiesForLevel(level) };
-    skillImportsByLevel.set(level, imports);
-    return imports;
+    return programs.mergeAbilityEntityImports(
+      importsForLevel?.(level),
+      localEntitiesForLevel(level),
+    );
   };
   return (input: {
     operatorId: string;
@@ -468,7 +466,7 @@ function compileResolvedTimelineTracks(
 ): CompiledScenarioTimeline {
   const common =
     context.compiledCommonDefinitions ??
-    compileCommonDefinitionSources(context.commonDefinitionSources, context.programs);
+    context.programs.compileCommonDefinitions(context.commonDefinitionSources);
   const importsForLevel = context.importsForLevel ?? common.importsForLevel;
   const operators: CombatOperatorProgram[] = [];
   const pendingInputs: (ScheduledSkillInput & { readonly order: number })[] = [];
@@ -477,11 +475,12 @@ function compileResolvedTimelineTracks(
   for (const { track, operatorInstance, operator, buildAttributes } of tracks) {
     rejectDuplicateEntities(operator, commonAbilityEntityDefinitions);
     const localEntities = createIndependentAbilityEntityImportResolver(
-      operator.abilityEntityDefinitions ?? {},
+      operator.abilityEntityDefinitions,
       context.programs,
       importsForLevel,
     );
-    const imports = (level: number) => ({ ...importsForLevel(level), ...localEntities(level) });
+    const imports = (level: number) =>
+      context.programs.mergeAbilityEntityImports(importsForLevel(level), localEntities(level));
     const skillCasts = compileCastBindings(
       track.id,
       track.skillCasts,

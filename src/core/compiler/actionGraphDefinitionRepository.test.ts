@@ -1,7 +1,9 @@
 import { skillFixture } from '../../test/skillFixture';
 import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import { createProgramDefinitionCompiler } from './compileProgramDefinitions';
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
+import * as graphCompiler from './compileActionGraph';
+import { createIndependentAbilityEntityImportResolver } from './compileCommonAbilityEntityImports';
 import { ActionGraphDefinitionRepository } from './actionGraphDefinitionRepository';
 import { compileSkill } from './compileSkill';
 import type { ActionGraphDefinition } from '../../../packages/game-data-contract/src/actionGraph';
@@ -12,6 +14,85 @@ const definition = (): ActionGraphDefinition => ({
     second: { action: { kind: 'dealStagger', parameters: { value: 3 } }, next: 'shared' },
     shared: { action: { kind: 'dealStagger', parameters: { value: 4 } }, next: null },
   },
+});
+
+it('跨场景重建解析器仍复用实体定义表，修订、等级、外部依赖与仓库分别隔离', () => {
+  const programs = new ActionGraphDefinitionRepository();
+  const definitions = { entity: { lifetime: { kind: 'limited' as const, durationSeconds: 2 } } };
+  const resolve = () => createIndependentAbilityEntityImportResolver(definitions, programs);
+  const first = resolve()(1);
+  expect(resolve()(1)).toBe(first);
+  expect(resolve()(2)).not.toBe(first);
+  const changed = { entity: { lifetime: { kind: 'limited' as const, durationSeconds: 3 } } };
+  const second = programs.compileAbilityEntities(changed, 1);
+  expect(second).not.toBe(first);
+  expect(second.entity!.lifetime).toEqual({ kind: 'limited', durationSeconds: 3 });
+  expect(() => Object.assign(definitions.entity.lifetime, { durationSeconds: 4 })).toThrow();
+  expect(new ActionGraphDefinitionRepository().compileAbilityEntities(definitions, 1)).not.toBe(
+    first,
+  );
+  const external = programs.compileAbilityEntities(
+    { other: { lifetime: { kind: 'infinite' } } },
+    1,
+  );
+  const withExternal = createIndependentAbilityEntityImportResolver(
+    definitions,
+    programs,
+    () => external,
+  );
+  expect(withExternal(1)).not.toBe(first);
+  expect(withExternal(1)).toBe(withExternal(1));
+  expect(() => programs.compileAbilityEntities(definitions, 1, first)).toThrow(
+    'duplicate imported',
+  );
+  expect(programs.mergeAbilityEntityImports(external, first)).toBe(
+    programs.mergeAbilityEntityImports(external, resolve()(1)),
+  );
+  expect(programs.mergeAbilityEntityImports(external, second)).not.toBe(
+    programs.mergeAbilityEntityImports(external, first),
+  );
+  expect(createIndependentAbilityEntityImportResolver(undefined, programs)(0)).toBe(
+    createIndependentAbilityEntityImportResolver(undefined, programs)(0),
+  );
+});
+
+it('公共资源集合跨模拟复用，新的集合重新校验', () => {
+  const programs = new ActionGraphDefinitionRepository();
+  const sources = [
+    {
+      id: 'common',
+      abilityEntityDefinitions: { entity: { lifetime: { kind: 'infinite' as const } } },
+    },
+  ];
+  const first = programs.compileCommonDefinitions(sources);
+  expect(programs.compileCommonDefinitions(sources)).toBe(first);
+  expect(programs.compileCommonDefinitions([...sources])).not.toBe(first);
+  expect(() => programs.compileCommonDefinitions([...sources, ...sources])).toThrow(
+    'duplicate common',
+  );
+});
+
+it('已发布图只准备一次，不同等级与导入目录仍分别编译，新定义重新校验', () => {
+  const prepare = vi.spyOn(graphCompiler, 'prepareActionGraphDefinition');
+  try {
+    const programs = new ActionGraphDefinitionRepository();
+    const resource = { main: definition(), macros: {} };
+    const first = programs.compile(resource, 1, undefined, {}).compileAll();
+    const second = programs.compile(resource, 2, undefined, {}).compileAll();
+    expect(prepare).toHaveBeenCalledTimes(1);
+    expect(first).not.toBe(second);
+    expect(first.nodes.get('[null,"first"]')!.action).toMatchObject({ parameters: { value: 1 } });
+    expect(second.nodes.get('[null,"first"]')!.action).toMatchObject({ parameters: { value: 2 } });
+    const edited = structuredClone(resource);
+    Object.assign(edited.main.nodes.first!, { next: 'missing' });
+    expect(() => programs.compile(edited, 1)).toThrow('missing action graph node');
+    expect(prepare).toHaveBeenCalledTimes(2);
+    expect(() => {
+      Object.assign(resource.main.nodes.first!, { next: null });
+    }).toThrow();
+  } finally {
+    prepare.mockRestore();
+  }
 });
 
 it('同一仓库跨技能入口共享已编译节点，修订和等级隔离', () => {

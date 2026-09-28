@@ -51,6 +51,86 @@ class FixtureRuntime implements AbilitySkillRuntime {
 const beforeCastPayload = { sourceId: 'owner', targetId: 'owner', skillId: 'test', skillCastId: 1 };
 
 describe('AbilitySystemRuntime', () => {
+  it.each([false, true])('只推进活跃技能，结束后休眠且再次启动会唤醒，共享冷却=%s', shared => {
+    const events: string[] = [];
+    const skill = new FixtureRuntime('active', events);
+    const advance = vi.fn(() => {
+      skill.state = 'ended';
+    });
+    skill.advanceFrame = advance;
+    const sleeping = Array.from({ length: 20 }, (_, i) => new FixtureRuntime(`idle${i}`, events));
+    const skills = [skill, ...sleeping];
+    const ability = new AbilitySystemRuntime({
+      skills,
+      ...(shared
+        ? {
+            skillTickPlan: skills.map(skill => ({
+              skillId: skill.skillId,
+              advanceCooldown: () => {},
+            })),
+          }
+        : {}),
+    });
+    ability.advanceFrame();
+    expect(advance).not.toHaveBeenCalled();
+    expect(ability.tryStartSkill('active')).toBe(true);
+    ability.advanceFrame();
+    ability.advanceFrame();
+    expect(advance).toHaveBeenCalledTimes(1);
+    expect(ability.tryStartSkill('active')).toBe(true);
+    ability.advanceFrame();
+    expect(advance).toHaveBeenCalledTimes(2);
+    expect(events.some(event => event.startsWith('tick:idle'))).toBe(false);
+  });
+
+  it('技能结束后独立冷却继续推进，就绪后休眠', () => {
+    const skill = new FixtureRuntime('entity', []);
+    const cooldown = { ready: false };
+    const advance = vi.fn(() => {
+      cooldown.ready = true;
+    });
+    Object.assign(skill, { cooldown, advance });
+    const ability = new AbilitySystemRuntime({ skills: [skill] });
+    ability.advanceFrame();
+    ability.advanceFrame();
+    expect(advance).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([0, 2])('回调唤醒目录位置 %s 的技能时保持原生顺序', targetIndex => {
+    const events: string[] = [];
+    const skills = [0, 1, 2].map(i => new FixtureRuntime(String(i), events));
+    const ability = new AbilitySystemRuntime({ skills });
+    skills[1]!.advanceFrame = () => {
+      events.push('tick:1');
+      ability.tryStartSkill(String(targetIndex));
+    };
+    ability.tryStartSkill('1');
+    events.length = 0;
+    ability.advanceFrame();
+    expect(events.filter(event => event.startsWith('tick:'))).toEqual(
+      targetIndex === 2 ? ['tick:1', 'tick:2'] : ['tick:1'],
+    );
+    events.length = 0;
+    ability.advanceFrame();
+    expect(events.filter(event => event.startsWith('tick:'))).toEqual([`tick:${targetIndex}`]);
+  });
+
+  it('恢复活跃技能和冷却时重建分支索引，不重新启动技能', () => {
+    const originalSkill = new FixtureRuntime('skill', []);
+    const original = new AbilitySystemRuntime({ skills: [originalSkill] });
+    original.tryStartSkill('skill');
+    const events: string[] = [];
+    const restoredSkill = new FixtureRuntime('skill', events);
+    restoredSkill.state = originalSkill.state;
+    const restored = new AbilitySystemRuntime(
+      { skills: [restoredSkill] },
+      structuredClone(original.runtimeState),
+    );
+    originalSkill.state = 'ended';
+    original.advanceFrame();
+    restored.advanceFrame();
+    expect(events).toEqual(['tick:skill']);
+  });
   it('恢复运行中修改的原生技能类型，同时保留定义一致性检查', () => {
     const original = new AbilitySystemRuntime({
       skills: [new FixtureRuntime('skill', [], 'ultimate')],
@@ -145,14 +225,14 @@ describe('AbilitySystemRuntime', () => {
       skillTickPlan: [{ skillId: 'skill', advanceCooldown: cooldown }],
     });
     ability.advanceFrame();
-    expect(calls).toEqual(['tick:skill']);
+    expect(calls).toEqual([]);
     const cast = new FixtureRuntime('skill', calls, 'battleSkill', 'cast-1');
     ability.registerCastInstance(cast);
     expect(ability.tryStartSkill('skill', 'cast-1')).toBe(true);
     calls.length = 0;
     cooldown.mockClear();
     ability.advanceFrame();
-    expect(calls).toEqual(['tick:skill', 'tick:skill']);
+    expect(calls).toEqual(['tick:skill']);
     expect(cooldown).toHaveBeenCalledTimes(1);
     expect(() => ability.registerCastInstance(cast)).toThrow('duplicate');
   });
@@ -425,6 +505,8 @@ describe('AbilitySystemRuntime', () => {
       startedInCurrentFrame: false,
       advance: (timeline: number, cooldown: number) => events.push(`other:${timeline}:${cooldown}`),
     });
+    current.state = 'casting';
+    other.state = 'casting';
     const ability = new AbilitySystemRuntime({
       skills: [current, other],
       skillTickPlan: ['current', 'other'].map(skillId => ({
@@ -453,7 +535,10 @@ describe('AbilitySystemRuntime', () => {
         new FixtureRuntime('second', events),
         new FixtureRuntime('first', events, 'battleSkill', 'a'),
         new FixtureRuntime('first', events, 'battleSkill', 'b'),
-      ],
+      ].map(skill => {
+        skill.state = 'casting';
+        return skill;
+      }),
       buffRuntime: {
         advanceFrame: () => events.push('buff'),
         recycleFinishedBuffs: () => events.push('recycle'),
@@ -483,6 +568,7 @@ describe('AbilitySystemRuntime', () => {
 
   it('目录冷却消费原始冷却增量，放置实例只消费时间线增量', () => {
     const skill = new FixtureRuntime('first', []);
+    skill.state = 'casting';
     let received: number[] = [];
     const ability = new AbilitySystemRuntime({
       skills: [
@@ -533,7 +619,6 @@ describe('AbilitySystemRuntime', () => {
     expect(events).toEqual([
       'buff',
       'tick:first',
-      'tick:second',
       'interrupt:first:castNextSkill',
       'start:second',
       'action',
@@ -575,7 +660,6 @@ describe('AbilitySystemRuntime', () => {
 
     expect(events).toEqual([
       'tick:first',
-      'tick:second',
       'interrupt:first:castNextSkill',
       'before:second',
       'start:second',
@@ -605,7 +689,7 @@ describe('AbilitySystemRuntime', () => {
     });
     ability.advanceFrame();
 
-    expect(events).toEqual(['tick:first', 'tick:second']);
+    expect(events).toEqual(['tick:first']);
     expect(ability.currentSkillId).toBe('first');
   });
 
@@ -626,12 +710,7 @@ describe('AbilitySystemRuntime', () => {
     ability.requestPostSkillCast({ skillId: 'second' });
     ability.advanceFrame();
 
-    expect(events).toEqual([
-      'tick:first',
-      'tick:second',
-      'interrupt:first:castNextSkill',
-      'failed-start:second',
-    ]);
+    expect(events).toEqual(['tick:first', 'interrupt:first:castNextSkill', 'failed-start:second']);
     expect(ability.currentSkillId).toBeNull();
   });
 

@@ -41,6 +41,10 @@ export class SkillCooldown {
   get snapshot(): SkillCooldownSnapshot {
     return readSkillCooldown(this.#state);
   }
+  /** 就绪冷却无需推进，也不需要读取动态恢复倍率。 */
+  get ready(): boolean {
+    return this.#state.timer === undefined || isPeriodicTimerReady(this.#state.timer);
+  }
 
   /** 多个技能宿主必须引用同一份账本数据，不能各自复制。 */
   get runtimeState(): SkillCooldownState {

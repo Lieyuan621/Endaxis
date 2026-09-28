@@ -1300,6 +1300,7 @@ export class CombatRuntimeAssembly {
           const operations = this.#createOperationChain({
             operator,
             sourceActionId: origin?.originCastId ?? origin?.originSkillId ?? program.skillId,
+            ...(origin?.originCastId === undefined ? {} : { castId: origin.originCastId }),
             program: {
               operatorId: definitionOperatorId,
               skillId: originProgram?.skillId ?? origin?.originSkillId ?? program.skillId,
@@ -1626,35 +1627,38 @@ export class CombatRuntimeAssembly {
           ...this.#createAbilityRuntimeBindings(operator.operatorId),
           buffRuntime,
           skills,
-          skillTickPlan: [...cooldownPrograms.keys()].map(skillId => ({
-            skillId,
-            advanceCooldown: deltaSeconds => {
-              const ledger = this.#skillCooldowns.get(`${operator.operatorId}\u0000${skillId}`)!;
-              const recoveryScalar =
-                ledger.program.skillType === 'comboSkill'
-                  ? (runtimeOperator.buffRuntime?.getAttributeValue?.(
-                      'ComboSkillCooldownRecoveryScalar',
-                    ) ?? 1)
-                  : 1;
-              if (!Number.isFinite(recoveryScalar) || recoveryScalar < 0) {
-                throw new RangeError(
-                  `combo skill cooldown recovery scalar of '${operator.operatorId}' must be non-negative and finite, received ${recoveryScalar}`,
-                );
-              }
-              if (
-                !ledger.cooldown.advance(deltaSeconds * COMBAT_FRAMES_PER_SECOND * recoveryScalar)
-              )
-                return;
-              // 共享冷却属于技能定义，不能借任意放置块（可能尚未提交）的身份发布。
-              this.receipt.record({
-                frame: this.clock.frame,
-                time: this.clock.time,
-                event: 'SkillCooldownReady',
-                sourceId: operator.operatorId,
-                data: { skillId },
-              });
-            },
-          })),
+          skillTickPlan: [...cooldownPrograms.keys()].map(skillId => {
+            const ledger = this.#skillCooldowns.get(`${operator.operatorId}\u0000${skillId}`)!;
+            return {
+              skillId,
+              advanceCooldown: deltaSeconds => {
+                if (ledger.cooldown.ready) return;
+                const recoveryScalar =
+                  ledger.program.skillType === 'comboSkill'
+                    ? (runtimeOperator.buffRuntime?.getAttributeValue?.(
+                        'ComboSkillCooldownRecoveryScalar',
+                      ) ?? 1)
+                    : 1;
+                if (!Number.isFinite(recoveryScalar) || recoveryScalar < 0) {
+                  throw new RangeError(
+                    `combo skill cooldown recovery scalar of '${operator.operatorId}' must be non-negative and finite, received ${recoveryScalar}`,
+                  );
+                }
+                if (
+                  !ledger.cooldown.advance(deltaSeconds * COMBAT_FRAMES_PER_SECOND * recoveryScalar)
+                )
+                  return;
+                // 共享冷却属于技能定义，不能借任意放置块（可能尚未提交）的身份发布。
+                this.receipt.record({
+                  frame: this.clock.frame,
+                  time: this.clock.time,
+                  event: 'SkillCooldownReady',
+                  sourceId: operator.operatorId,
+                  data: { skillId },
+                });
+              },
+            };
+          }),
           skillSlotGroups: runtimeOperator.skillSlotGroups,
           playerActionRoutes: runtimeOperator.playerActionRoutes,
           playerActionModes: runtimeOperator.playerActionModes,

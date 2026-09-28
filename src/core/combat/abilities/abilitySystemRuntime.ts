@@ -188,16 +188,37 @@ export interface AbilitySystemRuntimeOptions {
   readonly dashOffsetFrames?: number;
 }
 
+interface ActiveSkillBinding {
+  readonly skill: AbilitySkillRuntime;
+  readonly order: number;
+}
+
+function firstSkillAfter(active: readonly ActiveSkillBinding[], order: number): number {
+  let low = 0,
+    high = active.length;
+  while (low < high) {
+    const middle = (low + high) >>> 1;
+    if (active[middle]!.order <= order) low = middle + 1;
+    else high = middle;
+  }
+  return low;
+}
+
 /** 按原生 PreLateTick 主干顺序推进一个实体的战斗能力。 */
 export class AbilitySystemRuntime implements FrameRuntime {
   readonly runtimeState: ReturnType<typeof createAbilitySystemState>;
   readonly #buffRuntime?: AbilityBuffRuntime;
   readonly #skills: AbilitySkillRuntime[];
+  readonly #unsharedActiveSkills: ActiveSkillBinding[] = [];
   readonly #skillTickPlan?: readonly {
     readonly skillId: string;
     readonly advanceCooldown: (deltaSeconds: number) => void;
-    readonly skills: AbilitySkillRuntime[];
+    readonly activeSkills: ActiveSkillBinding[];
   }[];
+  readonly #tickBindings = new Map<
+    AbilitySkillRuntime,
+    { binding: ActiveSkillBinding; active: ActiveSkillBinding[] }
+  >();
   readonly #skillsById = new Map<string, AbilitySkillRuntime>();
   readonly #slotGroupByStableInputSkill = new Map<string, string>();
   readonly #slotGroupByAllowedSkill = new Map<string, string>();
@@ -328,16 +349,40 @@ export class AbilitySystemRuntime implements FrameRuntime {
         if (ids.has(entry.skillId))
           throw new Error(`duplicate skill tick identity '${entry.skillId}'`);
         ids.add(entry.skillId);
+        const activeSkills: ActiveSkillBinding[] = [];
+        this.#skills.forEach((skill, order) => {
+          if (skill.skillId !== entry.skillId) return;
+          const binding = { skill, order };
+          this.#tickBindings.set(skill, { binding, active: activeSkills });
+          if (
+            skill.state === 'casting' ||
+            skill.startedInCurrentFrame ||
+            abilitySkillKey(skill) === this.runtimeState.currentSkillKey
+          )
+            activeSkills.push(binding);
+        });
         return {
           skillId: entry.skillId,
           advanceCooldown: entry.advanceCooldown,
-          skills: this.#skills.filter(skill => skill.skillId === entry.skillId),
+          activeSkills,
         };
       });
       for (const skill of this.#skills) {
         if (!ids.has(skill.skillId))
           throw new Error(`skill '${skill.skillId}' is missing from tick plan`);
       }
+    } else {
+      this.#skills.forEach((skill, order) => {
+        const binding = { skill, order };
+        this.#tickBindings.set(skill, { binding, active: this.#unsharedActiveSkills });
+        if (
+          skill.state === 'casting' ||
+          skill.startedInCurrentFrame ||
+          skill.cooldown?.ready === false ||
+          abilitySkillKey(skill) === this.runtimeState.currentSkillKey
+        )
+          this.#unsharedActiveSkills.push(binding);
+      });
     }
     const slotGroupKeys = new Set<string>();
     for (const group of options.skillSlotGroups ?? []) {
@@ -1069,6 +1114,7 @@ export class AbilitySystemRuntime implements FrameRuntime {
         execute => this.#withProcessingSkill(skill, execute),
       ) === true
     ) {
+      this.#activateSkill(skill);
       return true;
     }
 
@@ -1114,7 +1160,16 @@ export class AbilitySystemRuntime implements FrameRuntime {
     // 所有校验先完成，再同时更新寻址表和推进列表，失败不能留下半注册实例。
     this.#skillsById.set(key, skill);
     this.#skills.push(skill);
-    tickEntry?.skills.push(skill);
+    this.#tickBindings.set(skill, {
+      binding: { skill, order: this.#skills.length - 1 },
+      active: tickEntry?.activeSkills ?? this.#unsharedActiveSkills,
+    });
+    if (
+      skill.state === 'casting' ||
+      skill.startedInCurrentFrame ||
+      (tickEntry === undefined && skill.cooldown?.ready === false)
+    )
+      this.#activateSkill(skill);
   }
 
   advanceFrame(): void {
@@ -1129,30 +1184,14 @@ export class AbilitySystemRuntime implements FrameRuntime {
         // 同一个原生技能的多次摆放共享冷却，任一实例当帧 DoCast 都保护该账本。
         // 仅归零增量，不跳过 Tick：零时刻条件/动作仍有生命周期语义。
         entry.advanceCooldown(
-          entry.skills.some(skill => skill.startedInCurrentFrame)
+          entry.activeSkills.some(({ skill }) => skill.startedInCurrentFrame)
             ? 0
             : deltas.skillCooldownDeltaSeconds,
         );
-        for (const skill of entry.skills) {
-          // 此模式下冷却由目录唯一推进，技能实例不能再推进第二次。
-          if (skill.advance !== undefined)
-            skill.advance(skill.startedInCurrentFrame ? 0 : deltas.selfScaledDeltaSeconds, 0);
-          else skill.advanceFrame();
-          this.#publishRuntimeOperableBoundary(skill);
-        }
+        this.#advanceActiveSkills(entry.activeSkills, deltas, true);
       }
     } else {
-      for (const skill of this.#skills) {
-        if (skill.advance !== undefined) {
-          skill.advance(
-            skill.startedInCurrentFrame ? 0 : deltas.selfScaledDeltaSeconds,
-            skill.startedInCurrentFrame ? 0 : deltas.skillCooldownDeltaSeconds,
-          );
-        } else {
-          skill.advanceFrame();
-        }
-        this.#publishRuntimeOperableBoundary(skill);
-      }
+      this.#advanceActiveSkills(this.#unsharedActiveSkills, deltas, false);
     }
     if (this.#operableBoundaries !== null) {
       const actualFrame = this.#resolveActualFrame!();
@@ -1169,6 +1208,37 @@ export class AbilitySystemRuntime implements FrameRuntime {
     this.#flushPostSkillCastRequest();
     this.#buffRuntime?.recycleFinishedBuffs?.();
     this.#actionRuntime?.advanceFrame();
+  }
+
+  #advanceActiveSkills(
+    active: ActiveSkillBinding[],
+    deltas: AbilityTickDeltas,
+    sharedCooldown: boolean,
+  ): void {
+    // 回调可插入其他技能：已越过的登记位置留到下一帧，后面的位置仍在本帧执行。
+    let order = -1;
+    while (true) {
+      const binding = active[firstSkillAfter(active, order)];
+      if (binding === undefined) break;
+      order = binding.order;
+      const skill = binding.skill;
+      if (skill.state === 'casting' || (!sharedCooldown && skill.cooldown?.ready === false)) {
+        if (skill.advance !== undefined)
+          skill.advance(
+            skill.startedInCurrentFrame ? 0 : deltas.selfScaledDeltaSeconds,
+            sharedCooldown || skill.startedInCurrentFrame ? 0 : deltas.skillCooldownDeltaSeconds,
+          );
+        else skill.advanceFrame();
+      }
+      // 结束当帧仍要发布显示边界；同帧开始又结束的实例保留到下一帧，保护共享冷却。
+      this.#publishRuntimeOperableBoundary(skill);
+      if (
+        skill.state !== 'casting' &&
+        !skill.startedInCurrentFrame &&
+        (sharedCooldown || skill.cooldown?.ready !== false)
+      )
+        active.splice(active.indexOf(binding), 1);
+    }
   }
 
   #flushPostSkillCastRequest(): void {
@@ -1214,6 +1284,7 @@ export class AbilitySystemRuntime implements FrameRuntime {
   }
 
   #onSkillCastStart(skill: AbilitySkillRuntime): void {
+    this.#activateSkill(skill);
     this.#onCurrentSkillChanged?.(this.nativeSkillTypeForSkill(skill.skillId));
     if (
       this.runtimeState.nativeSkillTypeBySkillId.get(skill.skillId) !== 'attack' ||
@@ -1225,6 +1296,13 @@ export class AbilitySystemRuntime implements FrameRuntime {
     if (this.runtimeState.comboOffsetModifier !== null)
       this.runtimeState.comboOffsetModifier.skillCasted = true;
     if (skill.offsetRecordFrame === 0) this.#commitComboOffsetTargetAtRecordFrame();
+  }
+
+  /** 活跃列表只是当前分支的执行索引；恢复时由技能状态重建，不写入切面。 */
+  #activateSkill(skill: AbilitySkillRuntime): void {
+    const entry = this.#tickBindings.get(skill);
+    if (entry === undefined || entry.active.includes(entry.binding)) return;
+    entry.active.splice(firstSkillAfter(entry.active, entry.binding.order), 0, entry.binding);
   }
 
   #commitComboOffsetTargetAtRecordFrame(): void {

@@ -241,8 +241,8 @@ export interface StandardPlayerDamageEnvironmentOptions {
   /** 原生角色专属 HUD 直接跟踪的 Buff；与通用图标进度标志相互独立。 */
   readonly passiveProgressBuffIdsByOperator?: ReadonlyMap<string, ReadonlySet<string>>;
   /**
-   * 普通倒地的显式装配端口。到期策略必须来自当前闭包的消费者审计；
-   * 不默认注入零秒起身，也不因存在本端口就放开标准场景预检。
+   * 普通倒地的装配端口，由调用方提供倒地结束后的处理。
+   * 标准伤害模拟到期直接解除倒地，不模拟起身动画阶段。
    */
   readonly knockDown?: {
     readonly predefine: GameplayTagPredefine;

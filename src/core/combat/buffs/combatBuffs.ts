@@ -40,6 +40,7 @@ import {
   refreshBuffDuration,
   setFiniteBuffDuration,
   tickBuffLifecycle,
+  type BuffTickHost,
 } from './buffLifecycleExecution';
 import { buffReferenceKey, resolveBuffReferenceState } from './buffReference';
 import { SHIELD_EPSILON, absorbShieldDamage, refreshShieldConsumed } from './buffShieldExecution';
@@ -294,6 +295,16 @@ export interface BuffApplicationHandle {
 }
 
 export class CombatBuff<Key extends string> {
+  /** 每个实例只绑定一次；回调读取实时成员，恢复时随实例重建，不进入切面数据。 */
+  readonly #tickHost: BuffTickHost = {
+    trigger: elapsed => this.triggerInternal(elapsed),
+    tickDuringEnable: elapsed => this.#duringEnableAction?.tick(elapsed, this),
+    canTimedGrow: () => this.#stackingGroup?.canTimedGrow(this) === true,
+    growTimed: () => this.#stackingGroup?.growTimed(this) === true,
+    finishLifetime: () => {
+      this.finish('lifetime', null);
+    },
+  };
   /** 仅防止同步回收回调重入；完整帧保存点不会处于回收调用栈中。 */
   #recycling = false;
   readonly #state: BuffInstanceState<Key>;
@@ -840,15 +851,7 @@ export class CombatBuff<Key extends string> {
       typeof deltaTime === 'number'
         ? deltaTime
         : resolveBuffTickDelta(this.definition.timeClock ?? 'default', deltaTime);
-    tickBuffLifecycle(this.#state.lifecycle, resolvedDeltaTime, {
-      trigger: elapsed => this.triggerInternal(elapsed),
-      tickDuringEnable: elapsed => this.#duringEnableAction?.tick(elapsed, this),
-      canTimedGrow: () => this.#stackingGroup?.canTimedGrow(this) === true,
-      growTimed: () => this.#stackingGroup?.growTimed(this) === true,
-      finishLifetime: () => {
-        this.finish('lifetime', null);
-      },
-    });
+    tickBuffLifecycle(this.#state.lifecycle, resolvedDeltaTime, this.#tickHost);
   }
 
   /** 由定义的恢复接线调用，连接实例私有的持续动作。 */

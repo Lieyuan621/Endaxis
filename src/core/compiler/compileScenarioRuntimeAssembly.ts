@@ -1,4 +1,3 @@
-import { compileCommonDefinitionSources } from './compileCommonDefinitionSources';
 /**
  * 将场景的时间轴、初始资源和应用层提供的运行环境组合成运行时装配参数。
  *
@@ -189,9 +188,8 @@ export function compileScenarioCustomSkillCastPrograms(
   index: ScenarioRuntimeBuildIndex,
 ): readonly CombatSkillCastProgram[] {
   const builds = resolveScenarioBuilds(scenario, index);
-  const importsForLevel = compileCommonDefinitionSources(
+  const importsForLevel = index.actionPrograms.compileCommonDefinitions(
     index.getCommonDefinitionSources(),
-    index.actionPrograms,
   ).importsForLevel;
   const panels = new Map(
     resolveScenarioOperatorPanels(builds).map(panel => [panel.operatorId, panel]),
@@ -352,10 +350,8 @@ export function compileScenarioRuntimeAssembly(
   const builds = resolveScenarioBuilds(scenario, options.index);
   const commonDefinitionSources = options.index.getCommonDefinitionSources();
   const commonDefinitions = options.index.getCommonAbilityEntityDefinitions?.();
-  const compiledCommonDefinitions = compileCommonDefinitionSources(
-    commonDefinitionSources,
-    options.index.actionPrograms,
-  );
+  const compiledCommonDefinitions =
+    options.index.actionPrograms.compileCommonDefinitions(commonDefinitionSources);
   const importsForLevel = compiledCommonDefinitions.importsForLevel;
   const timelineBuilds =
     options.liveInputInitialFrame === undefined

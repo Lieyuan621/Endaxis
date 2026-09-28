@@ -41,6 +41,7 @@ export function bindRestoredCombatOperatorAbilitySystem(
       skillTickPlan: [...options.cooldowns].map(([skillId, binding]) => ({
         skillId,
         advanceCooldown: deltaSeconds => {
+          if (binding.cooldown.ready) return;
           const recoveryScalar =
             binding.program.skillType === 'comboSkill'
               ? (options.operator.buffRuntime?.getAttributeValue?.(

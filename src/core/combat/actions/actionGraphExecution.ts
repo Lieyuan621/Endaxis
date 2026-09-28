@@ -97,10 +97,6 @@ interface GraphNodeBinding {
   /** 自动提取的中间段不增加包装动作，只保存可恢复的子执行状态。 */
   readonly inlineOnly?: boolean;
 }
-interface GraphSlot {
-  readonly owner: ActionGraphExecution;
-  readonly id: string;
-}
 
 /**
  * 宏调用包装宿主：把宏体内的 parameter 操作数代入为调用点实参。
@@ -157,7 +153,8 @@ function wrapMacroHost(
 
 export class ActionGraphExecution extends CombatStep {
   readonly runtimeState: ActionGraphExecutionState;
-  readonly #bindings = new Map<string, GraphNodeBinding>();
+  // 生命周期对象随实例保持稳定，枚举时复用绑定与状态的配对，不逐帧分配包装。
+  readonly #bindings = new Map<string, [GraphNodeBinding, ActionStepState]>();
 
   constructor(
     readonly program: CompiledActionGraph,
@@ -244,7 +241,7 @@ export class ActionGraphExecution extends CombatStep {
 
   #binding(id: string): GraphNodeBinding {
     const existing = this.#bindings.get(id);
-    if (existing) return existing;
+    if (existing) return existing[0];
     const action = this.program.nodes.get(id)!.action;
     const saved = this.runtimeState.nodes.get(id)?.data;
     let binding: GraphNodeBinding;
@@ -651,20 +648,19 @@ export class ActionGraphExecution extends CombatStep {
         lifecycle: { state: 'pending', executeResult: false, executionPermitted: false },
         data: binding.data,
       });
-    this.#bindings.set(id, binding);
+    this.#bindings.set(id, [binding, this.runtimeState.nodes.get(id)!.lifecycle]);
     return binding;
   }
 
   *#entries(
     create: boolean,
     stopWhenClosed: boolean,
-  ): IterableIterator<[GraphSlot, ActionStepState]> {
+  ): IterableIterator<[GraphNodeBinding, ActionStepState]> {
     for (let id = this.runtimeState.entry; id !== null; id = this.program.nodes.get(id)!.next) {
       if (stopWhenClosed && this.runtimeState.closed) break;
       if (!create && !this.runtimeState.nodes.has(id)) continue;
       const binding = this.#binding(id);
-      if (!binding.inlineOnly)
-        yield [{ owner: this, id }, this.runtimeState.nodes.get(id)!.lifecycle];
+      if (!binding.inlineOnly) yield this.#bindings.get(id)!;
       if (stopWhenClosed && this.runtimeState.closed) break;
       const body = binding.inline?.(create);
       if (body) {
@@ -676,13 +672,13 @@ export class ActionGraphExecution extends CombatStep {
     }
   }
 
-  #executionHost(context: CombatExecutionContext): ActionSequenceExecutionHost<GraphSlot> {
+  #executionHost(context: CombatExecutionContext): ActionSequenceExecutionHost<GraphNodeBinding> {
     return {
       canExecute: () => this.host.canExecute(),
-      execute: slot => slot.owner.#binding(slot.id).execute(context),
-      reset: slot => slot.owner.#binding(slot.id).reset(context),
-      tick: (slot, dt) => slot.owner.#binding(slot.id).tick(dt, context),
-      end: slot => slot.owner.#binding(slot.id).end(context),
+      execute: binding => binding.execute(context),
+      reset: binding => binding.reset(context),
+      tick: (binding, dt) => binding.tick(dt, context),
+      end: binding => binding.end(context),
     };
   }
 

@@ -11,7 +11,6 @@ import type {
 import type { CombatCondition } from '../../game-data/operatorDefinition';
 import type { ScheduledSkillInput } from '../state/environmentState';
 import type { CombatOperatorProgram } from './combatRuntimeAssembly';
-import { inspectKnockDownControlConsumers } from './knockDownControlCompatibility';
 
 export const STANDARD_PLAYER_DAMAGE_COMPATIBILITY_CODES = [
   'unsupported-step',
@@ -634,10 +633,6 @@ export function inspectStandardPlayerDamageCompatibility(
     knockDown: input.supportsKnockDown ?? false,
     inspectedBuffs: new Set(),
   };
-  if (flags.knockDown) {
-    for (const issue of inspectKnockDownControlConsumers(input.operators))
-      report(collect, 'unsupported-condition', issue.path, issue.detail);
-  }
   input.operators.forEach((operator, operatorIndex) => {
     const operatorPath = `operators[${operatorIndex}]('${operator.operatorId}')`;
     const operatorFlags: CompatibilityFlags = {

@@ -59,33 +59,58 @@ export function readCombatAttribute<Key extends string>(
     return 0;
   }
   const definition = state.definitions.get(attribute);
-  const modifiers = state.modifiers.filter(
-    modifier => modifier.attribute === attribute && (modifier.source & filter) !== 0,
-  );
   if (definition === undefined) {
-    if (modifiers.length > 0 || additionalValues.length > 0) {
+    if (
+      additionalValues.length > 0 ||
+      state.modifiers.some(
+        modifier => modifier.attribute === attribute && (modifier.source & filter) !== 0,
+      )
+    ) {
       throw new Error(`attribute '${attribute}' requires explicit native bounds`);
     }
     return rawValue;
   }
 
-  const values = [...modifiers.map(modifier => modifier.values), ...additionalValues];
+  // 保持每个槽的原始累计顺序，一次遍历完成八槽聚合，不为每次属性读取创建临时数组。
+  let baseAddition = 0,
+    baseMultiplier = 0,
+    baseFinalAddition = 0,
+    baseFinalMultiplier = 1;
+  let addition = 0,
+    multiplier = 0,
+    finalAddition = 0,
+    finalMultiplier = 1;
+  const registeredCount = state.modifiers.length;
+  for (let index = 0; index < registeredCount + additionalValues.length; index++) {
+    let values: AttributeModifierValues;
+    if (index < registeredCount) {
+      const modifier = state.modifiers[index]!;
+      if (modifier.attribute !== attribute || (modifier.source & filter) === 0) continue;
+      values = modifier.values;
+    } else values = additionalValues[index - registeredCount]!;
+    baseAddition += values.baseAddition;
+    baseMultiplier += values.baseMultiplier;
+    baseFinalAddition += values.baseFinalAddition;
+    baseFinalMultiplier *= values.baseFinalMultiplier;
+    addition += values.addition;
+    multiplier += values.multiplier;
+    finalAddition += values.finalAddition;
+    finalMultiplier *= values.finalMultiplier;
+  }
   const baseValue = clamp(
-    rawValue + sum(values, 'baseAddition') + (definition.otherAttributeBaseAddition ?? 0),
+    rawValue + baseAddition + (definition.otherAttributeBaseAddition ?? 0),
     definition,
   );
   const armedValue = clamp(
-    (baseValue * Math.max(0, 1 + sum(values, 'baseMultiplier')) +
-      sum(values, 'baseFinalAddition')) *
-      product(values, 'baseFinalMultiplier') *
+    (baseValue * Math.max(0, 1 + baseMultiplier) + baseFinalAddition) *
+      baseFinalMultiplier *
       (definition.otherAttributeBaseFinalMultiplier ?? 1),
     definition,
   );
   if (stage === 'armed') return armedValue;
   const finalValue =
-    ((armedValue + sum(values, 'addition')) * Math.max(0, 1 + sum(values, 'multiplier')) +
-      sum(values, 'finalAddition')) *
-    product(values, 'finalMultiplier') *
+    ((armedValue + addition) * Math.max(0, 1 + multiplier) + finalAddition) *
+    finalMultiplier *
     (definition.otherAttributeFinalMultiplier ?? 1);
   return clamp(finalValue, definition);
 }
@@ -118,20 +143,6 @@ export function clearInstantAttributeModifiers<Key extends string>(
       state.modifiers.splice(index, 1);
     }
   }
-}
-
-function sum(
-  values: readonly AttributeModifierValues[],
-  key: keyof AttributeModifierValues,
-): number {
-  return values.reduce((total, current) => total + current[key], 0);
-}
-
-function product(
-  values: readonly AttributeModifierValues[],
-  key: 'finalMultiplier' | 'baseFinalMultiplier',
-): number {
-  return values.reduce((total, current) => total * current[key], 1);
 }
 
 function clamp(value: number, definition: CombatAttributeDefinition): number {

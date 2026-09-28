@@ -350,8 +350,14 @@ describe('标准入口普通倒地装配', () => {
       result.receiptEntries.filter(entry => entry.event === 'PhysicalInflictionApplied'),
     ).toHaveLength(1);
   });
-  it('正式入口拒绝需要敌方起身状态的场景，不先执行控制', () => {
-    expect(fixture(true)).toThrow('cannot omit get-up');
+  it('起身标签查询不再通过静态扫描阻止正式入口执行倒地', () => {
+    const result = fixture(true)();
+    expect(
+      result.receiptEntries.filter(entry => entry.event === 'PhysicalNoGuardApplied'),
+    ).toHaveLength(1);
+    expect(
+      result.receiptEntries.filter(entry => entry.event === 'PhysicalInflictionApplied'),
+    ).toHaveLength(1);
   });
 });
 

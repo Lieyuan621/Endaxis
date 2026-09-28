@@ -18,6 +18,8 @@ import { AbilityEntityChildSkillPrograms } from '../abilities/abilityEntityChild
 import { CombatOperationPrograms } from '../actions/combatOperationPrograms';
 import { CombatSkillPrograms } from '../skills/combatSkillPrograms';
 import { ProjectileCallbackPrograms } from '../abilities/projectileCallbackPrograms';
+import { createEnemyCombatVitals } from '../resources/combatVitalsFactory';
+import { deriveHitId } from '../timeline/deriveHitId';
 
 const compileGraphEntry = (
   revision: string,
@@ -305,6 +307,137 @@ function createFixture(
     operators,
   };
 }
+
+it.each([0, 4, 6])('投射物在第 %i 帧分支恢复后保留伤害的技能块与命中身份', saveFrame => {
+  const program: CompiledSkillProgram = {
+    operatorId: 'operator',
+    skillId: 'launch',
+    skillGroupKey: 'battleSkill',
+    skillType: 'battleSkill',
+    skillLevel: 1,
+    initialBlackboard: {},
+    timelineBlockFrames: 1,
+    costFrame: undefined,
+    costs: [],
+    timelineActions: [
+      {
+        startFrame: 0,
+        sequence: chainEntry('launch', [
+          {
+            kind: 'launchProjectile',
+            parameters: { finish: 0.1, recycleDelaySeconds: 0.5 },
+            callbacks: [
+              {
+                event: 'finish',
+                skill: {
+                  skillId: 'impact',
+                  nativeSkillType: 'normalSkill',
+                  naturalDurationFrames: 6,
+                  castResource: {
+                    costFrame: 0,
+                    cooldownSeconds: 0,
+                    maxChargeTime: 1,
+                    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                  },
+                  blackboard: {},
+                  scheduledSequences: [2, 4].map(startFrame => ({
+                    startFrame,
+                    sequence: { $sequence: 'damage' },
+                  })),
+                  actionGraph: {
+                    main: {
+                      nodes: {
+                        damage: {
+                          action: {
+                            kind: 'dealDamage',
+                            key: 'impact-hit',
+                            parameters: {
+                              damageType: 'physical',
+                              attackScale: 0.1,
+                              tags: ['normalSkill'],
+                            },
+                          },
+                          next: null,
+                        },
+                      },
+                    },
+                    macros: {},
+                  },
+                },
+              },
+            ],
+          },
+        ]),
+      },
+    ],
+  };
+  const operators: CombatOperatorProgram[] = [
+    {
+      operatorId: 'operator',
+      skills: [program],
+      skillCasts: [{ castId: 'cast:projectile', program }],
+      panel: {
+        operatorId: 'operator',
+        level: 1,
+        attributes: { strength: 0, agility: 0, intellect: 0, will: 0 },
+        attack: 100,
+        attackBeforeAttributeScalar: 100,
+        mainAttribute: 'strength',
+        secondaryAttribute: 'will',
+        health: 1000,
+        defense: 0,
+        criticalRate: 0,
+        criticalDamage: 0,
+        artsIntensity: 0,
+        ultimateEnergyGainEfficiency: 1,
+        skillCooldownReduction: 0,
+        staggerDamagePercent: 0,
+        combatModifiers: [],
+        receipt: [],
+      },
+    },
+  ];
+  const inputs = [
+    { frame: 0, operatorId: 'operator', skillId: 'launch', castId: 'cast:projectile' },
+  ];
+  const environment = new StandardPlayerDamageEnvironment({
+    ...environmentInput(),
+    enemyVitals: createEnemyCombatVitals(enemy),
+  });
+  const original = new CombatRuntimeAssembly({
+    ...environment.runtimeOptions,
+    resources,
+    enemy,
+    operators,
+    inputs,
+  });
+  original.advanceFrames(saveFrame);
+  const restored = CombatRuntimeAssembly.restore({
+    graph: structuredClone(original.stateGraph),
+    receiptHistory: original.receipt.history.snapshot(),
+    resources,
+    enemy,
+    operators,
+    inputs,
+    environment: environmentInput(),
+    abilityEntityChildSkillPrograms: original.abilityEntityChildSkillPrograms,
+    combatOperationPrograms: original.combatOperationPrograms,
+    combatSkillPrograms: original.combatSkillPrograms,
+    projectileCallbackPrograms: original.projectileLifetimes.callbackPrograms,
+  });
+  original.advanceFrames(12 - saveFrame);
+  restored.advanceFrames(12 - saveFrame);
+  const hits = original.receipt.entries.filter(entry => entry.event === 'DamageApplied');
+  expect(hits).toHaveLength(2);
+  for (const hit of hits) {
+    expect(hit.data).toMatchObject({
+      castId: 'cast:projectile',
+      hitId: deriveHitId('cast:projectile', 'impact-hit'),
+    });
+  }
+  expect(restored.receipt.entries).toEqual(original.receipt.entries);
+  expect(restored.stateGraph).toEqual(original.stateGraph);
+});
 
 it('恢复后群体 GlobalBuff 仍按原生队伍逆序应用子 Buff', () => {
   const childDefinition: ResolvedSkillBuffDefinition = { stackingType: 'unlimited' };
