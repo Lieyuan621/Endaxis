@@ -2,7 +2,7 @@ import type { PublishedScenarioSimulation } from '../useScenarioSimulation';
 import { projectTimelineHitDetailEntries } from './timelineHitEffects';
 import { deriveHitId } from '../../../core/combat/timeline/deriveHitId';
 
-/** 技能身份跨换轨保持稳定；查看旧结果不能使用当前轨道下标查找旧面板。 */
+/** 技能身份跨换轨保持稳定；查看旧结果不能使用当前轨道下标查找旧回执。 */
 export function projectPublishedHitDetail(
   published: PublishedScenarioSimulation | null,
   target: { castId: string; hitId: string; executionFrame?: number } | null,
@@ -23,8 +23,6 @@ export function projectPublishedHitDetail(
         target.hitId,
         target.executionFrame,
       ),
-      operatorPanel:
-        published.run.operatorPanels.find(panel => panel.operatorId === track.id) ?? null,
     };
   }
   return null;

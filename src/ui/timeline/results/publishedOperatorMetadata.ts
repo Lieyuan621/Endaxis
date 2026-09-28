@@ -12,6 +12,8 @@ export interface PublishedOperatorMetadata {
   readonly talents: readonly PublishedUpgradeMetadata[];
   readonly potentials: readonly PublishedUpgradeMetadata[];
   readonly skillKeys: readonly string[];
+  /** 发布时捕获的角色专属 Buff 名称键，避免旧日志跟随后续定义编辑漂移。 */
+  readonly buffDisplayNameKeys?: Readonly<Record<string, string>>;
   readonly skillIcons?: Readonly<Record<string, string>>;
   /** 单个技能自己的等级来源，用作缺少独立本地化标题时的显示回退。 */
   readonly skillLevelSources?: Readonly<Record<string, string>>;
@@ -48,6 +50,9 @@ export function capturePublishedOperatorMetadata(
         passiveKeys: (passiveSkills ?? []).map(skill => skill.key),
       })),
       skillKeys: skills.map(skill => skill.key),
+      ...(definition.buffDisplayNameKeys === undefined
+        ? {}
+        : { buffDisplayNameKeys: { ...definition.buffDisplayNameKeys } }),
       skillIcons: Object.fromEntries(
         bindings.map(({ group, skill }) => [
           skill.key,

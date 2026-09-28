@@ -25,6 +25,8 @@ import {
   type TimelineBattleLogPresetId,
 } from './timelineBattleLogFilterPresets';
 import { summarizeTimelineBattleLogEntry } from './timelineBattleLogEntrySummary';
+import { createTimelineBattleLogNumberFormat } from './timelineBattleLogNumberFormat';
+import { resolveBuffDisplayName } from './buffDisplayName';
 
 const props = defineProps<{
   log: TimelineBattleLogSnapshot | null;
@@ -36,7 +38,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   locate: [frame: number, castId: string | null];
 }>();
-const { t } = useI18n({ useScope: 'global' });
+const { t, te, locale } = useI18n({ useScope: 'global' });
+const numberFormat = computed(() => createTimelineBattleLogNumberFormat(locale.value));
 
 const snapshot = shallowRef<TimelineBattleLogSnapshot | null>(null);
 // 日志面板显式打开或刷新时才物化固定视图；模拟发布本身不再为本面板复制整份数组。
@@ -44,10 +47,15 @@ const entries = computed(() =>
   snapshot.value === null ? [] : [...snapshot.value.history.entries()],
 );
 const castOwners = computed(() => snapshot.value?.resolveCastOwners() ?? []);
+const buffDisplayNameKeys = computed(
+  () => snapshot.value?.buffDisplayNameKeys ?? new Map<string, string>(),
+);
 const dirty = computed(() => props.log !== snapshot.value);
 const keyword = ref('');
 const selectedEvents = ref<ReadonlySet<string>>(new Set());
 const limit = ref<200 | 500 | 'all'>(200);
+const showDebugEvents = ref(false);
+const expandedRawSequences = ref<ReadonlySet<number>>(new Set());
 
 function setLimit(value: EaSelectValue | EaSelectValue[]): void {
   if (value === 'all' || value === 200 || value === 500) limit.value = value;
@@ -58,12 +66,19 @@ const groupElements = new Map<string, HTMLElement>();
 const availableEvents = computed(() =>
   [...new Set(entries.value.map(entry => entry.event))].sort(),
 );
+function isAutoRecovery(entry: CombatReceiptEntry): boolean {
+  return entry.event === 'SpChanged' && entry.data?.source === 'autoRecovery';
+}
+const hiddenAutoRecoveryCount = computed(() =>
+  entries.value.reduce((count, entry) => count + Number(isAutoRecovery(entry)), 0),
+);
 const normalizedKeyword = computed(() => keyword.value.trim().toLocaleLowerCase());
 const filteredEntries = computed(() => {
   const allowed = selectedEvents.value;
   const query = normalizedKeyword.value;
   if (availableEvents.value.length > 0 && allowed.size === 0) return [];
   const matched = entries.value.filter(entry => {
+    if (!showDebugEvents.value && isAutoRecovery(entry)) return false;
     if (!allowed.has(entry.event)) return false;
     if (query.length === 0) return true;
     return JSON.stringify(entry).toLocaleLowerCase().includes(query);
@@ -121,6 +136,7 @@ watch(groupedEntries, syncSelectedCastGroup, { flush: 'post' });
 function refresh(): void {
   const previous = selectedEvents.value;
   snapshot.value = props.log;
+  expandedRawSequences.value = new Set();
   const events = new Set(entries.value.map(entry => entry.event));
   selectedEvents.value = new Set([...previous].filter(event => events.has(event)));
   if (selectedEvents.value.size === 0) selectedEvents.value = events;
@@ -141,6 +157,17 @@ function clearEvents(): void {
   selectedEvents.value = new Set();
 }
 
+watch(showDebugEvents, enabled => {
+  if (!enabled) expandedRawSequences.value = new Set();
+});
+
+function toggleRawReceipt(sequence: number, event: Event): void {
+  const next = new Set(expandedRawSequences.value);
+  if ((event.currentTarget as HTMLDetailsElement).open) next.add(sequence);
+  else next.delete(sequence);
+  expandedRawSequences.value = next;
+}
+
 function formatTime(frame: number): string {
   const sign = frame < 0 ? '-' : '';
   const absolute = Math.abs(frame);
@@ -148,23 +175,58 @@ function formatTime(frame: number): string {
 }
 
 function formatValue(value: CombatReceiptValue): string {
-  if (typeof value === 'number') {
-    return Number.isInteger(value)
-      ? String(value)
-      : value.toFixed(4).replace(/0+$/, '').replace(/\.$/, '');
-  }
-  return String(value);
+  return numberFormat.value.value(value);
+}
+
+function formatDamage(value: number): string {
+  return numberFormat.value.damage(value);
+}
+
+function isDamageEntry(entry: CombatReceiptEntry): boolean {
+  return entry.event === 'DamageApplied' || entry.event === 'BuffDamageApplied';
+}
+
+function isEffectDamage(entry: CombatReceiptEntry): boolean {
+  return entry.event === 'BuffDamageApplied' || entry.producedBy?.kind === 'buff';
+}
+
+function damageAmount(entry: CombatReceiptEntry): string | null {
+  const value = entry.data?.value;
+  return typeof value === 'number' && Number.isFinite(value) ? formatDamage(value) : null;
+}
+
+function damageElement(entry: CombatReceiptEntry): string | null {
+  const value = entry.data?.damageType;
+  return typeof value === 'string' && value.length > 0 ? props.damageTypeLabel(value) : null;
+}
+
+function formatDamageField(field: 'damage' | 'element', value: string): string {
+  return `${t(`battleLog.fields.${field}`)}=${value}`;
 }
 
 function entrySummary(entry: CombatReceiptEntry): string {
   return summarizeTimelineBattleLogEntry(entry, {
     damageTypeLabel: props.damageTypeLabel,
     formatValue,
+    formatDamage,
     overhealingLabel: value => t('battleLog.receiptDetails.overhealing', { value }),
     semanticLabel: (group, value) => {
       const key = `battleLog.receiptDetails.${group}.${value}`;
       const translated = t(key);
-      return translated === key ? value : translated;
+      return translated === key ? '' : translated;
+    },
+    identityLabel: (kind, id, receipt) => {
+      if (kind === 'skill') return skillIdentityLabel(id, receipt);
+      if (kind === 'buff')
+        return resolveBuffDisplayName(
+          id,
+          { t, te },
+          undefined,
+          undefined,
+          buffDisplayNameKeys.value,
+        );
+      const key = `effects.name.${id}`;
+      return te(key) ? t(key) : null;
     },
   });
 }
@@ -178,16 +240,46 @@ const ownerBySourceId = computed(() => {
   return result;
 });
 
-function sourceLabel(entry: CombatReceiptEntry): string {
+function skillIdentityLabel(id: string, entry: CombatReceiptEntry): string | null {
+  const castId = entry.data?.castId;
+  const castOwner = typeof castId === 'string' ? ownerByCastId.value.get(castId) : undefined;
+  if (castOwner?.skillId === id) return castOwner.label;
+  const candidates = castOwners.value.filter(
+    owner =>
+      owner.skillId === id && (entry.sourceId === undefined || owner.sourceId === entry.sourceId),
+  );
+  const labels = new Set(candidates.map(owner => owner.label));
+  return labels.size === 1 ? [...labels][0]! : null;
+}
+
+function sourceLabel(entry: CombatReceiptEntry): string | null {
   const castId = entry.data?.castId;
   if (typeof castId === 'string') {
     const owner = ownerByCastId.value.get(castId);
     if (owner !== undefined) return `${owner.operatorLabel} · ${owner.label}`;
   }
   if (entry.sourceId !== undefined) {
-    return ownerBySourceId.value.get(entry.sourceId)?.operatorLabel ?? entry.sourceId;
+    return ownerBySourceId.value.get(entry.sourceId)?.operatorLabel ?? null;
   }
-  return '—';
+  return null;
+}
+
+function entrySourceLabel(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): string | null {
+  const label = sourceLabel(entry);
+  if (label === null) return null;
+  if (group.kind === 'cast' && label === `${group.secondaryLabel} · ${group.label}`) return null;
+  if (group.kind === 'operator' && label === group.label) return null;
+  return label;
+}
+
+function groupActorLabel(group: TimelineBattleLogGroup): string {
+  if (group.kind === 'runtime') return t('battleLog.ui.runtimeGroup');
+  if (group.kind === 'operator') return t('battleLog.ui.operatorGroup');
+  return group.secondaryLabel;
+}
+
+function groupActionLabel(group: TimelineBattleLogGroup): string {
+  return group.kind === 'runtime' ? props.eventLabel(group.label) : group.label;
 }
 
 type BattleLogSectionKind = 'damage' | 'effects' | 'sp' | 'gauge' | 'stagger' | 'other';
@@ -239,10 +331,8 @@ function groupSections(entries: readonly CombatReceiptEntry[]): readonly BattleL
   });
 }
 
-function groupAccent(kind: 'cast' | 'operator' | 'runtime'): string {
-  if (kind === 'cast') return 'var(--ea-gold)';
-  if (kind === 'operator') return '#7dd3fc';
-  return '#94a3b8';
+function groupAccent(group: TimelineBattleLogGroup): string {
+  return group.accentColor ?? '#94a3b8';
 }
 
 function toggleGroup(key: string, event: Event): void {
@@ -311,8 +401,10 @@ function locateEntry(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): 
         </div>
       </div>
 
-      <div class="simlog-types-row">
-        <span class="simlog-filter-label">{{ $t('battleLog.ui.types') }}</span>
+      <details class="simlog-types-disclosure">
+        <summary class="simlog-filter-label">
+          {{ $t('battleLog.ui.types') }} ({{ selectedEvents.size }}/{{ availableEvents.length }})
+        </summary>
         <div class="simlog-types">
           <EaFilterChip
             v-for="event in availableEvents"
@@ -324,6 +416,15 @@ function locateEntry(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): 
             {{ eventLabel(event) }}
           </EaFilterChip>
         </div>
+      </details>
+
+      <div class="simlog-debug-row">
+        <EaFilterChip :selected="showDebugEvents" @click="showDebugEvents = !showDebugEvents">
+          {{ $t('battleLog.ui.debugEvents') }}
+        </EaFilterChip>
+        <span v-if="!showDebugEvents && hiddenAutoRecoveryCount > 0" class="simlog-debug-hint">
+          {{ $t('battleLog.ui.hiddenAutoRecovery', { count: hiddenAutoRecoveryCount }) }}
+        </span>
       </div>
 
       <div class="simlog-filter-bottom">
@@ -334,8 +435,9 @@ function locateEntry(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): 
           :placeholder="$t('battleLog.searchPlaceholder')"
         />
         <label class="simlog-limit">
-          <span class="simlog-filter-label">{{ $t('battleLog.limit') }}</span>
+          <span class="simlog-limit__label">{{ $t('battleLog.limit') }}</span>
           <EaSelect
+            class="simlog-limit-select"
             size="sm"
             :model-value="limit"
             :options="[
@@ -360,7 +462,7 @@ function locateEntry(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): 
           :ref="element => setGroupElement(group.key, element)"
           class="group simlog-block"
           :open="openGroupKey === group.key"
-          :style="{ '--group-accent': groupAccent(group.kind) }"
+          :style="{ '--group-accent': groupAccent(group) }"
         >
           <summary
             class="group__summary"
@@ -370,9 +472,9 @@ function locateEntry(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): 
           >
             <div class="group__summary-main">
               <div class="group__title-row">
-                <span class="group__actor">{{ group.secondaryLabel }}</span>
+                <span class="group__actor">{{ groupActorLabel(group) }}</span>
                 <span class="group__title-sep">·</span>
-                <span class="group__action">{{ group.label }}</span>
+                <span class="group__action">{{ groupActionLabel(group) }}</span>
               </div>
               <div class="group__timing">
                 <span class="group__timing-item">
@@ -388,7 +490,7 @@ function locateEntry(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): 
                 <span v-if="group.damage > 0" class="group__stat">
                   <span class="group__stat-label">{{ $t('battleLog.summary.damage') }}</span>
                   <span class="group__stat-sep">:</span>
-                  <span class="group__stat-value">{{ formatValue(group.damage) }}</span>
+                  <span class="group__stat-value">{{ formatDamage(group.damage) }}</span>
                 </span>
                 <span class="group__stat">
                   <span class="group__stat-label">{{ $t('battleLog.ui.lines') }}</span>
@@ -413,27 +515,67 @@ function locateEntry(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): 
                 <span class="group-section__count">{{ section.entries.length }}</span>
               </div>
               <div class="group-section__list">
-                <EaButton
-                  variant="ghost"
-                  size="sm"
-                  v-for="entry in section.entries"
-                  :key="entry.sequence"
-                  type="button"
-                  class="event-row"
-                  :class="{ 'is-jumpable': group.castId !== null }"
-                  :disabled="group.castId === null"
-                  :title="group.castId === null ? entry.event : $t('battleLog.ui.jumpToTimeline')"
-                  @click="locateEntry(group, entry)"
-                >
-                  <time class="event-row__time">{{ formatTime(entry.frame) }}</time>
-                  <span class="event-pill">{{ eventLabel(entry.event) }}</span>
-                  <span v-if="entrySummary(entry)" class="event-text">{{
-                    entrySummary(entry)
-                  }}</span>
-                  <span v-if="entry.sourceId" class="event-muted" :title="entry.sourceId">
-                    {{ sourceLabel(entry) }}
-                  </span>
-                </EaButton>
+                <div v-for="entry in section.entries" :key="entry.sequence" class="event-item">
+                  <EaButton
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    class="event-row"
+                    :class="{
+                      'is-jumpable': group.castId !== null,
+                      'event-row--damage': isDamageEntry(entry),
+                    }"
+                    :disabled="group.castId === null"
+                    :title="
+                      group.castId === null
+                        ? eventLabel(entry.event)
+                        : $t('battleLog.ui.jumpToTimeline')
+                    "
+                    @click="locateEntry(group, entry)"
+                  >
+                    <span v-if="isDamageEntry(entry)" class="event-row__main">
+                      <time class="event-row__time">{{ formatTime(entry.frame) }}</time>
+                      <span
+                        class="event-pill"
+                        :class="isEffectDamage(entry) ? 'event-pill--effect' : 'event-pill--skill'"
+                      >
+                        {{
+                          $t(
+                            isEffectDamage(entry)
+                              ? 'battleLog.ui.effectDamage'
+                              : 'battleLog.ui.skillDamage',
+                          )
+                        }}
+                      </span>
+                      <span v-if="damageAmount(entry) !== null" class="event-value">
+                        {{ formatDamageField('damage', damageAmount(entry)!) }}
+                      </span>
+                      <span v-if="damageElement(entry) !== null" class="event-value">
+                        {{ formatDamageField('element', damageElement(entry)!) }}
+                      </span>
+                    </span>
+                    <template v-else>
+                      <time class="event-row__time">{{ formatTime(entry.frame) }}</time>
+                      <span class="event-pill">{{ eventLabel(entry.event) }}</span>
+                      <span v-if="entrySummary(entry)" class="event-text">{{
+                        entrySummary(entry)
+                      }}</span>
+                    </template>
+                    <span v-if="entrySourceLabel(group, entry)" class="event-muted">
+                      {{ entrySourceLabel(group, entry) }}
+                    </span>
+                  </EaButton>
+                  <details
+                    v-if="showDebugEvents"
+                    class="event-raw"
+                    @toggle="toggleRawReceipt(entry.sequence, $event)"
+                  >
+                    <summary>{{ $t('battleLog.ui.rawReceipt') }}</summary>
+                    <pre v-if="expandedRawSequences.has(entry.sequence)">{{
+                      JSON.stringify(entry, null, 2)
+                    }}</pre>
+                  </details>
+                </div>
               </div>
             </section>
           </div>
@@ -512,7 +654,8 @@ function locateEntry(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): 
   justify-content: space-between;
   gap: 8px;
 }
-.simlog-filter-label {
+.simlog-filter-label,
+.simlog-limit__label {
   flex: none;
   color: var(--ea-fg-muted, #999);
   font-size: 10px;
@@ -520,27 +663,29 @@ function locateEntry(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): 
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-.simlog-presets,
-.simlog-types-row {
+.simlog-presets {
   display: flex;
   align-items: flex-start;
   gap: 10px;
   min-width: 0;
 }
-.simlog-types-row {
-  flex-direction: column;
-  gap: 5px;
+.simlog-types-disclosure {
+  min-width: 0;
+}
+.simlog-types-disclosure > summary {
+  display: list-item;
+  cursor: pointer;
+}
+.simlog-types-disclosure > summary:hover {
+  color: var(--ea-fg);
 }
 .simlog-presets {
   padding: 8px 10px;
   border: 1px solid rgba(56, 189, 248, 0.12);
   background: rgba(56, 189, 248, 0.04);
 }
-.simlog-presets > .simlog-filter-label,
-.simlog-types-row > .simlog-filter-label {
-  margin-top: 5px;
-}
 .simlog-presets > .simlog-filter-label {
+  margin-top: 5px;
   color: #7dd3fc;
 }
 .simlog-presets__list,
@@ -552,9 +697,9 @@ function locateEntry(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): 
   min-width: 0;
 }
 .simlog-types {
-  flex: none;
   width: 100%;
-  max-height: 112px;
+  max-height: min(240px, 35vh);
+  margin-top: 8px;
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
@@ -568,18 +713,28 @@ function locateEntry(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): 
   white-space: normal;
   overflow-wrap: anywhere;
 }
+.simlog-debug-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+}
+.simlog-debug-hint {
+  color: var(--ea-fg-muted, #999);
+  font-size: 10px;
+}
 .simlog-search {
   flex: 1;
   min-width: 0;
 }
 .simlog-limit {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
+  flex-shrink: 0;
 }
-.simlog-limit select {
-  height: 30px;
-  padding: 0 8px;
+.simlog-limit-select {
+  width: 88px;
 }
 .simlog-body {
   min-height: 0;
@@ -635,10 +790,8 @@ function locateEntry(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): 
 .group__title-row {
   gap: 6px;
   min-width: 0;
-  flex-wrap: nowrap;
 }
 .group__actor {
-  flex: none;
   color: var(--ea-fg, #fff);
   font-size: 13px;
   font-weight: 700;
@@ -648,12 +801,10 @@ function locateEntry(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): 
 }
 .group__action {
   min-width: 0;
-  overflow: hidden;
   color: color-mix(in srgb, var(--group-accent) 72%, var(--ea-fg, #fff));
   font-size: 14px;
   font-weight: 700;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
   text-shadow: 0 0 8px color-mix(in srgb, var(--group-accent) 32%, transparent);
 }
 .group__timing {
@@ -734,26 +885,39 @@ function locateEntry(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): 
 }
 .event-row {
   width: 100%;
-  min-height: 24px;
+  min-height: 28px;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  padding: 4px 0;
+  gap: 4px 8px;
+  padding: 5px 4px;
   border: 0;
   border-radius: 0;
   background: transparent;
   color: var(--ea-fg-secondary, rgba(255, 255, 255, 0.84));
   text-align: left;
 }
-.event-row + .event-row {
+.event-row.ea-button {
+  height: auto;
+  justify-content: flex-start;
+  line-height: 1.4;
+  white-space: normal;
+}
+.event-row--damage.ea-button {
+  flex-direction: column;
+  align-items: stretch;
+}
+.event-row__main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-width: 0;
+}
+.event-item + .event-item {
   border-top: 1px dashed rgba(255, 255, 255, 0.04);
 }
 .event-row.is-jumpable {
-  margin: 0 -4px;
-  width: calc(100% + 8px);
-  padding-right: 4px;
-  padding-left: 4px;
   cursor: pointer;
 }
 .event-row.is-jumpable:hover {
@@ -770,6 +934,9 @@ function locateEntry(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): 
     Consolas,
     monospace;
 }
+.event-row__time {
+  flex: none;
+}
 .event-pill {
   min-height: 18px;
   display: inline-flex;
@@ -781,10 +948,64 @@ function locateEntry(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): 
   color: color-mix(in srgb, var(--section-accent) 62%, var(--ea-fg, #fff));
   font-size: 10px;
   font-weight: 700;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.event-pill--skill {
+  border-color: rgba(248, 113, 113, 0.28);
+  background: rgba(248, 113, 113, 0.08);
+  color: #fca5a5;
+}
+.event-pill--effect {
+  border-color: rgba(125, 211, 252, 0.28);
+  background: rgba(125, 211, 252, 0.08);
+  color: #7dd3fc;
+}
+:global(html[data-theme='light']) .event-pill--skill {
+  color: #b42318;
+  border-color: rgba(180, 35, 24, 0.28);
+  background: rgba(180, 35, 24, 0.08);
+}
+:global(html[data-theme='light']) .event-pill--effect {
+  color: #0b6e99;
+  border-color: rgba(11, 110, 153, 0.28);
+  background: rgba(11, 110, 153, 0.08);
+}
+.event-value {
+  color: var(--ea-fg, rgba(255, 255, 255, 0.9));
+  font:
+    12px 'Roboto Mono',
+    Consolas,
+    monospace;
 }
 .event-text {
+  flex-basis: 100%;
+  min-width: 0;
   color: var(--ea-fg, rgba(255, 255, 255, 0.9));
   font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.event-muted {
+  flex-basis: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.event-raw {
+  margin: 0 4px 6px;
+  color: var(--ea-fg-muted, #999);
+  font-size: 11px;
+}
+.event-raw > summary {
+  cursor: pointer;
+}
+.event-raw > pre {
+  max-height: 220px;
+  overflow: auto;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.18);
+  font-size: 10px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 .simlog-empty {
   padding: 24px 12px;

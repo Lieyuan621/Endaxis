@@ -1576,6 +1576,7 @@ const {
       (name.assetSlug === null
         ? t('timeline.emptyTrack')
         : getOperatorGameName(name.assetSlug, locale.value)),
+    color: (cast, track) => skillAccentColor(cast.skillType, track.operatorSlug),
   },
   () => editorGameDataRepository.getGears(),
   () => editorGameDataRepository.getGearSets(),
@@ -3208,11 +3209,6 @@ function enemyDamageSourceDescription(entry: CombatReceiptEntry) {
     .filter(Boolean)
     .join(' · ');
 }
-function enemyDamageOperatorPanel(entry: CombatReceiptEntry) {
-  return (
-    simulationRun.value?.operatorPanels.find(panel => panel.operatorId === entry.sourceId) ?? null
-  );
-}
 const hitDetail = computed(() => {
   const target = hitDetailTarget.value;
   if (target === null) return null;
@@ -3237,15 +3233,6 @@ const hitDetailForceCritical = computed(() => {
   const detail = hitDetail.value;
   return detail?.cast.simulationInputs?.criticalOverrides?.[detail.marker.stepKey] === true;
 });
-const hitDetailOperatorPanel = computed(() => {
-  const target = hitDetailTarget.value;
-  const current = simulationRun.value;
-  if (current === null) return null;
-  if (target !== null) return publishedHitDetail.value?.operatorPanel ?? null;
-  const operatorId = enemyDamageDetailEntries.value[0]?.sourceId;
-  return current.operatorPanels.find(panel => panel.operatorId === operatorId) ?? null;
-});
-
 function hitDetailContributionSourceLabel(
   entry: Pick<OperatorPanelContributionReceipt, 'source'>,
   sequence?: number,
@@ -7700,7 +7687,6 @@ function setPanelDialogVisible(visible: boolean): void {
     :damage-zone-label="zone => t(`hitDetail.damageZones.${zone}`)"
     v-if="hitDetailTarget !== null || enemyDamageDetailSequence !== null"
     :random-mode="publishedRandomMode"
-    :operator-panel-for-entry="hitDetailTarget === null ? enemyDamageOperatorPanel : undefined"
     :source-label="t('timeline.buffDetail.source')"
     :buff-label="
       item =>
@@ -7724,7 +7710,6 @@ function setPanelDialogVisible(visible: boolean): void {
     :entries="
       hitDetailTarget !== null ? (publishedHitDetail?.entries ?? []) : enemyDamageDetailEntries
     "
-    :operator-panel="hitDetailOperatorPanel"
     :contribution-source-label="hitDetailContributionSourceLabel"
     :damage-type-label="damageElementLabel"
     :skill-type-label="skillTypeLabel"
@@ -7743,8 +7728,13 @@ function setPanelDialogVisible(visible: boolean): void {
       criticalDamage: t('hitDetail.critDamage'),
       nonCriticalDamage: t('hitDetail.nonCritDamage'),
       attack: t('hitDetail.attack'),
-      staticBuildAttack: t('hitDetail.staticBuildAttack'),
       basicTotal: t('statDetail.basicTotal'),
+      baseAttack: t('statDetail.baseAtk'),
+      operatorAttack: t('statDetail.operatorAtk'),
+      weaponAttack: t('statDetail.weaponAtk'),
+      attackBonus: t('statDetail.atkBonus'),
+      flatAttack: t('statDetail.flatAtk'),
+      percentageAttack: t('statDetail.percentageAtk'),
       attackSlot: (slot: string) => t(`statDetail.attackSlots.${slot}`),
       attributeBonus: t('statDetail.attributeBonus'),
       scalingCoefficient: t('timeline.skillEditing.scalingCoefficient'),
@@ -7756,6 +7746,10 @@ function setPanelDialogVisible(visible: boolean): void {
       criticalExpectation: t('hitDetail.critMult'),
       criticalResult: t('hitDetail.criticalResult'),
       criticalRate: t('hitDetail.rawCritRate'),
+      criticalRateStat: t('stats.crit_rate'),
+      criticalDamageStat: t('stats.crit_dmg'),
+      rawCriticalRate: t('hitDetail.rawCritRate'),
+      criticalRateCap: t('hitDetail.critRateCap'),
       criticalHit: t('hitDetail.criticalHit'),
       nonCriticalHit: t('hitDetail.nonCriticalHit'),
       cannotCritical: t('hitDetail.cannotCritical'),

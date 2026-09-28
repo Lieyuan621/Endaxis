@@ -12,6 +12,7 @@ import { useAppearance } from '../../appearance/useAppearance';
 import '../../../utils/echartsSetup';
 import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
 import type { TimelineDamageAnalysis, TimelineDamageAnalysisEntry } from './timelineDamageAnalysis';
+import { createTimelineDamageAnalysisNumberFormat } from './timelineDamageAnalysisNumberFormat';
 
 type ChartOption = ComposeOption<PieSeriesOption | TooltipComponentOption | LegendComponentOption>;
 
@@ -47,12 +48,21 @@ defineEmits<{ 'update:visible': [visible: boolean] }>();
 const { appearance } = useAppearance();
 const { t } = useI18n();
 const hasData = computed(() => props.analysis.totalDamage > 0);
-const numberFormatter = computed(
-  () => new Intl.NumberFormat(props.locale, { maximumFractionDigits: 0 }),
-);
+const numberFormatter = computed(() => createTimelineDamageAnalysisNumberFormat(props.locale));
 
 function formatNumber(value: number): string {
-  return numberFormatter.value.format(Math.round(value));
+  return numberFormatter.value.damage(value);
+}
+
+function chartTooltip(params: unknown): HTMLElement {
+  const first = Array.isArray(params) ? params[0] : params;
+  const item = first as { name?: unknown; value?: unknown; percent?: unknown } | undefined;
+  const label = typeof item?.name === 'string' ? item.name : '';
+  const value = typeof item?.value === 'number' ? item.value : 0;
+  const percent = typeof item?.percent === 'number' ? item.percent : 0;
+  const content = document.createElement('span');
+  content.textContent = numberFormatter.value.tooltip(label, value, percent);
+  return content;
 }
 
 function chartData(entries: readonly TimelineDamageAnalysisEntry[]) {
@@ -83,7 +93,7 @@ function pieOption(entries: readonly TimelineDamageAnalysisEntry[]): ChartOption
   const paint = chartPaint.value;
   return {
     backgroundColor: 'transparent',
-    tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)', ...paint.tooltip },
+    tooltip: { trigger: 'item', formatter: chartTooltip, ...paint.tooltip },
     legend: {
       orient: 'vertical',
       right: 10,
@@ -117,7 +127,7 @@ const contributionChartOption = computed<ChartOption>(() => {
   const data = chartData(props.analysis.byContribution);
   return {
     backgroundColor: 'transparent',
-    tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)', ...paint.tooltip },
+    tooltip: { trigger: 'item', formatter: chartTooltip, ...paint.tooltip },
     series: [
       {
         type: 'pie',

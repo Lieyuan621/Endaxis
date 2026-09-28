@@ -6,6 +6,8 @@ export interface TimelineBattleLogSnapshot {
   readonly history: CombatReceiptView;
   /** 只本地化已捕获的来源事实，不读取当前编辑文档或定义库。 */
   readonly resolveCastOwners: () => readonly TimelineBattleLogCastOwner[];
+  /** 发布时捕获的 Buff 展示键；未配置的 Buff 在普通日志中回退到稳定 ID。 */
+  readonly buffDisplayNameKeys?: ReadonlyMap<string, string>;
 }
 
 export interface TimelineBattleLogCastOwner {
@@ -13,6 +15,9 @@ export interface TimelineBattleLogCastOwner {
   readonly label: string;
   readonly operatorLabel: string;
   readonly sourceId: string | null;
+  /** 仅来自已发布技能定义，供日志把同一技能的内部 ID 显示为名称。 */
+  readonly skillId?: string;
+  readonly color?: string;
 }
 
 export interface TimelineBattleLogGroup {
@@ -24,6 +29,8 @@ export interface TimelineBattleLogGroup {
   readonly firstFrame: number;
   readonly lastFrame: number;
   readonly damage: number;
+  /** 已发布技能块的颜色；无技能归属的事件保持中性色。 */
+  readonly accentColor?: string;
   /** 仅显式归属到技能块时存在，用于日志定位；角色级和运行时分组保持 null。 */
   readonly castId: string | null;
 }
@@ -60,6 +67,7 @@ export function projectTimelineBattleLogGroups(
       kind: TimelineBattleLogGroup['kind'];
       label: string;
       secondaryLabel: string;
+      accentColor?: string;
       entries: CombatReceiptEntry[];
     }
   >();
@@ -82,6 +90,7 @@ export function projectTimelineBattleLogGroups(
       secondaryLabel:
         castOwner?.operatorLabel ??
         (sourceOwner === undefined ? '未归属运行时事件' : '角色级常驻行为'),
+      ...(castOwner?.color === undefined ? {} : { accentColor: castOwner.color }),
       entries: [],
     };
     bucket.entries.push(entry);
@@ -97,6 +106,7 @@ export function projectTimelineBattleLogGroups(
       firstFrame: bucket.entries[0]!.frame,
       lastFrame: bucket.entries.at(-1)!.frame,
       damage: bucket.entries.reduce((sum, entry) => sum + damageValue(entry), 0),
+      ...(bucket.accentColor === undefined ? {} : { accentColor: bucket.accentColor }),
       castId: bucket.kind === 'cast' ? key.slice('cast:'.length) : null,
     }))
     .sort((left, right) => left.firstFrame - right.firstFrame || left.key.localeCompare(right.key));
