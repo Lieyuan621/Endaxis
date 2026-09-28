@@ -160,6 +160,11 @@ export interface LegacyRetimingCheckpointSupport {
   createSession(scenario: ScenarioDocument, initialFrame: number): LegacyRetimingCheckpointSession;
 }
 
+export type LegacyPreservedInputRunner = (
+  scenario: ScenarioDocument,
+  resolve: (castId: string, actualSkillKey: string) => string | undefined,
+) => void;
+
 /** 同帧任何人工输入变化都必须回到该帧之前，包括被移走的标记原帧。 */
 function firstChangedInputFrame(
   accepted: readonly ScheduledCombatFrameInput[],
@@ -503,6 +508,7 @@ export function retimeLegacyProjectBySimulation(
   resolveRuntimeReplacement?: LegacyRuntimeReplacementResolver,
   checkpointSupport?: LegacyRetimingCheckpointSupport,
   timingMode: LegacyTimingMode = 'repair',
+  runPreservedInputs?: LegacyPreservedInputRunner,
 ): LegacyRetimingResult {
   const repairTiming = timingMode === 'repair';
   const root = record(preparedSource);
@@ -555,6 +561,56 @@ export function retimeLegacyProjectBySimulation(
     retimedScenarioCount += 1;
     retimedCastCount += ordered.length;
 
+    if (!repairTiming) {
+      if (runPreservedInputs === undefined)
+        throw new Error('preserved timing requires a forward input session');
+      const inferred = synchronizeLegacyInferredControlSwitches(
+        scenario,
+        ordered.map((item, order) => ({ ...item, order })),
+      );
+      const casts = new Map(ordered.map(item => [item.castId, item]));
+      for (const controlSwitch of inferred) {
+        const cast = ordered.find(
+          item => controlSwitch.id === legacyInferredControlSwitchId(item.castId),
+        );
+        if (cast !== undefined)
+          inferredControlSwitches.push({
+            scenarioId: scenario.id,
+            switchId: controlSwitch.id,
+            castId: cast.castId,
+            trackIndex: controlSwitch.trackIndex,
+            sourceFrame: cast.sourceStartFrame,
+            inferredFrame: controlSwitch.frame,
+          });
+      }
+      runPreservedInputs(scenario, (castId, actualSkillKey) => {
+        const item = casts.get(castId);
+        if (item === undefined) return undefined;
+        const cast = scenario.tracks[item.trackIndex]!.skillCasts.find(cast => cast.id === castId)!;
+        if (cast.source.kind !== 'operatorSkill') return undefined;
+        const replacement = resolveRuntimeReplacement?.({
+          scenario,
+          trackIndex: item.trackIndex,
+          skillGroupKey: cast.source.skillGroupKey,
+          expectedSkillKey: cast.source.skillKey,
+          actualSkillKey,
+        });
+        if (replacement == null || replacement.skillKey === cast.source.skillKey) return undefined;
+        skillFormAdjustments.push({
+          scenarioId: scenario.id,
+          castId,
+          trackIndex: item.trackIndex,
+          actionIndex: item.actionIndex,
+          sourceSkillKey: cast.source.skillKey,
+          resolvedSkillKey: replacement.skillKey,
+        });
+        cast.source = { ...cast.source, ...replacement };
+        return replacement.skillKey;
+      });
+      simulationRuns += 1;
+      continue;
+    }
+
     const working = structuredClone(scenario);
     const workingCasts = new Map(
       working.tracks.flatMap(track =>
@@ -576,7 +632,7 @@ export function retimeLegacyProjectBySimulation(
       let candidate = current.sourceStartFrame;
       let sameTrackEndCandidate: number | undefined;
       let globalOrderCandidate: number | undefined;
-      if (repairTiming && index > 0) {
+      if (index > 0) {
         const previousTrack = previousByTrack.get(current.trackIndex);
         if (previousTrack !== undefined) {
           sameTrackEndCandidate = actualEnds.get(previousTrack.castId);
@@ -600,19 +656,15 @@ export function retimeLegacyProjectBySimulation(
         candidate = Math.max(candidate, globalOrderCandidate);
       }
       const priorUltimateIntervals = ultimateIntervals;
-      const outsideDilation = repairTiming
-        ? moveOutsideUltimateTimeDilation(candidate, priorUltimateIntervals)
-        : { frame: candidate, intervalEnd: undefined };
+      const outsideDilation = moveOutsideUltimateTimeDilation(candidate, priorUltimateIntervals);
       let adjustedStartFrame = outsideDilation.frame;
       let ultimateTimeDilationEndFrame = outsideDilation.intervalEnd;
-      const separatedStartFrame = repairTiming
-        ? moveAfterConflictingControlledInput(
-            scenario,
-            current,
-            ordered.slice(0, index),
-            adjustedStartFrame,
-          )
-        : adjustedStartFrame;
+      const separatedStartFrame = moveAfterConflictingControlledInput(
+        scenario,
+        current,
+        ordered.slice(0, index),
+        adjustedStartFrame,
+      );
       const controlInputSeparationFrames = separatedStartFrame - adjustedStartFrame;
       if (controlInputSeparationFrames > 0) {
         const separatedOutsideDilation = moveOutsideUltimateTimeDilation(
@@ -697,6 +749,29 @@ export function retimeLegacyProjectBySimulation(
             },
           };
         };
+        const applyObservedReplacement = (run: LegacyRetimingSimulationResult): boolean => {
+          if (
+            resolveRuntimeReplacement === undefined ||
+            workingCast.source.kind !== 'operatorSkill'
+          )
+            return false;
+          const actualSkillKey = mismatchedActualSkillKey(run.receiptEntries, current.castId);
+          if (actualSkillKey === null) return false;
+          const replacement = resolveRuntimeReplacement({
+            scenario: working,
+            trackIndex: current.trackIndex,
+            skillGroupKey: workingCast.source.skillGroupKey,
+            expectedSkillKey: workingCast.source.skillKey,
+            actualSkillKey,
+          });
+          if (replacement === null || replacement.skillKey === workingCast.source.skillKey)
+            return false;
+          sourceSkillKey ??= workingCast.source.skillKey;
+          resolvedSkillKey = replacement.skillKey;
+          workingCast.source = { ...workingCast.source, ...replacement };
+          targetCast.source = { ...workingCast.source };
+          return true;
+        };
         let trial = beginTrial();
         try {
           const maximumPlanningEndFrame = Math.max(
@@ -724,29 +799,10 @@ export function retimeLegacyProjectBySimulation(
                     );
                   });
             lastReceiptEntries = run.receiptEntries;
-            if (
-              resolveRuntimeReplacement !== undefined &&
-              workingCast.source.kind === 'operatorSkill'
-            ) {
-              const actualSkillKey = mismatchedActualSkillKey(run.receiptEntries, current.castId);
-              if (actualSkillKey !== null) {
-                const replacement = resolveRuntimeReplacement({
-                  scenario: working,
-                  trackIndex: current.trackIndex,
-                  skillGroupKey: workingCast.source.skillGroupKey,
-                  expectedSkillKey: workingCast.source.skillKey,
-                  actualSkillKey,
-                });
-                if (replacement !== null && replacement.skillKey !== workingCast.source.skillKey) {
-                  sourceSkillKey ??= workingCast.source.skillKey;
-                  resolvedSkillKey = replacement.skillKey;
-                  workingCast.source = { ...workingCast.source, ...replacement };
-                  targetCast.source = { ...workingCast.source };
-                  trial?.dispose();
-                  trial = beginTrial();
-                  continue;
-                }
-              }
+            if (applyObservedReplacement(run)) {
+              trial?.dispose();
+              trial = beginTrial();
+              continue;
             }
             actualStarts = new Map(projectExecutedCastStartFrames(run.receiptEntries));
             actualEnds = new Map(projectDisplayedCastEndFrames(run.receiptEntries, actualStarts));
@@ -771,7 +827,6 @@ export function retimeLegacyProjectBySimulation(
         }
       };
 
-      const candidates = inputWindowCandidates(initialAdjustedStartFrame, priorUltimateIntervals);
       try {
         simulateCandidate(initialAdjustedStartFrame);
       } catch (error) {
@@ -780,11 +835,8 @@ export function retimeLegacyProjectBySimulation(
           { cause: error },
         );
       }
-      if (
-        repairTiming &&
-        settled &&
-        castCannotInterruptCurrentSkill(lastReceiptEntries, current.castId)
-      ) {
+      if (settled && castCannotInterruptCurrentSkill(lastReceiptEntries, current.castId)) {
+        const candidates = inputWindowCandidates(initialAdjustedStartFrame, priorUltimateIntervals);
         fallbackActualStarts = actualStarts;
         fallbackActualEnds = actualEnds;
         fallbackUltimateIntervals = ultimateIntervals;
@@ -828,9 +880,9 @@ export function retimeLegacyProjectBySimulation(
           `cast '${current.castId}' did not reach a stable display end (${lifecycle || 'no receipts'})`,
         );
       }
-      const actualEndFrame = actualEnds.get(current.castId)!;
       if (checkpointSupport !== undefined)
         acceptedInputs = checkpointSupport.compileInputs(working);
+      const actualEndFrame = actualEnds.get(current.castId)!;
       scenario.battle.durationFrames = Math.max(scenario.battle.durationFrames, actualEndFrame);
       if (scenario.battle.simulationRange?.endFrame !== undefined) {
         scenario.battle.simulationRange.endFrame = Math.max(
@@ -940,7 +992,7 @@ export function retimeLegacyProjectBySimulation(
       castCount: retimedCastCount,
       candidateProbes,
       simulationRuns,
-      ...(checkpointSupport === undefined
+      ...(checkpointSupport === undefined || !repairTiming
         ? {}
         : {
             checkpoints: { compiledSessions, trials: checkpointTrials, observationExtensions },

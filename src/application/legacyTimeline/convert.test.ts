@@ -1,4 +1,5 @@
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
+import { CombatRuntimeSession } from '../../core/combat/runtime/combatRuntimeSession';
 import { convertLegacyTimeline, resolveLegacyRuntimeReplacementSource } from './convert';
 import { gameDataRepository } from '../../data/gameDataRepository';
 import { parseProjectDocument } from '../../core/project/serialization';
@@ -25,9 +26,16 @@ it('保留时间允许同轴重叠，智能修复则顺延，且不改变原始�
       ],
     },
   };
-  const preserved = convertLegacyTimeline(input, gameDataRepository, mappings, {
-    timingMode: 'preserve',
-  });
+  const save = vi.spyOn(CombatRuntimeSession.prototype, 'save');
+  let preserved: ReturnType<typeof convertLegacyTimeline>;
+  try {
+    preserved = convertLegacyTimeline(input, gameDataRepository, mappings, {
+      timingMode: 'preserve',
+    });
+    expect(save).not.toHaveBeenCalled();
+  } finally {
+    save.mockRestore();
+  }
   const repaired = convertLegacyTimeline(input, gameDataRepository, mappings, {
     timingMode: 'repair',
   });

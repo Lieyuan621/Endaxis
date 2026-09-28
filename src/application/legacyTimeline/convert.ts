@@ -12,6 +12,7 @@ import {
 } from './heuristicRetiming';
 import { ScenarioSimulationService } from '../simulation/scenarioSimulationService';
 import { CheckpointRetimingSession } from './checkpointRetiming';
+import { createLegacyPreservedInputRunner } from './preservedInputs';
 import { skillSettings, skillSettingResources } from '../../data/combat/skillSettings';
 import { elementalAttachments } from '../../data/buffs/elementalAttachments';
 import { compoundStatusFactories } from '../../data/buffs/compoundStatusFactories';
@@ -281,6 +282,7 @@ export function convertLegacyTimeline(
             new CheckpointRetimingSession(simulation.createInputCombatSession(scenario, frame)),
         },
         options.timingMode,
+        createLegacyPreservedInputRunner(simulation),
       );
     } catch (error) {
       project = beforeRetiming;

@@ -2103,17 +2103,11 @@ export class CombatRuntimeAssembly {
         data: { skillId: expectedSkillId, ...(castId === undefined ? {} : { castId }) },
       });
     }
-    // 原生连携输入由 HUD 当前候选决定具体技能；CharacterData 的 curComboSkill 只提供
-    // 无候选时的静态槽位，不能覆盖已经打开的连携窗口阶段。
-    const pendingCombo = action === 'comboSkill' ? this.comboWindows.first : undefined;
-    const resolution =
-      pendingCombo !== undefined && pendingCombo.operatorId === operatorId
-        ? pendingCombo.nativeCondition !== undefined
-          ? ability.resolvePlayerInputSkill(expectedSkillId, action)
-          : pendingCombo.nextSkillKey === expectedSkillId
-            ? ({ status: 'matched', actualSkillKey: pendingCombo.nextSkillKey } as const)
-            : ({ status: 'mismatched', actualSkillKey: pendingCombo.nextSkillKey } as const)
-        : ability.resolvePlayerInputSkill(expectedSkillId, action);
+    const resolution = this.#resolvePlayerInputSkill({
+      operatorId,
+      skillId: expectedSkillId,
+      action,
+    });
     if (resolution.status === 'mismatched') {
       this.receipt.record({
         frame: this.clock.frame,
@@ -2701,6 +2695,10 @@ export class CombatRuntimeAssembly {
           };
           try {
             input.skills({
+              resolvePlayerInputSkill: skill => {
+                requireCurrentPhase();
+                return this.#resolvePlayerInputSkill(skill);
+              },
               submit: (skill, frame, skillProgram) => {
                 requireCurrentPhase(frame);
                 if (skillProgram !== undefined) {
@@ -2742,6 +2740,24 @@ export class CombatRuntimeAssembly {
           this.#externalEventRuntime.applyInput(event);
       },
     };
+  }
+
+  #resolvePlayerInputSkill(input: import('../state/environmentState').CombatSkillInput) {
+    // 原生连携输入优先使用 HUD 当前候选，而非无候选时的静态技能槽。
+    const pendingCombo = input.action === 'comboSkill' ? this.comboWindows.first : undefined;
+    if (
+      pendingCombo !== undefined &&
+      pendingCombo.operatorId === input.operatorId &&
+      pendingCombo.nativeCondition === undefined
+    ) {
+      return pendingCombo.nextSkillKey === input.skillId
+        ? ({ status: 'matched', actualSkillKey: pendingCombo.nextSkillKey } as const)
+        : ({ status: 'mismatched', actualSkillKey: pendingCombo.nextSkillKey } as const);
+    }
+    return this.#requireAbilitySystem(input.operatorId).resolvePlayerInputSkill(
+      input.skillId,
+      input.action,
+    );
   }
 
   #applyConsumableUse(input: import('../state/environmentState').ConsumableUseInput): void {

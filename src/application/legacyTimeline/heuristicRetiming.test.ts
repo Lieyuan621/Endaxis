@@ -22,6 +22,71 @@ function receipt(
   } as CombatReceiptEntry;
 }
 
+it.each([
+  [-10, 0],
+  [10, 10],
+  [10, 20],
+])('保留时间只观察输入帧 %s、%s，不等待技能或时间膨胀结束', (first, second) => {
+  const ids = ['legacy:test:track:0:cast:0', 'legacy:test:track:0:cast:1'];
+  const frames = [first, second];
+  const project = {
+    scenarios: [
+      {
+        id: 'test',
+        battle: { durationFrames: 60, simulationRange: { endFrame: 40 } },
+        tracks: [
+          {
+            skillCasts: ids.map((id, index) => ({
+              id,
+              placement: { startFrame: frames[index] },
+              source: { kind: 'operatorSkill', skillGroupKey: 'basic', skillKey: 'base' },
+            })),
+          },
+        ],
+      },
+    ],
+  } as unknown as EndaxisProjectDocument;
+  const observed: number[] = [];
+  const result = retimeLegacyProjectBySimulation(
+    project,
+    {
+      scenarioList: [
+        {
+          id: 'test',
+          data: {
+            tracks: [{ actions: frames.map(startTime => ({ startTime })) }],
+          },
+        },
+      ],
+    },
+    () => {
+      throw new Error('preserve must not trial a candidate');
+    },
+    () => ({ skillGroupKey: 'replacement', skillKey: 'replaced' }),
+    undefined,
+    'preserve',
+    (scenario, resolve) => {
+      ids.forEach((id, index) => {
+        observed.push(frames[index]!);
+        expect(resolve(id, 'replaced')).toBe('replaced');
+        expect(scenario.tracks[0]!.skillCasts[index]!.source).toMatchObject({
+          skillGroupKey: 'replacement',
+          skillKey: 'replaced',
+        });
+      });
+    },
+  );
+  expect(observed).toEqual(frames);
+  expect(
+    project.scenarios[0]!.tracks[0]!.skillCasts.map(cast => cast.placement.startFrame),
+  ).toEqual(frames);
+  expect(project.scenarios[0]!.battle.durationFrames).toBe(60);
+  expect(project.scenarios[0]!.battle.simulationRange?.endFrame).toBe(40);
+  expect(result.timingAdjustments).toEqual([]);
+  expect(result.skillFormAdjustments).toHaveLength(2);
+  expect(result.simulationStats.simulationRuns).toBe(1);
+});
+
 it('把同步切换成 Buff 的输入作为已执行的一帧参与后续全局排序', () => {
   const firstCastId = 'legacy:test:track:0:cast:0';
   const secondCastId = 'legacy:test:track:0:cast:1';
