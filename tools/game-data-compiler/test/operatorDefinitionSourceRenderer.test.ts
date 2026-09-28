@@ -68,9 +68,7 @@ describe('independent operator resource renderer', () => {
     };
     const operator = {
       slug: 'sample',
-      skillGroups: [
-        { key: 'battleSkill', skillType: 'battleSkill', levelSource: 'battleSkill', skills: skill },
-      ],
+      skillGroups: [{ key: 'battleSkill', operationType: 'battleSkill', skills: skill }],
     };
     const source = renderOperatorDefinitionSource({ operator });
     expect(source).not.toContain('expandActionGraph');

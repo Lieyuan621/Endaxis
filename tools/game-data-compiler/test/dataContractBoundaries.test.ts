@@ -267,8 +267,8 @@ describe('独立游戏数据契约边界', () => {
       ],
       CompiledActiveSkillTimelineSequenceSource: ['startFrame', 'endFrame'],
       OperatorSkillIdentitySource: ['key', 'skillType'],
-      OperatorSkillGroupVariantSource: ['key', 'levelSource'],
-      OperatorSkillGroupSource: ['key', 'skillType', 'levelSource'],
+      OperatorSkillGroupVariantSource: ['key'],
+      OperatorSkillGroupSource: ['key', 'operationType'],
       OperatorActiveSkillEntrySource: ['key', 'skillType'],
     };
     const found = new Set<string>();

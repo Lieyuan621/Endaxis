@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, markRaw, onBeforeUnmount, reactive, ref, toRaw, type Raw } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { EaButton, EaInput } from '@/design-system';
+import { EaButton, EaCloseButton, EaInput } from '@/design-system';
 import { ElConfigProvider } from 'element-plus';
 import AssetCatalogBrowser from './AssetCatalogBrowser.vue';
 import ResourceTools from './ResourceTools.vue';
@@ -210,10 +210,6 @@ function resourceLabel(resource: WorkspaceDefinitionResource): string {
       new Map(Object.entries(names ?? {})),
     );
   }
-  if (resource.kind === 'skill' && 'skillDisplayNameKeys' in definition) {
-    const nameKey = definition.skillDisplayNameKeys?.[resource.identity];
-    if (nameKey && te(nameKey)) return t(nameKey);
-  }
   if (resource.kind === 'skill' && draft.value.edit.kind === 'operator') {
     const path = resource.path;
     if (path[0] === 'dodgeSkill') return t('skillType.dodge');
@@ -222,7 +218,7 @@ function resourceLabel(resource: WorkspaceDefinitionResource): string {
       if (group) {
         const parent = fieldValueAt(definition, path.slice(0, -1));
         const number = Array.isArray(parent) ? ` ${Number(path[path.length - 1]) + 1}` : '';
-        return `${t(skillTypeLabelKey(group.skillType))}${number}`;
+        return `${t(skillTypeLabelKey(group.operationType))}${number}`;
       }
     }
   }
@@ -295,6 +291,13 @@ const fieldPath = computed(() => [
   ...(field.value ? [field.value] : []),
 ]);
 const referenceChoices = computed(() => ({
+  skillSlot:
+    draft.value.edit.kind === 'operator'
+      ? (draft.value.edit.definition.skillSlots ?? []).map(slot => ({
+          value: slot.key,
+          label: slot.key,
+        }))
+      : [],
   gearSet: props.assets.flatMap(asset =>
     asset.edit.kind === 'gearSet' ? [{ value: asset.edit.definition.slug, label: asset.name }] : [],
   ),
@@ -619,15 +622,7 @@ browserVisible.value = true;
           <EaButton v-if="custom" size="sm" :disabled="saving" @click="save"
             ><WorkspaceIcon name="check" />{{ tr('integration.save') }}</EaButton
           >
-          <EaButton
-            variant="ghost"
-            size="sm"
-            icon-only
-            :aria-label="tr('close')"
-            :disabled="saving"
-            @click="requestClose"
-            ><WorkspaceIcon name="close"
-          /></EaButton>
+          <EaCloseButton size="sm" :label="tr('close')" :disabled="saving" @click="requestClose" />
         </header>
         <nav class="ap-tabs" :aria-label="tr('documents')">
           <div
@@ -636,19 +631,23 @@ browserVisible.value = true;
             class="ap-tab"
             :class="{ 'is-active': activeKey === doc.key }"
           >
-            <button class="rw-native-button" @click="selectDocument(doc.documentKey)">
+            <EaButton
+              variant="ghost"
+              size="sm"
+              :pressed="activeKey === doc.key"
+              @click="selectDocument(doc.documentKey)"
+            >
               <WorkspaceIcon :name="doc.source === 'builtin' ? 'lock' : 'graph'" :size="13" />{{
                 doc.name
               }}<span v-if="doc.source === 'custom'" class="ap-custom-dot" />
-            </button>
-            <button
+            </EaButton>
+            <EaCloseButton
               v-if="assetTabs.length > 1"
-              class="rw-native-button ap-tab-close"
-              :aria-label="tr('close')"
+              class="ap-tab-close"
+              size="sm"
+              :label="tr('close')"
               @click="closeAsset(doc.key)"
-            >
-              <WorkspaceIcon name="close" :size="12" />
-            </button>
+            />
           </div>
         </nav>
         <div class="ap-location">
@@ -671,46 +670,56 @@ browserVisible.value = true;
             ><WorkspaceIcon name="forward"
           /></EaButton>
           <template v-for="part in path" :key="part.id">
-            <WorkspaceIcon name="chevron" :size="12" /><button
-              class="rw-native-button ap-text-button"
+            <WorkspaceIcon name="chevron" :size="12" /><EaButton
+              variant="ghost"
+              size="sm"
+              class="ap-text-button"
               @click="open(part.id)"
             >
               {{ part.name }}
-            </button>
+            </EaButton>
           </template>
           <div class="ap-spacer" />
           <div class="rw-layout-actions">
-            <button
-              class="rw-native-button"
+            <EaButton
+              variant="ghost"
+              size="sm"
+              icon-only
               :aria-label="tr('workspace.toggleTools')"
-              :aria-pressed="layout.leftOpen"
+              :pressed="layout.leftOpen"
               @click="layout.leftOpen = !layout.leftOpen"
             >
               <WorkspaceIcon name="list" :size="14" />
-            </button>
-            <button
-              class="rw-native-button"
+            </EaButton>
+            <EaButton
+              variant="ghost"
+              size="sm"
+              icon-only
               :aria-label="tr('workspace.toggleInspector')"
-              :aria-pressed="layout.rightOpen"
+              :pressed="layout.rightOpen"
               @click="layout.rightOpen = !layout.rightOpen"
             >
               <WorkspaceIcon name="info" :size="14" />
-            </button>
-            <button
-              class="rw-native-button"
+            </EaButton>
+            <EaButton
+              variant="ghost"
+              size="sm"
+              icon-only
               :aria-label="tr('workspace.focus')"
-              :aria-pressed="focused"
+              :pressed="focused"
               @click="focused = !focused"
             >
               <WorkspaceIcon name="fit" :size="14" />
-            </button>
-            <button
-              class="rw-native-button"
+            </EaButton>
+            <EaButton
+              variant="ghost"
+              size="sm"
+              icon-only
               :aria-label="tr('workspace.resetLayout')"
               @click="resetLayout"
             >
               <WorkspaceIcon name="layout" :size="14" />
-            </button>
+            </EaButton>
           </div>
           <span class="ap-mode"
             ><WorkspaceIcon :name="custom ? 'unlock' : 'lock'" :size="12" />{{
@@ -880,19 +889,14 @@ browserVisible.value = true;
             <strong>{{ tr('library') }}</strong
             ><span>{{ tr('workspace.drawerHint') }}</span>
             <div class="ap-spacer" />
-            <button
-              class="rw-native-button"
-              :aria-pressed="browserPinned"
+            <EaButton
+              variant="ghost"
+              size="sm"
+              :pressed="browserPinned"
               @click="browserPinned = !browserPinned"
             >
-              <WorkspaceIcon name="pin" :size="13" />{{ tr('workspace.pin') }}</button
-            ><button
-              class="rw-native-button"
-              :aria-label="tr('close')"
-              @click="browserVisible = false"
-            >
-              <WorkspaceIcon name="close" :size="14" />
-            </button>
+              <WorkspaceIcon name="pin" :size="13" />{{ tr('workspace.pin') }}</EaButton
+            ><EaCloseButton size="sm" :label="tr('close')" @click="browserVisible = false" />
           </div>
           <AssetCatalogBrowser
             :assets="browserAssets"
@@ -915,15 +919,17 @@ browserVisible.value = true;
           <EaButton @click="pendingClose = null">{{ tr('integration.cancel') }}</EaButton>
         </section>
         <footer class="ap-status">
-          <button
-            type="button"
-            class="rw-native-button rw-browser-toggle"
+          <EaButton
+            variant="ghost"
+            size="sm"
+            class="rw-browser-toggle"
+            :pressed="browserVisible"
             :aria-expanded="browserVisible"
             aria-controls="workspace-asset-browser"
             @click="browserVisible = !browserVisible"
           >
             <WorkspaceIcon name="folder" :size="14" />{{ tr('library') }}
-          </button>
+          </EaButton>
           <span class="ap-variable-dot" />{{ status || tr('ready') }}
           <div class="ap-spacer" />
           {{ tr('sharedDraft') }}

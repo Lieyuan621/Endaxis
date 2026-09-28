@@ -6,7 +6,6 @@ defineProps<{
   operatorName: string;
   typeLabel: string;
   skillGroupKey: string;
-  level: number;
   durationFrames: number;
   segments: readonly string[];
 }>();
@@ -36,16 +35,12 @@ const { t } = useI18n({ useScope: 'global' });
             </div>
           </div>
           <div class="form-group">
-            <span>{{ t('timeline.inspector.labels.skillType') }}</span>
+            <span>{{ t('timeline.libraryInspector.operationType') }}</span>
             <div class="readonly-field">{{ typeLabel }}</div>
           </div>
           <div class="form-group attribute-grid__wide">
             <span>{{ t('timeline.libraryInspector.skillGroupId') }}</span>
             <div class="readonly-field readonly-field--mono">{{ skillGroupKey }}</div>
-          </div>
-          <div class="form-group">
-            <span>{{ t('timeline.libraryInspector.level') }}</span>
-            <div class="readonly-field">{{ level }}</div>
           </div>
           <div class="form-group">
             <span>{{ t('timeline.libraryInspector.durationFrames') }}</span>

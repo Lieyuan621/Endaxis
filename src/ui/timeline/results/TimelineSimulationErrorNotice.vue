@@ -58,8 +58,8 @@ async function copyError() {
   padding: 9px 12px;
   border: 1px solid rgb(210 75 75 / 45%);
   border-radius: 6px;
-  background: var(--ea-bg-elevated);
-  box-shadow: 0 6px 18px rgb(0 0 0 / 22%);
+  background: var(--ea-panel-elevated);
+  box-shadow: 0 6px 18px var(--ea-shadow);
   color: var(--ea-fg-muted);
   font-size: 11px;
   pointer-events: auto;

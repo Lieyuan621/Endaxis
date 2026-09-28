@@ -508,9 +508,9 @@ const spWarnings = computed(() => {
 .resource-curves {
   min-width: 1px;
   height: 100%;
-  color: var(--ea-text-secondary, rgb(215 218 222 / 82%));
+  color: var(--ea-fg-secondary);
   background: var(--ea-workbench-main, #18181c);
-  font-family: var(--ea-font-family, 'Segoe UI', sans-serif);
+  font-family: inherit;
   letter-spacing: 0;
 }
 
@@ -521,7 +521,7 @@ const spWarnings = computed(() => {
 }
 
 .empty-state {
-  color: var(--ea-text-muted, rgb(255 255 255 / 32%));
+  color: var(--ea-fg-faint);
   font-size: 11px;
 }
 

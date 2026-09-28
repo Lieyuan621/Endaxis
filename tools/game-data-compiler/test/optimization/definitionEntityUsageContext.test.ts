@@ -167,9 +167,7 @@ const fixtureOperator = (
     comboSkillConditions: [],
     buffDefinitions: {},
     abilityEntityDefinitions: definitions,
-    skillGroups: [
-      { key: 'fixture', skillType: 'battleSkill', levelSource: 'battleSkill', skills: value },
-    ],
+    skillGroups: [{ key: 'fixture', operationType: 'battleSkill', skills: value }],
   };
 };
 

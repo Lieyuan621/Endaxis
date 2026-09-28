@@ -47,7 +47,8 @@ export function formatSkillBlockWarnings(options: {
   /** 读取定义失败时不把原始异常和技能 ID 直接显示在技能块上。 */
   definitionUnavailable?: boolean;
   castLabel: (castId: string) => string | undefined;
-  triggeredSkillLabel: (skillId: string) => string | undefined;
+  /** 从当前干员技能库的内存反向索引查询操作段名称；没有可见入口时返回 undefined。 */
+  actualSkillLabel?: (skillId: string) => string | undefined;
   t: Translate;
 }): string {
   const { t } = options;
@@ -58,8 +59,8 @@ export function formatSkillBlockWarnings(options: {
 
   const lines = options.reasons.map(reason => {
     if (reason.startsWith('skillInputMismatch:')) {
-      const actualId = /^skillInputMismatch: expected '(.+)', actual '(.+)'$/.exec(reason)?.[2];
-      const actual = actualId === undefined ? undefined : options.triggeredSkillLabel(actualId);
+      const actualId = /, actual '(.+)'$/.exec(reason)?.[1];
+      const actual = actualId === undefined ? undefined : options.actualSkillLabel?.(actualId);
       return actual === undefined ? text('inputMismatch') : text('inputMismatchNamed', { actual });
     }
     if (reason.startsWith('skillInterruptUnavailable:')) {

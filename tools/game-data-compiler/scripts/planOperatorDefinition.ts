@@ -4,6 +4,7 @@ import { format, resolveConfig } from 'prettier';
 import { compileOperatorFoundationSource } from '../src/domains/operator/sourceClosure.ts';
 import { parseOperatorProductIdentitySource } from '../src/domains/operator/productIdentity.ts';
 import { parseOperatorSkillGroupValidationOptions } from '../src/domains/operator/skillGroups.ts';
+import { resolveBasePassiveLevelSource } from '../src/domains/operator/skillLevels.ts';
 import {
   parseOperatorActiveSkillEntries,
   type OperatorActiveSkillEntrySource,
@@ -122,7 +123,7 @@ export function planOperatorDefinition(
     originId: id,
     sourcePath: `${args.slug}.basePassiveSkillIds`,
     skillId: id,
-    levelSource: resolveBasePassiveLevelSource(foundation.skillLibrary, id),
+    levelSource: resolveBasePassiveLevelSource(foundation.skillLibrary.nativeSkillGroups, id),
     inputBlackboard: {},
   }));
   const passiveRequests = [
@@ -209,14 +210,7 @@ export function planOperatorDefinition(
       },
     };
   });
-  const routedSkills = planRoutedSkills(
-    row,
-    entries,
-    activeSkills,
-    foundation.skillLibrary.skillGroups,
-    skills,
-    args.slug,
-  );
+  const routedSkills = planRoutedSkills(row, entries, activeSkills, skills, args.slug);
   const timeDilationPriorities = args.sources.timeDilationPriorities(args.timeDilationCatalog);
   const gameplayTagRegistry = new GameplayTagRegistry(
     args.sources.gameplayTags(args.gameplayTagCatalog),
@@ -229,7 +223,7 @@ export function planOperatorDefinition(
     activeSkills,
     foundation.skillLibrary.skillGroups.map(group => ({
       key: group.key,
-      skillType: group.skillType,
+      operationType: group.operationType,
       skillKeys: group.skillKeys,
     })),
     gameplayTagRegistry,
@@ -435,7 +429,7 @@ function planOperatorRuntimeTemplate(
   activeSkills: readonly PlannedOperatorActiveSkillRuntime[],
   skillGroups: readonly {
     readonly key: string;
-    readonly skillType: string;
+    readonly operationType: string;
     readonly skillKeys: readonly string[];
   }[],
   gameplayTagRegistry: GameplayTagRegistry,
@@ -473,7 +467,7 @@ function planOperatorRuntimeTemplate(
       : skillGroups.find(group => group.key === skillGroupKey);
   if (
     skillGroupKey !== undefined &&
-    (skillGroup === undefined || skillGroup.skillType !== 'comboSkill')
+    (skillGroup === undefined || skillGroup.operationType !== 'comboSkill')
   )
     throw new Error(`${sourcePath}.comboSkillGroupKey: expected a combo skill group`);
   const artifactPath = path.resolve(sourceRoot, sourceFile);
@@ -636,7 +630,7 @@ function createActiveSkillSlotReplacementProjection(skills: readonly { readonly 
       {
         kind: 'changeSkillSlot' as const,
         parameters: {
-          skillGroupKey: skillSlotKey,
+          skillSlotKey,
           targetSkillKey,
           inheritOriginSkillCooldownProgress: action.inheritOriginSkillCooldownProgress,
           lifetime:
@@ -673,39 +667,6 @@ function createActiveSkillTypeMutationProjection(skills: readonly { readonly key
       },
     ];
   };
-}
-
-function resolveBasePassiveLevelSource(
-  skillLibrary: ReturnType<typeof compileOperatorFoundationSource>['skillLibrary'],
-  passiveSkillId: string,
-) {
-  const nativeGroups = skillLibrary.nativeSkillGroups.filter(group =>
-    group.skillIds.includes(passiveSkillId),
-  );
-  if (nativeGroups.length > 1) {
-    throw new Error(
-      `base passive ${JSON.stringify(passiveSkillId)} belongs to multiple native skill groups`,
-    );
-  }
-  if (nativeGroups.length === 0) return { kind: 'nativeDefault' as const };
-  const nativeGroup = nativeGroups[0]!;
-  const projectedSources = [
-    ...skillLibrary.skillGroups
-      .filter(group => group.nativeGroupType === nativeGroup.nativeGroupType)
-      .map(group => group.levelSource),
-    ...skillLibrary.skillGroups.flatMap(group =>
-      group.variants
-        .filter(variant => variant.nativeGroupType === nativeGroup.nativeGroupType)
-        .map(variant => variant.levelSource),
-    ),
-  ];
-  const levelSources = [...new Set(projectedSources)];
-  if (levelSources.length !== 1) {
-    throw new Error(
-      `${nativeGroup.sourcePath}: base passive ${JSON.stringify(passiveSkillId)} must resolve to exactly one project skill level source`,
-    );
-  }
-  return { kind: 'operatorSkillGroup' as const, levelSource: levelSources[0]! };
 }
 
 function parsePlayerActionRouting(
@@ -898,12 +859,11 @@ const ROUTED_SKILL_CONFIG_FIELDS = new Set([
   'costResource',
 ]);
 
-/** 把旧 Python 已取证的跨组路由语义收进 TS 整名主干；这里只接受完全同构的包装器。 */
+/** 从已取证的包装技能解析实际执行体；不使用展示组决定执行身份。 */
 export function planRoutedSkills(
   row: Record<string, unknown>,
   entries: readonly OperatorActiveSkillEntrySource[],
   activeSkills: readonly Pick<PlannedOperatorActiveSkillRuntime, 'definition'>[],
-  skillGroups: readonly { readonly key: string; readonly skillKeys: readonly string[] }[],
   skillDataBySourceFile: Readonly<Record<string, unknown>>,
   slug: string,
 ) {
@@ -949,9 +909,8 @@ export function planRoutedSkills(
         : config.executionLevelSource,
       `${path}.executionLevelSource`,
     );
-    const targetGroups = skillGroups.filter(group => group.skillKeys.includes(targetSkillKey));
-    if (targetGroups.length !== 1 || targetEntry.levelSource !== executionLevelSource) {
-      throw new Error(`${path}: target placement group or per-skill level source does not match`);
+    if (targetEntry.levelSource !== executionLevelSource) {
+      throw new Error(`${path}: target per-skill level source does not match`);
     }
     const route = wrapper.switchToBuffCast;
     const condition = route?.condition;
@@ -1021,7 +980,7 @@ export function planRoutedSkills(
       targetSkillKey,
       skillType: targetEntry.skillType,
       levelSource: targetEntry.levelSource,
-      executionSkillGroupKey: targetGroups[0]!.key,
+
       costs: [{ resource: 'sp' as const, value: costValue }],
       costFrame: wrapper.costFrame,
       cooldownFrames,

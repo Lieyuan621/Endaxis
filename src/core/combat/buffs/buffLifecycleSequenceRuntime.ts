@@ -208,7 +208,7 @@ class BuffSkillSlotReplacementAction<Key extends string> implements BuffDuringEn
         operations.execute({
           kind: 'changeSkillSlot',
           parameters: {
-            skillGroupKey: replacement.skillGroupKey,
+            skillSlotKey: replacement.skillSlotKey,
             targetSkillKey: replacement.targetSkillKey,
             inheritOriginSkillCooldownProgress: replacement.inheritOriginSkillCooldownProgress,
           },
@@ -223,7 +223,7 @@ class BuffSkillSlotReplacementAction<Key extends string> implements BuffDuringEn
         operations.execute({
           kind: 'changeSkillSlot',
           parameters: {
-            skillGroupKey: replacement.skillGroupKey,
+            skillSlotKey: replacement.skillSlotKey,
             targetSkillKey: replacement.revertedSkillKey,
             inheritOriginSkillCooldownProgress: replacement.inheritOriginSkillCooldownProgress,
           },
@@ -242,7 +242,7 @@ class BuffSkillSlotReplacementAction<Key extends string> implements BuffDuringEn
       operations.execute({
         kind: 'changeSkillSlot',
         parameters: {
-          skillGroupKey: replacement.skillGroupKey,
+          skillSlotKey: replacement.skillSlotKey,
           targetSkillKey: replacement.revertedSkillKey,
           inheritOriginSkillCooldownProgress: replacement.inheritOriginSkillCooldownProgress,
         },

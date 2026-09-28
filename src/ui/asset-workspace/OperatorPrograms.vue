@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { EaButton } from '@/design-system';
 import type { OperatorDefinition } from '../../../packages/game-data-contract/src/operators';
 import type { WorkspaceResource } from './workspaceResources';
 import WorkspaceIcon from './WorkspaceIcon.vue';
@@ -80,16 +81,15 @@ function levelCount(resource: WorkspaceResource) {
         class="program-group"
       >
         <header>
-          <strong>{{ t(skillTypeLabelKey(group.skillType)) }}</strong>
+          <strong>{{ t(skillTypeLabelKey(group.operationType)) }}</strong>
           <code>{{ group.key }}</code>
-          <span>{{ tr('levelSource') }} · {{ t(skillTypeLabelKey(group.levelSource)) }}</span>
-          <button
-            class="rw-native-button list-action"
+          <EaButton
+            size="sm"
             :disabled="!editable"
             @click="emit('command', { kind: 'addSkill', group: groupIndex })"
           >
             {{ tr('addSkill') }}
-          </button>
+          </EaButton>
         </header>
         <div
           v-for="section in sections"
@@ -102,38 +102,41 @@ function levelCount(resource: WorkspaceResource) {
           >
           <ol>
             <li v-for="(skill, index) in section.items" :key="skill.id">
-              <button class="rw-native-button resource-link" @click="emit('open', skill.id)">
+              <EaButton variant="ghost" class="resource-link" @click="emit('open', skill.id)">
                 <span class="sequence-number">{{ index + 1 }}</span>
                 <span
                   ><strong>{{ skill.name }}</strong
                   ><code>{{ skill.definitionResource.identity }}</code></span
                 >
                 <WorkspaceIcon name="arrow" :size="14" />
-              </button>
+              </EaButton>
               <div v-if="section.key === 'base'" class="list-actions">
-                <button
-                  class="rw-native-button list-action"
+                <EaButton
+                  size="sm"
+                  icon-only
                   :disabled="!editable || index === 0"
                   :aria-label="tr('moveUp')"
                   @click="emit('command', { kind: 'moveSkillUp', group: groupIndex, index })"
                 >
                   ↑
-                </button>
-                <button
-                  class="rw-native-button list-action"
+                </EaButton>
+                <EaButton
+                  size="sm"
+                  icon-only
                   :disabled="!editable || index === section.items.length - 1"
                   :aria-label="tr('moveDown')"
                   @click="emit('command', { kind: 'moveSkillDown', group: groupIndex, index })"
                 >
                   ↓
-                </button>
-                <button
-                  class="rw-native-button list-action"
+                </EaButton>
+                <EaButton
+                  size="sm"
+                  variant="danger"
                   :disabled="!editable || section.items.length === 1"
                   @click="emit('command', { kind: 'removeSkill', group: groupIndex, index })"
                 >
                   {{ t('common.delete') }}
-                </button>
+                </EaButton>
               </div>
             </li>
           </ol>
@@ -143,10 +146,11 @@ function levelCount(resource: WorkspaceResource) {
         <header>
           <strong>{{ tr('otherSkills') }}</strong>
         </header>
-        <button
+        <EaButton
           v-for="skill in extraSkills"
           :key="skill.id"
-          class="rw-native-button resource-link"
+          variant="ghost"
+          class="resource-link"
           @click="emit('open', skill.id)"
         >
           <span
@@ -154,17 +158,16 @@ function levelCount(resource: WorkspaceResource) {
             ><code>{{ skill.definitionResource.identity }}</code></span
           >
           <WorkspaceIcon name="arrow" :size="14" />
-        </button>
+        </EaButton>
       </article>
       <div class="program-settings">
-        <button
+        <EaButton
           v-for="key in ['skillSlots', 'playerActionRoutes', 'comboSkillConditions']"
           :key="key"
-          class="rw-native-button"
           @click="emit('field', key)"
         >
           {{ t(`definitionEditor.fields.${key}`) }} <WorkspaceIcon name="arrow" :size="14" />
-        </button>
+        </EaButton>
       </div>
     </template>
     <template v-else>
@@ -172,8 +175,8 @@ function levelCount(resource: WorkspaceResource) {
         <h3>
           {{ t(`definitionEditor.fields.${section.kind === 'talent' ? 'talents' : 'potentials'}`) }}
         </h3>
-        <button
-          class="rw-native-button list-action"
+        <EaButton
+          size="sm"
           :disabled="!editable"
           @click="
             emit('command', {
@@ -183,10 +186,11 @@ function levelCount(resource: WorkspaceResource) {
           "
         >
           {{ tr('add') }}
-        </button>
+        </EaButton>
         <div v-for="(item, index) in section.items" :key="item.id" class="upgrade-row">
-          <button
-            class="rw-native-button resource-link upgrade-link"
+          <EaButton
+            class="resource-link upgrade-link"
+            variant="ghost"
             @click="emit('open', item.id)"
           >
             <span class="sequence-number">{{ index + 1 }}</span>
@@ -195,9 +199,10 @@ function levelCount(resource: WorkspaceResource) {
               t('assetWorkspace.programs.levels', { count: levelCount(item) })
             }}</span>
             <WorkspaceIcon name="arrow" :size="14" />
-          </button>
-          <button
-            class="rw-native-button list-action"
+          </EaButton>
+          <EaButton
+            size="sm"
+            variant="danger"
             :disabled="!editable"
             @click="
               emit('command', {
@@ -208,7 +213,7 @@ function levelCount(resource: WorkspaceResource) {
             "
           >
             {{ t('common.delete') }}
-          </button>
+          </EaButton>
         </div>
       </section>
     </template>
@@ -229,16 +234,6 @@ li,
   display: flex;
   flex-shrink: 0;
   gap: 4px;
-}
-.list-action {
-  padding: 4px 8px;
-  border: 1px solid var(--ea-border);
-  background: transparent;
-  white-space: nowrap;
-  font-size: 11px;
-}
-.list-action:hover:not(:disabled) {
-  background: #303a40;
 }
 .programs-heading {
   margin-bottom: 22px;
@@ -264,7 +259,7 @@ li,
   flex-wrap: wrap;
   gap: 12px;
   padding: 10px 14px;
-  background: #292f33;
+  background: var(--ea-surface-row);
 }
 .program-group > header > span {
   margin-left: auto;
@@ -292,18 +287,14 @@ ol {
 }
 .resource-link {
   width: 100%;
+  height: auto;
   display: flex;
   align-items: center;
   gap: 12px;
-  border: 0;
   border-bottom: 1px solid var(--ea-border);
   padding: 10px 12px;
-  background: transparent;
   text-align: left;
-}
-.resource-link:hover,
-.program-settings button:hover {
-  background: #303a40;
+  white-space: normal;
 }
 .resource-link > span:not(.sequence-number) {
   min-width: 0;
@@ -321,7 +312,7 @@ ol {
   flex-shrink: 0;
 }
 .sequence-number {
-  color: #b9aa71;
+  color: var(--ea-gold);
   font-size: 11px;
   flex: 0 0 18px;
 }
@@ -349,8 +340,5 @@ ol {
   display: flex;
   gap: 16px;
   align-items: center;
-  padding: 8px 12px;
-  border: 1px solid var(--ea-border);
-  background: transparent;
 }
 </style>

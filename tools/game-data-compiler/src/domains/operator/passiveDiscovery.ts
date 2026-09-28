@@ -32,7 +32,7 @@ export function discoverOperatorPassiveSkillRequestsFromBundles(
         originId: bundle.effectId,
         sourcePath: entry.sourcePath,
         skillId: entry.attachedSkill.skillId,
-        // 原生路径没有设置 CreateSkillOptions.level，使用 SkillData 默认等级。
+        // CreateCardSkill 未指定等级：先查 1 级补丁，不查询角色技能组等级。
         levelSource: { kind: 'nativeDefault' },
         inputBlackboard: entry.attachedSkill.blackboard,
         ...(activeConditionIds.length === 0 ? {} : { activeConditionIds }),

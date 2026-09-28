@@ -10,12 +10,11 @@ import { projectBuildAttributeModifier } from '../../compiler/build/buildAttribu
 import { projectSingleBuildConditionSource } from '../../compiler/conditions/buildCondition.ts';
 import type { OperatorProgressionSource } from './progression.ts';
 import type { CompiledOperatorProgressionEntrySource } from './progressionEffects.ts';
-import type { OperatorSkillGroupSource, OperatorSkillIdentitySource } from './skillGroups.ts';
+import type { OperatorSkillIdentitySource } from './skillGroups.ts';
 
-/** 来自已校验技能库及技能消耗元数据的绑定；不靠原生 ID 后缀选择技能组或消耗类型。 */
+/** 来自实际技能及费用元数据的绑定；养成修正不读取技能库展示分组。 */
 export interface OperatorProgressionDefinitionContext {
   readonly skills: readonly OperatorSkillIdentitySource[];
-  readonly skillGroups: readonly OperatorSkillGroupSource[];
   readonly costResources: ReadonlyMap<string, CombatResource>;
   /** 已由公共被动编译器完整装配的 AddPassiveSkill 来源；未列出的条目仍严格失败。 */
   readonly installedPassiveSkillSourcePaths?: ReadonlySet<string>;
@@ -26,8 +25,6 @@ export interface OperatorProgressionDefinitionContext {
     string,
     { readonly durationKey: string; readonly effectivenessKey: string }
   >;
-  /** 注册但不属于玩家可直接养成/放置入口的替换技能。 */
-  readonly runtimeReplacementSkillKeys?: ReadonlySet<string>;
 }
 
 type Progression = Pick<
@@ -236,8 +233,7 @@ function compileModifier(
     return [
       {
         kind: 'patchSkillBlackboard',
-        skillGroupKey: target.group.key,
-        ...(target.singleSkill ? {} : { skillKey: target.skill.key }),
+        skillKey: target.key,
         blackboardKey: entry.blackboardKey,
         operation: entry.operation === 'overwrite' ? 'assign' : entry.operation,
         value: entry.numberValue,
@@ -261,8 +257,7 @@ function compileModifier(
       return [
         {
           kind: 'addSkillCooldownFrames',
-          skillGroupKey: target.group.key,
-          ...(target.singleSkill ? {} : { skillKey: target.skill.key }),
+          skillKey: target.key,
           frames,
           ...(condition === null ? {} : { condition }),
         },
@@ -278,8 +273,7 @@ function compileModifier(
     return [
       {
         kind: 'multiplySkillCost',
-        skillGroupKey: target.group.key,
-        ...(target.singleSkill ? {} : { skillKey: target.skill.key }),
+        skillKey: target.key,
         resource,
         multiplier: entry.value,
       },
@@ -344,27 +338,5 @@ function resolveSkill(
 ) {
   const skills = context.skills.filter(skill => skill.key === skillId);
   if (skills.length !== 1) throw new Error(`${path}: expected one skill binding for '${skillId}'`);
-  const skill = skills[0]!;
-  const groups = context.skillGroups.filter(
-    group =>
-      group.skillKeys.includes(skill.key) ||
-      group.variants.some(variant => variant.skillKeys.includes(skill.key)),
-  );
-  if (groups.length !== 1) throw new Error(`${path}: expected one group binding for '${skillId}'`);
-  const group = groups[0]!;
-  const visibleSkillKeys = group.skillKeys.filter(
-    key => !context.runtimeReplacementSkillKeys?.has(key),
-  );
-  const hasRuntimeReplacements = group.skillKeys.some(key =>
-    context.runtimeReplacementSkillKeys?.has(key),
-  );
-  return {
-    skill,
-    group,
-    singleSkill:
-      visibleSkillKeys.length === 1 &&
-      group.variants.length === 0 &&
-      !hasRuntimeReplacements &&
-      !context.runtimeReplacementSkillKeys?.has(skill.key),
-  };
+  return skills[0]!;
 }

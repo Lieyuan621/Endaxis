@@ -253,7 +253,7 @@ export interface CombatOperatorProgram {
   readonly buffDefinitions?: Readonly<Record<string, ResolvedSkillBuffDefinition>>;
   /** Buff 生命周期直接引用的、同样与技能等级解耦的能力实体闭包。 */
   readonly abilityEntityDefinitions?: Readonly<Record<string, ResolvedAbilityEntityDefinition>>;
-  /** 稳定技能组的基础形态与不可直接放置的运行时替换形态。 */
+  /** 原生技能槽的基础及替换成员；与技能库展示组、成员是否可见无关。 */
   readonly skillSlotGroups?: readonly CompiledSkillSlotGroup[];
   /** 四类语义动作的显式技能请求路由；运行时不得从技能库分组恢复。 */
   readonly playerActionRoutes?: import('../../game-data/operatorDefinition').OperatorPlayerActionRoutes;
@@ -1565,7 +1565,6 @@ export class CombatRuntimeAssembly {
           if (
             previous.cooldownFrames !== program.cooldownFrames ||
             previous.skillType !== program.skillType ||
-            previous.skillGroupKey !== program.skillGroupKey ||
             (program.cooldownFrames !== undefined && previous.costFrame !== program.costFrame)
           ) {
             throw new Error(
@@ -2104,17 +2103,11 @@ export class CombatRuntimeAssembly {
         data: { skillId: expectedSkillId, ...(castId === undefined ? {} : { castId }) },
       });
     }
-    // 原生连携输入由 HUD 当前候选决定具体技能；CharacterData 的 curComboSkill 只提供
-    // 无候选时的静态槽位，不能覆盖已经打开的连携窗口阶段。
-    const pendingCombo = action === 'comboSkill' ? this.comboWindows.first : undefined;
-    const resolution =
-      pendingCombo !== undefined && pendingCombo.operatorId === operatorId
-        ? pendingCombo.nativeCondition !== undefined
-          ? ability.resolvePlayerInputSkill(expectedSkillId, action)
-          : pendingCombo.nextSkillKey === expectedSkillId
-            ? ({ status: 'matched', actualSkillKey: pendingCombo.nextSkillKey } as const)
-            : ({ status: 'mismatched', actualSkillKey: pendingCombo.nextSkillKey } as const)
-        : ability.resolvePlayerInputSkill(expectedSkillId, action);
+    const resolution = this.#resolvePlayerInputSkill({
+      operatorId,
+      skillId: expectedSkillId,
+      action,
+    });
     if (resolution.status === 'mismatched') {
       this.receipt.record({
         frame: this.clock.frame,
@@ -2322,7 +2315,7 @@ export class CombatRuntimeAssembly {
       const result = this.comboWindows.consume(
         operatorId,
         resolvedSkillId,
-        program.skillGroupKey,
+        ability.skillSlotKeyForSkill(resolvedSkillId),
         skillCastId,
         castId,
       );
@@ -2702,6 +2695,10 @@ export class CombatRuntimeAssembly {
           };
           try {
             input.skills({
+              resolvePlayerInputSkill: skill => {
+                requireCurrentPhase();
+                return this.#resolvePlayerInputSkill(skill);
+              },
               submit: (skill, frame, skillProgram) => {
                 requireCurrentPhase(frame);
                 if (skillProgram !== undefined) {
@@ -2743,6 +2740,24 @@ export class CombatRuntimeAssembly {
           this.#externalEventRuntime.applyInput(event);
       },
     };
+  }
+
+  #resolvePlayerInputSkill(input: import('../state/environmentState').CombatSkillInput) {
+    // 原生连携输入优先使用 HUD 当前候选，而非无候选时的静态技能槽。
+    const pendingCombo = input.action === 'comboSkill' ? this.comboWindows.first : undefined;
+    if (
+      pendingCombo !== undefined &&
+      pendingCombo.operatorId === input.operatorId &&
+      pendingCombo.nativeCondition === undefined
+    ) {
+      return pendingCombo.nextSkillKey === input.skillId
+        ? ({ status: 'matched', actualSkillKey: pendingCombo.nextSkillKey } as const)
+        : ({ status: 'mismatched', actualSkillKey: pendingCombo.nextSkillKey } as const);
+    }
+    return this.#requireAbilitySystem(input.operatorId).resolvePlayerInputSkill(
+      input.skillId,
+      input.action,
+    );
   }
 
   #applyConsumableUse(input: import('../state/environmentState').ConsumableUseInput): void {
@@ -3333,7 +3348,6 @@ export class CombatRuntimeAssembly {
       if (
         existing.periodFrames !== periodFrames ||
         existing.program.skillType !== program.skillType ||
-        existing.program.skillGroupKey !== program.skillGroupKey ||
         existing.commitFrame !== configuration.commitFrame
       ) {
         throw new Error(
@@ -3530,20 +3544,16 @@ export class CombatRuntimeAssembly {
           );
         }
         const group = operator.skillSlotGroups?.find(
-          group => group.skillGroupKey === program.skillGroupKey,
+          group => group.skillSlotKey === program.skillSlotKey,
         );
         if (group === undefined)
           throw new Error(
-            `combo condition '${program.key}' requires skill slot '${program.skillGroupKey}'`,
+            `combo condition '${program.key}' requires skill slot '${program.skillSlotKey}'`,
           );
         const skill = this.#skillCooldowns.get(
           `${operator.operatorId}\u0000${program.skillKey}`,
         )?.program;
-        if (
-          skill === undefined ||
-          skill.skillType !== 'comboSkill' ||
-          skill.skillGroupKey !== group.skillGroupKey
-        ) {
+        if (skill === undefined || skill.skillType !== 'comboSkill') {
           throw new Error(
             `combo condition '${program.key}' requires assembled combo skill '${program.skillKey}'`,
           );
@@ -3620,7 +3630,7 @@ export class CombatRuntimeAssembly {
               operatorId,
               program.skillKey,
               {},
-              { ...value, skillGroupKey: program.skillGroupKey },
+              { ...value, skillSlotKey: program.skillSlotKey },
             );
             onPending?.(operatorId, program, value);
           },
@@ -3644,12 +3654,12 @@ export class CombatRuntimeAssembly {
 
   #changeSkillSlot(
     operatorId: string,
-    skillGroupKey: string,
+    skillSlotKey: string,
     targetSkillKey: string,
     inheritOriginSkillCooldownProgress: boolean,
   ): void {
     const abilitySystem = this.#requireAbilitySystem(operatorId);
-    const previousSkillKey = abilitySystem.changeSkillSlot(skillGroupKey, targetSkillKey);
+    const previousSkillKey = abilitySystem.changeSkillSlot(skillSlotKey, targetSkillKey);
     let inheritedCooldownProgress: number | undefined;
     try {
       if (inheritOriginSkillCooldownProgress && previousSkillKey !== targetSkillKey) {
@@ -3657,7 +3667,7 @@ export class CombatRuntimeAssembly {
         const target = this.#skillCooldowns.get(`${operatorId}\u0000${targetSkillKey}`);
         if ((source === undefined) !== (target === undefined)) {
           throw new Error(
-            `ability skill slot '${skillGroupKey}' cannot inherit cooldown from ` +
+            `ability skill slot '${skillSlotKey}' cannot inherit cooldown from ` +
               `'${previousSkillKey}' to '${targetSkillKey}' before both skills are assembled`,
           );
         }
@@ -3667,7 +3677,7 @@ export class CombatRuntimeAssembly {
         }
       }
     } catch (error) {
-      abilitySystem.changeSkillSlot(skillGroupKey, previousSkillKey);
+      abilitySystem.changeSkillSlot(skillSlotKey, previousSkillKey);
       throw error;
     }
     this.receipt.record({
@@ -3676,7 +3686,7 @@ export class CombatRuntimeAssembly {
       event: 'SkillSlotChanged',
       sourceId: operatorId,
       data: {
-        skillGroupKey,
+        skillSlotKey,
         targetSkillKey,
         previousSkillKey,
         inheritOriginSkillCooldownProgress,
@@ -3688,7 +3698,7 @@ export class CombatRuntimeAssembly {
   #replaceSkillSlot(
     operatorId: string,
     parameters: {
-      readonly skillGroupKey: string;
+      readonly skillSlotKey: string;
       readonly targetSkillKey: string;
       readonly revertedSkillKey?: string;
       readonly inheritOriginSkillCooldownProgress: boolean;
@@ -3703,12 +3713,12 @@ export class CombatRuntimeAssembly {
 
   #finishSkillSlotReplacement(
     operatorId: string,
-    skillGroupKey: string,
+    skillSlotKey: string,
     registrationId: number,
   ): void {
     finishAbilitySkillSlotReplacement(
       this.#requireAbilitySystem(operatorId).runtimeState,
-      skillGroupKey,
+      skillSlotKey,
       registrationId,
       this.#skillSlotReplacementHost(operatorId),
     );
@@ -3862,8 +3872,8 @@ export class CombatRuntimeAssembly {
       delegate,
     });
     const baseDelegate = new SkillSlotOperationExecutor({
-      changeSkillSlot: (skillGroupKey, targetSkillKey, inheritCooldownProgress) =>
-        this.#changeSkillSlot(operatorId, skillGroupKey, targetSkillKey, inheritCooldownProgress),
+      changeSkillSlot: (skillSlotKey, targetSkillKey, inheritCooldownProgress) =>
+        this.#changeSkillSlot(operatorId, skillSlotKey, targetSkillKey, inheritCooldownProgress),
       replaceSkillSlot: parameters => this.#replaceSkillSlot(operatorId, parameters),
       finishSkillSlotReplacement: (group, id) =>
         this.#finishSkillSlotReplacement(operatorId, group, id),
@@ -4120,8 +4130,8 @@ export class CombatRuntimeAssembly {
       operatorId,
       this.comboWindows,
       controlConditions,
-      (skillGroupKey, ownerId) =>
-        this.#requireAbilitySystem(ownerId).currentSkillKeyForSlot(skillGroupKey),
+      (skillSlotKey, ownerId) =>
+        this.#requireAbilitySystem(ownerId).currentSkillKeyForSlot(skillSlotKey),
       { state: operationHost.state.comboWindows, programs: operationHost.programs },
     );
     const eventConditions = new EventContextConditionExecutor(
@@ -4444,8 +4454,8 @@ export class CombatRuntimeAssembly {
       operatorId,
       this.comboWindows,
       controlConditions,
-      (skillGroupKey, ownerId) =>
-        this.#requireAbilitySystem(ownerId).currentSkillKeyForSlot(skillGroupKey),
+      (skillSlotKey, ownerId) =>
+        this.#requireAbilitySystem(ownerId).currentSkillKeyForSlot(skillSlotKey),
       { state: operationHost.state.comboWindows, programs: operationHost.programs },
     );
     const eventConditions = new EventContextConditionExecutor(

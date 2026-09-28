@@ -209,7 +209,7 @@ describe('compileScenarioRuntimeAssembly', () => {
     expect(compiled.inputs).toEqual([]);
     expect(operator.skillSlotGroups).toContainEqual(
       expect.objectContaining({
-        skillGroupKey: 'comboSkill',
+        skillSlotKey: 'comboSkill',
         baseSkillKey: 'chr_0004_pelica_combo_skill',
         replacementSkillKeys: [],
       }),
@@ -244,7 +244,14 @@ describe('compileScenarioRuntimeAssembly', () => {
       potentials: [
         {
           levels: 1,
-          modifiers: [{ kind: 'addSkillCooldownFrames', skillGroupKey: 'comboSkill', frames: -15 }],
+          modifiers: [
+            {
+              kind: 'addSkillCooldownFrames',
+              skillKey: 'chr_0004_pelica_combo_skill',
+              frames: -15,
+            },
+            { kind: 'addSkillCooldownFrames', skillKey: 'replacement', frames: -15 },
+          ],
         },
       ],
       skillSlots: perlica.skillSlots?.map(slot =>
@@ -276,7 +283,7 @@ describe('compileScenarioRuntimeAssembly', () => {
     ]);
     expect(compiled.operators[0]!.skillSlotGroups).toContainEqual(
       expect.objectContaining({
-        skillGroupKey: 'comboSkill',
+        skillSlotKey: 'comboSkill',
         baseSkillKey: 'chr_0004_pelica_combo_skill',
         replacementSkillKeys: ['replacement'],
       }),

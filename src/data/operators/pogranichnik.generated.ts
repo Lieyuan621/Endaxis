@@ -3774,8 +3774,7 @@ export const pogranichnik: OperatorDefinition = {
   skillGroups: [
     {
       key: 'basicAttack',
-      skillType: 'basicAttack',
-      levelSource: 'basicAttack',
+      operationType: 'basicAttack',
       skills: [
         pogranichnikChr_0029_pograni_attack1,
         pogranichnikChr_0029_pograni_attack2,
@@ -3786,32 +3785,27 @@ export const pogranichnik: OperatorDefinition = {
     },
     {
       key: 'finisher',
-      skillType: 'finisher',
-      levelSource: 'basicAttack',
+      operationType: 'finisher',
       skills: pogranichnikChr_0029_pograni_power_attack,
     },
     {
       key: 'plungingAttack',
-      skillType: 'plungingAttack',
-      levelSource: 'basicAttack',
+      operationType: 'plungingAttack',
       skills: pogranichnikChr_0029_pograni_plunging_attack_end,
     },
     {
       key: 'battleSkill',
-      skillType: 'battleSkill',
-      levelSource: 'battleSkill',
+      operationType: 'battleSkill',
       skills: pogranichnikChr_0029_pograni_normal_skill,
     },
     {
       key: 'comboSkill',
-      skillType: 'comboSkill',
-      levelSource: 'comboSkill',
+      operationType: 'comboSkill',
       skills: pogranichnikChr_0029_pograni_combo_skill,
     },
     {
       key: 'ultimate',
-      skillType: 'ultimate',
-      levelSource: 'ultimate',
+      operationType: 'ultimate',
       skills: pogranichnikChr_0029_pograni_ultimate_skill,
     },
   ],
@@ -3866,17 +3860,17 @@ export const pogranichnik: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'has_potential1',
           operation: 'assign',
           value: 1,
+          skillKey: 'chr_0029_pograni_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'atb_return',
           operation: 'assign',
           value: 15,
+          skillKey: 'chr_0029_pograni_normal_skill',
         },
       ],
     },
@@ -3911,22 +3905,22 @@ export const pogranichnik: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
-          skillGroupKey: 'ultimate',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
+          skillKey: 'chr_0029_pograni_ultimate_skill',
         },
       ],
     },
     {
       levels: 1,
       modifiers: [
-        { kind: 'addSkillCooldownFrames', skillGroupKey: 'comboSkill', frames: -60 },
+        { kind: 'addSkillCooldownFrames', frames: -60, skillKey: 'chr_0029_pograni_combo_skill' },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'atb_ratio',
           operation: 'assign',
           value: 1.2,
+          skillKey: 'chr_0029_pograni_combo_skill',
         },
       ],
     },

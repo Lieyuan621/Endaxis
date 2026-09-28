@@ -79,7 +79,7 @@ const skillColors: Record<string, string> = {
 function skillColor(skillCastId: string): string {
   const found = findSkillCast(skillCastId);
   if (found === null) return '#ccc';
-  return found.skillCast.color ?? skillColors[found.skillCast.skillType ?? ''] ?? '#ccc';
+  return found.skillCast.color ?? skillColors[found.skillCast.operationType ?? ''] ?? '#ccc';
 }
 
 const ports: Record<TimelineConnectionPort, { x: number; y: number }> = {

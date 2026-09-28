@@ -95,7 +95,7 @@ describe('CombatActionSequenceRuntime', () => {
         action: {
           kind: 'changeSkillSlot',
           parameters: {
-            skillGroupKey: 'battle',
+            skillSlotKey: 'battle',
             targetSkillKey: 'enhanced',
             lifetime: 'finishByAction',
           },
@@ -148,7 +148,7 @@ describe('CombatActionSequenceRuntime', () => {
       {
         kind: 'changeSkillSlot',
         parameters: {
-          skillGroupKey: 'battle',
+          skillSlotKey: 'battle',
           targetSkillKey: 'enhanced',
           lifetime: 'finishByAction',
         },

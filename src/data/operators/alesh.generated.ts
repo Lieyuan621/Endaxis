@@ -2349,8 +2349,7 @@ export const alesh: OperatorDefinition = {
   skillGroups: [
     {
       key: 'basicAttack',
-      skillType: 'basicAttack',
-      levelSource: 'basicAttack',
+      operationType: 'basicAttack',
       skills: [
         aleshChr_0024_deepfin_attack1,
         aleshChr_0024_deepfin_attack2,
@@ -2359,36 +2358,19 @@ export const alesh: OperatorDefinition = {
         aleshChr_0024_deepfin_attack5,
       ],
     },
-    {
-      key: 'finisher',
-      skillType: 'finisher',
-      levelSource: 'basicAttack',
-      skills: aleshChr_0024_deepfin_power_attack,
-    },
+    { key: 'finisher', operationType: 'finisher', skills: aleshChr_0024_deepfin_power_attack },
     {
       key: 'plungingAttack',
-      skillType: 'plungingAttack',
-      levelSource: 'basicAttack',
+      operationType: 'plungingAttack',
       skills: aleshChr_0024_deepfin_plunging_attack_end,
     },
     {
       key: 'battleSkill',
-      skillType: 'battleSkill',
-      levelSource: 'battleSkill',
+      operationType: 'battleSkill',
       skills: aleshChr_0024_deepfin_normal_skill,
     },
-    {
-      key: 'comboSkill',
-      skillType: 'comboSkill',
-      levelSource: 'comboSkill',
-      skills: aleshChr_0024_deepfin_combo_skill,
-    },
-    {
-      key: 'ultimate',
-      skillType: 'ultimate',
-      levelSource: 'ultimate',
-      skills: aleshChr_0024_deepfin_ultimate_skill,
-    },
+    { key: 'comboSkill', operationType: 'comboSkill', skills: aleshChr_0024_deepfin_combo_skill },
+    { key: 'ultimate', operationType: 'ultimate', skills: aleshChr_0024_deepfin_ultimate_skill },
   ],
   dodgeSkill: aleshCommon_character_perfect_dodge,
   dashBuffs: [
@@ -2441,24 +2423,24 @@ export const alesh: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'prob_add',
           operation: 'assign',
           value: [0.002, 0.005],
+          skillKey: 'chr_0024_deepfin_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'prob_max',
           operation: 'assign',
           value: [0.3, 0.3],
+          skillKey: 'chr_0024_deepfin_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'rate',
           operation: 'assign',
           value: [10, 10],
+          skillKey: 'chr_0024_deepfin_combo_skill',
         },
       ],
     },
@@ -2469,17 +2451,17 @@ export const alesh: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'potential_1',
           operation: 'assign',
           value: 1,
+          skillKey: 'chr_0024_deepfin_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'potential_1_atb',
           operation: 'add',
           value: 10,
+          skillKey: 'chr_0024_deepfin_normal_skill',
         },
       ],
     },
@@ -2495,24 +2477,24 @@ export const alesh: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'potential_3',
           operation: 'assign',
           value: 1,
+          skillKey: 'chr_0024_deepfin_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'atk_up',
           operation: 'assign',
           value: 0.15,
+          skillKey: 'chr_0024_deepfin_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'Duration',
           operation: 'assign',
           value: 10,
+          skillKey: 'chr_0024_deepfin_combo_skill',
         },
       ],
     },
@@ -2521,9 +2503,9 @@ export const alesh: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
-          skillGroupKey: 'ultimate',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
+          skillKey: 'chr_0024_deepfin_ultimate_skill',
         },
       ],
     },
@@ -2532,24 +2514,24 @@ export const alesh: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'potential_5',
           operation: 'assign',
           value: 1,
+          skillKey: 'chr_0024_deepfin_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'hp_tar',
           operation: 'assign',
           value: 0.5,
+          skillKey: 'chr_0024_deepfin_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'atk_up',
           operation: 'assign',
           value: 1.5,
+          skillKey: 'chr_0024_deepfin_ultimate_skill',
         },
       ],
     },

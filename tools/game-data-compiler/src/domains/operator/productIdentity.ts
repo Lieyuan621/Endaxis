@@ -7,7 +7,6 @@ export interface OperatorProductIdentitySource {
   readonly exportName: string;
   readonly characterId: string;
   readonly buffDisplayNameKeys?: Readonly<Record<string, string>>;
-  readonly skillDisplayNameKeys?: Readonly<Record<string, string>>;
 }
 
 export function parseOperatorProductIdentitySource(
@@ -42,23 +41,11 @@ export function parseOperatorProductIdentitySource(
             requireNonEmptyString(key, `${sourcePath}.buffDisplayNameKeys.${id}`),
           ]),
         );
-  const skillDisplayNameKeys =
-    row.skillDisplayNameKeys === undefined
-      ? undefined
-      : Object.fromEntries(
-          Object.entries(
-            requireRecord(row.skillDisplayNameKeys, `${sourcePath}.skillDisplayNameKeys`),
-          ).map(([key, nameKey]) => [
-            requireNonEmptyString(key, `${sourcePath}.skillDisplayNameKeys.skillKey`),
-            requireNonEmptyString(nameKey, `${sourcePath}.skillDisplayNameKeys.${key}`),
-          ]),
-        );
   return {
     slug,
     gameId,
     exportName,
     characterId,
     ...(buffDisplayNameKeys === undefined ? {} : { buffDisplayNameKeys }),
-    ...(skillDisplayNameKeys === undefined ? {} : { skillDisplayNameKeys }),
   };
 }

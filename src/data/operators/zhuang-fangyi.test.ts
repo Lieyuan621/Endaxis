@@ -56,18 +56,24 @@ describe('next Zhuang Fangyi definition', () => {
       'finisher',
       'plungingAttack',
       'battleSkill',
+      'enhancedBattleSkill',
       'comboSkill',
+      'enhancedComboSkill',
       'ultimate',
       'enhancedBasicAttack',
     ]);
-    const battle = zhuangFangyi.skillGroups.find(group => group.key === 'battleSkill');
-    const combo = zhuangFangyi.skillGroups.find(group => group.key === 'comboSkill');
-    expect(battle?.replacementSkills?.map(skill => skill.key)).toEqual([
-      'chr_0030_zhuangfy_normal_skill_ult',
-    ]);
-    expect(combo?.replacementSkills?.map(skill => skill.key)).toEqual([
-      'chr_0030_zhuangfy_combo_skill_ult',
-    ]);
+    expect(
+      zhuangFangyi.skillGroups.find(group => group.key === 'enhancedBattleSkill'),
+    ).toMatchObject({
+      operationType: 'battleSkill',
+      skills: { key: 'chr_0030_zhuangfy_normal_skill_ult' },
+    });
+    expect(
+      zhuangFangyi.skillGroups.find(group => group.key === 'enhancedComboSkill'),
+    ).toMatchObject({
+      operationType: 'comboSkill',
+      skills: { key: 'chr_0030_zhuangfy_combo_skill_ult' },
+    });
 
     const skills = zhuangFangyi.skillGroups.flatMap(group => [
       ...(Array.isArray(group.skills) ? group.skills : [group.skills]),
@@ -90,13 +96,13 @@ describe('next Zhuang Fangyi definition', () => {
     const ultimateBuff = zhuangFangyi.buffDefinitions?.buff_chr_0030_zhuangfy_ult_base;
     expect(ultimateBuff?.skillSlotReplacements).toEqual([
       {
-        skillGroupKey: 'battleSkill',
+        skillSlotKey: 'battleSkill',
         targetSkillKey: 'chr_0030_zhuangfy_normal_skill_ult',
         revertedSkillKey: 'chr_0030_zhuangfy_normal_skill',
         inheritOriginSkillCooldownProgress: false,
       },
       {
-        skillGroupKey: 'comboSkill',
+        skillSlotKey: 'comboSkill',
         targetSkillKey: 'chr_0030_zhuangfy_combo_skill_ult',
         revertedSkillKey: 'chr_0030_zhuangfy_combo_skill',
         inheritOriginSkillCooldownProgress: true,

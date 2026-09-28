@@ -122,10 +122,10 @@ export function materializePassiveBuffInstallation<Value extends LevelValues>(
 function resolveRequestedLevel(
   request: PassiveSkillCompileRequestSource,
   resolvedWeaponLevel: number | undefined,
-): number | null {
+): number {
   switch (request.levelSource.kind) {
     case 'nativeDefault':
-      return null;
+      return 1;
     case 'operatorSkillGroup':
       throw new Error(
         `${request.sourcePath}: operator skill-group passive must preserve its level column`,

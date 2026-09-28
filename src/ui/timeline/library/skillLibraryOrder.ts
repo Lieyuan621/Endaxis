@@ -1,7 +1,7 @@
-import type { SkillType } from '../../../core/game-data/operatorDefinition';
+import type { OperationType } from '../../../core/game-data/operatorDefinition';
 
 interface TimelineSkillLibraryOrderEntry {
-  readonly skillType: SkillType;
+  readonly operationType: OperationType;
 }
 
 /**
@@ -12,11 +12,11 @@ export function orderTimelineSkillLibrary<T extends TimelineSkillLibraryOrderEnt
   entries: readonly T[],
 ): readonly T[] {
   const rank = (entry: TimelineSkillLibraryOrderEntry): number => {
-    if (entry.skillType === 'basicAttack') return 0;
-    if (entry.skillType === 'plungingAttack') return 1;
-    if (entry.skillType === 'finisher') return 2;
-    if (entry.skillType === 'battleSkill') return 3;
-    if (entry.skillType === 'comboSkill') return 4;
+    if (entry.operationType === 'basicAttack') return 0;
+    if (entry.operationType === 'plungingAttack') return 1;
+    if (entry.operationType === 'finisher') return 2;
+    if (entry.operationType === 'battleSkill') return 3;
+    if (entry.operationType === 'comboSkill') return 4;
     return 5;
   };
 

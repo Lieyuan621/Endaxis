@@ -85,15 +85,12 @@ describe('placeSkillGroup', () => {
       scenario,
       trackIndex: 0 as const,
       operator: yvonne,
-      skillGroupKey: 'basicAttack',
-      variantKey: 'enhancedBasicAttack',
+      skillGroupKey: 'enhancedBasicAttack',
       startFrame: 90,
       ids: createIds(),
     };
-    const group = yvonne.skillGroups.find(group => group.key === 'basicAttack')!;
-    const entry = listSkillGroupLibraryPlacements(group).find(
-      entry => entry.variantKey === 'enhancedBasicAttack',
-    )!;
+    const group = yvonne.skillGroups.find(group => group.key === 'enhancedBasicAttack')!;
+    const entry = listSkillGroupLibraryPlacements(group)[0]!;
     expect(entry.skills.map(skill => skill.key)).toEqual([
       'chr_0017_yvonne_ult_attack1_1',
       'chr_0017_yvonne_ult_attack2_1',
@@ -237,8 +234,7 @@ describe('placeSkillGroup', () => {
       scenario,
       trackIndex: 0,
       operator: laevatain,
-      skillGroupKey: 'basicAttack',
-      variantKey: 'enhancedBasicAttack',
+      skillGroupKey: 'enhancedBasicAttack',
       startFrame: 90,
       ids: createIds(),
     });
@@ -246,19 +242,19 @@ describe('placeSkillGroup', () => {
     expect(result.scenario.tracks[0]!.skillCasts).toHaveLength(4);
     expect(result.scenario.tracks[0]!.skillCasts.map(cast => cast.source)).toEqual([
       expect.objectContaining({
-        skillGroupKey: 'basicAttack',
+        skillGroupKey: 'enhancedBasicAttack',
         skillKey: 'chr_0016_laevat_ult_attack1',
       }),
       expect.objectContaining({
-        skillGroupKey: 'basicAttack',
+        skillGroupKey: 'enhancedBasicAttack',
         skillKey: 'chr_0016_laevat_ult_attack2',
       }),
       expect.objectContaining({
-        skillGroupKey: 'basicAttack',
+        skillGroupKey: 'enhancedBasicAttack',
         skillKey: 'chr_0016_laevat_ult_attack3',
       }),
       expect.objectContaining({
-        skillGroupKey: 'basicAttack',
+        skillGroupKey: 'enhancedBasicAttack',
         skillKey: 'chr_0016_laevat_ult_attack4',
       }),
     ]);
@@ -278,7 +274,7 @@ describe('placeSkillGroup', () => {
       scenario,
       trackIndex: 0,
       operator: laevatain,
-      skillGroupKey: 'battleSkill',
+      skillGroupKey: 'enhancedBattleSkill',
       skillKey: 'chr_0016_laevat_normal_skill_during_ult',
       startFrame: 120,
       ids: createIds(),
@@ -288,7 +284,7 @@ describe('placeSkillGroup', () => {
       expect.objectContaining({
         source: {
           kind: 'operatorSkill',
-          skillGroupKey: 'battleSkill',
+          skillGroupKey: 'enhancedBattleSkill',
           skillKey: 'chr_0016_laevat_normal_skill_during_ult',
           action: 'battleSkill',
         },

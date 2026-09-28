@@ -17,8 +17,7 @@ const operator = {
   skillGroups: [
     {
       key: 'battleSkill',
-      skillType: 'battleSkill',
-      levelSource: 'battleSkill',
+      operationType: 'battleSkill',
       skills: skillFixture({
         key: 'current-skill',
         timelineBlockFrames: 30,
@@ -28,7 +27,6 @@ const operator = {
       variants: [
         {
           key: 'variant',
-          levelSource: 'battleSkill',
           skills: skillFixture({
             key: 'variant-skill',
             timelineBlockFrames: 30,
@@ -57,9 +55,7 @@ const operator = {
             scheduledSequences: [],
             actionGraph: emptyActionGraph(),
           }),
-          skillType: 'comboSkill',
-          levelSource: 'comboSkill',
-          executionSkillGroupKey: 'comboSkill',
+
           executionSkillKey: 'combo-skill',
         },
       ],

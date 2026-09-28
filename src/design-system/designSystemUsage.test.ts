@@ -1,9 +1,14 @@
 import { readFileSync } from 'node:fs';
 import { NodeTypes, baseParse } from '@vue/compiler-dom';
-import { parse as parseSfc } from '@vue/compiler-sfc';
+import { compileStyle, parse as parseSfc } from '@vue/compiler-sfc';
 import { describe, expect, test } from 'vitest';
 
 const vueSources = import.meta.glob<string>('../**/*.vue', {
+  eager: true,
+  import: 'default',
+  query: '?raw',
+});
+const uiCssSources = import.meta.glob<string>('../ui/**/*.css', {
   eager: true,
   import: 'default',
   query: '?raw',
@@ -14,6 +19,8 @@ const vueSources = import.meta.glob<string>('../**/*.vue', {
 const adoptedFeaturePaths = new Set([
   '../ui/components/CustomNumberInput.vue',
   '../ui/timeline/TimelineEditor.vue',
+  '../ui/action-graph/NodeInspectorFields.vue',
+  '../ui/action-graph/NodeLevelValues.vue',
   '../ui/timeline/results/BattleLogPanel.vue',
   '../ui/timeline/components/ContingencyContractPanel.vue',
   '../ui/timeline/results/DamageAnalysisDialog.vue',
@@ -25,6 +32,7 @@ const adoptedFeaturePaths = new Set([
   '../ui/timeline/library/OperatorBuildDialog.vue',
   '../ui/timeline/library/OperatorPanelDialog.vue',
   '../ui/timeline/library/OperatorSelectionDialog.vue',
+  '../ui/timeline/library/SkillLibraryCard.vue',
   '../ui/timeline/interaction/TimelineActionBlock.vue',
   '../ui/timeline/interaction/TimelineActionContextMenu.vue',
   '../ui/timeline/interaction/TimelineActionInspector.vue',
@@ -40,15 +48,26 @@ const adoptedFeaturePaths = new Set([
   '../ui/timeline/library/TimelineLibrarySkillInspector.vue',
   '../ui/timeline/interaction/TimelineMarkerContextMenu.vue',
   '../ui/timeline/components/TimelineResetDialog.vue',
+  '../ui/timeline/components/TimelineSmallImageExportDialog.vue',
   '../ui/timeline/components/TimelineRuler.vue',
   '../ui/timeline/interaction/TimelineShortcutHelpDialog.vue',
   '../ui/timeline/components/TimelineTrackHeader.vue',
   '../ui/timeline/components/TimelineWorkbenchShell.vue',
   '../ui/timeline/library/WeaponBuildDialog.vue',
   '../ui/timeline/library/WeaponSelectionDialog.vue',
+  '../ui/timeline/results/CombatObjectOriginGraph.vue',
 ]);
+const adoptedNewEditorAreas = [
+  '../ui/action-graph/',
+  '../ui/asset-workspace/',
+  '../ui/definition-editor/',
+  '../ui/editor/',
+];
 const featureSources: Array<[string, string]> = [
-  ...Object.entries(vueSources).filter(([path]) => adoptedFeaturePaths.has(path)),
+  ...Object.entries(vueSources).filter(
+    ([path]) =>
+      adoptedFeaturePaths.has(path) || adoptedNewEditorAreas.some(area => path.startsWith(area)),
+  ),
   ...['armoryDialogTheme.css', 'selectionDialog.css'].map(
     name =>
       [
@@ -112,7 +131,63 @@ function legacyEaButtonSelectionBindings() {
   return violations.sort();
 }
 
+function unguardedHoverCount(source: string): number {
+  const styles = [...source.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/g)];
+  const css = styles.length > 0 ? styles.map(match => match[1]).join('\n') : source;
+  const tokens = css.match(
+    /@media\s*\(hover:\s*hover\)\s*and\s*\(pointer:\s*fine\)\s*\{|:hover|[{}]/g,
+  );
+  if (tokens === null) return 0;
+
+  const guarded = [false];
+  let violations = 0;
+  for (const token of tokens) {
+    if (token.startsWith('@media')) guarded.push(true);
+    else if (token === '{') guarded.push(guarded.at(-1) ?? false);
+    else if (token === '}') {
+      if (guarded.length > 1) guarded.pop();
+    } else if (!guarded.at(-1)) violations += 1;
+  }
+  return violations;
+}
+
 describe('design-system usage boundaries', () => {
+  test('feature styles only reference declared theme variables', () => {
+    const declarations = (source: string) =>
+      [...source.matchAll(/(--ea-[\w-]+)\s*:/g)].map(match => match[1]!);
+    const globalTokens = new Set(
+      ['../styles/theme.css', './styles/tokens.css']
+        .map(path => readFileSync(new URL(path, import.meta.url), 'utf8'))
+        .flatMap(declarations),
+    );
+    const violations = [
+      ...Object.entries(vueSources).filter(([path]) => path.startsWith('../ui/')),
+      ...Object.entries(uiCssSources),
+    ].flatMap(([path, source]) => {
+      const localTokens = new Set(declarations(source));
+      return [...source.matchAll(/var\(\s*(--ea-[\w-]+)/g)]
+        .map(match => match[1]!)
+        .filter(token => !globalTokens.has(token) && !localTokens.has(token))
+        .map(token => `${path}: ${token}`);
+    });
+    expect([...new Set(violations)].sort()).toEqual([]);
+  });
+
+  test('action graph theme overrides target the canvas rather than only the document root', () => {
+    const source = vueSources['../ui/action-graph/ActionGraphCanvas.vue'];
+    expect(source).toBeDefined();
+    const style = parseSfc(source!).descriptor.styles[0];
+    const compiled = compileStyle({
+      source: style!.content,
+      filename: 'ActionGraphCanvas.vue',
+      id: 'theme-check',
+      scoped: true,
+    });
+    expect(compiled.errors).toEqual([]);
+    expect(compiled.code).toContain("html[data-theme='light'] .action-graph-canvas {");
+    expect(compiled.code).toContain('background-color: var(--graph-canvas-bg)');
+  });
+
   test('native buttons are limited to dedicated timeline visuals', () => {
     const dedicatedButtonClasses = new Map<string, Set<string>>([
       ['../ui/timeline/interaction/TimelineActionBlock.vue', new Set(['timeline-action-block'])],
@@ -124,16 +199,117 @@ describe('design-system usage boundaries', () => {
         '../ui/timeline/results/TimelineEnemyEffects.vue',
         new Set(['anomaly-icon-box last-hit-buff', 'enemy-damage-hit']),
       ],
+      ['../ui/action-graph/BlackboardPanel.vue', new Set(['variable-item'])],
+      ['../ui/timeline/results/CombatObjectOriginGraph.vue', new Set(['graph-node'])],
+      [
+        '../ui/action-graph/SkillTimelinePanel.vue',
+        new Set([
+          'order-grip',
+          'row-choice',
+          'point-marker',
+          'range-body',
+          'range-handle start-handle',
+          'range-handle end-handle',
+        ]),
+      ],
+      [
+        '../ui/action-graph/ActionGraphCanvas.vue',
+        new Set([
+          'data-pin output',
+          'data-pin input',
+          'edit-timeline-button',
+          'entry-item',
+          'entry-output port-button',
+          'input-port port-button',
+          'output-port port-button',
+          '',
+        ]),
+      ],
     ]);
-    const violations = featureSources.flatMap(([path, source]) =>
-      [...source.matchAll(/<button\b[\s\S]*?>/g)]
-        .filter(match => {
-          const className = match[0].match(/\bclass="([^"]+)"/)?.[1] ?? '';
-          return !dedicatedButtonClasses.get(path)?.has(className);
-        })
-        .map(match => `${path}:${match.index}`),
-    );
+    const violations: string[] = [];
+    const nativeButtonCounts = new Map<string, number>();
+    for (const [path, source] of featureSources) {
+      const template = parseSfc(source, { filename: path }).descriptor.template?.content;
+      if (!template) continue;
+      const visit = (node: ReturnType<typeof baseParse>['children'][number]) => {
+        if (node.type !== NodeTypes.ELEMENT) return;
+        if (node.tag === 'button') {
+          nativeButtonCounts.set(path, (nativeButtonCounts.get(path) ?? 0) + 1);
+          const className = node.props.find(
+            prop => prop.type === NodeTypes.ATTRIBUTE && prop.name === 'class',
+          );
+          const value =
+            className?.type === NodeTypes.ATTRIBUTE ? (className.value?.content ?? '') : '';
+          if (!dedicatedButtonClasses.get(path)?.has(value))
+            violations.push(`${path}:${node.loc.start.line}`);
+        }
+        for (const child of node.children) visit(child);
+      };
+      for (const child of baseParse(template).children) visit(child);
+    }
     expect(violations).toEqual([]);
+    for (const [path, count] of [
+      ['../ui/action-graph/ActionGraphCanvas.vue', 10],
+      ['../ui/action-graph/BlackboardPanel.vue', 1],
+      ['../ui/action-graph/SkillTimelinePanel.vue', 6],
+      ['../ui/timeline/results/CombatObjectOriginGraph.vue', 1],
+    ] as const)
+      expect(nativeButtonCounts.get(path)).toBe(count);
+  });
+
+  test('draggable skill-library cards keep keyboard selection and disabled segment semantics', () => {
+    const source = vueSources['../ui/timeline/library/SkillLibraryCard.vue'];
+    expect(source).toBeDefined();
+    expect(source).toMatch(/class="skill-card"[\s\S]*?role="button"[\s\S]*?tabindex="0"/);
+    expect(source).toMatch(/class="skill-card"[\s\S]*?@keydown\.enter\.prevent/);
+    expect(source).toMatch(/class="skill-card"[\s\S]*?@keydown\.space\.stop\.prevent/);
+    expect(source).toMatch(
+      /class="attack-segment-chip"[\s\S]*?:aria-disabled="Boolean\(segment\.disabled\)"/,
+    );
+    expect(source).toMatch(/class="attack-segment-chip"[\s\S]*?@keydown\.space\.stop\.prevent/);
+    expect(source).toContain('.skill-card:focus-visible');
+    expect(source).toContain(".attack-segment-chip[aria-disabled='true']");
+  });
+
+  test('high-frequency visual surfaces avoid catch-all transitions', () => {
+    for (const path of [
+      '../ui/timeline/TimelineEditor.vue',
+      '../ui/timeline/library/SkillLibraryCard.vue',
+      '../ui/timeline/components/TimelineCornerToolbar.vue',
+      '../ui/timeline/results/TimelineEnemyEffects.vue',
+      '../ui/action-graph/ActionGraphCanvas.vue',
+      '../ui/asset-workspace/AssetWorkspace.vue',
+    ]) {
+      expect(vueSources[path], path).not.toMatch(/\btransition:\s*all\b/);
+    }
+    expect(uiCssSources['../ui/asset-workspace/assetWorkspace.css']).not.toMatch(
+      /\btransition:\s*all\b/,
+    );
+  });
+
+  test('migrated editors and active timeline visuals limit hover to fine pointers', () => {
+    const sources = [
+      ...Object.entries(vueSources).filter(
+        ([path]) =>
+          adoptedNewEditorAreas.some(area => path.startsWith(area)) ||
+          [
+            '../ui/timeline/library/SkillLibraryCard.vue',
+            '../ui/timeline/components/TimelineCornerToolbar.vue',
+            '../ui/timeline/results/TimelineEnemyEffects.vue',
+          ].includes(path),
+      ),
+      [
+        '../ui/asset-workspace/assetWorkspace.css',
+        uiCssSources['../ui/asset-workspace/assetWorkspace.css']!,
+      ] as [string, string],
+      [
+        '../ui/timeline/library/selectionDialog.css',
+        uiCssSources['../ui/timeline/library/selectionDialog.css']!,
+      ] as [string, string],
+    ];
+    expect(
+      sources.filter(([, source]) => unguardedHoverCount(source) > 0).map(([path]) => path),
+    ).toEqual([]);
   });
 
   test('legacy ea-btn modifier classes are fully retired', () => {
@@ -169,8 +345,19 @@ describe('design-system usage boundaries', () => {
     expect(duplicates).toEqual([]);
   });
 
+  test('small image export delegates dialog chrome to EaDialog while keeping preview scrolling', () => {
+    const source = vueSources['../ui/timeline/components/TimelineSmallImageExportDialog.vue'];
+    expect(source).toBeDefined();
+    expect(source).not.toMatch(/\.small-image-export-dialog\s+\.el-dialog__(?:title|header)\s*\{/);
+    expect(source).not.toMatch(/background-color:\s*var\(--ea-dialog-bg\)/);
+    expect(source).toMatch(
+      /\.small-image-export-dialog\s+\.el-dialog__body\s*\{\s*overflow-y:\s*auto/,
+    );
+  });
+
   test('common form controls use design-system adapters', () => {
     expect(filesMatching(/<el-(?:input|input-number|select|switch|checkbox|radio)\b/)).toEqual([]);
+    expect(filesMatching(/<select\b/)).toEqual([]);
   });
 
   test('equipment refine toggles expose their selected state through EaButton', () => {

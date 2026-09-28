@@ -222,9 +222,9 @@ describe('projectTimelineEditor', () => {
       'comboSkill',
       'ultimate',
     ]);
-    expect(viewModel.tracks[0]?.skillLibrary[0]?.level).toBe(12);
+    expect(viewModel.tracks[0]?.skillLibrary[0]).not.toHaveProperty('level');
     expect(viewModel.tracks[0]?.skillLibrary[0]?.skills).toHaveLength(4);
-    expect(viewModel.tracks[0]?.skillCasts[0]?.skillType).toBe('battleSkill');
+    expect(viewModel.tracks[0]?.skillCasts[0]?.operationType).toBe('battleSkill');
     expect(viewModel.tracks[1]).toMatchObject({
       operatorSlug: null,
       operatorAssetSlug: null,
@@ -235,7 +235,7 @@ describe('projectTimelineEditor', () => {
     });
   });
 
-  it('projects enhanced basic attacks as a variant entry using ultimate level', () => {
+  it('projects enhanced basic attacks as the same player operation without a library level', () => {
     const scenario = createEmptyScenario('scenario:laevatain-variant', '莱万汀强化普攻');
     scenario.tracks[0] = {
       id: 'track:laevatain',
@@ -258,27 +258,27 @@ describe('projectTimelineEditor', () => {
       getOperator: slug => (slug === laevatain.slug ? laevatain : null),
     });
     const basicEntries = projected.tracks[0]!.skillLibrary.filter(
-      entry => entry.skillGroupKey === 'basicAttack',
+      entry => entry.operationType === 'basicAttack',
     );
 
     expect(basicEntries).toHaveLength(2);
     expect(basicEntries[0]?.variantKey).toBeUndefined();
-    expect(basicEntries[0]?.level).toBe(3);
+    expect(basicEntries[0]).not.toHaveProperty('level');
     expect(basicEntries[1]).toMatchObject({
-      variantKey: 'enhancedBasicAttack',
-      level: 11,
-      nameQualifier: 'enhanced',
+      skillGroupKey: 'enhancedBasicAttack',
+      operationType: 'basicAttack',
+      nameKey: 'skillNames.enhanced',
     });
     expect(basicEntries[1]!.skills).toHaveLength(4);
     const battleEntries = projected.tracks[0]!.skillLibrary.filter(
-      entry => entry.skillGroupKey === 'battleSkill',
+      entry => entry.operationType === 'battleSkill',
     );
     expect(battleEntries).toHaveLength(2);
     expect(battleEntries[0]?.skills.map(skill => skill.skillKey)).toEqual([
       'chr_0016_laevat_normal_skill',
     ]);
     expect(battleEntries[1]).toMatchObject({
-      placementSkillKey: 'chr_0016_laevat_normal_skill_during_ult',
+      skillGroupKey: 'enhancedBattleSkill',
       groupPlacementSkillKeys: ['chr_0016_laevat_normal_skill_during_ult'],
     });
   });
@@ -303,9 +303,8 @@ describe('projectTimelineEditor', () => {
     };
     const battleEntries = projectTimelineEditor(scenario, {
       getOperator: slug => (slug === mifu.slug ? mifu : null),
-    }).tracks[0]!.skillLibrary.filter(entry => entry.skillGroupKey === 'battleSkill');
+    }).tracks[0]!.skillLibrary.filter(entry => entry.operationType === 'battleSkill');
     expect(battleEntries).toHaveLength(1);
-    expect(battleEntries[0]?.placementSkillKey).toBeUndefined();
     expect(battleEntries[0]?.groupPlacementSkillKeys).toEqual([
       'chr_0031_mifu_normalskill_1',
       'chr_0031_mifu_normalskill_2',
@@ -350,7 +349,7 @@ describe('projectTimelineEditor', () => {
     expect(replacementCast!.hitMarkers.every(marker => !marker.conditional)).toBe(true);
   });
 
-  it('projects a routed replacement as an independent card with its execution level source', () => {
+  it('keeps a routed combo execution displayed as the battle-skill player operation', () => {
     const scenario = createEmptyScenario('scenario:camille-routed-card', '卡米拉强化战技卡片');
     scenario.tracks[0] = {
       id: 'track:camille',
@@ -372,7 +371,7 @@ describe('projectTimelineEditor', () => {
       scenario,
       trackIndex: 0,
       operator: camille,
-      skillGroupKey: 'battleSkill',
+      skillGroupKey: 'replacementBattleSkill',
       skillKey: 'chr_0033_camille_normal_skill_2',
       startFrame: 1,
       ids: { allocate: kind => `${kind}:camille-routed` },
@@ -381,16 +380,15 @@ describe('projectTimelineEditor', () => {
     const track = projectTimelineEditor(placed, {
       getOperator: slug => (slug === camille.slug ? camille : null),
     }).tracks[0]!;
-    const battleEntries = track.skillLibrary.filter(entry => entry.skillGroupKey === 'battleSkill');
+    const battleEntries = track.skillLibrary.filter(entry => entry.operationType === 'battleSkill');
     expect(battleEntries).toHaveLength(2);
-    expect(battleEntries[0]).toMatchObject({ skillType: 'battleSkill', level: 4 });
+    expect(battleEntries[0]).toMatchObject({ operationType: 'battleSkill' });
     expect(battleEntries[1]).toMatchObject({
-      placementSkillKey: 'chr_0033_camille_normal_skill_2',
-      skillType: 'comboSkill',
-      level: 5,
+      skillGroupKey: 'replacementBattleSkill',
+      operationType: 'battleSkill',
       groupPlacementSkillKeys: ['chr_0033_camille_normal_skill_2'],
     });
-    expect(track.skillCasts[0]?.skillType).toBe('comboSkill');
+    expect(track.skillCasts[0]?.operationType).toBe('battleSkill');
   });
 
   it('uses explicit library semantics instead of treating every replacement as enhanced', () => {
@@ -419,39 +417,39 @@ describe('projectTimelineEditor', () => {
 
     const zhuangEntries = project(zhuangFangyi);
     expect(
-      zhuangEntries.some(
-        entry => entry.placementSkillKey === 'chr_0030_zhuangfy_ultimate_skill_end',
+      zhuangEntries.some(entry =>
+        entry.skills.some(skill => skill.skillKey === 'chr_0030_zhuangfy_ultimate_skill_end'),
       ),
     ).toBe(false);
     expect(
       zhuangEntries.find(entry => entry.skillGroupKey === 'enhancedBasicAttack'),
-    ).toMatchObject({ nameQualifier: 'enhanced' });
+    ).toMatchObject({ nameKey: 'skillNames.enhanced' });
     expect(
-      zhuangEntries.find(entry => entry.placementSkillKey === 'chr_0030_zhuangfy_normal_skill_ult'),
-    ).toMatchObject({ nameQualifier: 'enhanced' });
-    expect(
-      zhuangEntries.find(entry => entry.placementSkillKey === 'chr_0030_zhuangfy_combo_skill_ult'),
-    ).toMatchObject({ nameQualifier: 'enhanced' });
+      zhuangEntries.find(entry => entry.skillGroupKey === 'enhancedBattleSkill'),
+    ).toMatchObject({ nameKey: 'skillNames.enhanced' });
+    expect(zhuangEntries.find(entry => entry.skillGroupKey === 'enhancedComboSkill')).toMatchObject(
+      { nameKey: 'skillNames.enhanced' },
+    );
 
-    expect(
-      project(arcane).find(
-        entry => entry.placementSkillKey === 'chr_0032_lizhiyan_ultimate_skill2',
-      ),
-    ).toMatchObject({
-      skillType: 'ultimate',
+    expect(project(arcane).find(entry => entry.skillGroupKey === 'ultimate')).toMatchObject({
+      operationType: 'ultimate',
+      groupPlacementSkillKeys: [
+        'chr_0032_lizhiyan_ultimate_skill',
+        'chr_0032_lizhiyan_ultimate_skill2',
+      ],
     });
-    expect(
-      project(liino).find(entry => entry.placementSkillKey === 'chr_0035_liino_normal_skill_end'),
-    ).toMatchObject({
-      skillType: 'battleSkill',
-    });
-    expect(project(liino).filter(entry => entry.skillGroupKey === 'battleSkill')).toEqual([
+    expect(project(liino).find(entry => entry.skillGroupKey === 'stanceTermination')).toMatchObject(
+      {
+        operationType: 'battleSkill',
+      },
+    );
+    expect(project(liino).filter(entry => entry.operationType === 'battleSkill')).toEqual([
       expect.objectContaining({
         groupPlacementSkillKeys: ['chr_0035_liino_normal_skill'],
         skills: [expect.objectContaining({ timelineBlockFrames: 50 })],
       }),
       expect.objectContaining({
-        placementSkillKey: 'chr_0035_liino_normal_skill_end',
+        skillGroupKey: 'stanceTermination',
         groupPlacementSkillKeys: ['chr_0035_liino_normal_skill_end'],
       }),
     ]);
@@ -459,20 +457,18 @@ describe('projectTimelineEditor', () => {
       expect.objectContaining({ groupPlacementSkillKeys: ['chr_0033_camille_combo_skill'] }),
     ]);
     expect(
-      project(typhoeus).find(
-        entry => entry.placementSkillKey === 'chr_0034_typhoea_combo_skillfloating',
-      ),
+      project(typhoeus).find(entry => entry.skillGroupKey === 'floatingComboSkill'),
     ).toMatchObject({
-      nameQualifier: 'floating',
-      skillType: 'comboSkill',
+      nameKey: 'skillNames.floating',
+      operationType: 'comboSkill',
       skills: [expect.objectContaining({ timelineBlockFrames: 57 })],
     });
-    expect(project(camille).filter(entry => entry.skillGroupKey === 'battleSkill')).toEqual([
+    expect(project(camille).filter(entry => entry.operationType === 'battleSkill')).toEqual([
       expect.objectContaining({ groupPlacementSkillKeys: ['chr_0033_camille_normal_skill'] }),
       expect.objectContaining({
-        placementSkillKey: 'chr_0033_camille_normal_skill_2',
+        skillGroupKey: 'replacementBattleSkill',
         groupPlacementSkillKeys: ['chr_0033_camille_normal_skill_2'],
-        skillType: 'comboSkill',
+        operationType: 'battleSkill',
       }),
     ]);
     expect(project(rossi).filter(entry => entry.skillGroupKey === 'comboSkill')).toEqual([

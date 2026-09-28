@@ -10,10 +10,7 @@ it('resolves historical gamedata targets and does not collapse an enhanced attac
     const group = operator.skillGroups.find(group => group.key === target.skillGroupKey)!;
     expect(group, rule.id).toBeDefined();
     if (target.kind === 'operatorSkillSequence') {
-      expect(
-        group.variants?.some(v => v.key === target.variantKey),
-        rule.id,
-      ).toBe(true);
+      expect(Array.isArray(group.skills) && group.skills.length > 1, rule.id).toBe(true);
     } else if (target.kind === 'operatorSkill') {
       const skills = [
         ...(Array.isArray(group.skills) ? group.skills : [group.skills]),
@@ -99,13 +96,6 @@ it('keeps each reviewed skill mapping unique and points to an existing group mem
             group => group.key === continuation.skillGroupKey,
           );
           expect(continuationGroup, slug + '/' + continuation.skillGroupKey).toBeDefined();
-          if (continuation.variantKey !== undefined)
-            expect(
-              continuationGroup?.variants?.some(
-                candidate => candidate.key === continuation.variantKey,
-              ),
-              slug + '/' + continuation.variantKey,
-            ).toBe(true);
         }
         continue;
       }

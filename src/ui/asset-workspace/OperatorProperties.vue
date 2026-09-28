@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { EaNumberInput } from '@/design-system';
+import { EaCheckbox, EaNumberInput } from '@/design-system';
 import {
   DEFAULT_TRUST_ATTRIBUTE_BONUS,
   type OperatorDefinition,
@@ -77,19 +77,19 @@ function updateTrust(index: number, value: number | undefined) {
       </div>
       <h2>{{ t('definitionEditor.fields.trustAttributeBonus') }}</h2>
       <div class="operator-properties__trust-targets">
-        <label v-for="attribute in trustAttributes" :key="attribute">
-          <input
-            type="checkbox"
-            :checked="(trust.attributes as readonly string[]).includes(attribute)"
-            :disabled="!editable"
-            @change="toggleTrustAttribute(attribute, ($event.target as HTMLInputElement).checked)"
-          />
+        <EaCheckbox
+          v-for="attribute in trustAttributes"
+          :key="attribute"
+          :model-value="(trust.attributes as readonly string[]).includes(attribute)"
+          :disabled="!editable"
+          @change="toggleTrustAttribute(attribute, $event)"
+        >
           {{
             attribute === 'main' || attribute === 'secondary'
               ? t(`definitionEditor.fields.${attribute}Attribute`)
               : t(`definitionEditor.options.${attribute}`)
           }}
-        </label>
+        </EaCheckbox>
       </div>
       <div class="operator-properties__trust">
         <label v-for="(value, index) in trust.values" :key="index">
@@ -159,7 +159,7 @@ function updateTrust(index: number, value: number | undefined) {
   padding: 4px 8px;
   text-align: left;
   font-weight: 500;
-  color: var(--ea-text-secondary);
+  color: var(--ea-fg-secondary);
 }
 .operator-properties__growth th:first-child {
   width: 100px;
@@ -188,19 +188,6 @@ function updateTrust(index: number, value: number | undefined) {
   gap: 8px;
   margin-bottom: 12px;
   font-size: 13px;
-}
-.operator-properties__trust-targets label {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-right: 10px;
-}
-.operator-properties__trust-targets input {
-  width: 14px;
-  height: 14px;
-  min-width: 0;
-  margin: 0;
-  padding: 0;
 }
 @media (max-width: 900px) {
   .operator-properties__form {

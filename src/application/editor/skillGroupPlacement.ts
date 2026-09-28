@@ -5,22 +5,18 @@
 import type {
   SkillDefinition,
   SkillGroupDefinition,
-  SkillLibraryNameQualifier,
-  SkillLevelSource,
-  SkillType,
 } from '../../core/game-data/operatorDefinition';
 
 import { asSkillDefinitions } from '../../core/game-data/operatorSkillDefinitions';
+import type { OperationType } from '../../../packages/game-data-contract/src/primitives';
 
 export interface SkillGroupLibraryPlacement {
   readonly entryKey: string;
   readonly variantKey?: string;
-  readonly placementSkillKey?: string;
-  readonly levelSource: SkillLevelSource;
-  readonly skillType: SkillType;
+  readonly operationType: OperationType;
   readonly skills: readonly SkillDefinition[];
   /** 只修饰技能名称，不参与放置身份或运行时解析。 */
-  readonly nameQualifier?: SkillLibraryNameQualifier;
+  readonly nameKey?: string;
 }
 
 /** 局部边界在技能更新后到达；默认块体覆盖至下一次输入，零宽内部技能仍保持零宽。 */
@@ -63,7 +59,12 @@ function skillIndex(group: SkillGroupDefinition): ReadonlyMap<string, SkillDefin
 }
 
 function resolvePlacementSequence(group: SkillGroupDefinition): readonly SkillDefinition[] {
-  if (group.placementSequenceSkillKeys === undefined) return asSkillDefinitions(group.skills);
+  if (group.placementSequenceSkillKeys === undefined) {
+    return [
+      ...asSkillDefinitions(group.skills),
+      ...(group.routedReplacementSkills ?? []).map(route => route.skill),
+    ];
+  }
   const byKey = skillIndex(group);
   return group.placementSequenceSkillKeys.map(skillKey => {
     const skill = byKey.get(skillKey);
@@ -79,82 +80,30 @@ function resolvePlacementSequence(group: SkillGroupDefinition): readonly SkillDe
   });
 }
 
-function resolveEntryLevelSource(
-  group: SkillGroupDefinition,
-  skills: readonly SkillDefinition[],
-  fallback: SkillLevelSource,
-): SkillLevelSource {
-  const sources = new Set(
-    skills.map(skill => skill.levelSource).filter(source => source !== undefined),
-  );
-  if (sources.size > 1) {
-    throw new Error(`skill group '${group.key}' library entry mixes multiple level sources`);
-  }
-  // 自由编辑的旧项目定义可能尚未把等级来源下沉到技能；只为这类存档保留组级兼容值。
-  return sources.values().next().value ?? fallback;
-}
-
 /** 枚举技能库中可见的卡片；有序换槽技能只进入基础链，不重复生成独立卡片。 */
 export function listSkillGroupLibraryPlacements(
   group: SkillGroupDefinition,
 ): readonly SkillGroupLibraryPlacement[] {
-  const sequenceSkillKeys = new Set(group.placementSequenceSkillKeys ?? []);
-  const replacementPlacements = group.replacementSkillPlacements ?? {};
   const baseSkills = resolvePlacementSequence(group);
   return [
     {
       entryKey: `${group.key}:base`,
-      levelSource: resolveEntryLevelSource(group, baseSkills, group.levelSource),
-      skillType: group.skillType,
+      operationType: group.operationType,
       skills: baseSkills,
-      ...(group.libraryNameQualifier === undefined
-        ? {}
-        : { nameQualifier: group.libraryNameQualifier }),
+      ...(group.nameKey === undefined ? {} : { nameKey: group.nameKey }),
     },
     ...(group.variants ?? []).map(variant => {
       const skills = asSkillDefinitions(variant.skills);
       return {
         entryKey: `${group.key}:variant:${variant.key}`,
         variantKey: variant.key,
-        levelSource: resolveEntryLevelSource(group, skills, variant.levelSource),
-        skillType: group.skillType,
+        operationType: group.operationType,
         skills,
-        ...(variant.libraryNameQualifier === undefined
+        ...((variant.nameKey ?? group.nameKey) === undefined
           ? {}
-          : { nameQualifier: variant.libraryNameQualifier }),
+          : { nameKey: variant.nameKey ?? group.nameKey }),
       };
     }),
-    ...(group.replacementSkills ?? [])
-      .filter(
-        skill =>
-          !sequenceSkillKeys.has(skill.key) && replacementPlacements[skill.key] !== 'internal',
-      )
-      .map(skill => ({
-        entryKey: `${group.key}:replacement:${skill.key}`,
-        placementSkillKey: skill.key,
-        levelSource: resolveEntryLevelSource(group, [skill], group.levelSource),
-        skillType: skill.skillType ?? group.skillType,
-        skills: [skill],
-        ...(group.replacementSkillNameQualifiers?.[skill.key] === undefined
-          ? {}
-          : { nameQualifier: group.replacementSkillNameQualifiers[skill.key] }),
-      })),
-    ...(group.routedReplacementSkills ?? [])
-      .filter(
-        replacement =>
-          !sequenceSkillKeys.has(replacement.skill.key) &&
-          replacementPlacements[replacement.skill.key] !== 'internal',
-      )
-      .map(replacement => ({
-        entryKey: `${group.key}:routed:${replacement.skill.key}`,
-        placementSkillKey: replacement.skill.key,
-        levelSource: resolveEntryLevelSource(group, [replacement.skill], replacement.levelSource),
-        skillType: replacement.skill.skillType ?? replacement.skillType,
-        skills: [replacement.skill],
-        ...(group.replacementSkillNameQualifiers?.[replacement.skill.key] === undefined
-          ? {}
-          : { nameQualifier: group.replacementSkillNameQualifiers[replacement.skill.key] }),
-      })),
   ];
 }
 

@@ -100,15 +100,15 @@ const children = computed(() =>
     </section>
     <section v-if="children.length" class="resource-properties__section">
       <h3>{{ tr('ownedResources') }}</h3>
-      <button
+      <EaButton
         v-for="child in children"
         :key="child.id"
-        class="rw-native-button resource-properties__child"
+        class="resource-properties__child"
         @click="emit('open', child.id)"
       >
         <strong>{{ child.name }}</strong
         ><code>{{ child.definitionResource.identity }}</code>
-      </button>
+      </EaButton>
     </section>
   </section>
 </template>
@@ -149,7 +149,7 @@ code {
 }
 .resource-properties__fields > :deep(.definition-field) {
   padding: 8px 0;
-  border-bottom: 1px solid var(--ea-border-subtle, #ffffff0a);
+  border-bottom: 1px solid var(--ea-border-soft);
 }
 .resource-properties__child {
   display: flex;
@@ -161,8 +161,5 @@ code {
   border: 0;
   border-bottom: 1px solid var(--ea-border);
   padding: 12px;
-}
-.resource-properties__child:hover {
-  background: #303a40;
 }
 </style>

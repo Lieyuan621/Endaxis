@@ -1,5 +1,8 @@
 export type PassiveSkillLevelSource =
-  | { readonly kind: 'nativeDefault' }
+  | {
+      /** 原生未指定等级时先查 1 级补丁，缺失时才保留 SkillData 默认值。 */
+      readonly kind: 'nativeDefault';
+    }
   | {
       /** 角色基础被动跟随其所在原生技能组对应的项目等级轴。 */
       readonly kind: 'operatorSkillGroup';

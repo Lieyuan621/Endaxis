@@ -33,6 +33,7 @@ it('captures definition metadata once, while localization uses the captured iden
   const definition = {
     ...perlica,
     displayName: 'captured custom name',
+    buffDisplayNameKeys: { 'buff:owned': 'effects.name.razorClawmark' },
     talents: perlica.talents.map(talent => ({ ...talent })),
   };
   const index = { getOperator: vi.fn(() => definition) };
@@ -47,10 +48,12 @@ it('captures definition metadata once, while localization uses the captured iden
     {
       skill: () => (language === 'zh' ? '战技' : 'Battle skill'),
       operator: name => `${name.displayName}:${language}`,
+      color: () => '#ff4d4f',
     },
   );
   const reads = index.getOperator.mock.calls.length;
   definition.displayName = 'edited name';
+  definition.buffDisplayNameKeys['buff:owned'] = 'effects.name.edited';
   definition.talents[0]!.levels = 99;
   expect(operators.get(perlica.slug)!.talents[0]).toEqual(originalTalent);
   expect(Object.keys(operators.get(perlica.slug)!)).not.toContain('skills');
@@ -59,7 +62,24 @@ it('captures definition metadata once, while localization uses the captured iden
   expect(snapshot.resolveCastOwners()[0]).toMatchObject({
     label: 'Battle skill',
     operatorLabel: 'captured custom name:en',
+    skillId: 'battleSkill',
+    color: '#ff4d4f',
   });
   expect(index.getOperator).toHaveBeenCalledTimes(reads);
   expect(snapshot.history).toBe(receiptHistory);
+  expect(snapshot.buffDisplayNameKeys?.get('buff:owned')).toBe('effects.name.razorClawmark');
+
+  scenario.tracks[0]!.skillCasts[0]!.presentation = { color: '#123456' };
+  expect(snapshot.resolveCastOwners()[0]?.color).toBe('#ff4d4f');
+  const recolored = capturePublishedBattleLog(
+    { scenario, run: { receiptHistory } as unknown as PublishedScenarioSimulation['run'] },
+    index,
+    operators,
+    {
+      skill: () => '战技',
+      operator: () => '佩里卡',
+      color: () => '#ff4d4f',
+    },
+  );
+  expect(recolored.resolveCastOwners()[0]?.color).toBe('#123456');
 });

@@ -23,10 +23,15 @@ defineEmits(['select', 'dragstart', 'dragend', 'select-segment', 'dragstart-segm
       class="skill-card"
       :class="{ 'is-selected': selected }"
       :title="tooltip || name"
+      role="button"
+      tabindex="0"
+      :aria-pressed="selected"
       draggable="true"
       @dragstart="$emit('dragstart', $event)"
       @dragend="$emit('dragend', $event)"
       @click="$emit('select')"
+      @keydown.enter.prevent="$emit('select')"
+      @keydown.space.stop.prevent="$emit('select')"
     >
       <div class="card-edge"></div>
       <div class="card-body">
@@ -50,9 +55,15 @@ defineEmits(['select', 'dragstart', 'dragend', 'select-segment', 'dragstart-segm
         class="attack-segment-chip"
         :class="{ 'is-selected': segment.selected, 'is-last': index === segments.length - 1 }"
         :draggable="!segment.disabled"
+        role="button"
+        :tabindex="segment.disabled ? -1 : 0"
+        :aria-pressed="Boolean(segment.selected)"
+        :aria-disabled="Boolean(segment.disabled)"
         @dragstart="$emit('dragstart-segment', { event: $event, skillKey: segment.id })"
         @dragend="$emit('dragend', $event)"
-        @click.stop="$emit('select-segment', segment.id)"
+        @click.stop="!segment.disabled && $emit('select-segment', segment.id)"
+        @keydown.enter.stop.prevent="!segment.disabled && $emit('select-segment', segment.id)"
+        @keydown.space.stop.prevent="!segment.disabled && $emit('select-segment', segment.id)"
       >
         {{ segment.label }}
       </div>
@@ -77,12 +88,11 @@ defineEmits(['select', 'dragstart', 'dragend', 'select-segment', 'dragstart-segm
   cursor: grab;
   overflow: hidden;
   box-sizing: border-box;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.skill-card:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--accent-color);
-  transform: translateY(-2px);
+  transition:
+    background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .skill-card.is-selected {
   border-color: var(--ea-gold);
@@ -115,6 +125,11 @@ defineEmits(['select', 'dragstart', 'dragend', 'select-segment', 'dragstart-segm
   cursor: grab;
   box-sizing: border-box;
   min-width: 0;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 .attack-segment-chip::before {
   content: '';
@@ -133,11 +148,6 @@ defineEmits(['select', 'dragstart', 'dragend', 'select-segment', 'dragstart-segm
   transform: translateY(-50%);
   color: rgba(255, 255, 255, 0.28);
   pointer-events: none;
-}
-.attack-segment-chip:hover {
-  border-color: var(--accent-color);
-  color: #fff;
-  background: rgba(255, 255, 255, 0.06);
 }
 .attack-segment-chip.is-selected {
   border-color: var(--ea-gold);
@@ -219,6 +229,9 @@ defineEmits(['select', 'dragstart', 'dragend', 'select-segment', 'dragstart-segm
   align-items: flex-end;
   justify-content: flex-end;
   z-index: 1;
+  transition:
+    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .weapon-icon-inner {
   width: 28px;
@@ -227,15 +240,10 @@ defineEmits(['select', 'dragstart', 'dragend', 'select-segment', 'dragstart-segm
   opacity: 0.9;
   margin: 0 2px 2px 0;
   pointer-events: none;
-}
-.skill-card:hover .card-bg-deco {
-  opacity: 0.85;
-  transform: scale(1.05);
-}
-.skill-card:hover .weapon-icon-inner {
-  filter: brightness(1.5) drop-shadow(0 0 8px #fff);
-  transform: scale(1.1);
-  opacity: 1;
+  transition:
+    filter 0.2s ease,
+    opacity 0.2s ease,
+    transform 0.2s ease;
 }
 .card-bg-deco-empty {
   position: absolute;
@@ -253,9 +261,6 @@ defineEmits(['select', 'dragstart', 'dragend', 'select-segment', 'dragstart-segm
   border-color: var(--ea-border-strong);
   box-shadow: 0 1px 2px var(--ea-shadow);
 }
-:global(html[data-theme='light'] .skill-card:hover) {
-  background: var(--ea-surface-soft);
-}
 :global(html[data-theme='light'] .skill-primary) {
   color: var(--ea-fg);
 }
@@ -265,5 +270,41 @@ defineEmits(['select', 'dragstart', 'dragend', 'select-segment', 'dragstart-segm
 :global(html[data-theme='light'] .weapon-icon-inner) {
   filter: brightness(0) opacity(0.72);
   opacity: 1;
+}
+.skill-card:focus-visible,
+.attack-segment-chip:focus-visible {
+  outline: none;
+  box-shadow: var(--ea-focus-ring);
+}
+.attack-segment-chip[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: var(--ea-control-disabled-opacity);
+}
+@media (hover: hover) and (pointer: fine) {
+  .skill-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--accent-color);
+    transform: translateY(-2px);
+  }
+  .attack-segment-chip:not([aria-disabled='true']):hover {
+    border-color: var(--accent-color);
+    color: #fff;
+    background: rgba(255, 255, 255, 0.06);
+  }
+  .skill-card:hover .card-bg-deco {
+    opacity: 0.85;
+    transform: scale(1.05);
+  }
+  .skill-card:hover .weapon-icon-inner {
+    filter: brightness(1.5) drop-shadow(0 0 8px #fff);
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  :global(html[data-theme='light'] .skill-card:hover) {
+    background: var(--ea-surface-soft);
+  }
+  :global(html[data-theme='light'] .skill-card:hover .weapon-icon-inner) {
+    filter: brightness(0) opacity(0.92);
+  }
 }
 </style>

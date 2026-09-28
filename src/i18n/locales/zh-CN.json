@@ -425,6 +425,7 @@
       "variants": "变体",
       "key": "名称",
       "skillType": "技能类型",
+      "operationType": "操作类型",
       "levelSource": "养成等级来源",
       "placementPolicy": "放置方式",
       "actionGraph": "动作图",
@@ -464,7 +465,6 @@
       "playerActionModes": "操作模式",
       "skillAliases": "技能别名",
       "buffDisplayNameKeys": "状态显示名称",
-      "skillDisplayNameKeys": "技能显示名称",
       "comboSkillConditions": "连携条件",
       "comboSkillPriority": "连携优先规则",
       "entityBlackboardInitializers": "实体变量初值",
@@ -1431,8 +1431,13 @@
         "name": "有效输入（秒）",
         "help": "可以成功命中连携时机的时间长度。"
       },
-      "skillGroupKey": {
-        "name": "技能组"
+      "skillSlotKey": {
+        "name": "技能槽",
+        "help": "接收玩家输入并选择当前技能的原生槽位。"
+      },
+      "skillKey": {
+        "name": "技能",
+        "help": "所属宿主中具体执行技能的身份。"
       },
       "targetSkillKey": {
         "name": "切换到技能"
@@ -2531,6 +2536,8 @@
       "SkillTimelineFinished": "技能时间线完成",
       "SkillCostApplied": "技能费用结算",
       "SkillInputProcessed": "技能输入处理",
+      "SkillCooldownReserved": "技能冷却占用",
+      "SkillCooldownUnavailableAtStart": "起始时技能冷却未就绪",
       "SkillCooldownReady": "技能冷却完成",
       "SkillCooldownAdjusted": "技能冷却调整",
       "SkillOperableBoundaryReached": "技能可操作点",
@@ -2546,6 +2553,7 @@
       "StatusChanged": "状态变化",
       "BuffApplied": "Buff 施加",
       "BuffFinished": "Buff 结束",
+      "BuffReleased": "Buff 回收",
       "BuffPresentationStarted": "Buff 显示开始",
       "BuffPresentationFinished": "Buff 显示结束",
       "ElementalInflictionApplied": "元素附着",
@@ -2560,8 +2568,57 @@
       "AbilityEntityFinished": "能力实体结束",
       "AbilityEntityChildSkillRequested": "能力实体子技能请求",
       "TimeDilationStarted": "时间膨胀开始",
+      "TimeDilationEnded": "时间膨胀结束",
+      "TimeDilationRejected": "时间膨胀被拒绝",
       "PassiveSkillEnabled": "被动启用",
-      "OperatorUpgradeInitialized": "养成效果初始化"
+      "OperatorUpgradeInitialized": "养成效果初始化",
+      "BuffCreated": "Buff 创建",
+      "BuffEnhanceAttempted": "Buff 增强尝试",
+      "BuffStackChanged": "Buff 层数变化",
+      "CharacterPassiveUiValueChanged": "被动显示数值变化",
+      "CombatConditionEvaluated": "战斗条件判定",
+      "CombatStepReached": "战斗步骤到达",
+      "ComboRingQteActiveChanged": "连携 QTE 状态变化",
+      "ComboRingQteOpened": "连携 QTE 开启",
+      "ComboRingQtePressed": "连携 QTE 输入",
+      "ConsumableUsed": "消耗品使用",
+      "DashEnergyChanged": "冲刺能量变化",
+      "DashInputExecuted": "冲刺输入执行",
+      "DodgeInputForced": "强制闪避输入",
+      "DodgeInputPartiallySimulated": "闪避输入部分模拟",
+      "ElementalAttachmentConverted": "元素附着转化",
+      "GlobalBuffCreated": "全局 Buff 创建",
+      "PerfectDodgeDeclarationForced": "强制声明完美闪避",
+      "PerfectDodgeDeclarationRejected": "完美闪避声明被拒绝",
+      "PerfectDodgeDeclared": "完美闪避声明",
+      "PerfectDodgeSkillStarted": "完美闪避技能开始",
+      "PerfectDodgeSucceeded": "完美闪避成功",
+      "PhysicalInflictionApplied": "物理异常积蓄",
+      "PhysicalNoGuardApplied": "物理破防施加",
+      "AirborneOutput": "击飞",
+      "KnockDownOutput": "倒地",
+      "PoiseKnotBroken": "失衡节点击破",
+      "ProjectileLaunched": "投射物发射",
+      "SkillCooldownRefunded": "技能冷却返还",
+      "SkillCostRejected": "技能消耗结算失败",
+      "SkillCostUnavailableAtStart": "起始时技能消耗不足",
+      "SkillInputBlockedByCommonTag": "技能输入被通用标签阻止",
+      "SkillInputBlockedByDashWindow": "技能输入被冲刺窗口阻止",
+      "SkillInputBlockedByTypeTag": "技能输入被类型标签阻止",
+      "SkillInputCannotInterruptCurrentSkill": "技能输入无法打断当前技能",
+      "SkillInputGroupBlocked": "技能输入组被阻止",
+      "SkillInputInterruptionUnknown": "技能输入打断结果未知",
+      "SkillInputResolutionUnknown": "技能输入解析结果未知",
+      "SkillInputResolvedToDifferentSkill": "技能输入解析为其他技能",
+      "SkillInterrupted": "技能被打断",
+      "SkillSwitchedToBuff": "技能切换为 Buff",
+      "TimedMarkerCreated": "定时标记创建",
+      "TimedMarkerFinished": "定时标记结束",
+      "TimelineActionEnded": "时间轴动作结束",
+      "TimelineActionStarted": "时间轴动作开始",
+      "TimelineComboCooldownControlled": "连携冷却受控",
+      "UltimateInputBlockedByPresentation": "终结技输入被表现阶段阻止",
+      "UltimatePresentationChanged": "终结技表现阶段变化"
     },
     "receiptDetails": {
       "overhealing": "过量治疗 {value}",
@@ -2584,6 +2641,10 @@
         "early": "提前结束",
         "ignite": "点燃结束",
         "other": "其他原因"
+      },
+      "condition": {
+        "passed": "条件满足",
+        "failed": "条件未满足"
       }
     },
     "receiptFields": {
@@ -2648,13 +2709,18 @@
     "presets": {
       "label": "预设",
       "all": "全部",
-      "damage": "仅伤害",
+      "damage": "伤害流程",
       "status": "附着/异常"
     },
     "ui": {
       "filtered": "条目",
-      "actionGroups": "技能",
+      "actionGroups": "分组",
       "types": "类型",
+      "runtimeGroup": "未归属运行时事件",
+      "operatorGroup": "角色级常驻行为",
+      "debugEvents": "显示调试事件",
+      "hiddenAutoRecovery": "已隐藏 {count} 条逐帧技力回复",
+      "rawReceipt": "原始回执",
       "skillKinds": "技能",
       "noResults": "当前筛选下没有可显示的战斗事件。",
       "clear": "清空",
@@ -3535,7 +3601,7 @@
       "enableCap": "设置易伤上限",
       "cap": "易伤上限",
       "multiplier": "倍率",
-      "skillGroupKey": "技能组键",
+      "skillKey": "技能键",
       "slowedNoParameters": "减速标记本身没有额外参数，具体响应由运行时机制读取。",
       "reaction": "元素反应",
       "reactions": {
@@ -3894,7 +3960,7 @@
         "scalingCoefficient": "每点所选属性提供的易伤比例，界面按百分数显示。",
         "susceptibilityCap": "限制基础易伤与属性换算易伤相加后的最大值。",
         "resourceCostMultiplier": "资源消耗最终乘数。1 表示不变，0.8 表示消耗降至 80%。",
-        "skillGroupKey": "要修改冷却的技能组稳定身份，不是显示名称。",
+        "skillKey": "要修改冷却的具体技能身份，在所属宿主内解析。",
         "cooldownMultiplier": "技能冷却时长乘数。1 表示不变，0.8 表示冷却缩短至 80%。",
         "reaction": "要创建或消费的元素反应身份。它与元素附着是不同的运行时状态。",
         "reactionTarget": "施加反应可选择施法者或敌人；消费反应按战斗模型固定作用于敌人。",
@@ -4239,7 +4305,7 @@
     "libraryInspector": {
       "operator": "所属干员",
       "skillGroupId": "技能组 ID",
-      "level": "技能等级",
+      "operationType": "操作类型",
       "durationFrames": "占轴帧数",
       "skillChain": "技能链"
     },
@@ -4275,14 +4341,12 @@
     "weaponDialog": {
       "title": "选择武器",
       "searchPlaceholder": "搜索武器名称、类型或星级",
-      "empty": "没有符合条件的武器",
-      "partialSupport": "部分效果尚未支持"
+      "empty": "没有符合条件的武器"
     },
     "gearDialog": {
       "title": "配置装备",
       "searchPlaceholder": "搜索装备名称、套装或防御力",
       "empty": "没有符合条件的装备",
-      "partialSupport": "部分效果尚未支持",
       "defense": "防御力",
       "noSet": "无套装",
       "slots": {
@@ -4629,10 +4693,6 @@
     "skill": "战技",
     "link": "连携",
     "ultimate": "终结技",
-    "nameQualifier": {
-      "enhanced": "强化{type}",
-      "floating": "浮空{type}"
-    },
     "enhancedAttack": "强化普攻",
     "enhancedSkill": "强化战技",
     "enhancedLink": "强化连携",
@@ -5271,7 +5331,6 @@
     "link_cd_reduction": "连携冷却缩减"
   },
   "hitDetail": {
-    "staticBuildAttack": "攻击力",
     "damageZones": {
       "product": "独立增伤",
       "normal": "伤害加成",
@@ -5335,8 +5394,22 @@
     "effectiveness": "异常效能"
   },
   "skillNames": {
-    "pursuit": "追猎",
-    "stanceTermination": "姿态中止"
+    "enhanced": {
+      "name": "强化{baseName}",
+      "shortName": "{baseName}*"
+    },
+    "floating": {
+      "name": "浮空{baseName}",
+      "shortName": "{baseName}*"
+    },
+    "replacement": {
+      "name": "替换{baseName}",
+      "shortName": "{baseName}*"
+    },
+    "stanceTermination": {
+      "name": "姿态中止",
+      "shortName": "姿态中止"
+    }
   },
   "actionItem": {
     "damageHitTooltip": "伤害: {damage}",

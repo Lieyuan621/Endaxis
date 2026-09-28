@@ -7,6 +7,7 @@ import type {
   SkillGroupDefinition,
   SkillLevelSource,
   SkillType,
+  OperationType,
   OperatorSkillSlotDefinition,
   OperatorPlayerActionRoutes,
   OperatorPlayerActionModeDefinition,
@@ -119,7 +120,7 @@ export interface OperatorDefinitionAssemblyInput {
     readonly targetSkillKey: string;
     readonly skillType: SkillType;
     readonly levelSource: SkillLevelSource;
-    readonly executionSkillGroupKey: string;
+
     readonly costs: NonNullable<SkillDefinition['costs']>;
     readonly costFrame: number;
     readonly cooldownFrames: number;
@@ -249,8 +250,6 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
   }
   const context = {
     skills: skillLibrary.activeSkills.entries,
-    skillGroups: skillLibrary.skillGroups,
-    runtimeReplacementSkillKeys,
     costResources: new Map(
       input.activeSkills.flatMap(item =>
         item.definition.costs?.length === 1
@@ -741,9 +740,12 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
   const abilityEntityDefinitions = hydrate(compiledAbilityEntityDefinitions);
   const assignedRuntimeReplacementSkillKeys = new Set<string>();
   const skillGroups = skillLibrary.skillGroups.map(group => {
-    const visibleSkillKeys = group.skillKeys.filter(key => !runtimeReplacementSkillKeys.has(key));
+    // 展示组由配置直接声明；原生换槽目标也可以是独立组的基础技能。
+    const visibleSkillKeys = group.skillKeys.filter(
+      key => group.replacementPlacements[key] === undefined && !routedSkills.has(key),
+    );
     const replacementSkillKeys = group.skillKeys.filter(
-      key => runtimeReplacementSkillKeys.has(key) && !routedSkills.has(key),
+      key => group.replacementPlacements[key] !== undefined && !routedSkills.has(key),
     );
     const routedSkillEntries = group.skillKeys.flatMap(key => {
       const routed = routedSkills.get(key);
@@ -754,31 +756,12 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
       ...routedSkillEntries.map(item => item.key),
     ];
     const declaredReplacementKeys = Object.keys(group.replacementPlacements);
-    const missingReplacementPlacements = runtimeReplacementKeysInGroup.filter(
-      key => group.replacementPlacements[key] === undefined,
-    );
     const unknownReplacementPlacements = declaredReplacementKeys.filter(
       key => !runtimeReplacementKeysInGroup.includes(key),
     );
-    const unknownReplacementNameQualifiers = Object.keys(group.replacementNameQualifiers).filter(
-      key => !runtimeReplacementKeysInGroup.includes(key),
-    );
-    const hiddenReplacementNameQualifiers = Object.keys(group.replacementNameQualifiers).filter(
-      key => group.replacementPlacements[key] !== 'standard',
-    );
-    if (missingReplacementPlacements.length > 0 || unknownReplacementPlacements.length > 0) {
+    if (unknownReplacementPlacements.length > 0) {
       throw new Error(
-        `skill group '${group.key}' replacement placement mismatch: missing ${JSON.stringify(missingReplacementPlacements)}, unknown ${JSON.stringify(unknownReplacementPlacements)}`,
-      );
-    }
-    if (unknownReplacementNameQualifiers.length > 0) {
-      throw new Error(
-        `skill group '${group.key}' replacement name qualifier mismatch: unknown ${JSON.stringify(unknownReplacementNameQualifiers)}`,
-      );
-    }
-    if (hiddenReplacementNameQualifiers.length > 0) {
-      throw new Error(
-        `skill group '${group.key}' replacement name qualifier requires standard placement: ${JSON.stringify(hiddenReplacementNameQualifiers)}`,
+        `skill group '${group.key}' replacement placement mismatch: unknown ${JSON.stringify(unknownReplacementPlacements)}`,
       );
     }
     const sequenceReplacementKeys = new Set(
@@ -787,19 +770,18 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
     const placementSequenceSkillKeys = group.skillKeys.filter(
       key => visibleSkillKeys.includes(key) || sequenceReplacementKeys.has(key),
     );
-    if (visibleSkillKeys.length === 0) {
+    if (visibleSkillKeys.length === 0 && routedSkillEntries.length === 0) {
       throw new Error(`skill group '${group.key}' has no visible skill after runtime replacements`);
     }
-    replacementSkillKeys.forEach(key => assignedRuntimeReplacementSkillKeys.add(key));
+    group.skillKeys
+      .filter(key => runtimeReplacementSkillKeys.has(key))
+      .forEach(key => assignedRuntimeReplacementSkillKeys.add(key));
     routedSkillEntries.forEach(item => assignedRuntimeReplacementSkillKeys.add(item.key));
     return {
       key: group.key,
-      skillType: group.skillType,
-      levelSource: group.levelSource,
+      operationType: group.operationType,
       ...(group.placementPolicy === undefined ? {} : { placementPolicy: group.placementPolicy }),
-      ...(group.libraryNameQualifier === undefined
-        ? {}
-        : { libraryNameQualifier: group.libraryNameQualifier }),
+      ...(group.nameKey === undefined ? {} : { nameKey: group.nameKey }),
       skills:
         visibleSkillKeys.length === 1
           ? definitions.get(visibleSkillKeys[0]!)!
@@ -810,29 +792,24 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
       ...(replacementSkillKeys.length === 0
         ? {}
         : { replacementSkills: replacementSkillKeys.map(key => definitions.get(key)!) }),
-      ...(runtimeReplacementKeysInGroup.every(
-        key => group.replacementPlacements[key] === 'sequence',
-      )
-        ? {}
-        : {
+      ...(runtimeReplacementKeysInGroup.some(key => group.replacementPlacements[key] === 'internal')
+        ? {
             replacementSkillPlacements: Object.fromEntries(
               runtimeReplacementKeysInGroup.flatMap(key => {
                 const placement = group.replacementPlacements[key]!;
-                return placement === 'sequence' ? [] : [[key, placement] as const];
+                return placement === undefined || placement === 'sequence'
+                  ? []
+                  : [[key, placement] as const];
               }),
             ),
-            ...(Object.keys(group.replacementNameQualifiers).length === 0
-              ? {}
-              : { replacementSkillNameQualifiers: group.replacementNameQualifiers }),
-          }),
+          }
+        : {}),
       ...(routedSkillEntries.length === 0
         ? {}
         : {
             routedReplacementSkills: routedSkillEntries.map(routed => ({
               skill: definitions.get(routed.key)!,
-              skillType: routed.skillType,
-              levelSource: routed.levelSource,
-              executionSkillGroupKey: routed.executionSkillGroupKey,
+
               executionSkillKey: routed.targetSkillKey,
             })),
           }),
@@ -841,13 +818,10 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
         : {
             variants: group.variants.map(variant => ({
               key: variant.key,
-              levelSource: variant.levelSource,
               ...(variant.placementPolicy === undefined
                 ? {}
                 : { placementPolicy: variant.placementPolicy }),
-              ...(variant.libraryNameQualifier === undefined
-                ? {}
-                : { libraryNameQualifier: variant.libraryNameQualifier }),
+              ...(variant.nameKey === undefined ? {} : { nameKey: variant.nameKey }),
               skills:
                 variant.skillKeys.length === 1
                   ? definitions.get(variant.skillKeys[0]!)!
@@ -964,11 +938,6 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
       throw new Error(`operator '${operator.slug}' names unknown private Buff '${id}'`);
     }
   }
-  for (const key of Object.keys(operator.skillDisplayNameKeys ?? {})) {
-    if (!skillLibrary.activeSkills.entries.some(skill => skill.key === key)) {
-      throw new Error(`operator '${operator.slug}' names unknown skill '${key}'`);
-    }
-  }
   return {
     operator,
     commonBuffDefinitions: commonBuffs,
@@ -990,10 +959,10 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
 export function selectSingleSkillTimelineBlockFrames(
   definitions: Map<string, CompiledOperatorActiveSkillRuntimeDefinitionSource>,
   groups: readonly {
-    readonly skillType: SkillType;
+    readonly operationType: OperationType;
     readonly skillKeys: readonly string[];
     readonly variants?: readonly { readonly skillKeys: readonly string[] }[];
-    readonly replacementPlacements: Readonly<Record<string, 'sequence' | 'standard' | 'internal'>>;
+    readonly replacementPlacements: Readonly<Record<string, 'sequence' | 'internal'>>;
   }[],
   runtimeReplacementSkillKeys: ReadonlySet<string>,
 ): void {
@@ -1015,7 +984,7 @@ export function selectSingleSkillTimelineBlockFrames(
   );
   const basicAttackSkillIds = new Set(
     groups
-      .filter(group => group.skillType === 'basicAttack')
+      .filter(group => group.operationType === 'basicAttack')
       .flatMap(group => groupSkillKeys(group).map(key => definitions.get(key)?.key)),
   );
   for (const [key, definition] of definitions) {
@@ -1048,7 +1017,7 @@ export function selectSingleSkillTimelineBlockFrames(
       const definition = definitions.get(key);
       if (definition === undefined) continue;
       const followUp = definition.timelineBlockFollowUpSkillId;
-      if (group.skillType === 'basicAttack' && followUp === undefined) continue;
+      if (group.operationType === 'basicAttack' && followUp === undefined) continue;
       const inputTransitions = definition.allowNextSkillTransitions.filter(
         transition =>
           transition.startFrame > 0 &&
@@ -1057,7 +1026,7 @@ export function selectSingleSkillTimelineBlockFrames(
               routableSkillIds.has(id) &&
               (followUp !== undefined
                 ? id === followUp
-                : !['battleSkill', 'comboSkill', 'ultimate'].includes(group.skillType) ||
+                : !['battleSkill', 'comboSkill', 'ultimate'].includes(group.operationType) ||
                   basicAttackSkillIds.has(id)),
           ),
       );
@@ -1108,7 +1077,7 @@ export function selectSingleSkillTimelineBlockFrames(
 export function selectBasicAttackTimelineBlockFrames(
   definitions: Map<string, CompiledOperatorActiveSkillRuntimeDefinitionSource>,
   groups: readonly {
-    readonly skillType: SkillType;
+    readonly operationType: OperationType;
     readonly skillKeys: readonly string[];
     readonly variants: readonly { readonly skillKeys: readonly string[] }[];
   }[],
@@ -1174,7 +1143,7 @@ export function selectBasicAttackTimelineBlockFrames(
     }
   };
   for (const group of groups) {
-    if (group.skillType !== 'basicAttack') continue;
+    if (group.operationType !== 'basicAttack') continue;
     selectRoute(group.skillKeys);
     group.variants.forEach(variant => selectRoute(variant.skillKeys));
   }
@@ -1249,7 +1218,7 @@ function compileOperatorPlayerActionRouting(
       if (typeof parameters !== 'object' || parameters === null) {
         throw new Error('compiled ChangeSkillAction has no parameters');
       }
-      const slot = 'skillGroupKey' in parameters ? parameters.skillGroupKey : undefined;
+      const slot = 'skillSlotKey' in parameters ? parameters.skillSlotKey : undefined;
       const target = 'targetSkillKey' in parameters ? parameters.targetSkillKey : undefined;
       const set = typeof slot === 'string' ? replacementKeysBySlot.get(slot) : undefined;
       if (set === undefined || typeof target !== 'string') {
@@ -1262,7 +1231,7 @@ function compileOperatorPlayerActionRouting(
   for (const definition of definitions.values()) visit(definition);
   for (const replacements of buffReplacements.values()) {
     for (const replacement of replacements) {
-      const set = replacementKeysBySlot.get(replacement.skillGroupKey);
+      const set = replacementKeysBySlot.get(replacement.skillSlotKey);
       if (set === undefined) throw new Error('Buff replacement references an unknown native slot');
       set.add(replacement.targetSkillKey);
     }
@@ -1387,7 +1356,7 @@ function compileOperatorBuffSkillSlotReplacements(
             revertedSkillKey = baseSkillKey;
           }
           replacements.push({
-            skillGroupKey: skillSlotKey,
+            skillSlotKey: skillSlotKey,
             targetSkillKey,
             revertedSkillKey,
             inheritOriginSkillCooldownProgress: action.inheritOriginSkillCooldownProgress,

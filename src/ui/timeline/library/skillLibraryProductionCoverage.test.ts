@@ -74,6 +74,17 @@ const declaredPlaceableSkills: readonly DeclaredPlaceableSkill[] = gameDataRepos
   );
 
 describe('正式干员技能库覆盖', () => {
+  it('每个展示组直接生成一张卡片，不按替换技能在运行时拆组', () => {
+    for (const operator of gameDataRepository.getOperators()) {
+      const entries = projectTimelineEditor(createOperatorScenario(operator), gameDataRepository)
+        .tracks[0]!.skillLibrary;
+      expect(entries.map(entry => entry.skillGroupKey).toSorted()).toEqual(
+        operator.skillGroups.map(group => group.key).toSorted(),
+      );
+      expect(entries.every(entry => entry.variantKey === undefined)).toBe(true);
+    }
+  });
+
   it('将全部可主动放置技能恰好展示一次，并排除内部执行技能', () => {
     const projected = gameDataRepository.getOperators().flatMap(operator => {
       const track = projectTimelineEditor(createOperatorScenario(operator), gameDataRepository)
@@ -115,7 +126,6 @@ describe('正式干员技能库覆盖', () => {
           operator,
           skillGroupKey: entry.skillGroupKey,
           ...(entry.variantKey === undefined ? {} : { variantKey: entry.variantKey }),
-          ...(entry.placementSkillKey === undefined ? {} : { skillKey: entry.placementSkillKey }),
           startFrame: 0,
           ids: { allocate: kind => `${kind}:coverage:${allocated++}` },
         }).scenario;
@@ -129,7 +139,8 @@ describe('正式干员技能库覆盖', () => {
           skill => skill.key === entry.skills[0]!.skillKey,
         )?.levelSource;
         expect(levelSource).toBeDefined();
-        expect(entry.level).toBe(scenario.tracks[0]!.operator!.skillLevels[levelSource!] ?? 1);
+        expect(entry.operationType).toBe(group.operationType);
+        expect(entry).not.toHaveProperty('level');
       }
     }
   });

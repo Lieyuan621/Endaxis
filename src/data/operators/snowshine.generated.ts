@@ -1794,44 +1794,30 @@ export const snowshine: OperatorDefinition = {
   skillGroups: [
     {
       key: 'basicAttack',
-      skillType: 'basicAttack',
-      levelSource: 'basicAttack',
+      operationType: 'basicAttack',
       skills: [
         snowshineChr_0014_aurora_attack1,
         snowshineChr_0014_aurora_attack2,
         snowshineChr_0014_aurora_attack3,
       ],
     },
-    {
-      key: 'finisher',
-      skillType: 'finisher',
-      levelSource: 'basicAttack',
-      skills: snowshineChr_0014_aurora_power_attack,
-    },
+    { key: 'finisher', operationType: 'finisher', skills: snowshineChr_0014_aurora_power_attack },
     {
       key: 'plungingAttack',
-      skillType: 'plungingAttack',
-      levelSource: 'basicAttack',
+      operationType: 'plungingAttack',
       skills: snowshineChr_0014_aurora_plunging_attack_end,
     },
     {
       key: 'battleSkill',
-      skillType: 'battleSkill',
-      levelSource: 'battleSkill',
+      operationType: 'battleSkill',
       skills: snowshineChr_0014_aurora_normal_skill,
     },
     {
       key: 'comboSkill',
-      skillType: 'comboSkill',
-      levelSource: 'comboSkill',
+      operationType: 'comboSkill',
       skills: snowshineChr_0014_aurora_combo_skill,
     },
-    {
-      key: 'ultimate',
-      skillType: 'ultimate',
-      levelSource: 'ultimate',
-      skills: snowshineChr_0014_aurora_ultimate_skill,
-    },
+    { key: 'ultimate', operationType: 'ultimate', skills: snowshineChr_0014_aurora_ultimate_skill },
   ],
   dodgeSkill: snowshineCommon_character_perfect_dodge,
   dashBuffs: [
@@ -1880,10 +1866,10 @@ export const snowshine: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'talent_2_sup',
           operation: 'assign',
           value: [6, 10],
+          skillKey: 'chr_0014_aurora_normal_skill',
         },
       ],
     },
@@ -1894,10 +1880,10 @@ export const snowshine: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'potential_1',
           operation: 'assign',
           value: 1,
+          skillKey: 'chr_0014_aurora_normal_skill',
         },
       ],
     },
@@ -1906,17 +1892,17 @@ export const snowshine: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'potential_2',
           operation: 'assign',
           value: 1,
+          skillKey: 'chr_0014_aurora_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'potential_2_range',
           operation: 'assign',
           value: 0.2,
+          skillKey: 'chr_0014_aurora_ultimate_skill',
         },
       ],
     },
@@ -1925,10 +1911,10 @@ export const snowshine: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'extra_duration',
           operation: 'add',
           value: 2,
+          skillKey: 'chr_0014_aurora_ultimate_skill',
         },
       ],
     },
@@ -1944,10 +1930,10 @@ export const snowshine: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           blackboardKey: 'potential_5_atb',
           operation: 'assign',
           value: 10,
+          skillKey: 'chr_0014_aurora_normal_skill',
         },
       ],
     },

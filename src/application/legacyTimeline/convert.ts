@@ -12,6 +12,7 @@ import {
 } from './heuristicRetiming';
 import { ScenarioSimulationService } from '../simulation/scenarioSimulationService';
 import { CheckpointRetimingSession } from './checkpointRetiming';
+import { createLegacyPreservedInputRunner } from './preservedInputs';
 import { skillSettings, skillSettingResources } from '../../data/combat/skillSettings';
 import { elementalAttachments } from '../../data/buffs/elementalAttachments';
 import { compoundStatusFactories } from '../../data/buffs/compoundStatusFactories';
@@ -21,27 +22,33 @@ import { expandLegacyRecursiveSkillSequences } from './recursiveSequenceExpansio
 import { listSkillGroupDefinitionBindings } from '../../core/game-data/operatorSkillDefinitions';
 import type { OperatorDefinition } from '../../core/game-data/operatorDefinition';
 
-export function resolveLegacyRuntimeReplacementSkillKey(
+export function resolveLegacyRuntimeReplacementSource(
   operator: OperatorDefinition,
   skillGroupKey: string,
   expectedSkillKey: string,
   actualSkillKey: string,
-): string | null {
+): { readonly skillGroupKey: string; readonly skillKey: string } | null {
   const group = operator.skillGroups.find(candidate => candidate.key === skillGroupKey);
-  const slot = operator.skillSlots?.find(candidate => candidate.key === skillGroupKey);
+  const slot = operator.skillSlots?.find(candidate => candidate.baseSkillKey === expectedSkillKey);
   if (
     group === undefined ||
+    !listSkillGroupDefinitionBindings(group).some(
+      binding => binding.skill.key === expectedSkillKey,
+    ) ||
     slot === undefined ||
     expectedSkillKey !== slot.baseSkillKey ||
     !slot.replacementSkillKeys.includes(actualSkillKey)
   ) {
     return null;
   }
-  return listSkillGroupDefinitionBindings(group).some(
-    binding => binding.skill.key === actualSkillKey,
-  )
-    ? actualSkillKey
-    : null;
+  const targets = operator.skillGroups.filter(
+    candidate =>
+      candidate.replacementSkillPlacements?.[actualSkillKey] !== 'internal' &&
+      listSkillGroupDefinitionBindings(candidate).some(
+        binding => binding.skill.key === actualSkillKey,
+      ),
+  );
+  return targets.length === 1 ? { skillGroupKey: targets[0]!.key, skillKey: actualSkillKey } : null;
 }
 
 function createLegacyRuntimeReplacementResolver(
@@ -53,7 +60,7 @@ function createLegacyRuntimeReplacementResolver(
     );
     return build === undefined
       ? null
-      : resolveLegacyRuntimeReplacementSkillKey(
+      : resolveLegacyRuntimeReplacementSource(
           build.operator,
           skillGroupKey,
           expectedSkillKey,
@@ -275,6 +282,7 @@ export function convertLegacyTimeline(
             new CheckpointRetimingSession(simulation.createInputCombatSession(scenario, frame)),
         },
         options.timingMode,
+        createLegacyPreservedInputRunner(simulation),
       );
     } catch (error) {
       project = beforeRetiming;

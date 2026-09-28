@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { EaButton } from '@/design-system';
 import type { WorkspaceAssetDefinition } from './workspaceAssetDefinition';
 import type { WorkspaceResource } from './workspaceResources';
 import WorkspaceIcon from './WorkspaceIcon.vue';
@@ -57,32 +58,28 @@ function summary(field: string) {
   </div>
   <template v-if="page === 'overview'">
     <div class="ap-property-grid">
-      <button
+      <EaButton
         v-for="field in basicFields"
         :key="field"
-        class="rw-native-button ap-reference-row"
+        class="ap-reference-row"
         @click="emit('field', field)"
       >
         <span>{{ label(field) }}</span
         ><strong>{{ summary(field) }}</strong>
         <WorkspaceIcon name="arrow" :size="14" />
-      </button>
+      </EaButton>
     </div>
     <div class="rw-operator-overview">
-      <button
-        class="rw-native-button"
-        v-if="edit.kind === 'weapon'"
-        @click="emit('page', 'growth')"
-      >
+      <EaButton v-if="edit.kind === 'weapon'" @click="emit('page', 'growth')">
         <strong>{{ t('assetWorkspace.workspace.growth') }}</strong>
         <span>{{ label('baseAttackAtLevelNodes') }}</span
         ><WorkspaceIcon name="arrow" />
-      </button>
-      <button class="rw-native-button" @click="emit('page', 'traits')">
+      </EaButton>
+      <EaButton @click="emit('page', 'traits')">
         <strong>{{ t('assetWorkspace.workspace.traits') }}</strong>
         <span>{{ t('assetWorkspace.equipment.effectsHint') }}</span
         ><WorkspaceIcon name="arrow" />
-      </button>
+      </EaButton>
     </div>
   </template>
   <template v-else-if="page === 'growth' && edit.kind === 'weapon'">
@@ -98,9 +95,9 @@ function summary(field: string) {
       <tbody>
         <tr>
           <th>
-            <button class="rw-native-button" @click="emit('field', 'baseAttackAtLevelNodes')">
+            <EaButton size="sm" variant="ghost" @click="emit('field', 'baseAttackAtLevelNodes')">
               {{ t('assetWorkspace.equipment.attack') }}
-            </button>
+            </EaButton>
           </th>
           <td v-for="(level, index) in levels" :key="level">
             {{ edit.definition.baseAttackAtLevelNodes[index] ?? '—' }}
@@ -108,41 +105,34 @@ function summary(field: string) {
         </tr>
       </tbody>
     </table>
-    <button
-      class="rw-native-button ap-reference-row"
-      @click="emit('field', 'baseAttackAtLevelNodes')"
-    >
+    <EaButton class="ap-reference-row" @click="emit('field', 'baseAttackAtLevelNodes')">
       {{ t('assetWorkspace.equipment.editGrowth') }}<WorkspaceIcon name="arrow" />
-    </button>
+    </EaButton>
   </template>
   <template v-else-if="page === 'traits'">
     <h2>{{ t('assetWorkspace.workspace.traits') }}</h2>
     <template v-if="edit.kind === 'gearSet'">
       <p class="ap-muted">{{ t('assetWorkspace.equipment.setHint') }}</p>
-      <button
-        v-if="edit.definition.actionGraph"
-        class="rw-native-button ap-reference-row"
-        @click="emit('graph')"
-      >
+      <EaButton v-if="edit.definition.actionGraph" class="ap-reference-row" @click="emit('graph')">
         <WorkspaceIcon name="graph" />{{ t('assetWorkspace.workspace.graph')
         }}<WorkspaceIcon name="arrow" />
-      </button>
+      </EaButton>
       <div class="ap-property-grid">
-        <button
+        <EaButton
           v-for="field in contributionFields"
           :key="field"
-          class="rw-native-button ap-reference-row"
+          class="ap-reference-row"
           @click="emit('field', field)"
         >
           {{ label(field) }}<WorkspaceIcon name="arrow" />
-        </button>
+        </EaButton>
       </div>
     </template>
     <div v-else class="ap-skill-family">
-      <button
+      <EaButton
         v-for="(trait, index) in traits"
         :key="trait.id"
-        class="rw-native-button ap-skill-entry"
+        class="ap-skill-entry"
         @click="emit('open', trait.id)"
       >
         <WorkspaceIcon name="box" />
@@ -151,7 +141,7 @@ function summary(field: string) {
           ><small>{{ trait.name }}</small>
         </div>
         <WorkspaceIcon name="arrow" />
-      </button>
+      </EaButton>
     </div>
   </template>
 </template>

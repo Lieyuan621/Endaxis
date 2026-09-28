@@ -546,7 +546,7 @@ describe('operator upgrade compilation', () => {
     ]);
   });
 
-  it('applies cost multipliers in upgrade and modifier order to every skill variant', () => {
+  it('applies cost multipliers in declaration order to explicitly selected skills', () => {
     const source = [
       program('ultimate-a', 'ultimate', 'ultimateEnergy', 100),
       program('ultimate-b', 'ultimate', 'ultimateEnergy', 120),
@@ -562,7 +562,13 @@ describe('operator upgrade compilation', () => {
           modifiers: [
             {
               kind: 'multiplySkillCost',
-              skillGroupKey: 'ultimate',
+              skillKey: 'ultimate-a',
+              resource: 'ultimateEnergy',
+              multiplier: 0.8,
+            },
+            {
+              kind: 'multiplySkillCost',
+              skillKey: 'ultimate-b',
               resource: 'ultimateEnergy',
               multiplier: 0.8,
             },
@@ -578,7 +584,13 @@ describe('operator upgrade compilation', () => {
           modifiers: [
             {
               kind: 'multiplySkillCost',
-              skillGroupKey: 'ultimate',
+              skillKey: 'ultimate-a',
+              resource: 'ultimateEnergy',
+              multiplier: 0.5,
+            },
+            {
+              kind: 'multiplySkillCost',
+              skillKey: 'ultimate-b',
               resource: 'ultimateEnergy',
               multiplier: 0.5,
             },
@@ -608,7 +620,7 @@ describe('operator upgrade compilation', () => {
           modifiers: [
             {
               kind: 'multiplySkillCost',
-              skillGroupKey: 'ultimate',
+
               skillKey: 'ultimate',
               resource: 'ultimateEnergy',
               multiplier: 0.8,
@@ -644,21 +656,21 @@ describe('operator upgrade compilation', () => {
           modifiers: [
             {
               kind: 'patchSkillBlackboard',
-              skillGroupKey: 'battleSkill',
+              skillKey: 'battleSkill',
               blackboardKey: 'talent_1',
               operation: 'assign',
               value: [1, 1],
             },
             {
               kind: 'patchSkillBlackboard',
-              skillGroupKey: 'battleSkill',
+              skillKey: 'battleSkill',
               blackboardKey: 'pulse_up',
               operation: 'multiply',
               value: [1, 1.3],
             },
             {
               kind: 'patchSkillBlackboard',
-              skillGroupKey: 'battleSkill',
+              skillKey: 'battleSkill',
               blackboardKey: 'level_two_flag',
               operation: 'assign',
               value: 1,
@@ -667,13 +679,20 @@ describe('operator upgrade compilation', () => {
             },
             {
               kind: 'patchSkillBlackboard',
-              skillGroupKey: 'battleSkill',
+              skillKey: 'battleSkill',
               blackboardKey: 'level_one_flag',
               operation: 'assign',
               value: 1,
               maximumUpgradeLevel: 1,
             },
-          ],
+          ].flatMap(modifier =>
+            ['battle-a', 'battle-b'].map(skillKey => ({
+              ...modifier,
+              kind: 'patchSkillBlackboard' as const,
+              operation: modifier.operation as 'assign' | 'multiply',
+              skillKey,
+            })),
+          ),
         },
       },
     ]);
@@ -712,7 +731,7 @@ describe('operator upgrade compilation', () => {
           modifiers: [
             {
               kind: 'addSkillCooldownFrames',
-              skillGroupKey: 'comboSkill',
+
               skillKey: 'combo-a',
               frames: -60,
             },
@@ -743,7 +762,7 @@ describe('operator upgrade compilation', () => {
           modifiers: [
             {
               kind: 'patchSkillBlackboard' as const,
-              skillGroupKey: 'comboSkill',
+              skillKey: 'combo',
               blackboardKey: 'rate',
               operation: 'add' as const,
               value: 0.06,
@@ -756,7 +775,7 @@ describe('operator upgrade compilation', () => {
             },
             {
               kind: 'addSkillCooldownFrames' as const,
-              skillGroupKey: 'comboSkill',
+              skillKey: 'combo',
               frames: -180,
               condition: {
                 kind: 'deckAttributeCompare' as const,
@@ -835,13 +854,13 @@ describe('operator upgrade compilation', () => {
           modifiers: [
             {
               kind: 'multiplyEffectDuration',
-              skillGroupKey: 'comboSkill',
+              skillKey: 'combo',
               stepKey: 'combo.electrification',
               multiplier: 1.75,
             },
             {
               kind: 'setEffectiveness',
-              skillGroupKey: 'comboSkill',
+              skillKey: 'combo',
               stepKey: 'combo.electrification',
               value: 1.33,
             },
@@ -1217,7 +1236,7 @@ describe('operator upgrade compilation', () => {
           modifiers: [
             {
               kind: 'patchSkillBlackboard',
-              skillGroupKey: 'comboSkill',
+
               skillKey: 'variant-a',
               blackboardKey: 'value',
               operation: 'add',
@@ -1244,7 +1263,7 @@ describe('operator upgrade compilation', () => {
             modifiers: [
               {
                 kind: 'multiplyEffectDuration',
-                skillGroupKey: 'comboSkill',
+                skillKey: 'combo',
                 stepKey: 'missing',
                 multiplier: 1.5,
               },
@@ -1455,7 +1474,7 @@ describe('operator upgrade compilation', () => {
             modifiers: [
               {
                 kind: 'multiplySkillCost',
-                skillGroupKey: 'missing',
+                skillKey: 'missing',
                 resource: 'ultimateEnergy',
                 multiplier: 0.85,
               },
@@ -1463,7 +1482,7 @@ describe('operator upgrade compilation', () => {
           },
         },
       ]),
-    ).toThrow("references missing skill group 'missing'");
+    ).toThrow("references missing skill 'missing'");
     expect(() =>
       applyOperatorUpgradeSkillPatches(source, [
         {
@@ -1472,9 +1491,7 @@ describe('operator upgrade compilation', () => {
           level: 1,
           definition: {
             levels: 1,
-            modifiers: [
-              { kind: 'multiplySkillDamage', skillGroupKey: 'ultimate', multiplier: 1.1 },
-            ],
+            modifiers: [{ kind: 'multiplySkillDamage', skillKey: 'ultimate', multiplier: 1.1 }],
           },
         },
       ]),
@@ -1490,7 +1507,7 @@ describe('operator upgrade compilation', () => {
             modifiers: [
               {
                 kind: 'patchSkillBlackboard',
-                skillGroupKey: 'missing',
+                skillKey: 'missing',
                 blackboardKey: 'atb',
                 operation: 'add',
                 value: 10,
@@ -1499,7 +1516,7 @@ describe('operator upgrade compilation', () => {
           },
         },
       ]),
-    ).toThrow("references missing skill group 'missing'");
+    ).toThrow("references missing skill 'missing'");
   });
 });
 

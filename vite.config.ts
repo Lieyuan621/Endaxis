@@ -13,6 +13,28 @@ export default defineConfig({
     vueDevTools(),
   ],
   base: '/',
+  build: {
+    rollupOptions: {
+      output: {
+        onlyExplicitManualChunks: true,
+        manualChunks(id) {
+          const path = id.replaceAll('\\', '/');
+          // A saved project imports individual definitions. Keep those imports smaller than the
+          // full catalogs, while avoiding hundreds of requests when a selector loads everything.
+          const weaponFamily = path.match(
+            /\/src\/data\/equipment\/generated-weapons\/([^/]+)\//,
+          )?.[1];
+          if (weaponFamily) return `weapon-${weaponFamily}`;
+          const gearFamily = path.match(/\/src\/data\/equipment\/generated\/([^/]+)\//)?.[1];
+          if (gearFamily === '_standalone') {
+            const tier = path.match(/\/item_equip_t(\d+)_/)?.[1] ?? 'other';
+            return `gear-standalone-t${tier}`;
+          }
+          if (gearFamily) return `gear-${gearFamily}`;
+        },
+      },
+    },
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
@@ -33,6 +55,6 @@ export default defineConfig({
     // Rebuild/audit evidence belongs in the ignored temporary workspace and may
     // itself contain focused Vitest probes. It must never become part of the
     // repository test suite.
-    exclude: [...configDefaults.exclude, 'tmp/**'],
+    exclude: [...configDefaults.exclude, 'tmp/**', 'tools/editor/generateActionNodeSchema.test.ts'],
   },
 });

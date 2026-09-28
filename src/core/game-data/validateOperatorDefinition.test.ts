@@ -98,7 +98,7 @@ describe('validateOperatorDefinition', () => {
     definition.talents[0]!.modifiers = [
       {
         kind: 'patchSkillBlackboard',
-        skillGroupKey: 'battleSkill',
+        skillKey: 'battleSkill',
         blackboardKey: ' ',
         operation: 'assign',
         value: 1,
@@ -112,7 +112,7 @@ describe('validateOperatorDefinition', () => {
       },
       {
         kind: 'patchSkillBlackboard',
-        skillGroupKey: 'battleSkill',
+        skillKey: 'battleSkill',
         blackboardKey: 'new-key',
         operation: 'assign',
         value: [1, 2],
@@ -143,8 +143,7 @@ describe('validateOperatorDefinition', () => {
       skillGroups: [
         {
           key: 'basicAttack',
-          skillType: 'basicAttack' as const,
-          levelSource: 'basicAttack' as const,
+          operationType: 'basicAttack' as const,
           skills: skillFixture({
             key: 'basic-route',
             timelineBlockFrames: 0,
@@ -159,18 +158,15 @@ describe('validateOperatorDefinition', () => {
                 scheduledSequences: [],
                 actionGraph: { main: { nodes: {} }, macros: {} },
               }),
-              skillType: 'basicAttack' as const,
-              levelSource: 'basicAttack' as const,
+
               executionSkillKey: '',
-              executionSkillGroupKey: '',
             },
           ],
         },
       ],
     });
     const paths = validateOperatorDefinition(definition).map(issue => issue.path);
-    expect(paths).toContain('$.skillGroups[0].routedReplacementSkills[0].executionSkillKey');
-    expect(paths).toContain('$.skillGroups[0].routedReplacementSkills[0].executionSkillGroupKey');
+    expect(paths).toEqual(['$.skillGroups[0].routedReplacementSkills[0].executionSkillKey']);
   });
   it('reports incomplete status presentation without rewriting the draft', () => {
     const passiveUi = {

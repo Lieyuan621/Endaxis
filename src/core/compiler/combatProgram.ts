@@ -47,7 +47,7 @@ export type ResolvedStatusModifier =
   | { kind: 'slowed' }
   | { kind: 'blockResourceGain'; resource: CombatResource }
   | { kind: 'resourceCostMultiplier'; resource: CombatResource; value: number }
-  | { kind: 'skillCooldownMultiplier'; skillGroupKey: string; value: number };
+  | { kind: 'skillCooldownMultiplier'; skillKey: string; value: number };
 
 /** 每种步骤经编译后允许进入运行时的参数映射。 */
 export type ResolvedSkillBuffLifecycleSequences = {
@@ -571,7 +571,7 @@ export interface CompiledSkillExecutionProgram extends CompiledSkillActionProgra
   readonly operatorId: string;
   readonly skillId: string;
   /** 路由包装器的行为养成补丁按真实执行体身份匹配；费用和冷却仍使用槽位身份。 */
-  readonly executionSkillGroupKey?: string;
+
   readonly executionSkillId?: string;
   /** 只有玩家操作、伤害分类或对应事件确实需要时才存在；原生实体技能不得伪造。 */
   readonly skillType?: SkillType;
@@ -627,9 +627,9 @@ export type CompiledSkillCooldownProgram = Pick<
   | 'costFrame'
 >;
 
-/** 一个稳定技能组可在释放之间切换的已编译技能身份。 */
+/** 原生技能槽及成员关系，不是技能库展示组。换槽只影响后续输入选择。 */
 export interface CompiledSkillSlotGroup {
-  readonly skillGroupKey: string;
+  readonly skillSlotKey: string;
   readonly input?: import('../game-data/operatorDefinition').PlayerSkillInput;
   /** 处决和下落同属普攻操作，但不是无条件默认映射。 */
   readonly defaultForInput?: boolean;
@@ -642,8 +642,8 @@ export interface CompiledSkillSlotGroup {
 /** 原生附着事件的常驻条件环境；不与旧语义事件连携规则混用。 */
 export interface CompiledComboSkillConditionProgram {
   readonly key: string;
-  /** 由具体技能身份反查得到，仅用于把候选窗口投影回稳定输入槽。 */
-  readonly skillGroupKey: string;
+  /** 从原生 skillSlots 成员关系取得，与展示分组无关。 */
+  readonly skillSlotKey: string;
   /** 角色模板注册条件时绑定的具体技能；不随槽位替换状态漂移。 */
   readonly skillKey: string;
   readonly event: import('../game-data/operatorDefinition').ComboSkillConditionDefinition['event'];

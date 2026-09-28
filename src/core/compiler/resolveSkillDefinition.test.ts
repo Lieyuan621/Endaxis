@@ -32,8 +32,7 @@ const customSkill: SkillDefinition = skillFixture({
 
 const skillGroup: SkillGroupDefinition = {
   key: 'battleSkill',
-  skillType: 'battleSkill',
-  levelSource: 'battleSkill',
+  operationType: 'battleSkill',
   skills: catalogSkill,
 };
 
@@ -77,7 +76,7 @@ describe('resolveEffectiveSkillDefinition', () => {
 
     expect(resolved.definition).toBe(catalogSkill);
     expect(resolved.group).toBe(skillGroup);
-    expect(resolved.group.skillType).toBe('battleSkill');
+    expect(resolved.group.operationType).toBe('battleSkill');
   });
 
   it('resolves a legacy skill identity through a canonical catalog alias', () => {
@@ -115,7 +114,7 @@ describe('resolveEffectiveSkillDefinition', () => {
     });
     const groupWithVariant: SkillGroupDefinition = {
       ...skillGroup,
-      variants: [{ key: 'enhanced', levelSource: 'ultimate', skills: enhanced }],
+      variants: [{ key: 'enhanced', skills: enhanced }],
     };
     const resolved = resolveEffectiveSkillDefinition(
       createCast({
@@ -147,9 +146,7 @@ describe('resolveEffectiveSkillDefinition', () => {
       routedReplacementSkills: [
         {
           skill: routed,
-          skillType: 'comboSkill',
-          levelSource: 'comboSkill',
-          executionSkillGroupKey: 'comboSkill',
+
           executionSkillKey: 'comboSkill',
         },
       ],

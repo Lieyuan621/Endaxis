@@ -312,7 +312,7 @@ export async function addOperatorImpliedReferences(
       charId: string;
       assets?: unknown;
       skills: Array<{ key: string; source: string }>;
-      skillGroups: Array<{ skillType: string }>;
+      skillGroups: Array<{ operationType: string }>;
     }>;
   };
   const tableDirectory = await findTableDirectory(sourceRoot);
@@ -365,7 +365,7 @@ export async function addOperatorImpliedReferences(
       ['comboSkill', 'combo'],
       ['ultimate', 'ultimate'],
     ] as const) {
-      if (!operator.skillGroups.some(group => group.skillType === skillKey)) continue;
+      if (!operator.skillGroups.some(group => group.operationType === skillKey)) continue;
       const nativeCharacterName = operator.charId.split('_').slice(2).join('_');
       const conventionalIconId =
         skillKey === 'comboSkill'

@@ -220,12 +220,12 @@ export interface StatusModifierDefinitionMap {
     /** 费用乘数。 */
     value: number;
   };
-  /** 乘算指定技能组的冷却时间。 */
+  /** 乘算指定技能的冷却时间。 */
   skillCooldownMultiplier: {
     /** 修正种类判别值。 */
     kind: 'skillCooldownMultiplier';
-    /** 目标技能组。 */
-    skillGroupKey: string;
+    /** 目标技能。 */
+    skillKey: string;
     /** 冷却时间乘数。 */
     value: number;
   };
@@ -1410,10 +1410,10 @@ export interface CombatStepParameters {
     /** 可以成功触发连携的秒数。 */
     activeDurationSeconds: ActionValueOperand;
   };
-  /** 切换稳定技能组后续释放所使用的技能形态；当前已启动的释放不受影响。 */
+  /** 切换原生技能槽后续选择的技能；当前已启动的释放不受影响。 */
   changeSkillSlot: {
-    /** 要修改的技能组或稳定槽位键。 */
-    skillGroupKey: string;
+    /** 原生槽位键，不是技能库展示组。 */
+    skillSlotKey: string;
     /** 换入的技能键。 */
     targetSkillKey: string;
     /** 原生 ChangeSkillAction 在切换前把当前形态的归一化冷却进度传给目标形态。 */
@@ -1760,12 +1760,12 @@ export type CombatEventTrigger =
       /** 检查当前干员还是全队来源。 */
       scope: SkillTriggerScope;
     }
-  /** 指定技能组在相应范围内命中。 */
+  /** 指定技能在相应范围内命中。 */
   | {
       /** 触发器种类判别值。 */
       kind: 'skillHit';
-      /** 要匹配的技能组。 */
-      skillGroupKey: string;
+      /** 要匹配的执行技能。 */
+      skillKey: string;
       /** 检查当前干员还是全队来源。 */
       scope: SkillTriggerScope;
     }

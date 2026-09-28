@@ -2,7 +2,7 @@
 import { computed, nextTick, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import WorkspaceIcon from './WorkspaceIcon.vue';
-import { EaInput } from '@/design-system';
+import { EaButton, EaFilterChip, EaInput } from '@/design-system';
 import OperatorAvatar from '../components/OperatorAvatar.vue';
 import type { AssetCatalogEntry } from './assetCatalog';
 
@@ -55,35 +55,43 @@ async function locate() {
   <section class="ab-browser">
     <div class="ab-path">
       <span>{{ tr('filters') }}</span>
-      <button class="rw-native-button" v-if="source" @click="source = ''">
+      <EaButton size="sm" variant="ghost" v-if="source" @click="source = ''">
         {{ tr(source) }} ×
-      </button>
-      <button class="rw-native-button" v-if="typeFilter" @click="typeFilter = ''">
+      </EaButton>
+      <EaButton size="sm" variant="ghost" v-if="typeFilter" @click="typeFilter = ''">
         {{ kind(typeFilter) }} ×
-      </button>
+      </EaButton>
       <span v-if="!source && !typeFilter" class="ab-muted">{{ tr('all') }}</span>
-      <button class="rw-native-button" @click="clear">{{ tr('clear') }}</button>
-      <button class="rw-native-button ab-locate" @click="locate">{{ tr('locate') }}</button>
+      <EaButton size="sm" variant="ghost" @click="clear">{{ tr('clear') }}</EaButton>
+      <EaButton size="sm" variant="ghost" class="ab-locate" @click="locate">{{
+        tr('locate')
+      }}</EaButton>
     </div>
     <aside class="ab-sources" :aria-label="tr('filters')">
       <fieldset>
         <legend>{{ tr('sources') }}</legend>
-        <label v-for="value in ['', 'builtin', 'custom']" :key="value">
-          <input v-model="source" type="radio" name="asset-source" :value="value" />
-          {{ tr(value || 'all') }}
-        </label>
+        <EaFilterChip
+          v-for="value in ['', 'builtin', 'custom']"
+          :key="value"
+          :selected="source === value"
+          @click="source = value"
+          >{{ tr(value || 'all') }}</EaFilterChip
+        >
       </fieldset>
       <fieldset>
         <legend>{{ tr('type') }}</legend>
-        <label
-          ><input v-model="typeFilter" type="radio" name="asset-type" value="" />{{ tr('all') }}
-          <small>{{ matching.length }}</small></label
+        <EaFilterChip :selected="typeFilter === ''" @click="typeFilter = ''">
+          {{ tr('all') }} <small>{{ matching.length }}</small>
+        </EaFilterChip>
+        <EaFilterChip
+          v-for="value in types"
+          :key="value"
+          :selected="typeFilter === value"
+          @click="typeFilter = value"
         >
-        <label v-for="value in types" :key="value">
-          <input v-model="typeFilter" type="radio" name="asset-type" :value="value" />
           {{ kind(value) }}
           <small>{{ matching.filter(asset => asset.kind === value).length }}</small>
-        </label>
+        </EaFilterChip>
       </fieldset>
     </aside>
     <main class="ab-content">
@@ -96,12 +104,12 @@ async function locate() {
           :aria-label="tr('search')"
           :placeholder="tr('search')"
         />
-        <button class="rw-native-button" :aria-pressed="view === 'grid'" @click="view = 'grid'">
+        <EaButton size="sm" :pressed="view === 'grid'" @click="view = 'grid'">
           {{ tr('grid') }}
-        </button>
-        <button class="rw-native-button" :aria-pressed="view === 'list'" @click="view = 'list'">
+        </EaButton>
+        <EaButton size="sm" :pressed="view === 'list'" @click="view = 'list'">
           {{ tr('list') }}
-        </button>
+        </EaButton>
       </div>
       <div ref="results" class="ab-results" :class="view" :aria-label="tr('assets')">
         <article
@@ -111,8 +119,10 @@ async function locate() {
           :class="{ selected: selection === asset.id }"
           :data-kind="asset.kind"
         >
-          <button
-            class="rw-native-button ab-open"
+          <EaButton
+            variant="ghost"
+            class="ab-open"
+            :pressed="selection === asset.id"
             :title="asset.id"
             @click="selection = asset.id"
             @dblclick="emit('navigate', asset.id)"
@@ -142,7 +152,7 @@ async function locate() {
               >{{ kind(asset.kind) }} ·
               {{ tr(sourceOf(asset.id) === 'custom' ? 'custom' : 'readonly') }}</small
             >
-          </button>
+          </EaButton>
         </article>
         <p v-if="!visible.length" class="ab-empty">{{ tr('empty') }}</p>
       </div>
@@ -160,32 +170,25 @@ async function locate() {
   min-height: 0;
   font-size: 11px;
 }
-.ab-browser .rw-native-button {
-  border: 0;
-  background: transparent;
-  text-align: left;
-}
 .ab-path {
   grid-column: 1 / -1;
   display: flex;
   align-items: center;
   gap: 5px;
   padding: 0 9px;
-  border-bottom: 1px solid #414b52;
+  border-bottom: 1px solid var(--ea-border);
   overflow: auto;
   white-space: nowrap;
 }
-.ab-path button {
-  padding: 3px 6px;
+.ab-path :deep(.ea-button) {
   flex-shrink: 0;
 }
 .ab-path .ab-locate {
   margin-left: auto;
-  color: #c8bd87;
 }
 .ab-sources {
   overflow: auto;
-  border-right: 1px solid #46515a;
+  border-right: 1px solid var(--ea-border);
   padding: 6px 0;
 }
 
@@ -206,17 +209,6 @@ async function locate() {
   min-width: 80px;
 }
 
-.ab-search button,
-.ab-filters button {
-  padding: 3px 6px;
-  white-space: nowrap;
-  color: #abbac6;
-}
-.ab-browser .rw-native-button[aria-pressed='true'] {
-  background: #494b37;
-  color: #e5d991;
-}
-
 .ab-results {
   flex: 1;
   min-height: 0;
@@ -230,10 +222,10 @@ async function locate() {
   gap: 7px;
 }
 .ab-asset {
-  --type-color: #879aa8;
-  border: 1px solid #46525b;
+  --type-color: var(--ea-fg-muted);
+  border: 1px solid var(--ea-border);
   border-top: 2px solid var(--type-color);
-  background: #303940;
+  background: var(--ea-surface-row);
   min-width: 0;
 }
 .ab-asset[data-kind='skill'],
@@ -251,16 +243,20 @@ async function locate() {
   --type-color: #d1b47a;
 }
 .ab-asset.selected {
-  background: #4a503d;
-  border-color: #c4b86c;
+  background: var(--ea-select-hover-bg);
+  border-color: var(--ea-gold);
 }
-.ab-asset:hover {
-  background: #414c55;
+@media (hover: hover) and (pointer: fine) {
+  .ab-asset:hover {
+    background: var(--ea-hover-fill);
+  }
 }
 .ab-open {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  white-space: normal;
+  text-align: left;
   width: 100%;
   gap: 5px;
   padding: 9px;
@@ -288,13 +284,13 @@ async function locate() {
   overflow-wrap: anywhere;
 }
 .ab-open small {
-  color: #a7b7c4;
+  color: var(--ea-fg-muted);
   font-size: 10px;
 }
 
 .ab-count {
   padding: 4px 9px;
-  color: #8fa3b2;
+  color: var(--ea-fg-muted);
   font-size: 10px;
 }
 .list .ab-asset {
@@ -321,7 +317,7 @@ async function locate() {
 
 .ab-empty,
 .ab-muted {
-  color: #91a2af;
+  color: var(--ea-fg-muted);
 }
 .ab-result-path {
   overflow-wrap: anywhere;
@@ -333,20 +329,15 @@ async function locate() {
   padding: 8px 12px;
 }
 .ab-sources legend,
-.ab-sources fieldset label {
+.ab-sources :deep(.ea-filter-chip) {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 0;
-}
-.ab-sources input {
-  width: 12px;
-  height: 12px;
-  accent-color: #ddcc78;
-  margin: 0;
+  width: 100%;
+  margin-bottom: 3px;
 }
 .ab-sources small {
   margin-left: auto;
-  color: #8d9dab;
+  color: var(--ea-fg-muted);
 }
 </style>

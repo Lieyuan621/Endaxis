@@ -79,8 +79,7 @@ export function bindRestoredCombatSkillCooldowns(
       if (
         existing.configuration.periodFrames !== configuration.periodFrames ||
         existing.configuration.commitFrame !== configuration.commitFrame ||
-        existing.program.skillType !== program.skillType ||
-        existing.program.skillGroupKey !== program.skillGroupKey
+        existing.program.skillType !== program.skillType
       ) {
         throw new Error(
           `skill '${program.skillId}' of '${operator.operatorId}' has inconsistent cooldown configuration`,

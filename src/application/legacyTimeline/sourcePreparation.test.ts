@@ -267,8 +267,7 @@ it('maps four identity categories and quantizes source frames without modifying 
 it('keeps a declared skill-group sequence separate from ordinary skill sources', () => {
   const sequence = {
     kind: 'operatorSkillSequence',
-    skillGroupKey: 'basicAttack',
-    variantKey: 'enhancedBasicAttack',
+    skillGroupKey: 'enhancedBasicAttack',
   } as const;
   const result = prepareLegacySource(input(), {
     skills: { old: [{ source, target: sequence }] },
@@ -282,7 +281,7 @@ it('keeps a cross-group continuation as one declared legacy skill chain', () => 
   const sequence = {
     kind: 'operatorSkillSequence',
     skillGroupKey: 'battleSkill',
-    continuations: [{ skillGroupKey: 'basicAttack', variantKey: 'enhancedBasicAttack' }],
+    continuations: [{ skillGroupKey: 'enhancedBasicAttack' }],
   } as const;
   const result = prepareLegacySource(input(), {
     skills: { old: [{ source, target: sequence }] },

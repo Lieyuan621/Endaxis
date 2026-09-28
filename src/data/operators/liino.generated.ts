@@ -4151,45 +4151,6 @@ export const liinoChr_0035_liino_normal_skill: SkillDefinition = {
   actionGraph: liinoChr_0035_liino_normal_skillActionGraph,
 };
 
-export const liinoChr_0035_liino_normal_skill_endActionGraph = {
-  main: {
-    nodes: {
-      applyBuff_1: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffId: 'buff_chr_0035_liino_skill_end',
-            target: 'caster',
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const liinoChr_0035_liino_normal_skill_end: SkillDefinition = {
-  actionGraph: liinoChr_0035_liino_normal_skill_endActionGraph,
-  key: 'chr_0035_liino_normal_skill_end',
-  blackboard: { atk_scale: 1, atk_up: 0.5 },
-  timelineBlockFrames: 1,
-  naturalDurationFrames: 1,
-  exclusiveFrame: 0,
-  offsetRecordFrame: 0,
-  costFrame: 0,
-  scheduledSequences: [],
-  switchToBuffCast: {
-    currentSkillTypes: ['battleSkill', 'ultimate'],
-    asSkillCast: false,
-    sequence: { $sequence: 'applyBuff_1' },
-  },
-  skillType: 'battleSkill',
-  levelSource: 'battleSkill',
-  nativeSkillType: 'extraActiveSkill',
-};
-
 export const liinoChr_0035_liino_normal_skill_comboActionGraph = {
   main: {
     nodes: {
@@ -4668,6 +4629,45 @@ export const liinoChr_0035_liino_normal_skill_combo: SkillDefinition = {
   actionGraph: liinoChr_0035_liino_normal_skill_comboActionGraph,
 };
 
+export const liinoChr_0035_liino_normal_skill_endActionGraph = {
+  main: {
+    nodes: {
+      applyBuff_1: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffId: 'buff_chr_0035_liino_skill_end',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const liinoChr_0035_liino_normal_skill_end: SkillDefinition = {
+  actionGraph: liinoChr_0035_liino_normal_skill_endActionGraph,
+  key: 'chr_0035_liino_normal_skill_end',
+  blackboard: { atk_scale: 1, atk_up: 0.5 },
+  timelineBlockFrames: 1,
+  naturalDurationFrames: 1,
+  exclusiveFrame: 0,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [],
+  switchToBuffCast: {
+    currentSkillTypes: ['battleSkill', 'ultimate'],
+    asSkillCast: false,
+    sequence: { $sequence: 'applyBuff_1' },
+  },
+  skillType: 'battleSkill',
+  levelSource: 'battleSkill',
+  nativeSkillType: 'extraActiveSkill',
+};
+
 export const liinoChr_0035_liino_ultimate_skillActionGraph = {
   main: {
     nodes: {
@@ -4905,7 +4905,7 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
         action: {
           kind: 'changeSkillSlot',
           parameters: {
-            skillGroupKey: 'battleSkill',
+            skillSlotKey: 'battleSkill',
             targetSkillKey: 'chr_0035_liino_normal_skill_end',
             inheritOriginSkillCooldownProgress: true,
             lifetime: 'finishByAction',
@@ -6279,7 +6279,7 @@ const liinoBuff10: SkillBuffDefinition = {
   actionGraph: liinoBuff10ActionGraph,
   skillSlotReplacements: [
     {
-      skillGroupKey: 'battleSkill',
+      skillSlotKey: 'battleSkill',
       targetSkillKey: 'chr_0035_liino_normal_skill_end',
       revertedSkillKey: 'chr_0035_liino_normal_skill',
       inheritOriginSkillCooldownProgress: true,
@@ -8278,7 +8278,6 @@ const liinoBuff37: SkillBuffDefinition = {
 export const liino: OperatorDefinition = {
   slug: 'liino',
   gameId: 'LIINO',
-  skillDisplayNameKeys: { chr_0035_liino_normal_skill_end: 'skillNames.stanceTermination' },
   rarity: 6,
   weaponType: 'polearm',
   element: 'electric',
@@ -8300,16 +8299,10 @@ export const liino: OperatorDefinition = {
     ultimateBuffId: 'buff_chr_0035_liino_ultskill_music_tag',
   },
   skillGroups: [
-    {
-      key: 'comboSkill',
-      skillType: 'comboSkill',
-      levelSource: 'comboSkill',
-      skills: liinoChr_0035_liino_combo_skill,
-    },
+    { key: 'comboSkill', operationType: 'comboSkill', skills: liinoChr_0035_liino_combo_skill },
     {
       key: 'basicAttack',
-      skillType: 'basicAttack',
-      levelSource: 'basicAttack',
+      operationType: 'basicAttack',
       skills: [
         liinoChr_0035_liino_attack1,
         liinoChr_0035_liino_attack2,
@@ -8318,38 +8311,26 @@ export const liino: OperatorDefinition = {
         liinoChr_0035_liino_attack5,
       ],
     },
-    {
-      key: 'finisher',
-      skillType: 'finisher',
-      levelSource: 'basicAttack',
-      skills: liinoChr_0035_liino_power_attack,
-    },
+    { key: 'finisher', operationType: 'finisher', skills: liinoChr_0035_liino_power_attack },
     {
       key: 'plungingAttack',
-      skillType: 'plungingAttack',
-      levelSource: 'basicAttack',
+      operationType: 'plungingAttack',
       skills: liinoChr_0035_liino_plunging_attack_end,
     },
     {
       key: 'battleSkill',
-      skillType: 'battleSkill',
-      levelSource: 'battleSkill',
+      operationType: 'battleSkill',
       skills: liinoChr_0035_liino_normal_skill,
-      replacementSkills: [
-        liinoChr_0035_liino_normal_skill_end,
-        liinoChr_0035_liino_normal_skill_combo,
-      ],
-      replacementSkillPlacements: {
-        chr_0035_liino_normal_skill_end: 'standard',
-        chr_0035_liino_normal_skill_combo: 'internal',
-      },
+      replacementSkills: [liinoChr_0035_liino_normal_skill_combo],
+      replacementSkillPlacements: { chr_0035_liino_normal_skill_combo: 'internal' },
     },
     {
-      key: 'ultimate',
-      skillType: 'ultimate',
-      levelSource: 'ultimate',
-      skills: liinoChr_0035_liino_ultimate_skill,
+      key: 'stanceTermination',
+      operationType: 'battleSkill',
+      nameKey: 'skillNames.stanceTermination',
+      skills: liinoChr_0035_liino_normal_skill_end,
     },
+    { key: 'ultimate', operationType: 'ultimate', skills: liinoChr_0035_liino_ultimate_skill },
   ],
   dodgeSkill: liinoCommon_character_perfect_dodge,
   dashBuffs: [
@@ -8397,7 +8378,6 @@ export const liino: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0035_liino_normal_skill',
           blackboardKey: 'talent_a',
           operation: 'assign',
@@ -8405,7 +8385,6 @@ export const liino: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0035_liino_normal_skill',
           blackboardKey: 'shelter',
           operation: 'assign',
@@ -8413,7 +8392,6 @@ export const liino: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0035_liino_normal_skill',
           blackboardKey: 'healtaken_rate',
           operation: 'assign',
@@ -8421,7 +8399,6 @@ export const liino: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0035_liino_normal_skill',
           blackboardKey: 'shelter_duration',
           operation: 'assign',
@@ -8429,31 +8406,31 @@ export const liino: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'talent_a',
           operation: 'assign',
           value: [1, 1],
+          skillKey: 'chr_0035_liino_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'shelter',
           operation: 'assign',
           value: [-0.1, -0.2],
+          skillKey: 'chr_0035_liino_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'healtaken_rate',
           operation: 'assign',
           value: [0.1, 0.2],
+          skillKey: 'chr_0035_liino_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'shelter_duration',
           operation: 'assign',
           value: [3, 3],
+          skillKey: 'chr_0035_liino_ultimate_skill',
         },
       ],
     },
@@ -8462,24 +8439,24 @@ export const liino: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'talent_b',
           operation: 'assign',
           value: [1, 1],
+          skillKey: 'chr_0035_liino_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'atb_return',
           operation: 'assign',
           value: [5, 10],
+          skillKey: 'chr_0035_liino_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'atb_return_duration',
           operation: 'assign',
           value: [30, 30],
+          skillKey: 'chr_0035_liino_combo_skill',
         },
       ],
     },
@@ -8490,7 +8467,6 @@ export const liino: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0035_liino_normal_skill',
           blackboardKey: 'potential_atb_return',
           operation: 'assign',
@@ -8498,7 +8474,6 @@ export const liino: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0035_liino_normal_skill',
           blackboardKey: 'atk_up',
           operation: 'add',
@@ -8506,10 +8481,10 @@ export const liino: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'atk_up',
           operation: 'add',
           value: 0.06,
+          skillKey: 'chr_0035_liino_ultimate_skill',
         },
       ],
       attachedBuffs: [{ buffId: 'buff_chr_0035_liino_potential' }],
@@ -8524,34 +8499,34 @@ export const liino: OperatorDefinition = {
     {
       levels: 1,
       modifiers: [
-        { kind: 'addSkillCooldownFrames', skillGroupKey: 'comboSkill', frames: -30 },
+        { kind: 'addSkillCooldownFrames', frames: -30, skillKey: 'chr_0035_liino_combo_skill' },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'heal_value',
           operation: 'multiply',
           value: 1.4,
+          skillKey: 'chr_0035_liino_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'heal_rate',
           operation: 'multiply',
           value: 1.4,
+          skillKey: 'chr_0035_liino_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'atk_scale',
           operation: 'multiply',
           value: 1.4,
+          skillKey: 'chr_0035_liino_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           blackboardKey: 'atk_scale_2',
           operation: 'multiply',
           value: 1.4,
+          skillKey: 'chr_0035_liino_combo_skill',
         },
       ],
     },
@@ -8560,9 +8535,9 @@ export const liino: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
-          skillGroupKey: 'ultimate',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
+          skillKey: 'chr_0035_liino_ultimate_skill',
         },
       ],
     },
@@ -8571,49 +8546,48 @@ export const liino: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'will_up',
           operation: 'multiply',
           value: 1.2,
+          skillKey: 'chr_0035_liino_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'will_max',
           operation: 'multiply',
           value: 1.2,
+          skillKey: 'chr_0035_liino_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'atk_scale',
           operation: 'multiply',
           value: 1.2,
+          skillKey: 'chr_0035_liino_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'atk_scale_2',
           operation: 'multiply',
           value: 1.2,
+          skillKey: 'chr_0035_liino_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'atk_scale_3',
           operation: 'multiply',
           value: 1.2,
+          skillKey: 'chr_0035_liino_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'atk_scale_4',
           operation: 'multiply',
           value: 1.2,
+          skillKey: 'chr_0035_liino_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0035_liino_normal_skill',
           blackboardKey: 'atk_scale',
           operation: 'multiply',
@@ -8621,7 +8595,6 @@ export const liino: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0035_liino_normal_skill',
           blackboardKey: 'atk_scale_2',
           operation: 'multiply',
@@ -8629,7 +8602,6 @@ export const liino: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0035_liino_normal_skill',
           blackboardKey: 'atk_scale_3',
           operation: 'multiply',

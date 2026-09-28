@@ -35,7 +35,6 @@ import type {
   SkillDefinition,
   ScheduledSequenceDefinition,
   SkillType,
-  SkillLevelSource,
   DamageElement,
 } from '../../../packages/game-data-contract/src/index.ts';
 import type {
@@ -168,10 +167,11 @@ it('GameplayTag 是 string 的语义别名，不要求运行时转换', () => {
 it('技能身份、等级来源与元素复用契约，但链接计划和养成 IR 保留自身信息', () => {
   expectTypeOf<OperatorSkillIdentitySource['skillType']>().toEqualTypeOf<SkillType>();
   expectTypeOf<OperatorActiveSkillTypeSource>().toEqualTypeOf<SkillType>();
-  expectTypeOf<OperatorSkillGroupSource['levelSource']>().toEqualTypeOf<SkillLevelSource>();
-  expectTypeOf<OperatorSkillGroupVariantSource['levelSource']>().toEqualTypeOf<SkillLevelSource>();
+  expectTypeOf<OperatorSkillGroupSource>().not.toHaveProperty('levelSource');
+  expectTypeOf<OperatorSkillGroupVariantSource>().not.toHaveProperty('levelSource');
   expectTypeOf<ProjectedDamageElementSource>().toEqualTypeOf<DamageElement>();
-  expectTypeOf<OperatorSkillGroupSource['nativeGroupType']>().toEqualTypeOf<number>();
+  expectTypeOf<OperatorSkillGroupSource>().not.toHaveProperty('nativeGroupType');
+  expectTypeOf<OperatorSkillGroupVariantSource>().not.toHaveProperty('nativeGroupType');
   type BlackboardPatch = Extract<
     CompiledOperatorProgressionEntrySource,
     { kind: 'skillBlackboardModifier' }

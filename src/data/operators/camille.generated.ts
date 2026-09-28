@@ -3852,7 +3852,7 @@ const camilleBuff12: SkillBuffDefinition = {
   },
   skillSlotReplacements: [
     {
-      skillGroupKey: 'battleSkill',
+      skillSlotKey: 'battleSkill',
       targetSkillKey: 'chr_0033_camille_normal_skill_2',
       revertedSkillKey: 'chr_0033_camille_normal_skill',
       inheritOriginSkillCooldownProgress: false,
@@ -3881,7 +3881,6 @@ const camilleBuff13: SkillBuffDefinition = {
 export const camille: OperatorDefinition = {
   slug: 'camille',
   gameId: 'CAMILLE',
-  skillDisplayNameKeys: { chr_0033_camille_normal_skill_2: 'skillNames.pursuit' },
   rarity: 6,
   weaponType: 'polearm',
   element: 'heat',
@@ -3899,8 +3898,7 @@ export const camille: OperatorDefinition = {
   skillGroups: [
     {
       key: 'basicAttack',
-      skillType: 'basicAttack',
-      levelSource: 'basicAttack',
+      operationType: 'basicAttack',
       skills: [
         camilleChr_0033_camille_attack1,
         camilleChr_0033_camille_attack2,
@@ -3909,48 +3907,37 @@ export const camille: OperatorDefinition = {
         camilleChr_0033_camille_attack5,
       ],
     },
-    {
-      key: 'finisher',
-      skillType: 'finisher',
-      levelSource: 'basicAttack',
-      skills: camilleChr_0033_camille_power_attack,
-    },
+    { key: 'finisher', operationType: 'finisher', skills: camilleChr_0033_camille_power_attack },
     {
       key: 'plungingAttack',
-      skillType: 'plungingAttack',
-      levelSource: 'basicAttack',
+      operationType: 'plungingAttack',
       skills: camilleChr_0033_camille_plunging_attack_end,
     },
     {
       key: 'battleSkill',
-      skillType: 'battleSkill',
-      levelSource: 'battleSkill',
+      operationType: 'battleSkill',
       skills: camilleChr_0033_camille_normal_skill,
-      replacementSkillPlacements: { chr_0033_camille_normal_skill_2: 'standard' },
+    },
+    {
+      key: 'replacementBattleSkill',
+      operationType: 'battleSkill',
+      nameKey: 'skillNames.replacement',
+      skills: [],
       routedReplacementSkills: [
         {
           skill: camilleChr_0033_camille_normal_skill_2,
-          skillType: 'comboSkill',
-          levelSource: 'comboSkill',
-          executionSkillGroupKey: 'comboSkill',
           executionSkillKey: 'chr_0033_camille_combo_skill_2',
         },
       ],
     },
     {
       key: 'comboSkill',
-      skillType: 'comboSkill',
-      levelSource: 'comboSkill',
+      operationType: 'comboSkill',
       skills: camilleChr_0033_camille_combo_skill,
       replacementSkills: [camilleChr_0033_camille_combo_skill_2],
       replacementSkillPlacements: { chr_0033_camille_combo_skill_2: 'internal' },
     },
-    {
-      key: 'ultimate',
-      skillType: 'ultimate',
-      levelSource: 'ultimate',
-      skills: camilleChr_0033_camille_ultimate_skill,
-    },
+    { key: 'ultimate', operationType: 'ultimate', skills: camilleChr_0033_camille_ultimate_skill },
   ],
   dodgeSkill: camilleCommon_character_perfect_dodge,
   dashBuffs: [
@@ -3998,7 +3985,6 @@ export const camille: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           skillKey: 'chr_0033_camille_combo_skill',
           blackboardKey: 'talent_0',
           operation: 'assign',
@@ -4006,7 +3992,6 @@ export const camille: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           skillKey: 'chr_0033_camille_combo_skill',
           blackboardKey: 'combo_duration',
           operation: 'assign',
@@ -4014,7 +3999,6 @@ export const camille: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           skillKey: 'chr_0033_camille_combo_skill',
           blackboardKey: 'heal_base',
           operation: 'assign',
@@ -4022,7 +4006,6 @@ export const camille: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           skillKey: 'chr_0033_camille_combo_skill',
           blackboardKey: 'heal_sub_multi',
           operation: 'assign',
@@ -4030,7 +4013,6 @@ export const camille: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           skillKey: 'chr_0033_camille_combo_skill_2',
           blackboardKey: 'talent_0',
           operation: 'assign',
@@ -4038,7 +4020,6 @@ export const camille: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           skillKey: 'chr_0033_camille_combo_skill_2',
           blackboardKey: 'combo_duration',
           operation: 'assign',
@@ -4046,7 +4027,6 @@ export const camille: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           skillKey: 'chr_0033_camille_combo_skill_2',
           blackboardKey: 'heal_base',
           operation: 'assign',
@@ -4054,7 +4034,6 @@ export const camille: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           skillKey: 'chr_0033_camille_combo_skill_2',
           blackboardKey: 'heal_sub_multi',
           operation: 'assign',
@@ -4070,7 +4049,6 @@ export const camille: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0033_camille_normal_skill',
           blackboardKey: 'weak_scale',
           operation: 'add',
@@ -4078,7 +4056,6 @@ export const camille: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0033_camille_normal_skill',
           blackboardKey: 'vulnerable_scale',
           operation: 'add',
@@ -4086,7 +4063,6 @@ export const camille: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0033_camille_normal_skill',
           blackboardKey: 'bat_duration',
           operation: 'add',
@@ -4104,15 +4080,9 @@ export const camille: OperatorDefinition = {
     {
       levels: 1,
       modifiers: [
-        {
-          kind: 'addSkillCooldownFrames',
-          skillGroupKey: 'comboSkill',
-          skillKey: 'chr_0033_camille_combo_skill',
-          frames: -60,
-        },
+        { kind: 'addSkillCooldownFrames', skillKey: 'chr_0033_camille_combo_skill', frames: -60 },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           skillKey: 'chr_0033_camille_combo_skill',
           blackboardKey: 'atk_scale_1_1',
           operation: 'multiply',
@@ -4120,7 +4090,6 @@ export const camille: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           skillKey: 'chr_0033_camille_combo_skill',
           blackboardKey: 'atk_scale_1_2',
           operation: 'multiply',
@@ -4128,7 +4097,6 @@ export const camille: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           skillKey: 'chr_0033_camille_combo_skill',
           blackboardKey: 'atk_scale_1_3',
           operation: 'multiply',
@@ -4136,7 +4104,6 @@ export const camille: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           skillKey: 'chr_0033_camille_combo_skill_2',
           blackboardKey: 'atk_scale_2_1',
           operation: 'multiply',
@@ -4144,7 +4111,6 @@ export const camille: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           skillKey: 'chr_0033_camille_combo_skill_2',
           blackboardKey: 'atk_scale_2_2',
           operation: 'multiply',
@@ -4152,7 +4118,6 @@ export const camille: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           skillKey: 'chr_0033_camille_combo_skill_2',
           blackboardKey: 'atk_scale_2_3',
           operation: 'multiply',
@@ -4160,7 +4125,6 @@ export const camille: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           skillKey: 'chr_0033_camille_combo_skill_2',
           blackboardKey: 'atk_scale_2_4',
           operation: 'multiply',
@@ -4168,7 +4132,6 @@ export const camille: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           skillKey: 'chr_0033_camille_combo_skill',
           blackboardKey: 'atb',
           operation: 'multiply',
@@ -4176,7 +4139,6 @@ export const camille: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           skillKey: 'chr_0033_camille_combo_skill_2',
           blackboardKey: 'atb',
           operation: 'multiply',
@@ -4184,7 +4146,6 @@ export const camille: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           skillKey: 'chr_0033_camille_combo_skill_2',
           blackboardKey: 'atb_ex',
           operation: 'multiply',
@@ -4197,9 +4158,9 @@ export const camille: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
-          skillGroupKey: 'ultimate',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
+          skillKey: 'chr_0033_camille_ultimate_skill',
         },
       ],
     },

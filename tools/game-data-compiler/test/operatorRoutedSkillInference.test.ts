@@ -79,7 +79,6 @@ function fixture(overrides: Record<string, unknown> = {}) {
         { routedSkillKeys: ['wrapper'] },
         entries,
         [{ definition }, skills[1]!],
-        groups,
         source,
         'fixture',
       ),
@@ -94,7 +93,7 @@ describe('路由技能配置推导', () => {
         targetSkillKey: 'combo',
         skillType: 'comboSkill',
         levelSource: 'comboSkill',
-        executionSkillGroupKey: 'comboGroup',
+
         costs: [{ resource: 'sp', value: 100 }],
         costFrame: 3,
         cooldownFrames: 60,
@@ -128,13 +127,10 @@ describe('路由技能配置推导', () => {
     }
   });
 
-  it('推导不放宽包装形状、技能组唯一性或原生资源限制', () => {
+  it('推导不放宽包装形状或原生资源限制', () => {
     const unsupported = fixture();
     unsupported.source['wrapper.json'].castData.costData.costType = 'Unknown';
     expect(unsupported.run).toThrow('cost/cooldown is unsupported');
-    const ambiguous = fixture();
-    ambiguous.groups.push({ key: 'duplicate', skillKeys: ['combo'] });
-    expect(ambiguous.run).toThrow('target placement group');
     const invalid = fixture();
     expect(() =>
       invalid.run({

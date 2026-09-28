@@ -1,12 +1,9 @@
-import {
-  SKILL_TYPES,
-  SKILL_LEVEL_SOURCES,
-} from '../../../../../packages/game-data-contract/src/primitives.ts';
+import { OPERATION_TYPES } from '../../../../../packages/game-data-contract/src/primitives.ts';
 import type {
   SkillGroupDefinition,
+  SkillDefinition,
   SkillGroupPlacementPolicy,
   SkillGroupVariantDefinition,
-  SkillLibraryNameQualifier,
 } from '../../../../../packages/game-data-contract/src/skills.ts';
 import {
   requireArray,
@@ -37,22 +34,9 @@ const NATIVE_FIELDS = new Set([
   'skillGroupType',
   'skillIdList',
 ]);
-const GROUP_REQUIRED_FIELDS = new Set([
-  'key',
-  'levelSource',
-  'nativeGroupType',
-  'skillKeys',
-  'skillType',
-]);
-const VARIANT_FIELDS = new Set([
-  'key',
-  'levelSource',
-  'nativeGroupType',
-  'skillKeys',
-  'libraryNameQualifier',
-]);
-const LIBRARY_NAME_QUALIFIERS = ['enhanced', 'floating'] as const;
-const REPLACEMENT_PLACEMENTS = ['sequence', 'standard', 'internal'] as const;
+const GROUP_REQUIRED_FIELDS = new Set(['key', 'skillKeys', 'operationType']);
+const VARIANT_FIELDS = new Set(['key', 'skillKeys']);
+const REPLACEMENT_PLACEMENTS = ['sequence', 'internal'] as const;
 
 export interface NativeOperatorSkillGroupSource {
   readonly sourcePath: string;
@@ -63,27 +47,21 @@ export interface NativeOperatorSkillGroupSource {
 }
 
 /** 主动技能的原生 ID 和分类。 */
-export type OperatorSkillIdentitySource = Readonly<Pick<SkillGroupDefinition, 'key' | 'skillType'>>;
+export type OperatorSkillIdentitySource = Readonly<Pick<SkillDefinition, 'key' | 'skillType'>>;
 
-/** 配置中的链接计划，装配前保留原生等级组和有序技能键，不提前内联技能定义。 */
+/** 展示组的链接计划，仅保留操作与有序技能键，不携带原生养成分类。 */
 export type OperatorSkillGroupVariantSource = Readonly<
-  Pick<
-    SkillGroupVariantDefinition,
-    'key' | 'levelSource' | 'libraryNameQualifier' | 'placementPolicy'
-  >
+  Pick<SkillGroupVariantDefinition, 'key' | 'nameKey' | 'placementPolicy'>
 > & {
-  readonly nativeGroupType: number;
   readonly skillKeys: readonly string[];
 };
 
 export type OperatorSkillGroupSource = Readonly<
-  Pick<SkillGroupDefinition, 'key' | 'skillType' | 'levelSource' | 'placementPolicy'>
+  Pick<SkillGroupDefinition, 'key' | 'operationType' | 'placementPolicy'>
 > & {
-  readonly nativeGroupType: number;
   readonly skillKeys: readonly string[];
-  readonly libraryNameQualifier?: SkillLibraryNameQualifier;
+  readonly nameKey?: string;
   readonly replacementPlacements: Readonly<Record<string, (typeof REPLACEMENT_PLACEMENTS)[number]>>;
-  readonly replacementNameQualifiers: Readonly<Record<string, SkillLibraryNameQualifier>>;
   readonly variants: readonly OperatorSkillGroupVariantSource[];
 };
 
@@ -174,10 +152,8 @@ export function parseOperatorSkillGroupSources(
     const expectedFields = new Set(GROUP_REQUIRED_FIELDS);
     if (group.placementPolicy !== undefined) expectedFields.add('placementPolicy');
     if (group.variants !== undefined) expectedFields.add('variants');
-    if (group.libraryNameQualifier !== undefined) expectedFields.add('libraryNameQualifier');
+    if (group.nameKey !== undefined) expectedFields.add('nameKey');
     if (group.replacementPlacements !== undefined) expectedFields.add('replacementPlacements');
-    if (group.replacementNameQualifiers !== undefined)
-      expectedFields.add('replacementNameQualifiers');
     requireExactFields(group, expectedFields, groupPath);
     const variants =
       group.variants === undefined
@@ -186,26 +162,18 @@ export function parseOperatorSkillGroupSources(
             const variantPath = `${groupPath}.variants[${variantIndex}]`;
             const variant = requireRecord(item, variantPath);
             const fields = new Set(VARIANT_FIELDS);
+            if (variant.nameKey !== undefined) fields.add('nameKey');
             if (variant.placementPolicy !== undefined) fields.add('placementPolicy');
             requireExactFields(variant, fields, variantPath);
             return {
               ...readPlacementPolicy(variant, variantPath),
               key: requireNonEmptyString(variant.key, `${variantPath}.key`),
-              levelSource: requireGroupIdentity(
-                variant.levelSource,
-                SKILL_LEVEL_SOURCES,
-                `${variantPath}.levelSource`,
-              ),
-              nativeGroupType: requireNonNegativeInteger(
-                variant.nativeGroupType,
-                `${variantPath}.nativeGroupType`,
-              ),
               skillKeys: distinctStrings(variant.skillKeys, `${variantPath}.skillKeys`),
-              libraryNameQualifier: requireGroupIdentity(
-                variant.libraryNameQualifier,
-                LIBRARY_NAME_QUALIFIERS,
-                `${variantPath}.libraryNameQualifier`,
-              ),
+              ...(variant.nameKey === undefined
+                ? {}
+                : {
+                    nameKey: requireNonEmptyString(variant.nameKey, `${variantPath}.nameKey`),
+                  }),
             };
           });
     if (group.variants !== undefined && variants.length === 0) {
@@ -225,48 +193,21 @@ export function parseOperatorSkillGroupSources(
         ),
       ]),
     );
-    const replacementNameQualifiers = Object.fromEntries(
-      Object.entries(
-        group.replacementNameQualifiers === undefined
-          ? {}
-          : requireRecord(
-              group.replacementNameQualifiers,
-              `${groupPath}.replacementNameQualifiers`,
-            ),
-      ).map(([skillKey, qualifier]) => [
-        requireNonEmptyString(skillKey, `${groupPath}.replacementNameQualifiers key`),
-        requireGroupIdentity(
-          qualifier,
-          LIBRARY_NAME_QUALIFIERS,
-          `${groupPath}.replacementNameQualifiers.${skillKey}`,
-        ),
-      ]),
-    );
     return {
       key: requireNonEmptyString(group.key, `${groupPath}.key`),
       ...readPlacementPolicy(group, groupPath),
-      skillType: requireGroupIdentity(group.skillType, SKILL_TYPES, `${groupPath}.skillType`),
-      levelSource: requireGroupIdentity(
-        group.levelSource,
-        SKILL_LEVEL_SOURCES,
-        `${groupPath}.levelSource`,
-      ),
-      nativeGroupType: requireNonNegativeInteger(
-        group.nativeGroupType,
-        `${groupPath}.nativeGroupType`,
+      operationType: requireGroupIdentity(
+        group.operationType,
+        OPERATION_TYPES,
+        `${groupPath}.operationType`,
       ),
       skillKeys: distinctStrings(group.skillKeys, `${groupPath}.skillKeys`),
-      ...(group.libraryNameQualifier === undefined
+      ...(group.nameKey === undefined
         ? {}
         : {
-            libraryNameQualifier: requireGroupIdentity(
-              group.libraryNameQualifier,
-              LIBRARY_NAME_QUALIFIERS,
-              `${groupPath}.libraryNameQualifier`,
-            ),
+            nameKey: requireNonEmptyString(group.nameKey, `${groupPath}.nameKey`),
           }),
       replacementPlacements,
-      replacementNameQualifiers,
       variants,
     };
   });
@@ -311,8 +252,8 @@ function readPlacementPolicy(
 }
 
 /**
- * 原生组只证明养成等级来源；编辑器释放链和强化形态位置由显式配置决定。
- * 校验时仍要求两侧技能 ID 集合与原生顺序完全闭合。
+ * 展示分组仅校验技能引用和唯一归属。原生技能覆盖按 ID 集合核对，
+ * 不要求展示分组、顺序或操作类别与原生养成分类相同。
  */
 export function validateOperatorSkillGroups(
   groups: readonly OperatorSkillGroupSource[],
@@ -322,18 +263,12 @@ export function validateOperatorSkillGroups(
 ): void {
   const skillByKey = uniqueMap(skills, item => item.key, 'skills');
   uniqueMap(groups, item => item.key, 'skillGroups');
-  const expected = new Map<number, string[]>();
   const assigned: string[] = [];
   for (const group of groups) {
-    appendSkills(group.skillKeys, group.skillType, group.nativeGroupType, group.key);
+    appendSkills(group.skillKeys, group.key);
     uniqueMap(group.variants, item => item.key, `skillGroups.${group.key}.variants`);
     for (const variant of group.variants) {
-      appendSkills(
-        variant.skillKeys,
-        group.skillType,
-        variant.nativeGroupType,
-        `${group.key}.${variant.key}`,
-      );
+      appendSkills(variant.skillKeys, `${group.key}.${variant.key}`);
     }
   }
   if (new Set(assigned).size !== assigned.length) {
@@ -342,14 +277,20 @@ export function validateOperatorSkillGroups(
   const missing = [...skillByKey.keys()].filter(key => !assigned.includes(key)).sort();
   if (missing.length) throw new Error(`skillGroups: unassigned skills ${JSON.stringify(missing)}`);
 
-  const actual = new Map<number, string[]>();
+  const nativeTypes = new Set<number>();
+  const nativeTypeBySkill = new Map<string, number>();
   for (const group of nativeGroups) {
-    if (actual.has(group.nativeGroupType)) {
+    if (nativeTypes.has(group.nativeGroupType)) {
       throw new Error(`skillGroupMap: duplicate group type ${group.nativeGroupType}`);
     }
-    actual.set(group.nativeGroupType, [...group.skillIds]);
+    nativeTypes.add(group.nativeGroupType);
+    for (const id of group.skillIds) {
+      if (nativeTypeBySkill.has(id))
+        throw new Error(`skillGroupMap: duplicate native skill '${id}'`);
+      nativeTypeBySkill.set(id, group.nativeGroupType);
+    }
   }
-  const actualIds = new Set([...actual.values()].flat());
+  const actualIds = new Set(nativeTypeBySkill.keys());
   const routingOnly = optionIds(options.routingOnlyNativeSkillIds, 'routingOnlyNativeSkillIds');
   const equivalent = optionIds(
     options.simulationEquivalentNativeSkillIds,
@@ -383,41 +324,20 @@ export function validateOperatorSkillGroups(
   requireDisjoint(generatedIds, passive, 'basePassiveSkillIds');
   const routedIds = new Set(routedKeys.map(key => skillByKey.get(key)!.key));
   const omitted = new Set([...routingOnly, ...equivalent, ...passive]);
-  const normalizedActual = new Map(
-    [...actual].map(([type, ids]) => [type, ids.filter(id => !omitted.has(id))]),
-  );
-  const normalizedExpected = new Map<number, string[]>();
-  for (const [type, ids] of expected) {
-    const expectedSet = new Set(
-      ids.filter(id => !routedIds.has(id) && (actualIds.has(id) || !runtimeReplacementIds.has(id))),
-    );
-    normalizedExpected.set(
-      type,
-      (normalizedActual.get(type) ?? []).filter(id => expectedSet.has(id)),
-    );
-  }
-  if (!sameMaps(normalizedExpected, normalizedActual)) {
+  const uncovered = [...actualIds]
+    .filter(id => !omitted.has(id) && (!generatedIds.has(id) || routedIds.has(id)))
+    .sort();
+  if (uncovered.length) {
     throw new Error(
-      `skillGroupMap does not match generated skill sources: expected ${JSON.stringify(Object.fromEntries(normalizedExpected))}, got ${JSON.stringify(Object.fromEntries(normalizedActual))}`,
+      `skillGroupMap does not match generated skill sources: uncovered native skills ${JSON.stringify(uncovered)}`,
     );
   }
 
-  function appendSkills(
-    keys: readonly string[],
-    type: string,
-    nativeType: number,
-    path: string,
-  ): void {
+  function appendSkills(keys: readonly string[], path: string): void {
     if (!keys.length) throw new Error(`skillGroups.${path}: expected skills`);
     for (const key of keys) {
       const skill = skillByKey.get(key);
       if (!skill) throw new Error(`skillGroups.${path}: unknown skill key '${key}'`);
-      if (skill.skillType !== type) {
-        throw new Error(`skillGroups.${path}: skill type does not match '${key}'`);
-      }
-      const ids = expected.get(nativeType) ?? [];
-      ids.push(skill.key);
-      expected.set(nativeType, ids);
       assigned.push(key);
     }
   }
@@ -478,19 +398,4 @@ function requireDisjoint(left: ReadonlySet<string>, right: readonly string[], pa
   if (overlap.length) {
     throw new Error(`${path}: generated skills cannot be omitted ${JSON.stringify(overlap)}`);
   }
-}
-
-function sameMaps(
-  expected: ReadonlyMap<number, readonly string[]>,
-  actual: ReadonlyMap<number, readonly string[]>,
-): boolean {
-  if (expected.size !== actual.size) return false;
-  return [...expected].every(([type, ids]) => {
-    const other = actual.get(type);
-    return (
-      other !== undefined &&
-      ids.length === other.length &&
-      ids.every((id, index) => id === other[index])
-    );
-  });
 }

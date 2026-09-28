@@ -167,8 +167,7 @@
       "evidence": "9b92b0d7^:public/gamedata.json",
       "target": {
         "kind": "operatorSkillSequence",
-        "skillGroupKey": "basicAttack",
-        "variantKey": "enhancedBasicAttack"
+        "skillGroupKey": "enhancedBasicAttack"
       }
     },
     {
@@ -179,8 +178,7 @@
       "evidence": "9b92b0d7^:public/gamedata.json",
       "target": {
         "kind": "operatorSkillSequence",
-        "skillGroupKey": "basicAttack",
-        "variantKey": "enhancedBasicAttack"
+        "skillGroupKey": "enhancedBasicAttack"
       }
     },
     {
@@ -192,7 +190,7 @@
       "evidence": "9b92b0d7^:public/gamedata.json",
       "target": {
         "kind": "operatorSkill",
-        "skillGroupKey": "basicAttack",
+        "skillGroupKey": "enhancedBasicAttack",
         "skillKey": "chr_0016_laevat_ult_attack1"
       }
     },
@@ -205,7 +203,7 @@
       "evidence": "9b92b0d7^:public/gamedata.json",
       "target": {
         "kind": "operatorSkill",
-        "skillGroupKey": "basicAttack",
+        "skillGroupKey": "enhancedBasicAttack",
         "skillKey": "chr_0016_laevat_ult_attack2"
       }
     },
@@ -218,7 +216,7 @@
       "evidence": "9b92b0d7^:public/gamedata.json",
       "target": {
         "kind": "operatorSkill",
-        "skillGroupKey": "basicAttack",
+        "skillGroupKey": "enhancedBasicAttack",
         "skillKey": "chr_0016_laevat_ult_attack3"
       }
     },
@@ -231,7 +229,7 @@
       "evidence": "9b92b0d7^:public/gamedata.json",
       "target": {
         "kind": "operatorSkill",
-        "skillGroupKey": "basicAttack",
+        "skillGroupKey": "enhancedBasicAttack",
         "skillKey": "chr_0016_laevat_ult_attack4"
       }
     },
@@ -243,7 +241,7 @@
       "evidence": "9b92b0d7^:public/gamedata.json",
       "target": {
         "kind": "operatorSkill",
-        "skillGroupKey": "battleSkill",
+        "skillGroupKey": "enhancedBattleSkill",
         "skillKey": "chr_0016_laevat_normal_skill_during_ult"
       }
     },
@@ -255,7 +253,7 @@
       "evidence": "9b92b0d7^:public/gamedata.json",
       "target": {
         "kind": "operatorSkill",
-        "skillGroupKey": "battleSkill",
+        "skillGroupKey": "enhancedBattleSkill",
         "skillKey": "chr_0016_laevat_normal_skill_during_ult"
       }
     },
@@ -2972,7 +2970,7 @@
         },
         "target": {
           "kind": "operatorSkill",
-          "skillGroupKey": "battleSkill",
+          "skillGroupKey": "enhancedBattleSkill",
           "skillKey": "chr_0016_laevat_normal_skill_during_ult"
         }
       },
@@ -3009,7 +3007,7 @@
         },
         "target": {
           "kind": "operatorSkill",
-          "skillGroupKey": "basicAttack",
+          "skillGroupKey": "enhancedBasicAttack",
           "skillKey": "chr_0016_laevat_ult_attack1"
         }
       },
@@ -3022,7 +3020,7 @@
         },
         "target": {
           "kind": "operatorSkill",
-          "skillGroupKey": "basicAttack",
+          "skillGroupKey": "enhancedBasicAttack",
           "skillKey": "chr_0016_laevat_ult_attack2"
         }
       },
@@ -3035,7 +3033,7 @@
         },
         "target": {
           "kind": "operatorSkill",
-          "skillGroupKey": "basicAttack",
+          "skillGroupKey": "enhancedBasicAttack",
           "skillKey": "chr_0016_laevat_ult_attack3"
         }
       },
@@ -3048,7 +3046,7 @@
         },
         "target": {
           "kind": "operatorSkill",
-          "skillGroupKey": "basicAttack",
+          "skillGroupKey": "enhancedBasicAttack",
           "skillKey": "chr_0016_laevat_ult_attack4"
         }
       },
@@ -3391,7 +3389,7 @@
         },
         "target": {
           "kind": "operatorSkill",
-          "skillGroupKey": "battleSkill",
+          "skillGroupKey": "stanceTermination",
           "skillKey": "chr_0035_liino_normal_skill_end"
         }
       },
@@ -4205,8 +4203,7 @@
         },
         "target": {
           "kind": "operatorSkillSequence",
-          "skillGroupKey": "basicAttack",
-          "variantKey": "enhancedBasicAttack"
+          "skillGroupKey": "enhancedBasicAttack"
         }
       },
       {
@@ -4285,8 +4282,7 @@
           "skillGroupKey": "battleSkill",
           "continuations": [
             {
-              "skillGroupKey": "basicAttack",
-              "variantKey": "enhancedBasicAttack"
+              "skillGroupKey": "enhancedBasicAttack"
             }
           ]
         }
@@ -4313,7 +4309,7 @@
         },
         "target": {
           "kind": "operatorSkill",
-          "skillGroupKey": "basicAttack",
+          "skillGroupKey": "enhancedBasicAttack",
           "skillKey": "chr_0034_typhoea_floating_attack1"
         }
       },
@@ -4326,7 +4322,7 @@
         },
         "target": {
           "kind": "operatorSkill",
-          "skillGroupKey": "basicAttack",
+          "skillGroupKey": "enhancedBasicAttack",
           "skillKey": "chr_0034_typhoea_floating_attack2"
         }
       },
@@ -4339,7 +4335,7 @@
         },
         "target": {
           "kind": "operatorSkill",
-          "skillGroupKey": "basicAttack",
+          "skillGroupKey": "enhancedBasicAttack",
           "skillKey": "chr_0034_typhoea_floating_attack3"
         }
       },
@@ -4352,7 +4348,7 @@
         },
         "target": {
           "kind": "operatorSkill",
-          "skillGroupKey": "basicAttack",
+          "skillGroupKey": "enhancedBasicAttack",
           "skillKey": "chr_0034_typhoea_floating_attack4"
         }
       },
@@ -4365,7 +4361,7 @@
         },
         "target": {
           "kind": "operatorSkill",
-          "skillGroupKey": "basicAttack",
+          "skillGroupKey": "enhancedBasicAttack",
           "skillKey": "chr_0034_typhoea_floating_attack5"
         }
       },
@@ -4669,8 +4665,7 @@
         },
         "target": {
           "kind": "operatorSkillSequence",
-          "skillGroupKey": "basicAttack",
-          "variantKey": "enhancedBasicAttack"
+          "skillGroupKey": "enhancedBasicAttack"
         }
       },
       {
@@ -4885,7 +4880,7 @@
         },
         "target": {
           "kind": "operatorSkill",
-          "skillGroupKey": "battleSkill",
+          "skillGroupKey": "enhancedBattleSkill",
           "skillKey": "chr_0030_zhuangfy_normal_skill_ult"
         }
       },
@@ -4909,7 +4904,7 @@
         },
         "target": {
           "kind": "operatorSkill",
-          "skillGroupKey": "comboSkill",
+          "skillGroupKey": "enhancedComboSkill",
           "skillKey": "chr_0030_zhuangfy_combo_skill_ult"
         }
       },

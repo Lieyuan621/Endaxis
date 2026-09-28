@@ -10505,7 +10505,7 @@ const typhoeusBuff11: SkillBuffDefinition = {
   ],
   skillSlotReplacements: [
     {
-      skillGroupKey: 'comboSkill',
+      skillSlotKey: 'comboSkill',
       targetSkillKey: 'chr_0034_typhoea_combo_skillfloating',
       revertedSkillKey: 'chr_0034_typhoea_combo_skill',
       inheritOriginSkillCooldownProgress: false,
@@ -11919,8 +11919,7 @@ export const typhoeus: OperatorDefinition = {
   skillGroups: [
     {
       key: 'basicAttack',
-      skillType: 'basicAttack',
-      levelSource: 'basicAttack',
+      operationType: 'basicAttack',
       skills: [
         typhoeusChr_0034_typhoea_attack1,
         typhoeusChr_0034_typhoea_attack2,
@@ -11928,37 +11927,28 @@ export const typhoeus: OperatorDefinition = {
         typhoeusChr_0034_typhoea_attack4,
         typhoeusChr_0034_typhoea_attack5,
       ],
-      variants: [
-        {
-          key: 'enhancedBasicAttack',
-          levelSource: 'battleSkill',
-          libraryNameQualifier: 'floating',
-          skills: [
-            typhoeusChr_0034_typhoea_floating_attack1,
-            typhoeusChr_0034_typhoea_floating_attack2,
-            typhoeusChr_0034_typhoea_floating_attack3,
-            typhoeusChr_0034_typhoea_floating_attack4,
-            typhoeusChr_0034_typhoea_floating_attack5,
-          ],
-        },
+    },
+    {
+      key: 'enhancedBasicAttack',
+      operationType: 'basicAttack',
+      nameKey: 'skillNames.floating',
+      skills: [
+        typhoeusChr_0034_typhoea_floating_attack1,
+        typhoeusChr_0034_typhoea_floating_attack2,
+        typhoeusChr_0034_typhoea_floating_attack3,
+        typhoeusChr_0034_typhoea_floating_attack4,
+        typhoeusChr_0034_typhoea_floating_attack5,
       ],
     },
-    {
-      key: 'finisher',
-      skillType: 'finisher',
-      levelSource: 'basicAttack',
-      skills: typhoeusChr_0034_typhoea_power_attack,
-    },
+    { key: 'finisher', operationType: 'finisher', skills: typhoeusChr_0034_typhoea_power_attack },
     {
       key: 'plungingAttack',
-      skillType: 'plungingAttack',
-      levelSource: 'basicAttack',
+      operationType: 'plungingAttack',
       skills: typhoeusChr_0034_typhoea_plunging_attack_end,
     },
     {
       key: 'battleSkill',
-      skillType: 'battleSkill',
-      levelSource: 'battleSkill',
+      operationType: 'battleSkill',
       skills: typhoeusChr_0034_typhoea_normal_skill_floating_start,
       replacementSkills: [
         typhoeusChr_0034_typhoea_normal_skill_floating_loop,
@@ -11971,17 +11961,18 @@ export const typhoeus: OperatorDefinition = {
     },
     {
       key: 'comboSkill',
-      skillType: 'comboSkill',
-      levelSource: 'comboSkill',
+      operationType: 'comboSkill',
       skills: typhoeusChr_0034_typhoea_combo_skill,
-      replacementSkills: [typhoeusChr_0034_typhoea_combo_skillfloating],
-      replacementSkillPlacements: { chr_0034_typhoea_combo_skillfloating: 'standard' },
-      replacementSkillNameQualifiers: { chr_0034_typhoea_combo_skillfloating: 'floating' },
+    },
+    {
+      key: 'floatingComboSkill',
+      operationType: 'comboSkill',
+      nameKey: 'skillNames.floating',
+      skills: typhoeusChr_0034_typhoea_combo_skillfloating,
     },
     {
       key: 'ultimate',
-      skillType: 'ultimate',
-      levelSource: 'ultimate',
+      operationType: 'ultimate',
       skills: typhoeusChr_0034_typhoea_ultimate_skillfloating,
     },
   ],
@@ -12062,7 +12053,6 @@ export const typhoeus: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'basicAttack',
           skillKey: 'chr_0034_typhoea_floating_attack1',
           blackboardKey: 'atk_scale_enhence',
           operation: 'assign',
@@ -12070,7 +12060,6 @@ export const typhoeus: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'basicAttack',
           skillKey: 'chr_0034_typhoea_floating_attack2',
           blackboardKey: 'atk_scale_enhence',
           operation: 'assign',
@@ -12078,7 +12067,6 @@ export const typhoeus: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'basicAttack',
           skillKey: 'chr_0034_typhoea_floating_attack3',
           blackboardKey: 'atk_scale_enhence',
           operation: 'assign',
@@ -12086,7 +12074,6 @@ export const typhoeus: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'basicAttack',
           skillKey: 'chr_0034_typhoea_floating_attack4',
           blackboardKey: 'atk_scale_enhence',
           operation: 'assign',
@@ -12094,7 +12081,6 @@ export const typhoeus: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'basicAttack',
           skillKey: 'chr_0034_typhoea_floating_attack5',
           blackboardKey: 'atk_scale_enhence',
           operation: 'assign',
@@ -12124,7 +12110,6 @@ export const typhoeus: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'basicAttack',
           skillKey: 'chr_0034_typhoea_floating_attack1',
           blackboardKey: 'atk_scale_base',
           operation: 'multiply',
@@ -12132,7 +12117,6 @@ export const typhoeus: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'basicAttack',
           skillKey: 'chr_0034_typhoea_floating_attack2',
           blackboardKey: 'atk_scale_base',
           operation: 'multiply',
@@ -12140,7 +12124,6 @@ export const typhoeus: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'basicAttack',
           skillKey: 'chr_0034_typhoea_floating_attack3',
           blackboardKey: 'atk_scale_base',
           operation: 'multiply',
@@ -12148,7 +12131,6 @@ export const typhoeus: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'basicAttack',
           skillKey: 'chr_0034_typhoea_floating_attack4',
           blackboardKey: 'atk_scale_base',
           operation: 'multiply',
@@ -12156,7 +12138,6 @@ export const typhoeus: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'basicAttack',
           skillKey: 'chr_0034_typhoea_floating_attack5',
           blackboardKey: 'atk_scale_base',
           operation: 'multiply',
@@ -12164,7 +12145,6 @@ export const typhoeus: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0034_typhoea_normal_skill_floating_start',
           blackboardKey: 'potential_atkup',
           operation: 'assign',
@@ -12172,7 +12152,6 @@ export const typhoeus: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'battleSkill',
           skillKey: 'chr_0034_typhoea_normal_skill_floating_start',
           blackboardKey: 'atk_up',
           operation: 'assign',
@@ -12180,17 +12159,17 @@ export const typhoeus: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'potential_atkup',
           operation: 'assign',
           value: 1,
+          skillKey: 'chr_0034_typhoea_ultimate_skillfloating',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'atk_up',
           operation: 'assign',
           value: 0.18,
+          skillKey: 'chr_0034_typhoea_ultimate_skillfloating',
         },
       ],
       attachedBuffs: [
@@ -12210,21 +12189,14 @@ export const typhoeus: OperatorDefinition = {
     {
       levels: 1,
       modifiers: [
+        { kind: 'addSkillCooldownFrames', skillKey: 'chr_0034_typhoea_combo_skill', frames: -60 },
         {
           kind: 'addSkillCooldownFrames',
-          skillGroupKey: 'comboSkill',
-          skillKey: 'chr_0034_typhoea_combo_skill',
-          frames: -60,
-        },
-        {
-          kind: 'addSkillCooldownFrames',
-          skillGroupKey: 'comboSkill',
           skillKey: 'chr_0034_typhoea_combo_skillfloating',
           frames: -60,
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           skillKey: 'chr_0034_typhoea_combo_skill',
           blackboardKey: 'persistent_naturalburst_increase',
           operation: 'add',
@@ -12232,7 +12204,6 @@ export const typhoeus: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'comboSkill',
           skillKey: 'chr_0034_typhoea_combo_skillfloating',
           blackboardKey: 'persistent_naturalburst_increase',
           operation: 'add',
@@ -12245,9 +12216,9 @@ export const typhoeus: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
-          skillGroupKey: 'ultimate',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
+          skillKey: 'chr_0034_typhoea_ultimate_skillfloating',
         },
       ],
     },
@@ -12256,14 +12227,13 @@ export const typhoeus: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'arrow_num_given',
           operation: 'add',
           value: 1,
+          skillKey: 'chr_0034_typhoea_ultimate_skillfloating',
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'basicAttack',
           skillKey: 'chr_0034_typhoea_floating_attack1',
           blackboardKey: 'potential_damage_rate',
           operation: 'assign',
@@ -12271,7 +12241,6 @@ export const typhoeus: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'basicAttack',
           skillKey: 'chr_0034_typhoea_floating_attack2',
           blackboardKey: 'potential_damage_rate',
           operation: 'assign',
@@ -12279,7 +12248,6 @@ export const typhoeus: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'basicAttack',
           skillKey: 'chr_0034_typhoea_floating_attack3',
           blackboardKey: 'potential_damage_rate',
           operation: 'assign',
@@ -12287,7 +12255,6 @@ export const typhoeus: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'basicAttack',
           skillKey: 'chr_0034_typhoea_floating_attack4',
           blackboardKey: 'potential_damage_rate',
           operation: 'assign',
@@ -12295,7 +12262,6 @@ export const typhoeus: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'basicAttack',
           skillKey: 'chr_0034_typhoea_floating_attack5',
           blackboardKey: 'potential_damage_rate',
           operation: 'assign',
@@ -12303,10 +12269,10 @@ export const typhoeus: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
-          skillGroupKey: 'ultimate',
           blackboardKey: 'potential_damge_up',
           operation: 'assign',
           value: 1.2,
+          skillKey: 'chr_0034_typhoea_ultimate_skillfloating',
         },
       ],
     },

@@ -87,8 +87,7 @@ async function run(
     skillGroups: [
       {
         key: 'basicAttack',
-        skillType: 'basicAttack',
-        levelSource: 'basicAttack',
+        operationType: 'basicAttack',
         skills: (() => {
           const actionSpecs: { startFrame: number; action: ActionGraphStep }[] = [
             ...elements.map((element, index) => ({

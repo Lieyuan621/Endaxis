@@ -56,7 +56,12 @@ function typeOf(file: string, name: string): ts.Type {
 }
 
 function doc(symbol: ts.Symbol | undefined): string | undefined {
-  const text = symbol && ts.displayPartsToString(symbol.getDocumentationComment(checker)).trim();
+  const text =
+    symbol &&
+    ts
+      .displayPartsToString(symbol.getDocumentationComment(checker))
+      .replaceAll('\r\n', '\n')
+      .trim();
   return text || undefined;
 }
 

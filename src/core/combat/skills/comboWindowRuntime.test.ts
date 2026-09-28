@@ -73,7 +73,7 @@ describe('ComboWindowRuntime', () => {
   it('待释放窗口只保存施放参数，不捕获触发事件中的活动 Buff 或回调', () => {
     const window = new ComboWindowRuntime(new CombatClock(), new CombatReceiptCollector());
     const pending = {
-      skillGroupKey: 'comboSkill',
+      skillSlotKey: 'comboSkill',
       inputTarget: { kind: 'enemy' as const },
       triggerTarget: { kind: 'operator' as const, operatorId: 'ally' },
       assignPairs: { count: 2 },
@@ -83,7 +83,7 @@ describe('ComboWindowRuntime', () => {
     pending.assignPairs.count = 9;
     const saved = structuredClone(window.runtimeState);
     expect(saved.records.get('owner')!.candidates[0]!.nativeCondition).toEqual({
-      skillGroupKey: 'comboSkill',
+      skillSlotKey: 'comboSkill',
       inputTarget: { kind: 'enemy' },
       triggerTarget: { kind: 'operator', operatorId: 'ally' },
       assignPairs: { count: 2 },

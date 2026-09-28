@@ -5,6 +5,7 @@ import {
   OPERATOR_RARITIES,
   OPERATOR_ROLES,
   OPERATOR_WEAPON_TYPES,
+  OPERATION_TYPES,
   type OperatorDefinition,
   type OperatorPassiveSkillDefinition,
 } from './operatorDefinition';
@@ -174,12 +175,14 @@ export function validateOperatorDefinition(
   const skillIdentities = new Set<string>();
   for (const group of definition.skillGroups) {
     const groupPath = `${path}.skillGroups[${definition.skillGroups.indexOf(group)}]`;
+    if (!(OPERATION_TYPES as readonly unknown[]).includes(group.operationType))
+      push(issues, `${groupPath}.operationType`, 'expected a player operation type');
     if (group.key.length === 0) push(issues, `${groupPath}.key`, 'expected a non-empty string');
     if (groupKeys.has(group.key))
       push(issues, `${groupPath}.key`, `duplicate group key '${group.key}'`);
     groupKeys.add(group.key);
     (group.routedReplacementSkills ?? []).forEach((item, index) => {
-      for (const field of ['executionSkillGroupKey', 'executionSkillKey'] as const) {
+      for (const field of ['executionSkillKey'] as const) {
         if (item[field].trim() === '')
           push(
             issues,

@@ -90,8 +90,8 @@ function commitFrame(value: number | undefined): void {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  background: var(--ea-panel-bg, #17191c);
-  color: var(--ea-text, #e8e8e8);
+  background: var(--ea-workbench-panel);
+  color: var(--ea-fg);
 }
 
 .panel-header {
@@ -132,7 +132,7 @@ function commitFrame(value: number | undefined): void {
 
 .panel-tag-mini {
   margin-bottom: 10px;
-  color: var(--ea-text-secondary, #aeb4bb);
+  color: var(--ea-fg-secondary);
   font-size: 12px;
   font-weight: 700;
 }
@@ -152,7 +152,7 @@ function commitFrame(value: number | undefined): void {
   min-width: 0;
   display: grid;
   gap: 5px;
-  color: var(--ea-text-secondary, #aeb4bb);
+  color: var(--ea-fg-secondary);
   font-size: 12px;
 }
 
@@ -161,14 +161,14 @@ function commitFrame(value: number | undefined): void {
   overflow-wrap: anywhere;
   border-radius: 3px;
   padding: 7px 8px;
-  background: rgb(255 255 255 / 4%);
-  color: var(--ea-text, #e8e8e8);
+  background: var(--ea-fill-soft);
+  color: var(--ea-fg);
 }
 
 .field-help {
   display: block;
   margin-top: 9px;
-  color: var(--ea-text-muted, #7f8790);
+  color: var(--ea-fg-muted);
   line-height: 1.45;
 }
 

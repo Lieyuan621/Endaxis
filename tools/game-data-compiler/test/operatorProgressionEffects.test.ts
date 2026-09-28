@@ -136,7 +136,6 @@ it('原生直接附着 Buff 转成养成数据，不生成干员动作序列', (
     { level: 1 },
     {
       skills: [],
-      skillGroups: [],
       costResources: new Map(),
     },
   );

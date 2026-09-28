@@ -58,7 +58,6 @@ interface SkillCompilationBinding {
   readonly skill: SkillDefinition;
   readonly skillType: SkillType;
   readonly level: number;
-  readonly executionSkillGroupKey?: string;
   readonly executionSkillId?: string;
 }
 
@@ -228,61 +227,56 @@ function compileCastSkillPrograms(
       ...(routed === undefined
         ? {}
         : {
-            executionSkillGroupKey: routed.executionSkillGroupKey,
             executionSkillId: routed.executionSkillKey,
           }),
     },
   ];
-  return definitions.map(
-    ({ skill, skillType, level: definitionLevel, executionSkillGroupKey, executionSkillId }) => {
-      const wrapperProgram = compileDefinition({
-        operatorId: trackId,
-        skillGroupKey: resolved.group.key,
-        skillType,
-        skillLevel: definitionLevel,
-        skill,
-      });
-      if (executionSkillId === undefined || executionDefinition === undefined) {
-        return {
-          castId: cast.id,
-          program: {
-            ...wrapperProgram,
-            ...(executionSkillGroupKey === undefined
-              ? {}
-              : { executionSkillGroupKey, executionSkillId }),
-          },
-        };
-      }
-      const bodyProgram = compileDefinition({
-        operatorId: trackId,
-        skillGroupKey: executionSkillGroupKey!,
-        skillType: requireDefinitionSkillType(
-          executionDefinition,
-          `operator '${operator!.slug}' skill '${executionDefinition.key}'`,
-        ),
-        skillLevel: requireSkillLevel(build!, routed!.levelSource),
-        skill: executionDefinition,
-      });
+  return definitions.map(({ skill, skillType, level: definitionLevel, executionSkillId }) => {
+    const wrapperProgram = compileDefinition({
+      operatorId: trackId,
+      skillGroupKey: resolved.group.key,
+      skillType,
+      skillLevel: definitionLevel,
+      skill,
+    });
+    if (executionSkillId === undefined || executionDefinition === undefined) {
       return {
         castId: cast.id,
         program: {
-          ...bodyProgram,
-          skillId: wrapperProgram.skillId,
-          skillGroupKey: wrapperProgram.skillGroupKey,
-          skillType: wrapperProgram.skillType,
-          costs: wrapperProgram.costs,
-          ...(wrapperProgram.costFrame === undefined
-            ? {}
-            : { costFrame: wrapperProgram.costFrame }),
-          ...(wrapperProgram.cooldownFrames === undefined
-            ? {}
-            : { cooldownFrames: wrapperProgram.cooldownFrames }),
-          executionSkillGroupKey,
-          executionSkillId,
+          ...wrapperProgram,
+          ...(executionSkillId === undefined ? {} : { executionSkillId }),
         },
       };
-    },
-  );
+    }
+    const bodyProgram = compileDefinition({
+      operatorId: trackId,
+      skillGroupKey: resolved.group.key,
+      skillType: requireDefinitionSkillType(
+        executionDefinition,
+        `operator '${operator!.slug}' skill '${executionDefinition.key}'`,
+      ),
+      skillLevel: requireSkillLevel(
+        build!,
+        requireDefinitionLevelSource(executionDefinition, operator!.slug),
+      ),
+      skill: executionDefinition,
+    });
+    return {
+      castId: cast.id,
+      program: {
+        ...bodyProgram,
+        skillId: wrapperProgram.skillId,
+        skillGroupKey: wrapperProgram.skillGroupKey,
+        skillType: wrapperProgram.skillType,
+        costs: wrapperProgram.costs,
+        ...(wrapperProgram.costFrame === undefined ? {} : { costFrame: wrapperProgram.costFrame }),
+        ...(wrapperProgram.cooldownFrames === undefined
+          ? {}
+          : { cooldownFrames: wrapperProgram.cooldownFrames }),
+        executionSkillId,
+      },
+    };
+  });
 }
 
 function compileCastBindings(
@@ -323,7 +317,7 @@ function compileCastBindings(
   const patched = applyOperatorUpgradeSkillPatches(
     bindings.map(binding => binding.program),
     resolveActiveOperatorUpgrades(build, operator),
-    { skipUncompiledSkillGroups: true, buildAttributes },
+    { skipUncompiledSkills: true, buildAttributes },
   );
   return bindings.map((binding, index) => ({ ...binding, program: patched[index]! }));
 }
@@ -393,7 +387,7 @@ function compileSkillSlotGroups(
         `operator '${operator.slug}' skill slot '${slot.key}' must have exactly one player action route`,
       );
     return {
-      skillGroupKey: slot.key,
+      skillSlotKey: slot.key,
       input: matching[0]![0],
       baseSkillKey: slot.baseSkillKey,
       ...(slot.stableSkillKeys === undefined ? {} : { stableInputSkillKeys: slot.stableSkillKeys }),
@@ -434,7 +428,6 @@ export function compileOperatorDefinitionSkills(
       ...(routedReplacement === undefined
         ? {}
         : {
-            executionSkillGroupKey: routedReplacement.executionSkillGroupKey,
             executionSkillId: routedReplacement.executionSkillKey,
           }),
     })),

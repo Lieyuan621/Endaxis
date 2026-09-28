@@ -1,6 +1,6 @@
 import type { CombatCondition } from '../../game-data/operatorDefinition';
 import type { CombatOperationContext } from './skillRuntime';
-/** 切换稳定技能组后续释放形态；当前释放已经持有的 SkillRuntime 引用不会改变。 */
+/** 切换原生技能槽后续选择的技能；当前释放已经持有的 SkillRuntime 引用不会改变。 */
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 import type { CombatOperationExecutor } from './skillRuntime';
 import type { NativeSkillType } from '../../game-data/operatorDefinition';
@@ -8,17 +8,17 @@ import { resolveActionValueOperand } from '../actions/actionBlackboard';
 
 export interface SkillSlotOperationExecutorOptions {
   readonly changeSkillSlot: (
-    skillGroupKey: string,
+    skillSlotKey: string,
     targetSkillKey: string,
     inheritOriginSkillCooldownProgress: boolean,
   ) => void;
   readonly replaceSkillSlot?: (parameters: {
-    readonly skillGroupKey: string;
+    readonly skillSlotKey: string;
     readonly targetSkillKey: string;
     readonly revertedSkillKey?: string;
     readonly inheritOriginSkillCooldownProgress: boolean;
   }) => number;
-  readonly finishSkillSlotReplacement?: (skillGroupKey: string, registrationId: number) => void;
+  readonly finishSkillSlotReplacement?: (skillSlotKey: string, registrationId: number) => void;
   readonly activatePlayerActionMode?: (modeId: string) => number;
   readonly finishPlayerActionMode?: (registrationId: number) => void;
   readonly overrideBasicAttackMapping?: (skillId: string) => number;
@@ -80,10 +80,9 @@ export class SkillSlotOperationExecutor implements CombatOperationExecutor {
       const state = context?.actionRegistrationState;
       if (replace === undefined || finish === undefined || state === undefined)
         throw new Error('skill-slot replacement requires action state and lifecycle ports');
-      if (state.registrationId !== null)
-        finish(step.parameters.skillGroupKey, state.registrationId);
+      if (state.registrationId !== null) finish(step.parameters.skillSlotKey, state.registrationId);
       state.registrationId = replace({
-        skillGroupKey: step.parameters.skillGroupKey,
+        skillSlotKey: step.parameters.skillSlotKey,
         targetSkillKey: step.parameters.targetSkillKey,
         ...(step.parameters.revertedSkillKey === undefined
           ? {}
@@ -93,7 +92,7 @@ export class SkillSlotOperationExecutor implements CombatOperationExecutor {
       });
     } else {
       this.options.changeSkillSlot(
-        step.parameters.skillGroupKey,
+        step.parameters.skillSlotKey,
         step.parameters.targetSkillKey,
         step.parameters.inheritOriginSkillCooldownProgress ?? false,
       );
@@ -118,7 +117,7 @@ export class SkillSlotOperationExecutor implements CombatOperationExecutor {
         if (state === undefined || finish === undefined)
           throw new Error('skill-slot replacement requires action state and lifecycle ports');
         if (state.registrationId !== null)
-          finish(step.parameters.skillGroupKey, state.registrationId);
+          finish(step.parameters.skillSlotKey, state.registrationId);
         state.registrationId = null;
       }
       return;

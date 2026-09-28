@@ -176,7 +176,7 @@ function seconds(frames: number): string {
   align-items: center;
   gap: 14px;
   padding-bottom: 14px;
-  border-bottom: 1px solid var(--ea-border-subtle, rgb(255 255 255 / 12%));
+  border-bottom: 1px solid var(--ea-border-soft);
 }
 
 .passive-detail__preview {
@@ -187,13 +187,13 @@ function seconds(frames: number): string {
 }
 
 .passive-detail__header strong {
-  color: var(--ea-text-primary, #f1f1f1);
+  color: var(--ea-fg);
   font-size: 15px;
 }
 
 .passive-detail__description {
   margin: 14px 0 0;
-  color: var(--ea-text-secondary, #c8c8c8);
+  color: var(--ea-fg-secondary);
   font-size: 13px;
   line-height: 1.6;
 }
@@ -207,13 +207,13 @@ function seconds(frames: number): string {
 }
 
 .passive-detail__facts dt {
-  color: var(--ea-text-muted, #999);
+  color: var(--ea-fg-muted);
 }
 
 .passive-detail__facts dd {
   min-width: 0;
   margin: 0;
-  color: var(--ea-text-primary, #eee);
+  color: var(--ea-fg);
   overflow-wrap: anywhere;
 }
 </style>

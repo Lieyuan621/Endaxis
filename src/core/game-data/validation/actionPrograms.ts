@@ -284,7 +284,7 @@ function validateStatusModifier(
       requireFiniteNumber(record, 'value', path, out);
       break;
     case 'skillCooldownMultiplier':
-      requireString(record, 'skillGroupKey', path, out);
+      requireString(record, 'skillKey', path, out);
       requireFiniteNumber(record, 'value', path, out);
       break;
     case 'slowed':
@@ -2309,7 +2309,7 @@ function validateCombatStep(
       requireBoolean(parameters, 'inheritSourceSkillCastInfo', `${path}.parameters`, out);
       break;
     case 'changeSkillSlot':
-      requireString(parameters, 'skillGroupKey', `${path}.parameters`, out);
+      requireString(parameters, 'skillSlotKey', `${path}.parameters`, out);
       requireString(parameters, 'targetSkillKey', `${path}.parameters`, out);
       if (
         parameters.inheritOriginSkillCooldownProgress !== undefined &&
@@ -2559,7 +2559,7 @@ function validateEventTrigger(
       break;
     }
     case 'skillHit':
-      requireString(record, 'skillGroupKey', path, out);
+      requireString(record, 'skillKey', path, out);
       requireEnum(record, 'scope', TRIGGER_SCOPES_SET, path, out);
       break;
     case 'enemyDefeated':

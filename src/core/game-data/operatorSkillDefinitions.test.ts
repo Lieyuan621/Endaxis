@@ -20,17 +20,14 @@ describe('operatorSkillDefinitions', () => {
   it('enumerates every structural skill origin without assigning placement semantics', () => {
     const group: SkillGroupDefinition = {
       key: 'battleSkill',
-      skillType: 'battleSkill',
-      levelSource: 'battleSkill',
+      operationType: 'battleSkill',
       skills: [skill('base1'), skill('base2')],
-      variants: [{ key: 'variant', levelSource: 'ultimate', skills: skill('variant') }],
+      variants: [{ key: 'variant', skills: skill('variant') }],
       replacementSkills: [skill('replacement')],
       routedReplacementSkills: [
         {
           skill: { ...skill('routed'), skillType: 'comboSkill', levelSource: 'comboSkill' },
-          skillType: 'comboSkill',
-          levelSource: 'comboSkill',
-          executionSkillGroupKey: 'comboSkill',
+
           executionSkillKey: 'comboSkill',
         },
       ],

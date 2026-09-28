@@ -19,7 +19,56 @@ const SKILLS: readonly OperatorSkillIdentitySource[] = (
   ] as const
 ).map(([, key, skillType]) => ({ key, skillType }));
 
-describe('干员技能等级组', () => {
+describe('技能库展示分组与原生技能覆盖', () => {
+  it('拒绝在展示组和变体中配置原生养成分类', () => {
+    expect(() =>
+      parseOperatorSkillGroupSources(
+        [{ ...group('base', 'basicAttack', ['basic']), nativeGroupType: 0 }],
+        'groups',
+      ),
+    ).toThrow('nativeGroupType');
+    expect(() =>
+      parseOperatorSkillGroupSources(
+        [
+          {
+            ...group('base', 'basicAttack', ['basic']),
+            variants: [{ key: 'other', skillKeys: ['enhanced'], nativeGroupType: 2 }],
+          },
+        ],
+        'groups',
+      ),
+    ).toThrow('nativeGroupType');
+  });
+
+  it('允许展示组跨养成分类重排，但拒绝原生技能重复归属和漏导出', () => {
+    const skills: readonly OperatorSkillIdentitySource[] = [
+      { key: 'basic', skillType: 'basicAttack' },
+      { key: 'enhanced', skillType: 'basicAttack' },
+    ];
+    const groups = parseOperatorSkillGroupSources(
+      [group('sequence', 'basicAttack', ['enhanced', 'basic'])],
+      'groups',
+    );
+    expect(() =>
+      validateOperatorSkillGroups(groups, skills, [
+        nativeSource(0, ['basic']),
+        nativeSource(2, ['enhanced']),
+      ]),
+    ).not.toThrow();
+    expect(() =>
+      validateOperatorSkillGroups(groups, skills, [
+        nativeSource(0, ['basic']),
+        nativeSource(2, ['enhanced', 'basic']),
+      ]),
+    ).toThrow('duplicate native skill');
+    expect(() =>
+      validateOperatorSkillGroups(groups, skills, [
+        nativeSource(0, ['basic']),
+        nativeSource(2, ['enhanced', 'missing']),
+      ]),
+    ).toThrow('uncovered native skills');
+  });
+
   it('读取基础组与变体的通用递归放置策略，并校验端点和回退预算', () => {
     const placementPolicy = {
       kind: 'recursiveInput',
@@ -29,14 +78,12 @@ describe('干员技能等级组', () => {
       fallback: 'sequence',
     };
     const source = {
-      ...group('basicAttack', 'basicAttack', 'basicAttack', 0, ['basicAttack1', 'basicAttack2']),
+      ...group('basicAttack', 'basicAttack', ['basicAttack1', 'basicAttack2']),
       placementPolicy,
       variants: [
         {
           key: 'alternate',
-          levelSource: 'ultimate',
-          nativeGroupType: 2,
-          libraryNameQualifier: 'enhanced',
+          nameKey: 'skillNames.enhanced',
           skillKeys: ['basicAttack1', 'basicAttack2'],
           placementPolicy,
         },
@@ -58,11 +105,7 @@ describe('干员技能等级组', () => {
       ),
     ).toThrow('fallback sequence');
   });
-  it.each([
-    ['skillType', 'passive'],
-    ['levelSource', 'finisher'],
-    ['levelSource', 'plungingAttack'],
-  ])('配置入口拒绝不属于契约的 %s=%s', (field, value) => {
+  it.each([['operationType', 'passive']])('配置入口拒绝不属于契约的 %s=%s', (field, value) => {
     const groups = operatorGroups();
     groups[0]![field] = value;
     expect(() => parseOperatorSkillGroupSources(groups, 'fixture.skillGroups')).toThrow(
@@ -70,19 +113,21 @@ describe('干员技能等级组', () => {
     );
   });
 
-  it('变体同样校验等级来源，不借用技能类型枚举', () => {
+  it('组和变体拒绝重复声明等级来源', () => {
     const groups = operatorGroups();
+    expect(() =>
+      parseOperatorSkillGroupSources([{ ...groups[0], levelSource: 'basicAttack' }], 'groups'),
+    ).toThrow('levelSource');
     groups[0]!.variants = [
       {
         key: 'bad',
-        levelSource: 'finisher',
-        nativeGroupType: 2,
         skillKeys: ['basicAttack1'],
-        libraryNameQualifier: 'enhanced',
+        nameKey: 'skillNames.enhanced',
       },
     ];
+    (groups[0]!.variants as Record<string, unknown>[])[0]!.levelSource = 'ultimate';
     expect(() => parseOperatorSkillGroupSources(groups, 'fixture.skillGroups')).toThrow(
-      'fixture.skillGroups[0].variants[0].levelSource: unsupported identity "finisher"',
+      'levelSource',
     );
   });
 
@@ -90,20 +135,14 @@ describe('干员技能等级组', () => {
     const groups = operatorGroups();
     groups[3]!.replacementPlacements = {
       next: 'sequence',
-      enhanced: 'standard',
-      alternate: 'standard',
       exit: 'internal',
     };
-    groups[3]!.replacementNameQualifiers = { enhanced: 'enhanced' };
     expect(parseOperatorSkillGroupSources(groups, 'fixture.skillGroups')[3]).toMatchObject({
       key: 'battleSkill',
       replacementPlacements: {
         next: 'sequence',
-        enhanced: 'standard',
-        alternate: 'standard',
         exit: 'internal',
       },
-      replacementNameQualifiers: { enhanced: 'enhanced' },
     });
 
     groups[3]!.replacementPlacements = { bad: 'guessed' };
@@ -127,7 +166,7 @@ describe('干员技能等级组', () => {
     expect(() => validateOperatorSkillGroups(groups, SKILLS, nativeGroups)).not.toThrow();
   });
 
-  it('把强化普攻保留在普攻释放组，但按其原生终结技等级组校验', () => {
+  it('展示配置不携带养成分类，技能覆盖按原生 ID 校验', () => {
     const skills: readonly OperatorSkillIdentitySource[] = [
       { key: 'basic', skillType: 'basicAttack' },
       { key: 'enhanced', skillType: 'basicAttack' },
@@ -136,17 +175,13 @@ describe('干员技能等级组', () => {
       [
         {
           key: 'basicAttack',
-          skillType: 'basicAttack',
-          levelSource: 'basicAttack',
-          nativeGroupType: 0,
+          operationType: 'basicAttack',
           skillKeys: ['basic'],
           variants: [
             {
               key: 'enhancedBasicAttack',
-              levelSource: 'ultimate',
-              nativeGroupType: 2,
               skillKeys: ['enhanced'],
-              libraryNameQualifier: 'enhanced',
+              nameKey: 'skillNames.enhanced',
             },
           ],
         },
@@ -161,9 +196,9 @@ describe('干员技能等级组', () => {
     ).not.toThrow();
   });
 
-  it('拒绝重复归属、技能类型错配和原生组漂移', () => {
+  it('拒绝重复归属和原生组漂移，允许操作类别与执行类别不同', () => {
     const duplicate = operatorGroups();
-    duplicate[1]!.skillType = 'basicAttack';
+    duplicate[1]!.operationType = 'basicAttack';
     duplicate[1]!.skillKeys = ['attack_1'];
     expect(() =>
       validateOperatorSkillGroups(
@@ -174,14 +209,14 @@ describe('干员技能等级组', () => {
     ).toThrow('assigned more than once');
 
     const wrongType = operatorGroups();
-    wrongType[0]!.skillType = 'battleSkill';
+    wrongType[0]!.operationType = 'battleSkill';
     expect(() =>
       validateOperatorSkillGroups(
         parseOperatorSkillGroupSources(wrongType, 'fixture.skillGroups'),
         SKILLS,
         parseNativeOperatorSkillGroupSources(growthTable(), 'chr_test'),
       ),
-    ).toThrow('skill type does not match');
+    ).not.toThrow();
 
     const drifted = growthTable();
     drifted.chr_test.skillGroupMap.normal.skillIdList.pop();
@@ -227,13 +262,7 @@ describe('干员技能等级组', () => {
       { key: 'internal_exit', skillType: 'ultimate' },
     ];
     const groups = parseOperatorSkillGroupSources(
-      [
-        group('ultimate', 'ultimate', 'ultimate', 2, [
-          'native_base',
-          'native_enhanced',
-          'internal_exit',
-        ]),
-      ],
+      [group('ultimate', 'ultimate', ['native_base', 'native_enhanced', 'internal_exit'])],
       'fixture.skillGroups',
     );
     const nativeGroups = [nativeSource(2, ['native_base', 'native_enhanced'])];
@@ -251,23 +280,17 @@ describe('干员技能等级组', () => {
 
 function operatorGroups(): Array<Record<string, unknown> & { skillKeys: string[] }> {
   return [
-    group('basicAttack', 'basicAttack', 'basicAttack', 0, ['attack_1', 'attack_2']),
-    group('finisher', 'finisher', 'basicAttack', 0, ['power_attack']),
-    group('plungingAttack', 'plungingAttack', 'basicAttack', 0, ['plunging']),
-    group('battleSkill', 'battleSkill', 'battleSkill', 1, ['normal_skill']),
-    group('comboSkill', 'comboSkill', 'comboSkill', 3, ['combo_skill']),
-    group('ultimate', 'ultimate', 'ultimate', 2, ['ultimate_skill']),
+    group('basicAttack', 'basicAttack', ['attack_1', 'attack_2']),
+    group('finisher', 'finisher', ['power_attack']),
+    group('plungingAttack', 'plungingAttack', ['plunging']),
+    group('battleSkill', 'battleSkill', ['normal_skill']),
+    group('comboSkill', 'comboSkill', ['combo_skill']),
+    group('ultimate', 'ultimate', ['ultimate_skill']),
   ];
 }
 
-function group(
-  key: string,
-  skillType: string,
-  levelSource: string,
-  nativeGroupType: number,
-  skillKeys: string[],
-) {
-  return { key, skillType, levelSource, nativeGroupType, skillKeys };
+function group(key: string, skillType: string, skillKeys: string[]) {
+  return { key, operationType: skillType, skillKeys };
 }
 
 function growthTable() {

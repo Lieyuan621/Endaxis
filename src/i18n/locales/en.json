@@ -408,6 +408,7 @@
       "variants": "Variants",
       "key": "Name",
       "skillType": "Skill type",
+      "operationType": "Operation type",
       "levelSource": "Progression source",
       "placementPolicy": "Placement",
       "actionGraph": "Action graph",
@@ -447,7 +448,6 @@
       "playerActionModes": "Action modes",
       "skillAliases": "Skill aliases",
       "buffDisplayNameKeys": "Buff display names",
-      "skillDisplayNameKeys": "Skill display names",
       "comboSkillConditions": "Combo conditions",
       "comboSkillPriority": "Combo priority",
       "entityBlackboardInitializers": "Entity variable initializers",
@@ -1414,8 +1414,13 @@
         "name": "Valid Input (s)",
         "help": "Duration in which combo input succeeds."
       },
-      "skillGroupKey": {
-        "name": "Skill Group"
+      "skillSlotKey": {
+        "name": "Skill Slot",
+        "help": "Native slot that selects the current skill for player input."
+      },
+      "skillKey": {
+        "name": "Skill",
+        "help": "Identity of the executable skill within its owner."
       },
       "targetSkillKey": {
         "name": "Replacement Skill"
@@ -2514,6 +2519,8 @@
       "SkillTimelineFinished": "Skill timeline complete",
       "SkillCostApplied": "Skill cost",
       "SkillInputProcessed": "Skill input",
+      "SkillCooldownReserved": "Skill cooldown reserved",
+      "SkillCooldownUnavailableAtStart": "Skill cooldown unavailable at start",
       "SkillCooldownReady": "Skill cooldown ready",
       "SkillCooldownAdjusted": "Skill cooldown adjusted",
       "SkillOperableBoundaryReached": "Skill operable point",
@@ -2529,6 +2536,7 @@
       "StatusChanged": "Status change",
       "BuffApplied": "Buff apply",
       "BuffFinished": "Buff end",
+      "BuffReleased": "Buff released",
       "BuffPresentationStarted": "Buff display start",
       "BuffPresentationFinished": "Buff display end",
       "ElementalInflictionApplied": "Elemental infliction",
@@ -2543,8 +2551,57 @@
       "AbilityEntityFinished": "Ability entity finish",
       "AbilityEntityChildSkillRequested": "Ability entity child skill",
       "TimeDilationStarted": "Time dilation start",
+      "TimeDilationEnded": "Time dilation end",
+      "TimeDilationRejected": "Time dilation rejected",
       "PassiveSkillEnabled": "Passive enabled",
-      "OperatorUpgradeInitialized": "Upgrade effect initialization"
+      "OperatorUpgradeInitialized": "Upgrade effect initialization",
+      "BuffCreated": "Buff created",
+      "BuffEnhanceAttempted": "Buff enhancement attempted",
+      "BuffStackChanged": "Buff stack changed",
+      "CharacterPassiveUiValueChanged": "Passive display value changed",
+      "CombatConditionEvaluated": "Combat condition evaluated",
+      "CombatStepReached": "Combat step reached",
+      "ComboRingQteActiveChanged": "Combo QTE state changed",
+      "ComboRingQteOpened": "Combo QTE opened",
+      "ComboRingQtePressed": "Combo QTE pressed",
+      "ConsumableUsed": "Consumable used",
+      "DashEnergyChanged": "Dash energy changed",
+      "DashInputExecuted": "Dash input executed",
+      "DodgeInputForced": "Dodge input forced",
+      "DodgeInputPartiallySimulated": "Dodge input partially simulated",
+      "ElementalAttachmentConverted": "Elemental attachment converted",
+      "GlobalBuffCreated": "Global Buff created",
+      "PerfectDodgeDeclarationForced": "Perfect dodge declaration forced",
+      "PerfectDodgeDeclarationRejected": "Perfect dodge declaration rejected",
+      "PerfectDodgeDeclared": "Perfect dodge declared",
+      "PerfectDodgeSkillStarted": "Perfect dodge skill started",
+      "PerfectDodgeSucceeded": "Perfect dodge succeeded",
+      "PhysicalInflictionApplied": "Physical infliction applied",
+      "PhysicalNoGuardApplied": "Physical no-guard applied",
+      "AirborneOutput": "Airborne",
+      "KnockDownOutput": "Knockdown",
+      "PoiseKnotBroken": "Poise knot broken",
+      "ProjectileLaunched": "Projectile launched",
+      "SkillCooldownRefunded": "Skill cooldown refunded",
+      "SkillCostRejected": "Skill cost rejected",
+      "SkillCostUnavailableAtStart": "Skill cost unavailable at start",
+      "SkillInputBlockedByCommonTag": "Skill input blocked by common tag",
+      "SkillInputBlockedByDashWindow": "Skill input blocked by dash window",
+      "SkillInputBlockedByTypeTag": "Skill input blocked by type tag",
+      "SkillInputCannotInterruptCurrentSkill": "Skill input cannot interrupt current skill",
+      "SkillInputGroupBlocked": "Skill input group blocked",
+      "SkillInputInterruptionUnknown": "Skill input interruption unknown",
+      "SkillInputResolutionUnknown": "Skill input resolution unknown",
+      "SkillInputResolvedToDifferentSkill": "Skill input resolved to another skill",
+      "SkillInterrupted": "Skill interrupted",
+      "SkillSwitchedToBuff": "Skill switched to Buff",
+      "TimedMarkerCreated": "Timed marker created",
+      "TimedMarkerFinished": "Timed marker finished",
+      "TimelineActionEnded": "Timeline action ended",
+      "TimelineActionStarted": "Timeline action started",
+      "TimelineComboCooldownControlled": "Combo cooldown controlled",
+      "UltimateInputBlockedByPresentation": "Ultimate input blocked by presentation",
+      "UltimatePresentationChanged": "Ultimate presentation changed"
     },
     "receiptDetails": {
       "overhealing": "Overhealing {value}",
@@ -2567,6 +2624,10 @@
         "early": "Finished early",
         "ignite": "Finished by ignite",
         "other": "Other reason"
+      },
+      "condition": {
+        "passed": "Condition met",
+        "failed": "Condition not met"
       }
     },
     "receiptFields": {
@@ -2631,13 +2692,18 @@
     "presets": {
       "label": "Presets",
       "all": "All",
-      "damage": "Damage only",
+      "damage": "Damage flow",
       "status": "Status"
     },
     "ui": {
       "filtered": "Entries",
-      "actionGroups": "Skills",
+      "actionGroups": "Groups",
       "types": "Types",
+      "runtimeGroup": "Unattributed runtime events",
+      "operatorGroup": "Operator passive events",
+      "debugEvents": "Show debug events",
+      "hiddenAutoRecovery": "Hidden {count} frame-by-frame SP recovery events",
+      "rawReceipt": "Raw receipt",
       "skillKinds": "Skills",
       "noResults": "No combat events match the current filters.",
       "clear": "Clear",
@@ -2724,7 +2790,7 @@
       "resourceUnavailable": "There is not enough SP or Ultimate Energy to use {skill}.",
       "cooldownUnavailable": "{skill} is still on cooldown.",
       "inputMismatch": "This action would not trigger {skill} at this time.",
-      "inputMismatchNamed": "This action would trigger {actual} instead of {skill}.",
+      "inputMismatchNamed": "This action would trigger {actual} instead of {skill} at this time.",
       "inputUnknown": "The simulation cannot yet determine whether this action would trigger {skill}.",
       "interruptUnavailable": "It is too early to follow up with {skill}.",
       "interruptUnavailableNamed": "{current} cannot yet be interrupted by {skill}.",
@@ -3518,7 +3584,7 @@
       "enableCap": "Set susceptibility cap",
       "cap": "Susceptibility cap",
       "multiplier": "Multiplier",
-      "skillGroupKey": "Skill group key",
+      "skillKey": "Skill key",
       "slowedNoParameters": "The slowed marker has no parameters; runtime mechanics consume it directly.",
       "reaction": "Elemental reaction",
       "reactions": {
@@ -3877,7 +3943,7 @@
         "scalingCoefficient": "Susceptibility supplied by each point of the selected attribute, displayed as a percentage.",
         "susceptibilityCap": "Caps the sum of base and attribute-scaled susceptibility.",
         "resourceCostMultiplier": "Final resource cost multiplier. 1 is unchanged; 0.8 reduces the cost to 80%.",
-        "skillGroupKey": "Stable identity of the skill group whose cooldown is modified, not its display name.",
+        "skillKey": "Identity of the skill whose cooldown is modified, resolved within its owner.",
         "cooldownMultiplier": "Cooldown duration multiplier. 1 is unchanged; 0.8 reduces cooldown to 80%.",
         "reaction": "The elemental reaction to create or consume. Reactions and elemental inflictions are separate runtime states.",
         "reactionTarget": "Applied reactions may target the caster or enemy; consuming one is fixed to the enemy.",
@@ -4222,7 +4288,7 @@
     "libraryInspector": {
       "operator": "Operator",
       "skillGroupId": "Skill group ID",
-      "level": "Skill level",
+      "operationType": "Operation type",
       "durationFrames": "Timeline frames",
       "skillChain": "Skill chain"
     },
@@ -4258,14 +4324,12 @@
     "weaponDialog": {
       "title": "Select weapon",
       "searchPlaceholder": "Search by name, type, or rarity",
-      "empty": "No matching weapons",
-      "partialSupport": "Some effects are not supported yet"
+      "empty": "No matching weapons"
     },
     "gearDialog": {
       "title": "Configure gear",
       "searchPlaceholder": "Search by name, set, or defense",
       "empty": "No matching gear",
-      "partialSupport": "Some effects are not supported yet",
       "defense": "Defense",
       "noSet": "No set",
       "slots": {
@@ -4612,10 +4676,6 @@
     "skill": "Skill",
     "link": "Combo",
     "ultimate": "Ultimate",
-    "nameQualifier": {
-      "enhanced": "Enhanced {type}",
-      "floating": "Airborne {type}"
-    },
     "enhancedAttack": "Enhanced Basic Attack",
     "enhancedSkill": "Enhanced Skill",
     "enhancedLink": "Enhanced Combo",
@@ -5254,7 +5314,6 @@
     "link_cd_reduction": "Combo CD reduction"
   },
   "hitDetail": {
-    "staticBuildAttack": "ATK",
     "damageZones": {
       "product": "Independent damage bonus",
       "normal": "Damage bonus",
@@ -5318,8 +5377,22 @@
     "effectiveness": "Effectiveness"
   },
   "skillNames": {
-    "pursuit": "Pursuit",
-    "stanceTermination": "End Stance"
+    "enhanced": {
+      "name": "Enhanced {baseName}",
+      "shortName": "{baseName}*"
+    },
+    "floating": {
+      "name": "Airborne {baseName}",
+      "shortName": "{baseName}*"
+    },
+    "replacement": {
+      "name": "Replacement {baseName}",
+      "shortName": "{baseName}*"
+    },
+    "stanceTermination": {
+      "name": "End Stance",
+      "shortName": "End Stance"
+    }
   },
   "actionItem": {
     "damageHitTooltip": "Damage: {damage}",

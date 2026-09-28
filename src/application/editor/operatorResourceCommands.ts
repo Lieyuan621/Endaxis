@@ -49,23 +49,14 @@ export function editOperatorResources(
     visit(definition);
     let index = 1;
     while (used.has(`custom_skill_${index}`)) index++;
+    const template = skills[0];
+    if (template === undefined) throw new Error(`skill group '${group.key}' has no skill template`);
     skills.push({
       key: `custom_skill_${index}`,
-      ...(group.skillType === 'dodge'
+      ...(template.skillType === 'dodge'
         ? { skillType: 'dodge' as const }
-        : { skillType: group.skillType, levelSource: group.levelSource }),
-      nativeSkillType:
-        group.skillType === 'basicAttack' || group.skillType === 'plungingAttack'
-          ? 'attack'
-          : group.skillType === 'finisher'
-            ? 'breakingAttack'
-            : group.skillType === 'battleSkill'
-              ? 'normalSkill'
-              : group.skillType === 'comboSkill'
-                ? 'comboSkill'
-                : group.skillType === 'dodge'
-                  ? 'dodge'
-                  : 'ultimateSkill',
+        : { skillType: template.skillType, levelSource: template.levelSource }),
+      nativeSkillType: template.nativeSkillType,
       timelineBlockFrames: 30,
       naturalDurationFrames: 30,
       exclusiveFrame: 0,

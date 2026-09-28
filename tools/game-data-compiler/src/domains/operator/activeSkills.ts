@@ -3,7 +3,7 @@ import {
   type SkillLevelSource,
   type SkillType,
 } from '../../../../../packages/game-data-contract/src/primitives.ts';
-import type { SkillGroupDefinition } from '../../../../../packages/game-data-contract/src/skills.ts';
+import type { SkillDefinition } from '../../../../../packages/game-data-contract/src/skills.ts';
 export type { SkillType as OperatorActiveSkillTypeSource } from '../../../../../packages/game-data-contract/src/primitives.ts';
 
 import {
@@ -37,8 +37,9 @@ export const OPERATOR_ACTIVE_SKILL_TYPES = [
 
 /** 技能身份从原生 SkillData 文件名取得；compile 只描述额外的执行路由。 */
 export type OperatorActiveSkillEntrySource = Readonly<
-  Pick<SkillGroupDefinition, 'key' | 'skillType' | 'levelSource'>
+  Pick<SkillDefinition, 'key' | 'skillType'>
 > & {
+  readonly levelSource: SkillLevelSource;
   readonly sourcePath: string;
   readonly sourceFile: string;
   readonly projectionConfig: SourceRecord | null;

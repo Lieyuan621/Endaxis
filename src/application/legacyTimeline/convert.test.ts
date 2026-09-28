@@ -1,5 +1,6 @@
-import { expect, it } from 'vitest';
-import { convertLegacyTimeline, resolveLegacyRuntimeReplacementSkillKey } from './convert';
+import { expect, it, vi } from 'vitest';
+import { CombatRuntimeSession } from '../../core/combat/runtime/combatRuntimeSession';
+import { convertLegacyTimeline, resolveLegacyRuntimeReplacementSource } from './convert';
 import { gameDataRepository } from '../../data/gameDataRepository';
 import { parseProjectDocument } from '../../core/project/serialization';
 import realAxisMappings from './mappings.json';
@@ -25,9 +26,16 @@ it('保留时间允许同轴重叠，智能修复则顺延，且不改变原始�
       ],
     },
   };
-  const preserved = convertLegacyTimeline(input, gameDataRepository, mappings, {
-    timingMode: 'preserve',
-  });
+  const save = vi.spyOn(CombatRuntimeSession.prototype, 'save');
+  let preserved: ReturnType<typeof convertLegacyTimeline>;
+  try {
+    preserved = convertLegacyTimeline(input, gameDataRepository, mappings, {
+      timingMode: 'preserve',
+    });
+    expect(save).not.toHaveBeenCalled();
+  } finally {
+    save.mockRestore();
+  }
   const repaired = convertLegacyTimeline(input, gameDataRepository, mappings, {
     timingMode: 'repair',
   });
@@ -119,18 +127,21 @@ it('把旧版空闪避块转换为同轨普通闪避标签，不生成技能块�
   ]);
 });
 
-it('只把技能槽基础技能解析为同组声明的替换形态', () => {
+it('按原生技能槽识别替换形态，并返回其独立放置组', () => {
   const laevatain = gameDataRepository.getOperator('laevatain')!;
   expect(
-    resolveLegacyRuntimeReplacementSkillKey(
+    resolveLegacyRuntimeReplacementSource(
       laevatain,
       'battleSkill',
       'chr_0016_laevat_normal_skill',
       'chr_0016_laevat_normal_skill_during_ult',
     ),
-  ).toBe('chr_0016_laevat_normal_skill_during_ult');
+  ).toEqual({
+    skillGroupKey: 'enhancedBattleSkill',
+    skillKey: 'chr_0016_laevat_normal_skill_during_ult',
+  });
   expect(
-    resolveLegacyRuntimeReplacementSkillKey(
+    resolveLegacyRuntimeReplacementSource(
       laevatain,
       'battleSkill',
       'chr_0016_laevat_normal_skill_during_ult',
@@ -138,7 +149,7 @@ it('只把技能槽基础技能解析为同组声明的替换形态', () => {
     ),
   ).toBeNull();
   expect(
-    resolveLegacyRuntimeReplacementSkillKey(
+    resolveLegacyRuntimeReplacementSource(
       laevatain,
       'basicAttack',
       'chr_0016_laevat_attack1',
@@ -146,7 +157,7 @@ it('只把技能槽基础技能解析为同组声明的替换形态', () => {
     ),
   ).toBeNull();
   expect(
-    resolveLegacyRuntimeReplacementSkillKey(
+    resolveLegacyRuntimeReplacementSource(
       laevatain,
       'battleSkill',
       'chr_0016_laevat_normal_skill',
@@ -202,8 +213,7 @@ it('按当前递归输入路由把旧单块展开为稳定技能序列', { timeo
           },
           target: {
             kind: 'operatorSkillSequence',
-            skillGroupKey: 'basicAttack',
-            variantKey: 'enhancedBasicAttack',
+            skillGroupKey: 'enhancedBasicAttack',
           },
         },
       ],
@@ -234,11 +244,11 @@ it('把旧版提弗洛斯战技块展开为战技和完整强化普攻链', { ti
   const casts = result.project!.scenarios[0]!.tracks[0]!.skillCasts;
   expect(casts.map(cast => cast.source)).toMatchObject([
     { skillGroupKey: 'battleSkill', skillKey: 'chr_0034_typhoea_normal_skill_floating_start' },
-    { skillGroupKey: 'basicAttack', skillKey: 'chr_0034_typhoea_floating_attack1' },
-    { skillGroupKey: 'basicAttack', skillKey: 'chr_0034_typhoea_floating_attack2' },
-    { skillGroupKey: 'basicAttack', skillKey: 'chr_0034_typhoea_floating_attack3' },
-    { skillGroupKey: 'basicAttack', skillKey: 'chr_0034_typhoea_floating_attack4' },
-    { skillGroupKey: 'basicAttack', skillKey: 'chr_0034_typhoea_floating_attack5' },
+    { skillGroupKey: 'enhancedBasicAttack', skillKey: 'chr_0034_typhoea_floating_attack1' },
+    { skillGroupKey: 'enhancedBasicAttack', skillKey: 'chr_0034_typhoea_floating_attack2' },
+    { skillGroupKey: 'enhancedBasicAttack', skillKey: 'chr_0034_typhoea_floating_attack3' },
+    { skillGroupKey: 'enhancedBasicAttack', skillKey: 'chr_0034_typhoea_floating_attack4' },
+    { skillGroupKey: 'enhancedBasicAttack', skillKey: 'chr_0034_typhoea_floating_attack5' },
   ]);
   expect(
     casts.every(
@@ -272,11 +282,11 @@ it('按真实旧轴段号把提弗洛斯战技链映射为战技和五段强化�
     result.project!.scenarios[0]!.tracks[0]!.skillCasts.map(cast => cast.source),
   ).toMatchObject([
     { skillGroupKey: 'battleSkill', skillKey: 'chr_0034_typhoea_normal_skill_floating_start' },
-    { skillGroupKey: 'basicAttack', skillKey: 'chr_0034_typhoea_floating_attack1' },
-    { skillGroupKey: 'basicAttack', skillKey: 'chr_0034_typhoea_floating_attack2' },
-    { skillGroupKey: 'basicAttack', skillKey: 'chr_0034_typhoea_floating_attack3' },
-    { skillGroupKey: 'basicAttack', skillKey: 'chr_0034_typhoea_floating_attack4' },
-    { skillGroupKey: 'basicAttack', skillKey: 'chr_0034_typhoea_floating_attack5' },
+    { skillGroupKey: 'enhancedBasicAttack', skillKey: 'chr_0034_typhoea_floating_attack1' },
+    { skillGroupKey: 'enhancedBasicAttack', skillKey: 'chr_0034_typhoea_floating_attack2' },
+    { skillGroupKey: 'enhancedBasicAttack', skillKey: 'chr_0034_typhoea_floating_attack3' },
+    { skillGroupKey: 'enhancedBasicAttack', skillKey: 'chr_0034_typhoea_floating_attack4' },
+    { skillGroupKey: 'enhancedBasicAttack', skillKey: 'chr_0034_typhoea_floating_attack5' },
   ]);
 });
 

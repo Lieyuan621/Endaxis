@@ -13,8 +13,8 @@ describe('Operator 技能库组装', () => {
         skill('battleSkill', 'native_battle.json'),
       ],
       manifestSkillGroups: [
-        group('basicAttack', 'basicAttack', 'basicAttack', 0, ['native_attack']),
-        group('battleSkill', 'battleSkill', 'battleSkill', 1, ['native_battle']),
+        group('basicAttack', 'basicAttack', ['native_attack']),
+        group('battleSkill', 'battleSkill', ['native_battle']),
       ],
       skillDataBySourceFile: {
         'native_attack.json': activeSkillFixture('native_attack'),
@@ -45,9 +45,7 @@ describe('Operator 技能库组装', () => {
         characterId: 'chr_test',
         sourcePath: 'fixture',
         manifestSkills: [skill('basicAttack', 'native_attack.json')],
-        manifestSkillGroups: [
-          group('basicAttack', 'basicAttack', 'basicAttack', 0, ['native_attack']),
-        ],
+        manifestSkillGroups: [group('basicAttack', 'basicAttack', ['native_attack'])],
         skillDataBySourceFile: { 'native_attack.json': activeSkillFixture('native_attack') },
         skillPatchTable: {},
         charGrowthTable: {
@@ -64,14 +62,8 @@ function skill(skillType: string, source: string) {
   return { skillType, levelSource: skillType, source, compile: { kind: 'resolvedSequence' } };
 }
 
-function group(
-  key: string,
-  skillType: string,
-  levelSource: string,
-  nativeGroupType: number,
-  skillKeys: string[],
-) {
-  return { key, skillType, levelSource, nativeGroupType, skillKeys };
+function group(key: string, skillType: string, skillKeys: string[]) {
+  return { key, operationType: skillType, skillKeys };
 }
 
 function nativeGroup(skillGroupId: string, skillGroupType: number, skillIdList: string[]) {

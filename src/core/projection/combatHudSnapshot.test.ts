@@ -114,7 +114,7 @@ describe('projectCombatHudSnapshot', () => {
       }),
       receipt(5, 30, 'SkillCooldownReady', 'track:1', { skillId: 'battle' }),
       receipt(6, 35, 'SkillSlotChanged', 'track:1', {
-        skillGroupKey: 'battleSlot',
+        skillSlotKey: 'battleSlot',
         previousSkillKey: 'battle',
         targetSkillKey: 'enhancedBattle',
       }),

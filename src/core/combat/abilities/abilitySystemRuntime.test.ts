@@ -86,7 +86,7 @@ describe('AbilitySystemRuntime', () => {
   it('恢复当前技能、替换槽和活动模式，不套用构造默认值或调用旧技能绑定', () => {
     const definition = {
       skillSlotGroups: [
-        { skillGroupKey: 'battle', baseSkillKey: 'base', replacementSkillKeys: ['enhanced'] },
+        { skillSlotKey: 'battle', baseSkillKey: 'base', replacementSkillKeys: ['enhanced'] },
       ],
       playerActionModes: [
         { modeId: 'default', modeLayer: 'mode', defaultEnabled: true, commandMappings: {} },
@@ -357,7 +357,7 @@ describe('AbilitySystemRuntime', () => {
         expect(ability.currentProcessingSkillCastId).toBe(42);
       },
       skillSlotGroups: [
-        { skillGroupKey: 'slot', baseSkillKey: 'base', replacementSkillKeys: ['replacement'] },
+        { skillSlotKey: 'slot', baseSkillKey: 'base', replacementSkillKeys: ['replacement'] },
       ],
     });
     ability.changeSkillSlot('slot', 'replacement');
@@ -857,7 +857,7 @@ describe('AbilitySystemRuntime', () => {
           battleSkill: { kind: 'skillSlot', skillSlotKey: 'battle' },
         },
         skillSlotGroups: [
-          { skillGroupKey: 'battle', baseSkillKey: 'battle', replacementSkillKeys: [] },
+          { skillSlotKey: 'battle', baseSkillKey: 'battle', replacementSkillKeys: [] },
         ],
         resolveActualFrame: () => frame,
         onSkillOperableBoundaryReached: fact => reached.push(fact),
@@ -911,7 +911,7 @@ describe('AbilitySystemRuntime', () => {
       skills: [base, replacement],
       skillSlotGroups: [
         {
-          skillGroupKey: 'ultimate',
+          skillSlotKey: 'ultimate',
           baseSkillKey: 'ultimate',
           replacementSkillKeys: ['arcana'],
         },
@@ -946,7 +946,7 @@ describe('AbilitySystemRuntime', () => {
       skills: [base, comboInput, end],
       skillSlotGroups: [
         {
-          skillGroupKey: 'battleSkill',
+          skillSlotKey: 'battleSkill',
           baseSkillKey: 'battleSkill',
           stableInputSkillKeys: ['battleSkill', 'battleSkillCombo'],
           replacementSkillKeys: ['battleSkillEnd'],
@@ -978,7 +978,7 @@ describe('AbilitySystemRuntime', () => {
       ],
       skillSlotGroups: [
         {
-          skillGroupKey: 'battleSkill',
+          skillSlotKey: 'battleSkill',
           baseSkillKey: 'battleSkill',
           stableInputSkillKeys: ['battleSkill', 'battleSkillCombo'],
           replacementSkillKeys: ['battleSkillEnd'],
@@ -1008,7 +1008,7 @@ describe('AbilitySystemRuntime', () => {
       ],
       skillSlotGroups: [
         {
-          skillGroupKey: 'normalSkillSlot',
+          skillSlotKey: 'normalSkillSlot',
           input: 'battleSkill',
           baseSkillKey: 'battleSkill',
           replacementSkillKeys: ['enhancedBattleSkill'],
@@ -1305,7 +1305,7 @@ describe('AbilitySystemRuntime', () => {
       skills: [first, second],
       skillSlotGroups: [
         {
-          skillGroupKey: 'basicAttack',
+          skillSlotKey: 'basicAttack',
           input: 'basicAttack',
           defaultForInput: true,
           baseSkillKey: 'attack1',
@@ -1368,7 +1368,7 @@ describe('AbilitySystemRuntime', () => {
       skills: [battleSkill, attack1, attack2],
       skillSlotGroups: [
         {
-          skillGroupKey: 'basicAttack',
+          skillSlotKey: 'basicAttack',
           input: 'basicAttack',
           defaultForInput: true,
           baseSkillKey: 'attack1',
@@ -1408,7 +1408,7 @@ describe('AbilitySystemRuntime', () => {
       skills: [base, combo, end],
       skillSlotGroups: [
         {
-          skillGroupKey: 'battleSkill',
+          skillSlotKey: 'battleSkill',
           baseSkillKey: 'battleSkill',
           stableInputSkillKeys: ['battleSkill', 'battleSkillCombo'],
           replacementSkillKeys: ['battleSkillEnd'],

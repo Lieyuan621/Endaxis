@@ -100,9 +100,7 @@ function operator(slug: string, charId: string, source: string) {
     skillGroups: [
       {
         key: 'basicAttack',
-        skillType: 'basicAttack',
-        levelSource: 'basicAttack',
-        nativeGroupType: 0,
+        operationType: 'basicAttack',
         skillKeys: [source.slice(0, -'.json'.length)],
       },
     ],

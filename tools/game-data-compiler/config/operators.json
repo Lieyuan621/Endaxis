@@ -22,9 +22,7 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0038_purrche_attack1",
             "chr_0038_purrche_attack2",
@@ -33,23 +31,17 @@
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0038_purrche_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0038_purrche_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "skillKeys": [
             "chr_0038_purrche_normal_skill",
             "chr_0038_purrche_normal_skill_counter",
@@ -68,16 +60,12 @@
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "skillKeys": ["chr_0038_purrche_combo_skill"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0038_purrche_ultimate_skill"]
         }
       ],
@@ -173,9 +161,7 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0004_pelica_attack1",
             "chr_0004_pelica_attack2",
@@ -185,37 +171,27 @@
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0004_pelica_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0004_pelica_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "skillKeys": ["chr_0004_pelica_normal_skill"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "skillKeys": ["chr_0004_pelica_combo_skill"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0004_pelica_ultimate_skill"]
         }
       ],
@@ -284,9 +260,7 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0009_azrila_attack1",
             "chr_0009_azrila_attack2",
@@ -296,37 +270,27 @@
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0009_azrila_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0009_azrila_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "skillKeys": ["chr_0009_azrila_normal_skill"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0009_azrila_ultimate_skill"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "skillKeys": ["chr_0009_azrila_combo_skill"]
         }
       ],
@@ -395,9 +359,7 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0006_wolfgd_attack1",
             "chr_0006_wolfgd_attack2",
@@ -407,37 +369,27 @@
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0006_wolfgd_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0006_wolfgd_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "skillKeys": ["chr_0006_wolfgd_normal_skill"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "skillKeys": ["chr_0006_wolfgd_combo_skill"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0006_wolfgd_ultimate_skill"]
         }
       ],
@@ -506,9 +458,7 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0023_antal_attack1",
             "chr_0023_antal_attack2",
@@ -518,37 +468,27 @@
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0023_antal_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0023_antal_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "skillKeys": ["chr_0023_antal_normal_skill"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "skillKeys": ["chr_0023_antal_combo_skill"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0023_antal_ultimate_skill"]
         }
       ],
@@ -617,9 +557,7 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0024_deepfin_attack1",
             "chr_0024_deepfin_attack2",
@@ -630,37 +568,27 @@
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0024_deepfin_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0024_deepfin_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "skillKeys": ["chr_0024_deepfin_normal_skill"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "skillKeys": ["chr_0024_deepfin_combo_skill"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0024_deepfin_ultimate_skill"]
         }
       ],
@@ -740,9 +668,7 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0011_seraph_attack1",
             "chr_0011_seraph_attack2",
@@ -753,37 +679,27 @@
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0011_seraph_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0011_seraph_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "skillKeys": ["chr_0011_seraph_normal_skill"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "skillKeys": ["chr_0011_seraph_combo_skill"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0011_seraph_ultimate_skill"]
         }
       ],
@@ -857,9 +773,7 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0012_avywen_attack1",
             "chr_0012_avywen_attack2",
@@ -870,37 +784,27 @@
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0012_avywen_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0012_avywen_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "skillKeys": ["chr_0012_avywen_normal_skill"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "skillKeys": ["chr_0012_avywen_combo_skill"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0012_avywen_ultimate_skill"]
         }
       ],
@@ -974,9 +878,7 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0020_meurs_attack1",
             "chr_0020_meurs_attack2",
@@ -986,37 +888,27 @@
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0020_meurs_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0020_meurs_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "skillKeys": ["chr_0020_meurs_normal_skill"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "skillKeys": ["chr_0020_meurs_combo_skill"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0020_meurs_ultimate_skill"]
         }
       ],
@@ -1085,9 +977,7 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0025_ardelia_attack1",
             "chr_0025_ardelia_attack2",
@@ -1097,37 +987,27 @@
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0025_ardelia_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0025_ardelia_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "skillKeys": ["chr_0025_ardelia_normal_skill"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "skillKeys": ["chr_0025_ardelia_combo_skill"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0025_ardelia_ultimate_skill"]
         }
       ],
@@ -1195,9 +1075,7 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0005_chen_attack1",
             "chr_0005_chen_attack2",
@@ -1208,37 +1086,27 @@
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0005_chen_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0005_chen_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "skillKeys": ["chr_0005_chen_normal_skill"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "skillKeys": ["chr_0005_chen_combo_skill"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0005_chen_ultimate_skill"]
         }
       ],
@@ -1315,9 +1183,7 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0028_wulfa_attack1",
             "chr_0028_wulfa_attack2",
@@ -1328,38 +1194,28 @@
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0028_wulfa_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0028_wulfa_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "skillKeys": ["chr_0028_wulfa_normal_skill"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "replacementPlacements": { "chr_0028_wulfa_combo_3_skill": "sequence" },
           "skillKeys": ["chr_0028_wulfa_combo_2_skill", "chr_0028_wulfa_combo_3_skill"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0028_wulfa_ultimate_skill"]
         }
       ],
@@ -1434,7 +1290,7 @@
       "charId": "chr_0033_camille",
       "basePassiveSkillIds": ["chr_0033_camille_passive_listen_normal_skill"],
       "outputStage": "complete",
-      "skillDisplayNameKeys": { "chr_0033_camille_normal_skill_2": "skillNames.pursuit" },
+
       "runtimeReplacementSkillKeys": [
         "chr_0033_camille_normal_skill_2",
         "chr_0033_camille_combo_skill_2"
@@ -1446,9 +1302,7 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0033_camille_attack1",
             "chr_0033_camille_attack2",
@@ -1459,39 +1313,36 @@
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0033_camille_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0033_camille_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
-          "replacementPlacements": { "chr_0033_camille_normal_skill_2": "standard" },
-          "skillKeys": ["chr_0033_camille_normal_skill", "chr_0033_camille_normal_skill_2"]
+          "operationType": "battleSkill",
+          "skillKeys": ["chr_0033_camille_normal_skill"]
+        },
+        {
+          "key": "replacementBattleSkill",
+          "operationType": "battleSkill",
+          "nameKey": "skillNames.replacement",
+          "skillKeys": ["chr_0033_camille_normal_skill_2"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
-          "replacementPlacements": { "chr_0033_camille_combo_skill_2": "internal" },
+          "operationType": "comboSkill",
+          "replacementPlacements": {
+            "chr_0033_camille_combo_skill_2": "internal"
+          },
           "skillKeys": ["chr_0033_camille_combo_skill", "chr_0033_camille_combo_skill_2"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0033_camille_ultimate_skill"]
         }
       ],
@@ -1576,9 +1427,7 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0029_pograni_attack1",
             "chr_0029_pograni_attack2",
@@ -1589,37 +1438,27 @@
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0029_pograni_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0029_pograni_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "skillKeys": ["chr_0029_pograni_normal_skill"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "skillKeys": ["chr_0029_pograni_combo_skill"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0029_pograni_ultimate_skill"]
         }
       ],
@@ -1699,9 +1538,7 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0030_zhuangfy_attack1",
             "chr_0030_zhuangfy_attack2",
@@ -1712,50 +1549,48 @@
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0030_zhuangfy_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0030_zhuangfy_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
-          "replacementPlacements": { "chr_0030_zhuangfy_normal_skill_ult": "standard" },
-          "replacementNameQualifiers": { "chr_0030_zhuangfy_normal_skill_ult": "enhanced" },
-          "skillKeys": ["chr_0030_zhuangfy_normal_skill", "chr_0030_zhuangfy_normal_skill_ult"]
+          "operationType": "battleSkill",
+          "skillKeys": ["chr_0030_zhuangfy_normal_skill"]
+        },
+        {
+          "key": "enhancedBattleSkill",
+          "operationType": "battleSkill",
+          "nameKey": "skillNames.enhanced",
+          "skillKeys": ["chr_0030_zhuangfy_normal_skill_ult"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
-          "replacementPlacements": { "chr_0030_zhuangfy_combo_skill_ult": "standard" },
-          "replacementNameQualifiers": { "chr_0030_zhuangfy_combo_skill_ult": "enhanced" },
-          "skillKeys": ["chr_0030_zhuangfy_combo_skill", "chr_0030_zhuangfy_combo_skill_ult"]
+          "operationType": "comboSkill",
+          "skillKeys": ["chr_0030_zhuangfy_combo_skill"]
+        },
+        {
+          "key": "enhancedComboSkill",
+          "operationType": "comboSkill",
+          "nameKey": "skillNames.enhanced",
+          "skillKeys": ["chr_0030_zhuangfy_combo_skill_ult"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
-          "replacementPlacements": { "chr_0030_zhuangfy_ultimate_skill_end": "internal" },
+          "operationType": "ultimate",
+          "replacementPlacements": {
+            "chr_0030_zhuangfy_ultimate_skill_end": "internal"
+          },
           "skillKeys": ["chr_0030_zhuangfy_ultimate_skill", "chr_0030_zhuangfy_ultimate_skill_end"]
         },
         {
           "key": "enhancedBasicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
-          "libraryNameQualifier": "enhanced",
+          "operationType": "basicAttack",
+          "nameKey": "skillNames.enhanced",
           "skillKeys": [
             "chr_0030_zhuangfy_attack1_ult",
             "chr_0030_zhuangfy_attack2_ult",
@@ -1865,9 +1700,7 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0032_lizhiyan_attack1",
             "chr_0032_lizhiyan_attack2",
@@ -1878,38 +1711,28 @@
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0032_lizhiyan_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0032_lizhiyan_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "skillKeys": ["chr_0032_lizhiyan_normal_skill"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "skillKeys": ["chr_0032_lizhiyan_combo_skill"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
-          "replacementPlacements": { "chr_0032_lizhiyan_ultimate_skill2": "standard" },
+          "operationType": "ultimate",
+          "replacementPlacements": { "chr_0032_lizhiyan_ultimate_skill2": "sequence" },
           "skillKeys": ["chr_0032_lizhiyan_ultimate_skill", "chr_0032_lizhiyan_ultimate_skill2"]
         }
       ],
@@ -2008,9 +1831,7 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0007_ikut_attack1",
             "chr_0007_ikut_attack2",
@@ -2021,37 +1842,27 @@
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0007_ikut_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0007_ikut_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "skillKeys": ["chr_0007_ikut_normal_skill"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0007_ikut_ultimate_skill"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "skillKeys": ["chr_0007_ikut_combo_skill"]
         }
       ],
@@ -2124,9 +1935,7 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0013_aglina_attack1",
             "chr_0013_aglina_attack2",
@@ -2136,37 +1945,27 @@
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0013_aglina_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0013_aglina_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "skillKeys": ["chr_0013_aglina_normal_skill"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0013_aglina_ultimate_skill"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "skillKeys": ["chr_0013_aglina_combo_skill"]
         }
       ],
@@ -2236,9 +2035,7 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0015_lifeng_attack1",
             "chr_0015_lifeng_attack2",
@@ -2248,37 +2045,27 @@
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0015_lifeng_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0015_lifeng_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "skillKeys": ["chr_0015_lifeng_normal_skill"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0015_lifeng_ultimate_skill"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "skillKeys": ["chr_0015_lifeng_combo_skill"]
         }
       ],
@@ -2346,9 +2133,7 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0021_whiten_attack1",
             "chr_0021_whiten_attack2",
@@ -2358,37 +2143,27 @@
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0021_whiten_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0021_whiten_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "skillKeys": ["chr_0021_whiten_normal_skill"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0021_whiten_ultimate_skill"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "skillKeys": ["chr_0021_whiten_combo_skill"]
         }
       ],
@@ -2456,9 +2231,7 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0018_dapan_attack1",
             "chr_0018_dapan_attack2",
@@ -2468,37 +2241,27 @@
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0018_dapan_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0018_dapan_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "skillKeys": ["chr_0018_dapan_normal_skill"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0018_dapan_ultimate_skill"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "skillKeys": ["chr_0018_dapan_combo_skill"]
         }
       ],
@@ -2566,9 +2329,7 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0019_karin_attack1",
             "chr_0019_karin_attack2",
@@ -2578,37 +2339,27 @@
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0019_karin_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0019_karin_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "skillKeys": ["chr_0019_karin_normal_skill"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0019_karin_ultimate_skill"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "skillKeys": ["chr_0019_karin_combo_skill"]
         }
       ],
@@ -2687,9 +2438,7 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0027_tangtang_attack1",
             "chr_0027_tangtang_attack2",
@@ -2700,37 +2449,27 @@
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0027_tangtang_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0027_tangtang_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "skillKeys": ["chr_0027_tangtang_normal_skill"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0027_tangtang_ultimate_skill"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "skillKeys": ["chr_0027_tangtang_combo_skill"]
         }
       ],
@@ -2803,9 +2542,7 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0022_bounda_attack1",
             "chr_0022_bounda_attack2",
@@ -2816,37 +2553,27 @@
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0022_bounda_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0022_bounda_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "skillKeys": ["chr_0022_bounda_normal_skill"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0022_bounda_ultimate_skill"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "skillKeys": ["chr_0022_bounda_combo_skill"]
         }
       ],
@@ -3004,9 +2731,7 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0003_endminf_attack1",
             "chr_0003_endminf_attack2",
@@ -3017,37 +2742,27 @@
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0003_endminf_power_attack2"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0003_endminf_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "skillKeys": ["chr_0003_endminf_normal_skill"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0003_endminf_ultimate_skill"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "skillKeys": ["chr_0003_endminf_combo_skill"]
         }
       ],
@@ -3121,9 +2836,7 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0026_lastrite_attack1",
             "chr_0026_lastrite_attack2",
@@ -3133,37 +2846,27 @@
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0026_lastrite_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0026_lastrite_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "skillKeys": ["chr_0026_lastrite_normal_skill"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0026_lastrite_ultimate_skill"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "skillKeys": ["chr_0026_lastrite_combo_skill"]
         }
       ],
@@ -3244,68 +2947,55 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0016_laevat_attack1",
             "chr_0016_laevat_attack2",
             "chr_0016_laevat_attack3",
             "chr_0016_laevat_attack4",
             "chr_0016_laevat_attack5"
-          ],
-          "variants": [
-            {
-              "key": "enhancedBasicAttack",
-              "levelSource": "ultimate",
-              "nativeGroupType": 2,
-              "libraryNameQualifier": "enhanced",
-              "skillKeys": [
-                "chr_0016_laevat_ult_attack1",
-                "chr_0016_laevat_ult_attack2",
-                "chr_0016_laevat_ult_attack3",
-                "chr_0016_laevat_ult_attack4"
-              ]
-            }
+          ]
+        },
+        {
+          "operationType": "basicAttack",
+          "key": "enhancedBasicAttack",
+          "nameKey": "skillNames.enhanced",
+          "skillKeys": [
+            "chr_0016_laevat_ult_attack1",
+            "chr_0016_laevat_ult_attack2",
+            "chr_0016_laevat_ult_attack3",
+            "chr_0016_laevat_ult_attack4"
           ]
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0016_laevat_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0016_laevat_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
-          "replacementPlacements": { "chr_0016_laevat_normal_skill_during_ult": "standard" },
-          "replacementNameQualifiers": {
-            "chr_0016_laevat_normal_skill_during_ult": "enhanced"
-          },
-          "skillKeys": ["chr_0016_laevat_normal_skill", "chr_0016_laevat_normal_skill_during_ult"]
+          "operationType": "battleSkill",
+          "skillKeys": ["chr_0016_laevat_normal_skill"]
+        },
+        {
+          "key": "enhancedBattleSkill",
+          "operationType": "battleSkill",
+          "nameKey": "skillNames.enhanced",
+          "skillKeys": ["chr_0016_laevat_normal_skill_during_ult"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0016_laevat_ultimate_skill"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "skillKeys": ["chr_0016_laevat_combo_skill"]
         }
       ],
@@ -3405,73 +3095,58 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0017_yvonne_attack1",
             "chr_0017_yvonne_attack2",
             "chr_0017_yvonne_attack3",
             "chr_0017_yvonne_attack4",
             "chr_0017_yvonne_attack5"
-          ],
-          "variants": [
-            {
-              "key": "enhancedBasicAttack",
-              "levelSource": "ultimate",
-              "nativeGroupType": 2,
-              "libraryNameQualifier": "enhanced",
-              "skillKeys": [
-                "chr_0017_yvonne_ult_attack1_1",
-                "chr_0017_yvonne_ult_attack2_1",
-                "chr_0017_yvonne_ult_attack2_2",
-                "chr_0017_yvonne_ult_attack3_1",
-                "chr_0017_yvonne_ult_attack3_2",
-                "chr_0017_yvonne_ult_attack_end"
-              ],
-              "placementPolicy": {
-                "kind": "recursiveInput",
-                "firstSkillKey": "chr_0017_yvonne_ult_attack1_1",
-                "terminalSkillKey": "chr_0017_yvonne_ult_attack_end",
-                "maxSegments": 24,
-                "fallback": "sequence"
-              }
-            }
           ]
         },
         {
+          "operationType": "basicAttack",
+          "key": "enhancedBasicAttack",
+          "nameKey": "skillNames.enhanced",
+          "skillKeys": [
+            "chr_0017_yvonne_ult_attack1_1",
+            "chr_0017_yvonne_ult_attack2_1",
+            "chr_0017_yvonne_ult_attack2_2",
+            "chr_0017_yvonne_ult_attack3_1",
+            "chr_0017_yvonne_ult_attack3_2",
+            "chr_0017_yvonne_ult_attack_end"
+          ],
+          "placementPolicy": {
+            "kind": "recursiveInput",
+            "firstSkillKey": "chr_0017_yvonne_ult_attack1_1",
+            "terminalSkillKey": "chr_0017_yvonne_ult_attack_end",
+            "maxSegments": 24,
+            "fallback": "sequence"
+          }
+        },
+        {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0017_yvonne_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0017_yvonne_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "skillKeys": ["chr_0017_yvonne_normal_skill"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0017_yvonne_ultimate_skill"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "skillKeys": ["chr_0017_yvonne_combo_skill"]
         }
       ],
@@ -3577,9 +3252,7 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0031_mifu_attack1",
             "chr_0031_mifu_attack2",
@@ -3589,23 +3262,17 @@
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0031_mifu_plunging_attack_end"]
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0031_mifu_powerattack"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "replacementPlacements": {
             "chr_0031_mifu_normalskill_2": "sequence",
             "chr_0031_mifu_normalskill_3": "sequence"
@@ -3618,16 +3285,12 @@
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0031_mifu_ultimate_skill"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "skillKeys": ["chr_0031_mifu_combo_skill"]
         }
       ],
@@ -3706,9 +3369,7 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0014_aurora_attack1",
             "chr_0014_aurora_attack2",
@@ -3717,37 +3378,27 @@
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0014_aurora_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0014_aurora_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "skillKeys": ["chr_0014_aurora_normal_skill"]
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "skillKeys": ["chr_0014_aurora_combo_skill"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0014_aurora_ultimate_skill"]
         }
       ],
@@ -3805,7 +3456,7 @@
       "exportName": "liinoGeneratedSource",
       "gameId": "LIINO",
       "charId": "chr_0035_liino",
-      "skillDisplayNameKeys": { "chr_0035_liino_normal_skill_end": "skillNames.stanceTermination" },
+
       "runtimeReplacementSkillKeys": [
         "chr_0035_liino_normal_skill_end",
         "chr_0035_liino_normal_skill_combo"
@@ -3815,16 +3466,12 @@
       "skillGroups": [
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
+          "operationType": "comboSkill",
           "skillKeys": ["chr_0035_liino_combo_skill"]
         },
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0035_liino_attack1",
             "chr_0035_liino_attack2",
@@ -3835,38 +3482,31 @@
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0035_liino_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0035_liino_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "replacementPlacements": {
-            "chr_0035_liino_normal_skill_end": "standard",
             "chr_0035_liino_normal_skill_combo": "internal"
           },
-          "skillKeys": [
-            "chr_0035_liino_normal_skill",
-            "chr_0035_liino_normal_skill_end",
-            "chr_0035_liino_normal_skill_combo"
-          ]
+          "skillKeys": ["chr_0035_liino_normal_skill", "chr_0035_liino_normal_skill_combo"]
+        },
+        {
+          "key": "stanceTermination",
+          "operationType": "battleSkill",
+          "nameKey": "skillNames.stanceTermination",
+          "skillKeys": ["chr_0035_liino_normal_skill_end"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0035_liino_ultimate_skill"]
         }
       ],
@@ -3961,51 +3601,40 @@
       "skillGroups": [
         {
           "key": "basicAttack",
-          "skillType": "basicAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "basicAttack",
           "skillKeys": [
             "chr_0034_typhoea_attack1",
             "chr_0034_typhoea_attack2",
             "chr_0034_typhoea_attack3",
             "chr_0034_typhoea_attack4",
             "chr_0034_typhoea_attack5"
-          ],
-          "variants": [
-            {
-              "key": "enhancedBasicAttack",
-              "levelSource": "battleSkill",
-              "nativeGroupType": 1,
-              "libraryNameQualifier": "floating",
-              "skillKeys": [
-                "chr_0034_typhoea_floating_attack1",
-                "chr_0034_typhoea_floating_attack2",
-                "chr_0034_typhoea_floating_attack3",
-                "chr_0034_typhoea_floating_attack4",
-                "chr_0034_typhoea_floating_attack5"
-              ]
-            }
+          ]
+        },
+        {
+          "operationType": "basicAttack",
+          "key": "enhancedBasicAttack",
+          "nameKey": "skillNames.floating",
+          "skillKeys": [
+            "chr_0034_typhoea_floating_attack1",
+            "chr_0034_typhoea_floating_attack2",
+            "chr_0034_typhoea_floating_attack3",
+            "chr_0034_typhoea_floating_attack4",
+            "chr_0034_typhoea_floating_attack5"
           ]
         },
         {
           "key": "finisher",
-          "skillType": "finisher",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "finisher",
           "skillKeys": ["chr_0034_typhoea_power_attack"]
         },
         {
           "key": "plungingAttack",
-          "skillType": "plungingAttack",
-          "levelSource": "basicAttack",
-          "nativeGroupType": 0,
+          "operationType": "plungingAttack",
           "skillKeys": ["chr_0034_typhoea_plunging_attack_end"]
         },
         {
           "key": "battleSkill",
-          "skillType": "battleSkill",
-          "levelSource": "battleSkill",
-          "nativeGroupType": 1,
+          "operationType": "battleSkill",
           "replacementPlacements": {
             "chr_0034_typhoea_normal_skill_floating_loop": "internal",
             "chr_0034_typhoea_normal_skill_floating_end": "internal"
@@ -4018,18 +3647,18 @@
         },
         {
           "key": "comboSkill",
-          "skillType": "comboSkill",
-          "levelSource": "comboSkill",
-          "nativeGroupType": 3,
-          "replacementPlacements": { "chr_0034_typhoea_combo_skillfloating": "standard" },
-          "replacementNameQualifiers": { "chr_0034_typhoea_combo_skillfloating": "floating" },
-          "skillKeys": ["chr_0034_typhoea_combo_skill", "chr_0034_typhoea_combo_skillfloating"]
+          "operationType": "comboSkill",
+          "skillKeys": ["chr_0034_typhoea_combo_skill"]
+        },
+        {
+          "key": "floatingComboSkill",
+          "operationType": "comboSkill",
+          "nameKey": "skillNames.floating",
+          "skillKeys": ["chr_0034_typhoea_combo_skillfloating"]
         },
         {
           "key": "ultimate",
-          "skillType": "ultimate",
-          "levelSource": "ultimate",
-          "nativeGroupType": 2,
+          "operationType": "ultimate",
           "skillKeys": ["chr_0034_typhoea_ultimate_skillfloating"]
         }
       ],

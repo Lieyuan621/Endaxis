@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { toRefs, type UnwrapNestedRefs } from 'vue';
-import { EaButton } from '@/design-system';
+import { EaButton, EaInput } from '@/design-system';
 import ActionGraphCanvas from './ActionGraphCanvas.vue';
 import ActionNodeInspector from './ActionNodeInspector.vue';
 import GraphConnectionInspector from './GraphConnectionInspector.vue';
@@ -90,27 +90,33 @@ const {
   <aside v-if="area === 'tools'" class="resource-panel">
     <template v-if="!toolTab || toolTab === 'content'">
       <h3>当前技能</h3>
-      <button :class="{ active: address.kind === 'main' }" @click="changeGraph({ kind: 'main' })">
+      <EaButton
+        class="resource-panel__link"
+        :pressed="address.kind === 'main'"
+        @click="changeGraph({ kind: 'main' })"
+      >
         主图 <small>{{ Object.keys(draft.actionGraph.main.nodes).length }}</small>
-      </button>
+      </EaButton>
       <h3 v-if="Object.keys(draft.actionGraph.macros).length > 0">宏</h3>
-      <button
+      <EaButton
         v-for="(macro, id) in draft.actionGraph.macros"
         :key="id"
-        :class="{ active: address.kind === 'macro' && address.macroId === id }"
+        class="resource-panel__link"
+        :pressed="address.kind === 'macro' && address.macroId === id"
         @click="changeGraph({ kind: 'macro', macroId: id })"
       >
         {{ id }} <small>{{ Object.keys(macro.graph.nodes).length }}</small>
-      </button>
+      </EaButton>
       <h3>触发来源</h3>
-      <button
+      <EaButton
         v-for="group in entryGroups"
         :key="group.id"
+        class="resource-panel__link"
         :disabled="group.id !== 'timeline' && group.entries.length === 0"
         @click="group.id === 'timeline' ? openTimeline() : focusEntry(group.entries[0]!.id)"
       >
         {{ group.label }}<small>{{ group.entries.length }} 次调度</small>
-      </button>
+      </EaButton>
     </template>
     <BlackboardPanel
       v-if="!toolTab || toolTab === 'variables'"
@@ -131,11 +137,16 @@ const {
     />
     <template v-if="!toolTab || toolTab === 'find'">
       <h3>查找节点</h3>
-      <input v-model="query" placeholder="名称、类型或节点 ID" aria-label="查找节点" />
+      <EaInput v-model="query" placeholder="名称、类型或节点 ID" aria-label="查找节点" />
       <p v-if="query" class="muted">{{ searchResults.length }} 个结果</p>
-      <button v-for="[id, node] in searchResults" :key="id" @click="focusNode(id)">
+      <EaButton
+        class="resource-panel__link"
+        v-for="[id, node] in searchResults"
+        :key="id"
+        @click="focusNode(id)"
+      >
         {{ node.action.kind }}<small>{{ id }}</small>
-      </button>
+      </EaButton>
     </template>
   </aside>
   <ActionGraphCanvas
@@ -307,11 +318,15 @@ const {
   border-top: 1px solid var(--ea-border);
   box-sizing: border-box;
 }
-.timeline-resizer:hover,
 .timeline-resizer:focus-visible,
 .timeline-resizer.active {
   background: var(--ea-gold);
   outline: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .timeline-resizer:hover {
+    background: var(--ea-gold);
+  }
 }
 .resource-panel,
 .inspector-panel {
@@ -347,39 +362,22 @@ h3 {
   font-size: 12px;
   color: var(--ea-fg-muted);
 }
-.resource-panel > button:not(.ea-button) {
+.resource-panel__link {
   text-align: left;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  border: 1px solid transparent;
-  background: var(--ea-fill-soft);
-  color: var(--ea-fg);
-  padding: 8px;
-  border-radius: 3px;
-  font: inherit;
-  font-size: 12px;
-  cursor: pointer;
+  align-items: stretch;
+  height: auto;
   overflow-wrap: anywhere;
-}
-.resource-panel > button.active {
-  border-color: var(--ea-gold);
 }
 .resource-panel small {
   opacity: 0.6;
   font-size: 10px;
 }
-.resource-panel > button:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-input,
-select {
+.resource-panel > :deep(.ea-input) {
   min-width: 0;
-  padding: 7px;
-  color: var(--ea-fg);
-  border: 1px solid var(--ea-border);
-  background: var(--ea-fill-input);
+  width: 100%;
 }
 .inspector-empty {
   padding: 20px;

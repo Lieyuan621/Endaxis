@@ -23,6 +23,8 @@ export {
   type DamageFeature,
   SKILL_TYPES,
   type SkillType,
+  OPERATION_TYPES,
+  type OperationType,
   SKILL_LEVEL_SOURCES,
   type SkillLevelSource,
   OPERATOR_MISSING_CAPABILITIES,
@@ -116,7 +118,6 @@ export {
   type SkillActionProgramDefinition,
   type SkillGroupDefinition,
   type SkillGroupVariantDefinition,
-  type SkillLibraryNameQualifier,
   type RoutedSkillReplacementDefinition,
   type SkillPresentationVariantDefinition,
 } from '../../../packages/game-data-contract/src/skills.ts';

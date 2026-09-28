@@ -167,8 +167,7 @@ describe('ScenarioSimulationService', () => {
       skillGroups: [
         {
           key: 'battleSkill',
-          skillType: 'battleSkill',
-          levelSource: 'battleSkill',
+          operationType: 'battleSkill',
           skills: graphFixtureSkill,
         },
       ],

@@ -216,14 +216,14 @@ describe('next Perlica definition', () => {
     expect(source).toContain('contextTargetObjectTypeMatch');
   });
 
-  it('defines finisher and plunging attack as independent basic-attack-level groups', () => {
+  it('defines independent finisher and plunging operations whose skills use basic-attack levels', () => {
     expect(perlica.skillGroups.find(group => group.key === 'finisher')).toMatchObject({
-      skillType: 'finisher',
-      levelSource: 'basicAttack',
+      operationType: 'finisher',
+      skills: { skillType: 'finisher', levelSource: 'basicAttack' },
     });
     expect(perlica.skillGroups.find(group => group.key === 'plungingAttack')).toMatchObject({
-      skillType: 'plungingAttack',
-      levelSource: 'basicAttack',
+      operationType: 'plungingAttack',
+      skills: { skillType: 'plungingAttack', levelSource: 'basicAttack' },
     });
   });
 
@@ -254,7 +254,7 @@ describe('next Perlica definition', () => {
     expect(perlica.talents[1]?.modifiers).toEqual([
       {
         kind: 'patchSkillBlackboard',
-        skillGroupKey: 'comboSkill',
+        skillKey: 'chr_0004_pelica_combo_skill',
         blackboardKey: 'talent2',
         operation: 'assign',
         value: 1,

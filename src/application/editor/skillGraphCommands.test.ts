@@ -136,8 +136,7 @@ function fixture(custom = true) {
         skillGroups: [
           {
             key: 'basicAttack',
-            skillType: 'basicAttack',
-            levelSource: 'basicAttack',
+            operationType: 'basicAttack',
             skills: [definition],
           },
         ],

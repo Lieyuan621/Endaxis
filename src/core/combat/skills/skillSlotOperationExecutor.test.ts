@@ -39,7 +39,7 @@ describe('SkillSlotOperationExecutor', () => {
     const executor = new SkillSlotOperationExecutor({ changeSkillSlot, delegate });
     const step: ResolvedCombatOperationStep = {
       kind: 'changeSkillSlot',
-      parameters: { skillGroupKey: 'ultimate', targetSkillKey: 'arcana' },
+      parameters: { skillSlotKey: 'ultimate', targetSkillKey: 'arcana' },
     };
 
     expect(executor.execute(step)).toBe(true);
@@ -57,7 +57,7 @@ describe('SkillSlotOperationExecutor', () => {
     executor.execute({
       kind: 'changeSkillSlot',
       parameters: {
-        skillGroupKey: 'battleSkill',
+        skillSlotKey: 'battleSkill',
         targetSkillKey: 'battleSkillEnd',
         inheritOriginSkillCooldownProgress: true,
       },
@@ -82,7 +82,7 @@ describe('SkillSlotOperationExecutor', () => {
     const step: ResolvedCombatOperationStep = {
       kind: 'changeSkillSlot',
       parameters: {
-        skillGroupKey: 'comboSkill',
+        skillSlotKey: 'comboSkill',
         targetSkillKey: 'comboSkill3',
         lifetime: 'infinite',
       },
@@ -92,7 +92,7 @@ describe('SkillSlotOperationExecutor', () => {
     executor.end(step, context);
 
     expect(replaceSkillSlot).toHaveBeenCalledWith({
-      skillGroupKey: 'comboSkill',
+      skillSlotKey: 'comboSkill',
       targetSkillKey: 'comboSkill3',
       inheritOriginSkillCooldownProgress: false,
     });
@@ -114,7 +114,7 @@ describe('SkillSlotOperationExecutor', () => {
     const step: ResolvedCombatOperationStep = {
       kind: 'changeSkillSlot',
       parameters: {
-        skillGroupKey: 'battleSkill',
+        skillSlotKey: 'battleSkill',
         targetSkillKey: 'battleSkillEnd',
         revertedSkillKey: 'battleSkill',
         inheritOriginSkillCooldownProgress: true,

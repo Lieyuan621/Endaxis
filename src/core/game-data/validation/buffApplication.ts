@@ -506,7 +506,7 @@ export function validateBuffDefinition(
             for (const key of Object.keys(replacement)) {
               if (
                 ![
-                  'skillGroupKey',
+                  'skillSlotKey',
                   'targetSkillKey',
                   'revertedSkillKey',
                   'inheritOriginSkillCooldownProgress',
@@ -515,7 +515,7 @@ export function validateBuffDefinition(
                 push(out, `${replacementPath}.${key}`, 'unknown skill slot replacement field');
               }
             }
-            requireString(replacement, 'skillGroupKey', replacementPath, out);
+            requireString(replacement, 'skillSlotKey', replacementPath, out);
             requireString(replacement, 'targetSkillKey', replacementPath, out);
             requireString(replacement, 'revertedSkillKey', replacementPath, out);
             if (typeof replacement.inheritOriginSkillCooldownProgress !== 'boolean') {

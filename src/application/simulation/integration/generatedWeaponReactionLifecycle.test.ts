@@ -399,8 +399,7 @@ function fixtureOperator(
     skillGroups: [
       {
         key: 'basicAttack',
-        skillType: 'basicAttack',
-        levelSource: 'basicAttack',
+        operationType: 'basicAttack',
         skills: probeSkill,
       },
     ],

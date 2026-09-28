@@ -184,7 +184,7 @@ function matches(
       'payload' in event &&
       event.event === 'outputDamage' &&
       matchesScope(trigger.scope, ownerOperatorId, event.payload.sourceId) &&
-      event.payload.executingSkillGroupKey === trigger.skillGroupKey
+      event.payload.executingSkillId === trigger.skillKey
     );
   }
   if (trigger.kind === 'physicalInflictionApplied') {

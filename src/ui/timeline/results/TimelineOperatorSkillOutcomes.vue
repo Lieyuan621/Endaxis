@@ -108,7 +108,7 @@ const selected = computed(() => groups.value.find(group => group.castId === sele
   align-items: center;
   gap: 14px;
   padding-bottom: 14px;
-  border-bottom: 1px solid var(--ea-border-subtle, rgb(255 255 255 / 12%));
+  border-bottom: 1px solid var(--ea-border-soft);
 }
 .gift-detail__preview {
   width: 100px;
@@ -120,12 +120,12 @@ const selected = computed(() => groups.value.find(group => group.castId === sele
   object-fit: contain;
 }
 .gift-detail__header strong {
-  color: var(--ea-text-primary, #f1f1f1);
+  color: var(--ea-fg);
   font-size: 15px;
 }
 .gift-detail + .gift-detail {
   margin-top: 16px;
-  border-top: 1px solid var(--ea-border-subtle, rgb(255 255 255 / 12%));
+  border-top: 1px solid var(--ea-border-soft);
 }
 .gift-detail__facts {
   display: grid;
@@ -135,12 +135,12 @@ const selected = computed(() => groups.value.find(group => group.castId === sele
   font-size: 13px;
 }
 .gift-detail__facts dt {
-  color: var(--ea-text-muted, #999);
+  color: var(--ea-fg-muted);
 }
 .gift-detail__facts dd {
   min-width: 0;
   margin: 0;
-  color: var(--ea-text-primary, #eee);
+  color: var(--ea-fg);
   overflow-wrap: anywhere;
 }
 </style>

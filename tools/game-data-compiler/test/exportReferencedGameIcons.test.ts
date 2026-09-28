@@ -92,7 +92,7 @@ describe('全量图片隔离导出', () => {
           {
             slug: 'custom',
             charId: 'chr_9000_sample',
-            skillGroups: [{ skillType: 'battleSkill' }],
+            skillGroups: [{ operationType: 'battleSkill' }],
             assets: {
               portraitCharacterId: 'chr_0001_portrait',
               icons: {

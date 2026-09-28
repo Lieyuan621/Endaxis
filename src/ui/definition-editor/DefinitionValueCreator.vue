@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { EaButton, EaSelect, type EaSelectValue } from '@/design-system';
 import DefinitionField from './DefinitionField.vue';
 import type { DefinitionFieldSchema } from './fieldSchema';
 import type { ReferenceChoices } from './fieldInputConfig';
@@ -35,9 +36,9 @@ function label(schema: DefinitionFieldSchema) {
   }
   return t(`definitionEditor.valueTypes.${schema.kind}`);
 }
-function choose(event: Event) {
+function choose(next: EaSelectValue | EaSelectValue[]) {
   if (!props.editable) return;
-  index.value = Number((event.target as HTMLSelectElement).value);
+  index.value = Number(next);
   value.value = selected.value ? createDefinitionValueDraft(selected.value) : undefined;
 }
 function change(path: readonly (string | number)[], next: unknown) {
@@ -64,16 +65,18 @@ function create() {
 
 <template>
   <section class="definition-value-creator">
-    <select
+    <EaSelect
       v-if="variants.length > 1"
-      :value="index"
+      class="definition-value-creator__selector"
+      :model-value="index"
       :disabled="!editable"
       :aria-label="t('definitionEditor.chooseValue')"
+      :options="[
+        { value: -1, label: t('definitionEditor.chooseValue'), disabled: true },
+        ...variants.map((variant, i) => ({ value: i, label: label(variant) })),
+      ]"
       @change="choose"
-    >
-      <option :value="-1" disabled>{{ t('definitionEditor.chooseValue') }}</option>
-      <option v-for="(variant, i) in variants" :key="i" :value="i">{{ label(variant) }}</option>
-    </select>
+    />
     <DefinitionField
       v-if="selected"
       :key="index"
@@ -88,10 +91,10 @@ function create() {
       @change="change"
     />
     <div class="definition-value-creator__actions">
-      <button type="button" :disabled="!editable || !complete" @click="create">
+      <EaButton :disabled="!editable || !complete" @click="create">
         {{ t('definitionEditor.applyValue') }}
-      </button>
-      <button type="button" @click="emit('cancel')">{{ t('common.cancel') }}</button>
+      </EaButton>
+      <EaButton @click="emit('cancel')">{{ t('common.cancel') }}</EaButton>
     </div>
   </section>
 </template>
@@ -102,7 +105,7 @@ function create() {
   padding: 8px;
   border: 1px solid var(--ea-border-soft);
 }
-.definition-value-creator > select {
+.definition-value-creator__selector {
   width: 100%;
 }
 .definition-value-creator__actions {

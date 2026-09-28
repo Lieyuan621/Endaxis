@@ -3103,8 +3103,7 @@ export const endministrator: OperatorDefinition = {
   skillGroups: [
     {
       key: 'basicAttack',
-      skillType: 'basicAttack',
-      levelSource: 'basicAttack',
+      operationType: 'basicAttack',
       skills: [
         endministratorChr_0003_endminf_attack1,
         endministratorChr_0003_endminf_attack2,
@@ -3115,32 +3114,27 @@ export const endministrator: OperatorDefinition = {
     },
     {
       key: 'finisher',
-      skillType: 'finisher',
-      levelSource: 'basicAttack',
+      operationType: 'finisher',
       skills: endministratorChr_0003_endminf_power_attack2,
     },
     {
       key: 'plungingAttack',
-      skillType: 'plungingAttack',
-      levelSource: 'basicAttack',
+      operationType: 'plungingAttack',
       skills: endministratorChr_0003_endminf_plunging_attack_end,
     },
     {
       key: 'battleSkill',
-      skillType: 'battleSkill',
-      levelSource: 'battleSkill',
+      operationType: 'battleSkill',
       skills: endministratorChr_0003_endminf_normal_skill,
     },
     {
       key: 'ultimate',
-      skillType: 'ultimate',
-      levelSource: 'ultimate',
+      operationType: 'ultimate',
       skills: endministratorChr_0003_endminf_ultimate_skill,
     },
     {
       key: 'comboSkill',
-      skillType: 'comboSkill',
-      levelSource: 'comboSkill',
+      operationType: 'comboSkill',
       skills: endministratorChr_0003_endminf_combo_skill,
     },
   ],

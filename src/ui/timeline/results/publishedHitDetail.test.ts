@@ -14,7 +14,7 @@ function historyOf(entries: readonly CombatReceiptEntry[]) {
   return receipt.history.snapshot();
 }
 
-it('resolves receipts and panel through stable cast identity, independently of edited track position', () => {
+it('resolves receipts through stable cast identity, independently of edited track position', () => {
   const scenario = createEmptyScenario('test', 'test');
   scenario.tracks[2] = {
     id: 'source',
@@ -30,7 +30,6 @@ it('resolves receipts and panel through stable cast identity, independently of e
       },
     ],
   };
-  const panel = { operatorId: 'source' };
   const entry: CombatReceiptEntry = {
     sequence: 0,
     frame: 1,
@@ -40,15 +39,13 @@ it('resolves receipts and panel through stable cast identity, independently of e
   };
   const published: PublishedScenarioSimulation = {
     scenario,
-    // Only owner/panel identity and hit projection fields are needed by this fixture.
+    // Only hit projection fields are needed by this fixture.
     run: {
       receiptHistory: historyOf([entry]),
-      operatorPanels: [panel],
     } as unknown as PublishedScenarioSimulation['run'],
   };
   const detail = projectPublishedHitDetail(published, { castId: 'cast', hitId: 'hit' });
   expect(detail?.track).toBe(scenario.tracks[2]);
-  expect(detail?.operatorPanel).toBe(panel);
   expect(detail?.forcedCritical).toBe(false);
   expect(detail?.entries).toEqual([entry]);
   const laterEntry = {

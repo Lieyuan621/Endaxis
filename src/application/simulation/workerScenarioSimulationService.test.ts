@@ -64,8 +64,7 @@ it('图场景通过 Worker 数据包往返后仍执行技能', async () => {
     skillGroups: [
       {
         key: 'battleSkill',
-        skillType: 'battleSkill' as const,
-        levelSource: 'battleSkill',
+        operationType: 'battleSkill' as const,
         skills: graphSkill,
       },
     ],
