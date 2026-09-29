@@ -209,7 +209,7 @@ function setHovered(value: boolean): void {
 function markerStyle(marker: TimelineHitMarkerView): Record<string, string> {
   return {
     left: `${projectTimelineHitMarkerLeftPx(marker.leftPx)}px`,
-    '--hit-offset': `${marker.triggered ? 14 + (marker.triggeredStackIndex ?? 0) * 10 : 0}px`,
+    '--hit-offset': `${(marker.stackIndex ?? (marker.triggered ? 1 : 0)) * 10 + (marker.triggered ? 4 : 0)}px`,
   };
 }
 

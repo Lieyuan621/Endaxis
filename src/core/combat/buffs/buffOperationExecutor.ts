@@ -910,6 +910,25 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
                 0,
               );
       context.blackboard.assignDynamic(step.parameters.outputKey, count);
+      const query = step.parameters.query;
+      const sourceKey =
+        query.kind === 'id' && query.buffIds.length === 1
+          ? query.buffIds[0]
+          : query.kind === 'tag' &&
+              query.buffTags.length === 1 &&
+              (query.tagQueryType === 'hasAny' || query.tagQueryType === 'hasAll')
+            ? query.buffTags[0]
+            : undefined;
+      if (step.parameters.countType !== 'instance' && sourceKey !== undefined) {
+        context.blackboard.setValueCalculation(step.parameters.outputKey, {
+          operation: 'assign',
+          left: 0,
+          right: count,
+          result: count,
+          sourceKind: query.kind === 'id' ? 'buffIdStackCount' : 'buffTagStackCount',
+          rightKey: sourceKey,
+        });
+      }
       return true;
     }
 

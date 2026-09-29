@@ -81,6 +81,7 @@ const props = defineProps<{
     skillMultiplier: string;
     skillSettingSource: (column: number) => string;
     skillMultiplierKeyLabel: (key: string) => string | undefined;
+    buffStackSourceLabel?: (kind: 'id' | 'tag', key: string) => string | undefined;
     skillMultiplierInternalValue: string;
     skillMultiplierStep: (step: number) => string;
     skillMultiplierResult: string;
@@ -484,6 +485,8 @@ function isNeutralFactor(value: number): boolean {
 function isUnchangedMultiply(calculation: ActionValueCalculation): boolean {
   return (
     calculation.operation === 'multiply' &&
+    calculation.rightCalculation?.sourceKind !== 'buffIdStackCount' &&
+    calculation.rightCalculation?.sourceKind !== 'buffTagStackCount' &&
     isNeutralFactor(calculation.right) &&
     Math.abs(calculation.result - calculation.left) <
       0.000001 * Math.max(1, Math.abs(calculation.left))
@@ -589,6 +592,32 @@ function skillMultiplierCalculationRows(
 ): DetailRow[] {
   while (isUnchangedMultiply(calculation) && calculation.leftCalculation !== undefined)
     calculation = calculation.leftCalculation;
+  const stackDescription = (node: ActionValueCalculation | undefined): string | undefined => {
+    if (node?.operation !== 'assign' || node.rightKey === undefined) return undefined;
+    const kind =
+      node.sourceKind === 'buffIdStackCount'
+        ? 'id'
+        : node.sourceKind === 'buffTagStackCount'
+          ? 'tag'
+          : undefined;
+    const name =
+      kind === undefined ? undefined : props.labels.buffStackSourceLabel?.(kind, node.rightKey);
+    return name === undefined ? undefined : `${name} ${props.labels.stacksDetail(node.result)}`;
+  };
+  const leftStacks = stackDescription(calculation.leftCalculation);
+  const rightStacks = stackDescription(calculation.rightCalculation);
+  if (
+    calculation.operation === 'multiply' &&
+    ((leftStacks !== undefined && calculation.rightCalculation === undefined) ||
+      (rightStacks !== undefined && calculation.leftCalculation === undefined))
+  ) {
+    return [
+      {
+        label: `${props.labels.skillMultiplierResult}: ${leftStacks ?? rightStacks} × ${pct(leftStacks === undefined ? calculation.left : calculation.right)}`,
+        value: pct(calculation.result),
+      },
+    ];
+  }
   const semanticRows =
     stackBonusMultiplierRows(calculation) ??
     baseAndFactorMultiplierRows(calculation) ??
@@ -603,6 +632,7 @@ function skillMultiplierCalculationRows(
       : `${multiplierKeyLabel(key, props.labels.skillMultiplierInternalValue)} (${formatted})`;
   };
   const visit = (node: ActionValueCalculation, key: string | undefined, isRoot: boolean): void => {
+    if (node.sourceKind === 'buffIdStackCount' || node.sourceKind === 'buffTagStackCount') return;
     if (isUnchangedMultiply(node)) {
       if (node.sourceKind === 'skillSetting')
         rows.push({ label: props.labels.baseMultiplier, value: pct(node.left) });

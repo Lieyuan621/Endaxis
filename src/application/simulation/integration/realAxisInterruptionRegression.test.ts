@@ -577,6 +577,11 @@ it.each([0, 1, 4])('别礼连携按实际消费的%i层寒冷拆分附加伤害�
   }
   expect(hits[1]!.frame).toBe(hits[2]!.frame);
   expect(hits[0]!.frame).toBeLessThan(hits[1]!.frame);
+  expect(hits[1]!.skillMultiplierCalculation?.rightCalculation).toMatchObject({
+    sourceKind: 'buffTagStackCount',
+    rightKey: 'Skill/Character/Common/SpellInflict/CrystInflict',
+    result: layers,
+  });
 });
 
 it.each([true, false])('潮涌只由持有者输出的二层附着触发（本人=%s）', async ownInfliction => {

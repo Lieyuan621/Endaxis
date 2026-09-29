@@ -3141,7 +3141,7 @@ function castHitMarkers(trackIndex: TrackIndex, castId: string): TimelineHitMark
       executionFrame: hit.frame,
       leftPx: timelineFramePx(hit.frame) - timelineFramePx(publishedStartFrame),
       triggered: hit.triggered,
-      triggeredStackIndex: hit.triggeredStackIndex,
+      stackIndex: hit.stackIndex,
       linkBuffed: hit.linkBuffed,
       forcedCritical: cast.simulationInputs?.criticalOverrides?.[hit.stepKey] === true,
       title: hitMarkerTitle(hit.label),
@@ -7733,6 +7733,23 @@ function setPanelDialogVisible(visible: boolean): void {
         return te(labelKey) ? t(labelKey) : undefined;
       },
       skillMultiplierInternalValue: t('hitDetail.multiplierInternalValue'),
+      buffStackSourceLabel: (kind: 'id' | 'tag', key: string) => {
+        const id =
+          kind === 'id'
+            ? key
+            : elementalAttachments.buffs.find(
+                buff => buff.role?.kind === 'elementalAttachment' && buff.applyTags?.includes(key),
+              )?.id;
+        if (id === undefined) return undefined;
+        const name = resolveBuffDisplayName(
+          id,
+          { t, te },
+          undefined,
+          undefined,
+          operatorBuffDisplayNameKeys,
+        );
+        return name === id ? undefined : name;
+      },
       skillMultiplierStep: (step: number) => t('hitDetail.multiplierStep', { step }),
       skillMultiplierResult: t('hitDetail.multiplierResult'),
       baseDamage: t('hitDetail.baseDamage'),

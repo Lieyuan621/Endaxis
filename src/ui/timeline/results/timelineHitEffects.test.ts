@@ -109,8 +109,8 @@ it('keeps target-owned Buff receipts out of skill markers while retaining delega
       { ...secondTriggered, producedBy: { kind: 'buff', ownerId: 'operator', instanceId: 1 } },
     ])
       .get('cast')
-      ?.map(hit => hit.triggeredStackIndex),
-  ).toEqual([0, 0, 1]);
+      ?.map(hit => hit.stackIndex),
+  ).toEqual([0, 1, 2]);
   // 执行者是投射物并不意味着追加触发；普通伤害仍保持红色。
   expect(
     projectTimelineHitOccurrences([{ ...direct, sourceId: 'ability-entity:99' }]).get('cast')?.[0]
