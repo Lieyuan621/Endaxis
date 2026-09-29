@@ -46,6 +46,43 @@ export type SkillCastGroupSelection =
       readonly reason: 'count' | 'mixed' | 'nonAdjacent' | 'locked' | 'partialGroup';
     };
 
+/** 只插入同轨现有组的内部；重叠多组时不猜目标，已有组成员也不隐式拆组。 */
+export function findSkillCastGroupInsertion(
+  scenario: ScenarioDocument,
+  castId: string,
+  startFrames: ReadonlyMap<string, number>,
+  isReadOnly: (id: string) => boolean = () => false,
+): string | undefined {
+  const track = scenario.tracks.find(track => track?.skillCasts.some(cast => cast.id === castId));
+  if (!track) return;
+  const chains = getSkillCastPlacementChains(track.skillCasts);
+  const source = chains.find(chain => chain.casts.some(cast => cast.id === castId));
+  if (
+    !source ||
+    source.casts.length !== 1 ||
+    source.anchor.presentation?.locked ||
+    isReadOnly(castId)
+  )
+    return;
+  const frame = startFrames.get(castId);
+  if (frame === undefined) return;
+  const candidates = chains.flatMap(chain => {
+    if (
+      chain.casts.length < 2 ||
+      chain.casts.some(cast => cast.presentation?.locked || isReadOnly(cast.id))
+    )
+      return [];
+    const first = startFrames.get(chain.anchor.id);
+    const last = startFrames.get(chain.casts.at(-1)!.id);
+    if (first === undefined || last === undefined || frame <= first || frame > last) return [];
+    const next = chain.casts
+      .slice(1)
+      .find(cast => (startFrames.get(cast.id) ?? -Infinity) >= frame);
+    return next ? [next.id] : [];
+  });
+  return candidates.length === 1 ? candidates[0] : undefined;
+}
+
 export function resolveSkillCastGroupSelection(
   scenario: ScenarioDocument,
   selectedIds: ReadonlySet<string>,

@@ -4,6 +4,7 @@ import type { SkillCastDocument } from '../../../core/project/schema';
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
 import {
   expandSkillCastGroupSelection,
+  findSkillCastGroupInsertion,
   matchingPublishedSkillCastIds,
   projectCompatibleHitFrames,
   projectMovingSkillCastStartFrames,
@@ -34,6 +35,28 @@ function fixture(casts: SkillCastDocument[]) {
 }
 
 describe('连续组选择与移动', () => {
+  it('插入使用组内顺序，拒绝组外、锁定、历史及组成员', () => {
+    const value = fixture([
+      cast('a', { startFrame: 10 }),
+      cast('b', { afterCastId: 'a' }),
+      cast('c', { afterCastId: 'b' }),
+      cast('insert', { startFrame: 25 }),
+    ]);
+    const frames = new Map([
+      ['a', 10],
+      ['b', 40],
+      ['c', 90],
+      ['insert', 25],
+    ]);
+    expect(findSkillCastGroupInsertion(value, 'insert', frames)).toBe('b');
+    expect(findSkillCastGroupInsertion(value, 'b', frames)).toBeUndefined();
+    expect(findSkillCastGroupInsertion(value, 'insert', frames, id => id === 'a')).toBeUndefined();
+    expect(
+      findSkillCastGroupInsertion(value, 'insert', new Map([...frames, ['insert', 100]])),
+    ).toBeUndefined();
+    value.tracks[0]!.skillCasts[2]!.presentation = { locked: true };
+    expect(findSkillCastGroupInsertion(value, 'insert', frames)).toBeUndefined();
+  });
   const starts = new Map([
     ['a', 10],
     ['b', 40],

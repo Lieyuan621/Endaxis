@@ -30,6 +30,7 @@ import {
   removeDodgeMarker,
   clearSimulationRangeBoundary,
   createSkillCastGroup,
+  insertSkillCastIntoGroup,
   dissolveSkillCastGroups,
   moveSkillCast,
   moveSkillCasts,
@@ -291,6 +292,23 @@ describe('手动技能组命令', () => {
     return value;
   }
   const grouped = () => createSkillCastGroup(loose(), members, frames);
+
+  it('插入独立技能只重接相邻两段，保留组首、成员身份和连线', () => {
+    const original = grouped();
+    const result = insertSkillCastIntoGroup(original, 'cast:4', 'cast:2');
+    expect(result.tracks[0]!.skillCasts.map(cast => cast.placement)).toEqual([
+      { startFrame: 10 },
+      { afterCastId: 'cast:4' },
+      { afterCastId: 'cast:2' },
+      { afterCastId: 'cast:1' },
+    ]);
+    expect(result.connections).toBe(original.connections);
+    expect(original.tracks[0]!.skillCasts[1]!.placement).toEqual({ afterCastId: 'cast:1' });
+    expect(insertSkillCastIntoGroup(original, 'cast:2', 'cast:3')).toBe(original);
+    expect(insertSkillCastIntoGroup(original, 'cast:4', 'cast:1')).toBe(original);
+    original.tracks[0]!.skillCasts[2]!.presentation = { locked: true };
+    expect(insertSkillCastIntoGroup(original, 'cast:4', 'cast:2')).toBe(original);
+  });
 
   it('按实际顺序成组，仅组首保存帧，身份和技能块连线保持原样', () => {
     const original = loose();

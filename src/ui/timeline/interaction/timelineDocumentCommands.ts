@@ -591,6 +591,36 @@ export function createSkillCastGroup(
   return replaceSkillCastPlacements(scenario, placements);
 }
 
+/** 将独立技能插到组内指定成员之前；保留组首、原成员顺序和所有实例身份。 */
+export function insertSkillCastIntoGroup(
+  scenario: ScenarioDocument,
+  castId: string,
+  beforeCastId: string,
+): ScenarioDocument {
+  const track = scenario.tracks.find(track => track?.skillCasts.some(cast => cast.id === castId));
+  if (!track) return scenario;
+  const chains = getSkillCastPlacementChains(track.skillCasts);
+  const source = chains.find(chain => chain.casts.some(cast => cast.id === castId));
+  const target = chains.find(chain => chain.casts.some(cast => cast.id === beforeCastId));
+  if (
+    !source ||
+    source.casts.length !== 1 ||
+    !target ||
+    target.casts.length < 2 ||
+    [...source.casts, ...target.casts].some(cast => cast.presentation?.locked)
+  )
+    return scenario;
+  const index = target.casts.findIndex(cast => cast.id === beforeCastId);
+  if (index <= 0) return scenario;
+  return replaceSkillCastPlacements(
+    scenario,
+    new Map([
+      [castId, { afterCastId: target.casts[index - 1]!.id }],
+      [beforeCastId, { afterCastId: castId }],
+    ]),
+  );
+}
+
 /** 显式解散涉及的完整链，以用户当前看到的起点变成独立块；后台重算不得调用此命令。 */
 export function dissolveSkillCastGroups(
   scenario: ScenarioDocument,

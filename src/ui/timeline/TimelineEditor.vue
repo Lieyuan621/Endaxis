@@ -67,6 +67,7 @@ import {
 import TimelineActionBlock from './interaction/TimelineActionBlock.vue';
 import TimelineSkillCastGroupMarker from './interaction/TimelineSkillCastGroupMarker.vue';
 import TimelineActionContextMenu from './interaction/TimelineActionContextMenu.vue';
+import TimelineGroupInsertPrompt from './interaction/TimelineGroupInsertPrompt.vue';
 import TimelineActionInspector from './interaction/TimelineActionInspector.vue';
 import TimelineLibrarySkillInspector from './library/TimelineLibrarySkillInspector.vue';
 import TimelineExternalEventInspector from './interaction/TimelineExternalEventInspector.vue';
@@ -247,6 +248,7 @@ import {
   projectMovingSkillCastStartFrames,
   projectSkillCastInputFacts,
   resolveSkillCastGroupSelection,
+  findSkillCastGroupInsertion,
 } from './interaction/skillCastGroupInteraction';
 import { useTimelineEnemyEditor } from './useTimelineEnemyEditor';
 import {
@@ -272,6 +274,7 @@ import {
 } from './interaction/timelineClipboard';
 import {
   createSkillCastGroup,
+  insertSkillCastIntoGroup,
   dissolveSkillCastGroups,
   moveSkillCasts,
   moveSkillCast,
@@ -729,6 +732,12 @@ const contextMenuTarget = ref<{
   y: number;
   trackIndex: TrackIndex;
   skillCastId: string;
+} | null>(null);
+const groupInsertPrompt = ref<{
+  x: number;
+  y: number;
+  skillCastId: string;
+  insertBeforeCastId: string;
 } | null>(null);
 const selectedMarker = computed<{ kind: TimelineMarkerKind; id: string } | null>({
   get: () => {
@@ -2139,6 +2148,7 @@ const { castMoveGesture, beginCastMove, cancelCastMove, discardCastMove, consume
     commitScenario,
     simulateNow,
     warnLocked: () => ElMessage.warning(t('timelineGrid.action.locked')),
+    onDropped: offerJoinContinuousGroup,
   });
 const displayedSkillCastStartFrames = computed(() => {
   const gesture = castMoveGesture.value;
@@ -4968,6 +4978,7 @@ function placePendingLibrarySkill(event: PointerEvent, trackIndex: TrackIndex): 
     frame,
     trackIndex,
     placement.variantKey,
+    { x: event.clientX, y: event.clientY },
   );
   return true;
 }
@@ -4978,6 +4989,7 @@ async function placeGroup(
   startFrame = cursorFrame.value,
   trackIndex = selectedTrack.value,
   variantKey?: string,
+  dropPoint?: { x: number; y: number },
 ): Promise<void> {
   startFrame = Math.max(minimumEditableInputFrame.value, startFrame);
   const operatorSlug = viewModel.value.tracks[trackIndex]?.operatorSlug ?? null;
@@ -5027,6 +5039,9 @@ async function placeGroup(
   const lastPlacedId = placedIds.at(-1);
   if (lastPlacedId === undefined) clearTimelineSelection();
   else applyActionSelection(selectTimelineAction(actionSelection.value, lastPlacedId, false));
+  if (dropPoint && placedIds.length === 1) {
+    offerJoinContinuousGroup({ clientX: dropPoint.x, clientY: dropPoint.y }, trackIndex, placedIds);
+  }
   const placed = placedScenario.tracks[trackIndex]?.skillCasts ?? [];
   const last = placed.find(cast => cast.id === lastPlacedId);
   if (last !== undefined) {
@@ -5190,6 +5205,7 @@ function resetScenario(mode: TimelineResetMode): void {
 }
 
 function resetTransientScenarioUi(): void {
+  groupInsertPrompt.value = null;
   skillGraphEditorTarget.value = null;
   // 丢弃旧方案的拖动预览，不能让取消回调把旧草稿写回已切换的方案。
   discardCastMove();
@@ -5332,6 +5348,40 @@ function openCastContextMenu(event: MouseEvent, trackIndex: TrackIndex, skillCas
     applyActionSelection(selectTimelineAction(actionSelection.value, skillCastId, false));
   }
   contextMenuTarget.value = { x: event.clientX, y: event.clientY, trackIndex, skillCastId };
+}
+
+function offerJoinContinuousGroup(
+  point: { clientX: number; clientY: number },
+  _trackIndex: TrackIndex,
+  castIds: readonly string[],
+): void {
+  groupInsertPrompt.value = null;
+  if (castIds.length !== 1) return;
+  const skillCastId = castIds[0]!;
+  const insertBeforeCastId = findSkillCastGroupInsertion(
+    scenario.value,
+    skillCastId,
+    resolvedSkillCastStartFrames.value,
+    isHistoricalSkillInput,
+  );
+  if (insertBeforeCastId === undefined) return;
+  applyActionSelection(selectTimelineAction(actionSelection.value, skillCastId, false));
+  contextMenuTarget.value = null;
+  groupInsertPrompt.value = {
+    x: point.clientX,
+    y: point.clientY,
+    skillCastId,
+    insertBeforeCastId,
+  };
+}
+
+function joinDroppedSkillToGroup(): void {
+  const target = groupInsertPrompt.value;
+  if (!target) return;
+  commitScenario('insertSkillCastIntoGroup', current =>
+    insertSkillCastIntoGroup(current, target.skillCastId, target.insertBeforeCastId),
+  );
+  groupInsertPrompt.value = null;
 }
 
 function toggleContextCastField(field: 'locked' | 'disabled'): void {
@@ -7388,6 +7438,13 @@ function setPanelDialogVisible(visible: boolean): void {
     @close="connectionContextTarget = null"
     @delete="contextConnection && deleteTimelineConnection(contextConnection.id)"
     @change-port="updateConnectionContextPort"
+  />
+  <TimelineGroupInsertPrompt
+    v-if="groupInsertPrompt"
+    :x="groupInsertPrompt.x"
+    :y="groupInsertPrompt.y"
+    @join="joinDroppedSkillToGroup"
+    @close="groupInsertPrompt = null"
   />
   <TimelineActionContextMenu
     :input-read-only="[...actionSelection.selectedIds].some(isHistoricalSkillInput)"

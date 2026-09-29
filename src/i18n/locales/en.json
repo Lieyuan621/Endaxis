@@ -2814,6 +2814,7 @@
       "stillSimulated": "The simulation still executes {skill} as placed on the timeline."
     },
     "continuousGroup": {
+      "join": "Join continuous group",
       "create": "Create continuous group",
       "dissolve": "Dissolve continuous group",
       "label": "Chain · {count}",
