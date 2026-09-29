@@ -32,6 +32,8 @@ export interface DamageCalculationSnapshot {
   readonly attackDetail?: import('./foundationState').AttackReceiptSnapshot;
   readonly attack: number;
   readonly attackScale: number;
+  readonly attackScaleSourceKey?: string;
+  readonly attackScaleCalculation?: import('./foundationState').ActionValueCalculation;
   readonly skillSettingFactor?: import('./foundationState').ArtsIntensityFactor;
   readonly baseValue: number;
 }

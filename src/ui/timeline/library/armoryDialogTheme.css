@@ -75,27 +75,6 @@
   background: var(--ea-panel-elevated, #2a2a2e);
 }
 
-.armory-dialog .skill-slot.slot-base {
-  background: var(--ea-fill-muted, rgba(255, 255, 255, 0.12));
-  color: var(--ea-fg-secondary, rgba(255, 255, 255, 0.7));
-}
-
-.armory-dialog .skill-slot.slot-active {
-  background: color-mix(in srgb, var(--ea-gold) 22%, transparent);
-  color: var(--ea-gold);
-}
-
-.armory-dialog .skill-slot.slot-empty {
-  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.04));
-  color: transparent;
-  border: 1px solid var(--ea-border, rgba(255, 255, 255, 0.1));
-}
-
-.armory-dialog .skill-slot.slot-locked {
-  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.03));
-  color: var(--ea-fg-faint, rgba(255, 255, 255, 0.2));
-}
-
 .armory-dialog .skill-value,
 .armory-dialog .stat-value-inline,
 .armory-dialog .stat-locked {

@@ -30,9 +30,11 @@ import {
   projectWeaponProgressionChange,
 } from './loadoutBuildProgression';
 import { getWeaponTraitValueText } from './weaponTraitPresentation';
+import ArmoryLevelSlot from './ArmoryLevelSlot.vue';
 
 const LEVELS = [1, 20, 40, 60, 80, 90] as const satisfies readonly WeaponLevel[];
 type WeaponTraitKey = 'skill1' | 'skill2' | 'skill3';
+type LevelSlotState = 'base' | 'active' | 'empty' | 'locked';
 
 const props = defineProps<{
   visible: boolean;
@@ -157,12 +159,12 @@ function setTraitLevel(key: string, selectedLevel: number): void {
   emitChange({ traitLevels });
 }
 
-function slotClass(key: string, level: number): string {
+function slotState(key: string, level: number): LevelSlotState {
   const bounds = traitBounds(key);
-  if (level <= bounds.min) return 'slot-base';
-  if (level <= traitLevel(key)) return 'slot-active';
-  if (level <= bounds.max) return 'slot-empty';
-  return 'slot-locked';
+  if (level <= bounds.min) return 'base';
+  if (level <= traitLevel(key)) return 'active';
+  if (level <= bounds.max) return 'empty';
+  return 'locked';
 }
 
 function traitName(key: string): string {
@@ -310,18 +312,13 @@ function maxOut(): void {
                 </div>
                 <div class="skill-bar-area">
                   <div class="skill-slots">
-                    <EaButton
+                    <ArmoryLevelSlot
                       v-for="level in traitDisplayLevels(key)"
                       :key="level"
-                      class="skill-slot"
-                      :class="slotClass(key, level)"
-                      :disabled="level <= traitBounds(key).min || level > traitBounds(key).max"
+                      :state="slotState(key, level)"
+                      :label="`${traitName(key)} ${level}`"
                       @click="setTraitLevel(key, level)"
-                    >
-                      <template v-if="slotClass(key, level) === 'slot-locked'">&times;</template>
-                      <template v-else-if="slotClass(key, level) === 'slot-empty'">&nbsp;</template>
-                      <template v-else>/</template>
-                    </EaButton>
+                    />
                   </div>
                   <span class="skill-counter"
                     >{{ traitLevel(key) }}/{{ traitBounds(key).max }}</span
@@ -538,36 +535,6 @@ function maxOut(): void {
 .skill-slots {
   display: flex;
   gap: 3px;
-}
-.skill-slot {
-  width: 22px;
-  height: 22px;
-  border: none;
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 22px;
-  text-align: center;
-  padding: 0;
-  font-family: 'Roboto Mono', monospace;
-}
-.skill-slot.slot-base {
-  background: var(--ea-fill-muted, rgba(255, 255, 255, 0.12));
-  color: var(--ea-fg-secondary, rgba(255, 255, 255, 0.7));
-}
-.skill-slot.slot-active {
-  background: color-mix(in srgb, var(--ea-gold) 22%, transparent);
-  color: var(--ea-gold);
-  cursor: pointer;
-}
-.skill-slot.slot-empty {
-  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.04));
-  color: transparent;
-  border: 1px solid var(--ea-border, rgba(255, 255, 255, 0.1));
-  cursor: pointer;
-}
-.skill-slot.slot-locked {
-  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.03));
-  color: var(--ea-fg-faint, rgba(255, 255, 255, 0.2));
 }
 .skill-counter {
   font-size: 13px;

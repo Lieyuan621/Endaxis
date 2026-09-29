@@ -240,6 +240,76 @@ describe('resolveStaticPlayerDamageSnapshots', () => {
     attributes.setRawValue('intellect', 999);
     expect(freezeAttackReceiptDetail(captured.attack, captured.attackDetail)).toEqual(frozen);
   });
+  it('carries equipment attack percentages and flat attack into the hit source detail', () => {
+    const weaponSource = {
+      kind: 'equipment',
+      contribution: { kind: 'weaponTrait', slug: 'weapon', traitKey: 'attack-percent' },
+    } as const;
+    const gearSource = {
+      kind: 'equipment',
+      contribution: { kind: 'gearTrait', slug: 'gear', traitKey: 'flat-attack' },
+    } as const;
+    const equippedPanel: ResolvedOperatorPanel = {
+      ...panel,
+      attack: 899,
+      attackBeforeAttributeScalar: 899.2,
+      attackBase: { rawValue: 700, baseMultiplier: 0.256, baseFinalAddition: 20 },
+      attackDetail: {
+        operatorBaseAttack: 500,
+        weaponBaseAttack: 200,
+        attackPercent: 0.256,
+        flatAttack: 20,
+      },
+      receipt: [
+        { source: weaponSource, stat: 'attack', operation: 'percent', value: 0.256 },
+        { source: gearSource, stat: 'attack', operation: 'flat', value: 20 },
+        {
+          source: { kind: 'weaponBase', weaponSlug: 'weapon' },
+          stat: 'attack',
+          operation: 'base',
+          value: 200,
+        },
+      ],
+    };
+    const attributes = createOperatorAttackAttributes(equippedPanel);
+    attributes.addModifier(
+      createCombatAttributeModifier(
+        'Atk',
+        attributeModifierValues('baseMultiplier', 0.32),
+        ATTRIBUTE_MODIFIER_SOURCES.buff,
+        'runtime',
+      ),
+    );
+    const captured = resolveStaticPlayerDamageSnapshots(
+      createContext({ panel: equippedPanel }),
+      electricDamage,
+      attributes,
+    ).attacker;
+    expect(captured.attack).toBe(1123);
+    const frozen = freezeAttackReceiptDetail(captured.attack, captured.attackDetail);
+    expect(frozen.attackDetailAttackPercent).toBeCloseTo(0.576);
+    expect(frozen.attackDetailFlatAttack).toBe(20);
+    expect(captured.modifierDetails).toEqual([
+      {
+        kind: 'attribute',
+        panelSource: weaponSource,
+        sourceId: panel.operatorId,
+        side: 'attacker',
+        attribute: 'Atk',
+        slot: 'baseMultiplier',
+        value: 0.256,
+      },
+      {
+        kind: 'attribute',
+        panelSource: gearSource,
+        sourceId: panel.operatorId,
+        side: 'attacker',
+        attribute: 'Atk',
+        slot: 'baseFinalAddition',
+        value: 20,
+      },
+    ]);
+  });
   it('庇护属性保留原始无界槽，只有敌方快照影响对敌伤害', () => {
     const attacker = createOperatorAttackAttributes(panel);
     const defender = new CombatAttributeSet<string>();

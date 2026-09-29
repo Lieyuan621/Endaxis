@@ -1,5 +1,6 @@
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
 import type { CombatCondition } from '../../game-data/operatorDefinition';
+import type { ActionValueCalculation } from '../state/foundationState';
 /**
  * 生命伤害与独立失衡步骤进入玩家主动伤害生命周期的装配点。
  * 调用方必须提供同一命中的属性快照和事件端口；此处顺序具有战斗语义，不能随意拆分或并行。
@@ -7,7 +8,11 @@ import type { CombatCondition } from '../../game-data/operatorDefinition';
 import { NATIVE_SKILL_HAS_HIT_BLACKBOARD_KEY } from '../../../../packages/game-data-contract/src/conditions';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 import type { ActionValueOperand, SkillType } from '../../game-data/operatorDefinition';
-import { resolveActionValueOperand, resolveSkillSettingFactor } from '../actions/actionBlackboard';
+import {
+  limitValueCalculation,
+  resolveActionValueOperand,
+  resolveSkillSettingFactor,
+} from '../actions/actionBlackboard';
 import { attributeModifierValues } from '../attributes/combatAttributes';
 import type { CriticalSampleSource } from '../random/criticalSampleSource';
 import type { SimulationRandomMode } from '../random/simulationRandom';
@@ -157,6 +162,15 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       operationContext,
       'snapshot damage scale',
     );
+    const attackScaleSourceKey =
+      typeof step.parameters.attackScale !== 'number' &&
+      step.parameters.attackScale.kind === 'blackboard'
+        ? step.parameters.attackScale.key
+        : undefined;
+    const attackScaleCalculation =
+      attackScaleSourceKey === undefined
+        ? undefined
+        : operationContext.blackboard.getValueCalculation(attackScaleSourceKey);
     const attributes = this.dependencies.captureAttributeSnapshots(step).attacker;
     const attackKeys = attackReceiptAttributes(attributes.attackDetail);
     snapshots.set(step, {
@@ -171,6 +185,10 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       attack: attributes.attack,
       ...(attributes.attackDetail === undefined ? {} : { attackDetail: attributes.attackDetail }),
       attackScale,
+      ...(attackScaleSourceKey === undefined ? {} : { attackScaleSourceKey }),
+      ...(attackScaleCalculation === undefined
+        ? {}
+        : { attackScaleCalculation: limitValueCalculation(attackScaleCalculation) }),
       skillSettingFactor: resolveSkillSettingFactor(
         step.parameters.attackScale,
         operationContext.blackboard,
@@ -439,6 +457,21 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
           ? calculation.skillSettingFactor
           : undefined;
       const baseScale = skillSettingFactor?.baseValue ?? calculation.attackScale;
+      const multiplierSourceMatches =
+        standardCalculation &&
+        calculation.attackScale !== undefined &&
+        baseScale !== undefined &&
+        Math.abs(calculation.attackScale - baseScale) <= 0.00001 * Math.max(1, Math.abs(baseScale));
+      const multiplierCalculation =
+        calculation.attackScaleCalculation === undefined || baseScale === undefined
+          ? undefined
+          : multiplierSourceMatches &&
+              Math.abs(calculation.attackScaleCalculation.result - baseScale) <=
+                0.00001 * Math.max(1, Math.abs(baseScale))
+            ? calculation.attackScaleCalculation
+            : skillSettingFactor?.baseValue !== undefined
+              ? skillSettingBaseCalculation(calculation.attackScaleCalculation, baseScale)
+              : undefined;
       const separateScale = skillSettingFactor?.baseValue !== undefined;
       const finisherMultiplier =
         step.kind === 'dealDamage' && step.parameters.calculation === 'breakingAttack'
@@ -468,6 +501,9 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
           ? undefined
           : deriveHitId(this.dependencies.castId, step.key));
       executeHealthDamage({
+        ...(multiplierCalculation === undefined
+          ? {}
+          : { skillMultiplierCalculation: multiplierCalculation }),
         producedBy: operationProducer(operationContext, {
           ownerId: this.dependencies.sourceOperatorId,
           actionId: this.dependencies.sourceActionId,
@@ -541,6 +577,9 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
           standardCalculation,
           ...(standardCalculation && baseScale !== undefined
             ? { skillMultiplierPercent: baseScale * 100 }
+            : {}),
+          ...(multiplierSourceMatches && calculation.attackScaleSourceKey !== undefined
+            ? { skillMultiplierSourceKey: calculation.attackScaleSourceKey }
             : {}),
           calculationMultiplier,
           damageScaleMultiplier,
@@ -634,6 +673,8 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
     readonly value: number;
     readonly attackScale?: number;
     readonly skillSettingFactor?: import('../state/foundationState').ArtsIntensityFactor;
+    readonly attackScaleSourceKey?: string;
+    readonly attackScaleCalculation?: import('../state/foundationState').ActionValueCalculation;
   } {
     if (step.kind === 'dealFixedDamage') {
       return {
@@ -650,6 +691,8 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       return {
         value: snapshot.baseValue,
         attackScale: snapshot.attackScale,
+        attackScaleSourceKey: snapshot.attackScaleSourceKey,
+        attackScaleCalculation: snapshot.attackScaleCalculation,
         skillSettingFactor: snapshot.skillSettingFactor,
       };
     }
@@ -662,6 +705,15 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       operationContext,
       'dynamic damage scale',
     );
+    const attackScaleSourceKey =
+      typeof step.parameters.attackScale !== 'number' &&
+      step.parameters.attackScale.kind === 'blackboard'
+        ? step.parameters.attackScale.key
+        : undefined;
+    const attackScaleCalculation =
+      attackScaleSourceKey === undefined
+        ? undefined
+        : operationContext?.blackboard.getValueCalculation(attackScaleSourceKey);
     if (step.parameters.calculation === 'attribute') {
       const attributeValue = context.attackerAttributes.calculationAttributeValue;
       if (attributeValue === undefined) {
@@ -685,6 +737,8 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
         value: context.attackerAttributes.attack * attackScale,
         attackScale,
         skillSettingFactor,
+        attackScaleSourceKey,
+        attackScaleCalculation,
       };
     }
     return {
@@ -748,4 +802,32 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       ? this.dependencies.delegate.evaluate(condition)
       : this.dependencies.delegate.evaluate(condition, context);
   }
+}
+
+/** 技艺强度已单列显示时，只追溯技能表原值，不把强化后的倍率冒充基础倍率。 */
+function skillSettingBaseCalculation(
+  calculation: ActionValueCalculation,
+  baseScale: number,
+): ActionValueCalculation | undefined {
+  if (
+    calculation.sourceKind === 'skillSetting' &&
+    Math.abs(calculation.left - baseScale) <= 0.00001 * Math.max(1, Math.abs(baseScale))
+  ) {
+    return {
+      operation: 'multiply',
+      left: baseScale,
+      right: 1,
+      result: baseScale,
+      sourceKind: 'skillSetting',
+      sourceColumn: calculation.sourceColumn,
+    };
+  }
+  return (
+    (calculation.leftCalculation === undefined
+      ? undefined
+      : skillSettingBaseCalculation(calculation.leftCalculation, baseScale)) ??
+    (calculation.rightCalculation === undefined
+      ? undefined
+      : skillSettingBaseCalculation(calculation.rightCalculation, baseScale))
+  );
 }

@@ -107,6 +107,8 @@ export interface ActionBlackboardState {
 export interface ArtsIntensityFactor {
   readonly multiplier: number;
   readonly intensity?: number;
+  /** 原表各级均为 1：此值只提供技艺强度系数，尚未附着真正的技能基础倍率。 */
+  readonly unitEnhancementFactor?: boolean;
   /** 读取技能表时未乘技艺强度的基础值；后续纯乘除不改变它。 */
   readonly baseValue?: number;
   /** 读取基础值之后实际执行的额外乘数；只沿可分离的乘除和复制传播。 */
@@ -118,6 +120,12 @@ export interface ActionValueCalculation {
   readonly left: number;
   readonly right: number;
   readonly result: number;
+  readonly sourceKind?: 'skillSetting';
+  readonly sourceColumn?: number;
+  readonly leftKey?: string;
+  readonly rightKey?: string;
+  readonly leftCalculation?: ActionValueCalculation;
+  readonly rightCalculation?: ActionValueCalculation;
 }
 
 export function createActionBlackboardState(

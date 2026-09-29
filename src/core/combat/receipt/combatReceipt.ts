@@ -23,6 +23,8 @@ export interface CombatReceiptEntry {
   /** 原生实体 Source，与直接创建者分别保存。 */
   readonly runtimeSource?: RuntimeTargetRef;
   readonly data?: Readonly<Record<string, CombatReceiptValue>>;
+  /** 本次命中冻结的技能倍率运算链，不属于可重算的 UI 投影。 */
+  readonly skillMultiplierCalculation?: import('../state/foundationState').ActionValueCalculation;
   readonly appliedDamageModifiers?: readonly AppliedDamageModifier[];
 }
 

@@ -12,6 +12,7 @@ import { getGearDefinitionInstanceAffixRows } from './gearAffixPresentation';
 import { DEFAULT_GAME_ICON_PATH } from '../../gameAssetPaths';
 import { getGameQualityName } from '../../gameText';
 import { qualityColors } from '../../gameColors';
+import ArmoryLevelSlot from './ArmoryLevelSlot.vue';
 
 const props = defineProps<{
   visible: boolean;
@@ -122,19 +123,13 @@ function maxOut(): void {
               </div>
               <div v-if="isArtificable" class="stat-bar-area">
                 <div class="stat-slots">
-                  <EaButton
-                    size="sm"
-                    icon-only
+                  <ArmoryLevelSlot
                     v-for="level in slot.maximum"
                     :key="level"
-                    type="button"
-                    class="art-slot"
+                    :state="level <= slot.current ? 'active' : 'empty'"
+                    :label="`${slot.rows[0]?.label ?? t('armory.common.artificing')} ${level}`"
                     @click="setArtificingLevel(slot.traitIndex, level)"
-                    :pressed="level <= slot.current"
-                  >
-                    <template v-if="level <= slot.current">/</template>
-                    <template v-else>&nbsp;</template>
-                  </EaButton>
+                  />
                 </div>
                 <span class="stat-level">{{ slot.current }}/{{ slot.maximum }}</span>
               </div>
@@ -275,13 +270,6 @@ function maxOut(): void {
   display: flex;
   gap: 3px;
 }
-.art-slot {
-  color: transparent;
-  font-family: 'Roboto Mono', monospace;
-}
-.art-slot[aria-pressed='true'] {
-  color: inherit;
-}
 .stat-level {
   min-width: 24px;
   color: var(--ea-fg-secondary, #ccc);
@@ -293,10 +281,5 @@ function maxOut(): void {
 .stat-locked {
   color: var(--ea-dialog-hint, #777);
   font-size: 12px;
-}
-@media (hover: hover) and (pointer: fine) {
-  .art-slot[aria-pressed='true']:hover:not(:disabled) {
-    color: inherit;
-  }
 }
 </style>

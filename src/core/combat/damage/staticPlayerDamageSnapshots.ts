@@ -140,6 +140,31 @@ export function resolveStaticPlayerDamageSnapshots(
     );
   }
   const modifierDetails: import('./damageScale').AppliedDamageModifier[] = [];
+  // Deck 的 Atk 槽位已按构筑面板合并；仅补回来源明细，不再次施加数值。
+  for (const contribution of panel.receipt) {
+    if (
+      contribution.source.kind !== 'equipment' ||
+      contribution.stat !== 'attack' ||
+      contribution.value === 0
+    )
+      continue;
+    const slot =
+      contribution.operation === 'percent'
+        ? 'baseMultiplier'
+        : contribution.operation === 'flat'
+          ? 'baseFinalAddition'
+          : undefined;
+    if (slot === undefined) continue;
+    modifierDetails.push({
+      kind: 'attribute',
+      panelSource: contribution.source,
+      sourceId: panel.operatorId,
+      side: 'attacker',
+      attribute: 'Atk',
+      slot,
+      value: contribution.value,
+    });
+  }
   const staticDamageScales = resolveStaticDamageScales(
     context,
     step,

@@ -3,6 +3,28 @@ import { CombatReceiptCollector } from './combatReceipt';
 import { restoreCombatReceiptView } from './combatReceiptHistory';
 import { exportCombatReceiptJsonLines } from './combatReceiptExport';
 
+it('freezes nested skill multiplier provenance at the receipt boundary', () => {
+  const collector = new CombatReceiptCollector();
+  const source = {
+    operation: 'multiply' as const,
+    left: 0.5,
+    right: 6,
+    result: 3,
+    leftCalculation: { operation: 'add' as const, left: 0.4, right: 0.1, result: 0.5 },
+  };
+  collector.record({
+    event: 'DamageApplied',
+    frame: 0,
+    time: 0,
+    skillMultiplierCalculation: source,
+  });
+  source.leftCalculation.result = 9;
+  const saved = collector.entries[0]!.skillMultiplierCalculation!;
+  expect(saved.leftCalculation?.result).toBe(0.5);
+  expect(Object.isFrozen(saved.leftCalculation)).toBe(true);
+  expect(structuredClone(saved).result).toBe(3);
+});
+
 it('freezes direct bonus results and includes them in the common export', () => {
   const collector = new CombatReceiptCollector();
   const item = {

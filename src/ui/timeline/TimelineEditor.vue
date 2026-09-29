@@ -7670,6 +7670,14 @@ function setPanelDialogVisible(visible: boolean): void {
       attributeLabel: (attribute: string) => t(`stats.${attribute}`),
       fromSource: (name: string) => t('statDetail.fromSource', { name }),
       skillMultiplier: t('hitDetail.multiplier'),
+      skillSettingSource: (column: number) => t('hitDetail.skillSettingSource', { column }),
+      skillMultiplierKeyLabel: (key: string) => {
+        const labelKey = `hitDetail.multiplierKeys.${key}`;
+        return te(labelKey) ? t(labelKey) : undefined;
+      },
+      skillMultiplierInternalValue: t('hitDetail.multiplierInternalValue'),
+      skillMultiplierStep: (step: number) => t('hitDetail.multiplierStep', { step }),
+      skillMultiplierResult: t('hitDetail.multiplierResult'),
       baseDamage: t('hitDetail.baseDamage'),
       damageBonus: t('hitDetail.dmgBonus'),
       criticalExpectation: t('hitDetail.critMult'),
@@ -7690,6 +7698,8 @@ function setPanelDialogVisible(visible: boolean): void {
       additionalScale: t('hitDetail.additionalScale'),
       stacksDetail: (stacks: number) => t('hitDetail.linkDetail', { stacks }),
       baseMultiplier: t('hitDetail.baseMultiplier'),
+      fixedMultiplier: t('hitDetail.fixedMultiplier'),
+      hitFraction: t('hitDetail.hitFraction'),
       levelDetail: (level: number) => t('hitDetail.levelCoeffDetail', { level }),
       artsIntensityDetail: (value: number) => t('hitDetail.artsIntensityDetail', { value }),
       damageTaken: t('hitDetail.dmgTaken'),

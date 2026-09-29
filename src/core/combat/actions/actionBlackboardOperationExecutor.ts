@@ -139,6 +139,7 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
         resolveActionValueOperand(step.parameters.value, context.blackboard),
       );
       const oldValue = Math.fround(context.blackboard.getNumber(step.parameters.key) ?? 0);
+      const previousCalculation = context.blackboard.getValueCalculation(step.parameters.key);
       const copiedCalculation =
         step.parameters.value.kind === 'blackboard'
           ? context.blackboard.getValueCalculation(step.parameters.value.key)
@@ -160,6 +161,7 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
         detail?.intensity,
         detail?.baseValue,
         detail?.additionalMultiplier,
+        detail?.unitEnhancementFactor,
       );
       context.blackboard.setValueCalculation(
         step.parameters.key,
@@ -170,6 +172,18 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
               left: oldValue,
               right: operand,
               result: context.blackboard.getNumber(step.parameters.key)!,
+              leftKey: step.parameters.key,
+              ...(previousCalculation === undefined
+                ? {}
+                : { leftCalculation: previousCalculation }),
+              ...(step.parameters.value.kind !== 'blackboard'
+                ? {}
+                : {
+                    rightKey: step.parameters.value.key,
+                    ...(copiedCalculation === undefined
+                      ? {}
+                      : { rightCalculation: copiedCalculation }),
+                  }),
             },
       );
       context.refreshCurrentBuffAttributeModifiers?.();
@@ -183,6 +197,14 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
       const right = Math.fround(
         resolveActionValueOperand(step.parameters.right, context.blackboard),
       );
+      const leftKey =
+        step.parameters.left.kind === 'blackboard' ? step.parameters.left.key : undefined;
+      const rightKey =
+        step.parameters.right.kind === 'blackboard' ? step.parameters.right.key : undefined;
+      const leftCalculation =
+        leftKey === undefined ? undefined : context.blackboard.getValueCalculation(leftKey);
+      const rightCalculation =
+        rightKey === undefined ? undefined : context.blackboard.getValueCalculation(rightKey);
       const detail = combineSkillSettingFactors(
         step.parameters.operation,
         resolveSkillSettingFactor(step.parameters.left, context.blackboard),
@@ -200,12 +222,17 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
         detail?.intensity,
         detail?.baseValue,
         detail?.additionalMultiplier,
+        detail?.unitEnhancementFactor,
       );
       context.blackboard.setValueCalculation(step.parameters.key, {
         operation: step.parameters.operation,
         left,
         right,
         result: context.blackboard.getNumber(step.parameters.key)!,
+        ...(leftKey === undefined ? {} : { leftKey }),
+        ...(rightKey === undefined ? {} : { rightKey }),
+        ...(leftCalculation === undefined ? {} : { leftCalculation }),
+        ...(rightCalculation === undefined ? {} : { rightCalculation }),
       });
       context.refreshCurrentBuffAttributeModifiers?.();
       return true;
@@ -325,7 +352,17 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
           artsIntensityFactor ?? 1,
           intensity,
           item.values[column],
+          undefined,
+          item.enhance === undefined ? undefined : item.values.every(entry => entry === 1),
         );
+        context.blackboard.setValueCalculation(item.storeKey, {
+          operation: 'multiply',
+          left: item.values[column]!,
+          right: artsIntensityFactor ?? 1,
+          result: value,
+          sourceKind: 'skillSetting',
+          sourceColumn: column + 1,
+        });
         context.refreshCurrentBuffAttributeModifiers?.();
       }
       return true;

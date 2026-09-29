@@ -13,6 +13,7 @@ import {
   type DamageScaleZone,
 } from '../../../core/combat/damage/damageScale';
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
+import type { ActionValueCalculation } from '../../../core/combat/state/foundationState';
 import { ATTACK_FACTOR_ATTRIBUTE_BY_OPERATOR_ATTRIBUTE } from '../../../core/combat/attributes/operatorAttackAttributes';
 import type { OperatorAttribute } from '../../../core/game-data/operatorDefinition';
 import {
@@ -78,6 +79,11 @@ const props = defineProps<{
     attributeLabel: (attribute: string) => string;
     fromSource: (name: string) => string;
     skillMultiplier: string;
+    skillSettingSource: (column: number) => string;
+    skillMultiplierKeyLabel: (key: string) => string | undefined;
+    skillMultiplierInternalValue: string;
+    skillMultiplierStep: (step: number) => string;
+    skillMultiplierResult: string;
     baseDamage: string;
     damageBonus: string;
     criticalExpectation: string;
@@ -100,6 +106,8 @@ const props = defineProps<{
     additionalScale: string;
     stacksDetail: (value: number) => string;
     baseMultiplier: string;
+    fixedMultiplier: string;
+    hitFraction: string;
     damageTaken: string;
     defenseMultiplier: string;
     resistanceMultiplier: string;
@@ -144,6 +152,7 @@ interface DamageDetail {
   readonly attackDetail: AttackDetail | null;
   readonly contextRows: readonly DetailRow[];
   readonly baseRows: readonly DetailRow[];
+  readonly skillMultiplierSources: readonly DetailRow[];
   readonly multiplierRows: readonly DetailRow[];
 }
 
@@ -171,12 +180,14 @@ interface AttackDetail {
 
 const openAttackDetails = ref<ReadonlySet<number>>(new Set());
 const openCriticalDetails = ref<ReadonlySet<number>>(new Set());
+const openSkillMultiplierDetails = ref<ReadonlySet<number>>(new Set());
 // 回执序号只在当前结果内有效；换一组结果后不能继承上一组的展开状态。
 watch(
   () => props.entries,
   () => {
     openAttackDetails.value = new Set();
     openCriticalDetails.value = new Set();
+    openSkillMultiplierDetails.value = new Set();
   },
 );
 
@@ -455,6 +466,177 @@ function toggleCriticalDetail(key: number): void {
   openCriticalDetails.value = next;
 }
 
+function toggleSkillMultiplierDetail(key: number): void {
+  const next = new Set(openSkillMultiplierDetails.value);
+  if (next.has(key)) next.delete(key);
+  else next.add(key);
+  openSkillMultiplierDetails.value = next;
+}
+
+function multiplierKeyLabel(key: string | undefined, fallback: string): string {
+  return key === undefined ? fallback : (props.labels.skillMultiplierKeyLabel(key) ?? fallback);
+}
+
+function isNeutralFactor(value: number): boolean {
+  return Number.isFinite(value) && Math.abs(value - 1) < 0.000001;
+}
+
+function isUnchangedMultiply(calculation: ActionValueCalculation): boolean {
+  return (
+    calculation.operation === 'multiply' &&
+    isNeutralFactor(calculation.right) &&
+    Math.abs(calculation.result - calculation.left) <
+      0.000001 * Math.max(1, Math.abs(calculation.left))
+  );
+}
+
+/** 基础倍率叠加层数加成；普通命中与末段命中共用同一条加算来源。 */
+function stackBonusMultiplierRows(calculation: ActionValueCalculation): DetailRow[] | undefined {
+  const hasFinalRate =
+    calculation.operation === 'multiply' && calculation.rightKey === 'final_rate';
+  const added = hasFinalRate ? calculation.leftCalculation : calculation;
+  const stackBonus = added?.rightCalculation;
+  if (
+    added?.operation !== 'add' ||
+    added.leftKey !== 'atk_scale' ||
+    added.rightKey !== 'atk_up_final' ||
+    stackBonus?.operation !== 'multiply' ||
+    stackBonus.leftKey !== 'atk_up_per_conduct' ||
+    stackBonus.rightKey !== 'conductCnt'
+  )
+    return undefined;
+  return [
+    { label: props.labels.baseMultiplier, value: pct(added.left) },
+    {
+      label: multiplierKeyLabel(added.rightKey, props.labels.fixedMultiplier),
+      detail: `${props.labels.stacksDetail(stackBonus.right)} × ${pct(stackBonus.left)}`,
+      value: `${added.right >= 0 ? '+' : ''}${pct(added.right)}`,
+    },
+    ...(hasFinalRate
+      ? [
+          {
+            label: multiplierKeyLabel(calculation.rightKey, props.labels.fixedMultiplier),
+            value: mult(calculation.right),
+          },
+        ]
+      : []),
+  ];
+}
+
+/** 可识别的基础倍率乘法统一显示基础值与来源项，未知来源保留为额外倍率。 */
+function baseAndFactorMultiplierRows(calculation: ActionValueCalculation): DetailRow[] | undefined {
+  if (
+    calculation.operation !== 'multiply' ||
+    !/^atk_scale(?:_|$)/.test(calculation.leftKey ?? '') ||
+    calculation.leftCalculation !== undefined ||
+    calculation.rightCalculation !== undefined ||
+    !Number.isFinite(calculation.right)
+  )
+    return undefined;
+  const isAnonymousHitShare =
+    calculation.rightKey === undefined && calculation.right >= 0 && calculation.right <= 1;
+  return [
+    { label: props.labels.baseMultiplier, value: pct(calculation.left) },
+    ...(isUnchangedMultiply(calculation)
+      ? []
+      : isAnonymousHitShare
+        ? [{ label: props.labels.hitFraction, value: pct(calculation.right) }]
+        : [
+            {
+              label: multiplierKeyLabel(calculation.rightKey, props.labels.fixedMultiplier),
+              value: mult(calculation.right),
+            },
+          ]),
+  ];
+}
+
+/** 技能表原值及其后续乘数使用统一的「基础倍率 + 生效来源」布局。 */
+function skillSettingMultiplierRows(calculation: ActionValueCalculation): DetailRow[] | undefined {
+  if (calculation.sourceKind === 'skillSetting' && calculation.operation === 'multiply') {
+    return [
+      { label: props.labels.baseMultiplier, value: pct(calculation.left) },
+      ...(isUnchangedMultiply(calculation)
+        ? []
+        : [{ label: props.labels.artsIntensity, value: mult(calculation.right) }]),
+    ];
+  }
+  if (calculation.operation !== 'multiply' || calculation.leftCalculation === undefined)
+    return undefined;
+  const sources = skillSettingMultiplierRows(calculation.leftCalculation);
+  if (sources === undefined) return undefined;
+  if (isUnchangedMultiply(calculation)) return sources;
+  // 只折叠单纯的乘 1 来源；复杂的右侧计算仍交给完整公式展示。
+  const factorCalculation = calculation.rightCalculation;
+  if (
+    factorCalculation !== undefined &&
+    (!isUnchangedMultiply(factorCalculation) ||
+      factorCalculation.leftCalculation !== undefined ||
+      factorCalculation.rightCalculation !== undefined)
+  )
+    return undefined;
+  return [
+    ...sources,
+    {
+      label: multiplierKeyLabel(calculation.rightKey, props.labels.fixedMultiplier),
+      value: mult(calculation.right),
+    },
+  ];
+}
+
+function skillMultiplierCalculationRows(
+  calculation: ActionValueCalculation,
+  sourceKey: string | undefined,
+): DetailRow[] {
+  while (isUnchangedMultiply(calculation) && calculation.leftCalculation !== undefined)
+    calculation = calculation.leftCalculation;
+  const semanticRows =
+    stackBonusMultiplierRows(calculation) ??
+    baseAndFactorMultiplierRows(calculation) ??
+    skillSettingMultiplierRows(calculation);
+  if (semanticRows !== undefined) return semanticRows;
+  const rows: DetailRow[] = [];
+  const operand = (value: number, key: string | undefined, percent: boolean) => {
+    const formatted =
+      key === 'conductCnt' ? props.labels.stacksDetail(value) : percent ? pct(value) : mult(value);
+    return key === undefined
+      ? formatted
+      : `${multiplierKeyLabel(key, props.labels.skillMultiplierInternalValue)} (${formatted})`;
+  };
+  const visit = (node: ActionValueCalculation, key: string | undefined, isRoot: boolean): void => {
+    if (isUnchangedMultiply(node)) {
+      if (node.sourceKind === 'skillSetting')
+        rows.push({ label: props.labels.baseMultiplier, value: pct(node.left) });
+      else if (node.leftCalculation !== undefined)
+        visit(node.leftCalculation, node.leftKey, isRoot);
+      else if (/^atk_scale(?:_|$)/.test(node.leftKey ?? ''))
+        rows.push({ label: props.labels.baseMultiplier, value: pct(node.left) });
+      return;
+    }
+    if (node.leftCalculation !== undefined) visit(node.leftCalculation, node.leftKey, false);
+    if (node.rightCalculation !== undefined) visit(node.rightCalculation, node.rightKey, false);
+    const left = operand(node.left, node.leftKey, true);
+    const right = operand(node.right, node.rightKey, node.operation === 'add');
+    const operator =
+      node.operation === 'add'
+        ? '+'
+        : node.operation === 'multiply'
+          ? '×'
+          : node.operation === 'divide'
+            ? '÷'
+            : node.operation;
+    const expression =
+      node.operation === 'floor' || node.operation === 'ceil' || node.operation === 'roundToInt'
+        ? `${node.operation}(${operand(node.right, node.rightKey, true)})`
+        : `${left} ${operator} ${right}`;
+    rows.push({
+      label: `${node.sourceKind === 'skillSetting' && node.sourceColumn !== undefined ? props.labels.skillSettingSource(node.sourceColumn) : isRoot ? props.labels.skillMultiplierResult : multiplierKeyLabel(key ?? sourceKey, props.labels.skillMultiplierStep(rows.length + 1))}: ${expression}`,
+      value: pct(node.result),
+    });
+  };
+  visit(calculation, sourceKey, true);
+  return rows;
+}
+
 const damageDetails = computed<readonly DamageDetail[]>(() =>
   props.entries.flatMap(entry => {
     if (entry.event !== 'DamageApplied') return [];
@@ -502,6 +684,29 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
           ]
         : []),
       { label: props.labels.baseDamage, value: num(data.baseDamage) },
+    ];
+    const skillMultiplierSourceKey =
+      typeof data.skillMultiplierSourceKey === 'string' ? data.skillMultiplierSourceKey : undefined;
+    const skillMultiplierSources: DetailRow[] = [
+      ...(skillMultiplierSourceKey === undefined || entry.skillMultiplierCalculation !== undefined
+        ? []
+        : [
+            {
+              label: props.labels.fromSource(
+                multiplierKeyLabel(
+                  skillMultiplierSourceKey,
+                  props.labels.skillMultiplierInternalValue,
+                ),
+              ),
+              value: '',
+            },
+          ]),
+      ...(entry.skillMultiplierCalculation === undefined
+        ? []
+        : skillMultiplierCalculationRows(
+            entry.skillMultiplierCalculation,
+            skillMultiplierSourceKey,
+          )),
     ];
     const multiplierRows: DetailRow[] = [];
     const modifiers = origins.value
@@ -856,6 +1061,7 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
         attackDetail,
         contextRows,
         baseRows,
+        skillMultiplierSources,
         multiplierRows,
       },
     ];
@@ -869,6 +1075,7 @@ const canForceCritical = computed(() =>
 function onClose(): void {
   openAttackDetails.value = new Set();
   openCriticalDetails.value = new Set();
+  openSkillMultiplierDetails.value = new Set();
   emit('close');
 }
 </script>
@@ -1089,14 +1296,53 @@ function onClose(): void {
                   </tr>
                 </template>
               </template>
-              <tr
-                v-for="row in detail.baseRows"
-                :key="row.label"
-                :class="{ bold: row.label === labels.baseDamage }"
-              >
-                <td class="label-cell">{{ row.label }}</td>
-                <td class="value-cell">{{ row.value }}</td>
-              </tr>
+              <template v-for="row in detail.baseRows" :key="row.label">
+                <tr
+                  :class="{
+                    bold: row.label === labels.baseDamage,
+                    'expandable-row':
+                      row.label === labels.skillMultiplier &&
+                      detail.skillMultiplierSources.length > 0,
+                  }"
+                  @click="
+                    row.label === labels.skillMultiplier && detail.skillMultiplierSources.length > 0
+                      ? toggleSkillMultiplierDetail(detail.key)
+                      : undefined
+                  "
+                >
+                  <td class="label-cell">
+                    <el-icon
+                      v-if="
+                        row.label === labels.skillMultiplier &&
+                        detail.skillMultiplierSources.length > 0
+                      "
+                      class="expand-icon"
+                      :class="{ 'is-open': openSkillMultiplierDetails.has(detail.key) }"
+                      ><ArrowRight
+                    /></el-icon>
+                    {{ row.label }}
+                  </td>
+                  <td class="value-cell">{{ row.value }}</td>
+                </tr>
+                <template
+                  v-if="
+                    row.label === labels.skillMultiplier &&
+                    openSkillMultiplierDetails.has(detail.key)
+                  "
+                >
+                  <tr
+                    v-for="(source, index) in detail.skillMultiplierSources"
+                    :key="index"
+                    class="sub-row dim"
+                  >
+                    <td class="label-cell indent-2 skill-source-label">
+                      {{ source.label }}
+                      <span v-if="source.detail" class="mult-detail">{{ source.detail }}</span>
+                    </td>
+                    <td class="value-cell">{{ source.value }}</td>
+                  </tr>
+                </template>
+              </template>
             </tbody>
           </table>
 
@@ -1246,6 +1492,9 @@ function onClose(): void {
 }
 .label-cell {
   color: var(--ea-fg-secondary, #ddd);
+}
+.skill-source-label {
+  overflow-wrap: anywhere;
 }
 .value-cell {
   color: var(--ea-fg, #eee);

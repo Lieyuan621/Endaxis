@@ -500,6 +500,48 @@ describe('ActionBlackboardOperationExecutor', () => {
     expect(blackboard.getNumber('notANumber')).toBeNaN();
   });
 
+  it('keeps the executed add-then-multiply multiplier chain without following later writes', () => {
+    const blackboard = new ActionBlackboard({ base: 0.4, bonus: 0.1, finalRate: 6 });
+    const executor = new ActionBlackboardOperationExecutor(delegate);
+    executor.execute(
+      {
+        kind: 'calculateActionValue',
+        parameters: {
+          key: 'finalScale',
+          operation: 'add',
+          left: { kind: 'blackboard', key: 'base' },
+          right: { kind: 'blackboard', key: 'bonus' },
+        },
+      },
+      { blackboard },
+    );
+    executor.execute(
+      {
+        kind: 'calculateActionValue',
+        parameters: {
+          key: 'finalScale',
+          operation: 'multiply',
+          left: { kind: 'blackboard', key: 'finalScale' },
+          right: { kind: 'blackboard', key: 'finalRate' },
+        },
+      },
+      { blackboard },
+    );
+    const calculation = blackboard.getValueCalculation('finalScale');
+    expect(calculation).toMatchObject({
+      operation: 'multiply',
+      leftKey: 'finalScale',
+      rightKey: 'finalRate',
+      result: 3,
+      leftCalculation: { operation: 'add', leftKey: 'base', rightKey: 'bonus', result: 0.5 },
+    });
+    const saved = structuredClone(blackboard.runtimeState);
+    blackboard.assignDynamic('finalScale', 9);
+    expect(ActionBlackboard.bindRuntimeState(saved).getValueCalculation('finalScale')).toEqual(
+      calculation,
+    );
+  });
+
   it('rejects a missing calculation operand instead of using its serialized fallback', () => {
     const executor = new ActionBlackboardOperationExecutor(delegate);
 
@@ -552,6 +594,14 @@ describe('ActionBlackboardOperationExecutor', () => {
 
     expect(blackboard.getNumber('evenResult')).toBe(20);
     expect(blackboard.getNumber('oddResult')).toBe(40);
+    expect(blackboard.getValueCalculation('oddResult')).toMatchObject({
+      sourceKind: 'skillSetting',
+      sourceColumn: 4,
+      operation: 'multiply',
+      left: 40,
+      right: 1,
+      result: 40,
+    });
     expect(blackboard.getNumber('untouched')).toBeUndefined();
     expect(refresh).toHaveBeenCalledTimes(2);
   });
@@ -689,6 +739,64 @@ describe('ActionBlackboardOperationExecutor', () => {
       copied,
     );
     expect(copied.blackboard.getArtsIntensityDetail('copy')).toBeUndefined();
+  });
+
+  it('treats an all-one enhanced skill-setting column as a factor, not the attack scale base', () => {
+    const executor = new ActionBlackboardOperationExecutor(delegate, undefined, {
+      sourceId: 'mifu',
+      read: () => 72,
+    });
+    const context = { blackboard: new ActionBlackboard({ scale: 6 }) };
+    executor.execute(
+      {
+        kind: 'readSkillSettingData',
+        parameters: {
+          items: [
+            {
+              values: [1, 1, 1, 1],
+              column: { kind: 'constant', value: 1 },
+              storeKey: 'artsFactor',
+              enhance: { target: 'caster', formula: { kind: 'linear', paramA: 0.01 } },
+            },
+          ],
+        },
+      },
+      context,
+    );
+    expect(context.blackboard.getArtsIntensityDetail('artsFactor')).toMatchObject({
+      baseValue: 1,
+      multiplier: 1.72,
+      unitEnhancementFactor: true,
+    });
+    executor.execute(
+      {
+        kind: 'calculateActionValue',
+        parameters: {
+          key: 'scale',
+          operation: 'multiply',
+          left: { kind: 'blackboard', key: 'scale' },
+          right: { kind: 'blackboard', key: 'artsFactor' },
+        },
+      },
+      context,
+    );
+    executor.execute(
+      {
+        kind: 'modifyActionValue',
+        parameters: {
+          key: 'scale',
+          operation: 'multiply',
+          value: { kind: 'constant', value: 1.5 },
+        },
+      },
+      context,
+    );
+    expect(context.blackboard.getArtsIntensityDetail('scale')).toMatchObject({
+      baseValue: 6,
+      multiplier: 1.72,
+      additionalMultiplier: 1.5,
+      unitEnhancementFactor: false,
+    });
   });
 
   it('compares dynamic action values with native float tolerance', () => {

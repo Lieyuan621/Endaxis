@@ -1,4 +1,17 @@
 import type { CombatReceiptEntry } from './combatReceipt';
+import type { ActionValueCalculation } from '../state/foundationState';
+
+function freezeValueCalculation(calculation: ActionValueCalculation): ActionValueCalculation {
+  return Object.freeze({
+    ...calculation,
+    ...(calculation.leftCalculation === undefined
+      ? {}
+      : { leftCalculation: freezeValueCalculation(calculation.leftCalculation) }),
+    ...(calculation.rightCalculation === undefined
+      ? {}
+      : { rightCalculation: freezeValueCalculation(calculation.rightCalculation) }),
+  });
+}
 
 interface Segment {
   readonly previous: Segment | null;
@@ -124,6 +137,9 @@ export class CombatReceiptHistory {
         ? {}
         : { runtimeSource: Object.freeze({ ...entry.runtimeSource }) }),
       ...(entry.data === undefined ? {} : { data: Object.freeze({ ...entry.data }) }),
+      ...(entry.skillMultiplierCalculation === undefined
+        ? {}
+        : { skillMultiplierCalculation: freezeValueCalculation(entry.skillMultiplierCalculation) }),
       ...(entry.appliedDamageModifiers === undefined
         ? {}
         : {

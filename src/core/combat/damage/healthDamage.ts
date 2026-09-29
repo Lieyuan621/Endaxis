@@ -95,6 +95,7 @@ export interface HealthDamageReceiptDetail {
   readonly finalAttackValue?: number;
   readonly standardCalculation?: boolean;
   readonly skillMultiplierPercent?: number;
+  readonly skillMultiplierSourceKey?: string;
   readonly calculationMultiplier?: number;
   readonly damageScaleMultiplier?: number;
   readonly criticalRate?: number;
@@ -141,6 +142,7 @@ export interface ExecuteHealthDamageInput {
   readonly triggersCriticalEffects?: boolean;
   /** 伤害详情使用的公式冻结值；只记录已参与本次结算的标量，不在投影层重算规则。 */
   readonly detail?: HealthDamageReceiptDetail;
+  readonly skillMultiplierCalculation?: import('../state/foundationState').ActionValueCalculation;
   readonly appliedDamageModifiers?: readonly import('./damageScale').AppliedDamageModifier[];
   readonly target: CombatVitals;
   readonly clock: CombatClock;
@@ -206,6 +208,9 @@ export function executeHealthDamage(input: ExecuteHealthDamageInput): HealthDama
       : {}),
     sourceId: input.sourceId,
     targetId: input.targetId,
+    ...(input.skillMultiplierCalculation === undefined
+      ? {}
+      : { skillMultiplierCalculation: input.skillMultiplierCalculation }),
     data: {
       damageType: input.damageType,
       value: result.value,

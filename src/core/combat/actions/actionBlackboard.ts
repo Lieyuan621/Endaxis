@@ -49,7 +49,7 @@ export class ActionBlackboard {
         (this.#state.artsIntensityFactors ??= new Map()).set(key, factor);
     }
     for (const [key, calculation] of Object.entries(calculations ?? {}))
-      (this.#state.valueCalculations ??= new Map()).set(key, calculation);
+      (this.#state.valueCalculations ??= new Map()).set(key, limitValueCalculation(calculation));
   }
   getValueCalculation(
     key: string,
@@ -64,7 +64,7 @@ export class ActionBlackboard {
   ): void {
     const state = key.startsWith('EntityBB_') ? (this.#state.entity ?? this.#state) : this.#state;
     if (calculation === undefined) state.valueCalculations?.delete(key);
-    else (state.valueCalculations ??= new Map()).set(key, calculation);
+    else (state.valueCalculations ??= new Map()).set(key, limitValueCalculation(calculation));
   }
   getArtsIntensityFactor(key: string): number | undefined {
     return this.getArtsIntensityDetail(key)?.multiplier;
@@ -81,6 +81,7 @@ export class ActionBlackboard {
     intensity?: number,
     baseValue?: number,
     additionalMultiplier?: number,
+    unitEnhancementFactor?: boolean,
   ): void {
     const state = key.startsWith('EntityBB_') ? (this.#state.entity ?? this.#state) : this.#state;
     if (factor === undefined || !Number.isFinite(factor) || factor <= 0)
@@ -91,6 +92,7 @@ export class ActionBlackboard {
         intensity,
         baseValue,
         ...(additionalMultiplier === undefined ? {} : { additionalMultiplier }),
+        ...(unitEnhancementFactor === undefined ? {} : { unitEnhancementFactor }),
       });
   }
   getString(key: string): string | undefined {
@@ -159,6 +161,29 @@ export class ActionBlackboard {
   }
 }
 
+/** 单次命中的解释只保留有限层级，避免循环更新黑板时无限增大存档。 */
+export function limitValueCalculation(
+  calculation: import('../state/foundationState').ActionValueCalculation,
+  depth = 4,
+): import('../state/foundationState').ActionValueCalculation {
+  return {
+    operation: calculation.operation,
+    left: calculation.left,
+    right: calculation.right,
+    result: calculation.result,
+    ...(calculation.sourceKind === undefined ? {} : { sourceKind: calculation.sourceKind }),
+    ...(calculation.sourceColumn === undefined ? {} : { sourceColumn: calculation.sourceColumn }),
+    ...(calculation.leftKey === undefined ? {} : { leftKey: calculation.leftKey }),
+    ...(calculation.rightKey === undefined ? {} : { rightKey: calculation.rightKey }),
+    ...(depth <= 1 || calculation.leftCalculation === undefined
+      ? {}
+      : { leftCalculation: limitValueCalculation(calculation.leftCalculation, depth - 1) }),
+    ...(depth <= 1 || calculation.rightCalculation === undefined
+      ? {}
+      : { rightCalculation: limitValueCalculation(calculation.rightCalculation, depth - 1) }),
+  };
+}
+
 /** 缺键严格报错，只有操作数显式声明 fallback 时允许回退。 */
 export function resolveActionValueOperand(
   operand: ActionValueOperand,
@@ -197,9 +222,13 @@ export function combineSkillSettingFactors(
   if (operation === 'assign') return right;
   if (operation === 'multiply') {
     if (left && !right)
-      return { ...left, additionalMultiplier: (left.additionalMultiplier ?? 1) * rightValue };
+      return left.unitEnhancementFactor
+        ? { ...left, baseValue: rightValue, unitEnhancementFactor: false }
+        : { ...left, additionalMultiplier: (left.additionalMultiplier ?? 1) * rightValue };
     if (right && !left)
-      return { ...right, additionalMultiplier: (right.additionalMultiplier ?? 1) * leftValue };
+      return right.unitEnhancementFactor
+        ? { ...right, baseValue: leftValue, unitEnhancementFactor: false }
+        : { ...right, additionalMultiplier: (right.additionalMultiplier ?? 1) * leftValue };
   }
   if (operation === 'divide' && left && !right && rightValue !== 0)
     return { ...left, additionalMultiplier: (left.additionalMultiplier ?? 1) / rightValue };

@@ -183,7 +183,11 @@ it('keeps flat, additive percentage and independent attack sources separate with
         attribute: 'Atk',
         slot: 'baseMultiplier',
         value: 0.18,
-        sourceId: 'percent',
+        sourceId: 'operator',
+        panelSource: {
+          kind: 'equipment',
+          contribution: { kind: 'weaponTrait', slug: 'weapon', traitKey: 'attack-percent' },
+        },
       },
       {
         kind: 'attribute',
@@ -223,7 +227,7 @@ it('keeps flat, additive percentage and independent attack sources separate with
             forceCritical: false,
             resultForceCritical: false,
             entries: [entry],
-            contributionSourceLabel: () => '',
+            contributionSourceLabel: () => '武器词条',
             damageTypeLabel: (s: string) => s,
             skillTypeLabel: (s: string) => s,
             labels: {
@@ -263,7 +267,7 @@ it('keeps flat, additive percentage and independent attack sources separate with
   expect(detail.attributeSources).toEqual({});
   expect(detail.attackSlotSources.baseFinalAddition).toEqual([{ label: 'flat', value: 'ATK -20' }]);
   expect(detail.attackSlotSources.baseMultiplier).toEqual([
-    { label: 'percent', value: 'ATK +18%' },
+    { label: '武器词条', value: 'ATK +18%' },
   ]);
   expect(detail.attackSlotSources.finalMultiplier).toEqual([
     { label: 'product', value: 'ATK x1.2' },
@@ -369,10 +373,35 @@ it('projects expandable crit rows from the frozen hit facts', async () => {
     data: {
       value: 150,
       standardCalculation: true,
-      skillMultiplierPercent: 400,
+      skillMultiplierPercent: 324,
+      skillMultiplierSourceKey: 'atk_scale_final',
       criticalRate: 1.25,
       criticalDamageIncrease: 0.6,
       criticalExpectationMultiplier: 1.6,
+    },
+    skillMultiplierCalculation: {
+      operation: 'multiply',
+      left: 0.54,
+      right: 6,
+      result: 3.24,
+      leftKey: 'atk_scale_final',
+      rightKey: 'final_rate',
+      leftCalculation: {
+        operation: 'add',
+        left: 0.45,
+        right: 0.09,
+        result: 0.54,
+        leftKey: 'atk_scale',
+        rightKey: 'atk_up_final',
+        rightCalculation: {
+          operation: 'multiply',
+          left: 0.09,
+          right: 1,
+          result: 0.09,
+          leftKey: 'atk_up_per_conduct',
+          rightKey: 'conductCnt',
+        },
+      },
     },
     appliedDamageModifiers: [
       {
@@ -417,6 +446,29 @@ it('projects expandable crit rows from the frozen hit facts', async () => {
             skillTypeLabel: (s: string) => s,
             labels: {
               skillMultiplier: 'Skill Multiplier',
+              baseMultiplier: '基础倍率',
+              fixedMultiplier: '额外倍率',
+              hitFraction: '本次命中占比',
+              fromSource: (name: string) => `from ${name}`,
+              skillSettingSource: (column: number) => `Skill data column ${column}`,
+              skillMultiplierKeyLabel: (key: string) =>
+                (
+                  ({
+                    atk_scale: '基础倍率',
+                    atk_scale_enhence: '强化倍率',
+                    damage_enhence: '伤害强化',
+                    atk_scale_final: '计算后倍率',
+                    atk_up_per_conduct: '每层导电倍率加成',
+                    conductCnt: '导电层数',
+                    atk_up_final: '导电倍率加成',
+                    final_rate: '末段雷击倍率',
+                  }) as Record<string, string>
+                )[key],
+              skillMultiplierInternalValue: '技能内部数值',
+              skillMultiplierStep: (step: number) => `计算步骤 ${step}`,
+              skillMultiplierResult: '最终倍率',
+              artsIntensity: '技艺强度',
+              stacksDetail: (stacks: number) => `${stacks} 层`,
               criticalRate: 'CRIT',
               criticalDamage: 'CRIT DMG',
               defenseDetail: () => '',
@@ -426,7 +478,206 @@ it('projects expandable crit rows from the frozen hit facts', async () => {
     }),
   );
   const detail = state.damageDetails.value[0];
-  expect(detail.baseRows[0]).toEqual({ label: 'Skill Multiplier', value: '400%' });
+  expect(detail.baseRows[0]).toEqual({ label: 'Skill Multiplier', value: '324%' });
+  expect(detail.skillMultiplierSources).toEqual([
+    { label: '基础倍率', value: '45%' },
+    { label: '导电倍率加成', detail: '1 层 × 9%', value: '+9%' },
+    { label: '末段雷击倍率', value: 'x6' },
+  ]);
+  expect(
+    state.skillMultiplierCalculationRows(
+      entry.skillMultiplierCalculation!.leftCalculation,
+      'atk_scale_final',
+    ),
+  ).toEqual(detail.skillMultiplierSources.slice(0, 2));
+  expect(
+    state.skillMultiplierCalculationRows(
+      {
+        operation: 'multiply',
+        left: 1,
+        right: 2,
+        result: 2,
+        leftKey: 'unknown_internal_key',
+      },
+      'another_unknown_key',
+    )[0].label,
+  ).not.toMatch(/unknown_internal_key|another_unknown_key/);
+  expect(
+    state.skillMultiplierCalculationRows(
+      {
+        operation: 'multiply',
+        left: 1.5,
+        right: 0.1,
+        result: 0.15,
+        leftKey: 'atk_scale',
+      },
+      'atk_scale_once',
+    ),
+  ).toEqual([
+    { label: '基础倍率', value: '150%' },
+    { label: '本次命中占比', value: '10%' },
+  ]);
+  expect(
+    state.skillMultiplierCalculationRows(
+      {
+        operation: 'multiply',
+        left: 1.5,
+        right: 0.1,
+        result: 0.15,
+        leftKey: 'atk_scale',
+      },
+      'atk_scale',
+    ),
+  ).toEqual([
+    { label: '基础倍率', value: '150%' },
+    { label: '本次命中占比', value: '10%' },
+  ]);
+  expect(
+    state.skillMultiplierCalculationRows(
+      {
+        operation: 'multiply',
+        left: 1.92,
+        right: 0.4,
+        result: 0.768,
+        leftKey: 'atk_scale_1',
+      },
+      'atk_scale_once',
+    ),
+  ).toEqual([
+    { label: '基础倍率', value: '192%' },
+    { label: '本次命中占比', value: '40%' },
+  ]);
+  expect(
+    state.skillMultiplierCalculationRows(
+      {
+        operation: 'multiply',
+        left: 1.5,
+        right: 1.2,
+        result: 1.8,
+        leftKey: 'atk_scale',
+      },
+      'atk_scale_final',
+    ),
+  ).toEqual([
+    { label: '基础倍率', value: '150%' },
+    { label: '额外倍率', value: 'x1.2' },
+  ]);
+  expect(
+    state.skillMultiplierCalculationRows(
+      {
+        operation: 'multiply',
+        left: 1,
+        right: 1.6,
+        result: 1.6,
+        leftKey: 'atk_scale_base',
+        rightKey: 'atk_scale_enhence',
+      },
+      'atk_scale_total',
+    ),
+  ).toEqual([
+    { label: '基础倍率', value: '100%' },
+    { label: '强化倍率', value: 'x1.6' },
+  ]);
+  expect(
+    state.skillMultiplierCalculationRows(
+      {
+        operation: 'multiply',
+        left: 1,
+        right: 0.4,
+        result: 0.4,
+        leftKey: 'atk_scale_base',
+        rightKey: 'unknown_factor',
+      },
+      'atk_scale_total',
+    ),
+  ).toEqual([
+    { label: '基础倍率', value: '100%' },
+    { label: '额外倍率', value: 'x0.4' },
+  ]);
+  const burstBase = {
+    operation: 'multiply',
+    left: 1.6,
+    right: 1,
+    result: 1.6,
+    sourceKind: 'skillSetting',
+    sourceColumn: 1,
+  } as const;
+  const burstScale = (factor: number) => ({
+    operation: 'multiply' as const,
+    left: 1.6,
+    right: factor,
+    result: 1.6 * factor,
+    leftKey: 'atk_scale',
+    rightKey: 'damage_enhence',
+    leftCalculation: burstBase,
+    rightCalculation: {
+      operation: 'multiply' as const,
+      left: factor,
+      right: 1,
+      result: factor,
+      leftKey: 'potential_damage_rate',
+    },
+  });
+  expect(state.skillMultiplierCalculationRows(burstScale(1), 'atk_scale')).toEqual([
+    { label: '基础倍率', value: '160%' },
+  ]);
+  expect(state.skillMultiplierCalculationRows(burstScale(1.1), 'atk_scale')).toEqual([
+    { label: '基础倍率', value: '160%' },
+    { label: '伤害强化', value: 'x1.1' },
+  ]);
+  expect(
+    state.skillMultiplierCalculationRows({ ...burstBase, right: 1.25, result: 2 }, 'atk_scale'),
+  ).toEqual([
+    { label: '基础倍率', value: '160%' },
+    { label: '技艺强度', value: 'x1.25' },
+  ]);
+  expect(
+    state.skillMultiplierCalculationRows(
+      { operation: 'multiply', left: 1.6, right: 1, result: 1.6, leftKey: 'atk_scale' },
+      'atk_scale',
+    ),
+  ).toEqual([{ label: '基础倍率', value: '160%' }]);
+  expect(
+    state.skillMultiplierCalculationRows(
+      {
+        operation: 'multiply',
+        left: 2,
+        right: 1.2,
+        result: 2.4,
+        rightKey: 'unknown_factor',
+        rightCalculation: {
+          operation: 'multiply',
+          left: 1.2,
+          right: 1,
+          result: 1.2,
+          leftKey: 'unknown_factor',
+        },
+      },
+      'unknown_total',
+    ),
+  ).toHaveLength(1);
+  const complexBurstRows = state.skillMultiplierCalculationRows(
+    {
+      operation: 'multiply',
+      left: 1.6,
+      right: 1.2,
+      result: 1.92,
+      leftKey: 'atk_scale',
+      rightKey: 'damage_enhence',
+      leftCalculation: burstBase,
+      rightCalculation: {
+        operation: 'add',
+        left: 1,
+        right: 0.2,
+        result: 1.2,
+      },
+    },
+    'atk_scale',
+  );
+  expect(complexBurstRows[0]).toEqual({ label: '基础倍率', value: '160%' });
+  expect(complexBurstRows).toHaveLength(3);
+  state.toggleSkillMultiplierDetail(3);
+  expect(state.openSkillMultiplierDetails.value.has(3)).toBe(true);
   expect(detail.criticalRateRaw).toBe(1.25);
   expect(detail.criticalRateEffective).toBe(1);
   expect(detail.multiplierRows.find((row: { kind?: string }) => row.kind === 'crit')?.detail).toBe(
@@ -440,6 +691,7 @@ it('projects expandable crit rows from the frozen hit facts', async () => {
   expect(state.openCriticalDetails.value.has(3)).toBe(true);
   state.onClose();
   expect(state.openCriticalDetails.value.size).toBe(0);
+  expect(state.openSkillMultiplierDetails.value.size).toBe(0);
 });
 
 it('uses the shared floating-surface arrow and keeps the attack breakdown in the table', () => {

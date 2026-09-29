@@ -2564,6 +2564,13 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
     );
     expect(thirdFormDamage?.data?.value).toBeTypeOf('number');
     expect(thirdFormDamage?.data?.value as number).toBeGreaterThan(0);
+    expect(thirdFormDamage?.data).toMatchObject({
+      skillMultiplierPercent: 600,
+      additionalScaleMultiplier: 1,
+    });
+    expect(Number(thirdFormDamage?.data?.baseDamage)).toBeCloseTo(
+      Number(thirdFormDamage?.data?.attack) * 6,
+    );
     expect(
       result.receiptEntries
         .filter(

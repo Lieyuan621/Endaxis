@@ -641,6 +641,14 @@ describe('PlayerDamageOperationExecutor', () => {
 
     const enhancedBlackboard = new ActionBlackboard({ attackScale: 1 });
     enhancedBlackboard.setArtsIntensityFactor('attackScale', 2, 100, 0.25, 2);
+    enhancedBlackboard.setValueCalculation('attackScale', {
+      operation: 'multiply',
+      left: 0.25,
+      right: 4,
+      result: 1,
+      sourceKind: 'skillSetting',
+      sourceColumn: 12,
+    });
     executor.execute(
       {
         ...DAMAGE_STEP,
@@ -660,6 +668,13 @@ describe('PlayerDamageOperationExecutor', () => {
       artsIntensityMultiplier: 2,
       additionalScaleMultiplier: 2,
       expectedDamage: 100,
+    });
+    expect(receipt.entries.at(-1)?.skillMultiplierCalculation).toMatchObject({
+      sourceKind: 'skillSetting',
+      sourceColumn: 12,
+      left: 0.25,
+      right: 1,
+      result: 0.25,
     });
     // 倍率来自节点输入，攻击力为零也不能丢失或产生反除误差。
     runtimeAttack = 0;
@@ -694,15 +709,21 @@ describe('PlayerDamageOperationExecutor', () => {
       ...DAMAGE_STEP,
       parameters: {
         ...DAMAGE_STEP.parameters,
-        attackScale: 1,
+        attackScale: { kind: 'blackboard' as const, key: 'snapshotScale' },
         takeAttackSnapshot: true,
         stagger: undefined,
       },
     };
     const snapshotContext = {
-      blackboard: new ActionBlackboard(),
+      blackboard: new ActionBlackboard({ snapshotScale: 1 }),
       damageCalculationSnapshots: new DamageCalculationSnapshots(),
     };
+    snapshotContext.blackboard.setValueCalculation('snapshotScale', {
+      operation: 'multiply',
+      left: 0.5,
+      right: 2,
+      result: 1,
+    });
     attackModifiers = [
       {
         kind: 'attribute',
@@ -716,6 +737,7 @@ describe('PlayerDamageOperationExecutor', () => {
       },
     ];
     executor.prepare(snapshotStep, snapshotContext);
+    snapshotContext.blackboard.assignDynamic('snapshotScale', 9);
     attackModifiers[0] = { ...attackModifiers[0]!, buffId: 'new-buff' };
     runtimeAttack = 999;
     executor.prepare(snapshotStep, snapshotContext);
@@ -736,6 +758,13 @@ describe('PlayerDamageOperationExecutor', () => {
       usesAttackSnapshot: true,
       skillMultiplierPercent: 100,
       baseDamage: 100,
+      skillMultiplierSourceKey: 'snapshotScale',
+    });
+    expect(receipt.entries.at(-1)?.skillMultiplierCalculation).toMatchObject({
+      operation: 'multiply',
+      left: 0.5,
+      right: 2,
+      result: 1,
     });
     expect(receipt.entries.at(-1)?.appliedDamageModifiers).toContainEqual({
       kind: 'attribute',
@@ -753,7 +782,7 @@ describe('PlayerDamageOperationExecutor', () => {
 
     // 未选 Switch 分支内的 IfElse 也必须在 Reset 时建立快照，不能等命中后读实时攻击。
     const branchContext = {
-      blackboard: new ActionBlackboard({ choice: 0 }),
+      blackboard: new ActionBlackboard({ choice: 0, snapshotScale: 1 }),
       damageCalculationSnapshots: new DamageCalculationSnapshots(),
     };
     const branchRuntime = new CombatActionSequenceRuntime(

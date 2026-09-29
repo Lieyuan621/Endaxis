@@ -2315,6 +2315,34 @@ describe('registered generated operators', () => {
         }),
       }),
     );
+    const enhancedHit = result.receiptEntries.find(
+      entry =>
+        entry.event === 'DamageApplied' &&
+        entry.data?.castId === enhancedBattleCastId &&
+        String(entry.data?.stepKey).includes('/nodes/dealDamage_12/action'),
+    );
+    expect(enhancedHit?.data?.skillMultiplierSourceKey).toBe('atk_scale_final');
+    expect(enhancedHit?.skillMultiplierCalculation).toMatchObject({
+      operation: 'multiply',
+      leftKey: 'atk_scale_final',
+      rightKey: 'final_rate',
+      leftCalculation: {
+        operation: 'add',
+        leftKey: 'atk_scale',
+        rightKey: 'atk_up_final',
+      },
+    });
+    const ordinaryHit = result.receiptEntries.find(
+      entry =>
+        entry.event === 'DamageApplied' &&
+        entry.data?.castId === enhancedBattleCastId &&
+        /\/nodes\/dealDamage_[45]\/action/.test(String(entry.data?.stepKey)),
+    );
+    expect(ordinaryHit?.skillMultiplierCalculation).toMatchObject({
+      operation: 'add',
+      leftKey: 'atk_scale',
+      rightKey: 'atk_up_final',
+    });
     expect(result.receiptEntries).toContainEqual(
       expect.objectContaining({
         event: 'ElementalInflictionApplied',
