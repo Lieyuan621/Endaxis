@@ -39,6 +39,11 @@ interface TimelineCastMoveOptions {
   ) => boolean;
   readonly simulateNow: () => Promise<boolean>;
   readonly warnLocked: () => void;
+  readonly onDropped?: (
+    event: PointerEvent,
+    trackIndex: TrackIndex,
+    castIds: readonly string[],
+  ) => void;
 }
 /** 一个技能拖动会话拥有预览、指针捕获、自动滚动及发布后的收尾。 */
 export function useTimelineCastMove(options: TimelineCastMoveOptions) {
@@ -348,6 +353,7 @@ export function useTimelineCastMove(options: TimelineCastMoveOptions) {
       await simulateNow();
       return;
     }
+    options.onDropped?.(event, gesture.trackIndex, gesture.skillCastIds);
     await nextTick();
     const published = await simulateNow();
     // 只清理仍属于本次松手的预览；失败时保留实际落点，避免回退到不匹配的旧回执。

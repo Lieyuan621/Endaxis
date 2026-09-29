@@ -323,7 +323,8 @@ export type TrackGearSlot = keyof TrackDocument['gears'];
 
 /**
  * 更换轨道的干员实例。已有技能块依赖旧干员定义身份，因此切换或移除干员时一并清理。
- * 调用方负责提供初始养成值和轨道身份；命令层只维护轨道实例、连线的一致性与空轨道语义。
+ * 移除干员时同时删除指向该空轨道的输入标记；更换干员仍保留轨道上的通用输入。
+ * 调用方负责提供初始养成值和轨道身份。
  */
 export function setTrackOperator(
   scenario: ScenarioDocument,
@@ -337,6 +338,30 @@ export function setTrackOperator(
   if (previousSlug === nextSlug) return scenario;
 
   const removedCastIds = new Set(previousTrack?.skillCasts.map(cast => cast.id) ?? []);
+  const battle =
+    operatorInstance === null
+      ? {
+          ...scenario.battle,
+          controlSwitches: scenario.battle.controlSwitches.filter(
+            marker => marker.trackIndex !== trackIndex,
+          ),
+          ...(scenario.battle.dodgeMarkers === undefined
+            ? {}
+            : {
+                dodgeMarkers: scenario.battle.dodgeMarkers.filter(
+                  marker => marker.trackIndex !== trackIndex,
+                ),
+              }),
+          ...(scenario.battle.externalEventMarkers === undefined
+            ? {}
+            : {
+                externalEventMarkers: scenario.battle.externalEventMarkers.filter(
+                  marker =>
+                    marker.target.scope !== 'operator' || marker.target.trackIndex !== trackIndex,
+                ),
+              }),
+        }
+      : scenario.battle;
   const tracks = [...scenario.tracks] as ScenarioDocument['tracks'];
   tracks[trackIndex] =
     operatorInstance === null
@@ -358,6 +383,7 @@ export function setTrackOperator(
         !removedCastIds.has(connection.from.skillCastId) &&
         !removedCastIds.has(connection.to.skillCastId),
     ),
+    battle,
   };
 }
 
@@ -589,6 +615,36 @@ export function createSkillCastGroup(
     ]),
   );
   return replaceSkillCastPlacements(scenario, placements);
+}
+
+/** 将独立技能插到组内指定成员之前；保留组首、原成员顺序和所有实例身份。 */
+export function insertSkillCastIntoGroup(
+  scenario: ScenarioDocument,
+  castId: string,
+  beforeCastId: string,
+): ScenarioDocument {
+  const track = scenario.tracks.find(track => track?.skillCasts.some(cast => cast.id === castId));
+  if (!track) return scenario;
+  const chains = getSkillCastPlacementChains(track.skillCasts);
+  const source = chains.find(chain => chain.casts.some(cast => cast.id === castId));
+  const target = chains.find(chain => chain.casts.some(cast => cast.id === beforeCastId));
+  if (
+    !source ||
+    source.casts.length !== 1 ||
+    !target ||
+    target.casts.length < 2 ||
+    [...source.casts, ...target.casts].some(cast => cast.presentation?.locked)
+  )
+    return scenario;
+  const index = target.casts.findIndex(cast => cast.id === beforeCastId);
+  if (index <= 0) return scenario;
+  return replaceSkillCastPlacements(
+    scenario,
+    new Map([
+      [castId, { afterCastId: target.casts[index - 1]!.id }],
+      [beforeCastId, { afterCastId: castId }],
+    ]),
+  );
 }
 
 /** 显式解散涉及的完整链，以用户当前看到的起点变成独立块；后台重算不得调用此命令。 */

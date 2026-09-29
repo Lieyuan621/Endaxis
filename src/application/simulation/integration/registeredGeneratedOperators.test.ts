@@ -52,6 +52,85 @@ import type {
   ActionGraphStep,
 } from '../../../../packages/game-data-contract/src/actionGraph';
 
+import { createEditorSimulationService } from '../testSupport/editorSimulationService';
+
+it('梨诺战技接连携保留演唱，转入终结技时结束演唱且导电不再开启连携', async () => {
+  const scenario = createEmptyScenario('liino-stance', 'liino');
+  scenario.tracks[0] = {
+    id: 'liino',
+    operator: {
+      operatorSlug: 'liino',
+      level: 90,
+      promoted: true,
+      potential: 0,
+      trustLevel: 4,
+      skillLevels: { basicAttack: 12, battleSkill: 12, comboSkill: 12, ultimate: 12 },
+      talentStates: {},
+    },
+    weapon: null,
+    gears: { armor: null, gloves: null, accessory1: null, accessory2: null },
+    initialState: { ultimateEnergy: 0 },
+    skillCasts: [
+      {
+        id: 'battle',
+        source: {
+          kind: 'operatorSkill',
+          skillGroupKey: 'battleSkill',
+          skillKey: 'chr_0035_liino_normal_skill',
+        },
+        placement: { startFrame: 0 },
+      },
+      {
+        id: 'combo',
+        source: {
+          kind: 'operatorSkill',
+          skillGroupKey: 'comboSkill',
+          skillKey: 'chr_0035_liino_combo_skill',
+        },
+        placement: { startFrame: 60 },
+      },
+      {
+        id: 'ultimate',
+        source: {
+          kind: 'operatorSkill',
+          skillGroupKey: 'ultimate',
+          skillKey: 'chr_0035_liino_ultimate_skill',
+        },
+        placement: { startFrame: 300 },
+      },
+    ],
+  };
+  const result = await createEditorSimulationService().simulate(scenario, 700);
+  const entries = result.receiptEntries;
+  const normalStanceEnds = entries.filter(
+    e =>
+      e.event === 'BuffFinished' && e.data?.buffId === 'buff_chr_0035_liino_normalskill_music_tag',
+  );
+  expect(normalStanceEnds).toHaveLength(1);
+  expect(normalStanceEnds[0]?.frame).toBe(300);
+  const normalWaves = entries.filter(
+    e =>
+      e.event === 'SkillStarted' &&
+      e.data?.skillId === 'chr_0035_liino_normal_skill_soundwave_projhit',
+  );
+  expect(normalWaves.some(e => e.frame > 60 && e.frame < 300)).toBe(true);
+  expect(normalWaves.some(e => e.frame >= 300)).toBe(false);
+  expect(
+    entries.some(
+      e => e.event === 'BuffApplied' && e.data?.buffId === 'buff_chr_0035_liino_ultskill_music_tag',
+    ),
+  ).toBe(true);
+  expect(
+    entries.some(
+      e =>
+        e.event === 'BuffApplied' &&
+        e.frame >= 300 &&
+        e.data?.buffId === 'buff_common_pulse_pulse_conduct_triggered',
+    ),
+  ).toBe(true);
+  expect(entries.filter(e => e.event === 'ComboWindowOpened' && e.frame >= 300)).toEqual([]);
+});
+
 function findSkill(operator: OperatorDefinition, key: string) {
   const skill = operator.skillGroups
     .flatMap(group => (Array.isArray(group.skills) ? group.skills : [group.skills]))

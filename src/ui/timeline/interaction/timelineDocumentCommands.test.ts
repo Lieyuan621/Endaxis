@@ -30,6 +30,7 @@ import {
   removeDodgeMarker,
   clearSimulationRangeBoundary,
   createSkillCastGroup,
+  insertSkillCastIntoGroup,
   dissolveSkillCastGroups,
   moveSkillCast,
   moveSkillCasts,
@@ -292,6 +293,23 @@ describe('手动技能组命令', () => {
   }
   const grouped = () => createSkillCastGroup(loose(), members, frames);
 
+  it('插入独立技能只重接相邻两段，保留组首、成员身份和连线', () => {
+    const original = grouped();
+    const result = insertSkillCastIntoGroup(original, 'cast:4', 'cast:2');
+    expect(result.tracks[0]!.skillCasts.map(cast => cast.placement)).toEqual([
+      { startFrame: 10 },
+      { afterCastId: 'cast:4' },
+      { afterCastId: 'cast:2' },
+      { afterCastId: 'cast:1' },
+    ]);
+    expect(result.connections).toBe(original.connections);
+    expect(original.tracks[0]!.skillCasts[1]!.placement).toEqual({ afterCastId: 'cast:1' });
+    expect(insertSkillCastIntoGroup(original, 'cast:2', 'cast:3')).toBe(original);
+    expect(insertSkillCastIntoGroup(original, 'cast:4', 'cast:1')).toBe(original);
+    original.tracks[0]!.skillCasts[2]!.presentation = { locked: true };
+    expect(insertSkillCastIntoGroup(original, 'cast:4', 'cast:2')).toBe(original);
+  });
+
   it('按实际顺序成组，仅组首保存帧，身份和技能块连线保持原样', () => {
     const original = loose();
     const value = createSkillCastGroup(original, new Set(['cast:3', 'cast:1', 'cast:2']), frames);
@@ -484,6 +502,67 @@ describe('moveSkillCast', () => {
     original.tracks[0] = { ...original.tracks[0]!, operator: perlicaBuild };
 
     expect(setTrackOperator(original, 0, { ...perlicaBuild }, 'track:0')).toBe(original);
+  });
+
+  it('清空轨道删除其闪避、切人和外部输入，保留其他轨道与全队标记', () => {
+    const original = scenario();
+    original.tracks[0] = { ...original.tracks[0]!, operator: perlicaBuild };
+    original.tracks[1] = { ...original.tracks[0]!, id: 'track:1', skillCasts: [] };
+    original.battle.dodgeMarkers = [
+      {
+        id: 'dodge:sample:1',
+        frame: 10,
+        trackIndex: 0,
+        direction: 'forward',
+        mode: { kind: 'dodge' },
+      },
+      {
+        id: 'dodge:other',
+        frame: 20,
+        trackIndex: 1,
+        direction: 'backward',
+        mode: { kind: 'perfectDodge', successDelayFrames: 2 },
+      },
+    ];
+    original.battle.controlSwitches = [
+      { id: 'switch:0', frame: 5, trackIndex: 0 },
+      { id: 'switch:1', frame: 15, trackIndex: 1 },
+    ];
+    original.battle.externalEventMarkers = [
+      {
+        id: 'event:0',
+        frame: 5,
+        target: { scope: 'operator', trackIndex: 0 },
+        event: { kind: 'comboCooldownControl', mode: 'ready' },
+      },
+      {
+        id: 'event:1',
+        frame: 5,
+        target: { scope: 'operator', trackIndex: 1 },
+        event: { kind: 'comboCooldownControl', mode: 'ready' },
+      },
+      {
+        id: 'event:team',
+        frame: 5,
+        target: { scope: 'team' },
+        event: { kind: 'comboCooldownControl', mode: 'ready' },
+      },
+    ];
+    const changed = setTrackOperator(
+      original,
+      0,
+      { ...perlicaBuild, operatorSlug: 'arcane' },
+      'track:new',
+    );
+    expect(changed.battle).toBe(original.battle);
+    const cleared = setTrackOperator(original, 0, null, 'unused');
+    expect(cleared.tracks[0]).toBeNull();
+    expect(cleared.battle.dodgeMarkers).toEqual([original.battle.dodgeMarkers[1]]);
+    expect(cleared.battle.controlSwitches).toEqual([original.battle.controlSwitches[1]]);
+    expect(cleared.battle.externalEventMarkers).toEqual(
+      original.battle.externalEventMarkers.slice(1),
+    );
+    expect(original.battle.dodgeMarkers).toHaveLength(2);
   });
 
   it('assigns, replaces and removes a weapon on a track', () => {

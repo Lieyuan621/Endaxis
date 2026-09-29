@@ -2831,6 +2831,7 @@
       "stillSimulated": "模拟仍按时间轴执行{skill}。"
     },
     "continuousGroup": {
+      "join": "加入连续组",
       "create": "设为连续组",
       "dissolve": "解散连续组",
       "label": "连续 · {count}",

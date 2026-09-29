@@ -22,6 +22,25 @@ function track(id: string): TrackDocument {
 }
 
 describe('resolveControlTimeline', () => {
+  it.each([0, 1, 2, 3])('初始主控跳过空轨道，选择首个有干员的轨道 %i', index => {
+    const tracks: TrackListDocument = [null, null, null, null];
+    tracks[index] = track('first');
+    if (index < 3) tracks[3] = track('later');
+    expect(resolveControlTimeline(tracks, [], -30)).toEqual({
+      segments: [{ startFrame: -30, operatorId: 'first' }],
+    });
+  });
+
+  it('跳过有轨道对象但未设置干员的轨道，全空时无人主控', () => {
+    const empty = { ...track('empty'), operator: null };
+    expect(resolveControlTimeline([empty, null, track('third'), null], [])).toEqual({
+      segments: [{ startFrame: 0, operatorId: 'third' }],
+    });
+    expect(resolveControlTimeline([empty, null, null, null], [])).toEqual({
+      segments: [{ startFrame: 0, operatorId: null }],
+    });
+  });
+
   it('uses track zero initially and resolves switches to track ids', () => {
     const tracks: TrackListDocument = [track('track:0'), null, track('track:2'), null];
 
