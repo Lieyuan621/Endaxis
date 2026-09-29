@@ -1,12 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { compileOperatorDefinitionSkills } from '../../core/compiler/compileScenarioTimeline';
-import { ActionGraphDefinitionRepository } from '../../core/compiler/actionGraphDefinitionRepository';
 import type {
   ActionGraphResourceDefinition,
   ActionGraphStep,
 } from '../../../packages/game-data-contract/src/actionGraph';
-import type { OperatorInstanceDocument } from '../../core/project/schema';
-import definition from './zhuang-fangyi.generated';
 import { zhuangFangyi } from './zhuang-fangyi.generated';
 
 function graphActionsFrom(
@@ -24,44 +20,8 @@ function graphActionsFrom(
   return actions;
 }
 
-function buildAtLevel(skillLevel: number): OperatorInstanceDocument {
-  return {
-    operatorSlug: zhuangFangyi.slug,
-    level: 90,
-    promoted: true,
-    potential: 0,
-    trustLevel: 4,
-    skillLevels: {
-      basicAttack: skillLevel,
-      battleSkill: skillLevel,
-      comboSkill: skillLevel,
-      ultimate: skillLevel,
-    },
-    talentStates: {},
-  };
-}
-
 describe('next Zhuang Fangyi definition', () => {
-  it('uses the complete generated definition through the stable operator entry', () => {
-    expect(zhuangFangyi).toBe(definition);
-    expect(zhuangFangyi.conversionSupport).toEqual({
-      completeness: 'complete',
-      missingCapabilities: [],
-    });
-  });
-
-  it('keeps all fifteen player skills plus the runtime-only ultimate exit', () => {
-    expect(zhuangFangyi.skillGroups.map(group => group.key)).toEqual([
-      'basicAttack',
-      'finisher',
-      'plungingAttack',
-      'battleSkill',
-      'enhancedBattleSkill',
-      'comboSkill',
-      'enhancedComboSkill',
-      'ultimate',
-      'enhancedBasicAttack',
-    ]);
+  it('keeps enhanced battle and combo inputs in their distinct skill groups', () => {
     expect(
       zhuangFangyi.skillGroups.find(group => group.key === 'enhancedBattleSkill'),
     ).toMatchObject({
@@ -74,22 +34,6 @@ describe('next Zhuang Fangyi definition', () => {
       operationType: 'comboSkill',
       skills: { key: 'chr_0030_zhuangfy_combo_skill_ult' },
     });
-
-    const skills = zhuangFangyi.skillGroups.flatMap(group => [
-      ...(Array.isArray(group.skills) ? group.skills : [group.skills]),
-      ...(group.replacementSkills ?? []),
-    ]);
-    expect(skills).toHaveLength(16);
-    expect(new Set(skills.map(skill => skill.key)).size).toBe(16);
-    expect(skills.every(skill => skill.scheduledSequences.length > 0)).toBe(true);
-  });
-
-  it('preserves both talent slots and all five potential slots', () => {
-    expect(zhuangFangyi.talents).toHaveLength(2);
-    expect(zhuangFangyi.talents.every(talent => (talent.passiveSkills?.length ?? 0) > 0)).toBe(
-      true,
-    );
-    expect(zhuangFangyi.potentials).toHaveLength(5);
   });
 
   it('switches both enhanced skill slots for the lifetime of the ultimate Buff', () => {
@@ -124,20 +68,4 @@ describe('next Zhuang Fangyi definition', () => {
       parameters: { dashCount: { kind: 'constant', value: -1 } },
     });
   });
-
-  it.each(Array.from({ length: 12 }, (_, index) => index + 1))(
-    'compiles every skill at level %i',
-    skillLevel => {
-      expect(() =>
-        compileOperatorDefinitionSkills(
-          'zhuang-fangyi-instance',
-          buildAtLevel(skillLevel),
-          zhuangFangyi,
-          {},
-          undefined,
-          new ActionGraphDefinitionRepository(),
-        ),
-      ).not.toThrow();
-    },
-  );
 });

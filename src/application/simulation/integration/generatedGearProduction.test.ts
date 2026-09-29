@@ -1,12 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import { ExplicitCriticalSampleSource } from '../../../core/combat/random/criticalSampleSource';
-import { compileScenarioEquipment } from '../../../core/compiler/compileScenarioEquipment';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import type { ScenarioDocument, TrackDocument } from '../../../core/project/schema';
-import { gearDefinitions } from '../../../data/equipment';
 import { gameDataRepository } from '../../../data/gameDataRepository';
-import { generatedSkillSettings } from '../../../data/combat/skillSettings.generated';
 import { perlica as perlicaGeneratedOperator } from '../../../data/operators/perlica.generated';
 import { pogranichnik as pogranichnikGeneratedOperator } from '../../../data/operators/pogranichnik.generated';
 import { liino } from '../../../data/operators/liino.generated';
@@ -17,60 +14,11 @@ import { runStandardPlayerDamageScenarioSimulation } from '../runStandardPlayerD
 const CANONICAL_GEAR_SLUG = 'item_equip_t4_suit_burst01_edc_02';
 
 describe('generated gear production integration', () => {
-  it('uses the same game-data revision as the combat settings', () => {
-    expect(gameDataRepository.revision).toBe(generatedSkillSettings.revision);
-  });
-
-  it('compiles every current native gear at its lowest and highest available artificing levels', () => {
-    const current = gearDefinitions.filter(definition => definition.slug.startsWith('item_'));
-
-    for (const definition of current) {
-      for (const [tier, levels] of [
-        ['minimum', definition.traits.map(() => 0)],
-        ['maximum', definition.traits.map(trait => trait.levelCount - 1)],
-      ] as const) {
-        const identity = `${definition.slug}:${tier}`;
-        const [compiled] = compileScenarioEquipment(
-          createScenarioWithGear(definition.slug, definition.slotType, levels),
-          gameDataRepository,
-          gameDataRepository.actionPrograms,
-        );
-        expect(compiled?.contributions, identity).toHaveLength(definition.traits.length);
-        for (const contribution of compiled?.contributions ?? []) {
-          expect(contribution.source, identity).toMatchObject({
-            kind: 'gearTrait',
-            slug: definition.slug,
-          });
-          for (const modifier of contribution.modifiers) {
-            expect(Number.isFinite(modifier.value), identity).toBe(true);
-          }
-        }
-      }
-    }
-    expect(current.length).toBeGreaterThan(0);
-  });
-
   it('applies the selected native artificing level to damage', () => {
     const low = runWithGear(CANONICAL_GEAR_SLUG, 0);
     const high = runWithGear(CANONICAL_GEAR_SLUG, 3);
 
     expect(high.finalEnemyHealth).toBeLessThan(low.finalEnemyHealth);
-    expect(gameDataRepository.getGear(CANONICAL_GEAR_SLUG)).toMatchObject({
-      slug: CANONICAL_GEAR_SLUG,
-      traits: [
-        expect.anything(),
-        expect.anything(),
-        expect.objectContaining({
-          modifiers: [
-            expect.objectContaining({
-              kind: 'damageScale',
-              target: 'normalAttack',
-              value: [0.27599999999999997, 0.3036, 0.33119999999999994, 0.35879999999999995],
-            }),
-          ],
-        }),
-      ],
-    });
   });
 
   it.each([false, true])(

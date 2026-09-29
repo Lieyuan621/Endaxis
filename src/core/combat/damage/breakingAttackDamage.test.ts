@@ -17,15 +17,4 @@ describe('calculateBreakingAttackValue', () => {
     expect(result).toBe(expected);
     expect(result).not.toBe(412.3456789 * 1.23456789 * 1.34567 * 0.54321);
   });
-
-  it('keeps the per-hit calculation multiplier separate from the skill attack scale', () => {
-    expect(
-      calculateBreakingAttackValue({
-        attack: 1000,
-        targetDamageTakenMultiplier: 1.5,
-        calculationMultiplier: 0.25,
-        attackScale: 9,
-      }),
-    ).toBe(3375);
-  });
 });

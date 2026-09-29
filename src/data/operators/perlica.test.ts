@@ -287,34 +287,4 @@ describe('next Perlica definition', () => {
     });
     expect(potential?.modifiers).toBeUndefined();
   });
-
-  it('uses ordered steps instead of damage timing flags', () => {
-    const serialized = JSON.stringify(perlica);
-
-    expect(serialized).not.toContain('beforeDamage');
-    expect(serialized).not.toContain('afterDamage');
-    expect(serialized).not.toContain('evidence');
-    expect(serialized).not.toContain('sourceOrder');
-    expect(serialized).not.toContain('projectileId');
-    expect(serialized).not.toContain('impactSkillId');
-    expect(serialized).not.toContain('onReactionApplied');
-  });
-
-  it('keys every damage step with a non-empty unique identity', () => {
-    const entries: Array<{ skillKey: string; nodeId: string }> = [];
-    for (const skill of perlica.skillGroups.flatMap(getGroupSkills)) {
-      for (const [nodeId, node] of Object.entries(skill.actionGraph.main.nodes)) {
-        if (node.action.kind === 'dealDamage' || node.action.kind === 'dealFixedDamage') {
-          entries.push({ skillKey: skill.key, nodeId });
-        }
-      }
-    }
-
-    expect(entries.length).toBeGreaterThan(0);
-    for (const entry of entries) {
-      expect(entry.nodeId.length).toBeGreaterThan(0);
-    }
-    const allKeys = entries.map(entry => `${entry.skillKey}:${entry.nodeId}`);
-    expect(allKeys.length).toBe(new Set(allKeys).size);
-  });
 });

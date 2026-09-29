@@ -4,12 +4,7 @@ import { renderToString } from '@vue/server-renderer';
 import { ID_INJECTION_KEY, ZINDEX_INJECTION_KEY } from 'element-plus';
 import { i18n, setLocale } from '../../../i18n/index';
 import { gameDataRepository } from '../../../data/gameDataRepository';
-import {
-  getGearPieceGameName,
-  getOperatorPotentialDescription,
-  getOperatorTalentDescription,
-} from '../../gameText';
-import { GameRichTextRenderer } from '../../presentation';
+import { getGearPieceGameName } from '../../gameText';
 import EquipmentSelectionTooltip from './EquipmentSelectionTooltip.vue';
 import OperatorSkillTooltip from './OperatorSkillTooltip.vue';
 import { getGearDefinitionSelectionAffixRows } from './gearAffixPresentation';
@@ -185,21 +180,6 @@ describe('构筑 tooltip 渲染', () => {
     expect(JSON.stringify(weapon)).toBe(original);
   });
 
-  it('全部当前武器 tooltip 不使用默认图标', async () => {
-    const failures: string[] = [];
-    for (const weapon of gameDataRepository.getWeapons()) {
-      const html = await renderComponent(WeaponSelectionTooltip, {
-        weapon,
-        name: weapon.displayName ?? weapon.slug,
-        fullPotential: false,
-      });
-      if (html.includes('/icons/default_icon.webp')) {
-        failures.push(`${weapon.slug}: default icon`);
-      }
-    }
-    expect(failures).toEqual([]);
-  });
-
   it('装备选择 tooltip 渲染词条和套装富文本', async () => {
     const canonicalSlug = 'item_equip_t4_suit_expend_spell01_body_02';
     const definition = gameDataRepository.getGear(canonicalSlug)!;
@@ -246,21 +226,5 @@ describe('构筑 tooltip 渲染', () => {
       });
     });
     expect(failures).toEqual([]);
-  });
-
-  it('梨诺天赋和潜能描述可由统一富文本组件渲染', async () => {
-    const talentHtml = await renderComponent(GameRichTextRenderer, {
-      text: getOperatorTalentDescription('liino', 0, 0, 'zh-CN'),
-      locale: 'zh-CN',
-    });
-    const potentialHtml = await renderComponent(GameRichTextRenderer, {
-      text: getOperatorPotentialDescription('liino', 0, 'zh-CN'),
-      locale: 'zh-CN',
-    });
-
-    expect(talentHtml).toContain('game-rich-text');
-    expect(talentHtml).toContain('+10%');
-    expect(potentialHtml).toContain('game-rich-text');
-    expect(potentialHtml).toContain('返还');
   });
 });

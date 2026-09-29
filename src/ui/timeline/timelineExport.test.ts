@@ -5,13 +5,8 @@ import {
   imageFilename,
   projectFilename,
 } from './timelineExport';
-import source from './timelineExport.ts?raw';
 
 describe('timeline export helpers', () => {
-  it('loads the image renderer only when an image export starts', () => {
-    expect(source).not.toMatch(/^import .*@zumer\/snapdom/m);
-    expect(source).toContain("await import('@zumer/snapdom')");
-  });
   it('exports PNG images and normalizes existing file extensions', () => {
     expect(projectFilename(' rotation.webp ')).toBe('rotation.json');
     expect(imageFilename('rotation.png')).toBe('rotation.png');

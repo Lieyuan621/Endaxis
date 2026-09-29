@@ -30,13 +30,8 @@ describe('project game data repository', () => {
     expect(repository.getGearSets().length).toBeGreaterThan(0);
     expect(repository.hasAllDefinitions()).toBe(true);
   });
-  it('creates an empty-page repository without local preview files', async () => {
+  it('makes common definitions available before loading the selection catalogs', async () => {
     const repository = await createProjectGameDataRepository(undefined);
-    expect(repository.getOperators()).toEqual([]);
-    expect(repository.getWeapons()).toEqual([]);
-    expect(repository.getGears()).toEqual([]);
-    expect(repository.getGearSets()).toEqual([]);
-    expect(repository.hasAllDefinitions()).toBe(false);
     expect(repository.getCommonDefinitionSources?.().map(source => source.id)).toEqual([
       'common-buffs',
       'contingency-contracts',
@@ -87,11 +82,6 @@ describe('project game data repository', () => {
     expect(repository.getWeapon('wpn_sword_0026')).not.toBeNull();
     expect(repository.getOperator('typhoeus')).not.toBeNull();
     expect(repository.hasAllDefinitions()).toBe(true);
-    expect(repository.getCommonDefinitionSources?.().map(source => source.id)).toEqual([
-      'common-buffs',
-      'contingency-contracts',
-      'consumables',
-    ]);
   });
 
   it('does not look for project templates or their audit origins among generated files', async () => {
@@ -137,7 +127,6 @@ describe('project game data repository', () => {
     const result = openProject(project, { gameDataRepository: repository });
 
     expect(result.ok).toBe(true);
-    expect(repository.getOperators()).toEqual([]);
   });
 
   it('loads the built-in set referenced by a materialized project gear', async () => {

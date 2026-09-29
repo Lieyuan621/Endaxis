@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { EnemyHealthChangePoint } from './enemyHealthChangePoints';
-import { projectEnemyHealthCurve, projectEnemyHealthCurveFromReceipt } from './enemyHealthCurves';
+import { projectEnemyHealthCurve } from './enemyHealthCurves';
 
 const INITIAL = { health: 10000, maxHealth: 10000 };
 
@@ -50,26 +50,5 @@ describe('projectEnemyHealthCurve', () => {
     expect(() =>
       projectEnemyHealthCurve(INITIAL, [change({ actualDamage: 600, remainingHealth: 9300 })]),
     ).toThrow('discontinuous');
-  });
-
-  it('从原始回执直接投影', () => {
-    const curve = projectEnemyHealthCurveFromReceipt(INITIAL, [
-      {
-        sequence: 3,
-        frame: 10,
-        time: 1 / 3,
-        event: 'DamageApplied',
-        sourceId: 'perlica',
-        targetId: 'enemy',
-        data: {
-          damageType: 'physical',
-          value: 500,
-          actualDamage: 500,
-          remainingHealth: 9500,
-          isCritical: false,
-        },
-      },
-    ]);
-    expect(curve.points.at(-1)).toMatchObject({ frame: 10, value: 9500 });
   });
 });

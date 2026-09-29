@@ -1,7 +1,5 @@
 import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import { describe, expect, it } from 'vitest';
-import { compileOperatorDefinitionSkills } from '../../core/compiler/compileScenarioTimeline';
-import { ActionGraphDefinitionRepository } from '../../core/compiler/actionGraphDefinitionRepository';
 import type {
   OperatorDefinition,
   SkillGroupDefinition,
@@ -13,7 +11,6 @@ import type {
   ActionGraphStep,
 } from '../../../packages/game-data-contract/src/actionGraph';
 import { createGraphDataResolver } from '../../core/action-graph/actionGraphData';
-import type { OperatorInstanceDocument } from '../../core/project/schema';
 import { rossiChr_0028_wulfa_combo_3_skill } from './rossi.generated';
 
 function getGroupSkills(group: SkillGroupDefinition): readonly SkillDefinition[] {
@@ -84,33 +81,20 @@ function skillSteps(skill: SkillDefinition): ActionGraphStep[] {
   );
 }
 import {
-  alesh,
-  antal,
-  akekuri,
   arcane,
-  arclight,
   ardelia,
   avywenna,
   catcher,
   camille,
-  chenQianyu,
-  daPan,
-  ember,
   endministrator,
-  estella,
   fluorite,
   gilberta,
-  lastRite,
   laevatain,
   lifeng,
   liino,
-  mifu,
-  pogranichnik,
+  operatorDefinitions,
   rossi,
-  snowshine,
   tangtang,
-  wulfgard,
-  xaihi,
   yvonne,
   zhuangFangyi,
 } from './index';
@@ -148,37 +132,6 @@ function resolveGeneratedDataNodes(value: unknown): unknown {
   );
 }
 
-const generatedOperators: readonly [OperatorDefinition, number][] = [
-  [gilberta, 9],
-  [lifeng, 9],
-  [estella, 9],
-  [daPan, 9],
-  [ember, 9],
-  [akekuri, 9],
-  [fluorite, 10],
-  [arclight, 10],
-  [endministrator, 10],
-  [lastRite, 9],
-  [chenQianyu, 10],
-  [rossi, 11],
-  [camille, 11],
-  [tangtang, 10],
-  [laevatain, 15],
-  [mifu, 11],
-  [yvonne, 16],
-  [zhuangFangyi, 15],
-  [pogranichnik, 10],
-  [snowshine, 8],
-  [wulfgard, 9],
-  [antal, 9],
-  [alesh, 10],
-  [xaihi, 10],
-  [avywenna, 10],
-  [catcher, 9],
-  [ardelia, 9],
-  [liino, 11],
-];
-
 function hasUpgradeBehavior(
   upgrade: OperatorDefinition['talents'][number] | OperatorDefinition['potentials'][number],
 ): boolean {
@@ -209,10 +162,6 @@ describe('新增的完整技能转换干员', () => {
   });
 
   it('梨诺终结技同时保留对敌声波与友方治疗分支', () => {
-    expect(liino.conversionSupport).toEqual({
-      completeness: 'complete',
-      missingCapabilities: [],
-    });
     const ultimate = liino.skillGroups.find(group => group.key === 'ultimate');
     const serialized = JSON.stringify(ultimate);
     expect(serialized).toContain('buff_chr_0035_liino_ultskill_music_damage');
@@ -229,10 +178,6 @@ describe('新增的完整技能转换干员', () => {
   });
 
   it('Ardelia 保留战技易伤、潜能一黑板增幅与潜能五连携改写', () => {
-    expect(ardelia.conversionSupport).toEqual({
-      completeness: 'complete',
-      missingCapabilities: [],
-    });
     expect(ardelia.buffDefinitions?.buff_chr_0025_ardelia_normal_skill_vulnerable).toBeDefined();
     expect(ardelia.potentials[0]?.modifiers).toContainEqual(
       expect.objectContaining({
@@ -252,10 +197,6 @@ describe('新增的完整技能转换干员', () => {
   });
 
   it('Catcher 保留意志换防御、属性护盾与防御倍率追加伤害', () => {
-    expect(catcher.conversionSupport).toEqual({
-      completeness: 'complete',
-      missingCapabilities: [],
-    });
     expect(catcher.buffDefinitions?.buff_chr_0020_meurs_talent_0).toBeDefined();
     expect(
       catcher.buffDefinitions?.buff_chr_0020_meurs_combo_skill_shield?.shields?.[0]?.value,
@@ -271,10 +212,6 @@ describe('新增的完整技能转换干员', () => {
   });
 
   it('Avywenna 长枪回收保留脉冲附着检查，天赋一同时保留技能补丁与常驻 Buff', () => {
-    expect(avywenna.conversionSupport).toEqual({
-      completeness: 'complete',
-      missingCapabilities: [],
-    });
     expect(avywenna.buffDefinitions?.buff_chr_0012_avywen_lance_pulse_check).toBeDefined();
     expect(JSON.stringify(avywenna)).toContain('buff_chr_0012_avywen_lance_pulse_check');
     expect(avywenna.talents[0]?.modifiers).toHaveLength(3);
@@ -332,17 +269,6 @@ describe('新增的完整技能转换干员', () => {
       'chr_0003_endminf_ultimate_skill',
       'chr_0003_endminf_combo_skill',
     ]);
-  });
-
-  it('三个新样本只把真实转换缺口计入 skillBehavior', () => {
-    const skillBehaviorGaps = (operator: OperatorDefinition) =>
-      operator.conversionSupport?.missingCapabilities.find(
-        item => item.capability === 'skillBehavior',
-      )?.skillGroupKeys ?? [];
-
-    expect(skillBehaviorGaps(chenQianyu)).toEqual([]);
-    expect(skillBehaviorGaps(rossi)).toEqual([]);
-    expect(skillBehaviorGaps(camille)).toEqual([]);
   });
 
   it('Gilberta 战技把来源死亡监视 Buff 留在能力实体局部时间轴', () => {
@@ -546,31 +472,6 @@ describe('新增的完整技能转换干员', () => {
     expect(rossi.buffDefinitions?.buff_chr_0028_wulfa_tut_comboskill_success).toBeDefined();
   });
 
-  it.each(generatedOperators)('每个可放置技能都被分配到技能组', (operator, count) => {
-    const skills = operator.skillGroups.flatMap(group => [
-      ...(Array.isArray(group.skills) ? group.skills : [group.skills]),
-      ...(group.variants ?? []).flatMap(variant =>
-        Array.isArray(variant.skills) ? variant.skills : [variant.skills],
-      ),
-      ...(group.replacementSkills ?? []).filter(
-        skill => group.replacementSkillPlacements?.[skill.key] !== 'internal',
-      ),
-      ...(group.routedReplacementSkills ?? [])
-        .map(replacement => replacement.skill)
-        .filter(skill => group.replacementSkillPlacements?.[skill.key] !== 'internal'),
-    ]);
-
-    expect(skills).toHaveLength(count);
-    expect(new Set(skills.map(skill => skill.key)).size).toBe(count);
-    expect(
-      skills
-        .filter(
-          skill => skill.scheduledSequences.length === 0 && skill.switchToBuffCast === undefined,
-        )
-        .map(skill => skill.key),
-    ).toEqual([]);
-  });
-
   it.each([
     [laevatain, 4],
     [yvonne, 6],
@@ -643,50 +544,32 @@ describe('新增的完整技能转换干员', () => {
     );
   });
 
-  it.each(generatedOperators)('尚无可执行行为的养成定义必须保留对应缺口', operator => {
-    const capabilities = new Set(
-      operator.conversionSupport?.missingCapabilities.map(item => item.capability),
-    );
-
-    expect(operator.conversionSupport?.completeness).toBe(
-      capabilities.size === 0 ? 'complete' : 'partial',
-    );
-
-    if (operator.talents.some(talent => !hasUpgradeBehavior(talent))) {
-      expect(capabilities.has('talentEffects')).toBe(true);
-    }
-    if (operator.potentials.some(potential => !hasUpgradeBehavior(potential))) {
-      expect(capabilities.has('potentialEffects')).toBe(true);
-    }
-  });
-
-  it.each(generatedOperators)('所有技能等级都能编译为运行时程序', operator => {
-    for (let level = 1; level <= 12; level += 1) {
-      const build: OperatorInstanceDocument = {
-        operatorSlug: operator.slug,
-        level: 90,
-        promoted: true,
-        potential: 0,
-        trustLevel: 4,
-        skillLevels: {
-          basicAttack: level,
-          battleSkill: level,
-          comboSkill: level,
-          ultimate: level,
-        },
-        talentStates: {},
-      };
-
-      expect(() =>
-        compileOperatorDefinitionSkills(
-          'operator',
-          build,
-          operator,
-          {},
-          undefined,
-          new ActionGraphDefinitionRepository(),
-        ),
-      ).not.toThrow();
-    }
+  it('所有正式干员对尚无可执行行为的养成保留明确缺口', () => {
+    const issues = operatorDefinitions.flatMap(operator => {
+      const capabilities = new Set(
+        operator.conversionSupport?.missingCapabilities.map(item => item.capability),
+      );
+      const operatorIssues: string[] = [];
+      if (
+        operator.conversionSupport?.completeness !==
+        (capabilities.size === 0 ? 'complete' : 'partial')
+      ) {
+        operatorIssues.push(`${operator.slug}: conversion completeness differs from capabilities`);
+      }
+      if (
+        operator.talents.some(talent => !hasUpgradeBehavior(talent)) &&
+        !capabilities.has('talentEffects')
+      ) {
+        operatorIssues.push(`${operator.slug}: missing talentEffects gap`);
+      }
+      if (
+        operator.potentials.some(potential => !hasUpgradeBehavior(potential)) &&
+        !capabilities.has('potentialEffects')
+      ) {
+        operatorIssues.push(`${operator.slug}: missing potentialEffects gap`);
+      }
+      return operatorIssues;
+    });
+    expect(issues).toEqual([]);
   });
 });

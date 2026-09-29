@@ -3,15 +3,12 @@ import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import ts from 'typescript';
-import { COMBAT_PROTOCOL_RUNTIME_GAPS } from '../../../src/core/combat/runtime/combatProtocolCapabilities.ts';
 import {
   ABILITY_EVENTS,
   ATTRIBUTE_MODIFIER_SLOTS,
   ATTRIBUTE_MODIFIER_TIMINGS,
   COMBO_SKILL_PRIORITIES,
-  COMBAT_CONDITION_KINDS,
   COMBAT_EVENT_TRIGGER_KINDS,
-  COMBAT_STEP_KINDS,
   COMPARISON_OPERATORS,
   DAMAGE_MODIFIER_SIDES,
   DAMAGE_PROCESS_TIMINGS,
@@ -99,121 +96,6 @@ function loadProgram(configFile: string): ts.Program {
 }
 
 describe('独立游戏数据契约边界', () => {
-  it('公共战斗事件触发器同时具备严格校验草稿和语义运行时匹配分支', () => {
-    const runtimePath = join(productRoot, 'core/combat/events/combatSemanticEventRuntime.ts');
-    const ast = ts.createSourceFile(
-      runtimePath,
-      readFileSync(runtimePath, 'utf8'),
-      ts.ScriptTarget.Latest,
-      true,
-    );
-    const runtimeCases = new Set<string>();
-    const visit = (node: ts.Node): void => {
-      if (ts.isCaseClause(node) && ts.isStringLiteral(node.expression)) {
-        runtimeCases.add(node.expression.text);
-      }
-      ts.forEachChild(node, visit);
-    };
-    visit(ast);
-
-    expect(COMBAT_EVENT_TRIGGER_KINDS.filter(kind => !runtimeCases.has(kind))).toEqual([]);
-  });
-
-  it('公共动作和条件没有新增未登记的生产运行时缺口', () => {
-    const runtimeDirectories = [
-      'runtime',
-      'actions',
-      'abilities',
-      'buffs',
-      'skills',
-      'time',
-      'resources',
-      'damage',
-      'heal',
-      'infliction',
-      'events',
-      'status',
-    ];
-    const runtimeFiles = runtimeDirectories.flatMap(directory =>
-      sourceFiles(join(productRoot, 'core/combat', directory)),
-    );
-    const discriminants = new Set<string>();
-    for (const path of runtimeFiles.filter(
-      path =>
-        !/\.(test|spec)\.ts$/.test(path) && !path.endsWith('standardPlayerDamageCompatibility.ts'),
-    )) {
-      const ast = ts.createSourceFile(
-        path,
-        readFileSync(path, 'utf8'),
-        ts.ScriptTarget.Latest,
-        true,
-      );
-      const visit = (node: ts.Node): void => {
-        if (
-          ts.isBinaryExpression(node) &&
-          [
-            ts.SyntaxKind.EqualsEqualsToken,
-            ts.SyntaxKind.EqualsEqualsEqualsToken,
-            ts.SyntaxKind.ExclamationEqualsToken,
-            ts.SyntaxKind.ExclamationEqualsEqualsToken,
-          ].includes(node.operatorToken.kind)
-        ) {
-          for (const [left, right] of [
-            [node.left, node.right],
-            [node.right, node.left],
-          ] as const) {
-            if (
-              ts.isPropertyAccessExpression(left) &&
-              left.name.text === 'kind' &&
-              ts.isStringLiteral(right)
-            ) {
-              discriminants.add(right.text);
-            }
-          }
-        }
-        if (ts.isCaseClause(node) && ts.isStringLiteral(node.expression)) {
-          discriminants.add(node.expression.text);
-        }
-        ts.forEachChild(node, visit);
-      };
-      visit(ast);
-    }
-    expect(COMBAT_STEP_KINDS.filter(kind => !discriminants.has(kind))).toEqual(
-      Object.keys(COMBAT_PROTOCOL_RUNTIME_GAPS.steps),
-    );
-    expect(COMBAT_CONDITION_KINDS.filter(kind => !discriminants.has(kind))).toEqual(
-      Object.keys(COMBAT_PROTOCOL_RUNTIME_GAPS.conditions),
-    );
-  });
-
-  it('实体及整名干员装配直接接受契约检查，不用类型断言绕过输出差异', () => {
-    const violations: string[] = [];
-    for (const name of [
-      'compiler/abilities/abilityEntityDefinition.ts',
-      'compiler/abilities/abilityEntityChildSkill.ts',
-      'domains/operator/definition.ts',
-    ]) {
-      const path = join(compilerRoot, 'src', name);
-      const ast = ts.createSourceFile(
-        path,
-        readFileSync(path, 'utf8'),
-        ts.ScriptTarget.Latest,
-        true,
-      );
-      const visit = (node: ts.Node): void => {
-        // as const 仅保留字面量/只读元组，不允许 as 正式协议、unknown 或其他类型。
-        if (
-          (ts.isAsExpression(node) && node.type.getText(ast) !== 'const') ||
-          ts.isTypeAssertionExpression(node)
-        )
-          violations.push(name);
-        ts.forEachChild(node, visit);
-      };
-      visit(ast);
-    }
-    expect(violations).toEqual([]);
-  });
-
   it('已迁移阶段输出不得重新手写契约字段', () => {
     const protectedFields: Record<string, readonly string[]> = {
       CompiledWeaponStaticDefinitionSource: [

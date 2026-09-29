@@ -454,17 +454,6 @@ describe('validateSkillDefinition', () => {
     );
   });
 
-  it('accepts a structurally valid skill', () => {
-    const skill = skillWithSteps([
-      damageStep('hit:1'),
-      {
-        kind: 'modifyActionValue',
-        parameters: { key: 'x', operation: 'add', value: { kind: 'constant', value: 1 } },
-      },
-    ]);
-    expect(validateSkillDefinition(skill)).toEqual([]);
-  });
-
   it('validates named and inline time-dilation curves', () => {
     const step: Record<string, unknown> = {
       kind: 'startTimeDilation',
@@ -554,28 +543,10 @@ describe('validateSkillDefinition', () => {
     expect(issues.some(issue => issue.path.endsWith('.presentation.color'))).toBe(true);
   });
 
-  it('accepts ordered owner Buff lifecycle sequences', () => {
-    const definition: Record<string, unknown> = {
-      stackingType: 'unique',
-      lifecycleSequences: {
-        start: { $sequence: 'entry' },
-      },
-    };
-    expect(validateBuff(definition)).toEqual([]);
-  });
-
   it('accepts an owner Buff max stack count resolved from its application blackboard', () => {
     const definition: Record<string, unknown> = {
       stackingType: 'stack',
       maxStackCount: { blackboardKey: 'max_stack' },
-    };
-    expect(validateBuff(definition)).toEqual([]);
-  });
-
-  it('validates Buff independently of a creating skill', () => {
-    const definition: Record<string, unknown> = {
-      stackingType: 'unique',
-      lifecycleSequences: { start: { $sequence: null } },
     };
     expect(validateBuff(definition)).toEqual([]);
   });

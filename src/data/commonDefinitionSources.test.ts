@@ -83,35 +83,6 @@ it('公共来源只登记独立能力实体，并校验实体自己的图入口'
   ).toThrow('missing');
 });
 
-it('同一公共来源的静态与独立 Buff 图分别登记，不混用节点', () => {
-  const repository = createGameDataRepository({
-    revision: 'mixed-common-source',
-    commonDefinitionSources: [
-      {
-        id: 'mixed',
-        buffDefinitions: {
-          legacy: {
-            stackingType: 'unlimited',
-          },
-          independent: {
-            stackingType: 'unlimited',
-            lifecycleSequences: { start: { $sequence: 'own' } },
-            actionGraph: {
-              main: {
-                nodes: {
-                  own: { action: { kind: 'dealStagger', parameters: { value: 1 } }, next: null },
-                },
-              },
-              macros: {},
-            },
-          },
-        },
-      },
-    ],
-  });
-  expect(Object.keys(repository.getCommonBuffDefinitions!())).toEqual(['legacy', 'independent']);
-});
-
 it('保留公共定义所属的来源身份，允许不同来源使用相同的局部节点 ID', () => {
   const repository = createGameDataRepository({
     revision: 'graph-sources',

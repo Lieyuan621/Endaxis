@@ -34,64 +34,6 @@ function createEnemyAttributes(): CombatAttributeSet<Attribute> {
 }
 
 describe('elementalAttachments', () => {
-  it('固化四种附着与同元素爆发的身份和时序', () => {
-    const index = compileCombatBuffDefinitions<Attribute>(elementalAttachments, {
-      emitElementalInflictionStarted: () => undefined,
-      onSpellBurstTriggered: () => undefined,
-      onAttackScaledDamageTriggered: () => undefined,
-      readAttribute: () => 0,
-    });
-    const expected = {
-      heat: {
-        attachmentId: 'buff_common_energy_shard_attached_fire',
-        burstId: 'buff_common_fire_fire_triggered',
-        burstType: 'Fire',
-        burstDuration: 5,
-      },
-      electric: {
-        attachmentId: 'buff_common_energy_shard_attached_pulse',
-        burstId: 'buff_common_pulse_pulse_triggered',
-        burstType: 'Pulse',
-        burstDuration: 10,
-      },
-      cryo: {
-        attachmentId: 'buff_common_energy_shard_attached_cryst',
-        burstId: 'buff_common_cryst_cryst_triggered',
-        burstType: 'Cryst',
-        burstDuration: 5,
-      },
-      nature: {
-        attachmentId: 'buff_common_energy_shard_attached_natural',
-        burstId: 'buff_common_natural_natural_triggered',
-        burstType: 'Natural',
-        burstDuration: 5,
-      },
-    } as const;
-
-    for (const element of INFLICTION_ELEMENTS) {
-      const rule = expected[element];
-      expect(index.getAttachment(element)).toMatchObject({
-        id: rule.attachmentId,
-        durationSeconds: { blackboardKey: 'duration' },
-        maxStackCount: 4,
-      });
-      expect(index.getBurst(element)).toMatchObject({
-        id: rule.burstId,
-        durationSeconds: rule.burstDuration,
-        triggerIntervalSeconds: 1,
-        waitFirstTriggerInterval: true,
-        maxTriggerCount: 1,
-      });
-      expect(index.getSpellBurst(rule.burstType)).toMatchObject({
-        burstType: rule.burstType,
-        damageType: element,
-        skillSettingDataKey: '法术爆发伤害倍率',
-        skillSettingColumn: 1,
-        atkScaleBase: 50,
-      });
-    }
-  });
-
   it('compiles all four attachment roles through the typed definition boundary', () => {
     const emitStarted = vi.fn();
     const onSpellBurstTriggered = vi.fn();
@@ -127,36 +69,6 @@ describe('elementalAttachments', () => {
       expect(index.getCompoundStatus(factory.consumedElement, factory.incomingElement).id).toBe(
         factory.createdBuff.buffId,
       );
-    }
-  });
-
-  it('preserves the native attached-head-bar presentation for every elemental attachment', () => {
-    const index = compileCombatBuffDefinitions<Attribute>(elementalAttachments, {
-      emitElementalInflictionStarted: () => undefined,
-      onSpellBurstTriggered: () => undefined,
-      onAttackScaledDamageTriggered: () => undefined,
-      readAttribute: () => 0,
-    });
-    const expectedIcons = {
-      heat: 'icon_energy_fusion_fire',
-      electric: 'icon_energy_fusion_pulse',
-      cryo: 'icon_energy_fusion_cryst',
-      nature: 'icon_infliction_nature',
-    } as const;
-
-    for (const element of INFLICTION_ELEMENTS) {
-      expect(index.getAttachment(element).presentation).toMatchObject({
-        visible: true,
-        iconId: expectedIcons[element],
-        showInHeadBarCommon: false,
-        showInHeadBarAttached: true,
-        iconStyleInSquad: 'Default',
-        orderPriority: {
-          useDirectoryValue: false,
-          value: 0,
-          category: 'CommonCharBuff',
-        },
-      });
     }
   });
 

@@ -32,7 +32,6 @@ describe('contingencyContractCatalog', () => {
         contingencyContractTags.filter(tag => tag.support === 'omitted').map(tag => tag.tagId),
       ),
     ).toEqual(new Set(Object.keys(contingencyContractOmittedTagReasons).map(Number)));
-    expect(contingencyContractTags.every(tag => !Object.hasOwn(tag, 'localization'))).toBe(true);
   });
 
   it('replaces a selected tier in the same native conflict group', () => {

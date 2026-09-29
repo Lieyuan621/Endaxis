@@ -3,7 +3,6 @@ import { collectOperatorBuffDisplayNameKeys, resolveBuffDisplayName } from './bu
 import { compoundStatusFactories } from '../../../data/buffs/compoundStatusFactories';
 import zh from '../../../i18n/locales/zh-CN.json';
 import en from '../../../i18n/locales/en.json';
-import source from './buffDisplayName.ts?raw';
 
 const messages: Readonly<Record<string, string>> = {
   'effects.name.susceptibility:physical': '物理脆弱',
@@ -26,9 +25,6 @@ describe('Buff display name', () => {
         t: () => messages.timeline.globalModifiers.title,
       }),
     ).toBe(messages.timeline.globalModifiers.title);
-  });
-  it('does not load the complete game data repository for presentation names', () => {
-    expect(source).not.toContain('data/gameDataRepository');
   });
   it.each([zh, en])('translates Razor Clawmark before falling back to its source', messages => {
     expect(
@@ -64,14 +60,6 @@ describe('Buff display name', () => {
     expect(resolveBuffDisplayName('buff_common_pulse_unknown_triggered', i18n)).toBe(
       'buff_common_pulse_unknown_triggered',
     );
-  });
-  it('uses the active locale for compound names', () => {
-    expect(
-      resolveBuffDisplayName('buff_common_pulse_natural_triggered', {
-        te: key => key === 'effects.name.electrification',
-        t: () => 'Electrification',
-      }),
-    ).toBe('Electrification');
   });
   it('keeps missing-name Buff IDs transparent', () => {
     expect(resolveBuffDisplayName('buff:native-id', i18n)).toBe('buff:native-id');

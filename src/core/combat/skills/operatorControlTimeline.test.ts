@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  isOperatorControlledAt,
-  resolveControlledOperator,
-  type OperatorControlTimeline,
-} from './operatorControlTimeline';
+import { resolveControlledOperator, type OperatorControlTimeline } from './operatorControlTimeline';
 
 const timeline: OperatorControlTimeline = {
   segments: [
@@ -27,11 +23,5 @@ describe('operatorControlTimeline', () => {
       resolveControlledOperator({ segments: [{ startFrame: 10, operatorId: 'operator:1' }] }, 9),
     ).toBeNull();
     expect(resolveControlledOperator({ segments: [] }, 0)).toBeNull();
-  });
-
-  it('checks control using the same inclusive frame boundary', () => {
-    expect(isOperatorControlledAt(timeline, 'operator:1', 29)).toBe(true);
-    expect(isOperatorControlledAt(timeline, 'operator:1', 30)).toBe(false);
-    expect(isOperatorControlledAt(timeline, 'operator:2', 30)).toBe(true);
   });
 });

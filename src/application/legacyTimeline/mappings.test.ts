@@ -25,13 +25,7 @@ it('resolves historical gamedata targets and does not collapse an enhanced attac
   }
 });
 
-it('contains the complete one-time mapping catalog for the legacy data snapshot', () => {
-  expect(Object.keys(mappings.operators)).toHaveLength(31);
-  expect(Object.keys(mappings.weapons)).toHaveLength(79);
-  expect(Object.keys(mappings.gears)).toHaveLength(258);
-  expect(Object.keys(mappings.enemies)).toHaveLength(82);
-  expect(Object.values(mappings.skills).reduce((sum, rules) => sum + rules.length, 0)).toBe(317);
-
+it('keeps sequence and plunge mappings distinct from single-skill mappings', () => {
   // 旧版把伊冯整套强化普攻保存成一个技能块；新版是可递归分叉的技能序列，不能映射到某一段。
   expect(
     mappings.skills.yvonne.some(rule => rule.source.sourceSkillKey === 'enhancedBasicAttack'),

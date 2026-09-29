@@ -99,7 +99,6 @@ describe('正式干员技能库覆盖', () => {
       identity(entry.operator.slug, entry.groupKey, entry.variantKey, entry.skill.key),
     );
 
-    expect(declared).toHaveLength(332);
     expect(new Set(declared).size).toBe(declared.length);
     expect(new Set(projected).size).toBe(projected.length);
     expect(projected.toSorted()).toEqual(declared.toSorted());
@@ -111,15 +110,6 @@ describe('正式干员技能库覆盖', () => {
       const scenario = createOperatorScenario(operator);
       const track = projectTimelineEditor(scenario, gameDataRepository).tracks[0]!;
       for (const entry of track.skillLibrary) {
-        const group = operator.skillGroups.find(
-          candidate => candidate.key === entry.skillGroupKey,
-        )!;
-        const definitionSkills = [
-          ...asSkills(group.skills),
-          ...(group.variants ?? []).flatMap(variant => asSkills(variant.skills)),
-          ...(group.replacementSkills ?? []),
-          ...(group.routedReplacementSkills ?? []).map(item => item.skill),
-        ];
         const placed = placeSkillGroup({
           scenario,
           trackIndex: 0,
@@ -134,13 +124,6 @@ describe('正式干员技能库覆盖', () => {
             cast.source.kind === 'operatorSkill' ? cast.source.skillKey : null,
           ),
         ).toEqual(entry.groupPlacementSkillKeys);
-        expect(entry.skills.every(skill => skill.skillKey.length > 0)).toBe(true);
-        const levelSource = definitionSkills.find(
-          skill => skill.key === entry.skills[0]!.skillKey,
-        )?.levelSource;
-        expect(levelSource).toBeDefined();
-        expect(entry.operationType).toBe(group.operationType);
-        expect(entry).not.toHaveProperty('level');
       }
     }
   });

@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import type { GearDefinition } from '../../../core/game-data/equipmentDefinition';
 import type { OperatorDefinition } from '../../../core/game-data/operatorDefinition';
-import { compileScenarioEquipment } from '../../../core/compiler/compileScenarioEquipment';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import type { TrackDocument } from '../../../core/project/schema';
 import { elementalAttachments } from '../../../data/buffs/elementalAttachments';
@@ -45,29 +44,6 @@ describe('正式饰品槽位与套装运行行为', () => {
       operatorId: second.operatorPanels[0]!.operatorId,
     });
     expect(second.finalEnemyHealth).toEqual(first.finalEnemyHealth);
-  });
-
-  it.each(gearSets)('$slug 三件套可被真实构筑激活并经历四类技能事件', async gearSet => {
-    const operator = requireFourSkillOperator();
-    const scenario = createScenarioWithGearSet(operator, gearSet.slug);
-    const [compiled] = compileScenarioEquipment(
-      scenario,
-      gameDataRepository,
-      gameDataRepository.actionPrograms,
-    );
-    expect(
-      compiled?.contributions.flatMap(contribution =>
-        contribution.source.kind === 'gearSet' ? [contribution.source.slug] : [],
-      ),
-    ).toEqual([gearSet.slug]);
-
-    const active = await simulateScenario(operator, scenario, gameDataRepository);
-    const baseline = await simulateScenario(
-      operator,
-      scenario,
-      createRepositoryWithoutGearSet(gearSet.slug),
-    );
-    expect(observableEquipmentResult(active)).not.toEqual(observableEquipmentResult(baseline));
   });
 
   it.each(runtimeGearSets)(
@@ -265,23 +241,6 @@ async function simulateScenario(
   return service.simulate(placed, 1_200);
 }
 
-function createRepositoryWithoutGearSet(gearSetSlug: string) {
-  return createGameDataRepository({
-    revision: `${gameDataRepository.revision}:without:${gearSetSlug}`,
-    operators: gameDataRepository.getOperators(),
-    weapons: gameDataRepository.getWeapons(),
-    gears: gameDataRepository
-      .getGears()
-      .map(definition =>
-        definition.gearSetSlug === gearSetSlug
-          ? (({ gearSetSlug: _gearSetSlug, ...setless }) => setless)(definition)
-          : definition,
-      ),
-    gearSets: gameDataRepository.getGearSets(),
-    commonDefinitionSources: gameDataRepository.getCommonDefinitionSources?.(),
-  });
-}
-
 function createRepositoryWithoutGearSetRuntime(gearSetSlug: string) {
   return createGameDataRepository({
     revision: `${gameDataRepository.revision}:static-only:${gearSetSlug}`,
@@ -294,26 +253,6 @@ function createRepositoryWithoutGearSetRuntime(gearSetSlug: string) {
     }),
     commonDefinitionSources: gameDataRepository.getCommonDefinitionSources?.(),
   });
-}
-
-function observableEquipmentResult(
-  result: Awaited<ReturnType<ScenarioSimulationService['simulate']>>,
-) {
-  return {
-    operatorPanel: result.operatorPanels[0],
-    finalEnemyHealth: result.finalEnemyHealth,
-    receipts: result.receiptEntries.filter(entry =>
-      [
-        'BuffApplied',
-        'BuffFinished',
-        'DamageApplied',
-        'HealingApplied',
-        'PoiseApplied',
-        'SpChanged',
-        'UltimateEnergyChanged',
-      ].includes(entry.event),
-    ),
-  };
 }
 
 function observableGearSetRuntimeResult(

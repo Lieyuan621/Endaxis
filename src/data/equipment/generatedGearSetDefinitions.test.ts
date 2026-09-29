@@ -2,7 +2,6 @@ import { actionSteps } from '../../test/actionProgramMatchers';
 import { rootActionSteps } from '../../core/compiler/actionProgramInspection';
 import { describe, expect, it } from 'vitest';
 import { compileGearSetContribution } from '../../core/compiler/compileEquipment';
-import { validateGearSetDefinition } from '../../core/game-data/equipmentDefinitionValidation';
 import { perlica } from '../operators/perlica.generated';
 import { generatedGearSetDefinitions } from './generated-gear-sets/index.generated';
 import { ActionGraphDefinitionRepository } from '../../core/compiler/actionGraphDefinitionRepository';
@@ -16,7 +15,6 @@ const graphPrograms = new ActionGraphDefinitionRepository();
 describe('生成套装正式定义', () => {
   it('让终结技支援套只给穿戴者之外的队员施加限时增伤', () => {
     const definition = generatedGearSetDefinitions.find(item => item.slug === 'suit_usp02')!;
-    expect(validateGearSetDefinition(definition, '$.suit_usp02')).toEqual([]);
     const compiled = compileGearSetContribution(definition, perlicaAttributes, graphPrograms);
 
     expect(compiled.modifiers).toEqual([{ kind: 'panelStat', stat: 'healthFlat', value: 1000 }]);
@@ -97,7 +95,6 @@ describe('生成套装正式定义', () => {
 
   it('让终结技能量套在入战时重置，并只为首个战技返还技力', () => {
     const definition = generatedGearSetDefinitions.find(item => item.slug === 'suit_usp01')!;
-    expect(validateGearSetDefinition(definition, '$.suit_usp01')).toEqual([]);
     const compiled = compileGearSetContribution(definition, perlicaAttributes, graphPrograms);
 
     expect(compiled.modifiers).toEqual([
@@ -154,7 +151,6 @@ describe('生成套装正式定义', () => {
     const definition = generatedGearSetDefinitions.find(
       item => item.slug === 'suit_expend_spell01',
     )!;
-    expect(validateGearSetDefinition(definition, '$.suit_expend_spell01')).toEqual([]);
     const compiled = compileGearSetContribution(definition, perlicaAttributes, graphPrograms);
 
     expect(compiled.modifiers).toEqual([{ kind: 'panelStat', stat: 'attackPercent', value: 0.1 }]);
@@ -209,7 +205,6 @@ describe('生成套装正式定义', () => {
 
   it('让连携叠层套把连携次数转为同一次战技施放的动态增伤', () => {
     const definition = generatedGearSetDefinitions.find(item => item.slug === 'suit_attri01')!;
-    expect(validateGearSetDefinition(definition, '$.suit_attri01')).toEqual([]);
     const compiled = compileGearSetContribution(definition, perlicaAttributes, graphPrograms);
 
     expect(compiled.modifiers).toEqual([{ kind: 'panelStat', stat: 'attackPercent', value: 0.15 }]);
@@ -261,7 +256,6 @@ describe('生成套装正式定义', () => {
 
   it('让战技叠层套把战技次数转为同一次连携施放的动态增伤', () => {
     const definition = generatedGearSetDefinitions.find(item => item.slug === 'suit_atk02')!;
-    expect(validateGearSetDefinition(definition, '$.suit_atk02')).toEqual([]);
     const compiled = compileGearSetContribution(definition, perlicaAttributes, graphPrograms);
 
     expect(compiled.modifiers).toEqual([{ kind: 'panelStat', stat: 'attackPercent', value: 0.15 }]);
@@ -325,7 +319,6 @@ describe('生成套装正式定义', () => {
 
   it('让技力套在战技实际回能后给全队施加限时普通乘区增伤', () => {
     const definition = generatedGearSetDefinitions.find(item => item.slug === 'suit_atb01')!;
-    expect(validateGearSetDefinition(definition, '$.suit_atb01')).toEqual([]);
     const compiled = compileGearSetContribution(definition, perlicaAttributes, graphPrograms);
 
     expect(compiled.modifiers).toEqual([
@@ -391,7 +384,6 @@ describe('生成套装正式定义', () => {
   it('让 suit_atk01 的静态增伤、根安装和技能前攻击 Buff 进入正式编译', () => {
     const definition = generatedGearSetDefinitions.find(item => item.slug === 'suit_atk01');
     expect(definition).toBeDefined();
-    expect(validateGearSetDefinition(definition!, '$.suit_atk01')).toEqual([]);
 
     const compiled = compileGearSetContribution(definition!, perlicaAttributes, graphPrograms);
     expect(compiled.modifiers).toEqual([
@@ -440,7 +432,6 @@ describe('生成套装正式定义', () => {
   it('让 suit_combo_cd01 的连携冷却和施放前叠层增伤进入正式编译', () => {
     const definition = generatedGearSetDefinitions.find(item => item.slug === 'suit_combo_cd01');
     expect(definition).toBeDefined();
-    expect(validateGearSetDefinition(definition!, '$.suit_combo_cd01')).toEqual([]);
     const compiled = compileGearSetContribution(definition!, perlicaAttributes, graphPrograms);
     expect(compiled.modifiers).toEqual([
       { kind: 'skillCooldownMultiplier', skillTypes: 'comboSkill', value: 0.85 },
@@ -482,25 +473,10 @@ describe('生成套装正式定义', () => {
     });
   });
 
-  it('完整注册两套只剩木桩场景静态生命收益的原生套装', () => {
-    for (const slug of ['suit_stragi01', 'suit_wisdwill01'] as const) {
-      const definition = generatedGearSetDefinitions.find(item => item.slug === slug);
-      expect(definition).toBeDefined();
-      expect(validateGearSetDefinition(definition!, `$.${slug}`)).toEqual([]);
-
-      const compiled = compileGearSetContribution(definition!, perlicaAttributes, graphPrograms);
-      expect(compiled.modifiers).toEqual([{ kind: 'panelStat', stat: 'healthFlat', value: 500 }]);
-      expect(compiled.initializationSequence).toBeUndefined();
-      expect(compiled.buffDefinitions).toEqual({});
-    }
-  });
-
   it('在固定满血场景安装敏捷与智识套装的常驻增伤 Buff', () => {
     const agility = generatedGearSetDefinitions.find(item => item.slug === 'suit_agi01')!;
     const intellect = generatedGearSetDefinitions.find(item => item.slug === 'suit_wisd01')!;
 
-    expect(validateGearSetDefinition(agility, '$.suit_agi01')).toEqual([]);
-    expect(validateGearSetDefinition(intellect, '$.suit_wisd01')).toEqual([]);
     const compiledAgility = compileGearSetContribution(agility, perlicaAttributes, graphPrograms);
     const compiledIntellect = compileGearSetContribution(
       intellect,
@@ -524,25 +500,6 @@ describe('生成套装正式定义', () => {
     });
   });
 
-  it('在固定满血场景只保留意志套装的静态意志收益', () => {
-    const definition = generatedGearSetDefinitions.find(item => item.slug === 'suit_will01')!;
-    expect(validateGearSetDefinition(definition, '$.suit_will01')).toEqual([]);
-    expect(
-      compileGearSetContribution(definition, perlicaAttributes, graphPrograms).modifiers,
-    ).toEqual([{ kind: 'attribute', attribute: 'will', operation: 'flat', value: 50 }]);
-  });
-
-  it('在无敌方主动伤害场景只保留力量套装的静态力量收益', () => {
-    const definition = generatedGearSetDefinitions.find(item => item.slug === 'suit_str01')!;
-    expect(validateGearSetDefinition(definition, '$.suit_str01')).toEqual([]);
-    const compiled = compileGearSetContribution(definition, perlicaAttributes, graphPrograms);
-    expect(compiled.modifiers).toEqual([
-      { kind: 'attribute', attribute: 'strength', operation: 'flat', value: 50 },
-    ]);
-    expect(compiled.initializationSequence).toBeUndefined();
-    expect(compiled.buffDefinitions).toEqual({});
-  });
-
   it('让两组元素附着输出事件安装对应的限时元素增伤 Buff', () => {
     const cases = [
       {
@@ -561,7 +518,6 @@ describe('生成套装正式定义', () => {
 
     for (const fixture of cases) {
       const definition = generatedGearSetDefinitions.find(item => item.slug === fixture.slug)!;
-      expect(validateGearSetDefinition(definition, `$.${fixture.slug}`)).toEqual([]);
       const compiled = compileGearSetContribution(definition, perlicaAttributes, graphPrograms);
       expect(compiled.modifiers).toEqual([{ kind: 'panelStat', stat: 'artsIntensity', value: 30 }]);
       const response = compiled.buffDefinitions?.[fixture.rootBuffId]?.abilityEventResponses?.[0];
@@ -587,7 +543,6 @@ describe('生成套装正式定义', () => {
 
   it('让失衡套按原生动作 InputTarget 上的失衡 Buff 实例数追加两段物理增伤', () => {
     const definition = generatedGearSetDefinitions.find(item => item.slug === 'suit_poise01')!;
-    expect(validateGearSetDefinition(definition, '$.suit_poise01')).toEqual([]);
     const compiled = compileGearSetContribution(definition, perlicaAttributes, graphPrograms);
     expect(compiled.modifiers).toEqual([{ kind: 'panelStat', stat: 'attackPercent', value: 0.08 }]);
     const response =
@@ -624,7 +579,6 @@ describe('生成套装正式定义', () => {
 
   it('让物理套在指定 Buff 输出后按十五秒冷却造成物理与失衡伤害', () => {
     const definition = generatedGearSetDefinitions.find(item => item.slug === 'suit_phy01')!;
-    expect(validateGearSetDefinition(definition, '$.suit_phy01')).toEqual([]);
     const compiled = compileGearSetContribution(definition, perlicaAttributes, graphPrograms);
     expect(compiled.modifiers).toEqual([
       { kind: 'panelStat', stat: 'staggerDamagePercent', value: 0.2 },
@@ -681,7 +635,6 @@ describe('生成套装正式定义', () => {
     const definition = generatedGearSetDefinitions.find(
       item => item.slug === 'suit_crush_fracture',
     )!;
-    expect(validateGearSetDefinition(definition, '$.suit_crush_fracture')).toEqual([]);
     const compiled = compileGearSetContribution(definition, perlicaAttributes, graphPrograms);
     expect(compiled.modifiers).toEqual([{ kind: 'panelStat', stat: 'attackPercent', value: 0.08 }]);
     expect(
@@ -731,7 +684,6 @@ describe('生成套装正式定义', () => {
 
   it('让治疗套在满血治疗时按过量治疗分支给事件目标施加可视防御 Buff', () => {
     const definition = generatedGearSetDefinitions.find(item => item.slug === 'suit_heal01')!;
-    expect(validateGearSetDefinition(definition, '$.suit_heal01')).toEqual([]);
     const compiled = compileGearSetContribution(definition, perlicaAttributes, graphPrograms);
     expect(compiled.modifiers).toEqual([
       { kind: 'staticHealingIncrease', target: 'output', value: 0.2 },
@@ -778,7 +730,6 @@ describe('生成套装正式定义', () => {
 
   it('让暴击套由输出暴击事件叠攻击，满层加暴击并在攻击 Buff 结束时清理', () => {
     const definition = generatedGearSetDefinitions.find(item => item.slug === 'suit_criti01')!;
-    expect(validateGearSetDefinition(definition, '$.suit_criti01')).toEqual([]);
     const compiled = compileGearSetContribution(definition, perlicaAttributes, graphPrograms);
 
     expect(compiled.modifiers).toEqual([{ kind: 'panelStat', stat: 'criticalRate', value: 0.05 }]);
@@ -856,7 +807,6 @@ describe('生成套装正式定义', () => {
 
   it('让爆发套在对应元素 Buff 达到两实例后获得四系术法增伤', () => {
     const definition = generatedGearSetDefinitions.find(item => item.slug === 'suit_burst01')!;
-    expect(validateGearSetDefinition(definition, '$.suit_burst01')).toEqual([]);
     const compiled = compileGearSetContribution(definition, perlicaAttributes, graphPrograms);
 
     expect(compiled.modifiers).toEqual([

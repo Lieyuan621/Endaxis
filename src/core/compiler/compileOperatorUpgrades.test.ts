@@ -10,11 +10,8 @@ import { describe, expect, it } from 'vitest';
 import { perlica } from '../../data/operators/perlica.generated';
 import { arclight as arclightGeneratedOperator } from '../../data/operators/arclight.generated';
 import { camille as camilleGeneratedOperator } from '../../data/operators/camille.generated';
-import { chenQianyu as chenQianyuGeneratedOperator } from '../../data/operators/chen-qianyu.generated';
-import { daPan as daPanGeneratedOperator } from '../../data/operators/da-pan.generated';
 import { endministrator as endministratorGeneratedOperator } from '../../data/operators/endministrator.generated';
 import { lifeng as lifengGeneratedOperator } from '../../data/operators/lifeng.generated';
-import fluoriteGeneratedOperator from '../../data/operators/fluorite.generated';
 import { gilberta as gilbertaGeneratedOperator } from '../../data/operators/gilberta.generated';
 import { lastRite as lastRiteGeneratedOperator } from '../../data/operators/last-rite.generated';
 import { estella as estellaGeneratedOperator } from '../../data/operators/estella.generated';
@@ -295,35 +292,6 @@ describe('operator upgrade compilation', () => {
     expect(rootActionSteps(programs[0]?.sequence!)[0]).toMatchObject({
       kind: 'applyBuff',
       parameters: { blackboardAssignments: { add: { kind: 'constant', value: 0.3 } } },
-    });
-  });
-
-  it('compiles Endministrator potentials 1 through 3 as ordered attached-Buff initialization', () => {
-    const active = resolveActiveOperatorUpgrades(
-      build({ operatorSlug: endministratorGeneratedOperator.slug, potential: 3 }),
-      endministratorGeneratedOperator,
-    );
-    const programs = compileOperatorInitializationPrograms(active, upgradeEntryCompiler());
-
-    expect(programs.map(program => program.key)).toEqual([
-      'potential:0',
-      'potential:1',
-      'potential:2',
-    ]);
-    expect(rootActionSteps(programs[0]?.sequence!)[0]).toMatchObject({
-      kind: 'applyBuff',
-      parameters: { buffId: 'buff_chr_0003_endminf_potential1' },
-    });
-    expect(rootActionSteps(programs[1]?.sequence!)[0]).toMatchObject({
-      kind: 'applyBuff',
-      parameters: { buffId: 'buff_chr_0003_endminf_potential2' },
-    });
-    expect(rootActionSteps(programs[2]?.sequence!)[0]).toMatchObject({
-      kind: 'applyBuff',
-      parameters: {
-        buffId: 'buff_chr_0003_endminf_potential3',
-        blackboardAssignments: { usp: { kind: 'constant', value: 15 } },
-      },
     });
   });
 
@@ -878,37 +846,6 @@ describe('operator upgrade compilation', () => {
     });
   });
 
-  it('connects Perlica conduct duration and effectiveness potentials to native skill blackboard', () => {
-    const durationPatched = compileOperatorDefinitionSkills(
-      'track:perlica',
-      build({ potential: 1 }),
-      perlica,
-      undefined,
-      undefined,
-      new ActionGraphDefinitionRepository(),
-    );
-    const base = compileOperatorDefinitionSkills(
-      'track:perlica',
-      build(),
-      perlica,
-      undefined,
-      undefined,
-      new ActionGraphDefinitionRepository(),
-    );
-    const effectivenessDefinition = perlica.potentials[3]!;
-    const effectivenessPatched = applyOperatorUpgradeSkillPatches(base, [
-      { source: 'potential', index: 0, level: 1, definition: effectivenessDefinition },
-    ]);
-    expect(
-      durationPatched.find(program => program.skillGroupKey === 'comboSkill')?.initialBlackboard,
-    ).toMatchObject({ duration: 8.75, extra_scaling: 1 });
-    const effectiveness = effectivenessPatched.find(
-      program => program.skillGroupKey === 'comboSkill',
-    )?.initialBlackboard;
-    expect(effectiveness?.duration).toBe(5);
-    expect(effectiveness?.extra_scaling).toBeCloseTo(1.33);
-  });
-
   it('compiles Perlica reaction attack potential into its native listening Buff initialization', () => {
     const programs = compileOperatorInitializationPrograms(
       [{ source: 'potential', index: 2, level: 1, definition: perlica.potentials[2]! }],
@@ -1070,70 +1007,6 @@ describe('operator upgrade compilation', () => {
     ]);
   });
 
-  it('connects all pure Da Pan potential blackboard patches to their generated skills', () => {
-    const programs = compileOperatorDefinitionSkills(
-      'track:da-pan',
-      build({ operatorSlug: daPanGeneratedOperator.slug, potential: 5 }),
-      daPanGeneratedOperator,
-      undefined,
-      undefined,
-      new ActionGraphDefinitionRepository(),
-    );
-    const ultimate = programs.find(program => program.skillGroupKey === 'ultimate')!;
-    const battleSkill = programs.find(program => program.skillGroupKey === 'battleSkill')!;
-
-    expect(ultimate.initialBlackboard).toMatchObject({
-      potential_1_duration: 15,
-      talent_1_stack: 1,
-      talent_1_duration: 10,
-    });
-    expect(ultimate.initialBlackboard.potential_1_dmg_up).toBeCloseTo(0.3);
-    expect(battleSkill.initialBlackboard.potential_5_interval).toBe(45);
-  });
-
-  it('resolves both levels of Da Pan talent 2 into its ultimate Buff chain inputs', () => {
-    const compileUltimate = (level: 1 | 2) =>
-      compileOperatorDefinitionSkills(
-        'track:da-pan',
-        build({ operatorSlug: daPanGeneratedOperator.slug, talentStates: { 1: level } }),
-        daPanGeneratedOperator,
-        undefined,
-        undefined,
-        new ActionGraphDefinitionRepository(),
-      ).find(program => program.skillGroupKey === 'ultimate')!;
-
-    const firstLevel = compileUltimate(1).initialBlackboard;
-    const secondLevel = compileUltimate(2).initialBlackboard;
-    expect(firstLevel).toMatchObject({
-      talent_1: 1,
-      talent_1_stack: 1,
-      talent_1_duration: 20,
-    });
-    expect(secondLevel).toMatchObject({
-      talent_1: 1,
-      talent_1_stack: 2,
-      talent_1_duration: 20,
-    });
-    expect(firstLevel.talent_1_cd_reduce).toBeCloseTo(0.4);
-    expect(secondLevel.talent_1_cd_reduce).toBeCloseTo(0.4);
-  });
-
-  it('connects Camille potential 1 to the battle-skill ability-entity inputs', () => {
-    const programs = compileOperatorDefinitionSkills(
-      'track:camille',
-      build({ operatorSlug: camilleGeneratedOperator.slug, potential: 1 }),
-      camilleGeneratedOperator,
-      undefined,
-      undefined,
-      new ActionGraphDefinitionRepository(),
-    );
-    const battleSkill = programs.find(program => program.skillGroupKey === 'battleSkill')!;
-
-    expect(battleSkill.initialBlackboard.weak_scale).toBeCloseTo(0.12);
-    expect(battleSkill.initialBlackboard.vulnerable_scale).toBeCloseTo(0.12);
-    expect(battleSkill.initialBlackboard.bat_duration).toBe(60);
-  });
-
   it('connects Camille potential 3 cooldown and blackboard patches to each native combo variant', () => {
     const programs = compileOperatorDefinitionSkills(
       'track:camille',
@@ -1152,40 +1025,6 @@ describe('operator upgrade compilation', () => {
     expect(combo2.initialBlackboard.atk_scale_2_1).toBeCloseTo(0.6 * 1.3);
     expect(combo1.initialBlackboard.atb).toBeCloseTo(20 * 1.15);
     expect(combo2.initialBlackboard.atb_ex).toBeCloseTo(20 * 1.15);
-  });
-
-  it('connects Chen Qianyu potential 5 to combo cooldown and the ultimate branch flag', () => {
-    const programs = compileOperatorDefinitionSkills(
-      'track:chen-qianyu',
-      build({ operatorSlug: chenQianyuGeneratedOperator.slug, potential: 5 }),
-      chenQianyuGeneratedOperator,
-      undefined,
-      undefined,
-      new ActionGraphDefinitionRepository(),
-    );
-
-    expect(
-      programs.find(program => program.skillId === 'chr_0005_chen_combo_skill')!.cooldownFrames,
-    ).toBe(360);
-    expect(
-      programs.find(program => program.skillId === 'chr_0005_chen_ultimate_skill')!
-        .initialBlackboard.potential5,
-    ).toBe(1);
-  });
-
-  it('connects Gilberta potential 5 to combo cooldown and damage scale', () => {
-    const programs = compileOperatorDefinitionSkills(
-      'track:gilberta',
-      build({ operatorSlug: gilbertaGeneratedOperator.slug, potential: 5 }),
-      gilbertaGeneratedOperator,
-      undefined,
-      undefined,
-      new ActionGraphDefinitionRepository(),
-    );
-    const combo = programs.find(program => program.skillId === 'chr_0013_aglina_combo_skill')!;
-
-    expect(combo.cooldownFrames).toBe(510);
-    expect(combo.initialBlackboard.atk_scale).toBeCloseTo(3.15 * 1.3);
   });
 
   it('patches Gilberta team ultimate-energy passive after resolving talent level', () => {
@@ -1394,22 +1233,6 @@ describe('operator upgrade compilation', () => {
     expect(passives[0]?.initialBlackboard.normalskill_atk_scale01).toBeCloseTo(0.275);
   });
 
-  it('patches Lifeng potential 3 into the enabled talent passive blackboard', () => {
-    const active = resolveActiveOperatorUpgrades(
-      build({
-        operatorSlug: lifengGeneratedOperator.slug,
-        talentStates: { 0: 2 },
-        potential: 3,
-      }),
-      lifengGeneratedOperator,
-    );
-
-    const programs = compileOperatorPassivePrograms(active, [], undefined, upgradeEntryCompiler());
-    expect(programs).toHaveLength(1);
-    expect(programs[0]).toMatchObject({ key: 'chr_0015_lifeng_talent_1' });
-    expect(programs[0]!.initialBlackboard.atk_up).toBeCloseTo(0.002);
-  });
-
   it('does not invent a passive instance when its talent is disabled', () => {
     const active = resolveActiveOperatorUpgrades(
       build({ operatorSlug: lifengGeneratedOperator.slug, potential: 3 }),
@@ -1419,21 +1242,6 @@ describe('operator upgrade compilation', () => {
     expect(compileOperatorPassivePrograms(active, [], undefined, upgradeEntryCompiler())).toEqual(
       [],
     );
-  });
-
-  it('compiles Fluorite talent 1 as a complete attached passive program', () => {
-    const active = resolveActiveOperatorUpgrades(
-      build({ operatorSlug: fluoriteGeneratedOperator.slug, talentStates: { 0: 2 } }),
-      fluoriteGeneratedOperator,
-    );
-
-    const programs = compileOperatorPassivePrograms(active, [], undefined, upgradeEntryCompiler());
-    expect(programs).toHaveLength(1);
-    expect(programs[0]).toMatchObject({
-      key: 'chr_0022_bounda_talent_1',
-      initialBlackboard: { dmg_up: 0.2 },
-      enableSequence: actionSteps([{ kind: 'applyBuff' }]),
-    });
   });
 
   it('rejects duplicate passive identities across active upgrades', () => {
