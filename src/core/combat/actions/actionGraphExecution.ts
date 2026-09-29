@@ -239,9 +239,9 @@ export class ActionGraphExecution extends CombatStep {
     return this.nodeBindings?.[id] ?? id;
   }
 
-  #binding(id: string): GraphNodeBinding {
+  #binding(id: string): [GraphNodeBinding, ActionStepState] {
     const existing = this.#bindings.get(id);
-    if (existing) return existing[0];
+    if (existing) return existing;
     const action = this.program.nodes.get(id)!.action;
     const saved = this.runtimeState.nodes.get(id)?.data;
     let binding: GraphNodeBinding;
@@ -648,8 +648,12 @@ export class ActionGraphExecution extends CombatStep {
         lifecycle: { state: 'pending', executeResult: false, executionPermitted: false },
         data: binding.data,
       });
-    this.#bindings.set(id, [binding, this.runtimeState.nodes.get(id)!.lifecycle]);
-    return binding;
+    const slot: [GraphNodeBinding, ActionStepState] = [
+      binding,
+      this.runtimeState.nodes.get(id)!.lifecycle,
+    ];
+    this.#bindings.set(id, slot);
+    return slot;
   }
 
   *#entries(
@@ -658,9 +662,11 @@ export class ActionGraphExecution extends CombatStep {
   ): IterableIterator<[GraphNodeBinding, ActionStepState]> {
     for (let id = this.runtimeState.entry; id !== null; id = this.program.nodes.get(id)!.next) {
       if (stopWhenClosed && this.runtimeState.closed) break;
-      if (!create && !this.runtimeState.nodes.has(id)) continue;
-      const binding = this.#binding(id);
-      if (!binding.inlineOnly) yield this.#bindings.get(id)!;
+      // 恢复时已重建所有保存的绑定；热路径只查现有配对，缺失时才按需创建。
+      const slot = this.#bindings.get(id) ?? (create ? this.#binding(id) : undefined);
+      if (!slot) continue;
+      const binding = slot[0];
+      if (!binding.inlineOnly) yield slot;
       if (stopWhenClosed && this.runtimeState.closed) break;
       const body = binding.inline?.(create);
       if (body) {

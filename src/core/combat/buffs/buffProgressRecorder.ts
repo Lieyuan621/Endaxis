@@ -1,4 +1,4 @@
-import type { CombatBuff } from './combatBuffs';
+import type { CombatBuff, CombatBuffContainer } from './combatBuffs';
 import type { BuffProgressCurveState, BuffProgressRecorderState } from '../state/environmentState';
 
 export interface BuffProgressPoint {
@@ -107,14 +107,18 @@ export class BuffProgressRecorder {
     this.#sampleCurve(curve, buff.remainingDuration, frame);
   }
 
-  sample(targetId: string, buffs: readonly CombatBuff<string>[], frame: number): void {
-    for (const buff of buffs) {
-      if (buff.isFinished) continue;
-      const keys = this.runtimeState.runtimeCurveKeys.get(runtimeKey(targetId, buff.instanceId));
-      if (keys === undefined) continue;
+  sample(
+    target: Pick<CombatBuffContainer<string>, 'ownerId' | 'getInstance'>,
+    frame: number,
+  ): void {
+    // 活动索引已记录需要进度的实例；不为少量 HUD 曲线复制并扫描整个 Buff 容器。
+    for (const keys of this.runtimeState.runtimeCurveKeys.values()) {
       for (const key of keys) {
         const curve = this.runtimeState.curves.get(key);
-        if (curve !== undefined) this.#sampleCurve(curve, buff.remainingDuration, frame);
+        if (curve === undefined || curve.targetId !== target.ownerId) continue;
+        const buff = target.getInstance(curve.instanceId);
+        if (buff !== undefined && !buff.isFinished)
+          this.#sampleCurve(curve, buff.remainingDuration, frame);
       }
     }
   }

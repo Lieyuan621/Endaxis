@@ -74,7 +74,7 @@ describe('Buff instance recycling', () => {
     buff.finish('other');
     const history = recorder.snapshot();
     owner.recycleFinishedBuffs();
-    recorder.sample('owner', owner.buffs, 2);
+    recorder.sample(owner, 2);
     expect(owner.buffs).toHaveLength(0);
     expect(recorder.snapshot()).toEqual(history);
     expect(history).toHaveLength(1);

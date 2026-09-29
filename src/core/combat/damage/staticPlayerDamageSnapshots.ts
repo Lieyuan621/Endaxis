@@ -11,11 +11,7 @@ import type {
 } from '../../game-data/operatorDefinition';
 import type { PlayerDamageDefenderSnapshot } from './playerActiveDamageInput';
 import { ENEMY_RESISTANCE_ATTRIBUTES } from './playerActiveDamageInput';
-import {
-  DAMAGE_SCALE_ATTRIBUTE_KEYS,
-  type DamageScaleAttributeKey,
-  type DamageScaleAttributeSnapshot,
-} from './damageScaleAttributes';
+import { DAMAGE_SCALE_ATTRIBUTE_KEYS, type DamageScaleAttributeKey } from './damageScaleAttributes';
 import type { PlayerDamageAttributeSnapshots } from './playerDamageContext';
 import type { CombatDamageExecutorContext } from '../runtime/combatRuntimeAssembly';
 import { CombatAttributeSet, attributeModifierValues } from '../attributes/combatAttributes';
@@ -69,11 +65,17 @@ const STATIC_DAMAGE_INCREASE_ATTRIBUTE: Readonly<
   cryo: 'cryoDamageIncrease',
 };
 
-function emptyDamageScaleSnapshot(): Record<DamageScaleAttributeKey, number> {
-  return Object.fromEntries(DAMAGE_SCALE_ATTRIBUTE_KEYS.map(key => [key, 0])) as Record<
+const EMPTY_DAMAGE_SCALES = Object.freeze(
+  Object.fromEntries(DAMAGE_SCALE_ATTRIBUTE_KEYS.map(key => [key, 0])) as Record<
     DamageScaleAttributeKey,
     number
-  >;
+  >,
+);
+
+function captureDamageScales(attributes: CombatAttributeSet<string>) {
+  const result = { ...EMPTY_DAMAGE_SCALES };
+  for (const key of DAMAGE_SCALE_ATTRIBUTE_KEYS) result[key] = attributes.get(key);
+  return result;
 }
 
 function includesValue<T>(filter: T | readonly T[], value: T): boolean {
@@ -92,8 +94,8 @@ function resolveStaticDamageScales(
     attribute: string,
     slot: 'baseAddition' | 'addition',
   ) => void,
-): DamageScaleAttributeSnapshot {
-  const result = emptyDamageScaleSnapshot();
+): Record<DamageScaleAttributeKey, number> {
+  const result = { ...EMPTY_DAMAGE_SCALES };
   for (const modifier of context.panel?.combatModifiers ?? []) {
     if (modifier.kind === 'staticDamageIncrease') {
       result[STATIC_DAMAGE_INCREASE_ATTRIBUTE[modifier.target]] += modifier.value;
@@ -165,7 +167,7 @@ export function resolveStaticPlayerDamageSnapshots(
       value: contribution.value,
     });
   }
-  const staticDamageScales = resolveStaticDamageScales(
+  const attackerDamageScales = resolveStaticDamageScales(
     context,
     step,
     (modifier, attribute, slot) => {
@@ -181,12 +183,8 @@ export function resolveStaticPlayerDamageSnapshots(
       });
     },
   );
-  const attackerDamageScales = Object.fromEntries(
-    DAMAGE_SCALE_ATTRIBUTE_KEYS.map(key => [
-      key,
-      staticDamageScales[key] + operatorAttributes.get(key),
-    ]),
-  ) as Record<DamageScaleAttributeKey, number>;
+  for (const key of DAMAGE_SCALE_ATTRIBUTE_KEYS)
+    attackerDamageScales[key] += operatorAttributes.get(key);
   attackerDamageScales.damageToStaggeredEnemyIncrease +=
     ('program' in context
       ? context.program.statModifiers?.damageToStaggeredEnemyIncrease
@@ -211,7 +209,7 @@ export function resolveStaticPlayerDamageSnapshots(
     attacker: {
       modifierDetails,
       ...attackerDamageScales,
-      attack,
+      attack: attack.value,
       attackDetail: captureAttackReceiptSnapshot(panel, operatorAttributes, attack),
       ...(step.kind === 'dealDamage' && step.parameters.calculation === 'attribute'
         ? (() => {
@@ -242,14 +240,12 @@ export function resolveStaticPlayerDamageSnapshots(
         context.enemy.defenderAttributes.resistances[
           step.parameters.damageType as keyof typeof context.enemy.defenderAttributes.resistances
         ]?.percent,
-      ...emptyDamageScaleSnapshot(),
+      ...EMPTY_DAMAGE_SCALES,
       ...context.enemy.defenderAttributes,
       ...(enemyAttributes === undefined
         ? {}
         : {
-            ...Object.fromEntries(
-              DAMAGE_SCALE_ATTRIBUTE_KEYS.map(key => [key, enemyAttributes.get(key)]),
-            ),
+            ...captureDamageScales(enemyAttributes),
             shelterDamageMultiplier: enemyAttributes.get('shelterDamageMultiplier'),
             resistances: Object.fromEntries(
               Object.entries(ENEMY_RESISTANCE_ATTRIBUTES).map(([damageType, attribute]) => [

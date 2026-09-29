@@ -173,7 +173,6 @@ import {
   projectTimelineHitActualFrames,
 } from '../../../ui/timeline/results/timelineHitEffects';
 import { runStandardPlayerDamageScenarioSimulation } from '../runStandardPlayerDamageScenarioSimulation';
-import { createEditorSimulationService } from '../testSupport/editorSimulationService';
 import { createDefaultOperatorInstance } from '../../editor/loadoutBuildFactory';
 
 /** 每次放置独立计数；对照场景可复用相同前缀，但同一次多段放置不能共享释放身份。 */

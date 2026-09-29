@@ -30,7 +30,11 @@ import {
 } from './attackReceiptDetail';
 import { calculateBreakingAttackValue } from './breakingAttackDamage';
 import { classifyDamageTags, injectDamageScaleAttributes } from './damageScaleAttributes';
-import { DAMAGE_SCALE_ZONES } from './damageScale';
+import {
+  DAMAGE_SCALE_ZONES,
+  type AppliedDamageModifier,
+  type DamageScaleZone,
+} from './damageScale';
 import { executeHealthDamage } from './healthDamage';
 import { calculatePlayerActiveDamage } from './playerActiveDamage';
 import {
@@ -55,6 +59,21 @@ type RuntimeOperation = ResolvedCombatOperationStep;
 type DamageStep = ResolvedCombatStepForKind<'dealDamage' | 'dealFixedDamage'>;
 type StaggerStep = ResolvedCombatStepForKind<'dealStagger'>;
 type PoiseStep = DamageStep | StaggerStep;
+
+/** 按原来源顺序追加匹配项，不为每个属性拼接、过滤整份明细。 */
+function appendAttributeDetails(
+  result: AppliedDamageModifier[],
+  items: readonly AppliedDamageModifier[] | undefined,
+  side: DamageModifierSide,
+  attribute: string,
+  zone?: DamageScaleZone,
+): void {
+  if (items === undefined) return;
+  for (const item of items) {
+    if (item.kind !== 'attribute' || item.side !== side || item.attribute !== attribute) continue;
+    result.push(zone === undefined ? item : { ...item, zone });
+  }
+}
 
 // 原生 IgniteDamageSet：四种爆发、法术异常初次伤害、燃烧和碎冰。
 const IGNITE_DAMAGE_TAGS = new Set<string>([
@@ -301,11 +320,8 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       const recordAttribute = (side: DamageModifierSide, attribute: string) => {
         const snapshot =
           side === 'attacker' ? context.attackerAttributes : context.defenderAttributes;
-        attributeDetails.push(
-          ...[...(snapshot.modifierDetails ?? []), ...context.appliedDamageModifiers].filter(
-            item => item.kind === 'attribute' && item.side === side && item.attribute === attribute,
-          ),
-        );
+        appendAttributeDetails(attributeDetails, snapshot.modifierDetails, side, attribute);
+        appendAttributeDetails(attributeDetails, context.appliedDamageModifiers, side, attribute);
       };
       const calculation = this.#resolveCalculationResult(
         step,
@@ -327,13 +343,20 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
         (side, zone, attribute) => {
           const snapshot =
             side === 'attacker' ? context.attackerAttributes : context.defenderAttributes;
-          for (const item of [
-            ...(snapshot.modifierDetails ?? []),
-            ...context.appliedDamageModifiers,
-          ]) {
-            if (item.kind === 'attribute' && item.side === side && item.attribute === attribute)
-              scaleAttributeDetails.push({ ...item, zone });
-          }
+          appendAttributeDetails(
+            scaleAttributeDetails,
+            snapshot.modifierDetails,
+            side,
+            attribute,
+            zone,
+          );
+          appendAttributeDetails(
+            scaleAttributeDetails,
+            context.appliedDamageModifiers,
+            side,
+            attribute,
+            zone,
+          );
         },
       );
       if (step.kind === 'dealDamage') {
