@@ -38,7 +38,7 @@ describe('operator attack attributes', () => {
     );
     attributes.addModifier(buff);
     expect(attributes.get('Atk')).toBeCloseTo(714 * (1 + 0.312 + 0.2) + 20);
-    expect(resolveOperatorAttack(build, attributes)).toBe(
+    expect(resolveOperatorAttack(build, attributes).value).toBe(
       Math.floor((714 * 1.512 + 20) * (1 + 120 * Math.fround(0.005) + 200 * Math.fround(0.002))),
     );
     attributes.removeModifier(buff);
@@ -106,7 +106,7 @@ describe('operator attack attributes', () => {
   it('按原生主副属性系数计算静态攻击', () => {
     const attributes = createOperatorAttackAttributes(input);
 
-    expect(resolveOperatorAttack(input, attributes)).toBe(
+    expect(resolveOperatorAttack(input, attributes).value).toBe(
       Math.floor(500 * (1 + 120 * Math.fround(0.005) + 200 * Math.fround(0.002))),
     );
   });
@@ -130,7 +130,7 @@ describe('operator attack attributes', () => {
       ),
     );
 
-    expect(resolveOperatorAttack(input, attributes)).toBe(
+    expect(resolveOperatorAttack(input, attributes).value).toBe(
       Math.floor(
         500 * (1 + 120 * (Math.fround(0.005) + 0.001) + 200 * (Math.fround(0.002) + 0.001)),
       ),
@@ -148,7 +148,7 @@ describe('operator attack attributes', () => {
       ),
     );
 
-    expect(resolveOperatorAttack(input, attributes)).toBe(
+    expect(resolveOperatorAttack(input, attributes).value).toBe(
       Math.floor(500 * 1.4 * (1 + 120 * Math.fround(0.005) + 200 * Math.fround(0.002))),
     );
   });

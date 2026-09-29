@@ -223,21 +223,30 @@ export const EQUIPMENT_DAMAGE_SCALE_ATTRIBUTES: Readonly<Record<string, DamageSc
     staggeredEnemy: 'damageToStaggeredEnemyIncrease',
   };
 
-/** 在命中时读取当前系数；返回值继续保持现有面板与伤害输入使用的整数攻击。 */
+/** 同次读取的属性、系数和基础攻击共同产生整数攻击值，供计算与明细共享。 */
 export function resolveOperatorAttack(
   input: OperatorAttackDerivationInput,
   attributes: CombatAttributeSet<string>,
-): number {
+) {
+  const values = {} as Record<OperatorAttribute, number>;
+  const coefficients = {} as Record<OperatorAttribute, number>;
   let scalar = 1;
   for (const attribute of Object.keys(
     ATTACK_FACTOR_ATTRIBUTE_BY_OPERATOR_ATTRIBUTE,
   ) as OperatorAttribute[]) {
-    scalar +=
-      Math.floor(attributes.get(attribute)) *
-      attributes.get(ATTACK_FACTOR_ATTRIBUTE_BY_OPERATOR_ATTRIBUTE[attribute]);
+    values[attribute] = Math.floor(attributes.get(attribute));
+    coefficients[attribute] = attributes.get(
+      ATTACK_FACTOR_ATTRIBUTE_BY_OPERATOR_ATTRIBUTE[attribute],
+    );
+    scalar += values[attribute] * coefficients[attribute];
   }
   const attackBase = attributes.has('Atk')
     ? attributes.get('Atk')
     : input.attackBeforeAttributeScalar;
-  return Math.floor(attackBase * scalar);
+  return {
+    value: Math.floor(attackBase * scalar),
+    baseValue: attackBase,
+    attributes: values,
+    coefficients,
+  };
 }

@@ -25,6 +25,7 @@ import {
   beginSkillCast,
   endSkillExecution,
   tickSkillExecution,
+  type SkillAdvanceHost,
 } from './skillExecution';
 
 /** 发射动作只提交一次请求；回调技能及其宿主都归该投射物持有。 */
@@ -815,6 +816,14 @@ export class SkillRuntime {
     );
   }
 
+  readonly #advanceHost: SkillAdvanceHost = {
+    advanceCooldown: delta => this.#cooldown.advance(delta),
+    cooldownReady: () => this.record('SkillCooldownReady'),
+    tick: delta => this.#tick(delta),
+    timelineComplete: () => this.#timeline?.isComplete === true,
+    end: () => this.end(),
+  };
+
   /** 低层显式增量入口，单位秒；AbilitySystem 分派负责施放当帧保护及共享冷却。 */
   advance(timelineDeltaSeconds: number, cooldownDeltaSeconds: number): void {
     advanceSkillExecution(
@@ -823,13 +832,7 @@ export class SkillRuntime {
       this.#advancesCooldown,
       timelineDeltaSeconds,
       cooldownDeltaSeconds,
-      {
-        advanceCooldown: delta => this.#cooldown.advance(delta),
-        cooldownReady: () => this.record('SkillCooldownReady'),
-        tick: delta => this.#tick(delta),
-        timelineComplete: () => this.#timeline?.isComplete === true,
-        end: () => this.end(),
-      },
+      this.#advanceHost,
     );
   }
 

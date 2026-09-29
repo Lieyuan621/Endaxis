@@ -1886,7 +1886,10 @@ export class CombatBuffContainer<Key extends string> {
     for (const buff of this.#memberBindings.values()) {
       for (const modifier of buff.attributeModifiers) {
         if (!active.has(modifier)) continue;
-        for (const [slot, value] of Object.entries(modifier.values)) {
+        for (const slot in modifier.values) {
+          if (!Object.hasOwn(modifier.values, slot)) continue;
+          const value =
+            modifier.values[slot as import('../attributes/combatAttributes').AttributeModifierSlot];
           const neutral = slot === 'finalMultiplier' || slot === 'baseFinalMultiplier' ? 1 : 0;
           if (value === neutral) continue;
           result.push({
@@ -1942,7 +1945,8 @@ export class CombatBuffContainer<Key extends string> {
     const defaultDelta =
       typeof deltaTime === 'number' ? deltaTime : resolveBuffTickDelta('default', deltaTime);
     advanceBuffAddingCooldowns(this.#state, defaultDelta);
-    for (const buff of this.#iterateBuffs()) buff.tick(deltaTime);
+    // 遍历当前成员数组，保留回调中增删成员对后续遍历的影响。
+    for (const id of this.#state.memberIds) this.#requireMember(id).tick(deltaTime);
   }
 
   /** 原生回收独立于 tick；逆序逐项检查当前结束状态。 */

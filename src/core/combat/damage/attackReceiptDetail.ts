@@ -3,7 +3,10 @@ import type { OperatorAttribute } from '../../game-data/operatorDefinition';
 import type { ResolvedOperatorPanel } from '../../compiler/resolveOperatorPanel';
 import type { CombatAttributeSet } from '../attributes/combatAttributes';
 import { ATTRIBUTE_MODIFIER_SLOTS, attributeModifierValues } from '../attributes/combatAttributes';
-import { ATTACK_FACTOR_ATTRIBUTE_BY_OPERATOR_ATTRIBUTE } from '../attributes/operatorAttackAttributes';
+import {
+  ATTACK_FACTOR_ATTRIBUTE_BY_OPERATOR_ATTRIBUTE,
+  type resolveOperatorAttack,
+} from '../attributes/operatorAttackAttributes';
 import type { AttackReceiptSnapshot } from '../state/foundationState';
 export type { AttackReceiptSnapshot } from '../state/foundationState';
 
@@ -26,12 +29,10 @@ export function attackReceiptAttributes(
 export function captureAttackReceiptSnapshot(
   panel: ResolvedOperatorPanel,
   attributes: CombatAttributeSet<string>,
-  attack: number,
+  attack: ReturnType<typeof resolveOperatorAttack>,
 ): AttackReceiptSnapshot | undefined {
   if (panel.attackDetail === undefined) return undefined;
-  const keys = Object.keys(ATTACK_FACTOR_ATTRIBUTE_BY_OPERATOR_ATTRIBUTE) as OperatorAttribute[];
-  const modifiers = attributeModifierValues('addition', 0);
-  const totals = { ...modifiers };
+  const totals = { ...attributeModifierValues('addition', 0) };
   for (const modifier of attributes.runtimeState.modifiers) {
     if (modifier.attribute !== 'Atk') continue;
     for (const slot of ATTRIBUTE_MODIFIER_SLOTS) {
@@ -46,21 +47,17 @@ export function captureAttackReceiptSnapshot(
   totals.finalMultiplier *= definition?.otherAttributeFinalMultiplier ?? 1;
   return {
     ...panel.attackDetail,
-    panelAttack: attack,
+    panelAttack: attack.value,
     mainAttribute: panel.mainAttribute,
     secondaryAttribute: panel.secondaryAttribute,
-    attributes: Object.fromEntries(
-      keys.map(key => [key, Math.floor(attributes.get(key))]),
-    ) as Record<OperatorAttribute, number>,
-    coefficients: Object.fromEntries(
-      keys.map(key => [key, attributes.get(ATTACK_FACTOR_ATTRIBUTE_BY_OPERATOR_ATTRIBUTE[key])]),
-    ) as Record<OperatorAttribute, number>,
+    attributes: attack.attributes,
+    coefficients: attack.coefficients,
     attackPercent: totals.baseMultiplier,
     flatAttack: totals.baseFinalAddition,
     runtimeBase: {
       raw: attributes.runtimeState.rawValues.get('Atk') ?? panel.attackBeforeAttributeScalar,
       armed: attributes.getArmed('Atk'),
-      value: attributes.get('Atk'),
+      value: attributes.has('Atk') ? attack.baseValue : 0,
       minimum: definition?.minimum,
       maximum: definition?.maximum,
       modifiers: totals,

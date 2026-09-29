@@ -77,7 +77,7 @@ export function tickTimelineActions(
   }
   due.sort((left, right) => program[left]!.sourceIndex - program[right]!.sourceIndex);
   // 本次调用内的乱序完成集合，不进入切面；返回前游标已经越过全部到期项。
-  const started = new Set<number>();
+  let started: Set<number> | undefined;
   for (const indexedAction of due) {
     if (state.ended) break;
     if (indexedAction < pendingStart) {
@@ -96,6 +96,7 @@ export function tickTimelineActions(
     }
     // 跳转或结束会推进游标，已跳过的节点不能从本帧候选列表重新启动。
     if (indexedAction < state.nextPendingIndex) continue;
+    started ??= new Set<number>();
     started.add(indexedAction);
     while (started.has(state.nextPendingIndex)) state.nextPendingIndex += 1;
     state.starting = indexedAction;

@@ -1252,7 +1252,7 @@ export class StandardPlayerDamageEnvironment {
         definitionOperatorId => this.#requireProjectileRuntimeDependencies(definitionOperatorId),
       );
       runtime.configureAdvancedObserver(() =>
-        this.#buffProgress.sample(operatorId, container.buffs, this.#requireClock().frame),
+        this.#buffProgress.sample(container, this.#requireClock().frame),
       );
       this.#operatorBuffRuntimes.set(operatorId, runtime);
     }
