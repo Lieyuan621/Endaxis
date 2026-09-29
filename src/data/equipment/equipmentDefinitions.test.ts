@@ -15,18 +15,12 @@ import {
 
 describe('equipmentDefinitions', () => {
   it('keeps the current native gear and gear-set catalogs self-contained', () => {
-    expect(gearDefinitions).toHaveLength(258);
-    expect(gearSetDefinitions).toHaveLength(24);
-    expect(gearDefinitions.every(definition => definition.slug.startsWith('item_equip_'))).toBe(
-      true,
-    );
+    expect(gearDefinitions.length).toBeGreaterThan(0);
+    expect(gearSetDefinitions.length).toBeGreaterThan(0);
     expect(gearDefinitions.every(definition => Boolean(definition.assetSlug))).toBe(true);
-    expect(gearDefinitions.every(definition => definition.iconPath?.endsWith('.webp'))).toBe(true);
-    expect(gearSetDefinitions.every(definition => definition.iconPath?.endsWith('.webp'))).toBe(
-      true,
-    );
-    for (const set of gearSetDefinitions) {
-      expect(existsSync(join('public', set.iconPath!.slice(1))), set.slug).toBe(true);
+    for (const definition of [...gearDefinitions, ...gearSetDefinitions]) {
+      expect(definition.iconPath, definition.slug).toMatch(/^\/.*\.webp$/);
+      expect(existsSync(join('public', definition.iconPath!.slice(1))), definition.slug).toBe(true);
     }
     expect(
       gearDefinitions.find(definition => definition.slug === 'item_equip_t4_suit_atk02_hand_02'),

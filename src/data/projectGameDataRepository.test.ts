@@ -83,7 +83,6 @@ describe('project game data repository', () => {
     const { operatorDefinitions } = await import('./operators');
     expect(repository.getOperators()).toEqual(operatorDefinitions);
     expect(repository.getOperator('purrchena')).not.toBeNull();
-    expect(repository.getWeapons()).toHaveLength(80);
     expect(repository.getWeapon('wpn_sword_0023')).not.toBeNull();
     expect(repository.getWeapon('wpn_sword_0026')).not.toBeNull();
     expect(repository.getOperator('typhoeus')).not.toBeNull();

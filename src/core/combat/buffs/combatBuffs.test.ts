@@ -2412,7 +2412,7 @@ describe('CombatBuffContainer', () => {
     expect(buff.attributeModifiers).toHaveLength(1);
   });
 
-  it('refreshes registered attribute modifier values from the current buff blackboard', () => {
+  it('refreshes attributes from the blackboard, preserves modifiers on failure, and respects enable state', () => {
     const attributes = new CombatAttributeSet<Attribute>();
     attributes.define('attack', 100, { minimum: 0, maximum: 1000 });
     const container = new CombatBuffContainer('operator', attributes);
@@ -2449,6 +2449,16 @@ describe('CombatBuffContainer', () => {
     expect(attributes.modifierCount).toBe(1);
     expect(buff.attributeModifiers[0]).not.toBe(initialModifier);
     expect(lifecycle).toEqual(['start', 'enable']);
+
+    const previousModifier = buff.attributeModifiers[0];
+    buff.blackboard.assign({ bonus: 'invalid' });
+    expect(() => buff.refreshAttributeModifierValues()).toThrow(
+      "attribute modifier blackboard key 'bonus' is missing or not numeric",
+    );
+    expect(buff.attributeModifiers[0]).toBe(previousModifier);
+    expect(attributes.modifierCount).toBe(1);
+    expect(attributes.get('attack')).toBe(135);
+    expect(buff.blackboard.getNumber('bonus')).toBeUndefined();
 
     buff.disable();
     buff.blackboard.assignDynamic('bonus', 45);
@@ -2491,39 +2501,6 @@ describe('CombatBuffContainer', () => {
     expect(buff.enhanceCount).toBe(2);
     expect(attributes.modifierCount).toBe(2);
     expect(attributes.get('attack')).toBe(140);
-  });
-
-  it('keeps the previous modifier registered when refreshing an invalid blackboard value', () => {
-    const attributes = new CombatAttributeSet<Attribute>();
-    attributes.define('attack', 100, { minimum: 0, maximum: 1000 });
-    const container = new CombatBuffContainer('operator', attributes);
-    const buff = requireAddedBuff(
-      container.add(
-        {
-          id: 'buff.attribute.refresh.invalid',
-          stackingType: 'unlimited',
-          blackboard: { bonus: 10 },
-          attributeModifiers: [
-            {
-              attribute: 'attack',
-              values: { slot: 'addition', blackboardKey: 'bonus' },
-              timing: 'runtime',
-            },
-          ],
-        },
-        'operator',
-      ),
-    );
-    const previousModifier = buff.attributeModifiers[0];
-    buff.blackboard.assign({ bonus: 'invalid' });
-
-    expect(() => buff.refreshAttributeModifierValues()).toThrow(
-      "attribute modifier blackboard key 'bonus' is missing or not numeric",
-    );
-    expect(buff.attributeModifiers[0]).toBe(previousModifier);
-    expect(attributes.modifierCount).toBe(1);
-    expect(attributes.get('attack')).toBe(110);
-    expect(buff.blackboard.getNumber('bonus')).toBeUndefined();
   });
 
   it('registers and unregisters shared SP gain modifiers with the buff lifecycle', () => {

@@ -53,6 +53,7 @@ function gear(slug: string, slotType: GearDefinition['slotType']): GearDefinitio
 const armor = gear('test-armor', 'armor');
 const gloves = gear('test-gloves', 'gloves');
 const accessory = gear('test-accessory', 'accessory');
+const secondAccessory = gear('test-second-accessory', 'accessory');
 const gearSet: GearSetDefinition = {
   slug: 'test-set',
   modifiers: [{ kind: 'panelStat', stat: 'artsIntensity', value: 10 }],
@@ -105,7 +106,7 @@ function scenario() {
 
 function index() {
   const gears = new Map(
-    [armor, gloves, accessory].map(definition => [definition.slug, definition]),
+    [armor, gloves, accessory, secondAccessory].map(definition => [definition.slug, definition]),
   );
   return {
     getOperator: (slug: string) => (slug === perlica.slug ? perlica : null),
@@ -116,6 +117,42 @@ function index() {
 }
 
 describe('compileScenarioEquipment', () => {
+  it('keeps both accessory sources and their artificing levels independent', () => {
+    const value = scenario();
+    value.tracks[0]!.gears.accessory2 = {
+      gearSlug: secondAccessory.slug,
+      artificingLevels: [0],
+    };
+    const [compiled] = compileScenarioEquipment(
+      value,
+      index(),
+      new ActionGraphDefinitionRepository(),
+    );
+    const contributions = compiled!.contributions.filter(
+      entry =>
+        entry.source.kind === 'gearTrait' &&
+        [accessory.slug, secondAccessory.slug].includes(entry.source.slug),
+    );
+    expect(
+      contributions.map(entry => ({ source: entry.source, modifiers: entry.modifiers })),
+    ).toEqual(
+      [accessory, secondAccessory].map((definition, index) => ({
+        source: { kind: 'gearTrait', slug: definition.slug, traitKey: 'secondary-attribute' },
+        modifiers: [
+          {
+            kind: 'attribute',
+            attribute: perlica.secondaryAttribute,
+            operation: 'flat',
+            value: index === 0 ? 2 : 1,
+          },
+        ],
+      })),
+    );
+    expect(compiled!.contributions.filter(entry => entry.source.kind === 'gearSet')).toHaveLength(
+      1,
+    );
+  });
+
   it('compiles equipped builds, relative attributes, and one active three-piece set', () => {
     const [compiled] = compileScenarioEquipment(
       scenario(),

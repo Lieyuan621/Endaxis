@@ -38,12 +38,6 @@ const resources = {
   normalSkillUltimateEnergy: { selfGainPerSp: 0.065, otherGainPerSp: 0.065 },
 } as const;
 
-/**
- * 已复现并完成首轮归因、但尚未闭合的基础构筑失败边界。
- * 新失败不能自动进入此表；已修复项也必须从表中删除，否则“预期失败”会反向让门禁报错。
- */
-const knownFailures: Readonly<Record<string, string>> = {};
-
 describe('所有正式干员技能逐项放置与模拟', () => {
   it('覆盖默认仓库中的每个干员和每个基础/变体技能', () => {
     expect(cases.length).toBeGreaterThan(0);
@@ -53,7 +47,6 @@ describe('所有正式干员技能逐项放置与模拟', () => {
         .map(operator => operator.slug)
         .sort(),
     );
-    expect(Object.keys(knownFailures)).toHaveLength(0);
     expect(
       new Set(
         cases.map(
@@ -62,15 +55,10 @@ describe('所有正式干员技能逐项放置与模拟', () => {
         ),
       ).size,
     ).toBe(cases.length);
-    expect(
-      Object.keys(knownFailures).every(identity =>
-        cases.some(entry => skillIdentity(entry) === identity),
-      ),
-    ).toBe(true);
   });
 
   it.each(cases)(
-    '$operator.slug / $groupKey / $variantKey / $skill.key 可以在最小合法上下文中放上时间轴并跑完整模拟',
+    '$operator.slug / $groupKey / $variantKey / $skill.key 的正式定义可装配并完成模拟',
     async ({ operator, groupKey, variantKey, skill }) => {
       const scenario = createEmptyScenario(
         `audit:${operator.slug}:${groupKey}:${variantKey ?? 'base'}:${skill.key}`,
@@ -147,24 +135,19 @@ describe('所有正式干员技能逐项放置与模拟', () => {
         spellInflictionSettings: skillSettings,
       });
 
-      const expectedFailure = knownFailures[identity];
-      if (expectedFailure !== undefined) {
-        await expect(service.simulate(placed, 3600)).rejects.toThrow(expectedFailure);
-      } else {
-        const result = await service.simulate(placed, 3600);
-        expect(result).toBeDefined();
-        // 1.5.3 真实来源的独立 HideUI 结束帧；不能用 UltimateTime 的 50/56 帧代替。
-        // 固定正式产物门禁，避免只有需要本机来源的可选测试覆盖此链路。
-        if (presentationEnd !== undefined) {
-          expect(
-            result.receiptEntries
-              .filter(entry => entry.event === 'UltimatePresentationChanged')
-              .map(entry => [entry.frame, entry.data?.active]),
-          ).toEqual([
-            [startFrame, true],
-            [startFrame + presentationEnd, false],
-          ]);
-        }
+      const result = await service.simulate(placed, 3600);
+      expect(result).toBeDefined();
+      // 1.5.3 真实来源的独立 HideUI 结束帧；不能用 UltimateTime 的 50/56 帧代替。
+      // 固定正式产物门禁，避免只有需要本机来源的可选测试覆盖此链路。
+      if (presentationEnd !== undefined) {
+        expect(
+          result.receiptEntries
+            .filter(entry => entry.event === 'UltimatePresentationChanged')
+            .map(entry => [entry.frame, entry.data?.active]),
+        ).toEqual([
+          [startFrame, true],
+          [startFrame + presentationEnd, false],
+        ]);
       }
     },
   );

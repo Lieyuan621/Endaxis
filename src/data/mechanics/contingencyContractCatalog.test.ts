@@ -4,13 +4,34 @@ import {
   isContingencyContractTagLocked,
   toggleContingencyContractTag,
 } from './contingencyContractCatalog';
+import {
+  contingencyContractBlockedTagReasons,
+  contingencyContractOmittedTagReasons,
+  contingencyContractTagDefinitions,
+} from './generated/contingencyContractDefinitions.generated';
 
 describe('contingencyContractCatalog', () => {
-  it('classifies every current package tag without hiding unfinished work', () => {
-    expect(contingencyContractTags).toHaveLength(46);
-    expect(contingencyContractTags.filter(tag => tag.support === 'supported')).toHaveLength(24);
-    expect(contingencyContractTags.filter(tag => tag.support === 'blocked')).toHaveLength(0);
-    expect(contingencyContractTags.filter(tag => tag.support === 'omitted')).toHaveLength(22);
+  it('classifies every generated tag and gives unsupported tags a reason', () => {
+    expect(contingencyContractTags.map(tag => tag.tagId)).toEqual(
+      contingencyContractTagDefinitions.map(tag => tag.tagId),
+    );
+    for (const tag of contingencyContractTags) {
+      if (tag.support === 'supported') {
+        expect(tag.supportReason).toBeUndefined();
+      } else {
+        expect(tag.supportReason).toBeTruthy();
+      }
+    }
+    expect(
+      new Set(
+        contingencyContractTags.filter(tag => tag.support === 'blocked').map(tag => tag.tagId),
+      ),
+    ).toEqual(new Set(Object.keys(contingencyContractBlockedTagReasons).map(Number)));
+    expect(
+      new Set(
+        contingencyContractTags.filter(tag => tag.support === 'omitted').map(tag => tag.tagId),
+      ),
+    ).toEqual(new Set(Object.keys(contingencyContractOmittedTagReasons).map(Number)));
     expect(contingencyContractTags.every(tag => !Object.hasOwn(tag, 'localization'))).toBe(true);
   });
 

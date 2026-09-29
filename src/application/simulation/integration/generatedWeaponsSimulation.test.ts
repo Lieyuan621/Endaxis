@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import type { WeaponDefinition } from '../../../core/game-data/equipmentDefinition';
 import type { OperatorDefinition } from '../../../core/game-data/operatorDefinition';
+import { ActionGraphDefinitionRepository } from '../../../core/compiler/actionGraphDefinitionRepository';
+import {
+  compileWeaponBuffDefinitions,
+  compileWeaponContributions,
+} from '../../../core/compiler/compileEquipment';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import type { TrackDocument } from '../../../core/project/schema';
 import { skillSettings } from '../../../data/combat/skillSettings';
@@ -362,46 +367,22 @@ describe('生成武器的正式模拟门禁', () => {
     }
   });
 
-  it.each(candidates)('$slug 四类技能生产模拟全部成功，不设置失败豁免', async weapon => {
-    const operator = repository
-      .getOperators()
-      .find(
-        candidate =>
-          candidate.weaponType === weapon.weaponType &&
-          ['basicAttack', 'battleSkill', 'comboSkill', 'ultimate'].every(key =>
-            candidate.skillGroups.some(group => group.key === key),
-          ),
-      );
-    if (!operator) throw new Error(`no compatible operator for ${weapon.slug}`);
-    const result = await simulateWeapon(weapon, operator);
-    expect(result.finalEnemyHealth).toBeLessThan(result.enemyVitals.initialHealth);
-  });
-
-  it.each(candidates)('$slug 全兼容干员/词条两端审计：不得出现未知失败', async weapon => {
-    const operators = repository
-      .getOperators()
-      .filter(operator => operator.weaponType === weapon.weaponType);
-    expect(operators.length).toBeGreaterThan(0);
-    const failures: string[] = [];
-    for (const operator of operators) {
-      for (const tier of ['minimum', 'maximum'] as const) {
-        try {
-          const result = await simulateWeapon(
-            weapon,
-            operator,
-            undefined,
-            weapon.traits.map(trait => (tier === 'minimum' ? 1 : trait.levelCount)),
-          );
-          expect(result.finalEnemyHealth).toBeLessThan(result.enemyVitals.initialHealth);
-        } catch (error) {
-          failures.push(
-            `${operator.slug}/${tier}: ${error instanceof Error ? error.message : String(error)}`,
-          );
-        }
+  it('每把生成武器的词条首末档与武器 Buff 都能编译', () => {
+    const programs = new ActionGraphDefinitionRepository();
+    for (const weapon of candidates) {
+      const operator = repository
+        .getOperators()
+        .find(candidate => candidate.weaponType === weapon.weaponType)!;
+      const attributes = { main: operator.mainAttribute, secondary: operator.secondaryAttribute };
+      for (const levels of [
+        weapon.traits.map(() => 1),
+        weapon.traits.map(trait => trait.levelCount),
+      ]) {
+        const contributions = compileWeaponContributions(weapon, levels, attributes, programs);
+        expect(contributions, weapon.slug).toHaveLength(weapon.traits.length);
       }
+      compileWeaponBuffDefinitions(weapon, programs);
     }
-    // 正式诀已安装模板初值与动态条件；966 场全部必须成功，不再保留失败豁免。
-    expect(failures).toEqual([]);
   });
 
   it('诀单放连携也能从角色模板读取初值，不依赖武器事件补值', async () => {

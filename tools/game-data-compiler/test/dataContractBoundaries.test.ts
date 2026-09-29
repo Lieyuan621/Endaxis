@@ -603,17 +603,12 @@ describe('独立游戏数据契约边界', () => {
     expect(violations).toEqual([]);
   });
 
-  it('契约无需本体、转换器、Node 或 DOM 类型即可独立检查', () => {
+  it('契约的源码依赖闭包只包含契约自身', () => {
     const program = loadProgram(join(contractRoot, '../tsconfig.json'));
     const external = program
       .getSourceFiles()
       .filter(file => !file.isDeclarationFile && !inside(file.fileName, contractRoot));
     expect(external.map(file => file.fileName)).toEqual([]);
-    expect(
-      ts
-        .getPreEmitDiagnostics(program)
-        .map(item => ts.flattenDiagnosticMessageText(item.messageText, '\n')),
-    ).toEqual([]);
   });
 
   it('转换器只共享主包的纯逻辑，不加载应用状态、UI 或正式数据仓库', () => {
@@ -634,11 +629,6 @@ describe('独立游戏数据契约边界', () => {
           !sharedFiles.some(path => relative(path, file.fileName) === ''),
       );
     expect(violations.map(file => relative(root, file.fileName))).toEqual([]);
-    expect(
-      ts
-        .getPreEmitDiagnostics(program)
-        .map(item => ts.flattenDiagnosticMessageText(item.messageText, '\n')),
-    ).toEqual([]);
   });
 
   it('本体生产代码不得引用命令行工具或游戏数据编译器，跨端测试是显式例外', () => {

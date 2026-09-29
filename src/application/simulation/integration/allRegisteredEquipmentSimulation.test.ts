@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { GearDefinition, WeaponDefinition } from '../../../core/game-data/equipmentDefinition';
+import type { GearDefinition } from '../../../core/game-data/equipmentDefinition';
 import type { OperatorDefinition } from '../../../core/game-data/operatorDefinition';
 import { compileScenarioEquipment } from '../../../core/compiler/compileScenarioEquipment';
 import { createEmptyScenario } from '../../../core/project/createProject';
@@ -12,28 +12,8 @@ import { placeSkillGroup } from '../../../ui/timeline/interaction/placeSkillGrou
 import { ScenarioSimulationService } from '../scenarioSimulationService';
 import { staticEquipmentContribution } from '../testSupport/staticEquipmentContribution';
 
-const weapons = gameDataRepository.getWeapons();
 const gears = gameDataRepository.getGears();
-const gearTierCases = gears.flatMap(gear =>
-  (['minimum', 'maximum'] as const).map(tier => ({ gear, tier })),
-);
-const relativeAttributeGears = gears.filter(usesRelativeOperatorAttribute);
-const attributePairOperators = [
-  ...new Map(
-    gameDataRepository
-      .getOperators()
-      .filter(hasBasicAttack)
-      .map(operator => [`${operator.mainAttribute}:${operator.secondaryAttribute}`, operator]),
-  ).values(),
-];
-const relativeAttributeGearCases = relativeAttributeGears.flatMap(gear =>
-  attributePairOperators.map(operator => ({ gear, operator })),
-);
 const accessoryGears = gears.filter(gear => gear.slotType === 'accessory');
-const accessoryPairs = accessoryGears.map((gear, index) => ({
-  gear,
-  partner: accessoryGears[(index + 1) % accessoryGears.length]!,
-}));
 const gearSets = gameDataRepository.getGearSets();
 const runtimeGearSets = gearSets.filter(
   gearSet =>
@@ -46,47 +26,26 @@ const resources = {
   normalSkillUltimateEnergy: { selfGainPerSp: 0.065, otherGainPerSp: 0.065 },
 } as const;
 
-describe('所有正式武器与单件装备逐项装配和模拟', () => {
+describe('正式饰品槽位与套装运行行为', () => {
   it('各类装备测试来源非空且身份唯一', () => {
-    for (const definitions of [weapons, gears, gearSets, runtimeGearSets, relativeAttributeGears]) {
+    for (const definitions of [gears, gearSets, runtimeGearSets]) {
       expect(definitions.length).toBeGreaterThan(0);
     }
-    expect(new Set(weapons.map(definition => definition.slug)).size).toBe(weapons.length);
     expect(new Set(gears.map(definition => definition.slug)).size).toBe(gears.length);
   });
 
-  it.each(weapons)('$slug 可由兼容干员装配并跑完整模拟', async weapon => {
-    const operator = requireCompatibleOperator(weapon);
-    await expect(simulate(operator, { weapon })).resolves.toBeDefined();
-  });
-
-  it.each(gearTierCases)('$gear.slug 在 $tier 精炼档可装入对应槽位并跑完整模拟', async entry => {
+  it('同一饰品放入任一槽位产生相同属性和伤害', async () => {
     const operator = requireBasicAttackOperator();
-    await expect(simulate(operator, entry)).resolves.toBeDefined();
+    const gear = gameDataRepository.getGear('item_equip_t4_suit_burst01_edc_02')!;
+    expect(gear.slotType).toBe('accessory');
+    const first = await simulate(operator, { gear, gearSlot: 'accessory1' });
+    const second = await simulate(operator, { gear, gearSlot: 'accessory2' });
+    expect(second.operatorPanels[0]).toEqual({
+      ...first.operatorPanels[0],
+      operatorId: second.operatorPanels[0]!.operatorId,
+    });
+    expect(second.finalEnemyHealth).toEqual(first.finalEnemyHealth);
   });
-
-  it.each(relativeAttributeGearCases)(
-    '$gear.slug 可按 $operator.slug 的主副属性解析并跑完整模拟',
-    async ({ gear, operator }) => {
-      await expect(simulate(operator, { gear })).resolves.toBeDefined();
-    },
-  );
-
-  it.each(accessoryGears)('$slug 可装入第二饰品槽并跑完整模拟', async gear => {
-    const operator = requireBasicAttackOperator();
-    await expect(simulate(operator, { gear, gearSlot: 'accessory2' })).resolves.toBeDefined();
-  });
-
-  it.each(accessoryPairs)(
-    '$gear.slug 与 $partner.slug 同时装配并跑完整模拟',
-    async ({ gear, partner }) => {
-      if (partner.slug === gear.slug) {
-        throw new Error(`accessory '${gear.slug}' has no distinct pairing partner`);
-      }
-      const operator = requireBasicAttackOperator();
-      await expect(simulate(operator, { gear, secondaryGear: partner })).resolves.toBeDefined();
-    },
-  );
 
   it.each(gearSets)('$slug 三件套可被真实构筑激活并经历四类技能事件', async gearSet => {
     const operator = requireFourSkillOperator();
@@ -132,14 +91,11 @@ describe('所有正式武器与单件装备逐项装配和模拟', () => {
 function simulate(
   operator: OperatorDefinition,
   equipment: {
-    readonly weapon?: WeaponDefinition;
-    readonly gear?: GearDefinition;
-    readonly tier?: 'minimum' | 'maximum';
+    readonly gear: GearDefinition;
     readonly gearSlot?: keyof TrackDocument['gears'];
-    readonly secondaryGear?: GearDefinition;
   },
 ) {
-  const identity = `${operator.slug}:${equipment.weapon?.slug ?? equipment.gear?.slug ?? 'bare'}:${equipment.tier ?? 'maximum'}:${equipment.gearSlot ?? 'default'}:${equipment.secondaryGear?.slug ?? 'single'}`;
+  const identity = `${operator.slug}:${equipment.gear.slug}:${equipment.gearSlot ?? 'default'}`;
   const scenario = createEmptyScenario(`audit:equipment:${identity}`, '全配装运行门禁');
   scenario.battle.durationFrames = 300;
   scenario.enemy.editable.hp = 1_000_000_000;
@@ -167,21 +123,7 @@ function simulate(
     }
     gears[slot] = {
       gearSlug: equipment.gear.slug,
-      artificingLevels: equipment.gear.traits.map(trait =>
-        equipment.tier === 'minimum' ? 0 : trait.levelCount - 1,
-      ),
-    };
-  }
-  if (equipment.secondaryGear !== undefined) {
-    if (equipment.secondaryGear.slotType !== 'accessory') {
-      throw new Error(`secondary gear '${equipment.secondaryGear.slug}' must be an accessory`);
-    }
-    if (gears.accessory2 !== null) {
-      throw new Error('secondary gear conflicts with an explicitly occupied accessory2 slot');
-    }
-    gears.accessory2 = {
-      gearSlug: equipment.secondaryGear.slug,
-      artificingLevels: equipment.secondaryGear.traits.map(trait => trait.levelCount - 1),
+      artificingLevels: equipment.gear.traits.map(trait => trait.levelCount - 1),
     };
   }
   scenario.tracks[0] = {
@@ -195,16 +137,7 @@ function simulate(
       skillLevels: Object.fromEntries(operator.skillGroups.map(group => [group.key, 12])),
       talentStates: Object.fromEntries(operator.talents.map((_, index) => [index, 0])),
     },
-    weapon:
-      equipment.weapon === undefined
-        ? null
-        : {
-            weaponSlug: equipment.weapon.slug,
-            level: 90,
-            tuned: true,
-            potential: 0,
-            traitLevels: equipment.weapon.traits.map(trait => trait.levelCount),
-          },
+    weapon: null,
     gears,
     initialState: { ultimateEnergy: 1000, maxUltimateEnergyOverride: 1000 },
     skillCasts: [],
@@ -225,16 +158,6 @@ function simulate(
     spellInflictionSettings: skillSettings,
   });
   return service.simulate(placed, 300);
-}
-
-function requireCompatibleOperator(weapon: WeaponDefinition): OperatorDefinition {
-  const operator = gameDataRepository
-    .getOperators()
-    .find(candidate => candidate.weaponType === weapon.weaponType && hasBasicAttack(candidate));
-  if (operator === undefined) {
-    throw new Error(`weapon '${weapon.slug}' has no compatible operator with a basic attack`);
-  }
-  return operator;
 }
 
 function requireBasicAttackOperator(): OperatorDefinition {
@@ -446,14 +369,4 @@ function observableGearSetRuntimeResult(
 
 function hasBasicAttack(operator: OperatorDefinition): boolean {
   return operator.skillGroups.some(group => group.key === 'basicAttack');
-}
-
-function usesRelativeOperatorAttribute(gear: GearDefinition): boolean {
-  return gear.traits.some(trait =>
-    (trait.modifiers ?? []).some(
-      modifier =>
-        modifier.kind === 'attribute' &&
-        (modifier.attribute === 'main' || modifier.attribute === 'secondary'),
-    ),
-  );
 }

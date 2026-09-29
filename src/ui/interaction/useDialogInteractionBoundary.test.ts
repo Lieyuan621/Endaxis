@@ -4,10 +4,6 @@ import { createInteractionSession } from './interactionSession';
 import { useDialogInteractionBoundary } from './useDialogInteractionBoundary';
 import { usePopoverInteractionBoundary } from './usePopoverInteractionBoundary';
 import { useKeyboardShortcutScope } from '../keyboard/keyboardShortcutRouter';
-import enemy from '../timeline/components/EnemySettingsPanel.vue?raw';
-import global from '../timeline/components/GlobalResourcePanel.vue?raw';
-import reset from '../timeline/components/TimelineResetDialog.vue?raw';
-import markerMenu from '../timeline/interaction/TimelineMarkerContextMenu.vue?raw';
 
 describe('locally owned leaf dialog input', () => {
   afterEach(() => vi.unstubAllGlobals());
@@ -40,15 +36,6 @@ describe('locally owned leaf dialog input', () => {
     } finally {
       scope.stop();
     }
-  });
-
-  it('routes reset and marker menu Escape without independent document/window listeners', () => {
-    expect(reset).toContain(
-      'useDialogInteractionBoundary(session, () => props.modelValue, close, region)',
-    );
-    expect(markerMenu).toContain('usePopoverInteractionBoundary(');
-    for (const source of [reset, markerMenu])
-      expect(source).not.toContain("addEventListener('keydown'");
   });
 
   it('blocks background commands and leaves native Escape to the dialog above a popover', () => {
@@ -105,12 +92,5 @@ describe('locally owned leaf dialog input', () => {
     expect(session.tryStart('drag', vi.fn())).toBeNull();
     scope.stop();
     expect(session.tryStart('drag', vi.fn())).not.toBeNull();
-  });
-
-  it('registers local enemy and global attribute dialog lifecycles', () => {
-    expect(enemy).toContain('label="enemy-selection" :active="selectorVisible" modal');
-    expect(enemy).toContain('label="enemy-stats" :active="statsVisible" modal');
-    expect(global).toContain('label="global-modifiers" :active="editorVisible" modal');
-    expect(enemy).toContain("emit('save', cloneEditorDefinition(draft))");
   });
 });

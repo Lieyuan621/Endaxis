@@ -59,6 +59,7 @@ import {
 } from '../../ui/timeline/interaction/placeSkillGroup';
 import { CombatInputSchedule } from './combatInputSchedule';
 import { createScenarioSimulationService } from './createScenarioSimulationService';
+import { createEditorSimulationService } from './editorSimulationService';
 import type { CombatSkillInputPhase } from '../../core/combat/runtime/combatFrameInput';
 import {
   compileFixedCombatInputSchedule,
@@ -155,6 +156,47 @@ const testIndex = {
 };
 
 describe('ScenarioSimulationService', () => {
+  it('主线程编辑服务连续移动技能时复用未改变的前缀', async () => {
+    let now = 0;
+    const clock = vi.spyOn(performance, 'now').mockImplementation(() => (now += 30));
+    const repository = createGameDataRepository({
+      revision: 'editor-resume',
+      operators: [perlica],
+      commonDefinitionSources: [{ id: 'shared', buffDefinitions: commonBuffDefinitions }],
+    });
+    const service = createEditorSimulationService(repository);
+    const full = createScenarioSimulationService(repository);
+    const samples: ScenarioSimulationPerformanceSample[] = [];
+    service.subscribePerformance(sample => samples.push(sample));
+    try {
+      const scenario = placeSkillGroup({
+        scenario: createPerlicaScenario(),
+        trackIndex: 0,
+        operator: perlica,
+        skillGroupKey: 'plungingAttack',
+        startFrame: 210,
+        ids: { allocate: kind => `${kind}:editor-resume` },
+      }).scenario;
+      await service.simulate(scenario, 300);
+      expect(samples.at(-1)?.resumedFromFrame).toBeNull();
+      for (const frame of [220, 230, 215]) {
+        const moved = structuredClone(scenario);
+        moved.tracks[0]!.skillCasts[0]!.placement = { startFrame: frame };
+        const actual = await service.simulate(moved, 300);
+        const expected = await full.simulate(moved, 300);
+        expect(samples.at(-1)?.resumedFromFrame).toBe(150);
+        const { receiptHistory: actualHistory, ...actualData } = actual;
+        const { receiptHistory: expectedHistory, ...expectedData } = expected;
+        expect(actualData).toEqual(expectedData);
+        expect([...actualHistory.entries()]).toEqual([...expectedHistory.entries()]);
+      }
+    } finally {
+      service.clearCache();
+      full.clearCache();
+      clock.mockRestore();
+    }
+  });
+
   it.each(['expected', 'sampled'] as const)('单切面续算与完整重算一致：%s', async mode => {
     let now = 0;
     const incremental = createService(() => (now += 30), true);

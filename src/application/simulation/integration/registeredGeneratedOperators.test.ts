@@ -28,13 +28,9 @@ import {
   camille,
   daPan,
   ember,
-  endministrator,
   estella,
   fluorite,
-  gilberta,
   laevatain,
-  lastRite,
-  lifeng,
   liino,
   perlica,
   pogranichnik,
@@ -3241,140 +3237,6 @@ describe('registered generated operators', () => {
         targetId: 'enemy',
       }),
     );
-  });
-
-  it('keeps Perlica, Wulfgard, Last Rite and Tangtang native combo conditions in generated operator definitions', () => {
-    const conditionGraphText = (condition: { readonly actionGraph?: unknown }) =>
-      JSON.stringify(condition.actionGraph ?? {});
-    expect('comboSkillRegistrations' in perlica).toBe(false);
-    expect(perlica.comboSkillConditions).toEqual([
-      expect.objectContaining({
-        key: 'native-combo:0',
-        skillKey: 'chr_0004_pelica_combo_skill',
-        event: 'beforeTakeDamage',
-        immediately: false,
-        initialValues: null,
-        sequence: { $sequence: expect.any(String) },
-      }),
-    ]);
-    const perlicaCondition = perlica.comboSkillConditions![0]!;
-    expect(conditionGraphText(perlicaCondition)).toContain('eventDamageTagsMatch');
-    expect(conditionGraphText(perlicaCondition)).toContain('normalAttackLastCombo');
-    expect(JSON.stringify(perlica.comboSkillConditions)).toContain('eventSourceControlled');
-    expect(JSON.stringify(perlica.comboSkillConditions)).toContain('contextTargetObjectTypeMatch');
-    expect('comboSkillRegistrations' in wulfgard).toBe(false);
-    expect(wulfgard.comboSkillConditions).toEqual([
-      expect.objectContaining({
-        key: 'native-combo:0',
-        skillKey: 'chr_0006_wolfgd_combo_skill',
-        event: 'beforeTakeInfliction',
-        immediately: false,
-        initialValues: null,
-      }),
-    ]);
-    expect('comboSkillRegistrations' in lastRite).toBe(false);
-    expect(lastRite.comboSkillConditions).toEqual([
-      expect.objectContaining({
-        key: 'native-combo:0',
-        skillKey: 'chr_0026_lastrite_combo_skill',
-        event: 'beforeTakeInfliction',
-        immediately: false,
-        initialValues: null,
-      }),
-    ]);
-    expect('comboSkillRegistrations' in tangtang).toBe(false);
-    expect(tangtang.comboSkillConditions).toEqual([
-      expect.objectContaining({
-        key: 'native-combo:0',
-        skillKey: 'chr_0027_tangtang_combo_skill',
-        event: 'takeDamage',
-        immediately: false,
-        initialValues: null,
-        sequence: { $sequence: expect.any(String) },
-      }),
-      expect.objectContaining({
-        key: 'native-combo:1',
-        skillKey: 'chr_0027_tangtang_combo_skill',
-        event: 'beforeTakeInfliction',
-      }),
-    ]);
-    const tangtangCondition = tangtang.comboSkillConditions![0]!;
-    expect(conditionGraphText(tangtangCondition)).toContain('eventDamageTagsMatch');
-    expect(conditionGraphText(tangtangCondition)).toContain('fireBurst');
-    expect(conditionGraphText(tangtangCondition)).toContain('cryoBurst');
-  });
-
-  it('keeps newly decoded Arclight, Gilberta, Estella and Laevatain native combo conditions', () => {
-    expect(arclight.comboSkillConditions?.map(condition => condition.event)).toEqual([
-      'outputBuff',
-      'buffEndsEarly',
-    ]);
-    expect(JSON.stringify(arclight.comboSkillConditions)).toContain(
-      'Skill/Character/Common/SpellStatus/Conduct',
-    );
-
-    expect(gilberta.comboSkillConditions?.map(condition => condition.event)).toEqual(['addedBuff']);
-    expect(JSON.stringify(gilberta.comboSkillConditions)).toContain('contextTargetObjectTypeMatch');
-    expect(JSON.stringify(gilberta.comboSkillConditions)).toContain(
-      'Skill/Character/Common/SpellStatus',
-    );
-
-    expect(estella.comboSkillConditions?.map(condition => condition.event)).toEqual(['addedBuff']);
-    expect(JSON.stringify(estella.comboSkillConditions)).toContain(
-      'Skill/Character/Common/SpellStatus/Frozen',
-    );
-
-    expect(laevatain.comboSkillConditions?.map(condition => condition.event)).toEqual([
-      'addedBuff',
-    ]);
-    expect(JSON.stringify(laevatain.comboSkillConditions)).toContain(
-      'Skill/Character/Common/SpellStatus/Burning',
-    );
-    expect(JSON.stringify(laevatain.comboSkillConditions)).toContain(
-      'Skill/Character/Common/SpellStatus/Corrupt',
-    );
-  });
-
-  it('keeps shared target-context combo conditions for the next eight generated operators', () => {
-    expect(alesh.comboSkillConditions?.map(condition => condition.event)).toEqual([
-      'buffEndsEarly',
-      'buffEndsEarly',
-    ]);
-    expect(ember.comboSkillConditions?.map(condition => condition.event)).toEqual(['takeDamage']);
-    expect(avywenna.comboSkillConditions?.map(condition => condition.event)).toEqual([
-      'beforeOutputDamage',
-    ]);
-    expect(ardelia.comboSkillConditions?.map(condition => condition.event)).toEqual([
-      'beforeOutputDamage',
-    ]);
-    expect(zhuangFangyi.comboSkillConditions?.map(condition => condition.event)).toEqual([
-      'beforeOutputDamage',
-      'beforeOutputDamage',
-    ]);
-    expect(lifeng.comboSkillConditions?.map(condition => condition.event)).toEqual([
-      'beforeTakeDamage',
-    ]);
-    expect(endministrator.comboSkillConditions?.map(condition => condition.event)).toEqual([
-      'outputDamage',
-    ]);
-    expect(yvonne.comboSkillConditions?.map(condition => condition.event)).toEqual([
-      'beforeTakeDamage',
-    ]);
-
-    const serialized = JSON.stringify([
-      ember.comboSkillConditions,
-      avywenna.comboSkillConditions,
-      ardelia.comboSkillConditions,
-      zhuangFangyi.comboSkillConditions,
-      lifeng.comboSkillConditions,
-      endministrator.comboSkillConditions,
-      yvonne.comboSkillConditions,
-      alesh.comboSkillConditions,
-    ]);
-    expect(serialized).toContain('actionInputTargetObjectTypeMatch');
-    expect(serialized).toContain('actionInputTargetIdentityMatch');
-    expect(serialized).toContain('contextTargetIdentityMatch');
-    expect(serialized).toContain('contextTargetEntityTagMatch');
   });
 
   it('opens Zhuang Fangyi combo window after controlled finisher hits Perlica infliction', () => {

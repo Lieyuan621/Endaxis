@@ -43,6 +43,8 @@ jobs:
         run: npm run type-check:game-data-contract
       - name: Check compiler types
         run: npm run type-check:game-data
+      - name: Check standalone compiler production types
+        run: npm run type-check:game-data-production
       - name: Check tool types
         run: npm run type-check:tools
       - name: Test application

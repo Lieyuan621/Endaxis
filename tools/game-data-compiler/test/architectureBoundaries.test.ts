@@ -12,29 +12,6 @@ const commonRoots = [join(sourceRoot, 'source'), join(sourceRoot, 'compiler')];
 const domainsRoot = join(sourceRoot, 'domains');
 
 describe('游戏数据编译器架构边界', () => {
-  it('工具及跨端测试自身只允许 Node 可直接擦除的语法', () => {
-    // 完整测试配置包含本体集成探针；执行器的类只属于测试依赖。
-    // 生产入口另由 dataContractBoundaries 的独立配置证明不加载本体。
-    const configPath = join(sourceRoot, '..', 'tsconfig.json');
-    const config = ts.readConfigFile(configPath, ts.sys.readFile);
-    const parsed = ts.parseJsonConfigFileContent(config.config, ts.sys, join(sourceRoot, '..'));
-    const program = ts.createProgram(parsed.fileNames, {
-      ...parsed.options,
-      erasableSyntaxOnly: true,
-    });
-    // 只请求工具文件的诊断，依赖仍交给同一个 Program 解析。
-    // 先检查整个应用再过滤，会为本项不约束的应用及生成数据重复执行类型检查。
-    const violations = program
-      .getSourceFiles()
-      .filter(file => !relative(join(sourceRoot, '..'), file.fileName).startsWith('..'))
-      .flatMap(file => program.getSemanticDiagnostics(file))
-      .filter(diagnostic => diagnostic.code === 1294);
-    expect(
-      violations.map(diagnostic => `${diagnostic.file!.fileName}: ${diagnostic.messageText}`),
-    ).toEqual([]);
-    // 此项包含整棵跨端 TypeScript 图的语义检查，本机单独执行也可能超过 20 秒。
-  }, 120_000);
-
   it('禁止公共层反向依赖领域适配器', () => {
     const violations = commonRoots.flatMap(root =>
       sourceFiles(root).flatMap(path => {

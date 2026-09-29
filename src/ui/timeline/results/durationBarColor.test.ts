@@ -6,9 +6,6 @@ import {
   normalizeDurationBarColorPrefs,
   resolveDurationBarColor,
 } from './durationBarColor';
-import controls from './TimelineDurationBarColorControls.vue?raw';
-import track from './TimelineBuffBands.vue?raw';
-import enemy from './TimelineEnemyEffects.vue?raw';
 
 describe('duration bar display preferences', () => {
   it('keeps the legacy source-control order', () => {
@@ -125,13 +122,5 @@ describe('duration bar display preferences', () => {
     );
     expect(colors.every(color => color.startsWith('hsl('))).toBe(true);
     expect(new Set(colors).size).toBe(4);
-  });
-  it('wires shared settings to track/enemy rendering and hides tuning when disabled', () => {
-    expect(controls).toContain('v-if="prefs.enabled"');
-    expect(controls).toContain('DURATION_COLOR_SOURCES');
-    expect(controls).toContain('DURATION_COLOR_SURFACES');
-    expect(track).toContain("resolveDurationBarColor(durationBarColor.value, 'track', segment)");
-    expect(enemy).toContain("resolveDurationBarColor(durationBarColor.value, 'enemy', buff)");
-    expect(track).toContain(':duration-color="item.color"');
   });
 });

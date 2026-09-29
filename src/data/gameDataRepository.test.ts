@@ -122,7 +122,6 @@ describe('gameDataRepository', () => {
     );
     expect(gameDataRepository.getGear('xiranflow-light-armor')).toBeNull();
     expect(gameDataRepository.getGearSet('aic-fieldwork')).toBeNull();
-    expect(gameDataRepository.getWeapons()).toHaveLength(80);
     expect(gameDataRepository.getGearSet('suit_generaltype')).not.toBeNull();
     expect(gameDataRepository.getWeapon('missing')).toBeNull();
     expect(gameDataRepository.getGear('missing')).toBeNull();

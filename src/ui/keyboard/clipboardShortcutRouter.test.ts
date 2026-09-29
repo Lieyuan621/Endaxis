@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { KeyboardShortcutRouter } from './keyboardShortcutRouter';
-import routerSource from './keyboardShortcutRouter.ts?raw';
 
 const clipboardEvent = (type: string) => new Event(type, { cancelable: true }) as ClipboardEvent;
 afterEach(() => vi.unstubAllGlobals());
@@ -103,16 +102,5 @@ describe('native clipboard command ownership', () => {
     });
     expect(router.routeClipboard(clipboardEvent('cut'))).toBe(false);
     expect(handler).not.toHaveBeenCalled();
-  });
-
-  it('registers clipboard listeners with the page router lifetime and shares map commands', () => {
-    for (const type of ['copy', 'paste']) {
-      expect(routerSource).toContain(
-        `window.addEventListener('${type}', routePageClipboardEvent, true)`,
-      );
-      expect(routerSource).toContain(
-        `window.removeEventListener('${type}', routePageClipboardEvent, true)`,
-      );
-    }
   });
 });

@@ -5,16 +5,20 @@ import {
   contingencyContractMechanicAdapter,
   contingencyContractMechanicDefinitions,
 } from './contingencyContractAdapter';
-import {
-  contingencyContractBlockedTagReasons,
-  contingencyContractOmittedTagReasons,
-} from './generated/contingencyContractDefinitions.generated';
+import { contingencyContractTagDefinitions } from './generated/contingencyContractDefinitions.generated';
 
 describe('contingencyContractAdapter', () => {
-  it('publishes executable tags and keeps omitted tags explicit', () => {
-    expect(contingencyContractMechanicDefinitions).toHaveLength(46);
-    expect(contingencyContractBlockedTagReasons).toEqual({});
-    expect(Object.keys(contingencyContractOmittedTagReasons)).toHaveLength(22);
+  it('publishes a mechanic for every generated tag', () => {
+    expect(contingencyContractMechanicDefinitions).toHaveLength(
+      contingencyContractTagDefinitions.length,
+    );
+    expect(new Set(contingencyContractMechanicDefinitions.map(definition => definition.id))).toEqual(
+      new Set(
+        contingencyContractTagDefinitions.map(
+          tag => `${CONTINGENCY_CONTRACT_MECHANIC_PREFIX}${tag.tagId}`,
+        ),
+      ),
+    );
     expect(
       contingencyContractMechanicDefinitions.some(
         definition => definition.id === `${CONTINGENCY_CONTRACT_MECHANIC_PREFIX}900101`,
