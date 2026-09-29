@@ -1,6 +1,6 @@
 /**
  * 将场景轨道和持久化的切换事件解析为战斗运行时使用的主控时间线。
- * 初始主控沿用编辑器既有语义：第 1 轨道的干员；切换事件从其所在帧起生效。
+ * 初始主控为从上到下第一个已设置干员的轨道；切换事件从其所在帧起生效。
  */
 import type { OperatorControlTimeline } from '../combat/skills/operatorControlTimeline';
 import type { ControlSwitchDocument, TrackListDocument } from './schema';
@@ -17,7 +17,7 @@ export function resolveControlTimeline(
     throw new RangeError('initial control frame must be a non-positive integer');
   }
   const operatorByFrame = new Map<number, string | null>();
-  operatorByFrame.set(initialFrame, tracks[0]?.id ?? null);
+  operatorByFrame.set(initialFrame, tracks.find(track => track?.operator != null)?.id ?? null);
 
   for (const controlSwitch of switches) {
     operatorByFrame.set(controlSwitch.frame, tracks[controlSwitch.trackIndex]?.id ?? null);

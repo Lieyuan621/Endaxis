@@ -323,7 +323,8 @@ export type TrackGearSlot = keyof TrackDocument['gears'];
 
 /**
  * 更换轨道的干员实例。已有技能块依赖旧干员定义身份，因此切换或移除干员时一并清理。
- * 调用方负责提供初始养成值和轨道身份；命令层只维护轨道实例、连线的一致性与空轨道语义。
+ * 移除干员时同时删除指向该空轨道的输入标记；更换干员仍保留轨道上的通用输入。
+ * 调用方负责提供初始养成值和轨道身份。
  */
 export function setTrackOperator(
   scenario: ScenarioDocument,
@@ -337,6 +338,30 @@ export function setTrackOperator(
   if (previousSlug === nextSlug) return scenario;
 
   const removedCastIds = new Set(previousTrack?.skillCasts.map(cast => cast.id) ?? []);
+  const battle =
+    operatorInstance === null
+      ? {
+          ...scenario.battle,
+          controlSwitches: scenario.battle.controlSwitches.filter(
+            marker => marker.trackIndex !== trackIndex,
+          ),
+          ...(scenario.battle.dodgeMarkers === undefined
+            ? {}
+            : {
+                dodgeMarkers: scenario.battle.dodgeMarkers.filter(
+                  marker => marker.trackIndex !== trackIndex,
+                ),
+              }),
+          ...(scenario.battle.externalEventMarkers === undefined
+            ? {}
+            : {
+                externalEventMarkers: scenario.battle.externalEventMarkers.filter(
+                  marker =>
+                    marker.target.scope !== 'operator' || marker.target.trackIndex !== trackIndex,
+                ),
+              }),
+        }
+      : scenario.battle;
   const tracks = [...scenario.tracks] as ScenarioDocument['tracks'];
   tracks[trackIndex] =
     operatorInstance === null
@@ -358,6 +383,7 @@ export function setTrackOperator(
         !removedCastIds.has(connection.from.skillCastId) &&
         !removedCastIds.has(connection.to.skillCastId),
     ),
+    battle,
   };
 }
 

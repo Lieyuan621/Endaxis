@@ -1304,47 +1304,66 @@ describe('BuffOperationExecutor', () => {
     expect(finish).not.toHaveBeenCalled();
   });
 
-  it('ends an inherited existing Buff when no next skill is available', () => {
-    const finish = vi.fn(() => true);
-    const handle = { isRecycled: false, reference: createTestBuffReference(), finish };
-    const target = {
-      ownerId: 'operator',
-      findFirstHandleByIds: () => handle,
-      getCountByIds: () => 1,
-      finishByIds: () => 0,
-      holdByIds: () => ({ release: () => undefined }),
-      getCountByTags: () => 0,
-      matchesEntityTags: () => false,
-      findFirstByIds: () => undefined,
-      findFirstByTags: () => undefined,
-      finishByTags: () => 0,
-    };
-    const executor = new BuffOperationExecutor({
-      sourceId: 'operator',
-      resolveTarget: () => target,
-      delegate,
-    });
-    const step = {
-      kind: 'inheritBuffById' as const,
-      parameters: {
-        target: 'caster' as const,
-        buffId: 'music-vfx',
-        inheritToNextSkillIds: ['native.followup'],
-        finishByAction: true,
-        finishWithNextSkillIfNotInherited: true,
-      },
-    };
-    const actionBuffReferencesState = { active: false, references: [] };
+  it.each([
+    { nextSkillId: undefined, finishByAction: true, attach: true, finishes: true },
+    { nextSkillId: 'native.other', finishByAction: true, attach: true, finishes: true },
+    { nextSkillId: 'native.other', finishByAction: true, attach: false, finishes: true },
+    { nextSkillId: 'native.followup', finishByAction: true, attach: false, finishes: false },
+    { nextSkillId: 'native.followup', finishByAction: false, attach: true, finishes: false },
+    { nextSkillId: 'native.other', finishByAction: false, attach: true, finishes: false },
+  ])(
+    'respects inheritance policy without attaching: %j',
+    ({ nextSkillId, finishByAction, attach, finishes }) => {
+      const finish = vi.fn(() => true);
+      const handle = { isRecycled: false, reference: createTestBuffReference(), finish };
+      const target = {
+        ownerId: 'operator',
+        findFirstHandleByIds: () => handle,
+        getCountByIds: () => 1,
+        finishByIds: () => 0,
+        holdByIds: () => ({ release: () => undefined }),
+        getCountByTags: () => 0,
+        matchesEntityTags: () => false,
+        findFirstByIds: () => undefined,
+        findFirstByTags: () => undefined,
+        finishByTags: () => 0,
+      };
+      const executor = new BuffOperationExecutor({
+        sourceId: 'operator',
+        resolveTarget: () => target,
+        delegate,
+      });
+      const step = {
+        kind: 'inheritBuffById' as const,
+        parameters: {
+          target: 'caster' as const,
+          buffId: 'music-vfx',
+          inheritToNextSkillIds: ['native.followup'],
+          finishByAction,
+          finishWithNextSkillIfNotInherited: attach,
+        },
+      };
+      const actionBuffReferencesState = { active: false, references: [] };
 
-    executor.execute(step, {
-      blackboard: new ActionBlackboard(),
-      actionBuffReferencesState,
-      detachBuffFromCurrentSkill: () => undefined,
-    });
-    executor.end(step, { blackboard: new ActionBlackboard(), actionBuffReferencesState });
+      executor.execute(step, {
+        blackboard: new ActionBlackboard(),
+        actionBuffReferencesState,
+        detachBuffFromCurrentSkill: () => undefined,
+      });
+      const attachBuffToNextSkill = vi.fn();
+      executor.end(step, {
+        blackboard: new ActionBlackboard(),
+        actionBuffReferencesState,
+        ...(nextSkillId === undefined ? {} : { pendingNextSkillId: nextSkillId }),
+        attachBuffToNextSkill,
+      });
 
-    expect(finish).toHaveBeenCalledExactlyOnceWith('other');
-  });
+      expect(attachBuffToNextSkill).not.toHaveBeenCalled();
+      expect(finish).toHaveBeenCalledTimes(finishes ? 1 : 0);
+      if (finishes) expect(finish).toHaveBeenCalledWith('other');
+      expect(actionBuffReferencesState).toEqual({ active: false, references: [] });
+    },
+  );
 
   it.each([
     'buff',

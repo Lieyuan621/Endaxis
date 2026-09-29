@@ -1228,16 +1228,19 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
       if (reference === undefined) return;
       const handle = this.#resolveActionBuff(reference);
       if (handle === undefined) return;
+      if (!step.parameters.finishByAction) return;
       const hasNextSkill = context?.pendingNextSkillId !== undefined;
       const inherited =
         hasNextSkill && step.parameters.inheritToNextSkillIds.includes(context.pendingNextSkillId!);
-      const followsNextSkill = hasNextSkill && step.parameters.finishWithNextSkillIfNotInherited;
-      if (inherited || followsNextSkill) {
+      // 原生 InheritBuffAction.OnEnd 先检查继承名单；附着开关不能放行名单外技能。
+      // 名单内且不要求随下一技能结束时，仅释放动作引用，保留 Buff 自身寿命。
+      if (inherited && !step.parameters.finishWithNextSkillIfNotInherited) return;
+      if (inherited) {
         if (context?.attachBuffToNextSkill === undefined) {
           throw new Error('inheritBuffById requires a next-skill attachment port');
         }
         context.attachBuffToNextSkill(handle);
-      } else if (step.parameters.finishByAction) {
+      } else {
         handle.finish('other');
       }
       return;
