@@ -93,3 +93,26 @@ describe('workbench interaction ownership', () => {
     expect(successor.isCurrent()).toBe(true);
   });
 });
+
+it('非模态浮层同步关闭后，同一次按下可以取得拖动权限', () => {
+  const session = createInteractionSession();
+  const close = vi.fn(() => unregister());
+  const unregister = session.registerDismissibleLayer(close);
+  const lease = session.tryStart('cast-move', vi.fn());
+  expect(close).toHaveBeenCalledOnce();
+  expect(lease?.isCurrent()).toBe(true);
+});
+
+it('关闭浮层时弹出模态框或重入申请，都不能留下半启动手势', () => {
+  const session = createInteractionSession();
+  let unblock = () => {};
+  const unregister = session.registerDismissibleLayer(() => {
+    unregister();
+    expect(session.tryStart('nested', vi.fn())).toBeNull();
+    unblock = session.block();
+  });
+  expect(session.tryStart('cast-move', vi.fn())).toBeNull();
+  expect(session.current).toBeNull();
+  unblock();
+  expect(session.tryStart('cast-move', vi.fn())).not.toBeNull();
+});

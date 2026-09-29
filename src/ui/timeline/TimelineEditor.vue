@@ -1387,7 +1387,7 @@ const viewModel = computed(() => {
   return projectTimelineEditor(scenario.value, editorGameDataRepository);
 });
 const projectedControlSwitches = computed(() => {
-  if (scenario.value.battle.automaticControlSwitches !== true) return [];
+  if (scenario.value.battle.automaticControlSwitches === false) return [];
   const tracksById = new Map(
     scenario.value.tracks.flatMap((track, index) =>
       track === null ? [] : [[track.id, index] as const],
@@ -4751,7 +4751,8 @@ function beginMarkerMove(
   }
   const surface = timelineSurface.value;
   if (surface === null) return;
-  const lease = interactionSession.tryStart('marker-move', () => stopMarkerMove?.())!;
+  const lease = interactionSession.tryStart('marker-move', () => stopMarkerMove?.());
+  if (lease === null) return;
   const grabOffsetPx =
     event.clientX -
     surface.getBoundingClientRect().left -
@@ -5924,7 +5925,7 @@ function toggleAutomaticControlSwitches(): void {
     ...current,
     battle: {
       ...current.battle,
-      automaticControlSwitches: current.battle.automaticControlSwitches !== true,
+      automaticControlSwitches: current.battle.automaticControlSwitches === false,
     },
   }));
 }
@@ -6186,7 +6187,7 @@ function setPanelDialogVisible(visible: boolean): void {
         :locale="locale"
         :appearance="appearance"
         :random-mode="scenario.battle.random?.mode ?? 'expected'"
-        :automatic-control-switches="scenario.battle.automaticControlSwitches === true"
+        :automatic-control-switches="scenario.battle.automaticControlSwitches !== false"
         :global-random-seed="scenario.battle.random?.globalSeed ?? 0"
         :labels="{
           rename: t('timeline.scenario.renameTooltip'),

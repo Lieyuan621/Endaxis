@@ -141,6 +141,8 @@ export function useTimelineCastMove(options: TimelineCastMoveOptions) {
         options.prepEndFrame?.value,
       ) - initialActualFrame,
     );
+    const lease = interactionSession.tryStart('cast-move', cancelCastMove);
+    if (lease === null) return;
     castMoveGesture.value = {
       pointerId: event.pointerId,
       trackIndex,
@@ -164,45 +166,65 @@ export function useTimelineCastMove(options: TimelineCastMoveOptions) {
     // 捕获到稳定的滚动容器，避免模拟刷新替换技能块或跨控件悬停抢走手势。
     // 落点仍通过 elementFromPoint 解析，不依赖捕获后的 event.target。
     const captureTarget = timelineScroll.value;
-    const lease = interactionSession.tryStart('cast-move', cancelCastMove)!;
     const onMove = (moveEvent: PointerEvent) => {
       if (moveEvent.pointerId !== event.pointerId) return;
+      // 在窗口外松手等情况下可能漏收 pointerup；没有主按钮时不能继续拖动。
+      if ((moveEvent.buttons & 1) === 0) {
+        cancelCastMove();
+        return;
+      }
       moveEvent.stopPropagation();
-      updateCastMove(moveEvent);
+      try {
+        updateCastMove(moveEvent);
+      } catch (error) {
+        cancelCastMove();
+        throw error;
+      }
       // 超过拖动阈值才接管，普通点击仍交给原技能块，不能丢失选择行为。
       if (
         castMoveGesture.value?.dragStarted &&
         !captureTarget?.hasPointerCapture(event.pointerId)
       ) {
-        captureTarget?.setPointerCapture(event.pointerId);
+        try {
+          captureTarget?.setPointerCapture(event.pointerId);
+        } catch (error) {
+          cancelCastMove();
+          throw error;
+        }
       }
     };
     const onFinish = (finishEvent: PointerEvent) => {
       if (finishEvent.pointerId !== event.pointerId) return;
       finishEvent.stopPropagation();
-      void finishCastMove(finishEvent);
+      void finishCastMove(finishEvent).catch(error => {
+        console.error('Failed to finish timeline skill drag', error);
+      });
     };
-    const onCancel = () => cancelCastMove();
+    const onCancel = (cancelEvent: PointerEvent) => {
+      if (cancelEvent.pointerId === event.pointerId) cancelCastMove();
+    };
+    const onBlur = () => cancelCastMove();
     stopCastMoveGesture = () => {
+      // 先解除收尾函数，释放捕获触发同步事件时也不能再次清理本次手势。
+      stopCastMoveGesture = null;
       simulationService.endInteractiveSession();
       lease.release();
       window.removeEventListener('pointermove', onMove, true);
       window.removeEventListener('pointerup', onFinish, true);
-      window.removeEventListener('pointercancel', onCancel);
+      window.removeEventListener('pointercancel', onCancel, true);
       captureTarget?.removeEventListener('lostpointercapture', onCancel);
-      window.removeEventListener('blur', onCancel);
+      window.removeEventListener('blur', onBlur);
       if (captureTarget?.hasPointerCapture(event.pointerId)) {
         captureTarget.releasePointerCapture(event.pointerId);
       }
       if (castMoveAutoScrollFrame !== null) cancelAnimationFrame(castMoveAutoScrollFrame);
       castMoveAutoScrollFrame = null;
-      stopCastMoveGesture = null;
     };
     window.addEventListener('pointermove', onMove, true);
     window.addEventListener('pointerup', onFinish, true);
-    window.addEventListener('pointercancel', onCancel);
+    window.addEventListener('pointercancel', onCancel, true);
     captureTarget?.addEventListener('lostpointercapture', onCancel);
-    window.addEventListener('blur', onCancel);
+    window.addEventListener('blur', onBlur);
   }
 
   function castMoveFrame(
@@ -328,7 +350,12 @@ export function useTimelineCastMove(options: TimelineCastMoveOptions) {
   async function finishCastMove(event: PointerEvent): Promise<void> {
     let gesture = castMoveGesture.value;
     if (gesture === null || gesture.pointerId !== event.pointerId) return;
-    updateCastMove(event);
+    try {
+      updateCastMove(event);
+    } catch (error) {
+      cancelCastMove();
+      throw error;
+    }
     gesture = castMoveGesture.value;
     if (gesture === null) return;
     const finalScenario = scenario.value;
@@ -345,19 +372,23 @@ export function useTimelineCastMove(options: TimelineCastMoveOptions) {
     setTimeout(() => {
       if (suppressedCastClickId === gesture.pointerCastId) suppressedCastClickId = null;
     }, 0);
-    // 预览不是已提交文档；失败时必须恢复原输入，不能把非法落点留在界面里。
-    scenario.value = gesture.baseScenario;
-    const committed = commitScenario('moveSkillCasts', () => finalScenario);
-    if (!committed) {
-      castMoveGesture.value = null;
+    try {
+      // 预览不是已提交文档；失败时必须恢复原输入。
+      scenario.value = gesture.baseScenario;
+      const committed = commitScenario('moveSkillCasts', () => finalScenario);
+      if (!committed) {
+        castMoveGesture.value = null;
+        await simulateNow();
+        return;
+      }
+      options.onDropped?.(event, gesture.trackIndex, gesture.skillCastIds);
+      await nextTick();
       await simulateNow();
-      return;
+    } finally {
+      // 模拟可能被较新请求替代或失败，均不得留下已经结束的拖动预览。
+      // 旧请求结束时也不能清掉后来开始的新手势。
+      if (castMoveGesture.value === settlingGesture) castMoveGesture.value = null;
     }
-    options.onDropped?.(event, gesture.trackIndex, gesture.skillCastIds);
-    await nextTick();
-    const published = await simulateNow();
-    // 只清理仍属于本次松手的预览；失败时保留实际落点，避免回退到不匹配的旧回执。
-    if (published && castMoveGesture.value === settlingGesture) castMoveGesture.value = null;
   }
 
   function cancelCastMove(): void {

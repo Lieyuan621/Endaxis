@@ -123,7 +123,6 @@ describe('interactive popover ownership', () => {
       session.tryStart('drag', cancel);
       open.value = true;
       expect(cancel).toHaveBeenCalledOnce();
-      expect(session.tryStart('another-drag', cancel)).toBeNull();
       const key = (value: string) =>
         Object.assign(new Event('keydown', { cancelable: true }), { key: value });
       target.dispatchEvent(key('Delete'));
@@ -134,7 +133,9 @@ describe('interactive popover ownership', () => {
       target.dispatchEvent(key('Escape'));
       expect(open.value).toBe(false);
       expect(background).not.toHaveBeenCalled();
+      open.value = true;
       expect(session.tryStart('next-drag', cancel)).not.toBeNull();
+      expect(open.value).toBe(false);
       target.dispatchEvent(key('Delete'));
       expect(background).toHaveBeenCalledOnce();
     } finally {

@@ -69,3 +69,38 @@ test('技能库整组和单段放置、取消及横向滚动', async ({ page }) 
     .poll(() => page.locator('.timeline-scroll').evaluate(el => el.scrollLeft))
     .toBeGreaterThan(0);
 });
+
+for (const menuName of ['更多', '显示']) {
+  test(`${menuName}打开时可以直接拖动技能，松手和取消都不会黏手`, async ({ page }) => {
+    await openPerlica(page);
+    await placeBasicGroup(page);
+    const block = page.locator('.timeline-action-block').first();
+    const before = await box(block);
+    const menu = page.getByRole('button', { name: menuName, exact: true });
+    await menu.click();
+    await expect(
+      page.locator(menuName === '更多' ? '.header-more-panel' : '.timeline-display-menu'),
+    ).toBeVisible();
+    await page.mouse.move(before.x + 10, before.y + 25);
+    await page.mouse.down();
+    await page.mouse.move(before.x + 110, before.y + 25, { steps: 10 });
+    await expect(page.locator('.timeline-action-block.is-moving').first()).toBeVisible();
+    await page.mouse.up();
+    await expect(page.locator('.timeline-action-block.is-moving')).toHaveCount(0);
+    await expect.poll(async () => (await box(block)).x).toBeGreaterThan(before.x + 50);
+    const dropped = await box(block);
+    await page.mouse.move(dropped.x + 180, dropped.y + 25);
+    await expect.poll(async () => (await box(block)).x).toBeCloseTo(dropped.x, 0);
+    await menu.click();
+    await expect(
+      page.locator(menuName === '更多' ? '.header-more-panel' : '.timeline-display-menu'),
+    ).toBeVisible();
+    await page.mouse.move(dropped.x + 10, dropped.y + 25);
+    await page.mouse.down();
+    await page.mouse.move(dropped.x + 70, dropped.y + 25, { steps: 10 });
+    await page.keyboard.press('Escape');
+    await page.mouse.up();
+    await expect(page.locator('.timeline-action-block.is-moving')).toHaveCount(0);
+    await expect.poll(async () => (await box(block)).x).toBeCloseTo(dropped.x, 0);
+  });
+}

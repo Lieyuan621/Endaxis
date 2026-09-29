@@ -45,7 +45,9 @@ describe('locally owned leaf dialog input', () => {
     const session = createInteractionSession();
     const dialog = ref(false);
     const popover = ref(false);
-    const closePopover = vi.fn();
+    const closePopover = vi.fn(() => {
+      popover.value = false;
+    });
     const background = vi.fn(() => true);
     const cancel = vi.fn();
     scope.run(() => {
@@ -72,11 +74,11 @@ describe('locally owned leaf dialog input', () => {
       expect(background).not.toHaveBeenCalled();
       expect(session.tryStart('drag', cancel)).toBeNull();
       dialog.value = false;
-      expect(session.tryStart('drag', cancel)).toBeNull();
-      target.dispatchEvent(Object.assign(new Event('keydown'), { key: 'Escape' }));
+      const gesture = session.tryStart('drag', cancel);
+      expect(gesture).not.toBeNull();
       expect(closePopover).toHaveBeenCalledOnce();
-      popover.value = false;
-      expect(session.tryStart('drag', cancel)).not.toBeNull();
+      expect(popover.value).toBe(false);
+      gesture!.release();
       target.dispatchEvent(new Event('paste'));
       expect(background).toHaveBeenCalledOnce();
     } finally {

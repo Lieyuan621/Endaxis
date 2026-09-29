@@ -526,7 +526,7 @@ export function compileScenarioRuntimeAssembly(
     initialFrame,
     operatorControl: {
       initialOperatorId: initialControlledOperatorId,
-      automaticSwitches: scenario.battle.automaticControlSwitches === true,
+      automaticSwitches: scenario.battle.automaticControlSwitches !== false,
       scheduledSwitches:
         options.liveInputInitialFrame === undefined
           ? scenario.battle.controlSwitches.map(marker => ({
