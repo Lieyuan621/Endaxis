@@ -4,8 +4,6 @@ import {
   compileCombatInputSchedule,
   compileFixedCombatInputSchedule,
 } from './compileFixedCombatInputSchedule';
-import { CombatInputSchedule } from './combatInputSchedule';
-import { resolveScenarioInitialFrame } from '../../core/project/skillCastPlacement';
 import { planRecursiveSkillChain, type RecursiveSkillChain } from './recursiveSkillChain';
 import { InheritedScenarioSimulation } from './inheritedScenarioSimulation';
 import { IncrementalScenarioSimulation } from './incrementalScenarioSimulation';
@@ -337,20 +335,6 @@ export class ScenarioSimulationService {
       );
     }
     this.#inheritedSimulation.clear();
-    if (scenario.battle.automaticControlSwitches === true && !this.#options.reuseCheckpoint) {
-      const plan = this.compileInputSchedule(scenario);
-      const session = this.createInputCombatSession(
-        scenario,
-        resolveScenarioInitialFrame(scenario),
-      );
-      new CombatInputSchedule(
-        session,
-        plan.inputs,
-        plan.groups,
-        plan.customSkillPrograms,
-      ).advanceToFrame(endFrame);
-      return session.collectResult();
-    }
     if (
       this.#options.reuseCheckpoint &&
       continuationPlanCastIds === undefined &&

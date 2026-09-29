@@ -34,7 +34,6 @@ import type {
   SkillCastDocument,
 } from '../project/schema';
 import { getSkillCastPlacementChains } from '../project/skillCastPlacement';
-import { isControlledInputCast } from '../project/controlSwitchInference';
 import type { CompiledSkillProgram, CompiledSkillSlotGroup } from './combatProgram';
 import { createIndependentAbilityEntityImportResolver } from './compileCommonAbilityEntityImports';
 import type { compileCommonDefinitionSources } from './compileCommonDefinitionSources';
@@ -118,7 +117,6 @@ export function compileSkillCastPlayerInput(
   cast: SkillCastDocument,
   operator: OperatorDefinition,
   frame: number,
-  automaticControlSwitches = false,
 ): ScheduledSkillInput {
   if (cast.source.kind === 'custom') {
     throw new Error(
@@ -134,9 +132,6 @@ export function compileSkillCastPlayerInput(
     skillId: resolved.definition.key,
     ...(action === undefined ? {} : { action }),
     castId: cast.id,
-    ...(automaticControlSwitches && isControlledInputCast(cast)
-      ? { automaticControlSwitch: true }
-      : {}),
     ...(cast.simulationInputs === undefined
       ? {}
       : { simulationInputs: structuredClone(cast.simulationInputs) }),
@@ -458,7 +453,6 @@ interface ResolvedTimelineTrack {
 }
 
 export interface GraphScenarioContext {
-  readonly automaticControlSwitches?: boolean;
   readonly programs: ActionGraphDefinitionRepository;
   readonly commonDefinitionSources: readonly CommonDefinitionSource[];
   readonly compiledCommonDefinitions?: ReturnType<typeof compileCommonDefinitionSources>;
@@ -515,13 +509,7 @@ function compileResolvedTimelineTracks(
       const declarationOrder = order++;
       if (cast.presentation?.disabled) continue;
       pendingInputs.push({
-        ...compileSkillCastPlayerInput(
-          track.id,
-          cast,
-          operator,
-          anchors.get(cast.id)!,
-          context.automaticControlSwitches === true,
-        ),
+        ...compileSkillCastPlayerInput(track.id, cast, operator, anchors.get(cast.id)!),
         order: declarationOrder,
       });
     }
@@ -639,7 +627,6 @@ export function compileScenarioTimeline(
     tracks.push({ track, operatorInstance, operator });
   });
   return compileResolvedTimelineTracks(tracks, index.getCommonAbilityEntityDefinitions?.(), {
-    automaticControlSwitches: scenario.battle.automaticControlSwitches,
     programs: index.actionPrograms,
     commonDefinitionSources: index.getCommonDefinitionSources(),
   });

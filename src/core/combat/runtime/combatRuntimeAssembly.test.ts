@@ -1101,7 +1101,11 @@ describe('CombatRuntimeAssembly', () => {
         ],
       },
       operators: [{ operatorId: 'operator', skills: programs }],
-      initialControlledOperatorId: 'operator',
+      operatorControl: {
+        initialOperatorId: 'operator',
+        automaticSwitches: false,
+        scheduledSwitches: [],
+      },
       inputs: programs.map((program, declarationOrder) => ({
         frame: 0,
         operatorId: 'operator',

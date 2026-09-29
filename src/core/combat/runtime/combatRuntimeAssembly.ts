@@ -136,7 +136,10 @@ import { ComboWindowRuntime } from '../skills/comboWindowRuntime';
 import { GlobalCooldowns } from '../skills/globalCooldowns';
 import { HideUiOperationExecutor } from '../skills/hideUiOperationExecutor';
 import { OperatorControlConditionExecutor } from '../skills/operatorControlConditionExecutor';
-import { OperatorControlRuntime } from '../skills/operatorControlRuntime';
+import {
+  OperatorControlRuntime,
+  type OperatorControlConfiguration,
+} from '../skills/operatorControlRuntime';
 import {
   OperatorCenterStateRuntime,
   type DashTimingProgram,
@@ -410,12 +413,10 @@ export interface CombatRuntimeScenarioOptions {
   readonly skillInputGroups?: readonly SkillInputGroup[];
   /** 时间轴显式输入的受击事实；不执行敌方伤害或生命扣减。 */
   readonly externalEvents?: readonly ScheduledExternalCombatEventInput[];
-  /** 初始化时、首帧人工切换之前的主控；省略时兼容直接装配提供的控制查询。 */
-  readonly initialControlledOperatorId?: string | null;
-  /** 场景编译层依据控制切换时间线提供查询；装配层不猜测初始主控。 */
+  /** 场景的初始主控、自动切换规则与手动切人排程；不是切面状态。 */
+  readonly operatorControl?: OperatorControlConfiguration;
+  /** 独立运行环境的控制查询；场景模拟使用 operatorControl 和运行时当前身份。 */
   readonly isOperatorControlled?: (operatorId: string, frame: number) => boolean;
-  /** 玩家输入可改变主控时，不再按预排时间线逐帧覆盖运行状态。 */
-  readonly dynamicOperatorControl?: boolean;
 }
 
 export interface CombatRuntimeAssemblyOptions
@@ -578,7 +579,7 @@ export interface CombatRuntimeEnvironmentOptions extends CombatRuntimeInputRules
 
 /** 从同一切面树的固定程序与标准环境配置建立完整的当前分支装配。 */
 export interface CombatRuntimeAssemblyRestoreOptions extends CombatRuntimeInputRules {
-  readonly dynamicOperatorControl?: boolean;
+  readonly operatorControl?: OperatorControlConfiguration;
   readonly receiptHistory: import('../receipt/combatReceiptHistory').CombatReceiptView;
   readonly graph: CombatStateGraph;
   readonly resources: CombatResourceSnapshot;
@@ -885,9 +886,7 @@ export class CombatRuntimeAssembly {
         ...(restoreOptions.environment.isOperatorControlled === undefined
           ? {}
           : { isOperatorControlled: restoreOptions.environment.isOperatorControlled }),
-        ...(restoreOptions.dynamicOperatorControl === undefined
-          ? {}
-          : { dynamicOperatorControl: restoreOptions.dynamicOperatorControl }),
+        operatorControl: restoreOptions.operatorControl,
       };
     }
 
@@ -897,19 +896,17 @@ export class CombatRuntimeAssembly {
       }
       this.#consumables.set(definition.id, definition);
     }
-    const scheduledControl = options.dynamicOperatorControl ? undefined : options.isOperatorControlled;
+    const externalControlQuery = options.isOperatorControlled;
     const hasControlQuery =
-      restored === undefined
-        ? scheduledControl !== undefined || options.initialControlledOperatorId !== undefined
-        : restored.options.environment.isOperatorControlled !== undefined;
+      options.operatorControl !== undefined || externalControlQuery !== undefined;
     const controlState =
       restored?.preparation.graph.inputs.control ??
       new Map(
         options.operators.map(operator => [
           operator.operatorId,
-          options.initialControlledOperatorId === undefined
-            ? (scheduledControl?.(operator.operatorId, options.initialFrame ?? 0) ?? false)
-            : operator.operatorId === options.initialControlledOperatorId,
+          options.operatorControl === undefined
+            ? (externalControlQuery?.(operator.operatorId, options.initialFrame ?? 0) ?? false)
+            : operator.operatorId === options.operatorControl.initialOperatorId,
         ]),
       );
     if (hasControlQuery) {
@@ -933,6 +930,14 @@ export class CombatRuntimeAssembly {
       this.clock = sharedRuntime.clock;
       this.resources = sharedRuntime.resources;
       this.receipt = sharedRuntime.receipt;
+      this.#operatorControl = new OperatorControlRuntime({
+        clock: this.clock,
+        state: controlState,
+        configuration: options.operatorControl,
+        readControl: externalControlQuery,
+        emit: options.emitAbilityEvent,
+        receipt: this.receipt,
+      });
       this.ultimatePresentation = sharedRuntime.ultimatePresentation;
       this.comboWindows = sharedRuntime.comboWindows;
       this.timeDilation = sharedRuntime.timeDilation;
@@ -1363,7 +1368,7 @@ export class CombatRuntimeAssembly {
           abilityEntityRelations,
         },
         bindInputPhases: true,
-        dynamicOperatorControl: options.dynamicOperatorControl,
+        control: this.#operatorControl,
         playerMultiDash: {
           advanceFrame: () =>
             this.#playerMultiDash.advanceFrame(
@@ -1377,7 +1382,6 @@ export class CombatRuntimeAssembly {
           : { enemyStatusContainer: options.enemyStatusContainer }),
       });
       this.simulation = frame.simulation;
-      this.#operatorControl = frame.control;
       this.#enemyStatuses = frame.enemyStatuses;
       this.#scheduledFrameInputs = {
         skillInputs: () => {
@@ -1420,6 +1424,14 @@ export class CombatRuntimeAssembly {
     this.clock = sharedRuntime.clock;
     this.resources = sharedRuntime.resources;
     this.receipt = sharedRuntime.receipt;
+    this.#operatorControl = new OperatorControlRuntime({
+      clock: this.clock,
+      state: controlState,
+      configuration: options.operatorControl,
+      readControl: externalControlQuery,
+      emit: options.emitAbilityEvent,
+      receipt: this.receipt,
+    });
     this.ultimatePresentation = sharedRuntime.ultimatePresentation;
     this.comboWindows = sharedRuntime.comboWindows;
     this.timeDilation = sharedRuntime.timeDilation;
@@ -1908,13 +1920,6 @@ export class CombatRuntimeAssembly {
         options.emitOperatorEnterFight?.(operator.operatorId);
       }
 
-      this.#operatorControl = new OperatorControlRuntime(
-        options.operators.map(operator => operator.operatorId),
-        this.clock,
-        scheduledControl,
-        options.emitAbilityEvent,
-        controlState,
-      );
       bindCombatFramePipeline(this.simulation, {
         timeDilation: this.timeDilation,
         control: this.#operatorControl,
@@ -2064,6 +2069,10 @@ export class CombatRuntimeAssembly {
     else if (simulationInputs.randomSeed !== undefined)
       throw new Error('a cast seed requires a cast id');
     this.#ensureCastInstance(operatorId, expectedSkillId, castId);
+    const program = this.#skillPrograms.get(
+      `${operatorId}\u0000${expectedSkillId}\u0000${castId ?? ''}`,
+    );
+    this.#operatorControl.beforeSkillInput(operatorId, action, program?.skillType, castId);
     const center = this.#operatorCenters.get(operatorId);
     const centerState = this.#operatorCenterStates.get(operatorId);
     if (
@@ -2466,32 +2475,11 @@ export class CombatRuntimeAssembly {
   }
 
   #createInputExecution(): CombatInputExecution {
-    return (this.#inputExecution ??= (() => {
-      const execution = createCombatInputExecution(
-        (operatorId, skillId, castId, action, simulationInputs) =>
-          this.tryStartPlayerInput(operatorId, skillId, castId, action, simulationInputs),
-        this.receipt,
-      );
-      return {
-        ...execution,
-        submit: (input, frame) => {
-          if (
-            input.automaticControlSwitch === true &&
-            this.#operatorControl.runtimeState.get(input.operatorId) !== true
-          ) {
-            this.#operatorControl.applyInput(input.operatorId);
-            this.receipt.record({
-              frame,
-              time: this.clock.time,
-              event: 'AutomaticControlSwitched',
-              sourceId: input.operatorId,
-              data: input.castId === undefined ? undefined : { castId: input.castId },
-            });
-          }
-          return execution.submit(input, frame);
-        },
-      };
-    })());
+    return (this.#inputExecution ??= createCombatInputExecution(
+      (operatorId, skillId, castId, action, simulationInputs) =>
+        this.tryStartPlayerInput(operatorId, skillId, castId, action, simulationInputs),
+      this.receipt,
+    ));
   }
 
   /**
@@ -2692,6 +2680,7 @@ export class CombatRuntimeAssembly {
 
   #requireLiveInputs(): void {
     if (
+      (this.#options.operatorControl?.scheduledSwitches.length ?? 0) > 0 ||
       (this.#options.inputs?.length ?? 0) > 0 ||
       (this.#options.consumableUses?.length ?? 0) > 0 ||
       (this.#options.dodgeInputs?.length ?? 0) > 0 ||

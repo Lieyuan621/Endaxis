@@ -174,6 +174,86 @@ describe('ScenarioSimulationService', () => {
     ]);
     expect(placed.battle.controlSwitches).toEqual([]);
   });
+  it.each([false, true])(
+    '自动切人按操作执行，保留手动切人并且不重复发回执：切面=%s',
+    async reuse => {
+      for (const [group, action, shouldSwitch] of [
+        ['basicAttack', 'basicAttack', true],
+        ['basicAttack', 'battleSkill', false],
+        ['battleSkill', 'basicAttack', true],
+        ['battleSkill', 'battleSkill', false],
+        ['plungingAttack', undefined, true],
+        ['finisher', undefined, true],
+      ] as const) {
+        const base = createPerlicaScenario();
+        base.battle.automaticControlSwitches = true;
+        base.tracks[1] = { ...structuredClone(base.tracks[0]!), id: 'track:1', skillCasts: [] };
+        let id = 0;
+        const scenario = placeSkillGroup({
+          scenario: base,
+          trackIndex: 1,
+          operator: perlica,
+          skillGroupKey: group,
+          startFrame: 30,
+          ids: { allocate: kind => `${kind}:${id++}` },
+        }).scenario;
+        scenario.tracks[1]!.skillCasts.splice(1);
+        const cast = scenario.tracks[1]!.skillCasts[0]!;
+        if (cast.source.kind !== 'operatorSkill') throw new Error('expected operator skill');
+        if (action !== undefined) cast.source.action = action;
+        const service = createService(undefined, reuse);
+        const run = await service.simulate(scenario, 90);
+        expect(run.receiptEntries.filter(e => e.event === 'AutomaticControlSwitched')).toHaveLength(
+          shouldSwitch ? 1 : 0,
+        );
+        scenario.battle.controlSwitches = [{ id: 'manual', frame: 20, trackIndex: 1 }];
+        const manual = await service.simulate(scenario, 90);
+        expect(manual.receiptEntries.filter(e => e.event === 'AutomaticControlSwitched')).toEqual(
+          [],
+        );
+        scenario.battle.controlSwitches = [];
+        scenario.battle.automaticControlSwitches = false;
+        expect(
+          (await service.simulate(scenario, 90)).receiptEntries.filter(
+            e => e.event === 'AutomaticControlSwitched',
+          ),
+        ).toEqual([]);
+        service.clearCache();
+      }
+    },
+  );
+
+  it('自动切人身份随切面恢复，后续手动切人和完整重算一致', async () => {
+    let now = 0;
+    const service = createService(() => (now += 30), true);
+    let scenario = createPerlicaScenario();
+    scenario.battle.automaticControlSwitches = true;
+    scenario.tracks[1] = { ...structuredClone(scenario.tracks[0]!), id: 'track:1', skillCasts: [] };
+    for (const frame of [1, 210]) {
+      scenario = placeSkillGroup({
+        scenario,
+        trackIndex: 1,
+        operator: perlica,
+        skillGroupKey: 'plungingAttack',
+        startFrame: frame,
+        ids: { allocate: kind => `${kind}:${frame}` },
+      }).scenario;
+    }
+    scenario.battle.controlSwitches = [{ id: 'manual', frame: 190, trackIndex: 0 }];
+    const samples: ScenarioSimulationPerformanceSample[] = [];
+    service.subscribePerformance(sample => samples.push(sample));
+    await service.simulate(scenario, 300);
+    scenario.tracks[1]!.skillCasts[1]!.placement = { startFrame: 220 };
+    const resumed = await service.simulate(scenario, 300);
+    const full = await createService().simulate(scenario, 300);
+    expect(samples.at(-1)?.resumedFromFrame).toBe(150);
+    expect(resumed.receiptEntries).toEqual(full.receiptEntries);
+    expect(
+      resumed.receiptEntries.filter(e => e.event === 'AutomaticControlSwitched').map(e => e.frame),
+    ).toEqual([1, 220]);
+    service.clearCache();
+  });
+
   it('主线程编辑服务连续移动技能时复用未改变的前缀', async () => {
     let now = 0;
     const clock = vi.spyOn(performance, 'now').mockImplementation(() => (now += 30));

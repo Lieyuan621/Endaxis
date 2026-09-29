@@ -447,8 +447,6 @@ export interface CombatSkillInput {
   readonly action?: PlayerSkillInput;
   /** 文档中的技能释放身份；同技能多次放置靠它区分。 */
   readonly castId?: string;
-  /** 该玩家操作在实际提交时按需切换主控；仅为本次编译输入，不是切人标记。 */
-  readonly automaticControlSwitch?: boolean;
 }
 
 export interface ScheduledSkillInput extends CombatSkillInput {

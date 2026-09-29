@@ -75,9 +75,8 @@ it('场景输入与环境端口互不重叠，完整装配选项由两者组成'
     | 'skillInputGroups'
     | 'externalEvents'
     | 'dodgeInputs'
-    | 'initialControlledOperatorId'
     | 'isOperatorControlled'
-    | 'dynamicOperatorControl'
+    | 'operatorControl'
   >();
   expectTypeOf<
     keyof CombatRuntimeScenarioOptions & keyof CombatRuntimeEnvironmentOptions
@@ -615,7 +614,7 @@ describe('compileScenarioRuntimeAssembly', () => {
     const compiled = compileScenarioRuntimeAssembly(scenario, options());
 
     expect(compiled.initialFrame).toBe(-90);
-    expect(compiled.initialControlledOperatorId).toBe('track:1');
+    expect(compiled.operatorControl?.initialOperatorId).toBe('track:1');
     expect(compiled.isOperatorControlled?.('track:1', -90)).toBe(true);
   });
 

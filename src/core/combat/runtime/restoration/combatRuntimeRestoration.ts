@@ -4,6 +4,10 @@
  * 固定程序目录和环境工厂来自当前切面树；函数不会复制输入图，也不会读取或提交未来技能输入。
  */
 import {
+  OperatorControlRuntime,
+  type OperatorControlConfiguration,
+} from '../../skills/operatorControlRuntime';
+import {
   bindRestoredCombatAbilityEntityDirectory,
   type RestoreCombatAbilityEntityDirectoryOptions,
   type RestoredCombatAbilityEntityDirectory,
@@ -46,6 +50,7 @@ export interface RestoreCombatRuntimeObjectContext {
 
 export interface RestoreCombatRuntimeOptions {
   readonly graph: CombatStateGraph;
+  readonly operatorControl?: OperatorControlConfiguration;
   readonly programs: readonly CombatOperatorProgram[];
   readonly fixedSkillPrograms: CombatSkillPrograms;
   readonly foundation: Omit<RestoreCombatRuntimeFoundationOptions, 'preparation'>;
@@ -59,7 +64,7 @@ export interface RestoreCombatRuntimeOptions {
     | ((context: RestoreCombatRuntimeObjectContext) => RestoreCombatRuntimeObjectOptions);
   readonly frame?: Omit<
     RestoreCombatRuntimeFrameOptions,
-    'preparation' | 'foundation' | 'entities' | 'objects'
+    'preparation' | 'foundation' | 'entities' | 'objects' | 'control'
   >;
 }
 
@@ -105,7 +110,16 @@ export function restoreCombatRuntime(options: RestoreCombatRuntimeOptions): Rest
     ...objectContext,
     ...objectOptions,
   });
+  const control = new OperatorControlRuntime({
+    clock: foundation.shared.clock,
+    state: preparation.graph.inputs.control,
+    configuration: options.operatorControl,
+    readControl: foundation.environment.options.isOperatorControlled,
+    emit: foundation.environment.runtimeOptions.emitAbilityEvent,
+    receipt: foundation.shared.receipt,
+  });
   const frame = bindRestoredCombatRuntimeFrame({
+    control,
     preparation,
     foundation,
     entities,

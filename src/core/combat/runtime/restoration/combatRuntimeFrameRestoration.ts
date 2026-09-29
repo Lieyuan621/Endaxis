@@ -6,14 +6,15 @@ import type { RestoredCombatRuntimeObjectGraph } from './combatRuntimeObjectGrap
 import type { RestoredCombatRuntimeFoundation } from './combatRuntimeRestoreFoundation';
 import type { CombatRuntimeRestorePreparation } from './combatRuntimeRestorePreparation';
 import { bindCombatFramePipeline } from '../combatFramePipeline';
-import { OperatorControlRuntime } from '../../skills/operatorControlRuntime';
+import type { OperatorControlRuntime } from '../../skills/operatorControlRuntime';
 import { CombatResourceRuntime } from '../../resources/combatResourceRuntime';
 import { CombatSimulation } from '../combatSimulation';
 import { CombatStatusRuntime } from '../../status/combatStatusRuntime';
 import { PlayerMultiDashRuntime } from '../../skills/playerMultiDashRuntime';
 
 export interface RestoreCombatRuntimeFrameOptions {
-  readonly dynamicOperatorControl?: boolean;
+  /** 已绑定当前切面身份的主控运行时；此层只负责安排推进顺序。 */
+  readonly control: OperatorControlRuntime;
   readonly preparation: CombatRuntimeRestorePreparation;
   readonly foundation: RestoredCombatRuntimeFoundation;
   readonly entities: RestoredCombatAbilityEntityDirectory;
@@ -61,15 +62,7 @@ export function bindRestoredCombatRuntimeFrame(
   }
 
   const simulation = new CombatSimulation(shared.clock);
-  const control = new OperatorControlRuntime(
-    [...options.preparation.programs.keys()],
-    shared.clock,
-    options.dynamicOperatorControl
-      ? undefined
-      : options.foundation.environment.options.isOperatorControlled,
-    options.foundation.environment.runtimeOptions.emitAbilityEvent,
-    options.preparation.graph.inputs.control,
-  );
+  const control = options.control;
   const cores = [...options.objects.operators.cores.values()];
   const multiDash = new PlayerMultiDashRuntime();
   bindCombatFramePipeline(simulation, {

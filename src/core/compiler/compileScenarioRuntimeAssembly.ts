@@ -358,7 +358,6 @@ export function compileScenarioRuntimeAssembly(
       ? builds
       : builds.map(build => ({ ...build, track: { ...build.track, skillCasts: [] } }));
   const timeline = compileResolvedScenarioTimeline(timelineBuilds, commonDefinitions, {
-    automaticControlSwitches: scenario.battle.automaticControlSwitches,
     programs: options.index.actionPrograms,
     commonDefinitionSources,
     compiledCommonDefinitions,
@@ -525,8 +524,17 @@ export function compileScenarioRuntimeAssembly(
   return {
     ...options.environment,
     initialFrame,
-    initialControlledOperatorId,
-    dynamicOperatorControl: scenario.battle.automaticControlSwitches === true,
+    operatorControl: {
+      initialOperatorId: initialControlledOperatorId,
+      automaticSwitches: scenario.battle.automaticControlSwitches === true,
+      scheduledSwitches:
+        options.liveInputInitialFrame === undefined
+          ? scenario.battle.controlSwitches.map(marker => ({
+              frame: marker.frame,
+              operatorId: scenario.tracks[marker.trackIndex]?.id ?? null,
+            }))
+          : [],
+    },
     ...(options.liveInputInitialFrame === undefined ? {} : { deferInitialInput: true }),
     resources,
     enemy: applyMechanicsToScenarioEnemy(compileScenarioEnemy(scenario.enemy), mechanics),
