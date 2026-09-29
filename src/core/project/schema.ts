@@ -335,6 +335,8 @@ export interface BattleDocument {
     mode: import('../combat/random/simulationRandom').SimulationRandomMode;
     globalSeed: number;
   };
+  /** 方案级输入规则；省略时只使用手动切人标记。推断出的标记不持久化。 */
+  automaticControlSwitches?: boolean;
   cycleBoundaries: CycleBoundaryDocument[];
   controlSwitches: ControlSwitchDocument[];
   /** 旧 schema-1 文档可以省略；省略与空数组语义相同。 */

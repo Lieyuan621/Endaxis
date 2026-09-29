@@ -10,14 +10,13 @@ import type {
   ScenarioDocument,
   SkillCastDocument,
 } from '../../core/project/schema';
+import {
+  inferControlSwitches,
+  isControlledInputCast,
+  type ControlledInputCast,
+} from '../../core/project/controlSwitchInference';
 
 const INFERRED_CONTROL_SWITCH_PREFIX = 'legacy-inferred-control:';
-const CONTROLLED_INPUT_GROUPS = new Set([
-  'basicAttack',
-  'enhancedBasicAttack',
-  'plungingAttack',
-  'finisher',
-]);
 
 export interface LegacyControlledInputCast {
   readonly castId: string;
@@ -26,9 +25,7 @@ export interface LegacyControlledInputCast {
 }
 
 export function isLegacyControlledInputCast(cast: SkillCastDocument): boolean {
-  return (
-    cast.source?.kind === 'operatorSkill' && CONTROLLED_INPUT_GROUPS.has(cast.source.skillGroupKey)
-  );
+  return isControlledInputCast(cast);
 }
 
 export function isLegacyInferredControlSwitch(controlSwitch: ControlSwitchDocument): boolean {
@@ -49,27 +46,7 @@ export function synchronizeLegacyInferredControlSwitches(
   const explicitSwitches = (scenario.battle.controlSwitches ?? []).filter(
     controlSwitch => !isLegacyInferredControlSwitch(controlSwitch),
   );
-  const events: Array<
-    | {
-        readonly kind: 'explicit';
-        readonly frame: number;
-        readonly trackIndex: number;
-        order: number;
-      }
-    | {
-        readonly kind: 'cast';
-        readonly frame: number;
-        readonly trackIndex: number;
-        readonly castId: string;
-        order: number;
-      }
-  > = explicitSwitches.map((controlSwitch, order) => ({
-    kind: 'explicit',
-    frame: controlSwitch.frame,
-    trackIndex: controlSwitch.trackIndex,
-    order,
-  }));
-
+  const candidates: ControlledInputCast[] = [];
   for (const item of casts) {
     const cast = scenario.tracks[item.trackIndex]?.skillCasts.find(
       candidate => candidate.id === item.castId,
@@ -77,8 +54,7 @@ export function synchronizeLegacyInferredControlSwitches(
     if (cast === undefined || !isLegacyControlledInputCast(cast)) continue;
     const frame = cast.placement.startFrame;
     if (frame === undefined) continue;
-    events.push({
-      kind: 'cast',
+    candidates.push({
       frame,
       trackIndex: item.trackIndex,
       castId: item.castId,
@@ -86,27 +62,12 @@ export function synchronizeLegacyInferredControlSwitches(
     });
   }
 
-  events.sort(
-    (left, right) =>
-      left.frame - right.frame ||
-      (left.kind === right.kind ? left.order - right.order : left.kind === 'explicit' ? -1 : 1),
+  const inferred = inferControlSwitches(
+    scenario.tracks,
+    explicitSwitches,
+    candidates,
+    legacyInferredControlSwitchId,
   );
-
-  let controlledTrackIndex = 0;
-  const inferred: ControlSwitchDocument[] = [];
-  for (const event of events) {
-    if (event.kind === 'explicit') {
-      controlledTrackIndex = event.trackIndex;
-      continue;
-    }
-    if (event.trackIndex === controlledTrackIndex) continue;
-    inferred.push({
-      id: legacyInferredControlSwitchId(event.castId),
-      frame: event.frame,
-      trackIndex: event.trackIndex as ControlSwitchDocument['trackIndex'],
-    });
-    controlledTrackIndex = event.trackIndex;
-  }
   scenario.battle.controlSwitches = [...explicitSwitches, ...inferred];
   return inferred;
 }

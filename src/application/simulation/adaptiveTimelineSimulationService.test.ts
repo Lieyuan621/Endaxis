@@ -80,7 +80,6 @@ it('replaces a slow startup sample after one fast complete run, starting with th
   expect(await service.simulate(scenario, 60)).toEqual({ label: 'worker' });
   service.dispose();
 });
-
 it('keeps slow and unmeasured scenarios in the worker', async () => {
   const worker = backend('worker');
   const local = backend('local');
@@ -99,3 +98,4 @@ it('keeps slow and unmeasured scenarios in the worker', async () => {
   );
   service.dispose();
 });
+

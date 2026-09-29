@@ -104,6 +104,7 @@ export function compileCombatInputSchedule(
         cast,
         operator,
         anchors.get(cast.id)!,
+        scenario.battle.automaticControlSwitches === true,
       );
       at(frame).skills.push({ ...input, declarationOrder: order });
     }

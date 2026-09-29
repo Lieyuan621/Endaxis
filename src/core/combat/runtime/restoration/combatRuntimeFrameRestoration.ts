@@ -13,6 +13,7 @@ import { CombatStatusRuntime } from '../../status/combatStatusRuntime';
 import { PlayerMultiDashRuntime } from '../../skills/playerMultiDashRuntime';
 
 export interface RestoreCombatRuntimeFrameOptions {
+  readonly dynamicOperatorControl?: boolean;
   readonly preparation: CombatRuntimeRestorePreparation;
   readonly foundation: RestoredCombatRuntimeFoundation;
   readonly entities: RestoredCombatAbilityEntityDirectory;
@@ -63,7 +64,9 @@ export function bindRestoredCombatRuntimeFrame(
   const control = new OperatorControlRuntime(
     [...options.preparation.programs.keys()],
     shared.clock,
-    options.foundation.environment.options.isOperatorControlled,
+    options.dynamicOperatorControl
+      ? undefined
+      : options.foundation.environment.options.isOperatorControlled,
     options.foundation.environment.runtimeOptions.emitAbilityEvent,
     options.preparation.graph.inputs.control,
   );

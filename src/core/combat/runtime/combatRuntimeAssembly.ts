@@ -414,6 +414,8 @@ export interface CombatRuntimeScenarioOptions {
   readonly initialControlledOperatorId?: string | null;
   /** 场景编译层依据控制切换时间线提供查询；装配层不猜测初始主控。 */
   readonly isOperatorControlled?: (operatorId: string, frame: number) => boolean;
+  /** 玩家输入可改变主控时，不再按预排时间线逐帧覆盖运行状态。 */
+  readonly dynamicOperatorControl?: boolean;
 }
 
 export interface CombatRuntimeAssemblyOptions
@@ -576,6 +578,7 @@ export interface CombatRuntimeEnvironmentOptions extends CombatRuntimeInputRules
 
 /** 从同一切面树的固定程序与标准环境配置建立完整的当前分支装配。 */
 export interface CombatRuntimeAssemblyRestoreOptions extends CombatRuntimeInputRules {
+  readonly dynamicOperatorControl?: boolean;
   readonly receiptHistory: import('../receipt/combatReceiptHistory').CombatReceiptView;
   readonly graph: CombatStateGraph;
   readonly resources: CombatResourceSnapshot;
@@ -882,6 +885,9 @@ export class CombatRuntimeAssembly {
         ...(restoreOptions.environment.isOperatorControlled === undefined
           ? {}
           : { isOperatorControlled: restoreOptions.environment.isOperatorControlled }),
+        ...(restoreOptions.dynamicOperatorControl === undefined
+          ? {}
+          : { dynamicOperatorControl: restoreOptions.dynamicOperatorControl }),
       };
     }
 
@@ -891,7 +897,7 @@ export class CombatRuntimeAssembly {
       }
       this.#consumables.set(definition.id, definition);
     }
-    const scheduledControl = options.isOperatorControlled;
+    const scheduledControl = options.dynamicOperatorControl ? undefined : options.isOperatorControlled;
     const hasControlQuery =
       restored === undefined
         ? scheduledControl !== undefined || options.initialControlledOperatorId !== undefined
@@ -1357,6 +1363,7 @@ export class CombatRuntimeAssembly {
           abilityEntityRelations,
         },
         bindInputPhases: true,
+        dynamicOperatorControl: options.dynamicOperatorControl,
         playerMultiDash: {
           advanceFrame: () =>
             this.#playerMultiDash.advanceFrame(
@@ -2459,11 +2466,32 @@ export class CombatRuntimeAssembly {
   }
 
   #createInputExecution(): CombatInputExecution {
-    return (this.#inputExecution ??= createCombatInputExecution(
-      (operatorId, skillId, castId, action, simulationInputs) =>
-        this.tryStartPlayerInput(operatorId, skillId, castId, action, simulationInputs),
-      this.receipt,
-    ));
+    return (this.#inputExecution ??= (() => {
+      const execution = createCombatInputExecution(
+        (operatorId, skillId, castId, action, simulationInputs) =>
+          this.tryStartPlayerInput(operatorId, skillId, castId, action, simulationInputs),
+        this.receipt,
+      );
+      return {
+        ...execution,
+        submit: (input, frame) => {
+          if (
+            input.automaticControlSwitch === true &&
+            this.#operatorControl.runtimeState.get(input.operatorId) !== true
+          ) {
+            this.#operatorControl.applyInput(input.operatorId);
+            this.receipt.record({
+              frame,
+              time: this.clock.time,
+              event: 'AutomaticControlSwitched',
+              sourceId: input.operatorId,
+              data: input.castId === undefined ? undefined : { castId: input.castId },
+            });
+          }
+          return execution.submit(input, frame);
+        },
+      };
+    })());
   }
 
   /**

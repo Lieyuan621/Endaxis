@@ -41,6 +41,7 @@ const props = defineProps<{
   locale: string;
   appearance: 'light' | 'dark';
   randomMode: 'expected' | 'sampled';
+  automaticControlSwitches: boolean;
   configurationReadOnly?: boolean;
   globalRandomSeed: number;
   labels: {
@@ -59,6 +60,8 @@ const props = defineProps<{
     viewOperatorsEmpty: string;
     shortcuts: string;
     preferences: string;
+    scenarioSettings: string;
+    automaticControlSwitches: string;
     keycapMode: string;
     keyboardKeycaps: string;
     gamepadKeycaps: string;
@@ -92,6 +95,7 @@ const emit = defineEmits<{
   setLocale: [locale: 'zh-CN' | 'en'];
   setAppearance: [appearance: 'light' | 'dark'];
   setRandomMode: [mode: 'expected' | 'sampled'];
+  toggleAutomaticControlSwitches: [];
   setGlobalRandomSeed: [seed: number];
   rollGlobalRandomSeed: [];
   clearSelection: [];
@@ -633,20 +637,47 @@ onBeforeUnmount(() => {
             </EaButton>
           </section>
           <section class="header-more-section">
-            <h4 class="header-more-section__title">{{ labels.preferences }}</h4>
-            <div class="header-more-mode-row">
-              <span>{{ labels.keycapMode }}</span>
-              <div class="header-more-segment" role="group" :aria-label="labels.keycapMode">
-                <EaButton
-                  v-for="mode in ['keyboard', 'gamepad'] as const"
-                  :key="mode"
-                  type="button"
-                  @click="$emit('setKeycapMode', mode)"
-                  :pressed="keycapMode === mode"
+            <h4 class="header-more-section__title">{{ labels.scenarioSettings }}</h4>
+            <div class="header-more-checklist">
+              <EaButton
+                type="button"
+                class="header-more-check-row header-more-tool-row"
+                :title="t('timeline.header.automaticControlSwitchesHelp')"
+                :aria-pressed="automaticControlSwitches"
+                :disabled="configurationReadOnly"
+                @click="$emit('toggleAutomaticControlSwitches')"
+              >
+                <svg
+                  class="header-more-tool-row__icon"
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
                 >
-                  {{ mode === 'keyboard' ? labels.keyboardKeycaps : labels.gamepadKeycaps }}
-                </EaButton>
-              </div>
+                  <path d="M4 7h13m-3-3 3 3-3 3M20 17H7m3-3-3 3 3 3" />
+                </svg>
+                <span class="header-more-tool-row__label">{{
+                  labels.automaticControlSwitches
+                }}</span>
+                <svg
+                  class="header-more-tool-row__check"
+                  viewBox="0 0 16 16"
+                  width="13"
+                  height="13"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  aria-hidden="true"
+                >
+                  <rect x="1" y="1" width="14" height="14" rx="2" />
+                  <polyline v-if="automaticControlSwitches" points="3,8 6.5,11.5 13,4.5" />
+                </svg>
+              </EaButton>
             </div>
             <div class="header-more-mode-row">
               <span>{{ t('timeline.random.mode') }}</span>
@@ -687,6 +718,23 @@ onBeforeUnmount(() => {
               >
                 <EaDiceIcon />
               </EaButton>
+            </div>
+          </section>
+          <section class="header-more-section">
+            <h4 class="header-more-section__title">{{ labels.preferences }}</h4>
+            <div class="header-more-mode-row">
+              <span>{{ labels.keycapMode }}</span>
+              <div class="header-more-segment" role="group" :aria-label="labels.keycapMode">
+                <EaButton
+                  v-for="mode in ['keyboard', 'gamepad'] as const"
+                  :key="mode"
+                  type="button"
+                  @click="$emit('setKeycapMode', mode)"
+                  :pressed="keycapMode === mode"
+                >
+                  {{ mode === 'keyboard' ? labels.keyboardKeycaps : labels.gamepadKeycaps }}
+                </EaButton>
+              </div>
             </div>
             <div class="header-more-pref-row">
               <div class="header-more-locale" :title="t('timeline.header.languageTooltip')">

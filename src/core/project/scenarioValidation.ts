@@ -181,6 +181,16 @@ export function validateBattle(value: unknown, path: string, issues: ValidationI
     }
   }
 
+  if (
+    value.automaticControlSwitches !== undefined &&
+    typeof value.automaticControlSwitches !== 'boolean'
+  ) {
+    issues.push({
+      path: `${path}.automaticControlSwitches`,
+      message: 'expected a boolean',
+    });
+  }
+
   if (value.simulationRange !== undefined) {
     const rangePath = `${path}.simulationRange`;
     if (!isObject(value.simulationRange)) {

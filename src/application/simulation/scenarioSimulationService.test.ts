@@ -156,6 +156,24 @@ const testIndex = {
 };
 
 describe('ScenarioSimulationService', () => {
+  it('自动主控只在实际技能输入时切换，并以回执投影而不写入切人标记', async () => {
+    const scenario = createPerlicaScenario();
+    scenario.tracks[1] = { ...structuredClone(scenario.tracks[0]!), id: 'track:1', skillCasts: [] };
+    scenario.battle.automaticControlSwitches = true;
+    const placed = placeSkillGroup({
+      scenario,
+      trackIndex: 1,
+      operator: perlica,
+      skillGroupKey: 'plungingAttack',
+      startFrame: 30,
+      ids: { allocate: kind => `${kind}:auto-control` },
+    }).scenario;
+    const run = await createService().simulate(placed, 90);
+    expect(run.receiptEntries.filter(entry => entry.event === 'AutomaticControlSwitched')).toEqual([
+      expect.objectContaining({ frame: 30, sourceId: 'track:1' }),
+    ]);
+    expect(placed.battle.controlSwitches).toEqual([]);
+  });
   it('主线程编辑服务连续移动技能时复用未改变的前缀', async () => {
     let now = 0;
     const clock = vi.spyOn(performance, 'now').mockImplementation(() => (now += 30));
