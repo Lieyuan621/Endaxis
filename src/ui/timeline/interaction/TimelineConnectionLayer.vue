@@ -16,6 +16,7 @@ import type { TimelineConnectionPort } from './timelineConnections';
 import type { TimelineTrackViewModel } from '../timelineEditorViewModel';
 import { frameToTimelinePx } from '../timelineGeometry';
 import type { TimelineTrackEffectLayout } from '../results/timelineTrackEffectLayout';
+import TimelineConnectorStroke from '../components/TimelineConnectorStroke.vue';
 
 interface Point {
   readonly x: number;
@@ -257,24 +258,24 @@ const previewPath = computed(() => {
       <path class="connection-hit-area" :d="connection.path" :stroke="connection.endColor">
         <title>{{ t('connection.deleteHint') }}</title>
       </path>
-      <path class="connection-shadow" :d="connection.path" />
-      <path
-        class="connection-path"
-        :d="connection.path"
+      <TimelineConnectorStroke
+        :path="connection.path"
         :stroke="
           selectedConnectionId === connection.id
-            ? '#fff'
+            ? 'var(--ea-fg)'
             : `url(#connection-gradient-${connection.id})`
         "
-      />
-      <circle
-        class="moving-circle"
-        r="2"
-        :style="{
-          offsetPath: `path('${connection.path}')`,
-          '--start-color': connection.startColor,
-          '--end-color': connection.endColor,
-        }"
+        :emphasis="
+          selectedConnectionId === connection.id
+            ? 'selected'
+            : hoveredSkillCastId === connection.from.skillCastId ||
+                hoveredSkillCastId === connection.to.skillCastId
+              ? 'highlighted'
+              : 'normal'
+        "
+        :start-color="connection.startColor"
+        :end-color="connection.endColor"
+        particle
       />
       <circle
         v-if="selectedConnectionId === connection.id && !draggingConnection"
@@ -285,7 +286,13 @@ const previewPath = computed(() => {
         @pointerdown.stop.prevent="emit('retarget', $event, connection.id)"
       />
     </g>
-    <path v-if="previewPath" class="connection-path is-preview" :d="previewPath" />
+    <TimelineConnectorStroke
+      v-if="previewPath"
+      :path="previewPath"
+      stroke="var(--ea-gold)"
+      :shadow="false"
+      preview
+    />
   </svg>
 </template>
 
@@ -300,18 +307,9 @@ const previewPath = computed(() => {
   pointer-events: none;
 }
 
-.connection-path,
-.connection-hit-area,
-.connection-shadow {
+.connection-hit-area {
   fill: none;
   stroke-linecap: round;
-}
-
-.connection-path {
-  stroke-width: 2;
-  stroke-dasharray: 10 5;
-  pointer-events: none;
-  animation: dash-flow 0.5s linear infinite;
 }
 
 .connector-group {
@@ -328,29 +326,6 @@ const previewPath = computed(() => {
 
 .connector-group.is-dragging {
   pointer-events: none;
-}
-
-.connector-group.is-highlighted .connection-path {
-  stroke-width: 3;
-  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.4));
-}
-
-.connector-group.is-selected .connection-path {
-  stroke-width: 3;
-  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.9));
-}
-
-.connection-shadow {
-  stroke: rgba(0, 0, 0, 0.3);
-  stroke-width: 3;
-  filter: blur(2px);
-  transform: translateY(1px);
-  pointer-events: none;
-}
-
-.connection-path.is-preview {
-  stroke: var(--ea-gold);
-  opacity: 0.5;
 }
 
 .connection-hit-area {
@@ -378,40 +353,6 @@ const previewPath = computed(() => {
   .target-handle:hover {
     r: 7;
     fill: var(--ea-gold);
-  }
-}
-
-.moving-circle {
-  pointer-events: none;
-  animation:
-    move-along-path 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite,
-    color-pulse 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-}
-
-@keyframes dash-flow {
-  from {
-    stroke-dashoffset: 15;
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes move-along-path {
-  from {
-    offset-distance: 0%;
-  }
-  to {
-    offset-distance: 100%;
-  }
-}
-
-@keyframes color-pulse {
-  from {
-    fill: var(--start-color);
-  }
-  to {
-    fill: var(--end-color);
   }
 }
 </style>

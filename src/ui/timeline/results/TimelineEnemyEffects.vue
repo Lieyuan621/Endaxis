@@ -36,6 +36,7 @@ import {
   MONITOR_SECTION_TOPBAR_HEIGHT as SECTION_TOPBAR_HEIGHT,
 } from './monitorSectionMinimums';
 import { projectAttachmentConversionLinks } from '../../../core/projection/attachmentContinuations';
+import TimelineConnectorStroke from '../components/TimelineConnectorStroke.vue';
 
 const { t, te } = useI18n();
 
@@ -472,23 +473,12 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
               />
             </linearGradient>
           </defs>
-          <path
-            :d="`M 0 ${iconSize / 2} H ${buff.barWidthPx + 2}`"
-            class="attachment-continuation-shadow"
-          />
-          <path
-            :d="`M 0 ${iconSize / 2} H ${buff.barWidthPx + 2}`"
-            class="attachment-continuation-line"
-            :style="{ stroke: `url(#${buff.gradientId})` }"
-          />
-          <circle
-            r="2"
-            class="attachment-continuation-dot"
-            :style="{
-              offsetPath: `path('M 0 ${iconSize / 2} H ${buff.barWidthPx + 2}')`,
-              '--start-color': buff.color,
-              '--end-color': buff.endColor,
-            }"
+          <TimelineConnectorStroke
+            :path="`M 0 ${iconSize / 2} H ${buff.barWidthPx + 2}`"
+            :stroke="`url(#${buff.gradientId})`"
+            :start-color="buff.color"
+            :end-color="buff.endColor"
+            particle
           />
         </svg>
         <span
@@ -577,42 +567,6 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
   overflow: visible;
   pointer-events: none;
   flex-shrink: 0;
-}
-.attachment-continuation-shadow {
-  stroke: rgb(0 0 0 / 30%);
-  stroke-width: 3;
-  fill: none;
-  filter: blur(2px);
-  transform: translateY(1px);
-}
-.attachment-continuation-dot {
-  animation: attachment-dot 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-}
-@keyframes attachment-dot {
-  from {
-    offset-distance: 0%;
-    fill: var(--start-color);
-  }
-  to {
-    offset-distance: 100%;
-    fill: var(--end-color);
-  }
-}
-.attachment-continuation-line {
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-dasharray: 10 5;
-  fill: none;
-  animation: attachment-flow 0.5s linear infinite;
-}
-@keyframes attachment-flow {
-  from {
-    stroke-dashoffset: 15;
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
 }
 .enemy-effects {
   position: relative;
