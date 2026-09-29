@@ -109,7 +109,7 @@ export function projectSkillCastActualDurationFrames(
 
 /**
  * 把需要在整条时间轴上表达的时间实例配对为实际帧区间。
- * 只展示公共命名曲线 ComboSkill 与终结技时间膨胀，不依据来源技能的类型推断。
+ * 只展示全局范围的公共命名曲线 ComboSkill 与终结技时间膨胀，不依据来源技能的类型推断。
  * 其他实例仍参与模拟并校验生命周期，但不在轴上装饰。
  */
 export function projectTimelineTimeDilationBands(
@@ -163,8 +163,8 @@ export function projectTimelineTimeDilationBands(
 /** 开始及拒绝回执共用筛选，拖动预览不能把隐藏区间重新显示出来。 */
 export function isTimelineTimeDilationVisible(entry: CombatReceiptEntry): boolean {
   return (
-    entry.data?.curveKey === 'ComboSkill' ||
-    (entry.data?.kind === 'global' && entry.data?.slot === 'ultimate')
+    entry.data?.kind === 'global' &&
+    (entry.data?.curveKey === 'ComboSkill' || entry.data?.slot === 'ultimate')
   );
 }
 

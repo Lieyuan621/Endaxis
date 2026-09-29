@@ -74,7 +74,7 @@ describe('timeline display time', () => {
     ]);
   });
 
-  it('only displays the named ComboSkill curve and ultimate time dilation', () => {
+  it('only displays global ComboSkill curves and ultimate time dilation', () => {
     const entries: CombatReceiptEntry[] = [
       {
         ...receipt(0, 10, 'TimeDilationStarted', {
@@ -85,7 +85,12 @@ describe('timeline display time', () => {
         }),
       },
       {
-        ...receipt(1, 12, 'TimeDilationStarted', { instanceId: 2, kind: 'entity' }),
+        ...receipt(1, 12, 'TimeDilationStarted', {
+          instanceId: 2,
+          kind: 'entity',
+          curveKey: 'ComboSkill',
+          sourceCastId: 'cast:entityCombo',
+        }),
         targetId: 'track:1',
       },
       receipt(2, 14, 'TimeDilationStarted', {
