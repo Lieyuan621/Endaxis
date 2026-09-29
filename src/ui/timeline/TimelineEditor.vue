@@ -23,7 +23,6 @@ import {
   useInteractionBarrier,
 } from '../interaction/interactionSessionContext';
 import type { InteractionLease } from '../interaction/interactionSession';
-import { observeNativeDragLifetime } from '../interaction/nativeDragLifecycle';
 import { useAsyncModalBoundary } from '../interaction/useAsyncModalBoundary';
 import { isInsideTimelineDropRegion } from './interaction/timelineDropRegion';
 import {
@@ -59,7 +58,6 @@ import {
 import SkillLibraryCard from './library/SkillLibraryCard.vue';
 import {
   createLibraryDragGhost,
-  suppressNativeLibraryDragImage,
   attachLibraryDragGhostHint,
   LIBRARY_PLACE_CANCEL_HINT_DELAY_MS,
   positionLibraryDragGhost,
@@ -677,16 +675,7 @@ const contextConnection = computed(() =>
     connection => connection.id === connectionContextTarget.value?.id,
   ),
 );
-type TimelineDragPayload =
-  | {
-      kind: 'librarySkill';
-      entryKey: string;
-      skillGroupKey: string;
-      variantKey?: string;
-      skillKey?: string;
-      dragOffsetX: number;
-    }
-  | { kind: 'trackOrder'; trackIndex: TrackIndex };
+type TimelineDragPayload = { kind: 'trackOrder'; trackIndex: TrackIndex };
 
 const dragPayload = ref<TimelineDragPayload | null>(null);
 const trackOrderDropTarget = ref<TrackIndex | null>(null);
@@ -717,8 +706,6 @@ const workbenchInputRegion = useKeyboardInputRegion({
 });
 const interactionSession = provideInteractionSession(workbenchInputRegion);
 const serviceModalBoundary = useAsyncModalBoundary(interactionSession, workbenchInputRegion);
-let libraryDragLease: InteractionLease | null = null;
-let disposeLibraryDragLifetime: (() => void) | null = null;
 const trackDropRegions = new Map<TrackIndex, HTMLElement>();
 function registerTrackDropRegion(trackIndex: TrackIndex, element: unknown): void {
   if (element instanceof HTMLElement) trackDropRegions.set(trackIndex, element);
@@ -931,7 +918,6 @@ onScopeDispose(() => {
   cancelConnectionDrag();
   cancelCastMove();
   stopMarkerMove?.();
-  finishSkillDrag();
 });
 
 function commitScenario(
@@ -1497,7 +1483,7 @@ watch(
       removeLibraryDragGhost();
     });
   },
-  // 与原生拖拽共用 ghost；取消放置时先清理，再允许新拖拽创建自己的预览。
+  // 同步清理上一次放置预览，再创建当前技能的预览。
   { flush: 'sync' },
 );
 
@@ -4944,10 +4930,6 @@ function cancelLibraryPlacement(): boolean {
 }
 
 function libraryEntrySelected(entry: TimelineSkillLibraryEntryViewModel): boolean {
-  const drag = dragPayload.value;
-  if (drag?.kind === 'librarySkill' && drag.entryKey === entry.entryKey) {
-    return true;
-  }
   const placement = libraryPlacement.value;
   return (
     (placement !== null && placement.entryKey === entry.entryKey) ||
@@ -4964,17 +4946,20 @@ function placePendingLibrarySkill(event: PointerEvent, trackIndex: TrackIndex): 
     ElMessage.warning(t('timeline.shortcut.placeActiveTrackOnly'));
     return true;
   }
-  const lane = event.currentTarget as HTMLElement;
-  const frame = snapTimelineFrame(
-    timelinePointerActualFrame(
-      event.clientX -
-        getDefaultLibraryDragOffsets().dragOffsetX -
-        lane.getBoundingClientRect().left,
-    ),
-    snapFrames.value,
-    scenario.value.battle.durationFrames,
-    minimumEditableInputFrame.value,
-  );
+  const lane = resolveLibraryDropRegion(event);
+  if (lane === null) return true;
+  const frame = resolveTimelineLibraryDropFrame({
+    clientX: event.clientX,
+    laneLeftPx: lane.getBoundingClientRect().left,
+    dragOffsetPx: getDefaultLibraryDragOffsets().dragOffsetX,
+    pxPerFrame: pxPerFrame.value,
+    prepFrames: scenario.value.battle.prepFrames,
+    prepEndFrame: scenario.value.inheritance?.frame ?? 0,
+    prepExpanded: scenario.value.editor.prepExpanded,
+    snapFrames: snapFrames.value,
+    maximumFrame: scenario.value.battle.durationFrames,
+    minimumFrame: minimumEditableInputFrame.value,
+  });
   cursorFrame.value = frame;
   cancelLibraryPlacement();
   void placeGroup(
@@ -5108,7 +5093,7 @@ function resolvePlacedSkillDurationFrames(
   return skillPlacementDisplayFrames(lastSkill?.timelineBlockFrames ?? 0);
 }
 
-function resolveLibraryDropRegion(event: DragEvent): HTMLElement | null {
+function resolveLibraryDropRegion(event: PointerEvent): HTMLElement | null {
   const viewport = timelineScroll.value;
   const lane = trackDropRegions.get(selectedTrack.value);
   // Do not drop through an unrelated/teleported panel into the canvas behind it.
@@ -5138,79 +5123,15 @@ function resolveLibraryDropRegion(event: DragEvent): HTMLElement | null {
     : null;
 }
 
-// Negotiate on entry too: a quick release after crossing a child/overlay may happen
-// before the browser sends its next dragover at the new target.
-function guardLibrarySkillDragOver(event: DragEvent): void {
-  if (dragPayload.value?.kind !== 'librarySkill') return;
-  positionLibraryDragGhost(event.clientX, event.clientY);
-  event.preventDefault();
-  event.stopPropagation();
-  if (event.dataTransfer !== null) {
-    event.dataTransfer.dropEffect = resolveLibraryDropRegion(event) === null ? 'none' : 'copy';
-  }
-}
-
-/** The active workbench routes the drop before child controls can consume its text payload. */
-function guardLibrarySkillDrop(event: DragEvent): void {
-  if (dragPayload.value?.kind !== 'librarySkill') return;
-  event.preventDefault();
-  event.stopPropagation();
-  const lane = resolveLibraryDropRegion(event);
-  if (lane === null) finishSkillDrag();
-  else dropTimelinePayload(event, selectedTrack.value, lane);
-}
-
+/** 与快捷键共用指针放置模式，不进入浏览器原生拖放会话。 */
 function beginSkillDrag(
   event: DragEvent,
   entry: TimelineSkillLibraryEntryViewModel,
   skillKey?: string,
 ): void {
-  if (!(event.target instanceof Element) || !event.target.isConnected) {
-    event.preventDefault();
-    return;
-  }
-  const placedSkillKey = skillKey;
-  const lease = interactionSession.tryStart('library-drag', finishSkillDrag);
-  if (lease === null) {
-    event.preventDefault();
-    return;
-  }
-  libraryDragLease = lease;
-  disposeLibraryDragLifetime = observeNativeDragLifetime(event.target, () => {
-    if (lease.isCurrent()) finishSkillDrag();
-  });
-  window.addEventListener('drop', guardLibrarySkillDrop, true);
-  window.addEventListener('dragover', guardLibrarySkillDragOver, true);
-  window.addEventListener('dragenter', guardLibrarySkillDragOver, true);
-  const offsets = getDefaultLibraryDragOffsets();
-  dragPayload.value = {
-    kind: 'librarySkill',
-    entryKey: entry.entryKey,
-    skillGroupKey: entry.skillGroupKey,
-    ...(entry.variantKey === undefined ? {} : { variantKey: entry.variantKey }),
-    ...(placedSkillKey === undefined ? {} : { skillKey: placedSkillKey }),
-    dragOffsetX: offsets.dragOffsetX,
-  };
-  const preview = librarySkillPreview(entry, placedSkillKey);
-  createLibraryDragGhost(preview, preview.scale, () => preview.color);
-  positionLibraryDragGhost(event.clientX, event.clientY);
-  if (event.dataTransfer !== null) {
-    event.dataTransfer.effectAllowed = 'copy';
-    event.dataTransfer.setData('text/plain', placedSkillKey ?? entry.skillGroupKey);
-    suppressNativeLibraryDragImage(event.dataTransfer);
-  }
-}
-
-function finishSkillDrag(): void {
-  disposeLibraryDragLifetime?.();
-  disposeLibraryDragLifetime = null;
-  libraryDragLease?.release();
-  libraryDragLease = null;
-  window.removeEventListener('drop', guardLibrarySkillDrop, true);
-  window.removeEventListener('dragover', guardLibrarySkillDragOver, true);
-  window.removeEventListener('dragenter', guardLibrarySkillDragOver, true);
-  if (dragPayload.value?.kind === 'librarySkill') dragPayload.value = null;
-  removeLibraryDragGhost();
+  event.preventDefault();
+  lastPlacementPointer = { x: event.clientX, y: event.clientY };
+  beginLibraryPlacement(entry, skillKey);
 }
 
 function beginTrackOrderDrag(event: DragEvent, trackIndex: TrackIndex): void {
@@ -5247,47 +5168,6 @@ function dropTrackOrder(event: DragEvent, trackIndex: TrackIndex): void {
   dragPayload.value = null;
   trackOrderDropTarget.value = null;
   swapTrackOrder(payload.trackIndex, trackIndex);
-}
-
-function allowTimelinePayloadDrop(event: DragEvent): void {
-  event.preventDefault();
-  if (event.dataTransfer !== null) {
-    event.dataTransfer.dropEffect = dragPayload.value?.kind === 'librarySkill' ? 'copy' : 'move';
-  }
-}
-
-function dropTimelinePayload(
-  event: DragEvent,
-  trackIndex: TrackIndex,
-  dropRegion?: HTMLElement,
-): void {
-  const payload = dragPayload.value;
-  dragPayload.value = null;
-  if (payload === null) return;
-  event.preventDefault();
-  trackOrderDropTarget.value = null;
-  if (payload.kind === 'trackOrder') {
-    finishTrackOrderDrag();
-    swapTrackOrder(payload.trackIndex, trackIndex);
-    return;
-  }
-  finishSkillDrag();
-  if (trackIndex !== selectedTrack.value) return;
-  const lane = dropRegion ?? (event.currentTarget as HTMLElement);
-  const frame = resolveTimelineLibraryDropFrame({
-    clientX: event.clientX,
-    laneLeftPx: lane.getBoundingClientRect().left,
-    dragOffsetPx: payload.dragOffsetX,
-    pxPerFrame: pxPerFrame.value,
-    prepFrames: scenario.value.battle.prepFrames,
-    prepEndFrame: scenario.value.inheritance?.frame ?? 0,
-    prepExpanded: scenario.value.editor.prepExpanded,
-    snapFrames: snapFrames.value,
-    maximumFrame: scenario.value.battle.durationFrames,
-    minimumFrame: minimumEditableInputFrame.value,
-  });
-  cursorFrame.value = frame;
-  void placeGroup(payload.skillGroupKey, payload.skillKey, frame, trackIndex, payload.variantKey);
 }
 
 const resetDialogVisible = ref(false);
@@ -6735,8 +6615,8 @@ function setPanelDialogVisible(visible: boolean): void {
                 @pointerup.capture="placePendingLibrarySkill($event, track.trackIndex)"
                 @click="handleTimelineLaneClick"
                 @contextmenu="openMarkerContextMenu($event, track.trackIndex)"
-                @dragover="allowTimelinePayloadDrop"
-                @drop.prevent="dropTimelinePayload($event, track.trackIndex)"
+                @dragover.prevent
+                @drop.prevent="dropTrackOrder($event, track.trackIndex)"
               >
                 <template
                   v-if="
@@ -8178,10 +8058,19 @@ button:disabled {
   z-index: 100;
   min-width: 0;
   height: 12px;
-  overflow-x: auto;
+  overflow-x: scroll;
   overflow-y: hidden;
+  /* 独立导航条必须常驻；WebKit 的 thin/自动滚动条可能不绘制滑块。 */
+  scrollbar-width: auto;
+  /* 避免 Chromium 的标准颜色声明覆盖下方伪元素尺寸，挤出仅 12px 的容器。 */
+  scrollbar-color: auto;
   opacity: 0.7;
   transition: opacity 200ms ease;
+}
+
+.timeline-horizontal-scrollbar::-webkit-scrollbar {
+  display: block;
+  height: 10px;
 }
 
 .timeline-horizontal-scrollbar:hover,

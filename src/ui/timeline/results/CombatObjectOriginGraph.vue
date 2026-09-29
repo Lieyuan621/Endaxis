@@ -55,10 +55,18 @@ watch(
     failedIcons.value = new Set();
   },
 );
-const canvas = ref<SVGSVGElement>();
+const canvas = ref<HTMLDivElement>();
 const zoom = ref(1);
 const offset = ref({ x: 20, y: 20 });
 const markerId = useId();
+const edgeColors = {
+  default: '#8292a5',
+  producedBy: '#5884bb',
+  ownedBy: '#508c76',
+} as const;
+function edgeStyle(relation: CombatObjectRelation): keyof typeof edgeColors {
+  return relation === 'producedBy' || relation === 'ownedBy' ? relation : 'default';
+}
 const relations: readonly CombatObjectRelation[] = [
   'producedBy',
   'stackedBy',
@@ -281,7 +289,7 @@ function changeSummary(node: CombatObjectNode): string | undefined {
       </div>
       <p class="graph-hint">{{ t('objectOrigins.controls') }}</p>
       <div class="graph-workspace">
-        <svg
+        <div
           ref="canvas"
           class="graph-canvas"
           :aria-label="title"
@@ -292,83 +300,94 @@ function changeSummary(node: CombatObjectNode): string | undefined {
           @lostpointercapture="stopPan"
           @wheel.prevent="wheel"
         >
-          <defs>
-            <marker
-              :id="markerId"
-              viewBox="0 0 10 10"
-              refX="9"
-              refY="5"
-              markerWidth="7"
-              markerHeight="7"
-              orient="auto-start-reverse"
-            >
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke" />
-            </marker>
-          </defs>
-          <g :transform="`translate(${offset.x},${offset.y}) scale(${zoom})`">
-            <g
-              v-for="(edge, index) in graph?.edges"
-              :key="index"
-              class="graph-edge"
-              :class="{
-                highlighted: edge.from === selection || edge.to === selection,
-                muted: edge.from !== selection && edge.to !== selection,
-              }"
-              :data-relation="edge.relation"
-            >
-              <title>{{ t(`objectOrigins.${edge.relation}`) }}</title>
-              <path :d="graph!.routes[index]!.path" fill="none" :marker-end="`url(#${markerId})`" />
-              <text
-                v-if="edge.from === selection || edge.to === selection"
-                :x="graph!.routes[index]!.x"
-                :y="graph!.routes[index]!.y"
-                text-anchor="middle"
+          <!-- HTML 节点与 SVG 连线共用同一 CSS 坐标系，避免 WebKit foreignObject 的定位层脱离 SVG 变换。 -->
+          <div
+            class="graph-scene"
+            :style="{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})` }"
+          >
+            <svg class="graph-edges">
+              <defs>
+                <marker
+                  v-for="(color, style) in edgeColors"
+                  :id="`${markerId}-${style}`"
+                  :key="style"
+                  viewBox="0 0 10 10"
+                  refX="9"
+                  refY="5"
+                  markerWidth="7"
+                  markerHeight="7"
+                  orient="auto-start-reverse"
+                >
+                  <!-- 显式填色，避免不支持 context-stroke 的浏览器回退成黑色。 -->
+                  <path d="M 0 0 L 10 5 L 0 10 z" :fill="color" />
+                </marker>
+              </defs>
+              <g
+                v-for="(edge, index) in graph?.edges"
+                :key="index"
+                class="graph-edge"
+                :class="{
+                  highlighted: edge.from === selection || edge.to === selection,
+                  muted: edge.from !== selection && edge.to !== selection,
+                }"
+                :data-relation="edge.relation"
+                :stroke="edgeColors[edgeStyle(edge.relation)]"
               >
-                {{ t(`objectOrigins.${edge.relation}`) }}
-              </text>
-            </g>
-            <foreignObject
+                <title>{{ t(`objectOrigins.${edge.relation}`) }}</title>
+                <path
+                  :d="graph!.routes[index]!.path"
+                  fill="none"
+                  :marker-end="`url(#${markerId}-${edgeStyle(edge.relation)})`"
+                />
+                <text
+                  v-if="edge.from === selection || edge.to === selection"
+                  :x="graph!.routes[index]!.x"
+                  :y="graph!.routes[index]!.y"
+                  text-anchor="middle"
+                >
+                  {{ t(`objectOrigins.${edge.relation}`) }}
+                </text>
+              </g>
+            </svg>
+            <button
               v-for="(node, index) in graph?.nodes"
               :key="index"
-              :x="node.x"
-              :y="node.y"
-              width="240"
-              height="88"
+              type="button"
+              data-node
+              class="graph-node"
+              :class="{ selected: selection === index }"
+              :style="{
+                left: `${node.x}px`,
+                top: `${node.y}px`,
+                paddingLeft: icon(node.object) ? '54px' : undefined,
+              }"
+              :data-kind="node.object.ref.kind"
+              :aria-pressed="selection === index"
+              @click="selection = index"
             >
-              <button
-                type="button"
-                data-node
-                class="graph-node"
-                :class="{ selected: selection === index }"
-                :style="icon(node.object) ? { paddingLeft: '54px' } : undefined"
-                :data-kind="node.object.ref.kind"
-                :aria-pressed="selection === index"
-                @click="selection = index"
+              <img
+                v-if="icon(node.object)"
+                class="node-icon"
+                :src="icon(node.object)"
+                alt=""
+                draggable="false"
+                @error="failIcon(node.object)"
+              />
+              <span class="node-kind"
+                >{{ nodeKind(node.object) }}
+                <span v-if="changeSummary(node.object)"
+                  >· {{ changeSummary(node.object) }}</span
+                ></span
               >
-                <img
-                  v-if="icon(node.object)"
-                  class="node-icon"
-                  :src="icon(node.object)"
-                  alt=""
-                  draggable="false"
-                  @error="failIcon(node.object)"
-                />
-                <span class="node-kind"
-                  >{{ nodeKind(node.object) }}
-                  <span v-if="changeSummary(node.object)"
-                    >· {{ changeSummary(node.object) }}</span
-                  ></span
-                >
-                <span class="node-name" :title="description(node.object)">{{
-                  description(node.object)
-                }}</span>
-                <small v-if="node.object.fact && node.object.fact.sequence <= sequence"
-                  >#{{ node.object.fact.sequence }} · {{ node.object.fact.frame }}f</small
-                >
-              </button>
-            </foreignObject>
-          </g>
-        </svg>
+              <span class="node-name" :title="description(node.object)">{{
+                description(node.object)
+              }}</span>
+              <small v-if="node.object.fact && node.object.fact.sequence <= sequence"
+                >#{{ node.object.fact.sequence }} · {{ node.object.fact.frame }}f</small
+              >
+            </button>
+          </div>
+        </div>
         <aside class="node-details" v-if="chosen">
           <img
             v-if="icon(chosen)"
@@ -447,6 +466,8 @@ function changeSummary(node: CombatObjectNode): string | undefined {
   overflow: hidden;
 }
 .graph-canvas {
+  position: relative;
+  overflow: hidden;
   width: 100%;
   height: 100%;
   min-width: 0;
@@ -460,15 +481,26 @@ function changeSummary(node: CombatObjectNode): string | undefined {
 .graph-canvas:active {
   cursor: grabbing;
 }
+.graph-scene {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  transform-origin: 0 0;
+}
+.graph-edges {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  overflow: visible;
+}
 .graph-edge {
-  stroke: #8292a5;
   stroke-width: 1.6;
 }
-.graph-edge[data-relation='producedBy'] {
-  stroke: #5884bb;
-}
 .graph-edge[data-relation='ownedBy'] {
-  stroke: #508c76;
   stroke-dasharray: 5 3;
 }
 .graph-edge.highlighted {
@@ -486,9 +518,9 @@ function changeSummary(node: CombatObjectNode): string | undefined {
   paint-order: stroke;
 }
 .graph-node {
-  position: relative;
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  width: 240px;
+  height: 88px;
   display: flex;
   flex-direction: column;
   gap: 6px;

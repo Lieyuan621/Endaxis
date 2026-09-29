@@ -45,6 +45,10 @@ __pycache__/
 # Vitest
 __screenshots__/
 
+# Playwright
+/playwright-report/
+/test-results/
+
 # Inspector 反射元数据：由开发、构建和类型检查自动恢复，不作为源码审查。
 /src/ui/timeline/definitions/inspector/conditionStructure.generated.ts
 /src/ui/timeline/definitions/inspector/stepStructure.generated.ts

@@ -330,6 +330,18 @@ function startReorder(event: DragEvent): void {
   cursor: grabbing;
 }
 
+.drag-handle {
+  -webkit-user-select: none;
+  user-select: none;
+}
+.drag-handle[draggable='true'] {
+  -webkit-user-drag: element;
+}
+.drag-handle svg {
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
 .reorder-button {
   cursor: pointer;
 }

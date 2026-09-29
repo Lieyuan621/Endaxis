@@ -24,6 +24,8 @@
     "type-check:game-data-production": "tsc --project tools/game-data-compiler/tsconfig.production.json",
     "type-check:game-data": "tsc --project tools/game-data-compiler/tsconfig.json",
     "test": "vitest run src",
+    "test:browser": "playwright test",
+    "type-check:browser": "tsc -p tests/browser/tsconfig.json",
     "test:game-data": "vitest run tools/game-data-compiler",
     "test:tools": "vitest run tools/legacy-timeline",
     "type-check:tools": "tsc -p tsconfig.node.json && tsc -p tools/legacy-timeline/tsconfig.json && tsc -p tools/performance/tsconfig.json",
@@ -82,6 +84,7 @@
     "vuedraggable": "^4.1.0"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@types/node": "^25.0.9",
     "@vitejs/plugin-vue": "^6.0.1",
     "@vue/tsconfig": "^0.8.1",

@@ -45,6 +45,24 @@ GitHub Actions 在 Linux 和 Windows 上从锁文件安装，依次检查应用�
 
 ## 构建与静态部署
 
+### 浏览器交互回归
+
+`tests/browser/` 使用 Playwright 检查技能库整组与单段放置、取消、横向滚动及来源图的平移、缩放、选中和箭头颜色。每个用例使用独立浏览器存储，通过界面创建佩丽卡最小场景，不读取个人存档或在线分享轴。计算语义仍由单元测试负责。
+
+```sh
+npx playwright install chromium webkit
+npm run build
+npm run test:browser
+```
+
+测试自动启动独立的静态预览服务（4187 端口），Chromium 和 WebKit 串行执行，不自动重试。仅测一个浏览器可追加 `-- --project=webkit`，仅测一个文件可追加文件名。Windows PowerShell 若禁止 npm 脚本执行，使用 `npm.cmd`、`npx.cmd`。
+
+本地开发可设置 `PLAYWRIGHT_BASE_URL=http://localhost:5173` 复用已运行服务；此时不启动预览服务，也不验证静态产物。发布验收应取消该变量并重新构建。
+
+GitHub Actions 的 Browser interactions 在 PR 和手动触发时构建一次，运行两个浏览器的全部核心用例。失败保留截图、trace 和 HTML 报告 14 天；下载报告后可用 `npx playwright show-report` 查看。测试输出不提交。工作流不部署网站，WebKit 回归也不替代真实 macOS Safari 的发布抽查。配置依据见 [Playwright CI 文档](https://playwright.dev/docs/ci)。
+
+### 静态产物
+
 ```sh
 npm run type-check
 npm run build

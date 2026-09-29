@@ -14,11 +14,11 @@ defineProps({
   segments: { type: Array, default: () => [] },
 });
 
-defineEmits(['select', 'dragstart', 'dragend', 'select-segment', 'dragstart-segment']);
+defineEmits(['select', 'dragstart', 'select-segment', 'dragstart-segment']);
 </script>
 
 <template>
-  <div class="skill-item" :style="{ '--accent-color': accentColor }">
+  <div class="skill-item" :style="{ '--accent-color': accentColor }" @selectstart.prevent>
     <div
       class="skill-card"
       :class="{ 'is-selected': selected }"
@@ -28,7 +28,6 @@ defineEmits(['select', 'dragstart', 'dragend', 'select-segment', 'dragstart-segm
       :aria-pressed="selected"
       draggable="true"
       @dragstart="$emit('dragstart', $event)"
-      @dragend="$emit('dragend', $event)"
       @click="$emit('select')"
       @keydown.enter.prevent="$emit('select')"
       @keydown.space.stop.prevent="$emit('select')"
@@ -43,7 +42,7 @@ defineEmits(['select', 'dragstart', 'dragend', 'select-segment', 'dragstart-segm
       </div>
 
       <div v-if="icon" class="card-bg-deco">
-        <img :src="icon" class="weapon-icon-inner" alt="" />
+        <img :src="icon" class="weapon-icon-inner" alt="" draggable="false" />
       </div>
       <div v-else class="card-bg-deco-empty"></div>
     </div>
@@ -60,7 +59,6 @@ defineEmits(['select', 'dragstart', 'dragend', 'select-segment', 'dragstart-segm
         :aria-pressed="Boolean(segment.selected)"
         :aria-disabled="Boolean(segment.disabled)"
         @dragstart="$emit('dragstart-segment', { event: $event, skillKey: segment.id })"
-        @dragend="$emit('dragend', $event)"
         @click.stop="!segment.disabled && $emit('select-segment', segment.id)"
         @keydown.enter.stop.prevent="!segment.disabled && $emit('select-segment', segment.id)"
         @keydown.space.stop.prevent="!segment.disabled && $emit('select-segment', segment.id)"
@@ -77,6 +75,21 @@ defineEmits(['select', 'dragstart', 'dragend', 'select-segment', 'dragstart-segm
   flex-direction: column;
   gap: 6px;
   --accent-color: #8c8c8c;
+}
+
+/* Safari 必须同时禁用文字选择，并将卡片而非其文字/图片作为拖动源。 */
+.skill-item,
+.skill-item * {
+  -webkit-user-select: none;
+  user-select: none;
+}
+.skill-card,
+.attack-segment-chip[draggable='true'] {
+  -webkit-user-drag: element;
+}
+.skill-card * {
+  -webkit-user-drag: none;
+  pointer-events: none;
 }
 
 .skill-card {
@@ -121,7 +134,6 @@ defineEmits(['select', 'dragstart', 'dragend', 'select-segment', 'dragstart-segm
   font-family: 'Roboto Mono', 'Consolas', monospace;
   font-size: 11px;
   line-height: 1;
-  user-select: none;
   cursor: grab;
   box-sizing: border-box;
   min-width: 0;

@@ -55,6 +55,11 @@ export default defineConfig({
     // Rebuild/audit evidence belongs in the ignored temporary workspace and may
     // itself contain focused Vitest probes. It must never become part of the
     // repository test suite.
-    exclude: [...configDefaults.exclude, 'tmp/**', 'tools/editor/generateActionNodeSchema.test.ts'],
+    exclude: [
+      ...configDefaults.exclude,
+      'tmp/**',
+      'tests/browser/**',
+      'tools/editor/generateActionNodeSchema.test.ts',
+    ],
   },
 });
