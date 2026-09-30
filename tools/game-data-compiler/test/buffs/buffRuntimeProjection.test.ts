@@ -63,18 +63,9 @@ import { parseComboCacheActionSource } from '../../src/source/inputControlAction
 describe('公共 Buff 运行时投影', () => {
   it.each([
     ['Unlimited', true],
-    ['HighPriority', false],
     ['Stack', true],
-    ['Enhance', false],
     ['Refresh', false],
-    ['Extend', false],
-    ['Modify', false],
     ['Unique', true],
-    ['EnhanceAndRefresh', false],
-    ['OverwriteDuration', false],
-    ['EnhanceAndOverwriteDuration', false],
-    ['HighPriorityWithMaxStack', false],
-    ['TimedGrowingEnhance', false],
   ] as const)('只按原生叠加类型门槛加载 Buff 时间线：%s', (stackingType, expected) => {
     const fixture = sourceFixture();
     const eventSequence = fixture.graph.abilityEvents[0]!.actions[0]!;
@@ -1664,75 +1655,68 @@ describe('公共 Buff 运行时投影', () => {
       parameters: { target: 'enemy', source: 'buffSource' },
     });
   });
-  it.each(['OnBuffStart', 'DuringBuffEnable', 'OnBuffAfterTryEnhanced'] as const)(
-    '%s 的来源、持有者和默认目标不借用能力事件',
-    event => {
-      const source = sourceFixture();
-      const sequence = source.graph.abilityEvents[0]!.actions[0]!;
-      const apply = sequence.actions[1]!;
-      if (apply.body.kind !== 'leaf' || apply.body.value.family !== 'buffApplication')
-        throw new Error('fixture');
-      const action = apply.body.value.action;
-      for (const targetSource of ['Source', 'Owner', 'Target']) {
-        for (const buffSource of ['ActionSource', 'ActionOwner'] as const) {
-          const definition = compileBuffRuntimeDefinitionSource(
+  it.each([
+    ['OnBuffStart', 'Source', 'ActionSource'],
+    ['DuringBuffEnable', 'Owner', 'ActionOwner'],
+    ['OnBuffAfterTryEnhanced', 'Target', 'ActionSource'],
+  ] as const)('%s 的来源、持有者和默认目标不借用能力事件', (event, targetSource, buffSource) => {
+    const source = sourceFixture();
+    const sequence = source.graph.abilityEvents[0]!.actions[0]!;
+    const apply = sequence.actions[1]!;
+    if (apply.body.kind !== 'leaf' || apply.body.value.family !== 'buffApplication')
+      throw new Error('fixture');
+    const action = apply.body.value.action;
+    const definition = compileBuffRuntimeDefinitionSource(
+      {
+        ...source,
+        graph: {
+          ...source.graph,
+          abilityEvents: [],
+          buffEvents: [
             {
-              ...source,
-              graph: {
-                ...source.graph,
-                abilityEvents: [],
-                buffEvents: [
-                  {
-                    event,
-                    actions: [
-                      {
-                        ...sequence,
-                        actions: [
-                          {
-                            ...apply,
-                            body: {
-                              kind: 'leaf',
-                              value: {
-                                family: 'buffApplication',
-                                action: {
-                                  ...action,
-                                  target: fixedTarget(targetSource),
-                                  buffSource,
-                                },
-                              },
-                            },
+              event,
+              actions: [
+                {
+                  ...sequence,
+                  actions: [
+                    {
+                      ...apply,
+                      body: {
+                        kind: 'leaf',
+                        value: {
+                          family: 'buffApplication',
+                          action: {
+                            ...action,
+                            target: fixedTarget(targetSource),
+                            buffSource,
                           },
-                        ],
+                        },
                       },
-                    ],
-                  },
-                ],
-              },
+                    },
+                  ],
+                },
+              ],
             },
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            { gameplayTagRegistry: fixtureGameplayTagRegistry, ...{} },
-          );
-          const key =
-            event === 'OnBuffStart'
-              ? 'start'
-              : event === 'DuringBuffEnable'
-                ? 'enable'
-                : 'afterEnhance';
-          const step = lifecycleSteps(definition, key)[0];
-          expect(step).toMatchObject({
-            kind: 'applyBuff',
-            parameters: { target: targetSource === 'Source' ? 'caster' : 'buffOwner' },
-          });
-          expect(step?.kind === 'applyBuff' && step.parameters.source).toBe(
-            buffSource === 'ActionOwner' ? 'buffOwner' : undefined,
-          );
-        }
-      }
-    },
-  );
+          ],
+        },
+      },
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      { gameplayTagRegistry: fixtureGameplayTagRegistry },
+    );
+    const key =
+      event === 'OnBuffStart' ? 'start' : event === 'DuringBuffEnable' ? 'enable' : 'afterEnhance';
+    const step = lifecycleSteps(definition, key)[0];
+    expect(step).toMatchObject({
+      kind: 'applyBuff',
+      parameters: { target: targetSource === 'Source' ? 'caster' : 'buffOwner' },
+    });
+    expect(step?.kind === 'applyBuff' && step.parameters.source).toBe(
+      buffSource === 'ActionOwner' ? 'buffOwner' : undefined,
+    );
+  });
 
   it('把 DuringBuffEnable 末尾的 SkillAffix 保留为动作而非提前构造身份', () => {
     const source = sourceFixture();

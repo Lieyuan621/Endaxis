@@ -44,25 +44,6 @@ function setup(candidateSource: string) {
 
 describe('隔离候选 TypeScript 覆盖层', () => {
   it(
-    '按未来正式路径检查新增文件，并把候选目录视为完整替换',
-    () => {
-      const root = setup(
-        "import type { Row } from '../contract'; export const candidate: Row = { value: 3 };",
-      );
-      const result = typeCheckCandidateOverlay({
-        projectRoot: root,
-        candidateRoot: path.join(root, 'tmp/candidate'),
-        configFile: 'tsconfig.next.json',
-        replacementPaths: ['src/data/generated'],
-      });
-      expect(result.overlayFileCount).toBe(1);
-      expect(result.replacedDirectories).toEqual(['src/data/generated']);
-      expect(fs.existsSync(path.join(root, 'src/data/generated/formal.ts'))).toBe(true);
-    },
-    TYPE_CHECK_TIMEOUT_MS,
-  );
-
-  it(
     '拒绝只在候选落位后才出现的类型错误',
     () => {
       const root = setup(

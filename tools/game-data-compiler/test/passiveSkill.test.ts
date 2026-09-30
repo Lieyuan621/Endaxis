@@ -7,7 +7,7 @@ import {
   selectSkillBlackboardLevel,
   type SkillPatchSource,
 } from '../src/index.ts';
-import { scalarFixture } from './sourceFixtures.ts';
+import { activeSkillFixture, scalarFixture } from './sourceFixtures.ts';
 
 describe('领域无关的被动 SkillData', () => {
   it.each([
@@ -203,58 +203,17 @@ describe('领域无关的被动 SkillData', () => {
 
 function passiveFixture(): Record<string, unknown> {
   return {
+    ...activeSkillFixture('passive_fixture', 'Passive'),
     actionGroupData: {
       timelineActions: [],
       passiveEventActions: [{ abilityEvent: 'OnBuffStart', actions: [sequence([])] }],
     },
-    aiExclusiveFrame: 0,
-    attackRangeType: 'Default',
     blackboard: [],
     buffs: [buffInstall('buff_startup', true)],
-    canCastInAir: false,
-    canDummyCast: false,
-    canMove: false,
-    cardAttributeModifier: { attributeModifiers: [], isConvertedAttribute: false },
-    castData: {},
-    castType: 'Passive',
-    characterReturnToIdle: false,
-    comboSkillUIBigSpriteName: '',
-    comboSkillUISpriteName: '',
-    dontInterruptCombo: false,
-    dummyPositionOffset: {},
     durationFrame: 0,
     exclusiveFrame: 0,
-    hittableAttackRange: 0,
-    iconBgType: 'Default',
-    iconId: '',
-    level: 1,
-    needEnemyOutOfScreenWarning: false,
-    needEnemyOutOfScreenWarningOverrideValue: false,
-    offsetRecordFrame: 0,
-    overrideHittableObjAttackRange: false,
-    overrideNeedEnemyOutOfScreenWarning: false,
     passiveSkillType: 'ToggleBuff',
-    rootMotionCliffCheck: false,
-    selectStrategy: {},
-    showNotRecommendState: false,
-    skillHighlightCondition: {},
-    skillId: 'passive_fixture',
-    skillName: '',
-    skillSpecification: 'Default',
     skillTags: { predefinedTag: [{ tagId: -123 }] },
-    smartTargetBuffFindSettings: {},
-    smartTargetBuffIds: [],
-    smartTargetSelectStrategy: {},
-    smartTargetTagQuery: {},
-    switchToBuffConfig: {
-      condition: {},
-      buffs: [],
-      buffSource: {},
-      targets: {},
-      asSkillCast: false,
-    },
-    switchToCenterBeforeCast: false,
-    tagDuringAttach: {},
     toggleBuffs: [
       {
         conditions: [
@@ -267,8 +226,6 @@ function passiveFixture(): Record<string, unknown> {
         buffs: [buffInstall('buff_toggle', false)],
       },
     ],
-    uiRangeHints: [],
-    useAIExclusiveFrame: false,
   };
 }
 

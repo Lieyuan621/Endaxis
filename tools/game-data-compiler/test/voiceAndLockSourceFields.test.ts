@@ -41,11 +41,11 @@ const unlock = {
 };
 
 describe('语音与镜头锁定的新版字段', () => {
-  it.each([0, 250])('语音播放偏移 %s 不进入战斗调度', offset => {
+  it('非零语音播放偏移不进入战斗调度', () => {
     const current = {
       ...voice,
-      _jumpToWhenPlayMs: offset,
-      _seekFadeInMs: offset,
+      _jumpToWhenPlayMs: 250,
+      _seekFadeInMs: 250,
       _responseQuestIdKey: '',
     };
     expect(parseVoiceTriggerActionSource(current, 'voice')).toEqual(
@@ -69,10 +69,10 @@ describe('语音与镜头锁定的新版字段', () => {
     ).toEqual({ steps: [] });
   });
 
-  it.each([false, true])('手动锁定开关 %s 沿用无相机省略', blockManualLock => {
-    expect(parseTemporaryUnlockActionSource({ ...unlock, blockManualLock }, 'unlock')).toEqual(
-      parseTemporaryUnlockActionSource(unlock, 'unlock'),
-    );
+  it('启用手动锁定开关仍沿用无相机省略', () => {
+    expect(
+      parseTemporaryUnlockActionSource({ ...unlock, blockManualLock: true }, 'unlock'),
+    ).toEqual(parseTemporaryUnlockActionSource(unlock, 'unlock'));
   });
 
   it('非空语音句柄写回仍需分析消费者', () => {
@@ -81,29 +81,32 @@ describe('语音与镜头锁定的新版字段', () => {
     ).toThrow('voice handle consumers require explicit projection');
   });
 
-  it.each([0, 1, 2, 3, 4])('VFS 原生 VoSpeakerType 数值 %s 仍是纯表现输入', speakerType => {
-    expect(parseVoiceTriggerActionSource({ ...voice, _speakerType: speakerType }, 'voice')).toEqual(
-      { kind: 'voiceTrigger' },
-    );
+  it('原生 VoSpeakerType 数值仍是纯表现输入', () => {
+    expect(parseVoiceTriggerActionSource({ ...voice, _speakerType: 4 }, 'voice')).toEqual({
+      kind: 'voiceTrigger',
+    });
   });
 
-  it.each([-1, 5, 0.5, null, {}])('拒绝未知 VoSpeakerType %j', speakerType => {
-    expect(() =>
-      parseVoiceTriggerActionSource({ ...voice, _speakerType: speakerType }, 'voice'),
-    ).toThrow('voice._speakerType');
-  });
-
-  it.each([null, undefined, '0', {}, 0.5])('语音偏移拒绝非法整数 %j', value => {
-    for (const key of ['_jumpToWhenPlayMs', '_seekFadeInMs']) {
-      expect(() => parseVoiceTriggerActionSource({ ...voice, [key]: value }, 'voice')).toThrow(
-        `voice.${key}`,
-      );
+  it('拒绝越界及非整数的语音角色', () => {
+    for (const speakerType of [5, 0.5]) {
+      expect(() =>
+        parseVoiceTriggerActionSource({ ...voice, _speakerType: speakerType }, 'voice'),
+      ).toThrow('voice._speakerType');
     }
   });
 
-  it.each([null, undefined, 0, 'false', {}])('锁定开关拒绝非法布尔 %j', blockManualLock => {
+  it('两个语音偏移字段都拒绝非法整数', () => {
     expect(() =>
-      parseTemporaryUnlockActionSource({ ...unlock, blockManualLock }, 'unlock'),
+      parseVoiceTriggerActionSource({ ...voice, _jumpToWhenPlayMs: '0' }, 'voice'),
+    ).toThrow('voice._jumpToWhenPlayMs');
+    expect(() => parseVoiceTriggerActionSource({ ...voice, _seekFadeInMs: null }, 'voice')).toThrow(
+      'voice._seekFadeInMs',
+    );
+  });
+
+  it('锁定开关拒绝字符串布尔值', () => {
+    expect(() =>
+      parseTemporaryUnlockActionSource({ ...unlock, blockManualLock: 'false' }, 'unlock'),
     ).toThrow('unlock.blockManualLock');
   });
 

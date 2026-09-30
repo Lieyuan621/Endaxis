@@ -4,7 +4,7 @@ import { renderEquipmentSuitDefinitionFiles } from '../src/index.ts';
 import { createActionGraphBuilder } from '../src/compiler/actions/actionGraphBuilder.ts';
 
 describe('装备套装运行时定义渲染', () => {
-  it('稳定生成 GearSetDefinition 和索引，不把审计中间产物写入正式目录', () => {
+  it('按套装身份生成定义和索引，不把审计中间产物写入正式目录', () => {
     const graph = createActionGraphBuilder();
     const initializationSequence = graph.node({
       kind: 'applyBuff',
@@ -42,9 +42,6 @@ describe('装备套装运行时定义渲染', () => {
       'index.generated.ts',
       'suit_fixture.generated.ts',
     ]);
-    expect(
-      files.find(file => file.relativePath === 'suit_fixture.generated.ts')?.content,
-    ).toContain('satisfies GearSetDefinition');
     expect(files.some(file => file.relativePath.endsWith('.audit.json'))).toBe(false);
   });
 

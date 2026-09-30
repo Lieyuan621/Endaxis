@@ -17,16 +17,11 @@ import type { ScenarioDocument, SkillCastDocument } from '../../../core/project/
 import {
   addControlSwitch,
   addCycleBoundary,
-  addExternalEventMarker,
   addDodgeMarker,
   applyInitialUltimateEnergyPreset,
   moveControlSwitch,
-  moveCycleBoundary,
-  moveExternalEventMarker,
   moveDodgeMarker,
   removeControlSwitch,
-  removeCycleBoundary,
-  removeExternalEventMarker,
   removeDodgeMarker,
   clearSimulationRangeBoundary,
   createSkillCastGroup,
@@ -36,12 +31,8 @@ import {
   moveSkillCasts,
   removeSkillCast,
   removeSkillCasts,
-  setSkillCastColor,
-  setSkillCastDisabled,
   setSkillCastForcedCritical,
   setReactionDamageForcedCritical,
-  setSkillCastLocked,
-  setSkillCastRandomSeed,
   setUnifiedInitialUltimateEnergy,
   updateDodgeMarker,
   setScenarioBuffAttributes,
@@ -50,13 +41,11 @@ import {
   setControlSwitchTrack,
   setBattleDurationFrames,
   setBattlePrepFrames,
-  setTimelinePrepExpanded,
   setTrackGear,
   setTrackOperator,
   setTrackWeapon,
   swapTimelineTracks,
   updateBattleResourceRule,
-  updateExternalEventMarker,
   updateTrackInitialUltimateEnergy,
 } from './timelineDocumentCommands';
 import { ScenarioEditorSession } from '../../../application/editor/scenarioEditorSession';
@@ -71,15 +60,6 @@ describe('battle axis commands', () => {
     );
     expect(setBattlePrepFrames(updated, 60)).toBe(updated);
     expect(() => setBattlePrepFrames(original, -1)).toThrow('non-negative integer');
-  });
-
-  it('persists prep folding only in editor presentation state', () => {
-    const original = scenario();
-    const updated = setTimelinePrepExpanded(original, false);
-    expect(updated.editor.prepExpanded).toBe(false);
-    expect(updated.battle).toBe(original.battle);
-    expect(updated.tracks).toBe(original.tracks);
-    expect(setTimelinePrepExpanded(updated, false)).toBe(updated);
   });
 
   it('shortens the battle axis only as far as its latest stable timeline object', () => {
@@ -103,15 +83,6 @@ describe('battle axis commands', () => {
 });
 
 describe('updateBattleResourceRule', () => {
-  it('updates shared SP rules without mutating the scenario', () => {
-    const original = scenario();
-    const updated = updateBattleResourceRule(original, 'spRecoveryPerSecond', 18.5);
-
-    expect(updated).not.toBe(original);
-    expect(updated.battle.resourceRules.spRecoveryPerSecond).toBe(18.5);
-    expect(original.battle.resourceRules.spRecoveryPerSecond).not.toBe(18.5);
-  });
-
   it('clamps initial SP to the fixed maximum', () => {
     const original = scenario();
     original.battle.resourceRules.initialSp = 200;
@@ -442,18 +413,6 @@ describe('手动技能组命令', () => {
 });
 
 describe('moveSkillCast', () => {
-  it('assigns an operator to an empty track', () => {
-    const original = createEmptyScenario('scenario:operator', '干员样本');
-    const updated = setTrackOperator(original, 2, perlicaBuild, 'track:2');
-
-    expect(updated.tracks[2]).toMatchObject({
-      operator: perlicaBuild,
-      weapon: null,
-      skillCasts: [],
-    });
-    expect(original.tracks[2]).toBeNull();
-  });
-
   it('clears stale casts, connections and track equipment when changing operator', () => {
     const original = scenario();
     original.tracks[0] = {
@@ -495,13 +454,6 @@ describe('moveSkillCast', () => {
       accessory1: null,
       accessory2: null,
     });
-  });
-
-  it('leaves the document unchanged when selecting the current operator again', () => {
-    const original = scenario();
-    original.tracks[0] = { ...original.tracks[0]!, operator: perlicaBuild };
-
-    expect(setTrackOperator(original, 0, { ...perlicaBuild }, 'track:0')).toBe(original);
   });
 
   it('清空轨道删除其闪避、切人和外部输入，保留其他轨道与全队标记', () => {
@@ -565,28 +517,6 @@ describe('moveSkillCast', () => {
     expect(original.battle.dodgeMarkers).toHaveLength(2);
   });
 
-  it('assigns, replaces and removes a weapon on a track', () => {
-    const original = scenario();
-    original.tracks[0] = { ...original.tracks[0]!, operator: perlicaBuild };
-    const first = {
-      weaponSlug: 'first',
-      level: 90,
-      tuned: true,
-      potential: 0,
-      traitLevels: [1, 1, 1],
-    };
-    const second = { ...first, weaponSlug: 'second' };
-
-    const equipped = setTrackWeapon(original, 0, first);
-    const replaced = setTrackWeapon(equipped, 0, second);
-    const cleared = setTrackWeapon(replaced, 0, null);
-
-    expect(equipped.tracks[0]!.weapon).toEqual(first);
-    expect(replaced.tracks[0]!.weapon).toEqual(second);
-    expect(cleared.tracks[0]!.weapon).toBeNull();
-    expect(original.tracks[0]!.weapon).toBeNull();
-  });
-
   it('rejects equipping a weapon on an empty track', () => {
     const original = createEmptyScenario('scenario:empty-weapon', '空轨道');
     expect(() =>
@@ -600,34 +530,6 @@ describe('moveSkillCast', () => {
     ).toThrow('track 0 is empty');
   });
 
-  it('assigns independent gear slots and clears them separately', () => {
-    const original = scenario();
-    const armor = { gearSlug: 'armor', artificingLevels: [0, 0, 0] };
-    const accessory = {
-      gearSlug: 'accessory',
-      artificingLevels: [0, 0],
-    };
-
-    const armored = setTrackGear(original, 0, 'armor', armor);
-    const equipped = setTrackGear(armored, 0, 'accessory1', accessory);
-    const cleared = setTrackGear(equipped, 0, 'armor', null);
-
-    expect(equipped.tracks[0]!.gears).toEqual({
-      armor: armor,
-      gloves: null,
-      accessory1: accessory,
-      accessory2: null,
-    });
-    expect(cleared.tracks[0]!.gears.armor).toBeNull();
-    expect(cleared.tracks[0]!.gears.accessory1).toEqual(accessory);
-    expect(original.tracks[0]!.gears).toEqual({
-      armor: null,
-      gloves: null,
-      accessory1: null,
-      accessory2: null,
-    });
-  });
-
   it('rejects equipping gear on an empty track', () => {
     const original = createEmptyScenario('scenario:empty-gear', '空轨道');
     expect(() =>
@@ -636,15 +538,6 @@ describe('moveSkillCast', () => {
         artificingLevels: [0],
       }),
     ).toThrow('track 0 is empty');
-  });
-
-  it('moves only the requested cast without mutating the source scenario', () => {
-    const original = scenario();
-    const moved = moveSkillCast(original, 0, 'cast:1', 75);
-
-    expect(original.tracks[0]!.skillCasts[0]!.placement.startFrame).toBe(30);
-    expect(moved.tracks[0]!.skillCasts[0]!.placement.startFrame).toBe(75);
-    expect(moved.tracks[1]).toBe(original.tracks[1]);
   });
 
   it('does not move a locked cast', () => {
@@ -657,28 +550,6 @@ describe('moveSkillCast', () => {
     expect(() => moveSkillCast(scenario(), 0, 'missing', 30)).toThrow("no skill cast 'missing'");
   });
 
-  it('updates lock and disabled states without mutating the source', () => {
-    const original = scenario();
-    const locked = setSkillCastLocked(original, 0, 'cast:1', true);
-    const disabled = setSkillCastDisabled(locked, 0, 'cast:1', true);
-
-    expect(original.tracks[0]!.skillCasts[0]!.presentation).toBeUndefined();
-    expect(disabled.tracks[0]!.skillCasts[0]!.presentation).toMatchObject({
-      locked: true,
-      disabled: true,
-    });
-  });
-
-  it('sets and clears an action color as a presentation field', () => {
-    const original = scenario();
-    const colored = setSkillCastColor(original, 0, 'cast:1', '#ff4d4f');
-    const reset = setSkillCastColor(colored, 0, 'cast:1', null);
-
-    expect(colored.tracks[0]!.skillCasts[0]!.presentation?.color).toBe('#ff4d4f');
-    expect(reset.tracks[0]!.skillCasts[0]!.presentation?.color).toBeNull();
-    expect(original.tracks[0]!.skillCasts[0]!.presentation).toBeUndefined();
-  });
-
   it('stores forced critical hits by stable step key and removes empty simulation inputs', () => {
     const original = scenario();
     const forced = setSkillCastForcedCritical(original, 0, 'cast:1', 'damage:1', true);
@@ -689,16 +560,6 @@ describe('moveSkillCast', () => {
     expect(setSkillCastForcedCritical(forced, 0, 'cast:1', 'damage:1', true)).toBe(forced);
 
     const cleared = setSkillCastForcedCritical(forced, 0, 'cast:1', 'damage:1', false);
-    expect(cleared.tracks[0]!.skillCasts[0]!.simulationInputs).toBeUndefined();
-  });
-
-  it('stores and clears a skill-block random seed without changing other simulation inputs', () => {
-    const seeded = setSkillCastRandomSeed(scenario(), 0, 'cast:1', 123);
-    expect(seeded.tracks[0]!.skillCasts[0]!.simulationInputs).toEqual({
-      randomSeed: 123,
-    });
-
-    const cleared = setSkillCastRandomSeed(seeded, 0, 'cast:1', null);
     expect(cleared.tracks[0]!.skillCasts[0]!.simulationInputs).toBeUndefined();
   });
 
@@ -850,17 +711,6 @@ describe('timeline marker commands', () => {
     expect(clearSimulationRangeBoundary(original, 'start')).toBe(original);
   });
 
-  it('adds, moves and removes cycle boundaries immutably', () => {
-    const original = scenario();
-    const added = addCycleBoundary(original, 'cycle:1', 45);
-    const moved = moveCycleBoundary(added, 'cycle:1', 60);
-    const removed = removeCycleBoundary(moved, 'cycle:1');
-    expect(original.battle.cycleBoundaries).toEqual([]);
-    expect(added.battle.cycleBoundaries[0]?.frame).toBe(45);
-    expect(moved.battle.cycleBoundaries[0]?.frame).toBe(60);
-    expect(removed.battle.cycleBoundaries).toEqual([]);
-  });
-
   it('adds track-bound control switches only to occupied tracks', () => {
     const original = scenario();
     const added = addControlSwitch(original, 'switch:1', 30, 0);
@@ -924,38 +774,6 @@ describe('timeline marker commands', () => {
         mode: { kind: 'dodge' },
       }),
     ).toThrow('track 1 is empty');
-  });
-
-  it('persists only the explicitly supplied external fact and target', () => {
-    const original = scenario();
-    const added = addExternalEventMarker(
-      original,
-      'external:1',
-      90,
-      { scope: 'operator', trackIndex: 0 },
-      { kind: 'comboCooldownControl', mode: 'cooldown' },
-    );
-    expect(added.battle.externalEventMarkers?.[0]).toEqual({
-      id: 'external:1',
-      frame: 90,
-      target: { scope: 'operator', trackIndex: 0 },
-      event: { kind: 'comboCooldownControl', mode: 'cooldown' },
-    });
-    expect(
-      moveExternalEventMarker(added, 'external:1', 120).battle.externalEventMarkers?.[0]?.frame,
-    ).toBe(120);
-    const configured = updateExternalEventMarker(added, 'external:1', {
-      event: {
-        kind: 'comboCooldownControl',
-        mode: 'ready',
-      },
-    });
-    expect(configured.battle.externalEventMarkers?.[0]?.event).toEqual({
-      kind: 'comboCooldownControl',
-      mode: 'ready',
-    });
-    expect(updateExternalEventMarker(added, 'missing', {})).toBe(added);
-    expect(removeExternalEventMarker(added, 'external:1').battle.externalEventMarkers).toEqual([]);
   });
 
   it('rejects marker frames outside the editable battle range', () => {

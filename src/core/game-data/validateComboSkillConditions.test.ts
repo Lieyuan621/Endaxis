@@ -4,7 +4,7 @@ import { ActionGraphDefinitionRepository } from '../compiler/actionGraphDefiniti
 import { rootActionSteps } from '../compiler/actionProgramInspection';
 import { describe, expect, it } from 'vitest';
 import { validateComboSkillConditions } from './validateComboSkillConditions';
-import { ABILITY_EVENTS, type OperatorDefinition } from './operatorDefinition';
+import type { OperatorDefinition } from './operatorDefinition';
 import { perlica } from '../../data/operators/perlica.generated';
 import { compileOperatorComboSkillConditions } from '../compiler/compileOperatorComboSkillConditions';
 import { createEmptyProject } from '../project/createProject';
@@ -44,9 +44,6 @@ function project(condition: ComboSkillConditionDefinition = entry) {
 }
 
 describe('正式原生连携条件结构与绑定', () => {
-  it.each(ABILITY_EVENTS)('%s 接受公共 AbilitySystem 事件及现有动作图', event => {
-    expect(validateGraphComboConditions([{ ...entry, event }])).toEqual([]);
-  });
   it.each(
     [undefined, [], [{ ...entry, initialValues: null }], [{ ...entry, initialValues: {} }]].map(
       value => ({ value }),

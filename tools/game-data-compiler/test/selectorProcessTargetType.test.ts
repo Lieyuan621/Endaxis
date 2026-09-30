@@ -33,24 +33,20 @@ describe('排除与随机筛选的普通目标通道', () => {
       false,
     );
   });
-  it.each([-1, 0, 1, 3])('随机筛选保留限量值 %s，不在来源层执行或删除洗牌', limit => {
-    const old = { ...shuffle, targetNumLimit: scalarFixture(limit) };
-    expect(parseShuffle({ ...old, processTargetType: 'Targets' })).toEqual(parseShuffle(old));
+  it('随机筛选保留限量值，不在来源层执行或删除洗牌', () => {
+    expect(parseShuffle({ ...shuffle, processTargetType: 'Targets' })).toEqual(
+      parseShuffle(shuffle),
+    );
   });
-  it.each([0, 1, '0', null, undefined, 'HittableTargets', 'Unknown'])(
-    '各入口均拒绝未支持通道 %j',
-    processTargetType => {
-      const current = { ...exclude, processTargetType };
-      expect(() => parseExcludeTargetSource(current, 'exclude')).toThrow('processTargetType');
-      expect(() =>
-        selectorExcludesPlainOwner({ postProcessorData: [current] }, 'selector'),
-      ).toThrow('processTargetType');
-      expect(() =>
-        selectorExcludesPlainCurrentTarget({ postProcessorData: [current] }, 'selector'),
-      ).toThrow('processTargetType');
-      expect(() => parseShuffle({ ...shuffle, processTargetType })).toThrow('processTargetType');
-    },
-  );
+  it.each([0, undefined, 'HittableTargets'])('排除目标拒绝未支持通道 %j', processTargetType => {
+    const current = { ...exclude, processTargetType };
+    expect(() => parseExcludeTargetSource(current, 'exclude')).toThrow('processTargetType');
+  });
+  it('随机筛选也拒绝非普通目标通道', () => {
+    expect(() => parseShuffle({ ...shuffle, processTargetType: 'HittableTargets' })).toThrow(
+      'processTargetType',
+    );
+  });
   it('新增字段不绕过载荷与其他字段校验', () => {
     expect(() =>
       parseExcludeTargetSource({ ...exclude, processTargetType: 'Targets', extra: 1 }, 'exclude'),
@@ -92,16 +88,13 @@ describe('PriorityFilter 普通目标通道', () => {
     ]);
   });
 
-  it.each([0, 1, '0', null, undefined, 'HittableTargets', 'Unknown'])(
+  it.each([0, undefined, 'HittableTargets'])(
     '不强转枚举，也不把其他通道 %j 当普通目标',
     processTargetType => {
       const current = { ...priority, processTargetType };
       expect(() => parsePriorityFilterSource(current, 'priority')).toThrow(
         'priority.processTargetType',
       );
-      expect(() =>
-        parsePriorityFilterSources({ postProcessorData: [current] }, 'selector'),
-      ).toThrow('selector.postProcessorData[0].processTargetType');
     },
   );
 

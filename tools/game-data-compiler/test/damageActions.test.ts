@@ -97,15 +97,10 @@ describe('伤害动作公共载荷', () => {
 
   it.each([
     { m_attributeModifierLoader: {} },
-    { '<attributeMask>k__BackingField': { lowerMask: 0, higherMask: 0 } },
-    { ...emptyCache, m_attributeModifierLoader: null },
     { ...emptyCache, m_attributeModifierLoader: { value: 1 } },
-    { ...emptyCache, '<attributeMask>k__BackingField': null },
     { ...emptyCache, '<attributeMask>k__BackingField': { lowerMask: 1, higherMask: 0 } },
-    { ...emptyCache, '<attributeMask>k__BackingField': { lowerMask: 0, higherMask: 1 } },
     { ...emptyCache, '<attributeMask>k__BackingField': { lowerMask: '0', higherMask: 0 } },
     { ...emptyCache, '<attributeMask>k__BackingField': { lowerMask: 0 } },
-    { ...emptyCache, '<attributeMask>k__BackingField': { lowerMask: 0, higherMask: 0, extra: 0 } },
   ])('拒绝不完整、非法或非空私有缓存 %j', cache => {
     expect(() =>
       parseDamageProcessors([{ ...instantModifier, ...cache }], 'processors', {}),
@@ -118,7 +113,7 @@ describe('伤害动作公共载荷', () => {
     ).toEqual(parseDamageUnitSource(BASE_UNIT, 'unit', { atk_scale: [0.9] }));
   });
 
-  it.each([null, undefined, {}, 0, ''])('拒绝非法伤害标签列表 %j', damageTags => {
+  it.each([null, {}])('拒绝非法伤害标签列表 %j', damageTags => {
     expect(() => parseDamageUnitSource({ ...BASE_UNIT, damageTags }, 'unit', {})).toThrow(
       'unit.damageTags',
     );

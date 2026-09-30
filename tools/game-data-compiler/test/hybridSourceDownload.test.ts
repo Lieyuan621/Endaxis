@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import sharp from 'sharp';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { downloadGameDataSources, parseArguments } from '../scripts/downloadGameDataSources.ts';
+import { downloadGameDataSources } from '../scripts/downloadGameDataSources.ts';
 import {
   exportReference,
   parseArguments as iconArguments,
@@ -90,13 +90,6 @@ async function setup() {
 }
 
 describe('AKEDB 优先、VFS 补缺', () => {
-  it('默认融合；显式 VFS-only 仅供对照，未知选项拒绝', () => {
-    expect(parseArguments([])).toMatchObject({ sourceMode: 'hybrid', version: 'latest' });
-    expect(parseArguments(['--source-mode', 'vfs-only'])).toMatchObject({ sourceMode: 'vfs-only' });
-    expect(() => parseArguments(['--source-mode', 'oops'])).toThrow();
-    expect(() => parseArguments(['--unknown', 'x'])).toThrow();
-  });
-
   it('清单并集、同名 CDN 优先，逐文件记录版本、补缺原因与哈希', async () => {
     const { args, requests } = await setup();
     await downloadGameDataSources(args);

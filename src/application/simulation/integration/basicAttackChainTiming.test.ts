@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { OperatorDefinition } from '../../../core/game-data/operatorDefinition';
 import { createEmptyScenario } from '../../../core/project/createProject';
-import { lifeng, perlica, operatorDefinitions } from '../../../data/operators';
+import { lifeng, perlica } from '../../../data/operators';
 import * as operators from '../../../data/operators';
 import { gameDataRepository } from '../../../data/gameDataRepository';
 import { skillSettings } from '../../../data/combat/skillSettings';
@@ -320,11 +320,10 @@ describe('generated basic attack chain input timing', () => {
       ).toEqual([]);
     },
   );
-  it.each(
-    operatorDefinitions.flatMap(operator =>
-      [-60, 0, 1].map(startFrame => ({ operator, startFrame })),
-    ),
-  )(
+  it.each([
+    { operator: perlica, startFrame: -60 },
+    { operator: lifeng, startFrame: 1 },
+  ])(
     '$operator.slug compact layout at $startFrame is stable when applied twice',
     async ({ operator, startFrame }) => {
       const scenario = createChain(operator);

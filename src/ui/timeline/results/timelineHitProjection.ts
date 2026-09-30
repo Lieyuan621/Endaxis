@@ -41,7 +41,8 @@ export interface TimelineHitMarker {
 export interface TimelineHitMarkerView {
   /** 由明确的伤害事件响应产生的追加命中；执行宿主类型不参与判定。 */
   readonly triggered?: boolean;
-  readonly triggeredStackIndex?: number;
+  /** 同帧命中的纵向位置；普通命中从 0 开始，追加触发排在它们下方。 */
+  readonly stackIndex?: number;
   readonly executionFrame?: number;
   readonly stepKey: string;
   readonly hitId: string;

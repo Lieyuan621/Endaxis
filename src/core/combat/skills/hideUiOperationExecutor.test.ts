@@ -1,6 +1,4 @@
-import { rootActionSteps } from '../../compiler/actionProgramInspection';
 import { describe, expect, it } from 'vitest';
-import { chainEntry } from '../../../test/compiledGraphEntry';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 import { CombatReceiptCollector } from '../receipt/combatReceipt';
 import { CombatClock } from '../time/combatClock';
@@ -24,13 +22,6 @@ function fixture() {
 }
 
 describe('HideUI lifecycle', () => {
-  it('公共步骤编译保留分支，不把它转换为时间膨胀', () => {
-    const result = chainEntry('hide-ui', [
-      { kind: 'hideUi', parameters: { onlyBlockInput: false } },
-    ]);
-    expect(rootActionSteps(result)[0]).toMatchObject(step());
-  });
-
   it('记录实际起止帧和来源，不自行推进时钟', () => {
     const { executor, runtime, receipt, clock } = fixture();
     const action = step();

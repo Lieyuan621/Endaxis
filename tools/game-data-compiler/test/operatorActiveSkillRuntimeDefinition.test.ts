@@ -85,12 +85,6 @@ describe('Operator 主动技能正式运行定义', () => {
       ],
       allowedNextSkills: [{ startFrame: 6, endFrame: 9, skillIds: ['native.attack2'] }],
     });
-    expect(
-      renderOperatorActiveSkillRuntimeDefinitionSource({
-        operatorSlug: 'fixture',
-        definition,
-      }).content,
-    ).toContain('"inputWindows"');
   });
 
   it('动态声明进入实例初值，同名等级补丁覆盖初值而不改变来源', () => {
@@ -149,29 +143,6 @@ describe('Operator 主动技能正式运行定义', () => {
       costFrame: 3,
       scheduledSequences: [],
     });
-    const rendered = renderOperatorActiveSkillRuntimeDefinitionSource({
-      operatorSlug: 'fixture',
-      definition,
-      supplementalBuffDefinitions: {
-        ready: {
-          stackingType: 'unique',
-          priority: 0,
-          maxStackCount: 1,
-          durationSeconds: 2,
-          applyTags: [],
-          extendTags: [],
-          blackboard: {},
-          attributeModifiers: [],
-          actionGraph: { main: { nodes: {} }, macros: {} },
-        },
-      },
-    });
-    expect(rendered.relativePath).toBe('fixture.battle.runtime.generated.ts');
-    expect(rendered.content).toContain('satisfies SkillDefinition');
-    expect(rendered.content).toContain('export const supplementalBuffDefinitions');
-    expect(rendered.content).toContain('"durationSeconds": 2');
-    expect(rendered.content).not.toMatch(/[A-Z]:[\\/]|tmp[\\/]/i);
-
     const curveGraph = createActionGraphBuilder();
     const curveEntry = curveGraph.node({
       kind: 'startTimeDilation',

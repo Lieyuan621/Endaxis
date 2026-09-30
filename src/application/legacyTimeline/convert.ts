@@ -232,6 +232,7 @@ export function convertLegacyTimeline(
   if (!result.ok) fatalIssues.push(...result.errors.map(message => ({ path: '', message })));
   else issues.push(...result.warnings.map(message => ({ path: '', message })));
   if (project !== null) {
+    for (const scenario of project.scenarios) scenario.battle.automaticControlSwitches = true;
     resourceAdjustments = normalizeInitialUltimateEnergy(project, repository);
     const checked = parseProjectDocument(project, { gameDataRepository: repository });
     if (!checked.ok) fatalIssues.push({ path: '', message: JSON.stringify(checked) });
@@ -259,7 +260,6 @@ export function convertLegacyTimeline(
     timingAdjustments: [],
     skillFormAdjustments: [],
     controlSwitchAdjustments: [],
-    inferredControlSwitches: [],
     dodgeMarkerAdjustments: [],
     simulationStats: {
       scenarioCount: 0,
@@ -319,7 +319,6 @@ export function convertLegacyTimeline(
       timingAdjustments: retiming.timingAdjustments,
       skillFormAdjustments: retiming.skillFormAdjustments,
       controlSwitchAdjustments: retiming.controlSwitchAdjustments,
-      inferredControlSwitches: retiming.inferredControlSwitches,
       dodgeMarkerAdjustments: retiming.dodgeMarkerAdjustments,
       retimingSimulationStats: retiming.simulationStats,
       sourceActionCounts: prepared.source.scenarioList.map((s: any) => ({

@@ -93,6 +93,8 @@ it.each([true, false])('守墓人之赠重击增伤要求受益者为主控（�
   const scales: number[] = [];
   for (const potential of [0, 1]) {
     const scenario = createEmptyScenario('last-rite-potential-heavy', '潜能重击增伤主控条件');
+    // 固定主控身份以对照原生前后台分支，不能由普攻自动切人。
+    scenario.battle.automaticControlSwitches = false;
     scenario.tracks[0] = track('arcane', []);
     const owner = track('last-rite', [
       ['battleSkill', 'battleSkill', 1],
@@ -235,6 +237,8 @@ it('别礼原生基础被动拒绝通用回能，保留专属回能与不足能�
 
 it.each([true, false])('赛希晶体仅被主控重击消费且正确保留来源（主控=%s）', async controlled => {
   const scenario = createEmptyScenario('xaihi-enhance-source', '晶体增幅来源');
+  // 固定主控身份以对照原生前后台分支，不能由普攻自动切人。
+  scenario.battle.automaticControlSwitches = false;
   const healer = track('xaihi', [['battleSkill', 'battleSkill', 1]]);
   healer.operator!.potential = 1;
   healer.gears = {
@@ -577,6 +581,11 @@ it.each([0, 1, 4])('别礼连携按实际消费的%i层寒冷拆分附加伤害�
   }
   expect(hits[1]!.frame).toBe(hits[2]!.frame);
   expect(hits[0]!.frame).toBeLessThan(hits[1]!.frame);
+  expect(hits[1]!.skillMultiplierCalculation?.rightCalculation).toMatchObject({
+    sourceKind: 'buffTagStackCount',
+    rightKey: 'Skill/Character/Common/SpellInflict/CrystInflict',
+    result: layers,
+  });
 });
 
 it.each([true, false])('潮涌只由持有者输出的二层附着触发（本人=%s）', async ownInfliction => {
@@ -724,6 +733,8 @@ it('艾尔黛拉连携半额溅射排除主目标，不重复命中唯一木桩'
 
 it.each([true, false])('诀集束攻击仅由主控重击触发（主控=%s）', async controlled => {
   const scenario = createEmptyScenario('arcane-cluster-controller', '集束攻击来源');
+  // 固定主控身份以对照原生前后台分支，不能由普攻自动切人。
+  scenario.battle.automaticControlSwitches = false;
   scenario.tracks[0] = track('arcane', [['ultimate', 'ultimate', 1]]);
   scenario.tracks[1] = track('last-rite', [['basicAttack', 'basicAttack4', 100]]);
   scenario.battle.controlSwitches = [
@@ -1019,13 +1030,15 @@ function track(slug: string, casts: readonly (readonly [string, string, number])
   };
 }
 
-it.each([
-  ['basicAttack1', 'basicAttack2', 20],
-  ['basicAttack2', 'basicAttack3', 29],
-  ['basicAttack3', 'basicAttack4', 36],
-] as const)('别礼%s接%s的原生窗口%i帧只告警、不拒绝输入', async (current, next, boundary) => {
+// 用一组真实资源验证接续窗口接入；其他段数不重复验证相同调度规则。
+it('别礼A1接A2在窗口边界前告警但仍执行，边界后放行', async () => {
+  const current = 'basicAttack1';
+  const next = 'basicAttack2';
+  const boundary = 20;
   for (const offset of [boundary, boundary + 1]) {
     const scenario = createEmptyScenario('last-rite-input-window', '非主控普攻接续边界');
+    // 固定主控身份以对照原生前后台分支，不能由普攻自动切人。
+    scenario.battle.automaticControlSwitches = false;
     scenario.tracks[0] = track('arcane', []);
     scenario.tracks[1] = track('last-rite', [
       ['basicAttack', current, 10],
@@ -1049,39 +1062,6 @@ it.each([
           e.event === 'SkillStarted' &&
           e.frame === 10 + offset &&
           e.data?.castId === `last-rite:${next}`,
-      ),
-    ).toBe(true);
-  }
-});
-
-it('records the input-phase local frame at an exact allowed-next boundary', async () => {
-  // 记录当前固定步长调度约定，不把它宣称为已闭环的原生渲染帧顺序。
-  for (const offset of [22, 23]) {
-    const scenario = createEmptyScenario('a3-boundary', '接续边界');
-    scenario.tracks[0] = track('arcane', [
-      ['basicAttack', 'basicAttack3', 10],
-      ['basicAttack', 'basicAttack4', 10 + offset],
-    ]);
-    const result = await new ScenarioSimulationService({
-      index: gameDataRepository,
-      spellInflictionSettings: skillSettings,
-      resources,
-    }).simulate(scenario, 40);
-    const blocked = result.receiptEntries.filter(
-      entry =>
-        entry.event === 'SkillInputCannotInterruptCurrentSkill' &&
-        entry.data?.castId === 'arcane:basicAttack4',
-    );
-    if (offset === 22) {
-      expect(blocked).toHaveLength(1);
-      expect(blocked[0]?.data?.currentSkillTimelineFrame).toBe(21);
-    } else expect(blocked).toHaveLength(0);
-    expect(
-      result.receiptEntries.some(
-        entry =>
-          entry.event === 'SkillStarted' &&
-          entry.data?.castId === 'arcane:basicAttack4' &&
-          entry.frame === 10 + offset,
       ),
     ).toBe(true);
   }

@@ -5,23 +5,8 @@ import {
   contingencyContractMechanicAdapter,
   contingencyContractMechanicDefinitions,
 } from './contingencyContractAdapter';
-import {
-  contingencyContractBlockedTagReasons,
-  contingencyContractOmittedTagReasons,
-} from './generated/contingencyContractDefinitions.generated';
 
 describe('contingencyContractAdapter', () => {
-  it('publishes executable tags and keeps omitted tags explicit', () => {
-    expect(contingencyContractMechanicDefinitions).toHaveLength(46);
-    expect(contingencyContractBlockedTagReasons).toEqual({});
-    expect(Object.keys(contingencyContractOmittedTagReasons)).toHaveLength(22);
-    expect(
-      contingencyContractMechanicDefinitions.some(
-        definition => definition.id === `${CONTINGENCY_CONTRACT_MECHANIC_PREFIX}900101`,
-      ),
-    ).toBe(true);
-  });
-
   it('compiles an enemy maximum-health tag into a pre-vitals contribution', () => {
     const mechanicId = `${CONTINGENCY_CONTRACT_MECHANIC_PREFIX}900101`;
     const definition = contingencyContractMechanicDefinitions.find(

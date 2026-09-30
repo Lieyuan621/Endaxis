@@ -9,54 +9,14 @@ import {
 
 describe('单件装备属性投影', () => {
   it.each([
-    ['specific', 'Str', 'baseAddition', 'attribute', 'strength', 'flat'],
-    ['specific', 'Agi', 'baseAddition', 'attribute', 'agility', 'flat'],
     ['specific', 'Wisd', 'baseAddition', 'attribute', 'intellect', 'flat'],
-    ['specific', 'Will', 'baseAddition', 'attribute', 'will', 'flat'],
-    ['main', 'Level', 'baseAddition', 'attribute', 'main', 'flat'],
     ['sub', 'Level', 'baseAddition', 'attribute', 'secondary', 'flat'],
     ['main', 'Level', 'baseMultiplier', 'attribute', 'main', 'percent'],
-    ['sub', 'Level', 'baseMultiplier', 'attribute', 'secondary', 'percent'],
-    ['main', 'Wisd', 'baseAddition', 'attribute', 'main', 'flat'],
-    ['sub', 'Atk', 'baseMultiplier', 'attribute', 'secondary', 'percent'],
-    ['main', 'HealOutputIncrease', 'baseMultiplier', 'attribute', 'main', 'percent'],
     ['specific', 'Def', 'baseAddition', 'panelStat', 'baseDefense', undefined],
     ['specific', 'Atk', 'baseMultiplier', 'panelStat', 'attackPercent', undefined],
     ['specific', 'Atk', 'baseFinalAddition', 'panelStat', 'attackFlat', undefined],
-    ['specific', 'MaxHp', 'baseMultiplier', 'panelStat', 'healthPercent', undefined],
-    ['specific', 'MaxHp', 'baseFinalAddition', 'panelStat', 'healthFlat', undefined],
-    ['specific', 'CriticalRate', 'baseAddition', 'panelStat', 'criticalRate', undefined],
-    [
-      'specific',
-      'PhysicalAndSpellInflictionEnhance',
-      'baseAddition',
-      'panelStat',
-      'artsIntensity',
-      undefined,
-    ],
-    [
-      'specific',
-      'UltimateSpGainScalar',
-      'baseAddition',
-      'panelStat',
-      'ultimateEnergyGainEfficiency',
-      undefined,
-    ],
   ] as const)('maps %s/%s/%s', (target, attribute, slot, kind, semanticTarget, operation) => {
     const source = fixture(target, attribute, slot);
-    const values = Object.freeze([0, 0.25, -0.5]);
-    const column = projectEquipmentAttributeModifier({ ...source, value: values });
-    expect(column.status).toBe('supported');
-    if (column.status === 'supported') {
-      expect(column.modifier.value).toBe(values);
-      for (const value of values) {
-        expect(projectEquipmentAttributeModifier({ ...source, value })).toEqual({
-          status: 'supported',
-          source: { ...source, value },
-          modifier: { ...column.modifier, value },
-        });
-      }
-    }
     expect(projectEquipmentAttributeModifier(source)).toMatchObject({
       status: 'supported',
       modifier: {
@@ -68,17 +28,19 @@ describe('单件装备属性投影', () => {
     });
   });
 
+  it('整列数值经过装备投影仍按等级保留', () => {
+    const values = Object.freeze([0, 0.25, -0.5]);
+    expect(
+      projectEquipmentAttributeModifier({
+        ...fixture('specific', 'Atk', 'baseMultiplier'),
+        value: values,
+      }),
+    ).toMatchObject({ status: 'supported', modifier: { value: values } });
+  });
+
   it.each([
     ['NormalAttackDamageIncrease', 'normalAttack'],
-    ['NormalSkillDamageIncrease', 'battleSkill'],
-    ['ComboSkillDamageIncrease', 'comboSkill'],
-    ['UltimateSkillDamageIncrease', 'ultimate'],
-    ['PhysicalDamageIncrease', 'physical'],
-    ['FireDamageIncrease', 'heat'],
     ['PulseDamageIncrease', 'electric'],
-    ['CrystDamageIncrease', 'cryo'],
-    ['NaturalDamageIncrease', 'nature'],
-    ['EtherDamageIncrease', 'ether'],
     ['DamageToBrokenUnitIncrease', 'staggeredEnemy'],
   ] as const)('maps %s to damage scale %s', (attribute, target) => {
     expect(

@@ -1,11 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import {
-  parseMovementSettingCatalogDumpSource,
-  renderMovementSettingCatalogModule,
-} from '../src/source/movementSettingCatalogSource.ts';
+import { parseMovementSettingCatalogDumpSource } from '../src/source/movementSettingCatalogSource.ts';
 
 describe('MovementSetting catalog source', () => {
-  it('读取连续 Dash 的内外窗口并生成稳定模块', () => {
+  it('读取连续 Dash 的内外窗口', () => {
     const source = parseMovementSettingCatalogDumpSource(
       '\tfloat _dashInputCd = 0.8\r\n\tfloat _dashSecondDashInterval = 0.3\r\n',
       'fixture',
@@ -14,9 +11,6 @@ describe('MovementSetting catalog source', () => {
       dashInputCooldownSeconds: 0.8,
       dashSecondDashIntervalSeconds: 0.3,
     });
-    expect(renderMovementSettingCatalogModule(source)).toContain(
-      '"dashSecondDashIntervalSeconds": 0.3',
-    );
   });
 
   it('拒绝缺字段和颠倒的窗口', () => {

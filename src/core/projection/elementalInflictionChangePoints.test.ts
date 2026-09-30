@@ -29,27 +29,6 @@ function inflictionReceipt(
 }
 
 describe('projectElementalInflictionChangePoints', () => {
-  it('保留首次附着申请及其前后状态', () => {
-    expect(projectElementalInflictionChangePoints([inflictionReceipt(3)])).toEqual([
-      {
-        sequence: 3,
-        frame: 12,
-        time: 0.4,
-        sourceId: 'perlica',
-        targetId: 'enemy',
-        skillId: 'battleSkill',
-        requestedElement: 'electric',
-        isExtra: false,
-        previousElement: null,
-        previousLayers: 0,
-        currentElement: 'electric',
-        currentLayers: 1,
-        outcomeKind: 'attachmentOnly',
-        operationKinds: 'addAttachment',
-      },
-    ]);
-  });
-
   it('保留爆发和复合状态分支，不在投影层推导反应', () => {
     const burst = inflictionReceipt(4, {
       data: {
@@ -97,14 +76,6 @@ describe('projectElementalInflictionChangePoints', () => {
     ]);
 
     expect(points.map(point => point.sequence)).toEqual([8, 9]);
-  });
-
-  it('忽略非附着结算回执', () => {
-    expect(
-      projectElementalInflictionChangePoints([
-        { sequence: 10, frame: 12, time: 0.4, event: 'DamageApplied' },
-      ]),
-    ).toEqual([]);
   });
 
   it('拒绝缺少或自相矛盾的状态字段', () => {

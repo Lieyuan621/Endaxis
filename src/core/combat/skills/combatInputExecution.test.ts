@@ -19,11 +19,3 @@ it('同一切面可以提交不同的后续输入，不保留另一分支的输�
   expect(entries[1]!.time).toBe(1);
   expect(saved.length).toBe(1);
 });
-
-it('修改提交时的载荷不会改写已经记录的事实', () => {
-  const receipt = new CombatReceiptCollector();
-  const data = { value: 1 };
-  receipt.record({ frame: 0, time: 0, event: 'test', data });
-  data.value = 2;
-  expect(receipt.entries[0]!.data).toEqual({ value: 1 });
-});

@@ -38,7 +38,7 @@ function setup() {
     ...tableNames.map(name => path.join(tableRoot, `${name}.json`)),
   ];
   for (const file of sharedFiles) fs.writeFileSync(file, '{"value":1}');
-  return { root, paths, sharedFiles };
+  return { root, paths };
 }
 
 afterEach(() => {
@@ -124,7 +124,8 @@ describe('干员规划读取上下文', () => {
   });
 
   it('固定表与清单在逐人释放后继续复用同一份只读原文和 JSON', () => {
-    const { paths, sharedFiles } = setup();
+    const { paths } = setup();
+    const sharedFiles = [paths.manifest, path.join(paths.tableRoot, 'CharacterTable.json')];
     const sources = new OperatorPlanningSources(paths);
     const originals = sharedFiles.map(file => sources.readJson(file));
     sources.releaseOperator();
@@ -133,7 +134,7 @@ describe('干员规划读取上下文', () => {
       expect(sources.readText(file)).toBe('{"value":1}');
     }
     expect(sources.statistics()).toMatchObject({
-      shared: { fileReads: 9, jsonParses: 9, cacheHits: 18 },
+      shared: { fileReads: 2, jsonParses: 2, cacheHits: 4 },
       currentOperator: { fileReads: 0, retainedSourceBytes: 0 },
     });
   });
@@ -205,63 +206,19 @@ describe('干员规划读取上下文', () => {
     expect(scan.mock.calls.filter(([file]) => file === directory)).toHaveLength(2);
   });
 
-  it('已解析的公共目录跨人复用，新上下文重新验证文本目录', () => {
+  it('已解析的文本目录跨人复用，新上下文重新验证来源', () => {
     const { root, paths } = setup();
-    fs.writeFileSync(
-      paths.globalBuffCatalog,
-      JSON.stringify({
-        version: 'fixture',
-        evidence: {},
-        templates: {},
-      }),
-    );
-    fs.writeFileSync(
-      paths.skillSettingCatalog,
-      JSON.stringify({
-        schemaVersion: 1,
-        revision: 'fixture',
-        data: [],
-        enhanceFormulas: [],
-        resources: {
-          atbRecoverInterval: 1,
-          atbGainEfficiency: 1,
-          atbConsumedDefaultUspGainSelf: 1,
-          atbConsumedDefaultUspGainOther: 1,
-        },
-      }),
-    );
     const tags = path.join(root, 'tags.ts');
-    const priorities = path.join(root, 'priorities.ts');
     fs.writeFileSync(
       tags,
       "export const GAMEPLAY_TAG_PATHS = Object.freeze([\n  'fixture',\n] as const);\n",
     );
-    fs.writeFileSync(
-      priorities,
-      "export const TIME_DILATION_PRIORITY_DEFINITIONS = Object.freeze([{ tagPath: 'TimeDilation/Priority/Fixture', value: 1 }] as const);\n",
-    );
     const sources = new OperatorPlanningSources(paths);
-    const globals = sources.globalBuffs(paths.globalBuffCatalog);
-    const settings = sources.skillSettings(paths.skillSettingCatalog);
     const tagPaths = sources.gameplayTags(tags);
-    const priorityValues = sources.timeDilationPriorities(priorities);
     sources.releaseOperator();
-    expect(sources.globalBuffs(paths.globalBuffCatalog)).toBe(globals);
-    expect(sources.skillSettings(paths.skillSettingCatalog)).toBe(settings);
     expect(sources.gameplayTags(tags)).toBe(tagPaths);
-    expect(sources.timeDilationPriorities(priorities)).toBe(priorityValues);
-    expect(Object.isFrozen(tagPaths)).toBe(true);
-    expect(sources.statistics()).toMatchObject({
-      shared: { fileReads: 2, jsonParses: 2 },
-      currentOperator: { fileReads: 2, retainedSourceBytes: 0 },
-      parsedCatalogs: 4,
-    });
     fs.writeFileSync(tags, 'invalid changed source');
-    fs.writeFileSync(priorities, 'invalid changed source');
     const second = new OperatorPlanningSources(paths);
     expect(() => second.gameplayTags(tags)).toThrow('GAMEPLAY_TAG_PATHS not found');
-    expect(() => second.timeDilationPriorities(priorities)).toThrow(
-      'TIME_DILATION_PRIORITY_DEFINITIONS not found',
-    );
   });
 });

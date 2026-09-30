@@ -1122,7 +1122,6 @@ async function openProjectContent(content: string): Promise<boolean> {
           timingAdjustments: [],
           skillFormAdjustments: [],
           controlSwitchAdjustments: [],
-          inferredControlSwitches: [],
         },
         true,
       );
@@ -1418,6 +1417,30 @@ const viewModel = computed(() => {
   void operatorDefinitionRevision.value;
   return projectTimelineEditor(scenario.value, editorGameDataRepository);
 });
+const projectedControlSwitches = computed(() => {
+  if (scenario.value.battle.automaticControlSwitches === false) return [];
+  const tracksById = new Map(
+    scenario.value.tracks.flatMap((track, index) =>
+      track === null ? [] : [[track.id, index] as const],
+    ),
+  );
+  return publishedReceiptEntries.value.flatMap(entry => {
+    if (entry.event !== 'AutomaticControlSwitched' || entry.sourceId === undefined) return [];
+    const trackIndex = tracksById.get(entry.sourceId);
+    if (trackIndex === undefined) return [];
+    return [{ id: `automatic-control:${entry.sequence}`, frame: entry.frame, trackIndex }];
+  });
+});
+const skillCastDefinitionDurations = computed(
+  () =>
+    new Map(
+      viewModel.value.tracks.flatMap(track =>
+        track.skillCasts.map(
+          cast => [cast.id, skillPlacementDisplayFrames(cast.durationFrames)] as const,
+        ),
+      ),
+    ),
+);
 const exportShareTracks = computed<readonly TimelineShareTrack[]>(() =>
   viewModel.value.tracks
     .filter(track => track.operatorInstanceId !== null)
@@ -1788,6 +1811,7 @@ const simulationService = new AdaptiveTimelineSimulationService(
     currentScenario => captureScenarioSimulationGameData(currentScenario, editorGameDataRepository),
   ),
   () => createEditorSimulationService(editorGameDataRepository),
+  INTERACTIVE_SIMULATION_BUDGET_MS,
 );
 onScopeDispose(() => simulationService.dispose());
 const skillPlacementTransaction = new SkillPlacementTransaction(
@@ -2348,17 +2372,6 @@ const skillCastActualDurationFrames = computed(
 const skillCastPlacementActualFrames = computed(
   () => new Map([...skillCastInputFrames.value, ...skillCastActualStartFrames.value]),
 );
-const skillCastDefinitionDurations = computed(
-  () =>
-    new Map(
-      viewModel.value.tracks.flatMap(track =>
-        track.skillCasts.map(
-          cast => [cast.id, skillPlacementDisplayFrames(cast.durationFrames)] as const,
-        ),
-      ),
-    ),
-);
-
 function resolveDisplayedSkillStarts(document: ScenarioDocument): ReadonlyMap<string, number> {
   return new Map(
     document.tracks.flatMap(track => [
@@ -2993,13 +3006,23 @@ const operatorPassiveUiTimelineSegments = computed(() => {
       );
 });
 
-const operatorControlTimeline = computed(() =>
-  resolveControlTimeline(
+const operatorControlTimeline = computed(() => {
+  const timeline = resolveControlTimeline(
     scenario.value.tracks,
     scenario.value.battle.controlSwitches,
     -scenario.value.battle.prepFrames,
-  ),
-);
+  );
+  if (projectedControlSwitches.value.length === 0) return timeline;
+  const automatic = projectedControlSwitches.value.map(marker => ({
+    startFrame: marker.frame,
+    operatorId: scenario.value.tracks[marker.trackIndex]?.id ?? null,
+  }));
+  return {
+    segments: [...timeline.segments, ...automatic].sort(
+      (left, right) => left.startFrame - right.startFrame,
+    ),
+  };
+});
 
 /** 旧版底部摘要固定取最后一次敌人受伤时刻，而不是跟随隐藏的编辑光标。 */
 const collapsedMonitorSectionCount = ref(0);
@@ -3416,7 +3439,7 @@ function castHitMarkers(trackIndex: TrackIndex, castId: string): TimelineHitMark
       executionFrame: hit.frame,
       leftPx: timelineFramePx(hit.frame) - timelineFramePx(publishedStartFrame),
       triggered: hit.triggered,
-      triggeredStackIndex: hit.triggeredStackIndex,
+      stackIndex: hit.stackIndex,
       linkBuffed: hit.linkBuffed,
       forcedCritical: cast.simulationInputs?.criticalOverrides?.[hit.stepKey] === true,
       title: hitMarkerTitle(hit.label),
@@ -5002,7 +5025,8 @@ function beginMarkerMove(
   }
   const surface = timelineSurface.value;
   if (surface === null) return;
-  const lease = interactionSession.tryStart('marker-move', () => stopMarkerMove?.())!;
+  const lease = interactionSession.tryStart('marker-move', () => stopMarkerMove?.());
+  if (lease === null) return;
   const grabOffsetPx =
     event.clientX -
     surface.getBoundingClientRect().left -
@@ -6170,6 +6194,16 @@ function setScenarioRandomMode(mode: 'expected' | 'sampled'): void {
   }));
 }
 
+function toggleAutomaticControlSwitches(): void {
+  commitScenario('toggleAutomaticControlSwitches', current => ({
+    ...current,
+    battle: {
+      ...current.battle,
+      automaticControlSwitches: current.battle.automaticControlSwitches === false,
+    },
+  }));
+}
+
 function setGlobalRandomSeed(globalSeed: number): void {
   commitScenario('setGlobalRandomSeed', current => ({
     ...current,
@@ -6601,6 +6635,7 @@ function setMobileGuideFrame(frame: number | null): void {
         :locale="locale"
         :appearance="appearance"
         :random-mode="scenario.battle.random?.mode ?? 'expected'"
+        :automatic-control-switches="scenario.battle.automaticControlSwitches !== false"
         :global-random-seed="scenario.battle.random?.globalSeed ?? 0"
         :labels="{
           rename: t('timeline.scenario.renameTooltip'),
@@ -6628,6 +6663,8 @@ function setMobileGuideFrame(frame: number | null): void {
           viewOperatorsEmpty: t('timeline.header.hideEffectsEmpty'),
           shortcuts: t('timeline.header.shortcutsLabel'),
           preferences: t('timeline.header.sectionPrefs'),
+          scenarioSettings: t('timeline.header.sectionScenarioSettings'),
+          automaticControlSwitches: t('timeline.header.automaticControlSwitches'),
           keycapMode: t('display.keycapMode'),
           keyboardKeycaps: t('display.keyboardKeycaps'),
           gamepadKeycaps: t('display.gamepadKeycaps'),
@@ -6657,6 +6694,7 @@ function setMobileGuideFrame(frame: number | null): void {
         @set-appearance="setAppearance"
         @set-keycap-mode="keycapMode = $event"
         @set-random-mode="setScenarioRandomMode"
+        @toggle-automatic-control-switches="toggleAutomaticControlSwitches"
         @set-global-random-seed="setGlobalRandomSeed"
         @roll-global-random-seed="rollGlobalRandomSeed"
         @clear-selection="clearTimelineSelection"
@@ -7329,6 +7367,29 @@ function setMobileGuideFrame(frame: number | null): void {
                       )
                     }}
                   </span>
+                  <i class="track-switch-marker__pointer"></i>
+                </div>
+                <div
+                  v-if="
+                    timelineViewLayers.switchMarkers && isOperatorEffectsVisible(track.trackIndex)
+                  "
+                  v-for="marker in projectedControlSwitches.filter(
+                    item => item.trackIndex === track.trackIndex,
+                  )"
+                  :key="marker.id"
+                  class="timeline-marker track-switch-marker track-switch-marker--automatic"
+                  :style="{ left: `${timelineFramePx(marker.frame)}px` }"
+                  :title="t('timeline.header.automaticControlSwitchesHelp')"
+                  :aria-label="t('timeline.markerLabels.automaticControlSwitch')"
+                >
+                  <OperatorAvatar
+                    v-if="track.operatorSlug"
+                    class="track-switch-marker__avatar"
+                    :src="getOperatorAvatarPath(track.operatorAssetSlug ?? track.operatorSlug)"
+                  />
+                  <span class="track-switch-marker__time">{{
+                    formatGuideFrame(marker.frame)
+                  }}</span>
                   <i class="track-switch-marker__pointer"></i>
                 </div>
                 <div
@@ -8182,6 +8243,23 @@ function setMobileGuideFrame(frame: number | null): void {
         return te(labelKey) ? t(labelKey) : undefined;
       },
       skillMultiplierInternalValue: t('hitDetail.multiplierInternalValue'),
+      buffStackSourceLabel: (kind: 'id' | 'tag', key: string) => {
+        const id =
+          kind === 'id'
+            ? key
+            : elementalAttachments.buffs.find(
+                buff => buff.role?.kind === 'elementalAttachment' && buff.applyTags?.includes(key),
+              )?.id;
+        if (id === undefined) return undefined;
+        const name = resolveBuffDisplayName(
+          id,
+          { t, te },
+          undefined,
+          undefined,
+          operatorBuffDisplayNameKeys,
+        );
+        return name === id ? undefined : name;
+      },
       skillMultiplierStep: (step: number) => t('hitDetail.multiplierStep', { step }),
       skillMultiplierResult: t('hitDetail.multiplierResult'),
       baseDamage: t('hitDetail.baseDamage'),
@@ -9091,6 +9169,17 @@ button:disabled {
 .track-switch-marker.dragging {
   transition: none;
   cursor: grabbing;
+}
+
+.track-switch-marker--automatic {
+  opacity: 0.48;
+  pointer-events: none;
+}
+
+.track-switch-marker--automatic .track-switch-marker__avatar,
+.track-switch-marker--automatic .track-switch-marker__time {
+  border-style: dashed;
+  box-shadow: none;
 }
 
 .track-switch-marker__avatar.operator-avatar-crop {

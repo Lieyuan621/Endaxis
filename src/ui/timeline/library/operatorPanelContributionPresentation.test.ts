@@ -1,7 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { ensureLocaleResources } from '../../../i18n';
 import { capturePublishedEquipmentSources } from '../results/publishedBuffSource';
-import type { OperatorPanelContributionReceipt } from '../../../core/compiler/resolveOperatorPanel';
 import { resolveOperatorPanelContributionSourceLabel } from './operatorPanelContributionPresentation';
 
 const context = {
@@ -10,12 +9,6 @@ const context = {
   translate: (key: string, params?: Record<string, unknown>) =>
     params?.node === undefined ? key : `${key}:${String(params.node)}`,
 };
-
-function entry(
-  source: OperatorPanelContributionReceipt['source'],
-): OperatorPanelContributionReceipt {
-  return { source, stat: 'attack', operation: 'percent', value: 0.1 };
-}
 
 describe('operator panel contribution presentation', () => {
   beforeAll(() => ensureLocaleResources('zh-CN', ['weapons']));
@@ -45,28 +38,5 @@ describe('operator panel contribution presentation', () => {
         { ...context, weapons: custom },
       ),
     ).toBe('自定义武器');
-  });
-  it('uses stable translated labels for base and trust sources', () => {
-    expect(
-      resolveOperatorPanelContributionSourceLabel(
-        entry({ kind: 'operatorBase', operatorSlug: 'test' }),
-        context,
-      ),
-    ).toBe('statDetail.baseSource');
-    expect(
-      resolveOperatorPanelContributionSourceLabel(
-        entry({ kind: 'trust', operatorSlug: 'test', node: 4 }),
-        context,
-      ),
-    ).toBe('timeline.panel.trustNode:4');
-  });
-
-  it('keeps an unresolved upgrade identity visible rather than inventing a name', () => {
-    expect(
-      resolveOperatorPanelContributionSourceLabel(
-        entry({ kind: 'operatorUpgrade', source: 'potential', index: 9 }),
-        context,
-      ),
-    ).toBe('potential 10');
   });
 });

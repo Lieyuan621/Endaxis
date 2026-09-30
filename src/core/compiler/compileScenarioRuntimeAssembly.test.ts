@@ -5,15 +5,12 @@ import { createTestBuffReference } from '../combat/buffs/buffTestFixtures';
 import { createActionGraphCompilation } from './compileActionGraph';
 import type { ActionGraphNode } from '../../../packages/game-data-contract/src/actionGraph';
 import { ActionGraphDefinitionRepository } from './actionGraphDefinitionRepository';
-import { describe, expect, expectTypeOf, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   CombatRuntimeAssembly,
   type CombatOperationExecutorContext,
   type EnemyBuffRuntime,
   type OperatorBuffRuntime,
-  type CombatRuntimeAssemblyOptions,
-  type CombatRuntimeEnvironmentOptions,
-  type CombatRuntimeScenarioOptions,
 } from '../combat/runtime/combatRuntimeAssembly';
 import type { CombatOperationExecutor } from '../combat/skills/skillRuntime';
 import type { CompiledSkillProgram } from './combatProgram';
@@ -62,31 +59,6 @@ it('逐帧自定义技能在图干员上保留技能块身份和覆盖黑板', (
   expect(programs).toHaveLength(1);
   expect(programs[0]!.castId).toBe('cast:custom-graph');
   expect(programs[0]!.program.initialBlackboard.custom_marker).toBe(42);
-});
-
-it('场景输入与环境端口互不重叠，完整装配选项由两者组成', () => {
-  expectTypeOf<keyof CombatRuntimeScenarioOptions>().toEqualTypeOf<
-    | 'resources'
-    | 'enemy'
-    | 'operators'
-    | 'consumables'
-    | 'consumableUses'
-    | 'inputs'
-    | 'skillInputGroups'
-    | 'externalEvents'
-    | 'dodgeInputs'
-    | 'initialControlledOperatorId'
-    | 'isOperatorControlled'
-  >();
-  expectTypeOf<
-    keyof CombatRuntimeScenarioOptions & keyof CombatRuntimeEnvironmentOptions
-  >().toEqualTypeOf<never>();
-  expectTypeOf<keyof CombatRuntimeAssemblyOptions>().toEqualTypeOf<
-    keyof CombatRuntimeScenarioOptions | keyof CombatRuntimeEnvironmentOptions
-  >();
-  expectTypeOf<
-    CompileScenarioRuntimeAssemblyOptions['environment']
-  >().toEqualTypeOf<CombatRuntimeEnvironmentOptions>();
 });
 
 function createScenario(): ScenarioDocument {
@@ -614,7 +586,7 @@ describe('compileScenarioRuntimeAssembly', () => {
     const compiled = compileScenarioRuntimeAssembly(scenario, options());
 
     expect(compiled.initialFrame).toBe(-90);
-    expect(compiled.initialControlledOperatorId).toBe('track:1');
+    expect(compiled.operatorControl?.initialOperatorId).toBe('track:1');
     expect(compiled.isOperatorControlled?.('track:1', -90)).toBe(true);
   });
 

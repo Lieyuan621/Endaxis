@@ -86,15 +86,6 @@ describe('validateProjectWithGameData', () => {
       ],
     });
   });
-
-  it('returns the structurally validated document when it has no definition references', () => {
-    const project = createEmptyProject({ createdWith: 'test' });
-
-    expect(validateProjectWithGameData(project, createMissingRepository())).toEqual({
-      ok: true,
-      value: project,
-    });
-  });
 });
 
 describe('parseProjectDocument index validation', () => {

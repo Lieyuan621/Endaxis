@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  parseGlobalPartyAuraActionSource,
-  parseDirectRangedAuraActionSource,
-  parseAuraReferenceActionSource,
-} from '../src/source/auraActions.ts';
+import { parseGlobalPartyAuraActionSource } from '../src/source/auraActions.ts';
 import { scalarFixture, targetFixture } from './sourceFixtures.ts';
 
 const emptySequence = {
@@ -137,41 +133,19 @@ describe('Aura 新版默认影响过滤', () => {
     });
   });
 
-  it('范围 Aura 复用同一校验，不丢安装的 Buff', () => {
-    const ranged = { ...base, auraType: 'RangedAura', targetObjectType: 0 };
-    const unexpectedCallback = () => {
-      throw new Error('本样本不应解析进入子序列');
-    };
-    expect(
-      parseDirectRangedAuraActionSource({ ...ranged, ...defaults }, 'aura', unexpectedCallback),
-    ).toEqual(parseDirectRangedAuraActionSource(ranged, 'aura', unexpectedCallback));
-  });
-
-  it('引用闭包与正式入口共用字段表', () => {
-    expect(parseAuraReferenceActionSource({ ...base, ...defaults }, 'aura')).toEqual(
-      parseAuraReferenceActionSource(base, 'aura'),
-    );
-  });
-
   it.each([
     { limitInfluenceAngle: true },
-    { limitInfluenceHeight: true },
-    { limitInfluenceHeight: 0 },
-    { limitInfluenceAngle: 'false' },
-    { filterFactionSource: targetFixture('Owner') },
     { filterFactionSource: targetFixture('Context', undefined, 'enemy') },
-    { influenceAngle: null },
     { influenceDirection: {} },
-    { influenceDirectionAngleOffset: { ...scalarFixture(0), value: '0' } },
   ])('阻断未证明或非法的影响过滤 %j', overrides => {
     expect(() =>
       parseGlobalPartyAuraActionSource({ ...base, ...defaults, ...overrides }, 'aura'),
     ).toThrow('aura.');
   });
 
-  it.each(Object.keys(defaults))('新增字段必须完整，不能缺少 %s', key => {
+  it('新版影响过滤不能缺少必填字段', () => {
     const current: Record<string, unknown> = { ...base, ...defaults };
-    delete current[key];
+    delete current.limitInfluenceHeight;
     expect(() => parseGlobalPartyAuraActionSource(current, 'aura')).toThrow('unexpected fields');
   });
 

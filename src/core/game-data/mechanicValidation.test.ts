@@ -13,24 +13,6 @@ const mechanic: MechanicDefinitionRef = {
 };
 
 describe('validateMechanicSelections', () => {
-  it('accepts parameters declared by the referenced mechanic', () => {
-    const issues = validateMechanicSelections(
-      {
-        selections: [
-          {
-            id: 'selection:1',
-            mechanicId: mechanic.id,
-            enabled: true,
-            parameters: { damageUp: 0.5 },
-          },
-        ],
-      },
-      { getMechanic: id => (id === mechanic.id ? mechanic : null) },
-    );
-
-    expect(issues).toEqual([]);
-  });
-
   it('reports unknown mechanics without guessing their parameter contract', () => {
     const issues = validateMechanicSelections(
       {

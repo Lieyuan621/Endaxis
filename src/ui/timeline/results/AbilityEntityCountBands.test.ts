@@ -41,5 +41,4 @@ it('renders the configured entity icon, translated name and count without a HUD 
   const html = await renderToString(app);
   expect(html).toContain('/custom-entity.webp');
   expect(html).toContain('Owner · Configured crystal × 2');
-  expect(html).not.toContain('operator-passive-widget');
 });

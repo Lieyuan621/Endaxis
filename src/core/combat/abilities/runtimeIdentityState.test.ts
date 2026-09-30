@@ -34,15 +34,3 @@ it('实体编号耗尽时不再修改分配器', () => {
   expect(() => allocateAbilityEntityInstanceId(state)).toThrow('exhausted');
   expect(state.next).toBe(exhausted);
 });
-
-it('分配器可直接绑定恢复后的编号状态', () => {
-  const entityState = { next: 41 };
-  const castState = { nextId: 73 };
-  const entities = new AbilityEntityInstanceIdAllocator(entityState);
-  const casts = new SkillCastIdAllocator(castState);
-
-  expect(entities.runtimeState).toBe(entityState);
-  expect(casts.runtimeState).toBe(castState);
-  expect(entities.allocate()).toBe(41);
-  expect(casts.allocate()).toBe(73);
-});

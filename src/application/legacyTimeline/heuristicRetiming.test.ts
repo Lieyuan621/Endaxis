@@ -747,27 +747,12 @@ it('同帧的跨干员主控动作错开一帧，并按实际位置补主控切�
 
   expect(project.scenarios[0]!.tracks[0]!.skillCasts[0]!.placement.startFrame).toBe(10);
   expect(project.scenarios[0]!.tracks[1]!.skillCasts[0]!.placement.startFrame).toBe(11);
-  expect(project.scenarios[0]!.battle.controlSwitches).toEqual([
-    {
-      id: `legacy-inferred-control:${second}`,
-      frame: 11,
-      trackIndex: 1,
-    },
-  ]);
+  expect(project.scenarios[0]!.battle.controlSwitches).toEqual([]);
+  expect(project.scenarios[0]!.battle.automaticControlSwitches).toBe(true);
   expect(result.timingAdjustments).toContainEqual(
     expect.objectContaining({
       castId: second,
       controlInputSeparationFrames: 1,
     }),
   );
-  expect(result.inferredControlSwitches).toEqual([
-    {
-      scenarioId: 'test',
-      switchId: `legacy-inferred-control:${second}`,
-      castId: second,
-      trackIndex: 1,
-      sourceFrame: 10,
-      inferredFrame: 11,
-    },
-  ]);
 });

@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import * as prettier from 'prettier';
 import ts from 'typescript';
 import type { DefinitionFieldSchema } from '../../src/ui/definition-editor/fieldSchema.ts';
+import { renderSharedSchemaObjects } from './renderSharedSchemaObjects.ts';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const contract = resolve(root, 'packages/game-data-contract/src');
@@ -69,7 +70,15 @@ function branches(type: ts.Type): readonly ts.Type[] {
   return type.isUnion() ? type.types.flatMap(branches) : [type];
 }
 
-function describe(type: ts.Type, seen: ReadonlySet<number>, depth: number): DefinitionFieldSchema {
+function literalValue(type: ts.Type): string | number {
+  if (!type.isStringLiteral() && !type.isNumberLiteral())
+    throw new Error('expected a string or number literal');
+  if (typeof type.value !== 'string' && typeof type.value !== 'number')
+    throw new Error('BigInt literal cannot be edited as a schema enum');
+  return type.value;
+}
+
+function describe(type: ts.Type, seen: ReadonlySet<ts.Type>, depth: number): DefinitionFieldSchema {
   // 条件是独立的表达式结构；不能把几十种分支当作普通下拉框编辑。
   // TypeScript 会在可选属性上展开 aliasSymbol，但 typeToString 仍保留契约名称。
   const typeName = checker.typeToString(type);
@@ -83,9 +92,9 @@ function describe(type: ts.Type, seen: ReadonlySet<number>, depth: number): Defi
   const field = (shape: DefinitionFieldSchema): DefinitionFieldSchema =>
     optional ? { ...shape, optional: true } : shape;
   if (nullable.length > 1) {
-    const literals = nullable.filter(part => part.isStringLiteral() || part.isNumberLiteral());
+    const literals: ts.Type[] = nullable.filter(part => part.isStringLiteral() || part.isNumberLiteral());
     if (literals.length === nullable.length)
-      return field({ kind: 'enum', options: literals.map(part => (part as ts.LiteralType).value) });
+      return field({ kind: 'enum', options: literals.map(literalValue) });
     if (nullable.every(part => (part.flags & ts.TypeFlags.BooleanLike) !== 0))
       return field({ kind: 'boolean' });
     const others = nullable.filter(part => !literals.includes(part));
@@ -96,7 +105,7 @@ function describe(type: ts.Type, seen: ReadonlySet<number>, depth: number): Defi
           ? [
               {
                 kind: 'enum' as const,
-                options: literals.map(part => (part as ts.LiteralType).value),
+                options: literals.map(literalValue),
               },
             ]
           : []),
@@ -107,7 +116,7 @@ function describe(type: ts.Type, seen: ReadonlySet<number>, depth: number): Defi
   const current = nullable[0]!;
   if ((current.flags & ts.TypeFlags.Null) !== 0) return field({ kind: 'null' });
   if (current.isStringLiteral() || current.isNumberLiteral())
-    return field({ kind: 'enum', options: [current.value] });
+    return field({ kind: 'enum', options: [literalValue(current)] });
   if ((current.flags & ts.TypeFlags.NumberLike) !== 0) return field({ kind: 'number' });
   if ((current.flags & ts.TypeFlags.StringLike) !== 0) return field({ kind: 'string' });
   if ((current.flags & ts.TypeFlags.BooleanLike) !== 0) return field({ kind: 'boolean' });
@@ -127,8 +136,8 @@ function describe(type: ts.Type, seen: ReadonlySet<number>, depth: number): Defi
   }
   const index = checker.getIndexTypeOfType(current, ts.IndexKind.String);
   if (index) return field({ kind: 'record', value: describe(index, seen, depth + 1) });
-  if (depth >= 3 || seen.has(current.id)) return field({ kind: 'opaque' });
-  const nested = new Set(seen).add(current.id);
+  if (depth >= 3 || seen.has(current)) return field({ kind: 'opaque' });
+  const nested = new Set(seen).add(current);
   const fields: Record<string, DefinitionFieldSchema> = {};
   for (const property of checker.getPropertiesOfType(current)) {
     // 映射类型的属性可能没有独立声明节点，仍有完整类型，不能直接跳过。
@@ -162,9 +171,10 @@ export async function generateDefinitionSchemas(check = false): Promise<void> {
       describe(typeOf(file, name), new Set(), 0),
     ]),
   );
+  const rendered = renderSharedSchemaObjects(catalog, 'definitionSchemaPart');
   const prettierConfig = await prettier.resolveConfig(output);
   const source = await prettier.format(
-    `/** 由 tools/editor/generateDefinitionSchemas.ts 从正式契约生成，请勿手改。 */\nimport type { DefinitionSchemaCatalog } from './fieldSchema';\nexport const definitionSchemas = ${JSON.stringify(catalog)} as const satisfies DefinitionSchemaCatalog;\n`,
+    `/** 由 tools/editor/generateDefinitionSchemas.ts 从正式契约生成，请勿手改。 */\nimport type { DefinitionSchemaCatalog } from './fieldSchema';\n${rendered.declarations}\nexport const definitionSchemas = ${rendered.expression} as const satisfies DefinitionSchemaCatalog;\n`,
     { ...prettierConfig, filepath: output },
   );
   if (check) {

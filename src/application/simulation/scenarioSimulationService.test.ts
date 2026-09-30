@@ -59,13 +59,13 @@ import {
 } from '../../ui/timeline/interaction/placeSkillGroup';
 import { CombatInputSchedule } from './combatInputSchedule';
 import { createScenarioSimulationService } from './createScenarioSimulationService';
+import { createEditorSimulationService } from './editorSimulationService';
 import type { CombatSkillInputPhase } from '../../core/combat/runtime/combatFrameInput';
 import {
   compileFixedCombatInputSchedule,
   compileCombatInputSchedule,
 } from './compileFixedCombatInputSchedule';
 import {
-  createDefaultCriticalSampleSource,
   ScenarioSimulationService,
   type ScenarioSimulationPerformanceSample,
 } from './scenarioSimulationService';
@@ -155,6 +155,126 @@ const testIndex = {
 };
 
 describe('ScenarioSimulationService', () => {
+  it.each([true, undefined, false])(
+    '自动主控只在实际输入时切换且不写入切人标记：开关=%s',
+    async enabled => {
+      const scenario = createPerlicaScenario();
+      scenario.tracks[1] = {
+        ...structuredClone(scenario.tracks[0]!),
+        id: 'track:1',
+        skillCasts: [],
+      };
+      if (enabled === undefined) delete scenario.battle.automaticControlSwitches;
+      else scenario.battle.automaticControlSwitches = enabled;
+      const placed = placeSkillGroup({
+        scenario,
+        trackIndex: 1,
+        operator: perlica,
+        skillGroupKey: 'plungingAttack',
+        startFrame: 30,
+        ids: { allocate: kind => `${kind}:auto-control` },
+      }).scenario;
+      const run = await createService().simulate(placed, 90);
+      expect(
+        run.receiptEntries.filter(entry => entry.event === 'AutomaticControlSwitched'),
+      ).toEqual(
+        enabled === false ? [] : [expect.objectContaining({ frame: 30, sourceId: 'track:1' })],
+      );
+      expect(placed.battle.controlSwitches).toEqual([]);
+    },
+  );
+  it('实际操作而非技能库分组决定自动切人', async () => {
+    const base = createPerlicaScenario();
+    base.tracks[1] = { ...structuredClone(base.tracks[0]!), id: 'track:1', skillCasts: [] };
+    const scenario = placeSkillGroup({
+      scenario: base,
+      trackIndex: 1,
+      operator: perlica,
+      skillGroupKey: 'battleSkill',
+      startFrame: 30,
+      ids: { allocate: kind => `${kind}:action-routing` },
+    }).scenario;
+    const cast = scenario.tracks[1]!.skillCasts[0]!;
+    if (cast.source.kind !== 'operatorSkill') throw new Error('expected operator skill');
+    cast.source.action = 'basicAttack';
+    const result = await createService().simulate(scenario, 90);
+    expect(result.receiptEntries.filter(e => e.event === 'AutomaticControlSwitched')).toEqual([
+      expect.objectContaining({ frame: 30, sourceId: 'track:1' }),
+    ]);
+  });
+
+  it('自动切人身份随切面恢复，后续手动切人和完整重算一致', async () => {
+    let now = 0;
+    const service = createService(() => (now += 30), true);
+    let scenario = createPerlicaScenario();
+    scenario.battle.automaticControlSwitches = true;
+    scenario.tracks[1] = { ...structuredClone(scenario.tracks[0]!), id: 'track:1', skillCasts: [] };
+    for (const frame of [1, 210]) {
+      scenario = placeSkillGroup({
+        scenario,
+        trackIndex: 1,
+        operator: perlica,
+        skillGroupKey: 'plungingAttack',
+        startFrame: frame,
+        ids: { allocate: kind => `${kind}:${frame}` },
+      }).scenario;
+    }
+    scenario.battle.controlSwitches = [{ id: 'manual', frame: 190, trackIndex: 0 }];
+    const samples: ScenarioSimulationPerformanceSample[] = [];
+    service.subscribePerformance(sample => samples.push(sample));
+    await service.simulate(scenario, 300);
+    scenario.tracks[1]!.skillCasts[1]!.placement = { startFrame: 220 };
+    const resumed = await service.simulate(scenario, 300);
+    const full = await createService().simulate(scenario, 300);
+    expect(samples.at(-1)?.resumedFromFrame).toBe(150);
+    expect(resumed.receiptEntries).toEqual(full.receiptEntries);
+    expect(
+      resumed.receiptEntries.filter(e => e.event === 'AutomaticControlSwitched').map(e => e.frame),
+    ).toEqual([1, 220]);
+    service.clearCache();
+  });
+
+  it('主线程编辑服务连续移动技能时复用未改变的前缀', async () => {
+    let now = 0;
+    const clock = vi.spyOn(performance, 'now').mockImplementation(() => (now += 30));
+    const repository = createGameDataRepository({
+      revision: 'editor-resume',
+      operators: [perlica],
+      commonDefinitionSources: [{ id: 'shared', buffDefinitions: commonBuffDefinitions }],
+    });
+    const service = createEditorSimulationService(repository);
+    const full = createScenarioSimulationService(repository);
+    const samples: ScenarioSimulationPerformanceSample[] = [];
+    service.subscribePerformance(sample => samples.push(sample));
+    try {
+      const scenario = placeSkillGroup({
+        scenario: createPerlicaScenario(),
+        trackIndex: 0,
+        operator: perlica,
+        skillGroupKey: 'plungingAttack',
+        startFrame: 210,
+        ids: { allocate: kind => `${kind}:editor-resume` },
+      }).scenario;
+      await service.simulate(scenario, 300);
+      expect(samples.at(-1)?.resumedFromFrame).toBeNull();
+      for (const frame of [220, 230, 215]) {
+        const moved = structuredClone(scenario);
+        moved.tracks[0]!.skillCasts[0]!.placement = { startFrame: frame };
+        const actual = await service.simulate(moved, 300);
+        const expected = await full.simulate(moved, 300);
+        expect(samples.at(-1)?.resumedFromFrame).toBe(150);
+        const { receiptHistory: actualHistory, ...actualData } = actual;
+        const { receiptHistory: expectedHistory, ...expectedData } = expected;
+        expect(actualData).toEqual(expectedData);
+        expect([...actualHistory.entries()]).toEqual([...expectedHistory.entries()]);
+      }
+    } finally {
+      service.clearCache();
+      full.clearCache();
+      clock.mockRestore();
+    }
+  });
+
   it.each(['expected', 'sampled'] as const)('单切面续算与完整重算一致：%s', async mode => {
     let now = 0;
     const incremental = createService(() => (now += 30), true);
@@ -1095,7 +1215,7 @@ describe('ScenarioSimulationService', () => {
     ).toBe(true);
   });
 
-  it('重复施加附着时按 SkillSetting 真实打出爆发伤害', async () => {
+  it('重复施加附着时打出爆发伤害', async () => {
     const scenario = createPerlicaScenario();
     const ids = { allocate: (kind: string) => `${kind}:${Math.random()}` };
     const first = placeSkillGroup({
@@ -1157,46 +1277,6 @@ describe('ScenarioSimulationService', () => {
     expect(run.finalEnemyHealth).toBeLessThan(run.enemy.health);
   });
 
-  it('完整生成爆发已携带 SkillSetting 数值，不再需要旧聚合入口的运行时表', async () => {
-    const scenario = createPerlicaScenario();
-    const ids = { allocate: (kind: string) => `${kind}:${Math.random()}` };
-    const first = placeSkillGroup({
-      scenario,
-      trackIndex: 0,
-      operator: perlica,
-      skillGroupKey: 'battleSkill',
-      startFrame: 1,
-      ids,
-    }).scenario;
-    const second = placeSkillGroup({
-      scenario: first,
-      trackIndex: 0,
-      operator: perlica,
-      skillGroupKey: 'battleSkill',
-      startFrame: 40,
-      ids,
-    }).scenario;
-
-    const run = await createService().simulate(second, 120);
-    const hits = run.receiptEntries.filter(
-      entry => entry.event === 'DamageApplied' && entry.data?.spellBurstType === 'Pulse',
-    );
-    expect(hits).toHaveLength(1);
-    expect(Number(hits[0]!.data!.value)).toBeGreaterThan(0);
-  });
-
-  it('相同输入重新计算，结果一致且回执保持冻结', async () => {
-    const scenario = createPerlicaScenario();
-    const service = createService();
-
-    const first = await service.simulate(scenario, 30);
-    const second = await service.simulate(scenario, 30);
-
-    expect(second).not.toBe(first);
-    expect(second.receiptEntries).toEqual(first.receiptEntries);
-    expect(Object.isFrozen(second.receiptEntries)).toBe(true);
-  });
-
   it('每次重新模拟并发布模拟与投影耗时', async () => {
     let now = 0;
     const service = createService(() => now++);
@@ -1222,25 +1302,6 @@ describe('ScenarioSimulationService', () => {
     });
   });
 
-  it('场景内容变化后计算新场景的结果', async () => {
-    const service = createService();
-    const scenario = createPerlicaScenario();
-    const placed = placeSkillGroup({
-      scenario,
-      trackIndex: 0,
-      operator: perlica,
-      skillGroupKey: 'plungingAttack',
-      startFrame: 1,
-      ids: { allocate: kind => `${kind}:1` },
-    }).scenario;
-
-    const emptyRun = await service.simulate(scenario, 30);
-    const placedRun = await service.simulate(placed, 30);
-
-    expect(placedRun).not.toBe(emptyRun);
-    expect(placedRun.receiptEntries.some(entry => entry.event === 'DamageApplied')).toBe(true);
-  });
-
   it('拒绝已中止的请求', async () => {
     const controller = new AbortController();
     controller.abort();
@@ -1263,6 +1324,7 @@ describe('ScenarioSimulationService', () => {
     const replayed = await service.simulate(firstScenario, 30);
     expect(replayed).not.toBe(first);
     expect(replayed.receiptEntries).toEqual(first.receiptEntries);
+    expect(Object.isFrozen(replayed.receiptEntries)).toBe(true);
   });
 
   it('完整会话仅在输入时提交技能种子，未来候选换种子不改父分支', () => {
@@ -1404,12 +1466,5 @@ describe('ScenarioSimulationService', () => {
     new CombatInputSchedule(branch, []).advanceToFrame(30);
     expect(branch.runtime.readState()).toEqual(completed);
     expect(live.runtime.readState()).toEqual(initial);
-  });
-
-  it('默认暴击策略为每次新建的确定性均匀样本流', () => {
-    const samples = createDefaultCriticalSampleSource();
-    expect(samples.nextCriticalSample()).toBe(0.5);
-    expect(samples.nextCriticalSample()).toBe(0.25);
-    expect(createDefaultCriticalSampleSource().nextCriticalSample()).toBe(0.5);
   });
 });

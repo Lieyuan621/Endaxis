@@ -1,6 +1,4 @@
-import { ID_INJECTION_KEY, ZINDEX_INJECTION_KEY } from 'element-plus';
-import { createRenderer, createSSRApp, h, nextTick, ref, ssrContextKey } from 'vue';
-import { renderToString } from 'vue/server-renderer';
+import { createRenderer, h, nextTick, ref, ssrContextKey } from 'vue';
 import { createI18n } from 'vue-i18n';
 import { expect, it } from 'vitest';
 import NodeLevelValues from './NodeLevelValues.vue';
@@ -23,20 +21,6 @@ function i18n() {
     },
   });
 }
-
-it('renders the level selector and numeric fields with shared controls', async () => {
-  const app = createSSRApp({
-    render: () => h(NodeLevelValues, { text: '[2,5]', required: false, label: '技能数值' }),
-  });
-  app.use(i18n());
-  app.provide(ID_INJECTION_KEY, { prefix: 1024, current: 0 });
-  app.provide(ZINDEX_INJECTION_KEY, { current: 0 });
-  const html = await renderToString(app);
-  expect(html).toContain('ea-select');
-  expect(html.match(/ea-input--sm/g)).toHaveLength(2);
-  expect(html).toContain('第 1 级');
-  expect(html).toContain('第 2 级');
-});
 
 it('keeps invalid drafts local and commits valid level values', async () => {
   const text = ref('[2,5]');

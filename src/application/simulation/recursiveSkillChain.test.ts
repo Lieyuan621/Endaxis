@@ -78,7 +78,8 @@ it('零帧接续边界仍把后续输入放在下一实际帧', () => {
   );
 });
 
-it.each([8, 24])('路由永远循环也遵守配置的%d段身份预算，临时探针不会留在文档中', limit => {
+it('路由永远循环也遵守配置的身份预算，临时探针不会留在文档中', () => {
+  const limit = 8;
   const input = fixture();
   input.extension.reservedCastIds = input.extension.reservedCastIds.slice(0, limit - 1);
   const result = planRecursiveSkillChain(input);

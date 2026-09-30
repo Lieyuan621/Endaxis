@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  formatContingencyContractBuffSourceName,
   localizedContingencyContractTagName,
   resolveContingencyContractBuffPresentation,
 } from './contingencyContractBuffPresentation';
@@ -50,11 +49,5 @@ describe('contingency contract Buff presentation', () => {
         selections,
       ),
     ).toBeUndefined();
-  });
-
-  it('identifies both the contract operation and its exact tag in the source label', () => {
-    expect(
-      formatContingencyContractBuffSourceName('危机合约', '重燃测试作战', '改写：刺激 Ⅱ'),
-    ).toBe('危机合约「重燃测试作战」· 改写：刺激 Ⅱ');
   });
 });

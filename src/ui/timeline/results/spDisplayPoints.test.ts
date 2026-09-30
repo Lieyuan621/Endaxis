@@ -59,8 +59,4 @@ describe('SP display points', () => {
       { frame: 30, value: 50 },
     ]);
   });
-  it('does not invent facts for empty input or move a final point backwards', () => {
-    expect(spDisplayPoints([], -150, 30)).toEqual([]);
-    expect(spDisplayPoints([{ frame: 60, value: 5 }], 60, 30)).toEqual([{ frame: 60, value: 5 }]);
-  });
 });

@@ -4,14 +4,15 @@ import {
   isContingencyContractTagLocked,
   toggleContingencyContractTag,
 } from './contingencyContractCatalog';
-
 describe('contingencyContractCatalog', () => {
-  it('classifies every current package tag without hiding unfinished work', () => {
-    expect(contingencyContractTags).toHaveLength(46);
-    expect(contingencyContractTags.filter(tag => tag.support === 'supported')).toHaveLength(24);
-    expect(contingencyContractTags.filter(tag => tag.support === 'blocked')).toHaveLength(0);
-    expect(contingencyContractTags.filter(tag => tag.support === 'omitted')).toHaveLength(22);
-    expect(contingencyContractTags.every(tag => !Object.hasOwn(tag, 'localization'))).toBe(true);
+  it('gives unsupported tags a reason visible to the user', () => {
+    for (const tag of contingencyContractTags) {
+      if (tag.support === 'supported') {
+        expect(tag.supportReason).toBeUndefined();
+      } else {
+        expect(tag.supportReason).toBeTruthy();
+      }
+    }
   });
 
   it('replaces a selected tier in the same native conflict group', () => {

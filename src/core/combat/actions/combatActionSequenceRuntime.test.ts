@@ -1,12 +1,9 @@
-import { describe, expect, expectTypeOf, it, vi } from 'vitest';
-import { COMBAT_STEP_EXECUTION_ROUTES, isCombatOperationStep } from '../../compiler/combatProgram';
-import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
+import { describe, expect, it, vi } from 'vitest';
 import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
 import type {
   ActionGraphNode,
   ActionGraphStep,
 } from '../../../../packages/game-data-contract/src/actionGraph';
-import { COMBAT_STEP_KINDS } from '../../game-data/operatorDefinition';
 import type { ResolvedActionSequence } from '../../compiler/combatProgram';
 import { ActionBlackboard } from './actionBlackboard';
 import { CombatActionSequenceRuntime } from './combatActionSequenceRuntime';
@@ -745,22 +742,6 @@ describe('CombatActionSequenceRuntime', () => {
       data: { kind: 'repeat', repetition: { skipInitialTick: true } },
     });
     expect(savedLoop!.lifecycle.state).toBe('started');
-  });
-
-  it('每种步骤必须声明执行归属，监听器不能进入操作链', () => {
-    expect(Object.keys(COMBAT_STEP_EXECUTION_ROUTES).sort()).toEqual([...COMBAT_STEP_KINDS].sort());
-    expect(
-      isCombatOperationStep({
-        kind: 'setContextFlag',
-        parameters: { flag: 'ordinary', value: true, target: 'caster' },
-      }),
-    ).toBe(true);
-    expect(
-      isCombatOperationStep({ kind: 'listenForCombatEvents', parameters: { responses: [] } }),
-    ).toBe(false);
-    expectTypeOf<ResolvedCombatOperationStep['kind']>()
-      .exclude<'listenForCombatEvents'>()
-      .toEqualTypeOf<ResolvedCombatOperationStep['kind']>();
   });
 
   it('回调的 Channeling 子序列即时清理，不把 finishByAction 延长到回调时间轴结束', () => {

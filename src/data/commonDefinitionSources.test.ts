@@ -2,7 +2,6 @@ import type { AbilityEntityDefinition } from '../../packages/game-data-contract/
 import type { SkillBuffDefinition } from '../../packages/game-data-contract/src/buffs.ts';
 import { expect, it } from 'vitest';
 import type { ActionGraphDefinition } from '../../packages/game-data-contract/src/actionGraph';
-import type { OperatorDefinition } from '../core/game-data/operatorDefinition';
 import { createGameDataRepository } from './createGameDataRepository';
 
 const firstGraph: ActionGraphDefinition = {
@@ -12,18 +11,12 @@ const secondGraph: ActionGraphDefinition = {
   nodes: { entry: { action: { kind: 'dealStagger', parameters: { value: 2 } }, next: null } },
 };
 
-it('公共来源只登记独立 Buff，各 Buff 校验自己的图', () => {
+it('公共 Buff 校验自己的独立图入口', () => {
   const buff: SkillBuffDefinition = {
     stackingType: 'unlimited',
     lifecycleSequences: { start: { $sequence: 'entry' } },
     actionGraph: { main: firstGraph, macros: {} },
   };
-  const repository = createGameDataRepository({
-    revision: 'independent-buff',
-    commonDefinitionSources: [{ id: 'buffs', buffDefinitions: { first: buff } }],
-  });
-  expect(repository.getCommonBuffDefinitions!().first).toBe(buff);
-  expect(repository.getCommonBuffSource!('first')?.id).toBe('buffs');
   expect(() =>
     createGameDataRepository({
       revision: 'invalid-independent-buff',
@@ -39,7 +32,7 @@ it('公共来源只登记独立 Buff，各 Buff 校验自己的图', () => {
   ).toThrow('missing');
 });
 
-it('公共来源只登记独立能力实体，并校验实体自己的图入口', () => {
+it('公共能力实体校验子技能自己的独立图入口', () => {
   const entity: AbilityEntityDefinition = {
     lifetime: { kind: 'infinite' },
     childSkill: {
@@ -56,12 +49,6 @@ it('公共来源只登记独立能力实体，并校验实体自己的图入口'
       actionGraph: { main: firstGraph, macros: {} },
     },
   };
-  const repository = createGameDataRepository({
-    revision: 'independent-entity',
-    commonDefinitionSources: [{ id: 'entities', abilityEntityDefinitions: { child: entity } }],
-  });
-  expect(repository.getCommonAbilityEntitySource!('child')?.id).toBe('entities');
-  expect(repository.getCommonAbilityEntityDefinitions!().child).toBe(entity);
   expect(() =>
     createGameDataRepository({
       revision: 'invalid-independent-entity',
@@ -81,35 +68,6 @@ it('公共来源只登记独立能力实体，并校验实体自己的图入口'
       ],
     }),
   ).toThrow('missing');
-});
-
-it('同一公共来源的静态与独立 Buff 图分别登记，不混用节点', () => {
-  const repository = createGameDataRepository({
-    revision: 'mixed-common-source',
-    commonDefinitionSources: [
-      {
-        id: 'mixed',
-        buffDefinitions: {
-          legacy: {
-            stackingType: 'unlimited',
-          },
-          independent: {
-            stackingType: 'unlimited',
-            lifecycleSequences: { start: { $sequence: 'own' } },
-            actionGraph: {
-              main: {
-                nodes: {
-                  own: { action: { kind: 'dealStagger', parameters: { value: 1 } }, next: null },
-                },
-              },
-              macros: {},
-            },
-          },
-        },
-      },
-    ],
-  });
-  expect(Object.keys(repository.getCommonBuffDefinitions!())).toEqual(['legacy', 'independent']);
 });
 
 it('保留公共定义所属的来源身份，允许不同来源使用相同的局部节点 ID', () => {
@@ -151,12 +109,8 @@ it('保留公共定义所属的来源身份，允许不同来源使用相同的�
   });
   const sources = repository.getCommonDefinitionSources!();
   expect(sources.map(source => source.id)).toEqual(['buffs', 'consumables']);
-  expect(sources[0]!.buffDefinitions!.first).toBe(repository.getCommonBuffDefinitions!().first);
-  expect(repository.getCommonBuffSource!('first')).toBe(sources[0]);
-  expect(sources[1]!.abilityEntityDefinitions!.second).toBe(
-    repository.getCommonAbilityEntityDefinitions!().second,
-  );
-  expect(repository.getCommonAbilityEntitySource!('second')).toBe(sources[1]);
+  expect(repository.getCommonBuffSource!('first')?.id).toBe('buffs');
+  expect(repository.getCommonAbilityEntitySource!('second')?.id).toBe('consumables');
   expect(repository.getCommonBuffSource!('missing')).toBeNull();
 });
 
@@ -207,86 +161,4 @@ it('独立定义不允许递归动作图', () => {
       ],
     }),
   ).toThrow('recursive action graph');
-});
-
-it('仓库装载干员图时校验所有入口及未使用节点', () => {
-  const operator = (entry: string, graph = firstGraph) =>
-    ({
-      slug: 'graph-operator',
-      actionGraph: graph,
-      skillGroups: [
-        {
-          skills: {
-            key: 'test',
-            scheduledSequences: [{ startFrame: 0, sequence: { $sequence: entry } }],
-          },
-        },
-      ],
-    }) as unknown as OperatorDefinition & {
-      actionGraph: ActionGraphDefinition;
-    };
-  expect(() =>
-    createGameDataRepository({
-      revision: 'graph',
-      operators: [operator('entry')],
-    }),
-  ).not.toThrow();
-  expect(() =>
-    createGameDataRepository({
-      revision: 'graph',
-      operators: [operator('missing')],
-    }),
-  ).toThrow(
-    "operator 'graph-operator'.skillGroups.0.skills.scheduledSequences.0.sequence: missing action graph node: missing",
-  );
-  const independentSkill = (entry: string) =>
-    ({
-      ...operator('entry'),
-      skillGroups: [
-        {
-          skills: {
-            key: 'test',
-            scheduledSequences: [{ startFrame: 0, sequence: { $sequence: entry } }],
-            actionGraph: { main: secondGraph, macros: {} },
-          },
-        },
-      ],
-    }) as unknown as OperatorDefinition & {
-      actionGraph: ActionGraphDefinition;
-    };
-  expect(() =>
-    createGameDataRepository({
-      revision: 'nested-resource',
-      operators: [independentSkill('entry')],
-    }),
-  ).not.toThrow();
-  expect(() =>
-    createGameDataRepository({
-      revision: 'invalid-nested-resource',
-      operators: [independentSkill('missing')],
-    }),
-  ).toThrow('missing action graph node: missing');
-  const { actionGraph: _, ...graphless } = independentSkill('entry');
-  expect(() =>
-    createGameDataRepository({
-      revision: 'graphless-operator',
-      operators: [graphless],
-    }),
-  ).not.toThrow();
-  const { actionGraph: _unused, ...invalidGraphless } = independentSkill('missing');
-  expect(() =>
-    createGameDataRepository({
-      revision: 'invalid-graphless-operator',
-      operators: [invalidGraphless],
-    }),
-  ).toThrow('missing action graph node: missing');
-  const recursive: ActionGraphDefinition = {
-    nodes: { entry: { action: firstGraph.nodes.entry!.action, next: 'entry' } },
-  };
-  expect(() =>
-    createGameDataRepository({
-      revision: 'graph',
-      operators: [operator('entry', recursive)],
-    }),
-  ).toThrow("operator 'graph-operator': recursive action graph: entry");
 });

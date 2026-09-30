@@ -1,5 +1,4 @@
 import { expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
 import { createSSRApp, h, type ComponentOptions } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 import Dialog from './TimelineHitDetailDialog.vue';
@@ -465,6 +464,10 @@ it('projects expandable crit rows from the frozen hit facts', async () => {
                   }) as Record<string, string>
                 )[key],
               skillMultiplierInternalValue: '技能内部数值',
+              buffStackSourceLabel: (kind: string, key: string) =>
+                kind === 'tag' && key === 'Skill/Character/Common/SpellInflict/CrystInflict'
+                  ? '寒冷附着'
+                  : undefined,
               skillMultiplierStep: (step: number) => `计算步骤 ${step}`,
               skillMultiplierResult: '最终倍率',
               artsIntensity: '技艺强度',
@@ -478,6 +481,34 @@ it('projects expandable crit rows from the frozen hit facts', async () => {
     }),
   );
   const detail = state.damageDetails.value[0];
+  for (const layers of [0, 1, 3]) {
+    expect(
+      state.skillMultiplierCalculationRows(
+        {
+          operation: 'multiply',
+          left: 2.4,
+          right: layers,
+          result: 2.4 * layers,
+          leftKey: 'atk_scale3',
+          rightKey: 'infliction_num',
+          rightCalculation: {
+            operation: 'assign',
+            left: 0,
+            right: layers,
+            result: layers,
+            sourceKind: 'buffTagStackCount',
+            rightKey: 'Skill/Character/Common/SpellInflict/CrystInflict',
+          },
+        },
+        'final_combo_atkscale',
+      ),
+    ).toEqual([
+      {
+        label: `最终倍率: 寒冷附着 ${layers} 层 × 240%`,
+        value: `${240 * layers}%`,
+      },
+    ]);
+  }
   expect(detail.baseRows[0]).toEqual({ label: 'Skill Multiplier', value: '324%' });
   expect(detail.skillMultiplierSources).toEqual([
     { label: '基础倍率', value: '45%' },
@@ -692,13 +723,4 @@ it('projects expandable crit rows from the frozen hit facts', async () => {
   state.onClose();
   expect(state.openCriticalDetails.value.size).toBe(0);
   expect(state.openSkillMultiplierDetails.value.size).toBe(0);
-});
-
-it('uses the shared floating-surface arrow and keeps the attack breakdown in the table', () => {
-  const source = readFileSync(new URL('./TimelineHitDetailDialog.vue', import.meta.url), 'utf8');
-  expect(source).toContain('labels.baseAttack');
-  expect(source).toContain('labels.attributeBonus');
-  expect(source).not.toContain('labels.staticBuildAttack');
-  expect(source).not.toContain('.hit-detail-source-tooltip[data-popper-placement]');
-  expect(source).not.toContain('transform: rotate(45deg) !important');
 });

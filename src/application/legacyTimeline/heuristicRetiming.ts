@@ -17,15 +17,23 @@ import {
   projectSkillCastActualStartFrames,
   projectSkillCastInterruptionFrames,
 } from '../../core/projection/timelineDisplayTime';
-import {
-  isLegacyControlledInputCast,
-  legacyInferredControlSwitchId,
-  synchronizeLegacyInferredControlSwitches,
-} from './controlInference';
+
+const CONTROLLED_INPUT_GROUPS = new Set([
+  'basicAttack',
+  'enhancedBasicAttack',
+  'plungingAttack',
+  'finisher',
+]);
+
+function isControlledInputCast(cast: SkillCastDocument): boolean {
+  return (
+    cast.source?.kind === 'operatorSkill' && CONTROLLED_INPUT_GROUPS.has(cast.source.skillGroupKey)
+  );
+}
 
 type UnknownRecord = Record<string, unknown>;
 
-/** 保留时间只判断形态和补主控标记，不顺延技能或寻找可接续窗口。 */
+/** 保留时间只判断形态，不顺延技能或寻找可接续窗口。 */
 export type LegacyTimingMode = 'repair' | 'preserve';
 
 /** 严格比较模拟输入中的纯数据；转换器需要同时运行在 Node CLI 和浏览器中。 */
@@ -89,15 +97,6 @@ export interface LegacyControlSwitchAdjustment {
   readonly nextCastId?: string;
 }
 
-export interface LegacyInferredControlSwitch {
-  readonly scenarioId: string;
-  readonly switchId: string;
-  readonly castId: string;
-  readonly trackIndex: number;
-  readonly sourceFrame: number;
-  readonly inferredFrame: number;
-}
-
 export interface LegacyDodgeMarkerAdjustment {
   readonly scenarioId: string;
   readonly markerId: string;
@@ -112,7 +111,6 @@ export interface LegacyRetimingResult {
   readonly timingAdjustments: readonly LegacyTimingAdjustment[];
   readonly skillFormAdjustments: readonly LegacySkillFormAdjustment[];
   readonly controlSwitchAdjustments: readonly LegacyControlSwitchAdjustment[];
-  readonly inferredControlSwitches: readonly LegacyInferredControlSwitch[];
   readonly dodgeMarkerAdjustments: readonly LegacyDodgeMarkerAdjustment[];
   readonly simulationStats: {
     readonly scenarioCount: number;
@@ -480,7 +478,7 @@ function moveAfterConflictingControlledInput(
   const currentCast = scenario.tracks[current.trackIndex]?.skillCasts.find(
     cast => cast.id === current.castId,
   );
-  if (currentCast === undefined || !isLegacyControlledInputCast(currentCast)) return frame;
+  if (currentCast === undefined || !isControlledInputCast(currentCast)) return frame;
   let candidate = frame;
   while (
     processed.some(item => {
@@ -489,9 +487,7 @@ function moveAfterConflictingControlledInput(
         candidateCast => candidateCast.id === item.castId,
       );
       return (
-        cast !== undefined &&
-        isLegacyControlledInputCast(cast) &&
-        cast.placement.startFrame === candidate
+        cast !== undefined && isControlledInputCast(cast) && cast.placement.startFrame === candidate
       );
     })
   ) {
@@ -516,7 +512,6 @@ export function retimeLegacyProjectBySimulation(
   const timingAdjustments: LegacyTimingAdjustment[] = [];
   const skillFormAdjustments: LegacySkillFormAdjustment[] = [];
   const controlSwitchAdjustments: LegacyControlSwitchAdjustment[] = [];
-  const inferredControlSwitches: LegacyInferredControlSwitch[] = [];
   const dodgeMarkerAdjustments: LegacyDodgeMarkerAdjustment[] = [];
   let retimedScenarioCount = 0;
   let retimedCastCount = 0;
@@ -527,6 +522,7 @@ export function retimeLegacyProjectBySimulation(
   let observationExtensions = 0;
 
   for (const scenario of project.scenarios) {
+    scenario.battle.automaticControlSwitches = true;
     const sourceWrapper = sourceScenarios.find(wrapper => wrapper.id === scenario.id);
     const sourceData = record(sourceWrapper?.data);
     if (sourceData === null) continue;
@@ -564,25 +560,7 @@ export function retimeLegacyProjectBySimulation(
     if (!repairTiming) {
       if (runPreservedInputs === undefined)
         throw new Error('preserved timing requires a forward input session');
-      const inferred = synchronizeLegacyInferredControlSwitches(
-        scenario,
-        ordered.map((item, order) => ({ ...item, order })),
-      );
       const casts = new Map(ordered.map(item => [item.castId, item]));
-      for (const controlSwitch of inferred) {
-        const cast = ordered.find(
-          item => controlSwitch.id === legacyInferredControlSwitchId(item.castId),
-        );
-        if (cast !== undefined)
-          inferredControlSwitches.push({
-            scenarioId: scenario.id,
-            switchId: controlSwitch.id,
-            castId: cast.castId,
-            trackIndex: controlSwitch.trackIndex,
-            sourceFrame: cast.sourceStartFrame,
-            inferredFrame: controlSwitch.frame,
-          });
-      }
       runPreservedInputs(scenario, (castId, actualSkillKey) => {
         const item = casts.get(castId);
         if (item === undefined) return undefined;
@@ -699,14 +677,6 @@ export function retimeLegacyProjectBySimulation(
         workingCast.placement = { startFrame: candidateFrame };
         retimeControlSwitches(scenario, working, sourceData, ordered.slice(0, index + 1));
         retimeDodgeMarkers(scenario, working, sourceData, ordered.slice(0, index + 1));
-        synchronizeLegacyInferredControlSwitches(
-          scenario,
-          ordered.slice(0, index + 1).map((item, order) => ({ ...item, order })),
-        );
-        synchronizeLegacyInferredControlSwitches(
-          working,
-          ordered.slice(0, index + 1).map((item, order) => ({ ...item, order })),
-        );
         const beginTrial = (): LegacyRetimingTrial | undefined => {
           if (checkpointSupport === undefined) return undefined;
           const inputs = checkpointSupport.compileInputs(working);
@@ -923,10 +893,6 @@ export function retimeLegacyProjectBySimulation(
     }
     retimeControlSwitches(scenario, working, sourceData, ordered);
     retimeDodgeMarkers(scenario, working, sourceData, ordered);
-    const inferred = synchronizeLegacyInferredControlSwitches(
-      scenario,
-      ordered.map((item, order) => ({ ...item, order })),
-    );
     records(sourceData.switchEvents).forEach((sourceSwitch, index) => {
       const sourceFrame = integer(sourceSwitch.time);
       if (sourceFrame === null) return;
@@ -946,20 +912,6 @@ export function retimeLegacyProjectBySimulation(
         ...(next === undefined ? {} : { nextCastId: next.castId }),
       });
     });
-    for (const controlSwitch of inferred) {
-      const cast = ordered.find(
-        item => controlSwitch.id === legacyInferredControlSwitchId(item.castId),
-      );
-      if (cast === undefined) continue;
-      inferredControlSwitches.push({
-        scenarioId: scenario.id,
-        switchId: controlSwitch.id,
-        castId: cast.castId,
-        trackIndex: controlSwitch.trackIndex,
-        sourceFrame: cast.sourceStartFrame,
-        inferredFrame: controlSwitch.frame,
-      });
-    }
     records(sourceData.tracks).forEach((sourceTrack, trackIndex) => {
       records(sourceTrack.actions).forEach((action, actionIndex) => {
         if (record(action.convertedDodge) === null) return;
@@ -985,7 +937,6 @@ export function retimeLegacyProjectBySimulation(
     timingAdjustments,
     skillFormAdjustments,
     controlSwitchAdjustments,
-    inferredControlSwitches,
     dodgeMarkerAdjustments,
     simulationStats: {
       scenarioCount: retimedScenarioCount,

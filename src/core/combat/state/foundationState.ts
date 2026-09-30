@@ -120,7 +120,8 @@ export interface ActionValueCalculation {
   readonly left: number;
   readonly right: number;
   readonly result: number;
-  readonly sourceKind?: 'skillSetting';
+  /** 层数读取以 assign 保存当时的值，rightKey 是查询的 Buff ID 或标签，不是黑板键。 */
+  readonly sourceKind?: 'skillSetting' | 'buffIdStackCount' | 'buffTagStackCount';
   readonly sourceColumn?: number;
   readonly leftKey?: string;
   readonly rightKey?: string;

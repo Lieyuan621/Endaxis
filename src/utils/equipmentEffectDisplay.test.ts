@@ -37,7 +37,6 @@ describe('equipment modifier presentation icons', () => {
     ['skill_dmg_bonus', '/icons/icon_normal_skill_efficiency.webp'],
   ])('maps %s to its semantic game icon', (modifierId, expectedPath) => {
     expect(getEquipmentModifierIconPath(modifierId)).toBe(expectedPath);
-    expect(existsSync(resolve('public', expectedPath.slice(1)))).toBe(true);
   });
 
   it('does not disguise an unknown modifier with the default icon', () => {

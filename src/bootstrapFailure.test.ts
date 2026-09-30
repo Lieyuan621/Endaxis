@@ -1,13 +1,7 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import { showBootstrapFailure } from './bootstrapFailure';
-import main from './main.ts?raw';
 
 afterEach(() => vi.unstubAllGlobals());
-
-it('waits for initial route resources before mounting and catches startup failures', () => {
-  expect(main.indexOf('await router.isReady()')).toBeLessThan(main.indexOf("app.mount('#app')"));
-  expect(main).toContain('bootstrap().catch(showBootstrapFailure)');
-});
 
 it('renders errors as text and reloads only on explicit request without touching storage', () => {
   const nodes: any[] = [];

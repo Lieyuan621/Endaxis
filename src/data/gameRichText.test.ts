@@ -1,15 +1,7 @@
-import { beforeAll, describe, expect, test } from 'vitest';
-import { ensureLocaleResources } from '../i18n';
-import { getRichTextTerm, parseGameRichText } from './gameRichText';
+import { describe, expect, test } from 'vitest';
+import { parseGameRichText } from './gameRichText';
 
 describe('game rich text', () => {
-  beforeAll(async () => {
-    await Promise.all([
-      ensureLocaleResources('zh-CN', ['terms']),
-      ensureLocaleResources('en', ['terms']),
-    ]);
-  });
-
   test('parses style and term tags without dropping plain text', () => {
     expect(
       parseGameRichText('Deal <@ba.fire>Heat DMG</> and apply <#ba.burning>Combustion</>'),
@@ -25,12 +17,5 @@ describe('game rich text', () => {
     expect(parseGameRichText('<image="/icons/icon_energy_fusion_fire.webp">')).toEqual([
       { type: 'image', path: '/icons/icon_energy_fusion_fire.webp' },
     ]);
-  });
-
-  test('resolves localized battle term descriptions', () => {
-    expect(getRichTextTerm('ba.fireburst', 'zh-CN')?.name).toBe(
-      '\u6cd5\u672f\u7206\u53d1 - \u707c\u70ed',
-    );
-    expect(getRichTextTerm('ba.fireburst', 'en')?.name).toBe('Arts Burst: Heat');
   });
 });

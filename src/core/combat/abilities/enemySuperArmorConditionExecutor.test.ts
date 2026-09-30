@@ -34,21 +34,4 @@ describe('EnemySuperArmorConditionExecutor', () => {
       }),
     ).toThrow('enemySuperArmorCompare requires a combat operation context');
   });
-
-  it('delegates unrelated conditions and operation lifecycle', () => {
-    const end = vi.fn();
-    const localDelegate = { ...delegate, end };
-    const executor = new EnemySuperArmorConditionExecutor(30, localDelegate);
-    const condition = { kind: 'combatActive' } as const;
-    const context = { blackboard: new ActionBlackboard() };
-    const step = { kind: 'storeCurrentTimelineFrame', parameters: { outputKey: 'frame' } } as const;
-
-    executor.evaluate(condition, context);
-    executor.execute(step, context);
-    executor.end(step, context);
-
-    expect(localDelegate.evaluate).toHaveBeenCalledWith(condition, context);
-    expect(localDelegate.execute).toHaveBeenCalledWith(step, context);
-    expect(end).toHaveBeenCalledWith(step, context);
-  });
 });

@@ -524,7 +524,17 @@ export function compileScenarioRuntimeAssembly(
   return {
     ...options.environment,
     initialFrame,
-    initialControlledOperatorId,
+    operatorControl: {
+      initialOperatorId: initialControlledOperatorId,
+      automaticSwitches: scenario.battle.automaticControlSwitches !== false,
+      scheduledSwitches:
+        options.liveInputInitialFrame === undefined
+          ? scenario.battle.controlSwitches.map(marker => ({
+              frame: marker.frame,
+              operatorId: scenario.tracks[marker.trackIndex]?.id ?? null,
+            }))
+          : [],
+    },
     ...(options.liveInputInitialFrame === undefined ? {} : { deferInitialInput: true }),
     resources,
     enemy: applyMechanicsToScenarioEnemy(compileScenarioEnemy(scenario.enemy), mechanics),

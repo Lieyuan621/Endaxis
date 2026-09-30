@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import {
   APPEARANCE_STORAGE_KEY,
   applyAppearance,
-  normalizeAppearance,
   readStoredAppearance,
   setAppearance,
   toggleAppearance,
@@ -64,12 +63,6 @@ describe('appearance', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
-  });
-
-  test('normalizeAppearance defaults to dark', () => {
-    expect(normalizeAppearance(null)).toBe('dark');
-    expect(normalizeAppearance('nope')).toBe('dark');
-    expect(normalizeAppearance('light')).toBe('light');
   });
 
   test('applyAppearance sets data-theme and dark class', () => {

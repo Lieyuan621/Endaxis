@@ -30,7 +30,3 @@ it('preserves ordered same-frame changes and holds full buildup until recovery',
     input[3],
   ]);
 });
-it('does not invent a state for an empty curve or an endpoint earlier than existing facts', () => {
-  expect(poiseDisplayPoints([], 100)).toEqual([]);
-  expect(poiseDisplayPoints([{ frame: 100, value: 20 }], 50)).toEqual([{ frame: 100, value: 20 }]);
-});

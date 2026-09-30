@@ -11,6 +11,7 @@ import {
   compilePassiveSkillRequestBatch,
   type PassiveSkillCompileRequestSource,
 } from '../../src/index.ts';
+import { activeSkillFixture } from '../sourceFixtures.ts';
 
 /** 按被编译被动的自身图编译入口；不同被动的图互不共享。 */
 const compileEntry: CompileUpgradeEntry = (entry, level, path, owner) =>
@@ -99,7 +100,6 @@ describe('公共被动技能批量编译', () => {
     expect(compiledFirst?.abilityEventResponses).toEqual([
       { event: 'addedBuff', priority: 0, sequence: { $sequence: null } },
     ]);
-    expect(JSON.stringify(compiledFirst?.actionGraph)).not.toContain('listenForCombatEvents');
     expect(
       compileOperatorPassivePrograms([], compiled.definitions, undefined, compileEntry)[0]
         ?.abilityEventResponses?.[0]?.event,
@@ -196,57 +196,9 @@ function patchFixture(): Record<string, unknown> {
 
 function passiveFixture(skillId: string): Record<string, unknown> {
   return {
-    actionGroupData: { timelineActions: [], passiveEventActions: [] },
-    aiExclusiveFrame: 0,
-    attackRangeType: 'Default',
+    ...activeSkillFixture(skillId, 'Passive'),
     blackboard: [],
-    buffs: [],
-    canCastInAir: false,
-    canDummyCast: false,
-    canMove: false,
-    cardAttributeModifier: { attributeModifiers: [], isConvertedAttribute: false },
-    castData: {},
-    castType: 'Passive',
-    characterReturnToIdle: false,
-    comboSkillUIBigSpriteName: '',
-    comboSkillUISpriteName: '',
-    dontInterruptCombo: false,
-    dummyPositionOffset: {},
     durationFrame: 0,
     exclusiveFrame: 0,
-    hittableAttackRange: 0,
-    iconBgType: 'Default',
-    iconId: '',
-    level: 1,
-    needEnemyOutOfScreenWarning: false,
-    needEnemyOutOfScreenWarningOverrideValue: false,
-    offsetRecordFrame: 0,
-    overrideHittableObjAttackRange: false,
-    overrideNeedEnemyOutOfScreenWarning: false,
-    passiveSkillType: 'AddBuff',
-    rootMotionCliffCheck: false,
-    selectStrategy: {},
-    showNotRecommendState: false,
-    skillHighlightCondition: {},
-    skillId,
-    skillName: '',
-    skillSpecification: 'Default',
-    skillTags: { predefinedTag: [] },
-    smartTargetBuffFindSettings: {},
-    smartTargetBuffIds: [],
-    smartTargetSelectStrategy: {},
-    smartTargetTagQuery: {},
-    switchToBuffConfig: {
-      condition: {},
-      buffs: [],
-      buffSource: {},
-      targets: {},
-      asSkillCast: false,
-    },
-    switchToCenterBeforeCast: false,
-    tagDuringAttach: {},
-    toggleBuffs: [],
-    uiRangeHints: [],
-    useAIExclusiveFrame: false,
   };
 }

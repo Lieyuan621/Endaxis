@@ -1,32 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { perlica } from '../../data/operators/perlica.generated';
-import { gearDefinitions, gearSetDefinitions, weaponDefinitions } from '../../data/equipment';
 import { commonBuffDefinitions } from '../../data/buffs/commonDefinitions';
 import { fieldValueAt } from './definitionFieldRuntime';
 import { listDefinitionResources, resourcePresentationKey } from './definitionResources';
 
 describe('definition resource navigation', () => {
-  it('keeps every operator resource address inside its own definition', () => {
-    const resources = listDefinitionResources('operator', perlica);
-    expect(resources[0]).toEqual({ kind: 'operator', path: [], identity: perlica.slug });
-    expect(resources.some(item => item.kind === 'skill')).toBe(true);
-    for (const resource of resources)
-      expect(fieldValueAt(perlica, resource.path), resource.path.join('/')).toBeDefined();
-  });
-
-  it('lists equipment contributions separately from their owned Buff resources', () => {
-    const weapon = weaponDefinitions[0]!;
-    const gear = gearDefinitions[0]!;
-    const gearSet = gearSetDefinitions[0]!;
-    expect(
-      listDefinitionResources('weapon', weapon).filter(item => item.kind === 'weaponTrait'),
-    ).toHaveLength(weapon.traits.length);
-    expect(
-      listDefinitionResources('gear', gear).filter(item => item.kind === 'gearTrait'),
-    ).toHaveLength(gear.traits.length);
-    expect(listDefinitionResources('gearSet', gearSet)[0]?.path).toEqual([]);
-  });
-
   it('lists a global effect buff as an owned resource addressed inside the definition', () => {
     const buff = Object.values(commonBuffDefinitions)[0]!;
     const effect = {

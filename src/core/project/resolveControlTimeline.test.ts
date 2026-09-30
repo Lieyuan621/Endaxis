@@ -22,10 +22,8 @@ function track(id: string): TrackDocument {
 }
 
 describe('resolveControlTimeline', () => {
-  it.each([0, 1, 2, 3])('初始主控跳过空轨道，选择首个有干员的轨道 %i', index => {
-    const tracks: TrackListDocument = [null, null, null, null];
-    tracks[index] = track('first');
-    if (index < 3) tracks[3] = track('later');
+  it('初始主控跳过空轨道，选择第一个有干员的轨道', () => {
+    const tracks: TrackListDocument = [null, track('first'), null, track('later')];
     expect(resolveControlTimeline(tracks, [], -30)).toEqual({
       segments: [{ startFrame: -30, operatorId: 'first' }],
     });

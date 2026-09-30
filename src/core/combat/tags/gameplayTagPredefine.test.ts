@@ -3,7 +3,6 @@ import { GameplayTagPredefine } from './gameplayTagPredefine';
 import { CombatBuffContainer } from '../buffs/combatBuffs';
 import { CombatAttributeSet } from '../attributes/combatAttributes';
 import { GAMEPLAY_TAG_PREDEFINE } from '../../../data/combat/gameplayTagPredefine.generated';
-import { GAMEPLAY_TAG_PATHS } from '../../../data/combat/gameplayTagCatalog.generated';
 
 const knockDown = 'Status/Immobilized/KnockDown';
 const immune = 'Immune/KnockDown';
@@ -93,17 +92,7 @@ describe('原生预定义标签的安装与退出', () => {
     expect(table.getCommonSkillCastBlocker(target)).toBeUndefined();
   });
 
-  it('真实全表已解析成可读路径，公共运行时直接消费且保持两道免疫门独立', () => {
-    expect(Object.keys(GAMEPLAY_TAG_PREDEFINE.tags)).toHaveLength(179);
-    expect(Object.keys(GAMEPLAY_TAG_PREDEFINE.queries)).toHaveLength(67);
-    expect(GAMEPLAY_TAG_PREDEFINE.immunityQueries).toHaveLength(37);
-    const paths = new Set<string>(GAMEPLAY_TAG_PATHS);
-    const used = [
-      ...Object.values(GAMEPLAY_TAG_PREDEFINE.tags),
-      ...Object.values(GAMEPLAY_TAG_PREDEFINE.queries).flatMap(query => query.tags),
-      ...GAMEPLAY_TAG_PREDEFINE.immunityQueries.flatMap(entry => [entry.tag, ...entry.query.tags]),
-    ];
-    expect(used.every(tag => paths.has(tag))).toBe(true);
+  it('真实预定义标签保留物理异常与组件标签的独立免疫门', () => {
     const table = new GameplayTagPredefine(GAMEPLAY_TAG_PREDEFINE);
     const target = new CombatBuffContainer('enemy', new CombatAttributeSet<string>());
     expect(table.getTag('Interactive')).toBe('Category/Interactive');

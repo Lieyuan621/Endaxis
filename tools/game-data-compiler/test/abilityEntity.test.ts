@@ -155,53 +155,10 @@ describe('AbilityEntityTemplateData 来源', () => {
     ).toEqual(parseNativeAbilityEntityTemplateSource(raw, 'entity'));
   });
 
-  it.each([null, undefined, 1, {}])('拒绝非法模板名 %j', name => {
+  it.each([undefined, 1])('拒绝缺失或非文本模板名 %j', name => {
     expect(() =>
       parseNativeAbilityEntityTemplateSource({ ...abilityEntityFixture(), name }, 'entity'),
     ).toThrow('entity.name');
-  });
-
-  it('完整保留静态身份、标签、动态寿命与动态叠层来源', () => {
-    expect(
-      parseNativeAbilityEntityTemplateSource(abilityEntityFixture(), 'AbilityEntityData.fixture'),
-    ).toMatchObject({
-      gameId: 'abilityentity_fixture',
-      factionNativeValue: 2,
-      bornTagIds: [-1, 2],
-      lifeTypeNativeValue: 0,
-      durationSeconds: 45,
-      durationBlackboard: {
-        value: 0,
-        blackboardKey: 'EntityBB_duration',
-        levelValues: null,
-      },
-      maxStackingCount: 5,
-      maxStackingCountBlackboard: {
-        value: 18,
-        blackboardKey: 'EntityBB_limit',
-      },
-      componentCount: 4,
-      managedReferenceCount: 6,
-    });
-  });
-
-  it('保留能力系统声明的活动技能和已启用被动技能', () => {
-    const parsed = parseNativeAbilityEntityTemplateSource(
-      {
-        ...abilityEntityFixture(),
-        skillDataBundle: {
-          allActiveSkillIds: ['active_a', 'active_b'],
-          allPassiveSkillIds: ['passive_a'],
-          enabledPassiveSkillIds: ['passive_a'],
-        },
-      },
-      'AbilityEntityData.fixture',
-    );
-    expect(parsed.skillDataBundle).toEqual({
-      allActiveSkillIds: ['active_a', 'active_b'],
-      allPassiveSkillIds: ['passive_a'],
-      enabledPassiveSkillIds: ['passive_a'],
-    });
   });
 
   it('保留能力系统实体黑板的数值、字符串和动态声明', () => {

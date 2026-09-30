@@ -247,112 +247,88 @@ describe('干员与公共 Buff 共用规划', () => {
       expect(result.summary.entityValueConsumers?.unknownAccess).toBe(false);
   });
 
-  it.each(['off', 'report', 'apply'] as const)(
-    '正式单人 %s 生成与联合候选文本相同，复验重新收齐闭包且只写目标',
-    async optimization => {
-      const input = { ...(await setup()), optimization };
-      const skill: SkillDefinition = skillFixture({
-        key: 'spawn',
-        timelineBlockFrames: 10,
-        blackboard: { teammateValue: 7, unused: 99 },
-        scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'spawn' } }],
-        actionGraph: {
-          main: {
-            nodes: {
-              spawn: {
-                action: {
-                  kind: 'spawnAbilityEntity',
-                  parameters: {
-                    abilityEntityId: 'fixture',
-                    dieWhenSourceDies: false,
-                    inheritActionBlackboard: true,
-                  },
+  it('正式单人生成与联合候选文本相同，复验重新收齐闭包且只写目标', async () => {
+    const input = { ...(await setup()), optimization: 'apply' as const };
+    const skill: SkillDefinition = skillFixture({
+      key: 'spawn',
+      timelineBlockFrames: 10,
+      blackboard: { teammateValue: 7, unused: 99 },
+      scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'spawn' } }],
+      actionGraph: {
+        main: {
+          nodes: {
+            spawn: {
+              action: {
+                kind: 'spawnAbilityEntity',
+                parameters: {
+                  abilityEntityId: 'fixture',
+                  dieWhenSourceDies: false,
+                  inheritActionBlackboard: true,
                 },
-                next: null,
               },
+              next: null,
             },
           },
-          macros: {},
         },
-      });
-      planOperatorDefinition.mockImplementation(({ slug }: { slug: string }) => {
-        const result = planned(slug);
-        const operator: OperatorDefinition =
-          slug === 'one'
-            ? {
-                ...result.operator,
-                abilityEntityDefinitions: { fixture: { lifetime: { kind: 'infinite' } } },
-                skillGroups: [
-                  {
-                    key: 'spawn',
-                    operationType: 'battleSkill',
-                    skills: skill,
-                  },
-                ],
-              }
-            : {
-                ...result.operator,
-                buffDefinitions: {
-                  teammate: {
-                    stackingType: 'unlimited',
-                    durationSeconds: { blackboardKey: 'teammateValue' },
-                  },
+        macros: {},
+      },
+    });
+    planOperatorDefinition.mockImplementation(({ slug }: { slug: string }) => {
+      const result = planned(slug);
+      const operator: OperatorDefinition =
+        slug === 'one'
+          ? {
+              ...result.operator,
+              abilityEntityDefinitions: { fixture: { lifetime: { kind: 'infinite' } } },
+              skillGroups: [
+                {
+                  key: 'spawn',
+                  operationType: 'battleSkill',
+                  skills: skill,
                 },
-              };
-        return { ...result, operator };
-      });
-      await generateOperatorDefinitionCandidates(input);
-      const candidate = await fs.readFile(path.join(input.outputRoot, 'one.generated.ts'), 'utf8');
-      expect(candidate.includes('"unused":99')).toBe(optimization !== 'apply');
-      expect(candidate).toContain('"teammateValue":7');
-      const candidateAudit = await fs.readFile(
-        path.join(input.auditRoot, 'one/operator.audit.json'),
-        'utf8',
-      );
-      const output = path.join(input.sourceRoot, 'src/data/operators');
-      const auditOutput = path.join(
-        input.sourceRoot,
-        'tmp/game-data-audit/operator-definitions/one',
-      );
-      const commonOutput = path.join(input.sourceRoot, 'src/data/buffs/generated');
-      await fs.mkdir(output, { recursive: true });
-      await fs.mkdir(commonOutput, { recursive: true });
-      await fs.writeFile(path.join(output, 'two.generated.ts'), 'other operator');
-      await fs.writeFile(path.join(commonOutput, 'previous'), 'common snapshot');
-      vi.spyOn(process, 'cwd').mockReturnValue(input.sourceRoot);
-      const selected = { ...input, slug: 'one', output, auditOutput };
-      await expect(generateOperatorDefinition(selected)).resolves.toMatchObject({ slug: 'one' });
-      expect(await fs.readFile(path.join(output, 'one.generated.ts'), 'utf8')).toBe(candidate);
-      expect(await fs.readFile(path.join(auditOutput, 'operator.audit.json'), 'utf8')).toBe(
-        candidateAudit,
-      );
-      await expect(generateOperatorDefinition({ ...selected, check: true })).resolves.toMatchObject(
-        { slug: 'one' },
-      );
-      expect(planOperatorDefinition.mock.calls.map(([args]) => args.slug)).toEqual([
-        'one',
-        'two',
-        'one',
-        'two',
-        'one',
-        'two',
-      ]);
-      expect(renderOperatorDefinitionFiles.mock.calls.map(([slug]) => slug)).toEqual([
-        'one',
-        'two',
-        'one',
-        'one',
-      ]);
-      expect(await fs.readFile(path.join(output, 'two.generated.ts'), 'utf8')).toBe(
-        'other operator',
-      );
-      expect(await fs.readdir(commonOutput)).toEqual(['previous']);
-      expect(await fs.readFile(path.join(commonOutput, 'previous'), 'utf8')).toBe(
-        'common snapshot',
-      );
-      expect(await fs.readdir(path.dirname(auditOutput))).toEqual(['one']);
-    },
-  );
+              ],
+            }
+          : {
+              ...result.operator,
+              buffDefinitions: {
+                teammate: {
+                  stackingType: 'unlimited',
+                  durationSeconds: { blackboardKey: 'teammateValue' },
+                },
+              },
+            };
+      return { ...result, operator };
+    });
+    await generateOperatorDefinitionCandidates(input);
+    const candidate = await fs.readFile(path.join(input.outputRoot, 'one.generated.ts'), 'utf8');
+    expect(candidate).not.toContain('"unused":99');
+    expect(candidate).toContain('"teammateValue":7');
+    const candidateAudit = await fs.readFile(
+      path.join(input.auditRoot, 'one/operator.audit.json'),
+      'utf8',
+    );
+    const output = path.join(input.sourceRoot, 'src/data/operators');
+    const auditOutput = path.join(input.sourceRoot, 'tmp/game-data-audit/operator-definitions/one');
+    const commonOutput = path.join(input.sourceRoot, 'src/data/buffs/generated');
+    await fs.mkdir(output, { recursive: true });
+    await fs.mkdir(commonOutput, { recursive: true });
+    await fs.writeFile(path.join(output, 'two.generated.ts'), 'other operator');
+    await fs.writeFile(path.join(commonOutput, 'previous'), 'common snapshot');
+    vi.spyOn(process, 'cwd').mockReturnValue(input.sourceRoot);
+    const selected = { ...input, slug: 'one', output, auditOutput };
+    await expect(generateOperatorDefinition(selected)).resolves.toMatchObject({ slug: 'one' });
+    expect(await fs.readFile(path.join(output, 'one.generated.ts'), 'utf8')).toBe(candidate);
+    expect(await fs.readFile(path.join(auditOutput, 'operator.audit.json'), 'utf8')).toBe(
+      candidateAudit,
+    );
+    await expect(generateOperatorDefinition({ ...selected, check: true })).resolves.toMatchObject({
+      slug: 'one',
+    });
+    expect(await fs.readFile(path.join(output, 'two.generated.ts'), 'utf8')).toBe('other operator');
+    expect(await fs.readdir(commonOutput)).toEqual(['previous']);
+    expect(await fs.readFile(path.join(commonOutput, 'previous'), 'utf8')).toBe('common snapshot');
+    expect(await fs.readdir(path.dirname(auditOutput))).toEqual(['one']);
+  });
 
   it.each(['off', 'report', 'apply'] as const)(
     '%s 模式的生成和复验各规划每人一次，公共定义与报告使用同一模式',
@@ -647,20 +623,19 @@ describe('干员与公共 Buff 共用规划', () => {
     },
   );
 
-  it.each([
-    'commonBuffDefinitions.generated.ts',
-    'commonBuffPresentationNames.generated.ts',
-    'extra.ts',
-  ])('复验发现 %s 内容或文件集合变化且不写回', async file => {
-    const input = await setup();
-    await generateOperatorDefinitionCandidates(input);
-    const output = path.join(input.commonBuffOutput, file);
-    await fs.writeFile(output, 'changed after generation\n');
-    await expect(generateOperatorDefinitionCandidates({ ...input, check: true })).rejects.toThrow(
-      'stale',
-    );
-    expect(await fs.readFile(output, 'utf8')).toBe('changed after generation\n');
-  });
+  it.each(['commonBuffDefinitions.generated.ts', 'extra.ts'])(
+    '复验发现 %s 内容或文件集合变化且不写回',
+    async file => {
+      const input = await setup();
+      await generateOperatorDefinitionCandidates(input);
+      const output = path.join(input.commonBuffOutput, file);
+      await fs.writeFile(output, 'changed after generation\n');
+      await expect(generateOperatorDefinitionCandidates({ ...input, check: true })).rejects.toThrow(
+        'stale',
+      );
+      expect(await fs.readFile(output, 'utf8')).toBe('changed after generation\n');
+    },
+  );
 
   it('联合生成每轮新建读取上下文，复验不会复用首轮固定表快照', async () => {
     const base = await setup();

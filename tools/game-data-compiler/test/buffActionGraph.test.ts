@@ -5,7 +5,7 @@ import {
   parseReferenceAwareBuffActionGraphSource,
   resolveDefinitionReferenceClosure,
 } from '../src/index.ts';
-import { targetFixture } from './sourceFixtures.ts';
+import { buffFixture, targetFixture } from './sourceFixtures.ts';
 
 describe('Buff 公共动作图', () => {
   it('原始 Buff 生命周期数字事件与已解码名称具有同一身份', () => {
@@ -54,42 +54,6 @@ describe('Buff 公共动作图', () => {
     );
   });
 });
-
-function buffFixture(overrides: Record<string, unknown>): Record<string, unknown> {
-  return {
-    abilityEventAction: [],
-    addingCooldown: {},
-    applyTags: [],
-    attributeModifier: {},
-    blackboard: [],
-    buffEventAction: [],
-    damageModifier: [],
-    dispelConfig: {},
-    duration: {},
-    finishOnRepatriate: false,
-    globalModifier: [],
-    hasAddingCooldown: false,
-    hasIcon: false,
-    healModifier: [],
-    iconConfig: {},
-    id: 'buff_fixture',
-    igniteEventAction: [],
-    ignoreCooldownWhenAdding: false,
-    ignoreTagImmune: false,
-    lifeType: 'Infinity',
-    maxTriggerCnt: {},
-    onlyUseSelfTimeDilation: false,
-    poiseModifier: [],
-    shieldConfigs: [],
-    stackingSettings: {},
-    tagsAfterTriggerExtendBuffAction: [],
-    timelineActions: [],
-    triggerInterval: {},
-    useTimeDilationDt: false,
-    waitFirstTriggerInterval: true,
-    ...overrides,
-  };
-}
 
 function sequence(actionData: unknown[]): Record<string, unknown> {
   return {

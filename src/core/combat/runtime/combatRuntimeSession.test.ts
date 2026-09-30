@@ -1,3 +1,4 @@
+import type { OperatorControlConfiguration } from '../skills/operatorControlRuntime';
 import { expect, it, vi } from 'vitest';
 import { CombatRuntimeAssembly, type CombatOperatorProgram } from './combatRuntimeAssembly';
 import type {
@@ -110,7 +111,7 @@ function createFixture(
   deferInitialInput = false,
   lazyCasts = false,
   cameraSensitive = false,
-  initialControlledOperatorId?: string | null,
+  operatorControl?: OperatorControlConfiguration,
 ) {
   const environment = new StandardPlayerDamageEnvironment({
     ...environmentInput(isOperatorControlled),
@@ -265,7 +266,7 @@ function createFixture(
     resources,
     enemy,
     operators,
-    ...(initialControlledOperatorId === undefined ? {} : { initialControlledOperatorId }),
+    ...(operatorControl === undefined ? {} : { operatorControl }),
     inputs: live ? [] : inputs,
     abilityEntityChildSkillPrograms: childPrograms,
     combatOperationPrograms: operationPrograms,
@@ -286,6 +287,7 @@ function createFixture(
       CombatRuntimeAssembly.restore({
         receiptHistory,
         graph,
+        operatorControl,
         resources,
         enemy,
         operators: candidateOperators,
@@ -856,8 +858,16 @@ it('按游标筛选回执返回不可变事实，回退后旧游标失效', () =
 });
 
 it('首帧人工切换在被动初始化后执行，排程和逐帧入口都通知一次', () => {
-  const scheduled = createFixture(() => false, false, false, false, false, 'operator').session;
-  const live = createFixture(() => false, true, true, false, false, 'operator').session;
+  const configuration = {
+    initialOperatorId: 'operator',
+    automaticSwitches: false,
+    scheduledSwitches: [],
+  };
+  const scheduled = createFixture(undefined, false, false, false, false, {
+    ...configuration,
+    scheduledSwitches: [{ frame: 0, operatorId: null }],
+  }).session;
+  const live = createFixture(undefined, true, true, false, false, configuration).session;
   const count = (session: CombatRuntimeSession) =>
     [...session.readState().operators.get('operator')!.buffs!.instances.values()]
       .find(buff => buff.identity.definitionId === 'switch-counter')!

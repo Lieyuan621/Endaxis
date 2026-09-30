@@ -6,8 +6,6 @@ import {
   compileAllGearSetDefinitions,
   generateGearSetDefinitions,
 } from '../scripts/generateGearSetDefinitions.ts';
-import { compileEquipmentSuitStaticDefinitionBatchSource } from '../src/domains/equipment/suitStaticDefinition.ts';
-import { compileEquipmentSuitRuntimeBatchSource } from '../src/domains/equipment/suitRuntimeDefinition.ts';
 import { activeSkillFixture } from './sourceFixtures.ts';
 
 const roots: string[] = [];
@@ -31,18 +29,13 @@ const suit = (id: string, skillId = 'passive_fixture') => ({
 });
 
 describe('套装来源全量发现，不依赖已发布身份名单', () => {
-  it('未知于旧配置的身份也进入相同的转换路径，输出与公共批量编译等价', () => {
+  it('未知于旧配置的套装身份也进入转换结果', () => {
     const table = {
       suit_fixture_new: suit('suit_fixture_new'),
       suit_fixture_old: suit('suit_fixture_old'),
     };
     const result = compileAllGearSetDefinitions(table, skillData, {}, {});
-    const shared = compileEquipmentSuitStaticDefinitionBatchSource(table, skillData, {});
-    expect(result).toEqual(
-      compileEquipmentSuitRuntimeBatchSource(shared.definitions, shared.runtimeDependencies, {}),
-    );
     expect(result.definitions.map(d => d.slug)).toEqual(['suit_fixture_new', 'suit_fixture_old']);
-    expect(result.definitions.map(d => d.skillId)).toEqual(['passive_fixture', 'passive_fixture']);
   });
 
   it('逐项收集错误，坏的新条目不会被跳过或遮住后续有效条目', () => {

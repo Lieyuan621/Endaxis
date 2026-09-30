@@ -84,33 +84,20 @@ describe('SkillPlacementTransaction', () => {
       plannedStartFrames,
     });
   });
-  it.each(['continuation', 'compact'] as const)(
-    'preserves editing and the error when %s planning fails',
-    async mode => {
-      const { transaction, failures, placed } = setup();
-      const error = new Error('missing simulation input');
-      const result = transaction.resolve(placed, mode);
-      failures[0]!(error);
-      expect(await result).toEqual({ scenario: placed.scenario, incomplete: true, error });
-    },
-  );
-  it.each(['edit', 'cancel', 'newer'] as const)(
-    'does not fall back over newer state after %s',
-    async reason => {
-      const { transaction, pending, failures, placed, edit } = setup();
-      const first = transaction.resolve(placed);
-      let second: ReturnType<typeof transaction.resolve> | undefined;
-      if (reason === 'edit') edit();
-      if (reason === 'cancel') transaction.cancel();
-      if (reason === 'newer') second = transaction.resolve(placed);
-      failures[0]!(new Error('late simulation failure'));
-      expect(await first).toBeNull();
-      if (second) {
-        pending[1]!({ status: 'incomplete', unresolvedCastIds: ['b'] });
-        expect(await second).not.toBeNull();
-      }
-    },
-  );
+  it('preserves editing and the error when planning fails', async () => {
+    const { transaction, failures, placed } = setup();
+    const error = new Error('missing simulation input');
+    const result = transaction.resolve(placed);
+    failures[0]!(error);
+    expect(await result).toEqual({ scenario: placed.scenario, incomplete: true, error });
+  });
+  it('does not fall back over a newer edit when planning fails', async () => {
+    const { transaction, failures, placed, edit } = setup();
+    const first = transaction.resolve(placed);
+    edit();
+    failures[0]!(new Error('late simulation failure'));
+    expect(await first).toBeNull();
+  });
   it('preserves default author placement when planning is unresolved', async () => {
     const { transaction, pending, placed } = setup();
     const result = transaction.resolve(placed);

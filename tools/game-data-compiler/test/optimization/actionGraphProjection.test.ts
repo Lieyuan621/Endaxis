@@ -1,39 +1,13 @@
-/**
- * 树→图投影器（createActionGraphProjection / createActionGraphResourceProjection）已随树桥接删除。
- * 仅测已删接口的用例随之删除：
- * - 自动宏提取已删除，重复结构由 actionGraphDeduplication.test.ts 验证分支去重。
- * - 'shares equal tails without deleting calls or mutable instance boundaries'
- *   （投影器尾部共享与实例边界语义）
- * - 'does not merge distinct numeric values or user scope names'
- *   （投影器按值 interning 语义）
- * 保留的用例改为直接验证仍存在的 prepareActionGraphIdentities 与已生成图资源本身。
- */
 import { describe, expect, it } from 'vitest';
 import { prepareActionGraphIdentities } from '../../src/compiler/optimization/actionGraphProjection.ts';
-import { validateActionGraphResource } from '../../../../src/core/action-graph/actionGraphValidation.ts';
 import type {
   ActionGraphResourceDefinition,
   ActionGraphStep,
 } from '../../../../packages/game-data-contract/src/actionGraph.ts';
-import { typhoeus } from '../../../../src/data/operators/typhoeus.generated.ts';
 
 const finish: ActionGraphStep = { kind: 'finishTimeline', parameters: {} };
 
-describe('prepareActionGraphIdentities 与已生成图资源', () => {
-  it('真实提弗洛斯浮空普攻已经是独立技能图资源', () => {
-    const group = typhoeus.skillGroups.find(item => item.key === 'enhancedBasicAttack');
-    const skill = group?.skills;
-    if (!Array.isArray(skill)) throw new Error('missing floating attack sequence');
-    const definition = skill.find(item => item.key === 'chr_0034_typhoea_floating_attack2');
-    if (!definition) throw new Error('missing floating attack 2');
-    const prepared = prepareActionGraphIdentities(definition);
-    validateActionGraphResource(prepared.actionGraph);
-    expect(Object.keys(prepared.actionGraph.main.nodes).length).toBeLessThan(100);
-    expect(prepared.scheduledSequences[2]?.sequence).toEqual(
-      prepared.scheduledSequences[4]?.sequence,
-    );
-  });
-
+describe('prepareActionGraphIdentities', () => {
   it('omits per-call identities and binds local scopes when loading', () => {
     const make = (id: string): { actionGraph: ActionGraphResourceDefinition } => ({
       actionGraph: {

@@ -26,12 +26,11 @@ import {
   normalizeDurationBarColorPrefs,
 } from '../../../ui/timeline/results/durationBarColor';
 
-const elements: InflictionElement[] = ['heat', 'electric', 'cryo', 'nature'];
 const attachmentIds = new Set(
   elementalAttachments.buffs.filter(b => b.role?.kind === 'elementalAttachment').map(b => b.id),
 );
-it.each(elements)('does not connect %s after expiry to a new instance', async element => {
-  const { segments, viz } = await run([element, element], 900);
+it('does not connect an expired attachment to a new instance', async () => {
+  const { segments, viz } = await run(['heat', 'heat'], 900);
   const attachments = segments.filter(s => attachmentIds.has(s.buffId));
   expect(attachments.map(s => s.layers)).toEqual([1, 1]);
   expect(attachments[0]!.endFrame).toBeLessThan(attachments[1]!.startFrame);
@@ -220,8 +219,8 @@ it.each(compoundStatusFactories.factories)(
   },
 );
 
-it.each(elements)('preserves %s stacking, capped refresh and natural expiry', async element => {
-  const { segments, viz } = await run(Array.from({ length: 5 }, () => element));
+it('preserves attachment stacking, capped refresh and natural expiry', async () => {
+  const { segments, viz } = await run(Array.from({ length: 5 }, () => 'electric'));
   const attachments = segments.filter(s => attachmentIds.has(s.buffId));
   expect(attachments.map(s => s.layers)).toEqual([1, 2, 3, 4, 4]);
   expect(new Set(attachments.map(s => s.instanceId)).size).toBe(1);

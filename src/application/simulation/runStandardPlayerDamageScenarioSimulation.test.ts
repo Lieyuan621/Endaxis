@@ -1618,6 +1618,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
         `scenario:rossi-attack4-${controlled ? 'controlled' : 'off-field'}`,
         '洛茜第四段普攻主控分支',
       );
+      scenario.battle.automaticControlSwitches = false;
       const rossiTrack = controlled ? 0 : 1;
       if (!controlled) {
         scenario.tracks[0] = {

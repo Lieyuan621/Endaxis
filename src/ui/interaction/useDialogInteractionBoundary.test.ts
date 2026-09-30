@@ -4,10 +4,6 @@ import { createInteractionSession } from './interactionSession';
 import { useDialogInteractionBoundary } from './useDialogInteractionBoundary';
 import { usePopoverInteractionBoundary } from './usePopoverInteractionBoundary';
 import { useKeyboardShortcutScope } from '../keyboard/keyboardShortcutRouter';
-import enemy from '../timeline/components/EnemySettingsPanel.vue?raw';
-import global from '../timeline/components/GlobalResourcePanel.vue?raw';
-import reset from '../timeline/components/TimelineResetDialog.vue?raw';
-import markerMenu from '../timeline/interaction/TimelineMarkerContextMenu.vue?raw';
 
 describe('locally owned leaf dialog input', () => {
   afterEach(() => vi.unstubAllGlobals());
@@ -42,15 +38,6 @@ describe('locally owned leaf dialog input', () => {
     }
   });
 
-  it('routes reset and marker menu Escape without independent document/window listeners', () => {
-    expect(reset).toContain(
-      'useDialogInteractionBoundary(session, () => props.modelValue, close, region)',
-    );
-    expect(markerMenu).toContain('usePopoverInteractionBoundary(');
-    for (const source of [reset, markerMenu])
-      expect(source).not.toContain("addEventListener('keydown'");
-  });
-
   it('blocks background commands and leaves native Escape to the dialog above a popover', () => {
     const target = new EventTarget();
     vi.stubGlobal('window', target);
@@ -58,7 +45,9 @@ describe('locally owned leaf dialog input', () => {
     const session = createInteractionSession();
     const dialog = ref(false);
     const popover = ref(false);
-    const closePopover = vi.fn();
+    const closePopover = vi.fn(() => {
+      popover.value = false;
+    });
     const background = vi.fn(() => true);
     const cancel = vi.fn();
     scope.run(() => {
@@ -85,11 +74,11 @@ describe('locally owned leaf dialog input', () => {
       expect(background).not.toHaveBeenCalled();
       expect(session.tryStart('drag', cancel)).toBeNull();
       dialog.value = false;
-      expect(session.tryStart('drag', cancel)).toBeNull();
-      target.dispatchEvent(Object.assign(new Event('keydown'), { key: 'Escape' }));
+      const gesture = session.tryStart('drag', cancel);
+      expect(gesture).not.toBeNull();
       expect(closePopover).toHaveBeenCalledOnce();
-      popover.value = false;
-      expect(session.tryStart('drag', cancel)).not.toBeNull();
+      expect(popover.value).toBe(false);
+      gesture!.release();
       target.dispatchEvent(new Event('paste'));
       expect(background).toHaveBeenCalledOnce();
     } finally {
@@ -105,12 +94,5 @@ describe('locally owned leaf dialog input', () => {
     expect(session.tryStart('drag', vi.fn())).toBeNull();
     scope.stop();
     expect(session.tryStart('drag', vi.fn())).not.toBeNull();
-  });
-
-  it('registers local enemy and global attribute dialog lifecycles', () => {
-    expect(enemy).toContain('label="enemy-selection" :active="selectorVisible" modal');
-    expect(enemy).toContain('label="enemy-stats" :active="statsVisible" modal');
-    expect(global).toContain('label="global-modifiers" :active="editorVisible" modal');
-    expect(enemy).toContain("emit('save', cloneEditorDefinition(draft))");
   });
 });

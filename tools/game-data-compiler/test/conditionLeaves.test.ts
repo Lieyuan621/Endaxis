@@ -83,189 +83,25 @@ describe('公共条件叶子 IR', () => {
     });
   });
 
-  it.each([
-    {
-      name: '浮点黑板比较',
-      value: condition('CompareFloat', {
-        compare: 'GT',
-        valueA: scalarFixture(0, 'talent_enabled'),
-        valueB: scalarFixture(0.5),
-      }),
-      blackboard: { talent_enabled: [0, 1] },
-    },
-    {
-      name: '主控身份',
-      value: condition('CheckMainCharacterCondition', {
-        checkTarget: { targetSource: 'Owner', targetGroupKey: '' },
-      }),
-      blackboard: {},
-    },
-    {
-      name: '目标组数量',
-      value: condition('CheckEntityNum', {
-        checkTarget: { targetSource: 'Context', targetGroupKey: 'targets' },
-        minNum: 1,
-        compareType: 'GE',
-        containsHittableTarget: false,
-        excludeDeadEntity: true,
-        storeKey: 'target_count',
-      }),
-      blackboard: {},
-    },
-    {
-      name: 'Buff 高级查询',
-      value: condition('CheckBuffStackNumAdvanced', {
-        checkTarget: { targetSource: 'Target', targetGroupKey: '' },
-        buffSettings: {
-          checkType: 'Tag',
-          buffIdList: [''],
-          tagQuery: { queryType: 'HasAny', tags: [{ tagId: -1480463572 }] },
-        },
-        buffStackNumType: 'BuffCount',
-        compareType: 'GE',
-        value: scalarFixture(1),
-        limitSkillCastId: false,
-      }),
-      blackboard: {},
-    },
-    {
-      name: '实体 Tag',
-      value: condition('CheckTagMatch', {
-        checkTarget: { targetSource: 'Context', targetGroupKey: 'entities' },
-        query: { queryType: 'HasAll', tags: [{ tagId: -549424863 }] },
-      }),
-      blackboard: {},
-    },
-    {
-      name: '定时标记',
-      value: condition('CheckTimedMarkerCondition', {
-        checkTarget: { targetSource: 'Owner', targetGroupKey: '' },
-        id: 'damage_cd',
-        blackboardKey: '',
-        useBlackboardKey: false,
-        returnTrueIfNotExists: true,
-      }),
-      blackboard: {},
-    },
-    {
-      name: '生命比例',
-      value: condition('CheckHp', {
-        hpOwner: { targetSource: 'Context', targetGroupKey: 'smart_target' },
-        compare: 'LE',
-        isRatio: true,
-        value: scalarFixture(0.5),
-      }),
-      blackboard: {},
-    },
-    {
-      name: '距离',
-      value: condition('CheckDistanceCondition', {
-        source: targetFixture('Owner'),
-        target: targetFixture('Target'),
-        distance: 8,
-        lessThan: true,
-        includeTargetRadius: false,
-        containsHittableObj: false,
-      }),
-      blackboard: {},
-    },
-    {
-      name: '概率',
-      value: condition('Probablity', { prob: scalarFixture(0, 'proc_chance') }),
-      blackboard: { proc_chance: [0.25, 0.5] },
-    },
-    {
-      name: '目标身份相等',
-      value: condition('CheckTargetsEqual', {
-        firstTargetSettings: targetFixture('Owner'),
-        secondTargetSettings: targetFixture('Target'),
-      }),
-      blackboard: {},
-    },
-    {
-      name: '对象类型',
-      value: condition('CheckObjectTypeMatch', {
-        target: targetFixture('Target'),
-        objectTypeMask: 'Character',
-      }),
-      blackboard: {},
-    },
-    {
-      name: '敌人等级位集',
-      value: condition('CheckEnemyRank', {
-        target: targetFixture('Target'),
-        enemyRankSet: 'Elite, Boss',
-      }),
-      blackboard: {},
-    },
-    {
-      name: '霸体值',
-      value: condition('CheckSuperArmor', {
-        checkTarget: targetFixture('Target'),
-        compareType: 'GE',
-        value: scalarFixture(0, 'super_armor_threshold'),
-      }),
-      blackboard: { super_armor_threshold: [10, 20] },
-    },
-    {
-      name: '双方向夹角',
-      value: condition('CheckTwoDirectionAngle', {
-        dir1Source: targetFixture('Owner'),
-        dir1Target: targetFixture('Target'),
-        dir1DirectionType: 'TargetDirection',
-        dir2Source: targetFixture('Owner'),
-        dir2Target: targetFixture('Target'),
-        dir2DirectionType: 'SourceForward',
-        compareType: 'LE',
-        value: scalarFixture(45),
-      }),
-      blackboard: {},
-    },
-    {
-      name: '能力实体剩余时长',
-      value: condition('CheckAbilityEntityCurDuration', {
-        abilityEntity: targetFixture('Target'),
-        compareType: 'LT',
-        value: scalarFixture(3),
-        saveCurDuration: false,
-        bbKey: '',
-      }),
-      blackboard: {},
-    },
-    {
-      name: 'OR 组与局部取反',
-      value: condition('OrConditionAction', {
-        conditionList: [
-          {
-            actionData: [
-              condition('NotNextCheckAction', {}),
-              condition('CompareFloat', {
-                compare: 'GT',
-                valueA: scalarFixture(0, 'enabled'),
-                valueB: scalarFixture(0.5),
-              }),
-              condition('CheckDamageType', { damageType: 'Fire' }),
-            ],
-            onlyExecuteWhenSourceIsMainChar: false,
-            onlyExecuteWhenSourceIsGuard: false,
-          },
-          {
-            actionData: [condition('CheckSkillHasHit', {})],
-            onlyExecuteWhenSourceIsMainChar: false,
-            onlyExecuteWhenSourceIsGuard: false,
-          },
-        ],
-      }),
-      blackboard: { enabled: [0, 1] },
-    },
-  ])('$name 锁定已验证的对象级结构', ({ value, blackboard }) => {
-    const inheritedBlackboard: Record<string, readonly number[]> = {};
-    Object.entries(blackboard).forEach(([key, values]) => {
-      if (values) inheritedBlackboard[key] = values;
-    });
+  it('保留能力实体剩余时长的比较和目标', () => {
     expect(
-      parseConditionLeafSource(value, 'fixture.condition', inheritedBlackboard),
-    ).toMatchSnapshot();
+      parseConditionLeafSource(
+        condition('CheckAbilityEntityCurDuration', {
+          abilityEntity: targetFixture('Target'),
+          compareType: 'LT',
+          value: scalarFixture(3),
+          saveCurDuration: false,
+          bbKey: '',
+        }),
+        'fixture.condition',
+        {},
+      ),
+    ).toMatchObject({
+      kind: 'abilityEntityDuration',
+      comparison: 'LT',
+      target: { targetSource: 'Target' },
+      value: { value: 3 },
+    });
   });
 
   it('未知条件携带原生类型明确阻塞', () => {

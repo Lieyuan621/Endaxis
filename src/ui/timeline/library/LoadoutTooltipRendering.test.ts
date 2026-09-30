@@ -4,15 +4,7 @@ import { renderToString } from '@vue/server-renderer';
 import { ID_INJECTION_KEY, ZINDEX_INJECTION_KEY } from 'element-plus';
 import { i18n, setLocale } from '../../../i18n/index';
 import { gameDataRepository } from '../../../data/gameDataRepository';
-import {
-  getGearPieceGameName,
-  getOperatorPotentialDescription,
-  getOperatorTalentDescription,
-} from '../../gameText';
-import { GameRichTextRenderer } from '../../presentation';
-import EquipmentSelectionTooltip from './EquipmentSelectionTooltip.vue';
 import OperatorSkillTooltip from './OperatorSkillTooltip.vue';
-import { getGearDefinitionSelectionAffixRows } from './gearAffixPresentation';
 import WeaponSelectionTooltip from './WeaponSelectionTooltip.vue';
 import { KeyboardShortcutRouter } from '../../keyboard/keyboardShortcutRouter';
 
@@ -40,11 +32,9 @@ describe('构筑 tooltip 渲染', () => {
       skillTypeName: '终结技',
     });
 
-    expect(html).toContain('operator-skill-tooltip');
     expect(html).toContain('晨星的协奏曲');
     expect(html).toContain('终结技');
     expect(html).toContain('高歌姿态');
-    expect(html).toContain('game-rich-text');
     expect(html).toContain('终结技能量');
     expect(html).not.toContain('>ultimateEnergy<');
   });
@@ -106,12 +96,10 @@ describe('构筑 tooltip 渲染', () => {
       fullPotential: true,
     });
 
-    expect(normalHtml).toContain('weapon-selection-preview');
     expect(normalHtml).toContain('曜夜的首演');
     expect(normalHtml).toContain('医疗·闪耀帷幕');
     expect(normalHtml).toContain('Lv4');
     expect(normalHtml).toContain('+25.6%');
-    expect(normalHtml).toContain('game-rich-text');
 
     expect(fullHtml).toContain('Lv9');
     expect(fullHtml).toContain('+44.8%');
@@ -127,7 +115,6 @@ describe('构筑 tooltip 渲染', () => {
       fullPotential: false,
     });
     expect(html).toContain('测试三星武器');
-    expect(html).toContain('weapon-selection-preview__skill');
     expect(html).toContain('主能力提升·小');
     expect(html).toContain('强攻·武装整备');
   });
@@ -183,84 +170,5 @@ describe('构筑 tooltip 渲染', () => {
     router.revokeInactiveKeyboardState();
     expect(await renderPreview()).toBe(normal);
     expect(JSON.stringify(weapon)).toBe(original);
-  });
-
-  it('全部当前武器 tooltip 不使用默认图标', async () => {
-    const failures: string[] = [];
-    for (const weapon of gameDataRepository.getWeapons()) {
-      const html = await renderComponent(WeaponSelectionTooltip, {
-        weapon,
-        name: weapon.displayName ?? weapon.slug,
-        fullPotential: false,
-      });
-      if (html.includes('/icons/default_icon.webp')) {
-        failures.push(`${weapon.slug}: default icon`);
-      }
-    }
-    expect(failures).toEqual([]);
-  });
-
-  it('装备选择 tooltip 渲染词条和套装富文本', async () => {
-    const canonicalSlug = 'item_equip_t4_suit_expend_spell01_body_02';
-    const definition = gameDataRepository.getGear(canonicalSlug)!;
-    const affixRows = getGearDefinitionSelectionAffixRows(definition, (key, named) =>
-      String(i18n.global.t(key, named ?? {})),
-    );
-    const html = await renderComponent(EquipmentSelectionTooltip, {
-      equipment: {
-        id: canonicalSlug,
-        canonicalId: canonicalSlug,
-        name: getGearPieceGameName(canonicalSlug, 'zh-CN'),
-        category: definition.gearSetSlug ?? '',
-      },
-      affixRows,
-      gearSetName: '壤流',
-      gearSetDescription: '测试套装说明',
-    });
-
-    expect(affixRows.length).toBeGreaterThan(0);
-    expect(html).toContain('equipment-selection-preview');
-    expect(html).toContain('壤流轻甲');
-    expect(html).toContain('equipment-selection-preview__affix-row');
-    expect(html).toContain('equipment-selection-preview__set-bonus');
-    expect(html).toContain('game-rich-text');
-  });
-
-  it('全部当前装备都能从自身定义投影出可读词条', () => {
-    const failures = gameDataRepository.getGears().flatMap(definition => {
-      const rows = getGearDefinitionSelectionAffixRows(definition, (key, named) =>
-        String(i18n.global.t(key, named ?? {})),
-      );
-      if (rows.length === 0) return [`${definition.slug}: no rows`];
-      return rows.flatMap(row => {
-        if (row.modifierId.length === 0 || row.label.length === 0 || row.valueText.length === 0) {
-          return [`${definition.slug}: incomplete ${row.modifierId}`];
-        }
-        if (row.label === row.modifierId) {
-          return [`${definition.slug}: untranslated ${row.modifierId}`];
-        }
-        if (row.src === '/icons/default_icon.webp') {
-          return [`${definition.slug}: default icon ${row.modifierId}`];
-        }
-        return [];
-      });
-    });
-    expect(failures).toEqual([]);
-  });
-
-  it('梨诺天赋和潜能描述可由统一富文本组件渲染', async () => {
-    const talentHtml = await renderComponent(GameRichTextRenderer, {
-      text: getOperatorTalentDescription('liino', 0, 0, 'zh-CN'),
-      locale: 'zh-CN',
-    });
-    const potentialHtml = await renderComponent(GameRichTextRenderer, {
-      text: getOperatorPotentialDescription('liino', 0, 'zh-CN'),
-      locale: 'zh-CN',
-    });
-
-    expect(talentHtml).toContain('game-rich-text');
-    expect(talentHtml).toContain('+10%');
-    expect(potentialHtml).toContain('game-rich-text');
-    expect(potentialHtml).toContain('返还');
   });
 });

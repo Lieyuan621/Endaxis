@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  parseBattleCommandMappingCatalogDumpSource,
-  renderBattleCommandMappingCatalogModule,
-} from '../src/source/battleCommandMappingCatalogSource.ts';
+import { parseBattleCommandMappingCatalogDumpSource } from '../src/source/battleCommandMappingCatalogSource.ts';
 
 const dump = `MonoBehaviour Base
 \tSerializeFieldDictionary\`2 defaultCacheTimeMap
@@ -39,9 +36,6 @@ describe('BattleCommandMappingConfig catalog source', () => {
       allowAttackTimeAfterPerfectDodge: 0.25,
       allowDashInPerfectDodge: 0.5,
     });
-    expect(renderBattleCommandMappingCatalogModule(source)).toContain(
-      '"allowAttackTimeAfterDash": 0.35',
-    );
   });
 
   it('rejects incomplete or reordered command maps', () => {

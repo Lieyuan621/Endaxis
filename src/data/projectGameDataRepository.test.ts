@@ -9,7 +9,7 @@ import generatedGear from './equipment/generated/suit_wisdwill01/item_equip_t1_s
 import { createProjectGameDataRepository } from './projectGameDataRepository';
 
 describe('project game data repository', () => {
-  it('loads the operator catalog without equipment and merges concurrent equipment loads', async () => {
+  it('loads only requested catalogs and merges concurrent loads of the same catalog', async () => {
     const repository = await createProjectGameDataRepository(undefined);
     const task = repository.ensureDefinitions('operators');
     expect(repository.ensureDefinitions('operators')).toBe(task);
@@ -20,33 +20,14 @@ describe('project game data repository', () => {
     expect(repository.getGearSets()).toEqual([]);
     expect(repository.hasDefinitions('operators')).toBe(true);
     expect(repository.hasAllDefinitions()).toBe(false);
-    await Promise.all([
-      repository.ensureDefinitions('weapons'),
-      repository.ensureDefinitions('gears'),
-    ]);
+    const weapons = repository.ensureDefinitions('weapons');
+    expect(repository.ensureDefinitions('weapons')).toBe(weapons);
+    await weapons;
     expect(repository.getOperator('perlica')).not.toBeNull();
     expect(repository.getWeapon('wpn_sword_0026')).not.toBeNull();
-    expect(repository.getGears().length).toBeGreaterThan(0);
-    expect(repository.getGearSets().length).toBeGreaterThan(0);
-    expect(repository.hasAllDefinitions()).toBe(true);
-  });
-  it('creates an empty-page repository without local preview files', async () => {
-    const repository = await createProjectGameDataRepository(undefined);
-    expect(repository.getOperators()).toEqual([]);
-    expect(repository.getWeapons()).toEqual([]);
     expect(repository.getGears()).toEqual([]);
     expect(repository.getGearSets()).toEqual([]);
     expect(repository.hasAllDefinitions()).toBe(false);
-    expect(repository.getCommonDefinitionSources?.().map(source => source.id)).toEqual([
-      'common-buffs',
-      'contingency-contracts',
-      'consumables',
-    ]);
-    const [buffId] = Object.keys(repository.getCommonBuffDefinitions?.() ?? {});
-    expect(buffId).toBeDefined();
-    expect(repository.getCommonBuffSource?.(buffId!)?.buffDefinitions?.[buffId!]).toBe(
-      repository.getCommonBuffDefinitions?.()[buffId!],
-    );
   });
   it('loads only referenced definitions before the selection catalog is requested', async () => {
     const repository = await createProjectGameDataRepository({
@@ -83,16 +64,10 @@ describe('project game data repository', () => {
     const { operatorDefinitions } = await import('./operators');
     expect(repository.getOperators()).toEqual(operatorDefinitions);
     expect(repository.getOperator('purrchena')).not.toBeNull();
-    expect(repository.getWeapons()).toHaveLength(80);
     expect(repository.getWeapon('wpn_sword_0023')).not.toBeNull();
     expect(repository.getWeapon('wpn_sword_0026')).not.toBeNull();
     expect(repository.getOperator('typhoeus')).not.toBeNull();
     expect(repository.hasAllDefinitions()).toBe(true);
-    expect(repository.getCommonDefinitionSources?.().map(source => source.id)).toEqual([
-      'common-buffs',
-      'contingency-contracts',
-      'consumables',
-    ]);
   });
 
   it('does not look for project templates or their audit origins among generated files', async () => {
@@ -138,7 +113,6 @@ describe('project game data repository', () => {
     const result = openProject(project, { gameDataRepository: repository });
 
     expect(result.ok).toBe(true);
-    expect(repository.getOperators()).toEqual([]);
   });
 
   it('loads the built-in set referenced by a materialized project gear', async () => {

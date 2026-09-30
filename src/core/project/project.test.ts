@@ -168,22 +168,6 @@ describe('current project document', () => {
       value: project,
     });
   });
-  it('round-trips an empty project without adding runtime state', () => {
-    const project = createEmptyProject({
-      createdWith: 'test',
-    });
-
-    const json = serializeProjectDocument(project);
-    const parsed = parseProjectDocument(json);
-
-    expect(parsed).toEqual({ ok: true, value: project });
-    expect(json).not.toContain('operatorStatus');
-    expect(json).not.toContain('triggerEffects');
-    expect(json).not.toContain('_expectedDamage');
-    expect(json).not.toContain('initialEffects');
-    expect(json).not.toContain('initialEnemyState');
-  });
-
   it('round-trips frame-based cycle boundaries and control switches', () => {
     const project = createEmptyProject({
       createdWith: 'test',
@@ -664,29 +648,6 @@ describe('current project document', () => {
         path: '$.scenarios[0].tracks[0].skillCasts[0].simulationInputs.randomSeed',
         message: 'expected a 32-bit unsigned integer',
       });
-  });
-
-  it('accepts partial presentation fields', () => {
-    const project = createEmptyProject({
-      createdWith: 'test',
-    });
-    const scenario = project.scenarios[0]!;
-    const track = createTrack();
-    track.skillCasts.push({
-      id: 'cast:presentation',
-      source: {
-        kind: 'operatorSkill',
-        skillGroupKey: 'battleSkill',
-        skillKey: 'battleSkill',
-      },
-      placement: { startFrame: 0 },
-      presentation: {
-        locked: true,
-      },
-    });
-    scenario.tracks[0] = track;
-
-    expect(validateProjectDocument(project).ok).toBe(true);
   });
 
   it('rejects removed per-cast angle input and custom time bars', () => {

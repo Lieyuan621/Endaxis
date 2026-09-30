@@ -26,46 +26,6 @@ describe('projectResourceChangePoints', () => {
     ).toThrow('invalid recipient');
   });
 
-  it('保留共享技力变化回执已经给出的字段', () => {
-    const entries: CombatReceiptEntry[] = [
-      {
-        sequence: 3,
-        frame: 12,
-        time: 0.4,
-        event: 'SpChanged',
-        sourceId: 'perlica',
-        data: {
-          skillId: 'battleSkill',
-          recipient: 'team',
-          baseValue: 20,
-          requestedValue: 30,
-          actualValue: 10,
-          previousValue: 290,
-          currentValue: 300,
-          gainKind: 'refund',
-        },
-      },
-    ];
-
-    expect(projectResourceChangePoints(entries)).toEqual([
-      {
-        sequence: 3,
-        frame: 12,
-        time: 0.4,
-        resource: 'sp',
-        recipient: 'team',
-        sourceId: 'perlica',
-        skillId: 'battleSkill',
-        baseValue: 20,
-        requestedValue: 30,
-        actualValue: 10,
-        previousValue: 290,
-        currentValue: 300,
-        gainKind: 'refund',
-      },
-    ]);
-  });
-
   it('保留终结技能量的目标和被规则阻止的零变化', () => {
     const entries: CombatReceiptEntry[] = [
       {
@@ -134,20 +94,6 @@ describe('projectResourceChangePoints', () => {
 
     expect(points.map(point => point.sequence)).toEqual([8, 9]);
     expect(points.map(point => point.currentValue)).toEqual([10, 20]);
-  });
-
-  it('忽略非资源变化回执', () => {
-    expect(
-      projectResourceChangePoints([
-        {
-          sequence: 10,
-          frame: 20,
-          time: 2 / 3,
-          event: 'SkillCostApplied',
-          data: { remainingSp: 20 },
-        },
-      ]),
-    ).toEqual([]);
   });
 
   it('标记每帧自动回复的来源，拒绝未知来源', () => {

@@ -95,7 +95,7 @@ export function projectTimelineHitOccurrences(
       stepKey: string;
       frame: number;
       triggered: boolean;
-      triggeredStackIndex: number;
+      stackIndex: number;
       linkBuffed: boolean;
       label: TimelineHitEffectLabel;
     }[]
@@ -116,9 +116,7 @@ export function projectTimelineHitOccurrences(
     );
     list.push({
       triggered,
-      triggeredStackIndex: triggered
-        ? list.filter(item => item.frame === hit.frame && item.triggered).length
-        : 0,
+      stackIndex: 0,
       hitId: hit.hitId,
       stepKey: hit.stepKey,
       frame: hit.frame,
@@ -148,6 +146,21 @@ export function projectTimelineHitOccurrences(
       },
     });
     byCast.set(hit.castId, list);
+  }
+  // 同帧的不同伤害操作分别可点选；普通命中也需要错开，不能由后画的固定伤害遮住附加伤害。
+  for (const list of byCast.values()) {
+    const byFrame = new Map<number, typeof list>();
+    for (const hit of list) {
+      const frameHits = byFrame.get(hit.frame) ?? [];
+      frameHits.push(hit);
+      byFrame.set(hit.frame, frameHits);
+    }
+    for (const frameHits of byFrame.values()) {
+      let index = 0;
+      for (const hit of frameHits) if (!hit.triggered) hit.stackIndex = index++;
+      index = Math.max(1, index);
+      for (const hit of frameHits) if (hit.triggered) hit.stackIndex = index++;
+    }
   }
   return byCast;
 }

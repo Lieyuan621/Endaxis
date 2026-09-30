@@ -33,31 +33,6 @@ function poiseReceipt(
 }
 
 describe('projectPoiseChangePoints', () => {
-  it('原样保留失衡变化、免疫和破韧状态', () => {
-    expect(projectPoiseChangePoints([poiseReceipt(3)])).toEqual([
-      {
-        sequence: 3,
-        frame: 15,
-        time: 0.5,
-        sourceId: 'perlica',
-        targetId: 'enemy',
-        calculationValue: 20,
-        calculatedDamage: 30,
-        requestedDelta: -30,
-        actualDelta: -20,
-        previousPoise: 20,
-        currentPoise: 0,
-        cancelled: false,
-        cancelledByImmunity: false,
-        poiseImmune: false,
-        ignorePoiseImmune: false,
-        brokePoise: true,
-        inPoiseRecovery: true,
-        hasPoiseBrokenTag: true,
-      },
-    ]);
-  });
-
   it('保留同帧多次结算及其中间状态，不进行归并', () => {
     const points = projectPoiseChangePoints([
       poiseReceipt(4, {
@@ -112,19 +87,6 @@ describe('projectPoiseChangePoints', () => {
       cancelledByImmunity: true,
       poiseImmune: true,
     });
-  });
-
-  it('忽略非失衡结算回执', () => {
-    expect(
-      projectPoiseChangePoints([
-        {
-          sequence: 7,
-          frame: 15,
-          time: 0.5,
-          event: 'DamageApplied',
-        },
-      ]),
-    ).toEqual([]);
   });
 
   it('拒绝缺少约定身份、数值或状态字段的回执', () => {

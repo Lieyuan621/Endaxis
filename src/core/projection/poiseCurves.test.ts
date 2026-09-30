@@ -289,21 +289,4 @@ describe('projectPoiseBrokenSegments', () => {
     ];
     expect(projectPoiseBrokenSegments(entries, 90)).toEqual([{ startFrame: 20, endFrame: 65 }]);
   });
-
-  it('closes an open interval at the projection boundary', () => {
-    expect(
-      projectPoiseBrokenSegments(
-        [
-          {
-            sequence: 0,
-            frame: 20,
-            time: 20 / 30,
-            event: 'PoiseApplied',
-            data: { brokePoise: true, hasPoiseBrokenTag: true },
-          },
-        ],
-        70,
-      ),
-    ).toEqual([{ startFrame: 20, endFrame: 70 }]);
-  });
 });

@@ -90,6 +90,7 @@ export class AdaptiveTimelineSimulationService {
 
   clearCache(): void {
     this.worker.clearCache();
+    this.local.clearCache();
     this.localUnsubscribe();
     this.local = this.createLocal();
     this.localUnsubscribe = this.local.subscribePerformance(sample => this.acceptSample(sample));
@@ -98,6 +99,7 @@ export class AdaptiveTimelineSimulationService {
   }
 
   dispose(): void {
+    this.local.clearCache();
     this.workerUnsubscribe();
     this.localUnsubscribe();
     this.worker.dispose();

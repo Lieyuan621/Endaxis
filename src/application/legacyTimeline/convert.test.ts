@@ -42,6 +42,10 @@ it('保留时间允许同轴重叠，智能修复则顺延，且不改变原始�
   expect(preserved.report.issues).toEqual([]);
   expect(preserved.report.timingMode).toBe('preserve');
   expect(preserved.report.timingAdjustments).toEqual([]);
+  for (const converted of [preserved, repaired]) {
+    expect(converted.project?.scenarios[0]?.battle.automaticControlSwitches).toBe(true);
+    expect(converted.project?.scenarios[0]?.battle.controlSwitches).toEqual([]);
+  }
   expect(
     preserved.project!.scenarios[0]!.tracks[0]!.skillCasts.map(c => c.placement.startFrame),
   ).toEqual([162, 163]);
@@ -757,6 +761,7 @@ it('converts old characterId switch markers to the original track index before s
   expect(result.project?.scenarios[0]?.battle.controlSwitches).toEqual([
     { id: 'switch', frame: 30, trackIndex: 0 },
   ]);
+  expect(result.project?.scenarios[0]?.battle.automaticControlSwitches).toBe(true);
 });
 
 it('reports and omits unresolved control targets without discarding the project', () => {

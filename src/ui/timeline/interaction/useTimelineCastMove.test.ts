@@ -8,7 +8,7 @@ import { moveSkillCasts } from './timelineDocumentCommands';
 
 afterEach(() => vi.unstubAllGlobals());
 
-function fixture(readOnly = false, minimumInputFrame = 0) {
+function fixture(readOnly = false, minimumInputFrame = 0, blocked = false) {
   const events = new EventTarget();
   class Lane {
     readonly dataset = { trackIndex: '0' };
@@ -47,7 +47,14 @@ function fixture(readOnly = false, minimumInputFrame = 0) {
   const actionSelection = shallowRef(createEmptyTimelineActionSelection());
   const interactionSession = createInteractionSession();
   const simulationService = { beginInteractiveSession: vi.fn(), endInteractiveSession: vi.fn() };
-  const commitScenario = vi.fn(() => true);
+  const commitScenario = vi.fn(
+    (_name: string, command: (current: typeof original) => typeof original) => {
+      scenario.value = command(scenario.value);
+      return true;
+    },
+  );
+  const simulateNow = vi.fn(async () => true);
+  const unblock = blocked ? interactionSession.block() : () => {};
   const scope = effectScope();
   const movement = scope.run(() =>
     useTimelineCastMove({
@@ -70,36 +77,45 @@ function fixture(readOnly = false, minimumInputFrame = 0) {
         actionSelection.value = selection;
       },
       commitScenario,
-      simulateNow: async () => true,
+      simulateNow,
       warnLocked: vi.fn(),
     }),
   )!;
-  movement.beginCastMove(
-    {
-      button: 0,
-      pointerId: 1,
-      clientX: 10,
-      clientY: 100,
-      currentTarget: { getBoundingClientRect: () => ({ left: 10 }) },
-      preventDefault() {},
-      stopPropagation() {},
-    } as unknown as PointerEvent,
-    0,
-    'cast',
-  );
-  const move = (clientX = 30) =>
+  const begin = () =>
+    movement.beginCastMove(
+      {
+        button: 0,
+        pointerId: 1,
+        clientX: 10,
+        clientY: 100,
+        currentTarget: { getBoundingClientRect: () => ({ left: 10 }) },
+        preventDefault() {},
+        stopPropagation() {},
+      } as unknown as PointerEvent,
+      0,
+      'cast',
+    );
+  begin();
+  const move = (clientX = 30, buttons = 1) =>
     events.dispatchEvent(
       Object.assign(new Event('pointermove'), {
         pointerId: 1,
+        buttons,
         clientX,
         clientY: 100,
       }),
     );
   move();
-  expect(scenario.value.tracks[0]!.skillCasts[0]!.placement.startFrame).toBe(readOnly ? 10 : 30);
+  expect(scenario.value.tracks[0]!.skillCasts[0]!.placement.startFrame).toBe(
+    readOnly || blocked ? 10 : 30,
+  );
   return {
     scenario,
     original,
+    begin,
+    unblock,
+    events,
+    simulateNow,
     movement,
     interactionSession,
     simulationService,
@@ -119,6 +135,105 @@ function fixture(readOnly = false, minimumInputFrame = 0) {
 }
 
 describe('timeline cast move lifecycle', () => {
+  it('交互被屏障阻止时不遗留拖动状态或启动模拟', () => {
+    const f = fixture(false, 0, true);
+    expect(f.movement.castMoveGesture.value).toBeNull();
+    expect(f.simulationService.beginInteractiveSession).not.toHaveBeenCalled();
+    f.unblock();
+    f.begin();
+    f.move();
+    expect(f.interactionSession.current?.owner).toBe('cast-move');
+    f.scope.stop();
+  });
+
+  it('漏收松开事件后没有按住主按钮的移动会取消并还原预览', () => {
+    const f = fixture();
+    f.move(40, 0);
+    expect(f.movement.castMoveGesture.value).toBeNull();
+    expect(f.scenario.value).toBe(f.original);
+    expect(f.interactionSession.current).toBeNull();
+    expect(f.commitScenario).not.toHaveBeenCalled();
+    f.scope.stop();
+  });
+
+  it('其他指针取消不影响当前拖动，当前指针取消则还原', () => {
+    const f = fixture();
+    f.events.dispatchEvent(Object.assign(new Event('pointercancel'), { pointerId: 2 }));
+    expect(f.movement.castMoveGesture.value).not.toBeNull();
+    f.events.dispatchEvent(Object.assign(new Event('pointercancel'), { pointerId: 1 }));
+    expect(f.movement.castMoveGesture.value).toBeNull();
+    expect(f.scenario.value).toBe(f.original);
+    f.scope.stop();
+  });
+
+  it('松手后的模拟被替代也清理预览，保留已提交落点', async () => {
+    const f = fixture();
+    f.simulateNow.mockResolvedValue(false);
+    f.finish();
+    await vi.waitFor(() => expect(f.movement.castMoveGesture.value).toBeNull());
+    expect(f.scenario.value.tracks[0]!.skillCasts[0]!.placement.startFrame).toBe(30);
+    expect(f.interactionSession.current).toBeNull();
+    f.scope.stop();
+  });
+
+  it('模拟异常也清理预览和交互占用', async () => {
+    const f = fixture();
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      f.simulateNow.mockRejectedValue(new Error('simulation failed'));
+      f.finish();
+      await vi.waitFor(() => expect(f.movement.castMoveGesture.value).toBeNull());
+      expect(f.interactionSession.current).toBeNull();
+      expect(f.simulationService.endInteractiveSession).toHaveBeenCalledTimes(1);
+      expect(error).toHaveBeenCalled();
+    } finally {
+      error.mockRestore();
+      f.scope.stop();
+    }
+  });
+
+  it('松手时计算落点异常也释放手势并还原文档', async () => {
+    const f = fixture();
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.stubGlobal('document', {
+      elementFromPoint: () => {
+        throw new Error('placement failed');
+      },
+    });
+    try {
+      f.finish();
+      await vi.waitFor(() => expect(error).toHaveBeenCalled());
+      expect(f.movement.castMoveGesture.value).toBeNull();
+      expect(f.interactionSession.current).toBeNull();
+      expect(f.scenario.value).toBe(f.original);
+      expect(f.commitScenario).not.toHaveBeenCalled();
+    } finally {
+      error.mockRestore();
+      f.scope.stop();
+    }
+  });
+
+  it('上一轮松手模拟结束不能清除新一轮拖动', async () => {
+    const f = fixture();
+    let finishSimulation!: (value: boolean) => void;
+    f.simulateNow.mockReturnValue(
+      new Promise(resolve => {
+        finishSimulation = resolve;
+      }),
+    );
+    f.finish();
+    await vi.waitFor(() => expect(f.simulateNow).toHaveBeenCalled());
+    f.begin();
+    f.move(50);
+    const current = f.movement.castMoveGesture.value;
+    finishSimulation(false);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(f.movement.castMoveGesture.value).toBe(current);
+    expect(f.interactionSession.current?.owner).toBe('cast-move');
+    f.scope.stop();
+  });
+
   it('拖入冻结历史时停在继承帧，仍可向后拖动', () => {
     const f = fixture(false, 5);
     f.move(-100);

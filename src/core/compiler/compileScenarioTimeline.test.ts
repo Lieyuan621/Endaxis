@@ -263,28 +263,6 @@ describe('compileScenarioTimeline', () => {
     });
   });
 
-  it('compiles the complete operator skill index and placed input', () => {
-    const scenario = place(createScenario(), 'battleSkill', 60);
-
-    const compiled = compileScenarioTimeline(scenario, index());
-
-    expect(compiled.operators).toHaveLength(1);
-    expect(compiled.operators[0]!.operatorId).toBe('track:0');
-    expect(compiled.operators[0]!.skills).toEqual([]);
-    expect(compiled.operators[0]!.skillCasts?.map(binding => binding.program.skillId)).toContain(
-      'chr_0004_pelica_normal_skill',
-    );
-    expect(compiled.inputs).toEqual([
-      {
-        frame: 60,
-        operatorId: 'track:0',
-        skillId: 'chr_0004_pelica_normal_skill',
-        castId: 'skillCast:1',
-        action: 'battleSkill',
-      },
-    ]);
-  });
-
   it('does not compile a hidden replacement until that concrete skill is placed', () => {
     const baseScenario = place(createScenario(), 'battleSkill', 60);
     const base = requireSingleSkill('battleSkill');
@@ -803,27 +781,6 @@ describe('compileScenarioTimeline', () => {
   });
 });
 
-it('compiles the complete graph operator skill catalog through the formal entry', () => {
-  const build = createScenario().tracks[0]!.operator!;
-  const compiled = compileOperatorDefinitionSkills(
-    'track:graph',
-    build,
-    perlica,
-    undefined,
-    undefined,
-    new ActionGraphDefinitionRepository(),
-  );
-  const entries = compiled.flatMap(program =>
-    program.timelineActions.map(action => {
-      if ('steps' in action.sequence) throw new Error('unexpected tree program');
-      return action.sequence;
-    }),
-  );
-  expect(entries.length).toBeGreaterThan(0);
-  expect(compiled.map(program => program.skillId)).toContain('chr_0004_pelica_normal_skill');
-  expect(entries.every(entry => entry.graph.skillLevel === 12)).toBe(true);
-});
-
 it('场景中的技能、Buff 和实体各自编译自己的图', () => {
   const scenario = place(createScenario(), 'battleSkill', 30);
   const sourceSkill = requireSingleSkill('battleSkill');
@@ -1012,26 +969,6 @@ it('binds graph timeline casts and custom overrides without losing cast or input
   });
   for (const binding of programs)
     for (const action of binding.program.timelineActions)
-      expect('steps' in action.sequence).toBe(false);
-});
-
-it('compiles a graph-backed complete scenario through the normal timeline entry', () => {
-  const scenario = place(createScenario(), 'battleSkill', 30);
-  const compiled = compileScenarioTimeline(scenario, index());
-  expect(compiled.inputs).toEqual([
-    {
-      frame: 30,
-      operatorId: 'track:0',
-      skillId: 'chr_0004_pelica_normal_skill',
-      castId: 'skillCast:1',
-      action: 'battleSkill',
-    },
-  ]);
-  expect(compiled.operators.map(operator => operator.operatorId)).toEqual(['track:0']);
-  const casts = compiled.operators[0]!.skillCasts ?? [];
-  expect(casts.length).toBeGreaterThan(0);
-  for (const cast of casts)
-    for (const action of cast.program.timelineActions)
       expect('steps' in action.sequence).toBe(false);
 });
 

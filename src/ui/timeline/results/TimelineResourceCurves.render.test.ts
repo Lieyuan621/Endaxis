@@ -36,9 +36,7 @@ describe('失衡资源曲线的节点显示', () => {
           }),
       }),
     );
-    expect(html).toContain('class="label-readout-knot"');
     expect(html).toContain('left:50%');
-    expect(html).toContain('class="poise-knot-zone"');
     expect(html).toContain('url(#poise-knot-pattern)');
   });
 

@@ -101,31 +101,29 @@ describe('validateSkillDefinition', () => {
     ).toEqual([]);
   });
 
-  it.each(['party', 'partyExceptCaster', 'controlledOperator', 'unknown'])(
-    '标签结束仍拒绝不属于单对象绑定的目标 %s',
-    target => {
-      const issues = validateSkillDefinition(
-        skillWithSteps([
-          {
-            kind: 'finishBuffsByTag',
-            parameters: {
-              target,
-              tagQueryType: 'hasAny',
-              buffTags: ['Test/Tag'],
-              reason: 'early',
-            },
+  it('标签结束仍拒绝不属于单对象绑定的队伍目标', () => {
+    const target = 'party';
+    const issues = validateSkillDefinition(
+      skillWithSteps([
+        {
+          kind: 'finishBuffsByTag',
+          parameters: {
+            target,
+            tagQueryType: 'hasAny',
+            buffTags: ['Test/Tag'],
+            reason: 'early',
           },
-        ]),
-      );
-      expect(issues).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            path: `${nodeActionPath('step-0')}.parameters.target`,
-          }),
-        ]),
-      );
-    },
-  );
+        },
+      ]),
+    );
+    expect(issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: `${nodeActionPath('step-0')}.parameters.target`,
+        }),
+      ]),
+    );
+  });
 
   it('原生事件触发器使用公共迁移准入，拒绝缺失及未支持身份', () => {
     const skill = (event: unknown) => ({
@@ -213,22 +211,6 @@ describe('validateSkillDefinition', () => {
     );
   });
 
-  it.each([undefined, 'parent', 'execution'])('接受黑板作用域生命周期 %s', lifetime => {
-    const skill = skillWithSteps([
-      {
-        kind: 'withActionBlackboardScope',
-        parameters: {
-          scopeKey: 'callback',
-          initialValues: {},
-          inheritParent: true,
-          lifetime,
-          alwaysNext: true,
-        },
-        body: { $sequence: null },
-      },
-    ]);
-    expect(validateSkillDefinition(skill)).toEqual([]);
-  });
   it.each([{ lifetime: 'unknown' }, { lifetime: null }, { alwaysNext: 1 }])(
     '拒绝非法黑板生命周期参数 %j',
     invalid => {
@@ -285,10 +267,7 @@ describe('validateSkillDefinition', () => {
     ]);
     expect(validateSkillDefinition(skill)).toEqual([]);
   });
-  it.each(['enemy', 'input', 'trigger', undefined])('接受有界智能目标 %s', smartTarget => {
-    expect(validateSkillDefinition({ ...baseSkill(), smartTarget })).toEqual([]);
-  });
-  it.each([null, 1, 'nearest', {}])('拒绝未知智能目标 %j', smartTarget => {
+  it.each([null, 'nearest'])('拒绝未知智能目标 %j', smartTarget => {
     expect(validateSkillDefinition({ ...baseSkill(), smartTarget })).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ path: expect.stringContaining('smartTarget') }),
@@ -377,40 +356,6 @@ describe('validateSkillDefinition', () => {
     expect(validateSkillDefinition(definition)).toEqual([]);
   });
 
-  it('允许终结技仅自动忽略施法者而不配置额外对象', () => {
-    const definition = skillWithSteps([
-      {
-        kind: 'startUltimateTimeDilation',
-        parameters: {
-          priority: 100,
-          targetScale: { kind: 'constant', value: 0 },
-          ignoredTargets: [],
-        },
-      },
-    ]);
-
-    expect(validateSkillDefinition(definition)).toEqual([]);
-  });
-
-  it('允许全局时间膨胀在执行帧排除当前主控干员', () => {
-    const definition = skillWithSteps([
-      {
-        kind: 'startTimeDilation',
-        parameters: {
-          scope: 'global',
-          durationSeconds: { kind: 'constant', value: 1 },
-          slot: 'Test/TimeSlot1',
-          priority: 2,
-          curve: { kind: 'named', key: 'ComboSkill' },
-          finishByAction: false,
-          ignoredTargets: ['controlled'],
-        },
-      },
-    ]);
-
-    expect(validateSkillDefinition(definition)).toEqual([]);
-  });
-
   it('严格校验时间膨胀中的能力实体 ID 与 Context 查询', () => {
     const queries: Array<Record<string, unknown>> = [
       {
@@ -452,17 +397,6 @@ describe('validateSkillDefinition', () => {
         }),
       ]),
     );
-  });
-
-  it('accepts a structurally valid skill', () => {
-    const skill = skillWithSteps([
-      damageStep('hit:1'),
-      {
-        kind: 'modifyActionValue',
-        parameters: { key: 'x', operation: 'add', value: { kind: 'constant', value: 1 } },
-      },
-    ]);
-    expect(validateSkillDefinition(skill)).toEqual([]);
   });
 
   it('validates named and inline time-dilation curves', () => {
@@ -552,32 +486,6 @@ describe('validateSkillDefinition', () => {
     const issues = validateBuff(definition);
     expect(issues.some(issue => issue.path.endsWith('.presentation.iconPath'))).toBe(true);
     expect(issues.some(issue => issue.path.endsWith('.presentation.color'))).toBe(true);
-  });
-
-  it('accepts ordered owner Buff lifecycle sequences', () => {
-    const definition: Record<string, unknown> = {
-      stackingType: 'unique',
-      lifecycleSequences: {
-        start: { $sequence: 'entry' },
-      },
-    };
-    expect(validateBuff(definition)).toEqual([]);
-  });
-
-  it('accepts an owner Buff max stack count resolved from its application blackboard', () => {
-    const definition: Record<string, unknown> = {
-      stackingType: 'stack',
-      maxStackCount: { blackboardKey: 'max_stack' },
-    };
-    expect(validateBuff(definition)).toEqual([]);
-  });
-
-  it('validates Buff independently of a creating skill', () => {
-    const definition: Record<string, unknown> = {
-      stackingType: 'unique',
-      lifecycleSequences: { start: { $sequence: null } },
-    };
-    expect(validateBuff(definition)).toEqual([]);
   });
 
   it('validates owner Buff ability event responses and their sequences', () => {

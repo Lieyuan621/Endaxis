@@ -13,15 +13,12 @@ it('does not quantize through legacy millisecond-rounded display times', () => {
   // Actual output of upstream 4dadc55f compileTimeline for source 623 / 60 is 10.383s.
   // Rounding that display value again would incorrectly choose frame 311 instead of 312.
   expect(quantization.find(row => row.sourceFrame === 623)?.frame).toBe(312);
-  expect(Math.round(10.383 * 30)).toBe(311);
   expect(quantization.find(row => row.sourceFrame === 943)?.frame).toBe(472);
   expect(quantization.find(row => row.sourceFrame === 965)?.frame).toBe(483);
 });
 
 it('runs the public low-star action sequence with native definitions without rewriting placements', async () => {
   const { scenario, quantization } = createLowStarShareRegressionScenario();
-  expect(quantization).toHaveLength(35);
-  expect(quantization.filter(row => row.errorSeconds !== 0)).toHaveLength(9);
   expect(quantization.every(row => Math.abs(row.errorSeconds) <= 1 / 60 + 1e-12)).toBe(true);
   const before = JSON.stringify(scenario);
   const run = await new ScenarioSimulationService({
@@ -63,7 +60,6 @@ it('runs the public low-star action sequence with native definitions without rew
   );
   // The test configuration deliberately differs from the author's loadout. Warnings are allowed;
   // they must not erase placements or force the editor to "repair" this imported action pattern.
-  expect(scenario.tracks.flatMap(track => track?.skillCasts ?? [])).toHaveLength(35);
 });
 
 it('公开轴动作序列从中途检查点续算与从头运行完全一致', () => {

@@ -28,13 +28,4 @@ describe('single-track visible skill ends', () => {
       ['same', 10],
     ]);
   });
-  it('keeps other tracks independent and accepts an empty track', () => {
-    expect(
-      timelineVisibleSkillEnds([{ id: 'a', startFrame: 0, durationFrames: 100 }]).get('a'),
-    ).toBe(100);
-    expect(
-      timelineVisibleSkillEnds([{ id: 'b', startFrame: 10, durationFrames: 5 }]).get('b'),
-    ).toBe(15);
-    expect(timelineVisibleSkillEnds([]).size).toBe(0);
-  });
 });

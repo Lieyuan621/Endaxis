@@ -10,7 +10,6 @@ export interface LegacyConversionReportView {
   readonly timingAdjustments: readonly unknown[];
   readonly skillFormAdjustments: readonly unknown[];
   readonly controlSwitchAdjustments: readonly unknown[];
-  readonly inferredControlSwitches: readonly unknown[];
 }
 
 function issueLine(issue: { readonly path: string; readonly message: string }): string {
@@ -24,8 +23,7 @@ export function formatLegacyConversionReport(report: LegacyConversionReportView)
     report.resourceAdjustments.length +
     report.timingAdjustments.length +
     report.skillFormAdjustments.length +
-    report.controlSwitchAdjustments.length +
-    report.inferredControlSwitches.length;
+    report.controlSwitchAdjustments.length;
   const lines: string[] = [];
   if (report.fatalIssues.length > 0) {
     lines.push('无法建立可打开的新版项目。');

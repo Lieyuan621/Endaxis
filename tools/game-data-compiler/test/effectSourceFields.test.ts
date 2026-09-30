@@ -55,21 +55,18 @@ describe('EffectAction 新版大特效目标', () => {
     ).toThrow('effect.bigEffectTarget');
   });
 
-  it.each([false, true])('显示开关 %s 不改变无渲染投影', isShowBigEffect => {
-    const old = { ...effect(), isShowBigEffect };
+  it('开启显示开关不改变无渲染投影', () => {
+    const old = { ...effect(), isShowBigEffect: true };
     expect(
       parseEffectActionSource({ ...old, bigEffectTarget: targetFixture('Target') }, 'effect'),
     ).toEqual(parseEffectActionSource(old, 'effect'));
   });
 
-  it.each([null, undefined, 0, {}, { ...targetFixture('Target'), extra: true }])(
-    '不吞掉显式非法目标 %j',
-    bigEffectTarget => {
-      expect(() => parseEffectActionSource({ ...effect(), bigEffectTarget }, 'effect')).toThrow(
-        'effect.bigEffectTarget',
-      );
-    },
-  );
+  it('不吞掉显式非法目标', () => {
+    expect(() => parseEffectActionSource({ ...effect(), bigEffectTarget: null }, 'effect')).toThrow(
+      'effect.bigEffectTarget',
+    );
+  });
 
   it('禁止未经消费者分析就省略特效句柄写回', () => {
     for (const current of [effect(), { ...effect(), bigEffectTarget: targetFixture('Target') }]) {

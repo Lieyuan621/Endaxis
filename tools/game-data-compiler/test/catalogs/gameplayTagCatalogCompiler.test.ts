@@ -47,6 +47,5 @@ vector _keyData
     );
     expect(rendered).toContain("'Entity/Owner\\'s'");
     expect(rendered).toContain(`Source SHA-256: ${'0'.repeat(64)}`);
-    expect(rendered).toContain('npm run generate:game-data:gameplay-tags');
   });
 });

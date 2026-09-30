@@ -1,6 +1,5 @@
 /** 检查装备与公共 Buff 的优化入口、报告模式及正式定义渲染，不依赖正式游戏资源。 */
 import { describe, expect, it } from 'vitest';
-import type { OperatorBuffDefinitions } from '../../../../packages/game-data-contract/src/buffs.ts';
 import type {
   ActionGraphReference,
   ActionGraphResourceDefinition,
@@ -8,28 +7,6 @@ import type {
 } from '../../../../packages/game-data-contract/src/actionGraph.ts';
 import type { SkillBuffDefinition } from '../../../../packages/game-data-contract/src/buffs.ts';
 
-it.each(['off', 'report'] as const)('%s 返回原始公共 Buff，包括未经整理的生成键', mode => {
-  const definitions: OperatorBuffDefinitions = {
-    buff: {
-      stackingType: 'unique',
-      lifecycleSequences: { enable: { $sequence: 'entry' } },
-      actionGraph: {
-        main: {
-          nodes: {
-            entry: {
-              action: { kind: 'finishTimeline', key: 'SkillData.review', parameters: {} },
-              next: null,
-            },
-          },
-        },
-        macros: {},
-      },
-    },
-  };
-  const before = structuredClone(definitions);
-  expect(optimizeCommonBuffDefinitions(definitions, mode).definitions).toBe(definitions);
-  expect(definitions).toEqual(before);
-});
 import type {
   EquipmentContributionDefinition,
   GearSetDefinition,
