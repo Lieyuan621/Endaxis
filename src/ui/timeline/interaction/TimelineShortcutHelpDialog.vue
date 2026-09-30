@@ -79,9 +79,11 @@ const sections = computed(() => [
       <div class="shortcut-sections">
         <section v-for="section in sections" :key="section.title">
           <h3>{{ section.title }}</h3>
-          <div v-for="item in section.items" :key="item[0]" class="shortcut-row">
-            <kbd>{{ item[0] }}</kbd
-            ><span>{{ item[1] }}</span>
+          <div class="shortcut-items">
+            <div v-for="item in section.items" :key="item[0]" class="shortcut-row">
+              <kbd>{{ item[0] }}</kbd>
+              <span>{{ item[1] }}</span>
+            </div>
           </div>
         </section>
       </div>
@@ -92,13 +94,24 @@ const sections = computed(() => [
 <style scoped>
 .shortcut-sections {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
+  max-height: calc(85dvh - 130px);
+  overflow-y: auto;
 }
 .shortcut-sections section {
+  min-width: 0;
   padding: 12px;
   border: 1px solid var(--ea-border-soft);
   background: var(--ea-fill-soft);
+}
+.shortcut-sections section:last-child {
+  grid-column: 1 / -1;
+}
+.shortcut-sections section:last-child .shortcut-items {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 14px;
 }
 .shortcut-sections h3 {
   margin: 0 0 12px;
@@ -107,15 +120,17 @@ const sections = computed(() => [
 }
 .shortcut-row {
   display: grid;
-  grid-template-columns: minmax(70px, auto) 1fr;
-  align-items: center;
+  grid-template-columns: 132px minmax(0, 1fr);
+  align-items: start;
   gap: 8px;
   padding: 5px 0;
   color: var(--ea-fg-secondary);
   font-size: 12px;
 }
 kbd {
+  box-sizing: border-box;
   justify-self: start;
+  max-width: 100%;
   padding: 2px 5px;
   border: 1px solid var(--ea-border);
   border-bottom-width: 2px;
@@ -123,8 +138,11 @@ kbd {
   color: var(--ea-gold);
   font-family: 'Roboto Mono', Consolas, monospace;
 }
-@media (max-width: 720px) {
+@media (max-width: 760px) {
   .shortcut-sections {
+    grid-template-columns: 1fr;
+  }
+  .shortcut-sections section:last-child .shortcut-items {
     grid-template-columns: 1fr;
   }
 }

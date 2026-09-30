@@ -86,6 +86,7 @@ const { field } = selection;
 const browserVisible = ref(false);
 const browserElement = ref<HTMLElement>();
 const browserHeight = ref<number>();
+const browserResizing = ref(false);
 let browserResize:
   { pointerId: number; y: number; height: number; previous: number | undefined } | undefined;
 function setBrowserHeight(height: number) {
@@ -101,6 +102,7 @@ function startBrowserResize(event: PointerEvent) {
     height: browserElement.value.clientHeight,
     previous: browserHeight.value,
   };
+  browserResizing.value = true;
   (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
 }
 function moveBrowserResize(event: PointerEvent) {
@@ -111,6 +113,7 @@ function endBrowserResize(event: PointerEvent) {
   if (browserResize?.pointerId !== event.pointerId) return;
   if (event.type === 'pointercancel') browserHeight.value = browserResize.previous;
   browserResize = undefined;
+  browserResizing.value = false;
   const target = event.currentTarget as HTMLElement;
   if (target.hasPointerCapture(event.pointerId)) target.releasePointerCapture(event.pointerId);
 }
@@ -149,11 +152,13 @@ const family = computed(() =>
   graphOpen.value ? 'graph' : draft.value.edit.kind === 'operator' ? 'operator' : 'data',
 );
 const layout = computed(() => layouts[family.value]);
+const resizingPanel = ref<'left' | 'right' | null>(null);
 let stopResize: (() => void) | undefined;
 function resizePanel(side: 'left' | 'right', event: PointerEvent) {
   if (event.button !== 0) return;
   event.preventDefault();
   stopResize?.();
+  resizingPanel.value = side;
   const startX = event.clientX,
     startWidth = layout.value[side],
     target = layout.value;
@@ -175,6 +180,7 @@ function resizePanel(side: 'left' | 'right', event: PointerEvent) {
     window.removeEventListener('pointerup', end);
     window.removeEventListener('pointercancel', end);
     stopResize = undefined;
+    resizingPanel.value = null;
   };
   window.addEventListener('pointermove', move);
   window.addEventListener('pointerup', end);
@@ -622,7 +628,7 @@ browserVisible.value = true;
           <EaButton v-if="custom" size="sm" :disabled="saving" @click="save"
             ><WorkspaceIcon name="check" />{{ tr('integration.save') }}</EaButton
           >
-          <EaCloseButton size="sm" :label="tr('close')" :disabled="saving" @click="requestClose" />
+          <EaCloseButton :label="tr('close')" :disabled="saving" @click="requestClose" />
         </header>
         <nav class="ap-tabs" :aria-label="tr('documents')">
           <div
@@ -758,7 +764,8 @@ browserVisible.value = true;
           </ResourceTools>
           <div
             v-show="layout.leftOpen && !focused"
-            class="rw-splitter"
+            class="rw-splitter ea-resize-handle ea-resize-handle--vertical"
+            :class="{ 'is-active': resizingPanel === 'left' }"
             role="separator"
             aria-orientation="vertical"
             :aria-label="tr('workspace.toolsWidth')"
@@ -795,7 +802,8 @@ browserVisible.value = true;
           </section>
           <div
             v-show="layout.rightOpen && !focused"
-            class="rw-splitter"
+            class="rw-splitter ea-resize-handle ea-resize-handle--vertical"
+            :class="{ 'is-active': resizingPanel === 'right' }"
             role="separator"
             aria-orientation="vertical"
             :aria-label="tr('workspace.inspectorWidth')"
@@ -872,7 +880,8 @@ browserVisible.value = true;
           :aria-label="tr('library')"
         >
           <div
-            class="rw-drawer-resizer"
+            class="rw-drawer-resizer ea-resize-handle ea-resize-handle--horizontal"
+            :class="{ 'is-active': browserResizing }"
             role="separator"
             tabindex="0"
             aria-orientation="horizontal"
@@ -896,7 +905,7 @@ browserVisible.value = true;
               @click="browserPinned = !browserPinned"
             >
               <WorkspaceIcon name="pin" :size="13" />{{ tr('workspace.pin') }}</EaButton
-            ><EaCloseButton size="sm" :label="tr('close')" @click="browserVisible = false" />
+            ><EaCloseButton :label="tr('close')" @click="browserVisible = false" />
           </div>
           <AssetCatalogBrowser
             :assets="browserAssets"

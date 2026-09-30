@@ -266,7 +266,7 @@ const {
   </aside>
   <template v-else-if="area === 'timeline' && timelineOpen && address.kind === 'main'">
     <div
-      class="timeline-resizer"
+      class="timeline-resizer ea-resize-handle ea-resize-handle--horizontal"
       role="separator"
       tabindex="0"
       aria-label="调整时间线编辑区高度"
@@ -274,7 +274,7 @@ const {
       :aria-valuenow="Math.round(visibleTimelineHeight)"
       :aria-valuemin="140"
       :aria-valuemax="Math.max(140, workspaceHeight - 280)"
-      :class="{ active: resizeGesture }"
+      :class="{ 'is-active': resizeGesture }"
       @pointerdown="startTimelineResize"
       @pointermove="moveTimelineResize"
       @pointerup="endTimelineResize"
@@ -312,21 +312,7 @@ const {
 }
 .timeline-resizer {
   flex: 0 0 6px;
-  cursor: ns-resize;
-  touch-action: none;
-  background: var(--ea-workbench-panel);
-  border-top: 1px solid var(--ea-border);
   box-sizing: border-box;
-}
-.timeline-resizer:focus-visible,
-.timeline-resizer.active {
-  background: var(--ea-gold);
-  outline: none;
-}
-@media (hover: hover) and (pointer: fine) {
-  .timeline-resizer:hover {
-    background: var(--ea-gold);
-  }
 }
 .resource-panel,
 .inspector-panel {

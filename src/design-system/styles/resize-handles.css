@@ -1,0 +1,98 @@
+/* Shared appearance for draggable panel boundaries. Layout and resize behavior stay with each panel. */
+.ea-resize-handle {
+  position: relative;
+  touch-action: none;
+}
+
+.ea-resize-handle--vertical {
+  cursor: ew-resize;
+}
+
+.ea-resize-handle--horizontal {
+  cursor: ns-resize;
+}
+
+.ea-resize-handle::before,
+.ea-resize-handle::after {
+  content: '';
+  position: absolute;
+}
+
+.ea-resize-handle::before {
+  background: var(--ea-border-soft);
+  pointer-events: none;
+  transition:
+    background-color 120ms ease,
+    box-shadow 120ms ease,
+    width 120ms ease,
+    height 120ms ease;
+}
+
+.ea-resize-handle::after {
+  background: transparent;
+}
+
+.ea-resize-handle--vertical::before,
+.ea-resize-handle--vertical::after {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.ea-resize-handle--vertical::before {
+  width: 1px;
+}
+
+.ea-resize-handle--vertical::after {
+  width: 9px;
+}
+
+.ea-resize-handle--horizontal::before,
+.ea-resize-handle--horizontal::after {
+  top: 50%;
+  right: 0;
+  left: 0;
+  transform: translateY(-50%);
+}
+
+.ea-resize-handle--horizontal::before {
+  height: 1px;
+}
+
+.ea-resize-handle--horizontal::after {
+  height: 9px;
+}
+
+.ea-resize-handle:focus-visible {
+  outline: none;
+}
+
+.ea-resize-handle:focus-visible::before,
+.ea-resize-handle.is-active::before {
+  background: color-mix(in srgb, var(--ea-gold) 70%, transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--ea-gold) 22%, transparent);
+}
+
+.ea-resize-handle--vertical:is(:focus-visible, .is-active)::before {
+  width: 2px;
+}
+
+.ea-resize-handle--horizontal:is(:focus-visible, .is-active)::before {
+  height: 2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ea-resize-handle:hover::before {
+    background: color-mix(in srgb, var(--ea-gold) 70%, transparent);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--ea-gold) 22%, transparent);
+  }
+
+  .ea-resize-handle--vertical:hover::before {
+    width: 2px;
+  }
+
+  .ea-resize-handle--horizontal:hover::before {
+    height: 2px;
+  }
+}

@@ -88,14 +88,6 @@
 .rw-body > .ap-inspector {
   grid-column: 5;
 }
-.rw-splitter {
-  background: var(--ea-border-strong);
-  cursor: col-resize;
-  touch-action: none;
-}
-.rw-splitter:focus-visible {
-  background: var(--ea-gold);
-}
 .rw-layout-actions {
   display: flex;
   gap: 3px;
@@ -164,12 +156,6 @@
   right: 0;
   height: 8px;
   z-index: 1;
-  cursor: ns-resize;
-  touch-action: none;
-}
-.rw-drawer-resizer:focus-visible {
-  background: color-mix(in srgb, var(--ea-gold) 35%, transparent);
-  outline: none;
 }
 .rw-drawer-heading strong {
   font-size: 12px;
@@ -452,12 +438,6 @@
   flex-direction: column;
 }
 @media (hover: hover) and (pointer: fine) {
-  .rw-splitter:hover {
-    background: var(--ea-gold);
-  }
-  .rw-drawer-resizer:hover {
-    background: color-mix(in srgb, var(--ea-gold) 35%, transparent);
-  }
   .ap-skill-entry:hover,
   .ap-reference-row:hover {
     background: var(--ea-hover-fill);

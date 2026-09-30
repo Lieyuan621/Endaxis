@@ -346,7 +346,7 @@ watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
     </aside>
     <div
       v-show="!leftCollapsed"
-      class="resizer resizer--left"
+      class="resizer resizer--left ea-resize-handle ea-resize-handle--vertical"
       :class="{ 'is-active': resizing === 'left' }"
       @pointerdown="beginResize('left', $event)"
       @dblclick="resetPanelSize('left')"
@@ -357,7 +357,7 @@ watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
       <div class="timeline-center"><slot /></div>
       <div
         v-show="!bottomCollapsed"
-        class="bottom-resizer"
+        class="bottom-resizer ea-resize-handle ea-resize-handle--horizontal"
         :class="{ 'is-active': resizing === 'bottom' }"
         @pointerdown="beginResize('bottom', $event)"
         @dblclick="resetPanelSize('bottom')"
@@ -387,7 +387,7 @@ watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
 
     <div
       v-show="!rightCollapsed"
-      class="resizer resizer--right"
+      class="resizer resizer--right ea-resize-handle ea-resize-handle--vertical"
       :class="{ 'is-active': resizing === 'right' }"
       @pointerdown="beginResize('right', $event)"
       @dblclick="resetPanelSize('right')"
@@ -598,35 +598,8 @@ watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
 }
 
 .bottom-resizer {
-  position: relative;
   z-index: 30;
   grid-row: 3;
-  background: var(--ea-border-soft);
-  cursor: ns-resize;
-  touch-action: none;
-}
-
-.bottom-resizer::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 0;
-  width: 100%;
-  height: 9px;
-  transform: translateY(-50%);
-}
-
-.bottom-resizer::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  background: var(--ea-active-fill);
-  transition: opacity 0.12s ease;
-}
-
-.bottom-resizer.is-active::before {
-  opacity: 1;
 }
 
 .bottom-panel {
@@ -683,35 +656,8 @@ watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
 }
 
 .resizer {
-  position: relative;
   grid-row: 1 / -1;
   z-index: 30;
-  background: var(--ea-border-soft);
-  cursor: ew-resize;
-  touch-action: none;
-}
-
-.resizer::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  background: var(--ea-active-fill);
-  transition: opacity 0.12s ease;
-}
-
-.resizer::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: 9px;
-  height: 100%;
-  transform: translateX(-50%);
-}
-
-.resizer.is-active::before {
-  opacity: 1;
 }
 
 .resizer--left {
@@ -723,11 +669,6 @@ watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .bottom-resizer:hover::before,
-  .resizer:hover::before {
-    opacity: 1;
-  }
-
   .bottom-panel-collapse:hover {
     color: var(--ea-fg);
   }
