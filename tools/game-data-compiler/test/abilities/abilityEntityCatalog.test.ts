@@ -26,9 +26,6 @@ describe('AbilityEntity 公共模板目录', () => {
       'abilityentity_a',
       'abilityentity_z',
     ]);
-    expect(catalog.byId.get('abilityentity_z')?.durationBlackboard.blackboardKey).toBe(
-      'EntityBB_duration',
-    );
     expect(catalog.idsByExactBornTag.get(2)).toEqual(['abilityentity_a', 'abilityentity_z']);
     expect(catalog.idsByExactBornTag.get(3)).toEqual(['abilityentity_z']);
   });

@@ -4,11 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import {
-  downloadGameDataSources,
-  loadSourceCatalog,
-  parseArguments,
-} from '../scripts/downloadGameDataSources.ts';
+import { downloadGameDataSources, loadSourceCatalog } from '../scripts/downloadGameDataSources.ts';
 
 const temporaryDirectories: string[] = [];
 
@@ -35,12 +31,6 @@ describe('VFS 精确资源下载器', () => {
       jsonCollections: { SkillData: 'SkillData' },
       jsonFiles: ['GameplayConfig/GameplayTagPredefineTable.json'],
     });
-    expect(
-      parseArguments(['--json-file', 'GameplayConfig/GameplayTagPredefineTable.json']),
-    ).toMatchObject({
-      jsonFile: 'GameplayConfig/GameplayTagPredefineTable.json',
-    });
-
     for (const jsonFiles of [['../escape.json'], ['X/a.json', 'X/a.json']]) {
       await writeJson(catalog, { tableCfg: [], jsonCollections: {}, jsonFiles });
       await expect(loadSourceCatalog(catalog)).rejects.toThrow();

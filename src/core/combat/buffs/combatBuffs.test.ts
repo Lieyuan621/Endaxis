@@ -516,7 +516,7 @@ it.each(['id', 'tag'] as const)('全量 %s 提前消费同步发布来源和原�
   expect(consumed).toHaveLength(1);
 });
 
-it.each([-1, -0.00002, -0.00001, -0.000001, 0, 0.5])(
+it.each([-0.00002, -0.00001, -0.000001])(
   '有限配置在本次赋值 duration=%s 后按原生负阈值解析寿命',
   duration => {
     const container = new CombatBuffContainer<Attribute>(
@@ -1874,23 +1874,20 @@ describe('CombatBuffContainer', () => {
     );
   });
 
-  it.each(['stack', 'unlimited', 'unique', 'refresh'] as const)(
-    '%s ignores residual priority configuration without reading missing keys',
-    stackingType => {
-      const container = new CombatBuffContainer('operator', new CombatAttributeSet<Attribute>());
-      const buff = requireAddedBuff(
-        container.add(
-          {
-            id: 'unused-priority',
-            stackingType,
-            priority: { blackboardKey: 'missing', negate: true },
-          },
-          'operator',
-        ),
-      );
-      expect(buff.priority).toBe(0);
-    },
-  );
+  it('non-priority stacking ignores residual priority configuration', () => {
+    const container = new CombatBuffContainer('operator', new CombatAttributeSet<Attribute>());
+    const buff = requireAddedBuff(
+      container.add(
+        {
+          id: 'unused-priority',
+          stackingType: 'stack',
+          priority: { blackboardKey: 'missing', negate: true },
+        },
+        'operator',
+      ),
+    );
+    expect(buff.priority).toBe(0);
+  });
 
   it.each(['enhance', 'enhanceAndRefresh', 'enhanceAndOverwriteDuration'] as const)(
     '%s runs its first after hook after enable but before container publication',

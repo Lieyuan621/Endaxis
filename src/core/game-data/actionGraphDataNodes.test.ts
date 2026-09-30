@@ -39,8 +39,8 @@ function sample(): ActionGraphDefinition {
 it('条件与读黑板转为正式数据引用，绑定还原原表达式，编译使用同一执行入口', () => {
   const original = sample();
   const graph = extractGraphDataNodes(original);
-  expect(Object.keys(graph.dataNodes!)).toHaveLength(4);
   expect(resolveGraphData(graph)).toEqual(original);
+  expect(extractGraphDataNodes(JSON.parse(JSON.stringify(graph)))).toEqual(graph);
   expect(validateActionGraphActions(graph, 'graph')).toEqual([]);
   const compiler = createActionGraphCompilation(graph, 1);
   const entry = compiler.compileEntry({ $sequence: 'branch' }, 'cast');
@@ -118,11 +118,4 @@ it('含副作用的条件拒绝增加消费者，纯黑板读取允许多个使�
     dataNodes: { read: { type: 'number', expression: { kind: 'blackboard', key: 'count' } } },
   };
   expect(() => resolveGraphData(pure)).not.toThrow();
-});
-it('同一数据节点的多个输入只共享定义，保存后再次转换不复制节点', () => {
-  const graph = extractGraphDataNodes(sample());
-  expect(extractGraphDataNodes(JSON.parse(JSON.stringify(graph)))).toEqual(graph);
-  const resolver = createGraphDataResolver(graph);
-  const id = Object.keys(graph.dataNodes!)[0]!;
-  expect(resolver.node(id, 'number')).toBe(resolver.node(id, 'number'));
 });

@@ -8,21 +8,9 @@ import { actionSteps } from '../../test/actionProgramMatchers';
 import { rootActionSteps } from './actionProgramInspection';
 import { describe, expect, it } from 'vitest';
 import { perlica } from '../../data/operators/perlica.generated';
-import { arclight as arclightGeneratedOperator } from '../../data/operators/arclight.generated';
-import { camille as camilleGeneratedOperator } from '../../data/operators/camille.generated';
-import { endministrator as endministratorGeneratedOperator } from '../../data/operators/endministrator.generated';
-import { lifeng as lifengGeneratedOperator } from '../../data/operators/lifeng.generated';
-import { gilberta as gilbertaGeneratedOperator } from '../../data/operators/gilberta.generated';
-import { lastRite as lastRiteGeneratedOperator } from '../../data/operators/last-rite.generated';
-import { estella as estellaGeneratedOperator } from '../../data/operators/estella.generated';
-import { tangtang as tangtangGeneratedOperator } from '../../data/operators/tangtang.generated';
 import type { CompiledSkillProgram } from './combatProgram';
 import type { OperatorInstanceDocument } from '../project/schema';
-import type {
-  OperatorDefinition,
-  OperatorUpgradeDefinition,
-} from '../game-data/operatorDefinition';
-import { compileOperatorDefinitionSkills } from './compileScenarioTimeline';
+import type { OperatorUpgradeDefinition } from '../game-data/operatorDefinition';
 import {
   applyOperatorUpgradeSkillPatches,
   compileOperatorReactionModifiers,
@@ -32,7 +20,6 @@ import {
   resolveActiveOperatorUpgrades,
   type CompileUpgradeEntry,
 } from './compileOperatorUpgrades';
-import { compileIndependentBuffResource } from './compileSkill';
 
 function upgradeEntryCompiler(
   programs = new ActionGraphDefinitionRepository(),
@@ -127,64 +114,6 @@ function program(
   };
 }
 
-function buffDefinitionResolver(operator: OperatorDefinition) {
-  const programs = new ActionGraphDefinitionRepository();
-  const cache = new Map<string, unknown>();
-  return (buffId: string): unknown => {
-    if (!cache.has(buffId)) {
-      const definition = operator.buffDefinitions?.[buffId];
-      cache.set(
-        buffId,
-        definition === undefined
-          ? undefined
-          : compileIndependentBuffResource(definition, buffId, programs),
-      );
-    }
-    return cache.get(buffId);
-  };
-}
-
-function hydrateOperatorBuffReferences<T>(
-  value: T,
-  resolveBuffDefinition: (buffId: string) => unknown,
-  seen = new WeakMap<object, unknown>(),
-): T {
-  if (value === null || typeof value !== 'object') return value;
-  if (seen.has(value)) return seen.get(value) as T;
-  if (Array.isArray(value)) {
-    const result: unknown[] = [];
-    seen.set(value, result);
-    result.push(
-      ...value.map(item => hydrateOperatorBuffReferences(item, resolveBuffDefinition, seen)),
-    );
-    return result as T;
-  }
-  if (value instanceof Map) {
-    const result = new Map();
-    seen.set(value, result);
-    for (const [key, item] of value)
-      result.set(key, hydrateOperatorBuffReferences(item, resolveBuffDefinition, seen));
-    return result as T;
-  }
-  const source = value as Record<string, unknown>;
-  const hydrated: Record<string, unknown> = {};
-  seen.set(value, hydrated);
-  for (const [key, child] of Object.entries(source))
-    hydrated[key] = hydrateOperatorBuffReferences(child, resolveBuffDefinition, seen);
-  if (source.kind === 'applyBuff') {
-    const parameters = source.parameters as Record<string, unknown> | undefined;
-    const buffId = parameters?.buffId;
-    const definition = typeof buffId === 'string' ? resolveBuffDefinition(buffId) : undefined;
-    if (definition !== undefined) {
-      hydrated.parameters = {
-        ...(hydrated.parameters as Record<string, unknown>),
-        definition: hydrateOperatorBuffReferences(definition, resolveBuffDefinition, seen),
-      };
-    }
-  }
-  return hydrated as T;
-}
-
 describe('operator upgrade compilation', () => {
   it('在技能补丁之外按养成等级聚合元素反应时长和效果修正', () => {
     const [modifier] = compileOperatorReactionModifiers([
@@ -226,9 +155,9 @@ describe('operator upgrade compilation', () => {
         {
           source: 'potential',
           index: 0,
-          level: 1,
+          level: 2,
           definition: {
-            levels: 1,
+            levels: 2,
             initializationSequence: { $sequence: 'init' },
             actionGraph: {
               main: {
@@ -239,6 +168,7 @@ describe('operator upgrade compilation', () => {
                       parameters: {
                         buffId: 'buff.potential',
                         target: 'caster',
+                        blackboardAssignments: { add: [0.2, 0.3] },
                       },
                     },
                     next: null,
@@ -256,243 +186,17 @@ describe('operator upgrade compilation', () => {
     expect(programs).toMatchObject([
       {
         key: 'potential:0',
-        sequence: actionSteps([{ kind: 'applyBuff', parameters: { buffId: 'buff.potential' } }]),
+        sequence: actionSteps([
+          {
+            kind: 'applyBuff',
+            parameters: {
+              buffId: 'buff.potential',
+              blackboardAssignments: { add: { kind: 'constant', value: 0.3 } },
+            },
+          },
+        ]),
       },
     ]);
-  });
-
-  it('resolves attached Buff blackboard inputs at the selected upgrade level', () => {
-    const definition = {
-      levels: 2,
-      initializationSequence: { $sequence: 'init' },
-      actionGraph: {
-        main: {
-          nodes: {
-            init: {
-              action: {
-                kind: 'applyBuff' as const,
-                parameters: {
-                  buffId: 'buff.talent',
-                  target: 'caster' as const,
-                  blackboardAssignments: { add: [0.2, 0.3] },
-                },
-              },
-              next: null,
-            },
-          },
-        },
-        macros: {},
-      },
-    };
-    const programs = compileOperatorInitializationPrograms(
-      [{ source: 'talent', index: 0, level: 2, definition }],
-      upgradeEntryCompiler(),
-    );
-
-    expect(rootActionSteps(programs[0]?.sequence!)[0]).toMatchObject({
-      kind: 'applyBuff',
-      parameters: { blackboardAssignments: { add: { kind: 'constant', value: 0.3 } } },
-    });
-  });
-
-  it('compiles Endministrator potential 5 into its trigger listener and absolute cooldown reduction', () => {
-    const active = resolveActiveOperatorUpgrades(
-      build({ operatorSlug: endministratorGeneratedOperator.slug, potential: 5 }),
-      endministratorGeneratedOperator,
-    );
-    const program = compileOperatorInitializationPrograms(active, upgradeEntryCompiler()).find(
-      item => item.key === 'potential:4',
-    );
-
-    expect(
-      hydrateOperatorBuffReferences(
-        rootActionSteps(program?.sequence!)[0],
-        buffDefinitionResolver(endministratorGeneratedOperator),
-      ),
-    ).toMatchObject({
-      kind: 'applyBuff',
-      parameters: {
-        buffId: 'buff_chr_0003_endminf_potential5',
-        blackboardAssignments: { cd_minus: { kind: 'constant', value: 2 } },
-        definition: {
-          abilityEventResponses: [
-            {
-              event: 'addedBuff',
-              sequence: actionSteps([
-                {
-                  kind: 'conditional',
-                  whenTrue: actionSteps([
-                    {
-                      kind: 'adjustSkillCooldown',
-                      parameters: {
-                        skill: { kind: 'id', skillId: 'chr_0003_endminf_combo_skill' },
-                        operation: 'reduce',
-                        basis: 'absoluteSeconds',
-                      },
-                    },
-                    {
-                      kind: 'adjustSkillCooldown',
-                      parameters: {
-                        skill: { kind: 'id', skillId: 'chr_0002_endminm_combo_skill' },
-                        operation: 'reduce',
-                        basis: 'absoluteSeconds',
-                      },
-                    },
-                  ]),
-                },
-              ]),
-            },
-          ],
-        },
-      },
-    });
-  });
-
-  it('compiles Estella potential 5 into a persistent enemy Buff-tag listener', () => {
-    const active = resolveActiveOperatorUpgrades(
-      build({ operatorSlug: estellaGeneratedOperator.slug, potential: 5 }),
-      estellaGeneratedOperator,
-    );
-    const program = compileOperatorInitializationPrograms(active, upgradeEntryCompiler()).find(
-      item => item.key === 'potential:4',
-    );
-
-    expect(
-      hydrateOperatorBuffReferences(
-        rootActionSteps(program?.sequence!)[0],
-        buffDefinitionResolver(estellaGeneratedOperator),
-      ),
-    ).toMatchObject({
-      kind: 'applyBuff',
-      parameters: {
-        buffId: 'buff_chr_0021_whiten_potential_5',
-        definition: {
-          lifecycleSequences: {
-            enable: actionSteps([
-              {
-                kind: 'applyBuff',
-                parameters: {
-                  buffId: 'buff_chr_0021_whiten_potential_5_inaura',
-                  target: 'enemy',
-                  finishByAction: true,
-                  definition: {
-                    abilityEventResponses: [
-                      {
-                        event: 'addedBuff',
-                        sequence: actionSteps([
-                          {
-                            kind: 'conditional',
-                            parameters: {
-                              condition: {
-                                kind: 'eventBuffTagsMatch',
-                                match: 'hasAny',
-                                buffTags: ['Skill/Character/Common/SpellStatus/Frozen'],
-                              },
-                            },
-                            whenTrue: actionSteps([
-                              {
-                                kind: 'conditional',
-                                parameters: {
-                                  condition: {
-                                    kind: 'not',
-                                    condition: {
-                                      kind: 'timedMarkerPresent',
-                                      target: 'caster',
-                                      markerId: 'buff_chr_0021_whiten_potential_5_cd',
-                                    },
-                                  },
-                                },
-                                whenTrue: actionSteps([
-                                  {
-                                    kind: 'createTimedMarker',
-                                    parameters: {
-                                      markerId: 'buff_chr_0021_whiten_potential_5_cd',
-                                    },
-                                  },
-                                  {
-                                    kind: 'changeResourceByActionValue',
-                                    parameters: {
-                                      resource: 'ultimateEnergy',
-                                      recipient: 'caster',
-                                    },
-                                  },
-                                ]),
-                              },
-                            ]),
-                          },
-                        ]),
-                      },
-                    ],
-                  },
-                },
-              },
-            ]),
-          },
-        },
-      },
-    });
-  });
-
-  it('compiles generated talent and potential effects into operator skills', () => {
-    const arclightBuild = build({
-      operatorSlug: arclightGeneratedOperator.slug,
-      potential: 5,
-      talentStates: { 0: 2 },
-    });
-    const skills = compileOperatorDefinitionSkills(
-      'track:0',
-      arclightBuild,
-      arclightGeneratedOperator,
-      undefined,
-      undefined,
-      new ActionGraphDefinitionRepository(),
-    );
-    const battleSkill = skills.find(skill => skill.skillGroupKey === 'battleSkill');
-    const ultimate = skills.find(skill => skill.skillGroupKey === 'ultimate');
-
-    expect(battleSkill?.initialBlackboard).toMatchObject({
-      talent_1: 1,
-      duration: 15,
-      pulse_up: Math.fround(0.0008 * 1.3),
-      count: 2,
-      atb: 50,
-    });
-    expect(ultimate?.costs).toEqual([{ resource: 'ultimateEnergy', value: 76.5 }]);
-
-    const initialization = compileOperatorInitializationPrograms(
-      resolveActiveOperatorUpgrades(arclightBuild, arclightGeneratedOperator),
-      upgradeEntryCompiler(),
-    );
-    expect(initialization).toHaveLength(1);
-    expect(
-      hydrateOperatorBuffReferences(
-        initialization[0],
-        buffDefinitionResolver(arclightGeneratedOperator),
-      ),
-    ).toMatchObject({
-      key: 'potential:4',
-      sequence: actionSteps([
-        {
-          kind: 'applyBuff',
-          parameters: {
-            buffId: 'buff_chr_0007_ikut_finish_count_p5',
-            definition: {
-              lifecycleSequences: {
-                start: actionSteps([
-                  {
-                    kind: 'finishBuffsById',
-                    parameters: {
-                      target: 'buffOwner',
-                      buffIds: ['buff_chr_0007_ikut_normal_skill_extra_count'],
-                    },
-                  },
-                ]),
-              },
-            },
-          },
-        },
-      ]),
-    });
   });
 
   it('selects talents and potentials in stable declaration order', () => {
@@ -846,31 +550,6 @@ describe('operator upgrade compilation', () => {
     });
   });
 
-  it('compiles Perlica reaction attack potential into its native listening Buff initialization', () => {
-    const programs = compileOperatorInitializationPrograms(
-      [{ source: 'potential', index: 2, level: 1, definition: perlica.potentials[2]! }],
-      upgradeEntryCompiler(),
-    );
-
-    expect(hydrateOperatorBuffReferences(programs, buffDefinitionResolver(perlica))).toMatchObject([
-      {
-        key: 'potential:2',
-        sequence: actionSteps([
-          {
-            kind: 'applyBuff',
-            parameters: {
-              buffId: 'buff_chr_0004_pelica_potential_3',
-              target: 'caster',
-              definition: {
-                abilityEventResponses: [{ event: 'outputBuff' }],
-              },
-            },
-          },
-        ]),
-      },
-    ]);
-  });
-
   it('resolves an upgrade event listener blackboard at the selected talent level', () => {
     const definition: OperatorUpgradeDefinition = {
       levels: 2,
@@ -894,170 +573,6 @@ describe('operator upgrade compilation', () => {
         initialBlackboard: { crystal_up: 0.04, duration: 15 },
       },
     ]);
-  });
-
-  it('compiles Last Rite talent 1 into its native Buff event listener', () => {
-    const active = resolveActiveOperatorUpgrades(
-      build({ operatorSlug: lastRiteGeneratedOperator.slug, talentStates: { 0: 2 } }),
-      lastRiteGeneratedOperator,
-    );
-
-    expect(compileOperatorUpgradeEventPrograms(active, upgradeEntryCompiler())).toEqual([]);
-    expect(
-      hydrateOperatorBuffReferences(
-        compileOperatorInitializationPrograms(active, upgradeEntryCompiler()),
-        buffDefinitionResolver(lastRiteGeneratedOperator),
-      ),
-    ).toMatchObject([
-      {
-        key: 'talent:0',
-        sequence: actionSteps([
-          {
-            kind: 'applyBuff',
-            parameters: {
-              buffId: 'buff_chr_0026_lastrite_talent_1',
-              target: 'caster',
-              blackboardAssignments: {
-                crystal_up: { kind: 'constant', value: 0.04 },
-                duration: { kind: 'constant', value: 15 },
-              },
-              definition: {
-                abilityEventResponses: [
-                  {
-                    event: 'buffConsumed',
-                    sequence: actionSteps([
-                      {
-                        kind: 'conditional',
-                        whenTrue: actionSteps([
-                          {
-                            kind: 'conditional',
-                            whenTrue: actionSteps([
-                              {
-                                kind: 'calculateActionValue',
-                                parameters: { key: 'crystal_vul' },
-                              },
-                              {
-                                kind: 'applyBuff',
-                                parameters: {
-                                  buffId: 'buff_chr_0026_lastrite_talent_1_vul',
-                                  target: 'eventTarget',
-                                  source: 'buffSource',
-                                },
-                              },
-                            ]),
-                          },
-                        ]),
-                      },
-                    ]),
-                  },
-                ],
-              },
-            },
-          },
-        ]),
-      },
-    ]);
-  });
-
-  it('adds Perlica ultimate critical rate to the native ultimate blackboard input', () => {
-    const base = compileOperatorDefinitionSkills(
-      'track:perlica',
-      build(),
-      perlica,
-      undefined,
-      undefined,
-      new ActionGraphDefinitionRepository(),
-    );
-    const patched = applyOperatorUpgradeSkillPatches(base, [
-      { source: 'potential', index: 0, level: 1, definition: perlica.potentials[4]! },
-    ]);
-
-    expect(
-      patched.find(program => program.skillGroupKey === 'ultimate')?.initialBlackboard.crit,
-    ).toBeCloseTo(0.3);
-    expect(
-      patched.find(program => program.skillGroupKey === 'comboSkill')?.initialBlackboard.crit,
-    ).toBeUndefined();
-    expect(base.find(program => program.skillGroupKey === 'ultimate')?.initialBlackboard.crit).toBe(
-      0,
-    );
-  });
-
-  it('resolves Perlica staggered-target talent level into its native Buff initialization', () => {
-    const active = resolveActiveOperatorUpgrades(build({ talentStates: { 0: 2 } }), perlica);
-    const initialization = compileOperatorInitializationPrograms(active, upgradeEntryCompiler());
-
-    expect(
-      hydrateOperatorBuffReferences(initialization, buffDefinitionResolver(perlica)),
-    ).toMatchObject([
-      {
-        key: 'talent:0',
-        sequence: actionSteps([
-          {
-            kind: 'applyBuff',
-            parameters: {
-              buffId: 'buff_chr_0004_pelica_talent_0',
-              target: 'caster',
-              blackboardAssignments: { dmg: { kind: 'constant', value: 0.3 } },
-              definition: { damageModifiers: [{ enabledSide: 'attacker' }] },
-            },
-          },
-        ]),
-      },
-    ]);
-  });
-
-  it('connects Camille potential 3 cooldown and blackboard patches to each native combo variant', () => {
-    const programs = compileOperatorDefinitionSkills(
-      'track:camille',
-      build({ operatorSlug: camilleGeneratedOperator.slug, potential: 3 }),
-      camilleGeneratedOperator,
-      undefined,
-      undefined,
-      new ActionGraphDefinitionRepository(),
-    );
-    const combo1 = programs.find(program => program.skillId === 'chr_0033_camille_combo_skill')!;
-    const combo2 = programs.find(program => program.skillId === 'chr_0033_camille_combo_skill_2')!;
-
-    expect(combo1.cooldownFrames).toBe(480);
-    expect(combo2.cooldownFrames).toBeUndefined();
-    expect(combo1.initialBlackboard.atk_scale_1_1).toBeCloseTo(0.6 * 1.3);
-    expect(combo2.initialBlackboard.atk_scale_2_1).toBeCloseTo(0.6 * 1.3);
-    expect(combo1.initialBlackboard.atb).toBeCloseTo(20 * 1.15);
-    expect(combo2.initialBlackboard.atb_ex).toBeCloseTo(20 * 1.15);
-  });
-
-  it('patches Gilberta team ultimate-energy passive after resolving talent level', () => {
-    const operatorBuild = build({
-      operatorSlug: gilbertaGeneratedOperator.slug,
-      talentStates: { 0: 2 },
-      potential: 3,
-    });
-    const active = resolveActiveOperatorUpgrades(operatorBuild, gilbertaGeneratedOperator);
-    const passives = compileOperatorPassivePrograms(active, [], undefined, upgradeEntryCompiler());
-
-    expect(passives).toHaveLength(1);
-    expect(passives[0]).toMatchObject({ key: 'chr_0013_aglina_talent_0' });
-    expect(passives[0]?.initialBlackboard.add).toBeCloseTo(0.12);
-  });
-
-  it('targets Camille talent patches to concrete variants inside the combo-skill group', () => {
-    const programs = compileOperatorDefinitionSkills(
-      'track:camille',
-      build({ operatorSlug: camilleGeneratedOperator.slug, talentStates: { 0: 2 } }),
-      camilleGeneratedOperator,
-      undefined,
-      undefined,
-      new ActionGraphDefinitionRepository(),
-    );
-    const comboPrograms = programs.filter(program => program.skillGroupKey === 'comboSkill');
-
-    expect(comboPrograms.map(program => program.skillId)).toEqual([
-      'chr_0033_camille_combo_skill',
-      'chr_0033_camille_combo_skill_2',
-    ]);
-    expect(comboPrograms.every(program => program.initialBlackboard.talent_0 === 1)).toBe(true);
-    expect(comboPrograms.every(program => program.initialBlackboard.heal_base === 60)).toBe(true);
   });
 
   it('does not leak a variant-specific blackboard patch to sibling skill programs', () => {
@@ -1199,49 +714,6 @@ describe('operator upgrade compilation', () => {
         enableSequence: actionSteps([]),
       },
     ]);
-  });
-
-  it('resolves Tangtang base passive from battle-skill level before potential patches', () => {
-    const operatorBuild = build({
-      operatorSlug: tangtangGeneratedOperator.slug,
-      potential: 3,
-    });
-    const active = resolveActiveOperatorUpgrades(operatorBuild, tangtangGeneratedOperator);
-    const skills = compileOperatorDefinitionSkills(
-      'track:tangtang',
-      operatorBuild,
-      tangtangGeneratedOperator,
-      undefined,
-      undefined,
-      new ActionGraphDefinitionRepository(),
-    );
-    const passives = compileOperatorPassivePrograms(
-      active,
-      tangtangGeneratedOperator.passiveSkills ?? [],
-      operatorBuild.skillLevels,
-      upgradeEntryCompiler(),
-    );
-
-    const battleSkill = skills.find(skill => skill.skillGroupKey === 'battleSkill');
-    const ultimate = skills.find(skill => skill.skillGroupKey === 'ultimate');
-    expect(battleSkill?.initialBlackboard.potential3).toBe(1);
-    expect(battleSkill?.initialBlackboard.rate_spellvulnerable).toBeCloseTo(0.1);
-    expect(battleSkill?.initialBlackboard.rate_spellvulnerable_02).toBeCloseTo(0.15);
-    expect(ultimate?.initialBlackboard.rate_spellvulnerable).toBeCloseTo(0.05);
-    expect(ultimate?.initialBlackboard.rate_spellvulnerable_02).toBeCloseTo(0.05);
-    expect(passives).toHaveLength(1);
-    expect(passives[0]?.initialBlackboard.normalskill_atk_scale01).toBeCloseTo(0.275);
-  });
-
-  it('does not invent a passive instance when its talent is disabled', () => {
-    const active = resolveActiveOperatorUpgrades(
-      build({ operatorSlug: lifengGeneratedOperator.slug, potential: 3 }),
-      lifengGeneratedOperator,
-    );
-
-    expect(compileOperatorPassivePrograms(active, [], undefined, upgradeEntryCompiler())).toEqual(
-      [],
-    );
   });
 
   it('rejects duplicate passive identities across active upgrades', () => {

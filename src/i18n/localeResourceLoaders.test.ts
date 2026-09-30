@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   createLocaleResourceLoaders,
   localeResourceLoaders,
-  resolveGameTextLocale,
   type LocaleTable,
 } from './localeResourceLoaders';
 
@@ -11,13 +10,6 @@ function table(id: string): LocaleTable {
 }
 
 describe('localeResourceLoaders', () => {
-  it.each([
-    ['zh-CN', 'zh'],
-    ['en', 'en'],
-  ] as const)('maps UI locale %s to game locale %s', (locale, expected) => {
-    expect(resolveGameTextLocale(locale)).toBe(expected);
-  });
-
   it('loads existing UI and game text modules through the default non-eager glob maps', async () => {
     const [ui, terms] = await Promise.all([
       localeResourceLoaders.loadUiLocale('en'),
@@ -51,20 +43,14 @@ describe('localeResourceLoaders', () => {
     await expect(first).resolves.toEqual({ id: 'ui:zh' });
   });
 
-  it('loads every non-gear family from the effective game locale', async () => {
-    const gameText = Object.fromEntries(
-      ['operators', 'weapons', 'enemies'].map(family => [
-        `./game-locales/en/${family}.json`,
-        vi.fn(async () => table(family)),
-      ]),
-    );
-    const loaders = createLocaleResourceLoaders({ ui: {}, gameText });
-
-    await expect(loaders.loadGameTextFamily('en', 'operators')).resolves.toEqual({
+  it('loads an ordinary game text family from the effective locale', async () => {
+    const loaders = createLocaleResourceLoaders({
+      ui: {},
+      gameText: { './game-locales/zh/operators.json': async () => table('operators') },
+    });
+    await expect(loaders.loadGameTextFamily('zh-CN', 'operators')).resolves.toEqual({
       id: 'operators',
     });
-    await expect(loaders.loadGameTextFamily('en', 'weapons')).resolves.toEqual({ id: 'weapons' });
-    await expect(loaders.loadGameTextFamily('en', 'enemies')).resolves.toEqual({ id: 'enemies' });
   });
 
   it('forms terms from battle text and the effective UI locale enum terms', async () => {

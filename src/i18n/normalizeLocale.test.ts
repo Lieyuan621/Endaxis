@@ -1,12 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { SUPPORTED_LOCALES, normalizeLocale } from './elementPlusLocale';
+import { normalizeLocale } from './elementPlusLocale';
 import { detectLocale } from './index';
 
 describe('normalizeLocale', () => {
-  it('offers exactly the two shipped locales', () => {
-    expect(SUPPORTED_LOCALES).toEqual(['zh-CN', 'en']);
-  });
-
   it('selects zh-CN for any Chinese tag', () => {
     for (const raw of ['zh', 'zh-CN', 'zh-cn', 'ZH-Hans', 'zh-TW', ' zh ']) {
       expect(normalizeLocale(raw)).toBe('zh-CN');

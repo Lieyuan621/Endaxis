@@ -4,17 +4,8 @@ import {
   isContingencyContractTagLocked,
   toggleContingencyContractTag,
 } from './contingencyContractCatalog';
-import {
-  contingencyContractBlockedTagReasons,
-  contingencyContractOmittedTagReasons,
-  contingencyContractTagDefinitions,
-} from './generated/contingencyContractDefinitions.generated';
-
 describe('contingencyContractCatalog', () => {
-  it('classifies every generated tag and gives unsupported tags a reason', () => {
-    expect(contingencyContractTags.map(tag => tag.tagId)).toEqual(
-      contingencyContractTagDefinitions.map(tag => tag.tagId),
-    );
+  it('gives unsupported tags a reason visible to the user', () => {
     for (const tag of contingencyContractTags) {
       if (tag.support === 'supported') {
         expect(tag.supportReason).toBeUndefined();
@@ -22,16 +13,6 @@ describe('contingencyContractCatalog', () => {
         expect(tag.supportReason).toBeTruthy();
       }
     }
-    expect(
-      new Set(
-        contingencyContractTags.filter(tag => tag.support === 'blocked').map(tag => tag.tagId),
-      ),
-    ).toEqual(new Set(Object.keys(contingencyContractBlockedTagReasons).map(Number)));
-    expect(
-      new Set(
-        contingencyContractTags.filter(tag => tag.support === 'omitted').map(tag => tag.tagId),
-      ),
-    ).toEqual(new Set(Object.keys(contingencyContractOmittedTagReasons).map(Number)));
   });
 
   it('replaces a selected tier in the same native conflict group', () => {

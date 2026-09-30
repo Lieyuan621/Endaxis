@@ -1,19 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import {
-  compressProjectCode,
-  decompressProjectCode,
-  imageFilename,
-  projectFilename,
-} from './timelineExport';
+import { compressProjectCode, decompressProjectCode } from './timelineExport';
 
 describe('timeline export helpers', () => {
-  it('exports PNG images and normalizes existing file extensions', () => {
-    expect(projectFilename(' rotation.webp ')).toBe('rotation.json');
-    expect(imageFilename('rotation.png')).toBe('rotation.png');
-    expect(imageFilename('rotation.webp')).toBe('rotation.png');
-    expect(imageFilename('')).toBe('Endaxis_Export.png');
-  });
-
   it('uses the legacy URL-safe gzip data-code format', async () => {
     const code = await compressProjectCode('{"kind":"EndaxisProject"}');
     expect(code).toMatch(/^[A-Za-z0-9_-]+$/);

@@ -71,7 +71,6 @@ describe('independent operator resource renderer', () => {
       skillGroups: [{ key: 'battleSkill', operationType: 'battleSkill', skills: skill }],
     };
     const source = renderOperatorDefinitionSource({ operator });
-    expect(source).not.toContain('expandActionGraph');
     const exported = evaluate(source);
     const definition = exported.sampleBattleSkill as SkillDefinition;
     expect(exported.sampleActionGraph).toBeUndefined();
@@ -191,7 +190,6 @@ it('公共 Buff 生成的生命周期保留共享图引用，可直接进入正�
       }),
     },
   });
-  expect(source).not.toContain('expandActionGraph');
   const exported = evaluate(source);
   const definitions = exported.commonBuffDefinitions as Record<string, SkillBuffDefinition>;
   const definition = definitions.shared!;

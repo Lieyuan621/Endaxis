@@ -88,7 +88,7 @@ describe('useTimelineLoadoutEditor', () => {
     const { editor, scenario, session } = createEditor();
     editor.openOperatorDialog(0);
     editor.selectOperator(perlica.slug);
-    const gear = gameDataRepository.getGears().find(definition => definition.slotType === 'armor');
+    const gear = gameDataRepository.getGear('item_equip_t4_suit_atk02_body_04');
     expect(gear).toBeDefined();
     editor.openGearDialog(0, 'armor');
     editor.selectGear(gear!.slug, 0);

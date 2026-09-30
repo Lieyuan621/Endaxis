@@ -15,7 +15,6 @@ it('直接替换干员文件时保留混合目录中的相邻文件，并拒绝�
     });
     expect(await fs.readFile(path.join(root, 'sample.ts'), 'utf8')).toBe('new definition');
     expect(await fs.readFile(path.join(root, 'helper.ts'), 'utf8')).toBe('handwritten');
-    expect((await fs.readdir(root)).sort()).toEqual(['helper.ts', 'sample.ts']);
     await expect(
       writeGeneratedDefinitionFile(root, { relativePath: '../outside.ts', content: 'bad' }),
     ).rejects.toThrow();

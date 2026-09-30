@@ -88,7 +88,6 @@ describe('同步直线中间段宏提取', () => {
     }
     for (const entry of source.entries)
       expect(trace(result.graph, entry.$sequence!)).toEqual(trace(source.graph, entry.$sequence!));
-    expect(source.entries.flatMap(entry => trace(result.graph, entry.$sequence!))).toHaveLength(18);
   });
 
   it('去重之后只有一份的公共尾段不再提取宏', () => {

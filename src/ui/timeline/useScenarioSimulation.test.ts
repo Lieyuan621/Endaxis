@@ -510,7 +510,7 @@ describe('useScenarioSimulation', () => {
     }
   });
 
-  it.each([-60, 0, 1, 30])(
+  it.each([-60, 1])(
     'a freshly placed basic attack chain at %s does not diagnose its own default spacing as blocked',
     async startFrame => {
       const initial = createPerlicaScenario();

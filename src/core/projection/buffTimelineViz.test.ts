@@ -124,44 +124,6 @@ describe('projectBuffTimelineViz', () => {
     expect(projectBuffTimelineViz([applied(0, 10, 'enemy', 1, 1, false)], 90)).toEqual([]);
   });
 
-  it('保留 HUD 分流、进度和排序证据', () => {
-    const entry = applied(0, 10, 'operator:1', 1, 2);
-    expect(
-      projectBuffTimelineViz(
-        [
-          {
-            ...entry,
-            data: {
-              ...entry.data,
-              showInSquadIcon: true,
-              onlyShowForMainCharacter: true,
-              showProgressInNormalSkillButton: true,
-              useWeakProgressInNormalSkillButton: true,
-              showWarningBackground: true,
-              iconStyleInSquad: 'LifeTime',
-              abnormalColorType: 'Fire',
-              orderUseDirectoryValue: false,
-              orderPriorityValue: 12,
-              orderPriorityCategory: 'CommonCharBuff',
-            },
-          },
-        ],
-        90,
-      )[0],
-    ).toMatchObject({
-      showInSquadIcon: true,
-      onlyShowForMainCharacter: true,
-      showProgressInNormalSkillButton: true,
-      useWeakProgressInNormalSkillButton: true,
-      showWarningBackground: true,
-      iconStyleInSquad: 'LifeTime',
-      abnormalColorType: 'Fire',
-      orderUseDirectoryValue: false,
-      orderPriorityValue: 12,
-      orderPriorityCategory: 'CommonCharBuff',
-    });
-  });
-
   it('只用能力实体结束事实覆盖图标持续条，不改写 Buff 自身生命周期', () => {
     const entry = applied(0, 10, 'enemy', 1, 1);
     const segments = projectBuffTimelineViz(

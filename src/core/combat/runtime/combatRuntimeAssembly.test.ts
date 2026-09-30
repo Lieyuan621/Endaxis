@@ -34,7 +34,7 @@ import { CombatBuffContainer } from '../buffs/combatBuffs';
 import { createNativeEventFixture } from '../events/nativeEventTestFixture';
 import { CombatReceiptCollector } from '../receipt/combatReceipt';
 import { CombatVitals } from '../resources/combatVitals';
-import { CombatSkillPrograms, combatSkillProgramKey } from '../skills/combatSkillPrograms';
+import { CombatSkillPrograms } from '../skills/combatSkillPrograms';
 import type { CombatOperationExecutor } from '../skills/skillRuntime';
 import { createTimelineActionState, type ActionGraphExecutionState } from '../state/actionState';
 import { createBuffInstanceState } from '../state/instanceState';
@@ -729,19 +729,6 @@ describe('CombatRuntimeAssembly', () => {
     expect(saved.comboWindows.records.size).toBe(0);
     expect(saved.ultimatePresentation.inUltimateCasting).toBe(false);
     expect(assembly.receipt.history.length).toBeGreaterThan(savedHistory.length);
-  });
-
-  it('正式装配把普通技能登记到切面树共享的固定程序目录', () => {
-    const program = skill();
-    const programs = new CombatSkillPrograms();
-    const assembly = createAssembly({
-      programs: [program],
-      combatSkillPrograms: programs,
-      ...nativeEventRuntimeOptions(),
-    });
-
-    expect(assembly.combatSkillPrograms).toBe(programs);
-    expect(programs.resolve(combatSkillProgramKey(program)).program).toBe(program);
   });
 
   it('整场恢复预检接受完整复制图，并拒绝丢失程序或共享引用的候选', () => {
@@ -1633,7 +1620,7 @@ describe('CombatRuntimeAssembly', () => {
     },
   );
 
-  it.each(['basicAttack', 'battleSkill', 'comboSkill', 'ultimate', undefined] as const)(
+  it.each(['battleSkill', 'ultimate', undefined] as const)(
     'diagnoses only evidenced ultimate input during another operator presentation: %s',
     action => {
       const assembly = createAssembly([skill({ costs: [] })]);

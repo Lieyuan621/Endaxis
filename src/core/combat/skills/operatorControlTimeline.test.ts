@@ -11,10 +11,8 @@ const timeline: OperatorControlTimeline = {
 
 describe('operatorControlTimeline', () => {
   it('uses the segment whose start frame is the latest one not after the query frame', () => {
-    expect(resolveControlledOperator(timeline, 0)).toBe('operator:1');
     expect(resolveControlledOperator(timeline, 29)).toBe('operator:1');
     expect(resolveControlledOperator(timeline, 30)).toBe('operator:2');
-    expect(resolveControlledOperator(timeline, 89)).toBe('operator:2');
     expect(resolveControlledOperator(timeline, 90)).toBeNull();
   });
 

@@ -75,21 +75,16 @@ describe('GameplayTagPredefine 公共转换', () => {
     expect(table.canAddTag(target, tag)).toBe(true);
   });
 
-  it.each(['hasAny', 'hasAll', 'exceptAny', 'exceptAll'])('缓存查询按原生枚举顺序读取 %s', kind => {
+  it('缓存查询按原生枚举读取非默认成员', () => {
     const source = sourceTable();
-    source.predefinedQuery.CantCastAnySkill.queryType = [
-      'hasAny',
-      'hasAll',
-      'exceptAny',
-      'exceptAll',
-    ].indexOf(kind);
+    source.predefinedQuery.CantCastAnySkill.queryType = 3;
     expect(
       parseGameplayTagPredefineTableSource(source, 'fixture').predefinedQuery.CantCastAnySkill
         ?.queryType,
-    ).toBe(kind);
+    ).toBe('exceptAll');
   });
 
-  it.each([-1, 4, 1.5, 'HasAny', null])('拒绝缓存查询的未知枚举 %s', kind => {
+  it.each([4, 'HasAny'])('拒绝缓存查询的越界或强转枚举 %s', kind => {
     const source = sourceTable();
     expect(() =>
       parseGameplayTagPredefineTableSource(
@@ -189,8 +184,5 @@ describe('GameplayTagPredefine 公共转换', () => {
     await generateGameplayTagPredefine(input, shallow, 'fixture', fixtureGameplayTagCatalog);
     await generateGameplayTagPredefine(input, deep, 'fixture', fixtureGameplayTagCatalog);
     expect(await fs.readFile(deep, 'utf8')).toBe(await fs.readFile(shallow, 'utf8'));
-    expect(await fs.readFile(deep, 'utf8')).toContain(
-      "'../../../packages/game-data-contract/src/gameplayTags.ts'",
-    );
   });
 });

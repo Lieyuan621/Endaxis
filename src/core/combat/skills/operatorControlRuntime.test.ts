@@ -73,3 +73,25 @@ it('自动切人只记录实际变化，空帧保留身份，手动切人按同�
     [2, 'third'],
   ]);
 });
+
+it.each([
+  ['basicAttack', 'battleSkill', true],
+  ['battleSkill', 'basicAttack', false],
+  [undefined, 'plungingAttack', true],
+  [undefined, 'finisher', true],
+] as const)('自动切人规则：操作=%s，技能类型=%s', (action, skillType, shouldSwitch) => {
+  const receipt = new CombatReceiptCollector();
+  const state = new Map([
+    ['a', true],
+    ['b', false],
+  ]);
+  const runtime = new OperatorControlRuntime({
+    clock: new CombatClock(),
+    receipt,
+    state,
+    configuration: { initialOperatorId: 'a', automaticSwitches: true, scheduledSwitches: [] },
+  });
+  runtime.beforeSkillInput('b', action, skillType, 'cast');
+  expect(state.get('b')).toBe(shouldSwitch);
+  expect(receipt.entries).toHaveLength(shouldSwitch ? 1 : 0);
+});

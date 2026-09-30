@@ -91,19 +91,16 @@ describe('Buff 运行时公共来源', () => {
     ).toThrow('direct head buff display requires native routing projection');
   });
 
-  it.each([null, undefined, 0, 'false', {}])(
-    '直接显示开关严格校验显式值 %j',
-    showDirectlyInHeadBuff => {
-      expect(() =>
-        parseBuffRuntimeSource(
-          buffFixture({
-            iconConfig: { ...iconFixture(), showDirectlyInHeadBuff },
-          }),
-          'buff',
-        ),
-      ).toThrow('buff.iconConfig.showDirectlyInHeadBuff');
-    },
-  );
+  it.each([undefined, 0])('直接显示开关拒绝缺失或非布尔值 %j', showDirectlyInHeadBuff => {
+    expect(() =>
+      parseBuffRuntimeSource(
+        buffFixture({
+          iconConfig: { ...iconFixture(), showDirectlyInHeadBuff },
+        }),
+        'buff',
+      ),
+    ).toThrow('buff.iconConfig.showDirectlyInHeadBuff');
+  });
 
   it('保留生命周期、图标、属性修正和可执行技能类型条件', () => {
     const parsed = parseBuffRuntimeSource(

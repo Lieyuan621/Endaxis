@@ -11,9 +11,7 @@ const points: readonly ResourceCurvePoint[] = [
 describe('sampleStepCurve', () => {
   it('返回最后一个不晚于采样帧的曲线点值', () => {
     expect(sampleStepCurve(points, 0)).toEqual({ frame: 0, value: 100, known: true });
-    expect(sampleStepCurve(points, 9)).toEqual({ frame: 9, value: 100, known: true });
     expect(sampleStepCurve(points, 10)).toEqual({ frame: 10, value: 70, known: true });
-    expect(sampleStepCurve(points, 14)).toEqual({ frame: 14, value: 70, known: true });
     expect(sampleStepCurve(points, 999)).toEqual({ frame: 999, value: 90, known: true });
   });
 

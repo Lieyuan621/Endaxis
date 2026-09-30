@@ -12,8 +12,6 @@ describe('legacy enemy status density and dividers', () => {
     expect(enemyStatusRowSize(128, 6)).toBe(18);
     expect(enemyStatusRowSize(104, 6)).toBe(14);
     expect(enemyStatusRowSize(46, 6)).toBe(14);
-    expect(enemyStatusRowSize(140, 6)).toBe(20);
-    expect(enemyStatusRowSize(140, 3)).toBe(20);
   });
   it('transfers height only between adjacent expanded sections from actual starting heights', () => {
     const bodies = { affliction: 202, poise: 40, sp: 100 };

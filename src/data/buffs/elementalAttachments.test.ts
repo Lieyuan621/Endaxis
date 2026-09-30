@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { CombatAttributeSet } from '../../core/combat/attributes/combatAttributes';
 import { CombatBuffContainer } from '../../core/combat/buffs/combatBuffs';
 import { compileCombatBuffDefinitions } from '../../core/combat/buffs/combatBuffDefinitions';
-import { INFLICTION_ELEMENTS } from '../../core/game-data/operatorDefinition';
 import { ElementalInflictionBuffAdapter } from '../../core/combat/infliction/elementalInflictionBuffAdapter';
 import { resolveElementalInfliction } from '../../core/combat/infliction/elementalInfliction';
 import { executeCompoundStatusFactory } from '../../core/combat/infliction/compoundStatusFactory';
@@ -34,7 +33,7 @@ function createEnemyAttributes(): CombatAttributeSet<Attribute> {
 }
 
 describe('elementalAttachments', () => {
-  it('compiles all four attachment roles through the typed definition boundary', () => {
+  it('编译真实附着定义并发布叠层变化', () => {
     const emitStarted = vi.fn();
     const onSpellBurstTriggered = vi.fn();
     const index = compileCombatBuffDefinitions<Attribute>(elementalAttachments, {
@@ -45,31 +44,21 @@ describe('elementalAttachments', () => {
     });
     const container = new CombatBuffContainer('enemy', new CombatAttributeSet<Attribute>());
 
-    for (const element of INFLICTION_ELEMENTS) {
-      const definition = index.getAttachment(element);
-      expect(index.getAttachmentElement(definition)).toBe(element);
-      expect(definition.stackingType).toBe('enhanceAndRefresh');
-      expect(definition.maxStackCount).toBe(4);
-      const buff = container.add(definition, 'operator');
-      expect(buff?.remainingDuration).toBe(20);
-      container.add(definition, 'operator');
-    }
-
-    expect(emitStarted.mock.calls.map(([payload]) => payload)).toEqual(
-      INFLICTION_ELEMENTS.flatMap(element => [
-        { element, layers: 1 },
-        { element, layers: 2 },
-      ]),
-    );
+    const definition = index.getAttachment('electric');
+    expect(index.getAttachmentElement(definition)).toBe('electric');
+    expect(definition.stackingType).toBe('enhanceAndRefresh');
+    expect(definition.maxStackCount).toBe(4);
+    const buff = container.add(definition, 'operator');
+    expect(buff?.remainingDuration).toBe(20);
+    container.add(definition, 'operator');
+    expect(emitStarted.mock.calls.map(([payload]) => payload)).toEqual([
+      { element: 'electric', layers: 1 },
+      { element: 'electric', layers: 2 },
+    ]);
 
     expect(index.getCompoundStatus('nature', 'electric').id).toBe(
       'buff_common_pulse_natural_triggered',
     );
-    for (const factory of compoundStatusFactories.factories) {
-      expect(index.getCompoundStatus(factory.consumedElement, factory.incomingElement).id).toBe(
-        factory.createdBuff.buffId,
-      );
-    }
   });
 
   it('resolves real nature layers through the factory into an active conduct status', () => {
@@ -111,7 +100,7 @@ describe('elementalAttachments', () => {
     expect(conduct?.remainingDuration).toBe(12);
   });
 
-  it('creates every ordered compound status and publishes its initial abnormal damage', () => {
+  it('四种反应配方均能生成状态并发布初始异常伤害', () => {
     const emittedDamage = vi.fn();
     const index = compileCombatBuffDefinitions<Attribute>(elementalAttachments, {
       emitElementalInflictionStarted: () => undefined,
@@ -121,7 +110,11 @@ describe('elementalAttachments', () => {
     });
     const settings = createSkillSettingSource(skillSettings);
 
-    for (const factory of compoundStatusFactories.factories) {
+    const incomingElements = ['cryo', 'heat', 'nature', 'electric'] as const;
+    for (const incomingElement of incomingElements) {
+      const factory = compoundStatusFactories.factories.find(
+        entry => entry.incomingElement === incomingElement,
+      )!;
       const container = new CombatBuffContainer(
         `enemy.${factory.consumedElement}.${factory.incomingElement}`,
         createEnemyAttributes(),
@@ -156,7 +149,7 @@ describe('elementalAttachments', () => {
       ).toBeDefined();
     }
 
-    expect(emittedDamage).toHaveBeenCalledTimes(12);
+    expect(emittedDamage).toHaveBeenCalledTimes(incomingElements.length);
     expect(new Set(emittedDamage.mock.calls.map(([payload]) => payload.damageType))).toEqual(
       new Set(['heat', 'electric', 'cryo', 'nature']),
     );

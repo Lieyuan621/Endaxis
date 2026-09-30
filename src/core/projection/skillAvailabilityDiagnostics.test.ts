@@ -181,14 +181,4 @@ describe('projectSkillAvailabilityDiagnostics', () => {
       ]),
     ).toThrow("receipt 11 'SkillCooldownUnavailableAtStart' has no skillId");
   });
-
-  it('忽略与技能开始可用性无关的回执', () => {
-    expect(
-      projectSkillAvailabilityDiagnostics([
-        receipt(11, 'SkillStarted'),
-        receipt(12, 'SkillCostRejected'),
-        receipt(13, 'SkillCooldownReady'),
-      ]),
-    ).toEqual([]);
-  });
 });

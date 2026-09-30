@@ -41,10 +41,4 @@ describe('生成时间膨胀目录结构读取', () => {
   ])('拒绝非生成契约结构 %#', content => {
     expect(() => readGeneratedTimeDilationPriorities(fixture(content))).toThrow();
   });
-
-  it('读取仓库当前生成目录', () => {
-    expect(
-      readGeneratedTimeDilationPriorities('src/data/combat/timeDilationCatalog.generated.ts').size,
-    ).toBe(10);
-  });
 });

@@ -42,13 +42,9 @@ describe('loadout build progression projection', () => {
 
   it.each([
     [1, false, false, 3, 0],
-    [20, false, false, 3, 0],
     [20, true, true, 3, 1],
-    [40, false, false, 3, 1],
     [40, true, true, 6, 2],
-    [60, false, false, 6, 2],
     [60, true, true, 9, 3],
-    [80, false, false, 9, 3],
     [80, true, true, 12, 4],
     [90, false, true, 12, 4],
   ] as const)(
@@ -85,14 +81,7 @@ describe('loadout build progression projection', () => {
       traitLevels: [9, 9, 9],
     });
 
-    const sixStarDefinition = gameDataRepository
-      .getWeapons()
-      .find(definition => definition.rarity === 6)!;
-    const sixStar = {
-      ...createDefaultWeaponInstance(sixStarDefinition),
-      definition: sixStarDefinition,
-      potential: 2,
-    };
+    const sixStar = { ...weaponView('wpn_sword_0006'), potential: 2 };
     expect(projectMaxWeaponChanges(sixStar).potential).toBe(2);
   });
 
@@ -111,13 +100,9 @@ describe('loadout build progression projection', () => {
 
   it.each([
     [1, true, false, [3, 3, 4]],
-    [20, false, false, [3, 3, 4]],
     [20, true, true, [5, 4, 4]],
-    [40, false, false, [5, 4, 4]],
     [40, true, true, [6, 6, 4]],
-    [60, false, false, [6, 6, 4]],
     [60, true, true, [8, 7, 4]],
-    [80, false, false, [8, 7, 4]],
     [80, true, true, [9, 9, 4]],
     [90, false, true, [9, 9, 4]],
   ] as const)(

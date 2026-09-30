@@ -5,6 +5,7 @@ import { createEditorSimulationService } from '../testSupport/editorSimulationSe
 
 it.each([null, 0])('别礼开场普攻夹战技：切入帧 %s 决定旁路，不隐式切主控', async switchFrame => {
   const scenario = createEmptyScenario('last-rite-control', '公开轴主控最小对照');
+  scenario.battle.automaticControlSwitches = false;
   const track: TrackDocument = {
     id: 'last-rite',
     operator: {

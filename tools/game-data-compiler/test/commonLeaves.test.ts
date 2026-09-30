@@ -11,12 +11,16 @@ import {
 import { targetFixture } from './sourceFixtures.ts';
 
 describe('GameplayTag 查询', () => {
-  it.each(['HasAny', 'HasAll', 'ExceptAny', 'ExceptAll'])('锁定已验证的查询结构：%s', queryType => {
-    const payload = {
-      value: { queryType, tags: [{ tagId: 1001 }, { tagId: -2002 }] },
-      path: 'buff.tagQuery',
-    };
-    expect(parseTagQuerySource(payload.value, payload.path)).toMatchSnapshot();
+  it('保留排除查询和有符号标签身份', () => {
+    expect(
+      parseTagQuerySource(
+        { queryType: 'ExceptAll', tags: [{ tagId: 1001 }, { tagId: -2002 }] },
+        'buff.tagQuery',
+      ),
+    ).toEqual({
+      queryType: 'exceptAll',
+      tagIds: [1001, -2002],
+    });
   });
 
   it('拒绝未知查询枚举和多余字段', () => {
@@ -35,7 +39,10 @@ describe('GameplayTag 查询', () => {
 describe('TargetSettings', () => {
   it('保留普通目标引用，不提前归约模拟目标', () => {
     const payload = { value: targetFixture('Target'), path: 'skill.target' };
-    expect(parseTargetReferenceSource(payload.value, payload.path)).toMatchSnapshot();
+    expect(parseTargetReferenceSource(payload.value, payload.path)).toMatchObject({
+      targetSource: 'Target',
+      finderType: null,
+    });
   });
 
   it('保留 owner-spawned 实体类型和 Tag 验证器', () => {
@@ -55,7 +62,12 @@ describe('TargetSettings', () => {
       }),
       path: 'skill.spawnedTarget',
     };
-    expect(parseTargetReferenceSource(payload.value, payload.path)).toMatchSnapshot();
+    expect(parseTargetReferenceSource(payload.value, payload.path)).toMatchObject({
+      targetSource: 'InstantSearch',
+      finderType: 'OwnerSpawnedEntityFinder',
+      finderSpawnedObjectType: 'AbilityEntity',
+      validatorTagQueries: [['HasAll', [801, 802]]],
+    });
   });
 
   it('未知选择器阻塞解析', () => {
@@ -121,22 +133,7 @@ describe('TargetSettings', () => {
     });
   });
 
-  it('严格识别无配置字段的 AllEnemyFinder', () => {
-    expect(
-      parseTargetReferenceSource(
-        targetFixture('InstantSearch', {
-          finderData: {
-            $type: 'Beyond.Gameplay.Core.Selector+AllEnemyFinder+Data, Gameplay.Beyond',
-          },
-          validatorData: [],
-          postProcessorData: [],
-        }),
-        'skill.allEnemies',
-      ),
-    ).toMatchObject({ finderType: 'AllEnemyFinder' });
-  });
-
-  it('保留无配置字段的 InScreenValidator', () => {
+  it('保留 AllEnemyFinder 与 InScreenValidator 的独立身份', () => {
     expect(
       parseTargetReferenceSource(
         targetFixture('InstantSearch', {
@@ -152,7 +149,7 @@ describe('TargetSettings', () => {
         }),
         'skill.visibleEnemies',
       ),
-    ).toMatchObject({ validatorTypes: ['InScreenValidator'] });
+    ).toMatchObject({ finderType: 'AllEnemyFinder', validatorTypes: ['InScreenValidator'] });
   });
 
   it('保留 ShapeFinderData 的结构事实，不假称可执行空间查询', () => {
@@ -255,7 +252,11 @@ describe('黑板声明和引用', () => {
       path: 'skill.example',
     };
     const parsed = parseDeclaredBlackboard(payload.value, payload.path);
-    expect(parsed).toMatchSnapshot();
+    expect(parsed).toEqual([
+      { key: 'identity', value: 'child_skill', isDynamic: false },
+      { key: 'ratio', value: 0.8, isDynamic: false },
+      { key: 'runtime', value: 1, isDynamic: true },
+    ]);
     expect(numericDeclaredBlackboard(parsed)).toEqual({ ratio: 0.8 });
     expect(numericDeclaredBlackboard(parsed, true)).toEqual({ ratio: 0.8, runtime: 1 });
   });

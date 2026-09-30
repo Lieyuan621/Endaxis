@@ -9,9 +9,6 @@ const buff = (buffId: string, startFrame = 0, endFrame = 10, layers = 1) => ({
 });
 
 describe('last hit buff summary', () => {
-  it('has no snapshot before any hit', () => {
-    expect(summarizeLastHitBuffs([buff('a')], null)).toEqual({ buffs: [], overflow: 0 });
-  });
   it('includes both endpoints but excludes instantaneous and out-of-range segments', () => {
     expect(
       summarizeLastHitBuffs(

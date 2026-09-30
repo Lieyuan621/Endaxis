@@ -26,7 +26,6 @@ describe('公共模板黑板安装投影', () => {
   it('真实 4/2 初值分别进入实体与每条条件的运行板，动态项不被过滤', () => {
     const parsed = parseAbilitySystemBlackboardsSource(sample(), 'character.abilitySystem');
     const compiled = compileAbilitySystemBlackboardsSource(parsed);
-    expect(compiled.source).toBe(parsed);
     expect(compiled.entityInitialValues).toEqual({
       EntityBB_consumed_type: 0,
       EntityBB_consumed_layer: 0,

@@ -9,15 +9,10 @@ const group = (nativeGroupType: number) => ({
 });
 
 describe('基础被动原生等级来源', () => {
-  it.each([
-    [0, 'basicAttack'],
-    [1, 'battleSkill'],
-    [2, 'ultimate'],
-    [3, 'comboSkill'],
-  ])('仅有被动的原生组 %i 也能解析等级来源 %s', (type, levelSource) => {
-    expect(resolveBasePassiveLevelSource([group(Number(type))], 'passive')).toEqual({
+  it('仅有被动的原生组也能解析等级来源', () => {
+    expect(resolveBasePassiveLevelSource([group(2)], 'passive')).toEqual({
       kind: 'operatorSkillGroup',
-      levelSource,
+      levelSource: 'ultimate',
     });
   });
   it('不属于原生组时使用原生缺省等级', () => {

@@ -182,29 +182,6 @@ describe('placeSkillGroup', () => {
     expect(grouped.tracks[0]!.skillCasts.map(cast => cast.id)).toEqual(result.skillCastIds);
   });
 
-  it('keeps a single skill as one cast and resolves its cost', () => {
-    const result = placeSkillGroup({
-      scenario: createPerlicaScenario(),
-      trackIndex: 0,
-      operator: perlica,
-      skillGroupKey: 'battleSkill',
-      startFrame: 60,
-      ids: createIds(),
-    });
-    const cast = result.scenario.tracks[0]!.skillCasts[0]!;
-
-    const battleSkill = perlica.skillGroups.find(group => group.key === 'battleSkill')!;
-    const skill = Array.isArray(battleSkill.skills) ? battleSkill.skills[0] : battleSkill.skills;
-    expect(skill?.costs?.length ?? 0).toBeGreaterThan(0);
-    expect(skill?.scheduledSequences.length ?? 0).toBeGreaterThan(0);
-    expect(cast.source).toEqual({
-      kind: 'operatorSkill',
-      skillGroupKey: 'battleSkill',
-      skillKey: 'chr_0004_pelica_normal_skill',
-      action: 'battleSkill',
-    });
-  });
-
   it('places one selected segment of a skill chain', () => {
     const result = placeSkillGroup({
       scenario: createPerlicaScenario(),

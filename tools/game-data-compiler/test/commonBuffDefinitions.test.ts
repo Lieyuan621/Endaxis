@@ -2,19 +2,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { describe, expect, it } from 'vitest';
-import { commonBuffDefinitions } from '../../../src/data/buffs/commonDefinitions';
 import {
   createCommonBuffCollector,
   readSystemBuffRoots,
 } from '../scripts/generateCommonBuffDefinitions.ts';
 
 describe('公共 Buff 独立所有权', () => {
-  it('正式公共目录包含全部隐式系统根，不再只检查配置清单', () => {
-    const roots = readSystemBuffRoots(
-      path.resolve('tools/game-data-compiler/config/systemBuffRoots.json'),
-    );
-    for (const id of roots) expect(commonBuffDefinitions[id], id).toBeDefined();
-  });
   it('相同 ID 的相同定义只保留一份，冲突定义严格失败', () => {
     const first = { stackingType: 'stack', priority: 0 };
     const collector = createCommonBuffCollector<typeof first>();

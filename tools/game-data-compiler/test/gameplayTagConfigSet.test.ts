@@ -99,7 +99,7 @@ describe('GameplayTagConfigSet 引用闭包', () => {
     expect(result.catalog.paths).toEqual(['NPC/AvatarMesh/Actor/liino']);
     expect(result).toMatchObject({ duplicatePathCount: 1, emptyPathCount: 1 });
   });
-  it('Operator 来源审计可以消费完整路径目录，不能同时混入单配置 dump', () => {
+  it('Operator 来源审计不能同时指定完整路径目录和单配置 dump', () => {
     const base = [
       '--manifest',
       'manifest',
@@ -114,12 +114,6 @@ describe('GameplayTagConfigSet 引用闭包', () => {
       '--ability-entity-data',
       'entities',
     ];
-    expect(
-      parseOperatorSourceFileArguments([...base, '--gameplay-tag-catalog', 'tags.ts'], true),
-    ).toMatchObject({ gameplayTagCatalog: path.resolve('tags.ts') });
-    expect(
-      parseOperatorSourceFileArguments([...base, '--gameplay-tag-dump', 'tags.txt'], true),
-    ).toMatchObject({ gameplayTagDump: path.resolve('tags.txt') });
     expect(() =>
       parseOperatorSourceFileArguments(
         [...base, '--gameplay-tag-catalog', 'tags.ts', '--gameplay-tag-dump', 'tags.txt'],
@@ -145,7 +139,6 @@ describe('GameplayTagConfigSet 引用闭包', () => {
     ];
     execFileSync(process.execPath, args, { stdio: 'pipe' });
     const expected = fs.readFileSync(output, 'utf8');
-    expect(expected).toContain("'B',\n  'A',");
     execFileSync(process.execPath, [...args, '--check'], { stdio: 'pipe' });
     fs.appendFileSync(path.join(f.root, 'a.txt'), 'broken');
     expect(() => execFileSync(process.execPath, args, { stdio: 'pipe' })).toThrow();

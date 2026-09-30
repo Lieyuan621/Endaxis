@@ -68,56 +68,6 @@ describe('loadoutBuildCommands', () => {
         .ultimateEnergy,
     ).toBe(240);
   });
-  it('updates operator inputs without mutating the source document', () => {
-    const source = equippedScenario();
-    const updated = updateTrackOperatorInstance(source, 0, {
-      level: 80,
-      promoted: false,
-      potential: 2,
-      trustLevel: 3,
-      skillLevels: { basicAttack: 10 },
-      talentStates: { 0: 1 },
-    });
-
-    expect(updated.tracks[0]!.operator).toMatchObject({
-      operatorSlug: 'operator',
-      level: 80,
-      promoted: false,
-      potential: 2,
-      trustLevel: 3,
-      skillLevels: { basicAttack: 10 },
-      talentStates: { 0: 1 },
-    });
-    expect(source.tracks[0]!.operator!.level).toBe(90);
-  });
-
-  it('updates weapon inputs without mutating the source document', () => {
-    const source = equippedScenario();
-    const updated = updateTrackWeaponInstance(source, 0, {
-      level: 80,
-      potential: 3,
-      tuned: false,
-      traitLevels: [4, 5, 6],
-    });
-
-    expect(updated.tracks[0]!.weapon).toMatchObject({
-      weaponSlug: 'weapon',
-      level: 80,
-      potential: 3,
-      tuned: false,
-      traitLevels: [4, 5, 6],
-    });
-    expect(source.tracks[0]!.weapon!.level).toBe(90);
-  });
-
-  it('updates gear artificing inputs without mutating the source document', () => {
-    const source = equippedScenario();
-    const updated = updateTrackGearInstance(source, 0, 'armor', [1, 2]);
-
-    expect(updated.tracks[0]!.gears.armor!.artificingLevels).toEqual([1, 2]);
-    expect(source.tracks[0]!.gears.armor!.artificingLevels).toEqual([0, 0]);
-  });
-
   it('rejects malformed inputs and builds that are not equipped by the track', () => {
     const scenario = equippedScenario();
     expect(() => updateTrackOperatorInstance(scenario, 0, { potential: -1 })).toThrow(

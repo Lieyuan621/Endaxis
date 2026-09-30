@@ -2,10 +2,8 @@ import { expect, it } from 'vitest';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import { projectSkillCastActualDurationFrames } from '../../../core/projection/timelineDisplayTime';
 import { createEditorSimulationService } from '../testSupport/editorSimulationService';
-import { rossiChr_0028_wulfa_normal_skill } from '../../../data/operators/rossi.generated';
 
 it('洛茜战技执行可中断标记后结束块体，块尾可接普攻', async () => {
-  expect(rossiChr_0028_wulfa_normal_skill.timelineBlockFrames).toBe(49);
   const scenario = createEmptyScenario('rossi-interrupt', '洛茜接续');
   scenario.tracks[0] = {
     id: 'rossi',

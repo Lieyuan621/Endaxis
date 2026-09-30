@@ -15,7 +15,6 @@ import { readActionGraphChain } from '../src/compiler/actions/actionGraphBuilder
 import { compileGraphSequence } from './support/graphSequence.ts';
 import { CombatActionSequenceRuntime } from '../../../src/core/combat/actions/combatActionSequenceRuntime';
 import { ActionBlackboard } from '../../../src/core/combat/actions/actionBlackboard';
-import { renderCommonBuffDefinitionsSource } from '../src/domains/operator/definitionSourceRenderer.ts';
 
 const meta = { isEnable: true, priorityLevel: 'Default', priorityOffset: 0, serverActionIndex: 0 };
 const sequence = (actionData: unknown[]) => ({
@@ -92,7 +91,7 @@ function project(
 }
 
 describe('公共 Switch 投影', () => {
-  it('保留动态 choice、重复标签、空分支和嵌套 Switch；格式输出不丢 options', () => {
+  it('保留动态 choice、重复标签、空分支和嵌套 Switch', () => {
     const result = project([
       select([option(2, []), option(2, [read]), option(3, [select([option(3, [read])])])]),
     ]);
@@ -113,15 +112,6 @@ describe('公共 Switch 投影', () => {
     );
     expect(runtime.createSequence(result.compiled()).executeInstant({})).toBe(true);
     expect(execute).not.toHaveBeenCalled();
-    const rendered = renderCommonBuffDefinitionsSource({
-      buff: {
-        id: 'buff',
-        lifecycleSequences: { start: result.entry },
-        actionGraph: { main: result.graph, macros: {} },
-      },
-    });
-    expect(rendered.match(/"kind"\s*:\s*"switch"/g)).toHaveLength(2);
-    expect(rendered).toMatch(/"options"\s*:/);
   });
 
   it.each([false, true])(

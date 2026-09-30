@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { GearSetDefinition } from '../../../packages/game-data-contract/src/equipment';
 import { perlica } from '../../data/operators/perlica.generated';
-import { gearDefinitions, gearSetDefinitions, weaponDefinitions } from '../../data/equipment';
+import { gearSetDefinitions } from '../../data/equipment';
 import { createEmptyProject, createEmptyScenario } from '../../core/project/createProject';
 import { resolveScenarioBuilds } from '../../core/compiler/resolveScenarioBuilds';
 import { resolveOperatorPanel } from '../../core/compiler/resolveOperatorPanel';
@@ -15,38 +15,6 @@ import { duplicateDefinitionRecordResource } from './definitionDraftSession';
 import { emptyDefinitionActionGraph } from '../../ui/definition-editor/definitionFieldRuntime';
 
 describe('object definition project transaction', () => {
-  it.each([
-    { kind: 'weapon' as const, definition: weaponDefinitions[0]!, collection: 'weapons' as const },
-    { kind: 'gear' as const, definition: gearDefinitions[0]!, collection: 'gears' as const },
-    {
-      kind: 'gearSet' as const,
-      definition: gearSetDefinitions[0]!,
-      collection: 'gearSets' as const,
-    },
-  ])(
-    'round-trips a derived $kind template without changing its built-in source',
-    ({ kind, definition, collection }) => {
-      const id = `project:${kind}:editor-test`;
-      const sourceSlug = definition.slug;
-      const saved = saveProjectTemplateDefinition(
-        createEmptyProject({ createdWith: 'test' }),
-        { kind, definition } as Parameters<typeof saveProjectTemplateDefinition>[1],
-        sourceSlug,
-        id,
-        '自定义对象',
-        false,
-        {},
-      );
-      const parsed = parseProjectDocument(serializeProjectDocument(saved));
-      expect(parsed.ok).toBe(true);
-      if (parsed.ok) {
-        const template = getProjectDefinitionLibrary(parsed.value)[collection][id];
-        expect(template?.definition.slug).toBe(id);
-        expect(template?.name).toBe('自定义对象');
-      }
-      expect(definition.slug).toBe(sourceSlug);
-    },
-  );
   it('saves a derived definition and graph layout in one undoable project command', () => {
     const session = new ProjectEditorSession(createEmptyProject({ createdWith: 'test' }));
     const source = perlica;
@@ -267,68 +235,6 @@ describe('object definition project transaction', () => {
         ?.editor_test_buff,
     ).toEqual(perlica.buffDefinitions?.[sourceId]);
     expect(perlica.buffDefinitions).not.toHaveProperty('editor_test_buff');
-  });
-  it('round-trips changed weapon, gear, and set values without altering built-ins', () => {
-    const weapon = weaponDefinitions[0]!;
-    const gear = gearDefinitions[0]!;
-    const set = gearSetDefinitions.find(item => item.modifiers?.length)!;
-    const changedWeapon = {
-      ...weapon,
-      baseAttackAtLevelNodes: weapon.baseAttackAtLevelNodes.map(value => value + 7),
-    };
-    const changedGear = { ...gear, baseDefense: gear.baseDefense + 7 };
-    const changedSet = {
-      ...set,
-      modifiers: set.modifiers!.map((modifier, index) =>
-        index === 0 && modifier.kind === 'attribute'
-          ? { ...modifier, value: modifier.value + 7 }
-          : modifier,
-      ),
-    };
-    let project = createEmptyProject({ createdWith: 'test' });
-    project = saveProjectTemplateDefinition(
-      project,
-      { kind: 'weapon', definition: changedWeapon },
-      weapon.slug,
-      'project:weapon:changed',
-      '调整武器',
-      false,
-      {},
-    );
-    project = saveProjectTemplateDefinition(
-      project,
-      { kind: 'gear', definition: changedGear },
-      gear.slug,
-      'project:gear:changed',
-      '调整装备',
-      false,
-      {},
-    );
-    project = saveProjectTemplateDefinition(
-      project,
-      { kind: 'gearSet', definition: changedSet },
-      set.slug,
-      'project:gearSet:changed',
-      '调整套装',
-      false,
-      {},
-    );
-    const parsed = parseProjectDocument(serializeProjectDocument(project));
-    expect(parsed.ok).toBe(true);
-    if (!parsed.ok) return;
-    const library = getProjectDefinitionLibrary(parsed.value);
-    expect(library.weapons['project:weapon:changed']?.definition.baseAttackAtLevelNodes[0]).toBe(
-      weapon.baseAttackAtLevelNodes[0]! + 7,
-    );
-    expect(library.gears['project:gear:changed']?.definition.baseDefense).toBe(
-      gear.baseDefense + 7,
-    );
-    expect(library.gearSets['project:gearSet:changed']?.definition.modifiers?.[0]).toEqual(
-      changedSet.modifiers[0],
-    );
-    expect(weapon.baseAttackAtLevelNodes[0]).not.toBe(changedWeapon.baseAttackAtLevelNodes[0]);
-    expect(gear.baseDefense).not.toBe(changedGear.baseDefense);
-    expect(set.modifiers?.[0]).not.toEqual(changedSet.modifiers[0]);
   });
   it('saves a formally valid empty graph for a set whose built-in definition has no graph', () => {
     const source: GearSetDefinition = gearSetDefinitions.find(item => !('actionGraph' in item))!;

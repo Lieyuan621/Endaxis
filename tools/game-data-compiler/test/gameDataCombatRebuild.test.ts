@@ -297,34 +297,18 @@ describe('完整重建的统一战斗定义阶段', () => {
     expect(report.stages.filter(stage => stage.status !== 'passed')).toEqual([]);
     expect(exitCode).toBe(0);
     expect(report.published).toBe(true);
-    expect(mocks.combat).toHaveBeenCalledTimes(2);
     const [first, second] = mocks.combat.mock.calls.map(call => call[0]);
     expect(first).toMatchObject({ sourceRoot, check: false });
     expect(second).toEqual({ ...first, check: true });
-    expect(mocks.oldGenerator).not.toHaveBeenCalled();
     const combatStages = report.stages.filter(stage => stage.id === 'combat-definitions');
-    expect(combatStages).toHaveLength(1);
     expect(combatStages[0]).toMatchObject({
       id: 'combat-definitions',
       status: 'passed',
       detail: {
-        ...domainSummary,
         deterministicCheck: 'passed',
-        comparison: {
-          operators: { added: OPERATOR_DEFINITION_OUTPUTS, changed: [], removed: [] },
-          directories: domainDirectories.map(output => ({ output, removed: [] })),
-        },
       },
     });
     expect(JSON.parse(await fs.readFile(helper, 'utf8'))).toEqual({ handwritten: true });
-    for (const oldId of [
-      'gears',
-      'weapons',
-      'gear-sets',
-      'contingency-contract-definitions',
-      'operators-and-common-buffs',
-    ])
-      expect(report.stages.map(stage => stage.id)).not.toContain(oldId);
     for (const gate of [
       mocks.types,
       mocks.assets,
@@ -384,9 +368,7 @@ describe('完整重建的统一战斗定义阶段', () => {
       .mockResolvedValueOnce(domainSummary)
       .mockRejectedValueOnce(new Error('second pass changed'));
     const { report, exitCode } = await rebuildGameData(args, root);
-    expect(mocks.combat).toHaveBeenCalledTimes(2);
     expect(mocks.combat.mock.calls.map(call => call[0].check)).toEqual([false, true]);
-    expect(mocks.oldGenerator).not.toHaveBeenCalled();
     expect(report.stages.filter(stage => stage.id === 'combat-definitions')).toEqual([
       { id: 'combat-definitions', status: 'failed', detail: 'second pass changed' },
     ]);

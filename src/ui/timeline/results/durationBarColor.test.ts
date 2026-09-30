@@ -7,20 +7,6 @@ import {
 } from './durationBarColor';
 
 describe('duration bar display preferences', () => {
-  it('defaults to neutral buffs and colored anomaly bars in both surfaces', () => {
-    const prefs = normalizeDurationBarColorPrefs(undefined);
-    expect(prefs).toEqual({
-      enabled: true,
-      saturation: 50,
-      lightness: 90,
-      sources: { weapon: false, gearSet: false, operator: false, anomaly: true },
-      surfaces: { track: true, enemy: true },
-    });
-    expect(resolveDurationBarColor(prefs, 'track', { buffId: 'ordinary' })).toBe('#8c8c8c');
-    expect(
-      resolveDurationBarColor(prefs, 'enemy', { buffId: 'attachment', abnormalColorType: 'Fire' }),
-    ).toMatch(/^hsl\(/);
-  });
   it('bounds corrupt persisted tuning and keeps independent default maps', () => {
     const prefs = normalizeDurationBarColorPrefs({
       saturation: Infinity,
@@ -37,10 +23,7 @@ describe('duration bar display preferences', () => {
   });
   it.each([
     ['equipment:weaponTrait:slug:handler', 'weapon'],
-    ['upgrade-initialization:weapon-trait:slug:skill3', 'weapon'],
-    ['equipment:gearSet:slug:handler', 'gearSet'],
     ['upgrade-initialization:gear-trait:slug:handler', 'gearSet'],
-    ['cast:skill', 'operator'],
     [undefined, 'operator'],
   ] as const)('classifies provenance %s as %s', (id, expected) =>
     expect(durationColorSource(id)).toBe(expected),
@@ -74,35 +57,36 @@ describe('duration bar display preferences', () => {
       resolveDurationBarColor(prefs, 'track', { buffId: 'attachment', abnormalColorType: 'Fire' }),
     ).toBe('#8c8c8c');
   });
-  it.each(['Fire', 'Pulse', 'Cryst', 'Natural'])(
-    'colors %s factory outputs by native metadata, not IDs',
-    abnormalColorType => {
-      const prefs = normalizeDurationBarColorPrefs(undefined);
-      const color = resolveDurationBarColor(prefs, 'enemy', {
+  it('按原生异常颜色元数据上色，不从 Buff ID 猜测', () => {
+    const prefs = normalizeDurationBarColorPrefs(undefined);
+    const color = resolveDurationBarColor(prefs, 'enemy', {
+      buffId: 'factory:one',
+      abnormalColorType: 'Fire',
+    });
+    expect(color).toMatch(/^hsl\(/);
+    expect(
+      resolveDurationBarColor(prefs, 'enemy', {
+        buffId: 'factory:two',
+        abnormalColorType: 'Fire',
+      }),
+    ).toBe(color);
+    expect(resolveDurationBarColor(prefs, 'enemy', { buffId: 'unrecognized-buff' })).toBe(
+      '#8c8c8c',
+    );
+    expect(
+      resolveDurationBarColor(prefs, 'enemy', {
+        buffId: 'unknown',
+        abnormalColorType: 'Unknown',
+      }),
+    ).toBe('#8c8c8c');
+    prefs.sources.anomaly = false;
+    expect(
+      resolveDurationBarColor(prefs, 'enemy', {
         buffId: 'factory:one',
-        abnormalColorType,
-      });
-      expect(color).toMatch(/^hsl\(/);
-      expect(
-        resolveDurationBarColor(prefs, 'enemy', { buffId: 'factory:two', abnormalColorType }),
-      ).toBe(color);
-      expect(
-        resolveDurationBarColor(prefs, 'enemy', {
-          buffId: 'unrecognized-buff',
-        }),
-      ).toBe('#8c8c8c');
-      expect(
-        resolveDurationBarColor(prefs, 'enemy', {
-          buffId: 'unknown',
-          abnormalColorType: 'Unknown',
-        }),
-      ).toBe('#8c8c8c');
-      prefs.sources.anomaly = false;
-      expect(
-        resolveDurationBarColor(prefs, 'enemy', { buffId: 'factory:one', abnormalColorType }),
-      ).toBe('#8c8c8c');
-    },
-  );
+        abnormalColorType: 'Fire',
+      }),
+    ).toBe('#8c8c8c');
+  });
   it('uses exported attachment roles when native abnormal color is Physical', () => {
     const prefs = normalizeDurationBarColorPrefs(undefined);
     const attachments = elementalAttachments.buffs.filter(

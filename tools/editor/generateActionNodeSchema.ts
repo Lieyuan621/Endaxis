@@ -319,7 +319,7 @@ async function main(): Promise<void> {
   const source = await renderActionNodeSchemas();
   if (args.includes('--check')) {
     const existing = await readFile(generatedSchemaPath, 'utf8').catch(() => undefined);
-    if (existing !== source) {
+    if (existing?.replaceAll('\r\n', '\n') !== source.replaceAll('\r\n', '\n')) {
       throw new Error(
         'Action node schemas are stale. Run tools/editor/generateActionNodeSchema.ts.',
       );

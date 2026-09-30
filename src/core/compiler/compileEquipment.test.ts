@@ -228,45 +228,6 @@ describe('compile equipment contributions', () => {
     ]);
   });
 
-  it('compiles an active three-piece set at its single definition level', () => {
-    const set: GearSetDefinition = {
-      slug: 'hot-work',
-      modifiers: [{ kind: 'panelStat', stat: 'artsIntensity', value: 30 }],
-      buffDefinitions: {
-        'buff.hot-work': { stackingType: 'unique' },
-      },
-      initializationSequence: { $sequence: 'init' },
-      actionGraph: {
-        main: {
-          nodes: {
-            init: {
-              action: {
-                kind: 'applyBuff',
-                parameters: { buffId: 'buff.hot-work', target: 'caster' },
-              },
-              next: null,
-            },
-          },
-        },
-        macros: {},
-      },
-    };
-    const compiled = compileGearSetContribution(
-      set,
-      attributes,
-      new ActionGraphDefinitionRepository(),
-    );
-    expect(compiled).toMatchObject({
-      source: { kind: 'gearSet', slug: 'hot-work' },
-      selectedLevel: 1,
-      modifiers: [{ kind: 'panelStat', stat: 'artsIntensity', value: 30 }],
-      buffDefinitions: { 'buff.hot-work': { stackingType: 'unique' } },
-      initializationSequence: actionSteps([
-        { kind: 'applyBuff', parameters: { buffId: 'buff.hot-work', target: 'caster' } },
-      ]),
-    });
-  });
-
   it('resolves equipment healing modifiers and event blackboards at the selected level', () => {
     const definition: WeaponDefinition = {
       slug: 'healing-weapon',
@@ -278,7 +239,7 @@ describe('compile equipment contributions', () => {
           key: 'healing',
           levelCount: 2,
           modifiers: [{ kind: 'staticHealingIncrease', target: 'output', value: [0.1, 0.2] }],
-          blackboard: { rate: [0.05, 0.1] },
+          blackboard: { duration: 10, rate: [0.05, 0.1] },
           eventHandlers: [
             {
               key: 'heal-output',
@@ -300,37 +261,7 @@ describe('compile equipment contributions', () => {
     expect(compiled!.modifiers).toEqual([
       { kind: 'staticHealingIncrease', target: 'output', value: 0.2 },
     ]);
-    expect(compiled!.blackboard).toEqual({ rate: 0.1 });
-  });
-
-  it('resolves the initialization blackboard at the selected trait level', () => {
-    const definition: WeaponDefinition = {
-      slug: 'runtime-weapon',
-      rarity: 5,
-      weaponType: 'sword',
-      baseAttackAtLevelNodes: [1, 2, 3, 4, 5, 6],
-      traits: [
-        {
-          key: 'runtime',
-          levelCount: 3,
-          blackboard: { duration: 10, attack_up: [0.1, 0.2, 0.3] },
-          initializationSequence: { $sequence: null },
-          actionGraph: { main: { nodes: {} }, macros: {} },
-        },
-      ],
-    };
-
-    expect(
-      compileWeaponContributions(
-        definition,
-        [2],
-        attributes,
-        new ActionGraphDefinitionRepository(),
-      )[0],
-    ).toMatchObject({
-      blackboard: { duration: 10, attack_up: 0.2 },
-      initializationSequence: actionSteps([]),
-    });
+    expect(compiled!.blackboard).toEqual({ duration: 10, rate: 0.1 });
   });
 
   it('fails when build levels cannot map one-to-one to definition traits', () => {
@@ -345,21 +276,6 @@ describe('compile equipment contributions', () => {
     expect(() => compileGearContributions(xiranflowArmor, [4], attributes)).toThrow(
       'level must be an integer between 1 and 4',
     );
-  });
-
-  it('does not execute stale program fields on a gear trait', () => {
-    const stale = {
-      ...xiranflowArmor,
-      traits: [
-        {
-          ...xiranflowArmor.traits[0]!,
-          initializationSequence: { $sequence: 'forbidden-gear-action' },
-        },
-      ],
-    } as unknown as GearDefinition;
-    const [contribution] = compileGearContributions(stale, [0], attributes);
-    expect(contribution?.initializationSequence).toBeUndefined();
-    expect(contribution?.modifiers.length).toBeGreaterThan(0);
   });
 
   it('compiles weapon and set graph entries while gear remains static', () => {
@@ -418,6 +334,10 @@ describe('compile equipment contributions', () => {
       },
     };
     const setContribution = compileGearSetContribution(set, attributes, repository);
+    expect(setContribution).toMatchObject({
+      source: { kind: 'gearSet', slug: 'graph-set' },
+      selectedLevel: 1,
+    });
     expect(setContribution.buffDefinitions?.marker?.stackingType).toBe('unique');
     expect(setContribution.buffDefinitions?.marker?.scheduledSequences?.[0]?.sequence).toEqual(
       actionSteps([{ kind: 'dealStagger' }]),

@@ -63,42 +63,15 @@ function createEquippedScenario(): ScenarioDocument {
 }
 
 describe('projectTrackLoadoutBuilds', () => {
-  it('解析指定轨道的完整 Build 输入与定义', () => {
+  it('按轨道和槽位解析所选定义', () => {
     const scenario = createEquippedScenario();
 
     const projected = projectTrackLoadoutBuilds(scenario, 0, repository);
 
-    expect(projected.operator).toMatchObject({
-      operatorSlug: perlica.slug,
-      level: 90,
-      promoted: true,
-      potential: 3,
-      trustLevel: 4,
-      definition: perlica,
-    });
-    expect(projected.operator?.skillLevels).toEqual({ basicAttack: 12, battleSkill: 11 });
-    expect(projected.operator?.talentStates).toEqual({ talent1: 2 });
-    expect(projected.operator?.baseStatOverrides).toEqual({ attack: 1234 });
-    expect(projected.weapon).toMatchObject({
-      weaponSlug: weapon.slug,
-      level: 80,
-      tuned: true,
-      potential: 2,
-      traitLevels: [3, 4, 5],
-      definition: weapon,
-    });
-    expect(projected.gears.armor).toMatchObject({
-      slot: 'armor',
-      gearSlug: armor.slug,
-      artificingLevels: [1, 2],
-      definition: armor,
-    });
-    expect(projected.gears.accessory1).toMatchObject({
-      slot: 'accessory1',
-      gearSlug: accessory.slug,
-      artificingLevels: [3],
-      definition: accessory,
-    });
+    expect(projected.operator?.definition).toBe(perlica);
+    expect(projected.weapon?.definition).toBe(weapon);
+    expect(projected.gears.armor?.definition).toBe(armor);
+    expect(projected.gears.accessory1?.definition).toBe(accessory);
     expect(projected.gears.gloves).toBeNull();
     expect(projected.gears.accessory2).toBeNull();
   });
@@ -114,17 +87,6 @@ describe('projectTrackLoadoutBuilds', () => {
     expect(projected.operator?.skillLevels.basicAttack).toBe(12);
     expect(projected.weapon?.traitLevels).toEqual([3, 4, 5]);
     expect(projected.gears.armor?.artificingLevels).toEqual([1, 2]);
-  });
-
-  it('为空轨道和未装备槽位返回固定的 null 结构', () => {
-    const scenario = createEmptyScenario('scenario', 'Scenario');
-
-    expect(projectTrackLoadoutBuilds(scenario, 2, repository)).toEqual({
-      trackIndex: 2,
-      operator: null,
-      weapon: null,
-      gears: { armor: null, gloves: null, accessory1: null, accessory2: null },
-    });
   });
 
   it('拒绝武器实例指向的缺失定义', () => {

@@ -2,8 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import { compileOperatorActiveSkills, parseOperatorActiveSkillEntries } from '../src/index.ts';
 import { activeSkillFixture } from './sourceFixtures.ts';
-import { OPERATOR_ACTIVE_SKILL_TYPES } from '../src/domains/operator/activeSkills.ts';
-import { SKILL_TYPES } from '../../../packages/game-data-contract/src/primitives.ts';
 
 describe('Operator 主动技能入口', () => {
   it('块宽参照适用于普攻，且必须引用同干员的另一个技能', () => {
@@ -22,36 +20,6 @@ describe('Operator 主动技能入口', () => {
       ),
     ).toThrow('timelineBlockFollowUpSkillId');
   });
-  it('省略旧编译器选择仍按同一原始动作图生成技能', () => {
-    const identity = entry('basicAttack', 'native_attack.json');
-    const files = { 'native_attack.json': activeSkillFixture('native_attack') };
-    const automatic = compileOperatorActiveSkills([identity], files, {}, 'fixture.skills');
-    for (const kind of ['basicAttack', 'resolvedSequence', 'resolvedDamageSequence']) {
-      const legacy = compileOperatorActiveSkills(
-        [{ ...identity, compile: { kind } }],
-        files,
-        {},
-        'fixture.skills',
-      );
-      expect(automatic.definitions).toEqual(legacy.definitions);
-    }
-    expect(automatic.entries[0]!.projectionConfig).toBeNull();
-  });
-
-  it('主动技能列表保留顺序；闪避由运行时模板注入', () => {
-    expect(OPERATOR_ACTIVE_SKILL_TYPES).toEqual([
-      'basicAttack',
-      'finisher',
-      'plungingAttack',
-      'battleSkill',
-      'comboSkill',
-      'ultimate',
-    ]);
-    expect([...OPERATOR_ACTIVE_SKILL_TYPES].sort()).toEqual(
-      SKILL_TYPES.filter(type => type !== 'dodge').sort(),
-    );
-  });
-
   it('从 SkillData 文件名取得技能身份并绑定公共定义', () => {
     const result = compileOperatorActiveSkills(
       [

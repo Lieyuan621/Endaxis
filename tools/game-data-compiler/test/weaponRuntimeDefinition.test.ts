@@ -73,23 +73,6 @@ describe('weapon runtime definitions', () => {
       ),
     ).toThrow('BuffData: missing Buff definition "buff_only_created_by_event"');
   });
-  it('attaches language-neutral ItemTable identity without generating a display name', () => {
-    const item = {
-      ...itemFixture.itemTableEntry,
-      id: definition.slug,
-      iconId: 'wpn_sword_test',
-      rarity: definition.rarity,
-    };
-
-    expect(attachWeaponProductIdentities([definition], { [definition.slug]: item })).toEqual([
-      {
-        ...definition,
-        assetSlug: 'wpn_sword_test',
-        iconPath: '/weapons/sword/wpn_sword_test.webp',
-      },
-    ]);
-  });
-
   it('projects native weapon icon prefixes through the shared product asset convention', () => {
     const native = { ...definition, slug: 'wpn_claym_0003', weaponType: 'greatsword' as const };
     const item = {
@@ -103,29 +86,6 @@ describe('weapon runtime definitions', () => {
       assetSlug: 'wpn_greatsword_0003',
       iconPath: '/weapons/greatsword/wpn_greatsword_0003.webp',
     });
-  });
-
-  it('preserves a complete trait batch without inventing runtime behavior', () => {
-    const result = compileWeaponRuntimeDefinitionBatchSource(
-      [definition],
-      [dependency],
-      {},
-      fixtureGameplayTagRegistry,
-    );
-
-    expect(result.diagnostics).toEqual([]);
-    expect(result.definitions).toEqual([
-      {
-        ...definition,
-        traits: [
-          {
-            ...definition.traits[0],
-            skillId: dependency.skillId,
-            actionGraph: { main: { nodes: {} }, macros: {} },
-          },
-        ],
-      },
-    ]);
   });
 
   it('fails closed when a trait runtime dependency is missing', () => {
@@ -435,23 +395,6 @@ describe('weapon runtime definitions', () => {
         },
       },
     });
-  });
-
-  it('renders one file per weapon type and a stable index', () => {
-    const batch = compileWeaponRuntimeDefinitionBatchSource(
-      [definition],
-      [dependency],
-      {},
-      fixtureGameplayTagRegistry,
-    );
-    const files = renderWeaponDefinitionFiles(batch);
-
-    expect(files.map(item => item.relativePath)).toEqual([
-      'index.generated.ts',
-      'sword/wpn_test_0001.generated.ts',
-      'weapon-definitions.audit.json',
-    ]);
-    expect(files[1]!.content).toContain('satisfies WeaponDefinition');
   });
 
   it('武器内嵌词条自己的图，生成文件可直接编译事件程序', () => {

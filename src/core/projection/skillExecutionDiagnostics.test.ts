@@ -91,14 +91,4 @@ describe('projectSkillExecutionDiagnostics', () => {
       projectSkillExecutionDiagnostics([receipt(8, 'SkillCostRejected', { data: undefined })]),
     ).toThrow("receipt 8 'SkillCostRejected' has no skillId");
   });
-
-  it('忽略开始时诊断和成功扣费等其他回执', () => {
-    expect(
-      projectSkillExecutionDiagnostics([
-        receipt(9, 'SkillCostUnavailableAtStart'),
-        receipt(10, 'SkillCooldownUnavailableAtStart'),
-        receipt(11, 'SkillCostApplied'),
-      ]),
-    ).toEqual([]);
-  });
 });

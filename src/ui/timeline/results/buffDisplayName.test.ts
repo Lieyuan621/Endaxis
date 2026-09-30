@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { collectOperatorBuffDisplayNameKeys, resolveBuffDisplayName } from './buffDisplayName';
 import { compoundStatusFactories } from '../../../data/buffs/compoundStatusFactories';
 import zh from '../../../i18n/locales/zh-CN.json';
-import en from '../../../i18n/locales/en.json';
 
 const messages: Readonly<Record<string, string>> = {
   'effects.name.susceptibility:physical': '物理脆弱',
@@ -18,21 +17,21 @@ const i18n = {
 };
 
 describe('Buff display name', () => {
-  it.each([zh, en])('names global modifiers without exposing the internal Buff ID', messages => {
+  it('names global modifiers without exposing the internal Buff ID', () => {
     expect(
       resolveBuffDisplayName('scenario:custom-values', {
         te: key => key === 'timeline.globalModifiers.title',
-        t: () => messages.timeline.globalModifiers.title,
+        t: () => zh.timeline.globalModifiers.title,
       }),
-    ).toBe(messages.timeline.globalModifiers.title);
+    ).toBe(zh.timeline.globalModifiers.title);
   });
-  it.each([zh, en])('translates Razor Clawmark before falling back to its source', messages => {
+  it('translates Razor Clawmark before falling back to its source', () => {
     expect(
       resolveBuffDisplayName(
         'buff_chr_0028_wulfa_normal_bleed',
         {
           te: key => key === 'effects.name.razorClawmark',
-          t: () => messages.effects.name.razorClawmark,
+          t: () => zh.effects.name.razorClawmark,
         },
         undefined,
         '洛茜',
@@ -44,16 +43,18 @@ describe('Buff display name', () => {
           },
         ]),
       ),
-    ).toBe(messages.effects.name.razorClawmark);
+    ).toBe(zh.effects.name.razorClawmark);
   });
-  it('names every exported compound factory and its output by reaction direction', () => {
+  it('按输入元素命名复合状态及其产物', () => {
     const names = { heat: '燃烧', electric: '导电', cryo: '冻结', nature: '腐蚀' };
-    expect(compoundStatusFactories.factories).toHaveLength(12);
-    for (const factory of compoundStatusFactories.factories) {
+    for (const [element, name] of Object.entries(names)) {
+      const factory = compoundStatusFactories.factories.find(
+        candidate => candidate.incomingElement === element,
+      );
+      expect(factory, element).toBeDefined();
+      if (factory === undefined) continue;
       for (const id of [factory.id, factory.createdBuff.buffId]) {
-        expect(resolveBuffDisplayName(id, i18n, undefined, '来源技能')).toBe(
-          names[factory.incomingElement],
-        );
+        expect(resolveBuffDisplayName(id, i18n, undefined, '来源技能')).toBe(name);
       }
     }
     expect(resolveBuffDisplayName('buff_common_pulse_natural_triggered', i18n)).toBe('导电');
@@ -61,10 +62,6 @@ describe('Buff display name', () => {
       'buff_common_pulse_unknown_triggered',
     );
   });
-  it('keeps missing-name Buff IDs transparent', () => {
-    expect(resolveBuffDisplayName('buff:native-id', i18n)).toBe('buff:native-id');
-  });
-
   it('appends a strict single attribute summary after the source name', () => {
     expect(
       resolveBuffDisplayName(

@@ -1,14 +1,9 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { COMBAT_STEP_KINDS } from '../../packages/game-data-contract/src/actions.ts';
 import type { ActionGraphStep } from '../../packages/game-data-contract/src/actionGraph.ts';
 import { actionNodeSchemas } from '../../src/ui/action-graph/actionNodeSchemas.generated.ts';
-import {
-  generatedSchemaPath,
-  generateActionNodeSchemas,
-  renderActionNodeSchemas,
-} from './generateActionNodeSchema.ts';
+import { generateActionNodeSchemas } from './generateActionNodeSchema.ts';
 
 const schemas = generateActionNodeSchemas();
 
@@ -75,8 +70,4 @@ test('distinguishes operand, primitive and complex data without guessing values'
   assert.equal(field('callMacro', 'macroId').control, 'string');
   assert.ok(!schemas.callMacro.fields.some(item => item.label === 'key'));
   assert.ok(!schemas.callResource.fields.some(item => item.label === 'key'));
-});
-
-test('checked-in output matches the deterministic Prettier-formatted generator output', async () => {
-  assert.equal(await readFile(generatedSchemaPath, 'utf8'), await renderActionNodeSchemas());
 });

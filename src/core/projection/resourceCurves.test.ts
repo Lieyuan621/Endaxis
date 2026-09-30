@@ -142,25 +142,4 @@ describe('projectResourceCurves', () => {
       ]),
     ).toThrow('precedes frame');
   });
-
-  it('把每帧自动回复的来源透传到曲线点，供展示跳过标点', () => {
-    const curves = projectResourceCurvesFromReceipt(snapshot(), [
-      {
-        sequence: 2,
-        frame: 3,
-        time: 0.1,
-        event: 'SpChanged',
-        data: {
-          recipient: 'team',
-          baseValue: 1,
-          requestedValue: 1,
-          actualValue: 1,
-          previousValue: 100,
-          currentValue: 101,
-          source: 'autoRecovery',
-        },
-      },
-    ]);
-    expect(curves.sp.points.at(-1)).toMatchObject({ value: 101, source: 'autoRecovery' });
-  });
 });

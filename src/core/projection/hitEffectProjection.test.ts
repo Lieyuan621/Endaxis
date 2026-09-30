@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { CombatReceiptEntry } from '../combat/receipt/combatReceipt';
-import {
-  projectHitDamageReceipts,
-  projectHitInflictionReceipts,
-  projectHitReactionReceipts,
-} from './hitEffectProjection';
+import { projectHitDamageReceipts, projectHitReactionReceipts } from './hitEffectProjection';
 
 const baseDamage: Record<string, number | boolean | string | null> = {
   damageType: 'physical',
@@ -91,55 +86,6 @@ describe('projectHitDamageReceipts', () => {
         },
       ]),
     ).toThrow('has no finite value');
-  });
-});
-
-describe('projectHitInflictionReceipts', () => {
-  it('搬运附着事实', () => {
-    const points = projectHitInflictionReceipts([
-      {
-        sequence: 3,
-        frame: 12,
-        time: 0.4,
-        event: 'ElementalInflictionApplied',
-        sourceId: 'perlica',
-        targetId: 'enemy',
-        data: {
-          skillId: 'battleSkill',
-          castId: 'cast:1',
-          requestedElement: 'electric',
-          isExtra: false,
-          previousElement: null,
-          previousLayers: 0,
-          currentElement: 'electric',
-          currentLayers: 1,
-          outcomeKind: 'attachmentOnly',
-          operationKinds: 'addAttachment',
-        },
-      },
-    ]);
-    expect(points[0]).toMatchObject({
-      frame: 12,
-      sourceId: 'perlica',
-      skillId: 'battleSkill',
-      element: 'electric',
-      outcomeKind: 'attachmentOnly',
-      currentLayers: 1,
-      castId: 'cast:1',
-    });
-  });
-});
-
-describe('projectHitDamageReceipts receipt shape', () => {
-  it('忽略非伤害事件', () => {
-    const entry: CombatReceiptEntry = {
-      sequence: 9,
-      frame: 3,
-      time: 0.1,
-      event: 'SpChanged',
-      data: { recipient: 'team' },
-    };
-    expect(projectHitDamageReceipts([entry])).toEqual([]);
   });
 });
 

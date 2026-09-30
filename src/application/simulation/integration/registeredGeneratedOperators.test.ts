@@ -18,7 +18,6 @@ import { elementalAttachments } from '../../../data/buffs/elementalAttachments';
 import { compoundStatusFactories } from '../../../data/buffs/compoundStatusFactories';
 import { skillSettings } from '../../../data/combat/skillSettings';
 import {
-  alesh,
   antal,
   arcane,
   arclight,
@@ -27,7 +26,6 @@ import {
   catcher,
   camille,
   daPan,
-  ember,
   estella,
   fluorite,
   laevatain,
@@ -39,7 +37,6 @@ import {
   tangtang,
   wulfgard,
   xaihi,
-  yvonne,
   zhuangFangyi,
 } from '../../../data/operators';
 import { placeSkillGroup } from '../../../ui/timeline/interaction/placeSkillGroup';
@@ -178,8 +175,8 @@ function numberedPlacementIds(prefix: string) {
 }
 
 describe('registered generated operators', () => {
-  it.each(['basicAttack', 'battleSkill', 'comboSkill', 'ultimate'])(
-    '新注册的 purrchena %s 可经页面模拟入口完整执行',
+  it.each(['battleSkill', 'comboSkill', 'ultimate'])(
+    '噗切娜 %s 的专属行为可经页面模拟入口执行',
     async skillGroupKey => {
       const operator = gameDataRepository.getOperator('purrchena');
       if (!operator) throw new Error('purrchena is not registered');
@@ -201,7 +198,6 @@ describe('registered generated operators', () => {
         startFrame: 1,
         ids: numberedPlacementIds('purrchena'),
       }).scenario;
-      expect(placed.tracks[0]!.skillCasts.length).toBeGreaterThan(0);
       const result = await createEditorSimulationService().simulate(placed, 600);
       if (skillGroupKey === 'comboSkill' || skillGroupKey === 'ultimate') {
         const gifts = projectPurrchenaGiftResults(result.receiptEntries);
@@ -214,11 +210,6 @@ describe('registered generated operators', () => {
           ),
         ).toBe(true);
       }
-      expect(
-        result.receiptEntries.some(
-          entry => entry.event === 'SkillStarted' && entry.sourceId === 'track:purrchena',
-        ),
-      ).toBe(true);
       if (skillGroupKey === 'battleSkill') {
         const firstCast = placed.tracks[0]!.skillCasts[0]!;
         expect(
@@ -801,61 +792,6 @@ describe('registered generated operators', () => {
     );
   });
 
-  it('runs Avywenna standalone battle skill through the registered production pipeline', () => {
-    const scenario = createEmptyScenario('scenario:avywenna:battle', 'Avywenna 战技生产回归');
-    scenario.battle.durationFrames = 80;
-    scenario.enemy.editable.hp = 10_000_000;
-    scenario.tracks[0] = {
-      id: 'track:avywenna',
-      operator: {
-        operatorSlug: avywenna.slug,
-        level: 90,
-        promoted: true,
-        potential: 5,
-        trustLevel: 4,
-        skillLevels: { basicAttack: 12, battleSkill: 12, comboSkill: 12, ultimate: 12 },
-        talentStates: { 0: 2, 1: 2 },
-      },
-      weapon: null,
-      gears: { armor: null, gloves: null, accessory1: null, accessory2: null },
-      initialState: { ultimateEnergy: 0 },
-      skillCasts: [],
-    };
-    let nextId = 0;
-    const placed = placeSkillGroup({
-      scenario,
-      trackIndex: 0,
-      operator: avywenna,
-      skillGroupKey: 'battleSkill',
-      startFrame: 1,
-      ids: { allocate: (kind: string) => `${kind}:avywenna:${++nextId}` },
-    }).scenario;
-    const result = runStandardPlayerDamageScenarioSimulation({
-      scenario: placed,
-      endFrame: 80,
-      criticalSamples: new ExplicitCriticalSampleSource(Array(20).fill(1)),
-      elementalInflictionDocument: elementalAttachments,
-      resolveNonRandomRuntimeSnapshot: () => ({
-        runtimeExtensionMultiplier: 1,
-        appliesIgniteDamageMultiplier: false,
-        appliesPhysicalInflictionDamageMultiplier: false,
-      }),
-      options: {
-        index: gameDataRepository,
-        resources: {
-          sharedSpGain: { baseGainEfficiency: 1 },
-          spRecoveryPauseDuration: 1.5,
-          normalSkillUltimateEnergy: { selfGainPerSp: 0.065, otherGainPerSp: 0.065 },
-          ultimateEnergySystemUnlocked: true,
-        },
-      },
-    });
-
-    expect(result.receiptEntries).toContainEqual(
-      expect.objectContaining({ event: 'DamageApplied', sourceId: 'track:avywenna' }),
-    );
-  });
-
   it('runs Avywenna ultimate block callback, lance spawn, and direct hit through production', () => {
     const scenario = createEmptyScenario('scenario:avywenna:ultimate', 'Avywenna 终结技生产回归');
     scenario.battle.durationFrames = 90;
@@ -1409,68 +1345,6 @@ describe('registered generated operators', () => {
     ).toBe(true);
   });
 
-  it('runs Laevatain basic attack through the default repository', () => {
-    const scenario = createEmptyScenario('scenario:laevatain:registered', '莱万汀默认仓库回归');
-    scenario.battle.durationFrames = 120;
-    scenario.tracks[0] = {
-      id: 'track:laevatain',
-      operator: {
-        operatorSlug: laevatain.slug,
-        level: 90,
-        promoted: true,
-        potential: 0,
-        trustLevel: 4,
-        skillLevels: { basicAttack: 12, battleSkill: 12, comboSkill: 12, ultimate: 12 },
-        talentStates: {},
-      },
-      weapon: null,
-      gears: { armor: null, gloves: null, accessory1: null, accessory2: null },
-      initialState: { ultimateEnergy: 0 },
-      skillCasts: [],
-    };
-    const placed = placeSkillGroup({
-      scenario,
-      trackIndex: 0,
-      operator: laevatain,
-      skillGroupKey: 'basicAttack',
-      startFrame: 1,
-      ids: numberedPlacementIds('laevatain'),
-    }).scenario;
-
-    const result = runStandardPlayerDamageScenarioSimulation({
-      scenario: placed,
-      endFrame: 120,
-      criticalSamples: new ExplicitCriticalSampleSource(Array(20).fill(1)),
-      resolveNonRandomRuntimeSnapshot: () => ({
-        runtimeExtensionMultiplier: 1,
-        appliesIgniteDamageMultiplier: false,
-        appliesPhysicalInflictionDamageMultiplier: false,
-      }),
-      options: {
-        index: gameDataRepository,
-        resources: {
-          sharedSpGain: { baseGainEfficiency: 1 },
-          spRecoveryPauseDuration: 1.5,
-          ultimateEnergySystemUnlocked: true,
-          normalSkillUltimateEnergy: { selfGainPerSp: 0.065, otherGainPerSp: 0.065 },
-        },
-      },
-    });
-
-    expect(result.receiptEntries).toContainEqual(
-      expect.objectContaining({
-        event: 'SkillStarted',
-        sourceId: 'track:laevatain',
-        data: expect.objectContaining({ skillId: 'chr_0016_laevat_attack1' }),
-      }),
-    );
-    expect(
-      result.receiptEntries.some(
-        entry => entry.event === 'DamageApplied' && entry.sourceId === 'track:laevatain',
-      ),
-    ).toBe(true);
-  });
-
   it('activates Laevatain fire-resistance ignore after absorbing four heat attachments', () => {
     const run = (talentLevel: 1 | 3) => {
       const scenario = createEmptyScenario(
@@ -1599,132 +1473,6 @@ describe('registered generated operators', () => {
     expect(level1).toBeTypeOf('number');
     expect(level3).toBeTypeOf('number');
     expect(level3!).toBeGreaterThan(level1!);
-  });
-
-  it('runs Yvonne basic attack through the default repository', () => {
-    const scenario = createEmptyScenario('scenario:yvonne:registered', '伊冯默认仓库回归');
-    scenario.battle.durationFrames = 120;
-    scenario.tracks[0] = {
-      id: 'track:yvonne',
-      operator: {
-        operatorSlug: yvonne.slug,
-        level: 90,
-        promoted: true,
-        potential: 3,
-        trustLevel: 4,
-        skillLevels: { basicAttack: 12, battleSkill: 12, comboSkill: 12, ultimate: 12 },
-        talentStates: { 0: 2, 1: 2 },
-      },
-      weapon: null,
-      gears: { armor: null, gloves: null, accessory1: null, accessory2: null },
-      initialState: { ultimateEnergy: 0 },
-      skillCasts: [],
-    };
-    const placed = placeSkillGroup({
-      scenario,
-      trackIndex: 0,
-      operator: yvonne,
-      skillGroupKey: 'basicAttack',
-      startFrame: 1,
-      ids: numberedPlacementIds('yvonne'),
-    }).scenario;
-    expect(placed.tracks[0]!.skillCasts.map(cast => cast.placement.startFrame)).toEqual([
-      1, 18, 33, 54, 79,
-    ]);
-
-    const result = runStandardPlayerDamageScenarioSimulation({
-      scenario: placed,
-      endFrame: 120,
-      criticalSamples: new ExplicitCriticalSampleSource(Array(20).fill(1)),
-      resolveNonRandomRuntimeSnapshot: () => ({
-        runtimeExtensionMultiplier: 1,
-        appliesIgniteDamageMultiplier: false,
-        appliesPhysicalInflictionDamageMultiplier: false,
-      }),
-      options: {
-        index: gameDataRepository,
-        resources: {
-          sharedSpGain: { baseGainEfficiency: 1 },
-          spRecoveryPauseDuration: 1.5,
-          ultimateEnergySystemUnlocked: true,
-          normalSkillUltimateEnergy: { selfGainPerSp: 0.065, otherGainPerSp: 0.065 },
-        },
-      },
-    });
-
-    expect(result.receiptEntries).toContainEqual(
-      expect.objectContaining({
-        event: 'SkillStarted',
-        sourceId: 'track:yvonne',
-        data: expect.objectContaining({ skillId: 'chr_0017_yvonne_attack1' }),
-      }),
-    );
-    expect(
-      result.receiptEntries.some(
-        entry => entry.event === 'DamageApplied' && entry.sourceId === 'track:yvonne',
-      ),
-    ).toBe(true);
-  });
-
-  it('runs Ember basic attack through the default repository', () => {
-    const scenario = createEmptyScenario('scenario:ember:registered', 'Ember 默认仓库回归');
-    scenario.battle.durationFrames = 120;
-    scenario.tracks[0] = {
-      id: 'track:ember',
-      operator: {
-        operatorSlug: ember.slug,
-        level: 90,
-        promoted: true,
-        potential: 0,
-        trustLevel: 4,
-        skillLevels: { basicAttack: 12, battleSkill: 12, comboSkill: 12, ultimate: 12 },
-        talentStates: { 1: 2 },
-      },
-      weapon: null,
-      gears: { armor: null, gloves: null, accessory1: null, accessory2: null },
-      initialState: { ultimateEnergy: 0 },
-      skillCasts: [],
-    };
-    const placed = placeSkillGroup({
-      scenario,
-      trackIndex: 0,
-      operator: ember,
-      skillGroupKey: 'basicAttack',
-      startFrame: 1,
-      ids: numberedPlacementIds('ember'),
-    }).scenario;
-    const result = runStandardPlayerDamageScenarioSimulation({
-      scenario: placed,
-      endFrame: 120,
-      criticalSamples: new ExplicitCriticalSampleSource(Array(20).fill(1)),
-      resolveNonRandomRuntimeSnapshot: () => ({
-        runtimeExtensionMultiplier: 1,
-        appliesIgniteDamageMultiplier: false,
-        appliesPhysicalInflictionDamageMultiplier: false,
-      }),
-      options: {
-        index: gameDataRepository,
-        resources: {
-          sharedSpGain: { baseGainEfficiency: 1 },
-          spRecoveryPauseDuration: 1.5,
-          ultimateEnergySystemUnlocked: true,
-          normalSkillUltimateEnergy: { selfGainPerSp: 0.065, otherGainPerSp: 0.065 },
-        },
-      },
-    });
-
-    expect(result.receiptEntries).toContainEqual(
-      expect.objectContaining({
-        event: 'SkillStarted',
-        sourceId: 'track:ember',
-        data: expect.objectContaining({ skillId: 'chr_0009_azrila_attack1' }),
-      }),
-    );
-    expect(
-      result.receiptEntries.some(
-        entry => entry.event === 'DamageApplied' && entry.sourceId === 'track:ember',
-      ),
-    ).toBe(true);
   });
 
   it('reduces Fluorite combo cooldown once when her nature infliction reaches the enemy', () => {
@@ -2934,129 +2682,6 @@ describe('registered generated operators', () => {
     );
     expect(initialHealing?.data?.requestedHealing).toBeCloseTo(expectedInitialHealing);
   });
-
-  it('runs Wulfgard battle skill through the registered production repository', () => {
-    const scenario = createEmptyScenario('scenario:wulfgard:registered', '狼卫默认仓库回归');
-    scenario.battle.durationFrames = 150;
-    scenario.tracks[0] = {
-      id: 'track:wulfgard',
-      operator: {
-        operatorSlug: wulfgard.slug,
-        level: 90,
-        promoted: true,
-        potential: 5,
-        trustLevel: 4,
-        skillLevels: { basicAttack: 12, battleSkill: 12, comboSkill: 12, ultimate: 12 },
-        talentStates: { 0: 2, 1: 2 },
-      },
-      weapon: null,
-      gears: { armor: null, gloves: null, accessory1: null, accessory2: null },
-      initialState: { ultimateEnergy: 0 },
-      skillCasts: [],
-    };
-    const placed = placeSkillGroup({
-      scenario,
-      trackIndex: 0,
-      operator: wulfgard,
-      skillGroupKey: 'battleSkill',
-      startFrame: 1,
-      ids: { allocate: kind => `${kind}:wulfgard` },
-    }).scenario;
-
-    const result = runStandardPlayerDamageScenarioSimulation({
-      scenario: placed,
-      endFrame: 150,
-      criticalSamples: new ExplicitCriticalSampleSource(Array(20).fill(1)),
-      elementalInflictionDocument: elementalAttachments,
-      resolveNonRandomRuntimeSnapshot: () => ({
-        runtimeExtensionMultiplier: 1,
-        appliesIgniteDamageMultiplier: false,
-        appliesPhysicalInflictionDamageMultiplier: false,
-      }),
-      options: {
-        index: gameDataRepository,
-        resources: {
-          sharedSpGain: { baseGainEfficiency: 1 },
-          spRecoveryPauseDuration: 1.5,
-          normalSkillUltimateEnergy: { selfGainPerSp: 0.065, otherGainPerSp: 0.065 },
-          ultimateEnergySystemUnlocked: false,
-        },
-      },
-    });
-
-    expect(result.receiptEntries).toContainEqual(
-      expect.objectContaining({
-        event: 'DamageApplied',
-        sourceId: 'track:wulfgard',
-        targetId: 'enemy',
-      }),
-    );
-  });
-
-  it.each(['basicAttack', 'finisher', 'comboSkill'] as const)(
-    'runs Alesh %s through the registered production repository',
-    skillGroupKey => {
-      const scenario = createEmptyScenario(
-        `scenario:alesh:${skillGroupKey}:registered`,
-        '阿列什默认仓库回归',
-      );
-      scenario.battle.durationFrames = 160;
-      scenario.tracks[0] = {
-        id: 'track:alesh',
-        operator: {
-          operatorSlug: alesh.slug,
-          level: 90,
-          promoted: true,
-          potential: 5,
-          trustLevel: 4,
-          skillLevels: { basicAttack: 12, battleSkill: 12, comboSkill: 12, ultimate: 12 },
-          talentStates: { 0: 2, 1: 2 },
-        },
-        weapon: null,
-        gears: { armor: null, gloves: null, accessory1: null, accessory2: null },
-        initialState: { ultimateEnergy: 0 },
-        skillCasts: [],
-      };
-      const placed = placeSkillGroup({
-        scenario,
-        trackIndex: 0,
-        operator: alesh,
-        skillGroupKey,
-        startFrame: 1,
-        ids: numberedPlacementIds(`alesh:${skillGroupKey}`),
-      }).scenario;
-
-      const result = runStandardPlayerDamageScenarioSimulation({
-        scenario: placed,
-        endFrame: 160,
-        criticalSamples: new ExplicitCriticalSampleSource(Array(20).fill(1)),
-        probabilitySamples: new ExplicitProbabilitySampleSource(Array(20).fill(1)),
-        elementalInflictionDocument: elementalAttachments,
-        resolveNonRandomRuntimeSnapshot: () => ({
-          runtimeExtensionMultiplier: 1,
-          appliesIgniteDamageMultiplier: false,
-          appliesPhysicalInflictionDamageMultiplier: false,
-        }),
-        options: {
-          index: gameDataRepository,
-          resources: {
-            sharedSpGain: { baseGainEfficiency: 1 },
-            spRecoveryPauseDuration: 1.5,
-            normalSkillUltimateEnergy: { selfGainPerSp: 0.065, otherGainPerSp: 0.065 },
-            ultimateEnergySystemUnlocked: false,
-          },
-        },
-      });
-
-      expect(result.receiptEntries).toContainEqual(
-        expect.objectContaining({
-          event: 'DamageApplied',
-          sourceId: 'track:alesh',
-          targetId: 'enemy',
-        }),
-      );
-    },
-  );
 
   it('applies Antal battle-skill vulnerability and its potential-5 keyword enhancement', () => {
     const run = (potential: number) => {

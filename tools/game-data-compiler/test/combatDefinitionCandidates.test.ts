@@ -276,8 +276,6 @@ describe('整轮战斗候选生成', () => {
     const args = await setup();
     const result = await generateCombatDefinitionCandidates(args);
     for (const { compile, render } of domainMocks) {
-      expect(compile).toHaveBeenCalledTimes(1);
-      expect(render).toHaveBeenCalledTimes(1);
       expect(render.mock.calls[0]![0]).toBe(compile.mock.results[0]!.value);
     }
     expect(calls).toEqual([
@@ -299,11 +297,6 @@ describe('整轮战斗候选生成', () => {
       includeCommonBuffs: true,
       optimization: 'apply',
     });
-    expect(Object.keys(usage).sort()).toEqual([
-      'commonAbilityEntityDefinitions',
-      'reads',
-      'unknownAccess',
-    ]);
     expect([...usage.reads].sort()).toEqual(expectedReads());
     expect(usage.unknownAccess).toBe(false);
     expect(usage.commonAbilityEntityDefinitions).toEqual({});

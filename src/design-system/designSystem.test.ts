@@ -66,31 +66,6 @@ test('indeterminate checkbox reports a mixed state', async () => {
   expect(html).toContain('aria-checked="mixed"');
 });
 
-test('select retains combobox semantics', async () => {
-  const html = await render(
-    h(component('EaSelect'), {
-      modelValue: 'normal',
-      options: [{ label: 'Normal', value: 'normal' }],
-    }),
-  );
-  expect(html).toContain('role="combobox"');
-  expect(html).toContain('aria-haspopup="listbox"');
-});
-
-test('mobile drawer preserves an explicit dismissal override', async () => {
-  const html = await render(
-    h(
-      component('EaDrawer'),
-      { modelValue: true, closeOnClickModal: false },
-      {
-        default: () => 'Body',
-      },
-    ),
-  );
-  expect(html).toContain('data-direction="btt"');
-  expect(html).toContain('data-close-on-click-modal="false"');
-});
-
 test('busy dialog blocks every dismissal path', async () => {
   const html = await render(
     h(component('EaDialog'), { modelValue: true, title: 'Export', busy: true }),

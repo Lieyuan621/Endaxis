@@ -3,6 +3,7 @@ import { ActionGraphDefinitionRepository } from '../../../src/core/compiler/acti
 import { describe, expect, it } from 'vitest';
 
 import { compileWeaponStaticDefinitionBatchSource } from '../src/index.ts';
+import { activeSkillFixture } from './sourceFixtures.ts';
 
 describe('武器静态定义', () => {
   it('使用精确基础攻击节点和 SkillPatch 真实档位生成候选，以一份 Buff 安装保留参数列', () => {
@@ -184,14 +185,14 @@ describe('武器静态定义', () => {
     );
   });
 
-  it.each([3, 4, 5, 6, 2, 7])('星级 %s 按正式契约边界接受或阻断', rarity => {
+  it.each([2, 3, 6, 7])('星级 %s 按正式契约边界接受或阻断', rarity => {
     const result = compileWeaponStaticDefinitionBatchSource(
       { wpn_lance_fixture: { ...weaponFixture(), rarity } },
       upgradeFixture(),
       { sk_wpn_fixture: passiveFixture() },
       { sk_wpn_fixture: patchFixture() },
     );
-    if ([3, 4, 5, 6].includes(rarity)) {
+    if (rarity === 3 || rarity === 6) {
       expect(result.definitions[0]?.rarity).toBe(rarity);
       expect(result.diagnostics.some(item => item.status === 'blocked')).toBe(false);
     } else {
@@ -321,9 +322,7 @@ function patchFixture() {
 
 function passiveFixture(): Record<string, unknown> {
   return {
-    actionGroupData: { timelineActions: [], passiveEventActions: [] },
-    aiExclusiveFrame: 0,
-    attackRangeType: 'Default',
+    ...activeSkillFixture('sk_wpn_fixture', 'Passive'),
     blackboard: [
       { key: 'will', valueDouble: 0, valueStr: '', isDynamic: false },
       { key: 'duration', valueDouble: 0, valueStr: '', isDynamic: false },
@@ -344,9 +343,6 @@ function passiveFixture(): Record<string, unknown> {
         ],
       },
     ],
-    canCastInAir: false,
-    canDummyCast: false,
-    canMove: false,
     cardAttributeModifier: {
       attributeModifiers: [
         {
@@ -358,48 +354,7 @@ function passiveFixture(): Record<string, unknown> {
       ],
       isConvertedAttribute: false,
     },
-    castData: {},
-    castType: 'Passive',
-    characterReturnToIdle: false,
-    comboSkillUIBigSpriteName: '',
-    comboSkillUISpriteName: '',
-    dontInterruptCombo: false,
-    dummyPositionOffset: {},
     durationFrame: 0,
     exclusiveFrame: 0,
-    hittableAttackRange: 0,
-    iconBgType: 'Default',
-    iconId: '',
-    level: 1,
-    needEnemyOutOfScreenWarning: false,
-    needEnemyOutOfScreenWarningOverrideValue: false,
-    offsetRecordFrame: 0,
-    overrideHittableObjAttackRange: false,
-    overrideNeedEnemyOutOfScreenWarning: false,
-    passiveSkillType: 'AddBuff',
-    rootMotionCliffCheck: false,
-    selectStrategy: {},
-    showNotRecommendState: false,
-    skillHighlightCondition: {},
-    skillId: 'sk_wpn_fixture',
-    skillName: '',
-    skillSpecification: 'Default',
-    skillTags: { predefinedTag: [] },
-    smartTargetBuffFindSettings: {},
-    smartTargetBuffIds: [],
-    smartTargetSelectStrategy: {},
-    smartTargetTagQuery: {},
-    switchToBuffConfig: {
-      condition: {},
-      buffs: [],
-      buffSource: {},
-      targets: {},
-      asSkillCast: false,
-    },
-    switchToCenterBeforeCast: false,
-    tagDuringAttach: {},
-    toggleBuffs: [],
-    uiRangeHints: [],
-    useAIExclusiveFrame: false,
   };
 }

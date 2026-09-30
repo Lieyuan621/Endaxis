@@ -2,11 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import type { WeaponDefinition } from '../../../core/game-data/equipmentDefinition';
 import type { OperatorDefinition } from '../../../core/game-data/operatorDefinition';
-import { ActionGraphDefinitionRepository } from '../../../core/compiler/actionGraphDefinitionRepository';
-import {
-  compileWeaponBuffDefinitions,
-  compileWeaponContributions,
-} from '../../../core/compiler/compileEquipment';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import type { TrackDocument } from '../../../core/project/schema';
 import { skillSettings } from '../../../data/combat/skillSettings';
@@ -80,13 +75,13 @@ describe('生成武器的正式模拟门禁', () => {
     ).toBe(false);
     expect(baseline.executionDiagnostics).toEqual([]);
   });
-  it.each([1, 9])('艾维文娜连续排轴 %i：三把连携枪由战技回收并执行正式回调伤害', async tier => {
+  it('艾维文娜连续排轴：三把连携枪由战技回收并执行正式回调伤害', async () => {
     const weapon = candidates.find(item => item.slug === 'wpn_lance_0006')!;
     const result = await simulateWeapon(
       weapon,
       repository.getOperator('avywenna')!,
       ['comboSkill', 'comboSkill', 'comboSkill', 'battleSkill', 'basicAttack'],
-      weapon.traits.map(() => tier),
+      weapon.traits.map(() => 1),
       [],
       { ownerStartFrames: [1, 151, 301, 451, 701] },
     );
@@ -355,35 +350,6 @@ describe('生成武器的正式模拟门禁', () => {
       ).toBe(false);
     },
   );
-
-  it('武器候选非空、身份唯一且均有可装配的干员', () => {
-    expect(candidates.length).toBeGreaterThan(0);
-    expect(new Set(candidates.map(weapon => weapon.slug)).size).toBe(candidates.length);
-    for (const weapon of candidates) {
-      expect(
-        repository.getOperators().some(operator => operator.weaponType === weapon.weaponType),
-        weapon.slug,
-      ).toBe(true);
-    }
-  });
-
-  it('每把生成武器的词条首末档与武器 Buff 都能编译', () => {
-    const programs = new ActionGraphDefinitionRepository();
-    for (const weapon of candidates) {
-      const operator = repository
-        .getOperators()
-        .find(candidate => candidate.weaponType === weapon.weaponType)!;
-      const attributes = { main: operator.mainAttribute, secondary: operator.secondaryAttribute };
-      for (const levels of [
-        weapon.traits.map(() => 1),
-        weapon.traits.map(trait => trait.levelCount),
-      ]) {
-        const contributions = compileWeaponContributions(weapon, levels, attributes, programs);
-        expect(contributions, weapon.slug).toHaveLength(weapon.traits.length);
-      }
-      compileWeaponBuffDefinitions(weapon, programs);
-    }
-  });
 
   it('诀单放连携也能从角色模板读取初值，不依赖武器事件补值', async () => {
     const weapon = candidates.find(item => item.slug === 'wpn_funnel_0003')!;

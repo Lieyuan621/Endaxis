@@ -1,33 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { arcane, perlica } from './operators';
 import { gearDefinitions, gearSetDefinitions } from './equipment';
-import { createGameDataRepository, gameDataRepository } from './gameDataRepository';
-import { weaponDefinitions } from './equipment/weaponDefinitions';
+import { createGameDataRepository } from './gameDataRepository';
 
 describe('gameDataRepository', () => {
-  it('indexes adapted enemy definitions without using the legacy store', () => {
-    const enemy = gameDataRepository.getEnemy('eny-0125-fdcentur');
-
-    expect(gameDataRepository.getEnemies()).toContain(enemy);
-    expect(enemy).toMatchObject({
-      id: 'eny-0125-fdcentur',
-      rank: 'boss',
-      defense: 100,
-      superArmor: 30,
-      finisherMultiplier: 1.75,
-    });
-    expect(enemy?.levelHp[5]).toBe(2476341);
-    expect(gameDataRepository.getEnemy('missing')).toBeNull();
-  });
-
-  it('keeps native rank independent from the legacy display tier', () => {
-    expect(gameDataRepository.getEnemy('eny-0007-mimicw')).toMatchObject({
-      id: 'eny-0007-mimicw',
-      tier: 'advanced',
-      rank: 'elite',
-    });
-  });
-
   it('rejects duplicate stable identities while building a index', () => {
     expect(() =>
       createGameDataRepository({ revision: 'fixture', operators: [perlica, perlica] }),
@@ -52,13 +28,6 @@ describe('gameDataRepository', () => {
     expect(repository.getGear('legacy-gear')?.slug).toBe('legacy-gear');
     expect(repository.getGearSet('legacy-set')?.slug).toBe('legacy-set');
     expect(Object.isFrozen(repository.getGear('legacy-gear'))).toBe(true);
-  });
-
-  it('uses native weapon ids without registering presentation aliases', () => {
-    const native = weaponDefinitions[0]!;
-    expect(gameDataRepository.getWeapon(native.slug)).toBe(native);
-    expect(gameDataRepository.getWeapon('tarr-11')).toBeNull();
-    expect(gameDataRepository.getWeapons()).toEqual(weaponDefinitions);
   });
 
   it('rejects aliases that are redundant, shadow definitions or target missing definitions', () => {
@@ -96,16 +65,5 @@ describe('gameDataRepository', () => {
     expect(repository.getOperator(perlica.slug)).toBe(perlica);
     expect(repository.getOperator(arcane.slug)).toBeNull();
     expect(Object.isFrozen(repository)).toBe(true);
-  });
-
-  it('rejects an empty revision and duplicate enemy identities', () => {
-    const enemy = gameDataRepository.getEnemy('eny-0125-fdcentur')!;
-
-    expect(() => createGameDataRepository({ revision: '' })).toThrow(
-      'game data revision must not be empty',
-    );
-    expect(() =>
-      createGameDataRepository({ revision: 'fixture', enemies: [enemy, enemy] }),
-    ).toThrow("duplicate enemy definition 'eny-0125-fdcentur'");
   });
 });

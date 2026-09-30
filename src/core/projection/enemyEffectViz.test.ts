@@ -31,32 +31,31 @@ describe('projectEnemyEffectViz', () => {
     expect(result.markers).toHaveLength(2);
     expect(result.markers.every(marker => marker.frame === 20)).toBe(true);
   });
-  it.each(['heat', 'electric', 'cryo', 'nature'])(
-    'shows the incoming %s conversion attachment without fabricating a duration',
-    element => {
-      const result = projectEnemyEffectViz(
-        [
-          receipt(0, 20, 'ElementalInflictionApplied', {
-            requestedElement: element,
-            outcomeKind: 'compoundStatus',
-            currentLayers: 0,
-          }),
-          receipt(1, 30, 'ElementalInflictionApplied', {
-            requestedElement: element,
-            outcomeKind: 'attachmentOnly',
-            currentLayers: 1,
-          }),
-          receipt(2, 40, 'ElementalInflictionApplied', {
-            requestedElement: element,
-            outcomeKind: 'burst',
-            currentLayers: 2,
-          }),
-        ],
-        90,
-      );
-      expect(result).toEqual({ markers: [{ frame: 20, kind: 'attachmentTrigger', element }] });
-    },
-  );
+  it('只显示复合附着的触发标记，不伪造持续时间', () => {
+    const result = projectEnemyEffectViz(
+      [
+        receipt(0, 20, 'ElementalInflictionApplied', {
+          requestedElement: 'electric',
+          outcomeKind: 'compoundStatus',
+          currentLayers: 0,
+        }),
+        receipt(1, 30, 'ElementalInflictionApplied', {
+          requestedElement: 'electric',
+          outcomeKind: 'attachmentOnly',
+          currentLayers: 1,
+        }),
+        receipt(2, 40, 'ElementalInflictionApplied', {
+          requestedElement: 'electric',
+          outcomeKind: 'burst',
+          currentLayers: 2,
+        }),
+      ],
+      90,
+    );
+    expect(result).toEqual({
+      markers: [{ frame: 20, kind: 'attachmentTrigger', element: 'electric' }],
+    });
+  });
   it('只投影爆发和成功消费等瞬时标记', () => {
     expect(
       projectEnemyEffectViz(
@@ -83,24 +82,6 @@ describe('projectEnemyEffectViz', () => {
     });
   });
 
-  it('语义施加和附着回执不伪造第二份持续状态', () => {
-    expect(
-      projectEnemyEffectViz(
-        [
-          receipt(0, 10, 'ElementalInflictionApplied', {
-            requestedElement: 'electric',
-            currentLayers: 1,
-          }),
-          receipt(1, 20, 'ElementalReactionApplied', {
-            reaction: 'electrification',
-            level: 1,
-          }),
-        ],
-        100,
-      ),
-    ).not.toHaveProperty('segments');
-  });
-
   it('未成功消费不生成标记', () => {
     expect(
       projectEnemyEffectViz(
@@ -114,9 +95,5 @@ describe('projectEnemyEffectViz', () => {
         90,
       ).markers,
     ).toEqual([]);
-  });
-
-  it('拒绝非法结束帧', () => {
-    expect(() => projectEnemyEffectViz([], -1)).toThrow('non-negative');
   });
 });

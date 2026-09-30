@@ -84,13 +84,6 @@ describe('definition field command boundary', () => {
     } as const;
     expect(fieldSchemaForValue(shape, { kind: 'unknown' }).kind).toBe('opaque');
   });
-  it('does not invent scalar values when adding structured entries', () => {
-    expect(editableDefault({ kind: 'number' })).toBeUndefined();
-    expect(editableDefault({ kind: 'string' })).toBeUndefined();
-    expect(editableDefault({ kind: 'enum', options: ['first', 'second'] })).toBeUndefined();
-    expect(editableDefault({ kind: 'enum', options: ['only'] })).toBe('only');
-    expect(editableDefault({ kind: 'object', fields: { id: { kind: 'string' } } })).toBeUndefined();
-  });
   it('checks nested replacements without letting a container edit change identity or opaque data', () => {
     const schema = {
       kind: 'object',

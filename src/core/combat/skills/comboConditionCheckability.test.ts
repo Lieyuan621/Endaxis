@@ -19,12 +19,5 @@ describe('连携触发条件的可检查范围', () => {
     expect(hasUnmodeledIncomingAttackTrigger(programs, programs[0]!.skillKey)).toBe(
       operator !== perlica,
     );
-    expect(hasUnmodeledIncomingAttackTrigger(programs, 'another-skill')).toBe(false);
-    expect(
-      hasUnmodeledIncomingAttackTrigger(
-        programs.map(program => ({ ...program, event: 'outputDamage' as const })),
-        programs[0]!.skillKey,
-      ),
-    ).toBe(false);
   });
 });

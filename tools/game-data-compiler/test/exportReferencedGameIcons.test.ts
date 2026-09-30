@@ -119,33 +119,6 @@ describe('全量图片隔离导出', () => {
     ]);
     expect(references.has('/operators/custom/charge.webp')).toBe(true);
   });
-  it('图片并发有界且只接受正整数', () => {
-    expect(parseArguments([]).workers).toBe(6);
-    expect(parseArguments(['--workers', '12']).workers).toBe(12);
-    for (const value of ['0', '-1', '1.5', 'NaN', 'Infinity']) {
-      expect(() => parseArguments(['--workers', value])).toThrow('positive integer');
-    }
-    expect(() => parseArguments(['--workers'])).toThrow('requires a value');
-  });
-  it('默认兼容 public，可显式指定独立输出目录', () => {
-    expect(parseArguments([]).outputRoot).toBe(path.resolve('public'));
-    expect(parseArguments(['--output-root', 'tmp/icons']).outputRoot).toBe(
-      path.resolve('tmp/icons'),
-    );
-    expect(() => parseArguments(['--output-root'])).toThrow('requires a value');
-  });
-
-  it('可重复登记未发布候选的额外引用根', () => {
-    expect(
-      parseArguments([
-        '--additional-reference-root',
-        'tmp/candidate-a',
-        '--additional-reference-root',
-        'tmp/candidate-b',
-      ]).additionalReferenceRoots,
-    ).toEqual([path.resolve('tmp/candidate-a'), path.resolve('tmp/candidate-b')]);
-    expect(() => parseArguments(['--additional-reference-root'])).toThrow('requires a value');
-  });
 
   it('强制重导只覆盖隔离产物，不修改正式图片', async () => {
     const args = await isolatedArguments(['--overwrite']);

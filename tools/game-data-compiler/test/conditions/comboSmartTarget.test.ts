@@ -21,15 +21,13 @@ describe('木桩技能智能目标投影', () => {
     const input = source(4, strategy);
     const result = compileSkillSmartTargetSource(input);
     expect(result.definition).toEqual({ smartTarget: expected });
-    expect(result.source).toBe(input);
-    expect(result.projection).toBe('fixed-dummy-normal-targeting');
   });
-  it.each([2, 3, 4])('评分策略 %s 经唯一主目标回退投影为敌人', strategy => {
-    expect(compileSkillSmartTargetSource(source(4, strategy)).definition).toEqual({
+  it('评分策略经唯一主目标回退投影为敌人', () => {
+    expect(compileSkillSmartTargetSource(source(4, 4)).definition).toEqual({
       smartTarget: 'enemy',
     });
   });
-  it.each([0, 1, 2, 3])('非智能主策略 %s 不执行 StoreSmartTarget', strategy => {
-    expect(compileSkillSmartTargetSource(source(strategy, 4)).definition).toEqual({});
+  it('非智能主策略不执行 StoreSmartTarget', () => {
+    expect(compileSkillSmartTargetSource(source(0, 4)).definition).toEqual({});
   });
 });

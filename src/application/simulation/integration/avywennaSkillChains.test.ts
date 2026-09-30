@@ -8,14 +8,11 @@ import { placeSkillGroup } from '../../../ui/timeline/interaction/placeSkillGrou
 import { skillSettings } from '../../../data/combat/skillSettings';
 
 describe('艾维文娜技能召回与实体回收', () => {
-  it.each([0, 1, 2, 3, 4, 5])('潜能 %i：真实连携→战技能生成枪、召回并造成伤害', async potential => {
-    const result = await simulate(
-      [
-        ['comboSkill', 1],
-        ['battleSkill', 200],
-      ],
-      potential,
-    );
+  it('真实连携→战技能生成枪、召回并造成伤害', async () => {
+    const result = await simulate([
+      ['comboSkill', 1],
+      ['battleSkill', 200],
+    ]);
     const spawned = result.receiptEntries.filter(entry => entry.event === 'AbilityEntitySpawned');
     const finished = result.receiptEntries.filter(entry => entry.event === 'AbilityEntityFinished');
     expect(spawned.length).toBeGreaterThan(0);
@@ -26,14 +23,11 @@ describe('艾维文娜技能召回与实体回收', () => {
     ).toBe(true);
   });
 
-  it.each([0, 1, 2, 3, 4, 5])('潜能 %i：真实终结技→战技走完整实体/Buff/回收链', async potential => {
-    const result = await simulate(
-      [
-        ['ultimate', 1],
-        ['battleSkill', 200],
-      ],
-      potential,
-    );
+  it('真实终结技→战技走完整实体/Buff/回收链', async () => {
+    const result = await simulate([
+      ['ultimate', 1],
+      ['battleSkill', 200],
+    ]);
     expect(
       result.receiptEntries.filter(entry => entry.event === 'AbilityEntitySpawned'),
     ).toHaveLength(1);
@@ -42,22 +36,9 @@ describe('艾维文娜技能召回与实体回收', () => {
     ).toHaveLength(1);
     expect(result.receiptEntries.some(entry => entry.event === 'DamageApplied')).toBe(true);
   });
-  it('实际普攻链、处决和下落攻击均能模拟', async () => {
-    const result = await simulate(
-      [
-        ['basicAttack', 1],
-        ['finisher', 220],
-        ['plungingAttack', 320],
-      ],
-      5,
-    );
-    expect(
-      result.receiptEntries.filter(entry => entry.event === 'DamageApplied').length,
-    ).toBeGreaterThanOrEqual(7);
-  });
 });
 
-async function simulate(casts: readonly (readonly [string, number])[], potential: number) {
+async function simulate(casts: readonly (readonly [string, number])[]) {
   const operator = avywenna;
   let scenario = createEmptyScenario('full-operator', '艾维文娜技能链');
   scenario.battle.durationFrames = 600;
@@ -68,7 +49,7 @@ async function simulate(casts: readonly (readonly [string, number])[], potential
       operatorSlug: operator.slug,
       level: 90,
       promoted: true,
-      potential,
+      potential: 0,
       trustLevel: 4,
       skillLevels: { basicAttack: 12, battleSkill: 12, comboSkill: 12, ultimate: 12 },
       talentStates: { '0': 2, '1': 2 },

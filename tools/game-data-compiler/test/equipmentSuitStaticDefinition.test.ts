@@ -3,6 +3,7 @@ import { ActionGraphDefinitionRepository } from '../../../src/core/compiler/acti
 import { describe, expect, it } from 'vitest';
 
 import { compileEquipmentSuitStaticDefinitionBatchSource } from '../src/index.ts';
+import { activeSkillFixture } from './sourceFixtures.ts';
 
 describe('装备套装静态定义', () => {
   it('保留原生元素、失衡和连携冷却乘区，并单列未闭合运行时依赖', () => {
@@ -174,14 +175,9 @@ function modifier(attributeType: string, formulaItem: string, value: number) {
 
 function passiveFixture(): Record<string, unknown> {
   return {
-    actionGroupData: { timelineActions: [], passiveEventActions: [] },
-    aiExclusiveFrame: 0,
-    attackRangeType: 'Default',
+    ...activeSkillFixture('passive_fixture', 'Passive'),
     blackboard: [],
     buffs: [{ buffId: 'buff_fixture', assignBlackboard: false, assignItems: [] }],
-    canCastInAir: false,
-    canDummyCast: false,
-    canMove: false,
     cardAttributeModifier: {
       attributeModifiers: [
         modifier('EtherDamageIncrease', 'BaseAddition', 0.2),
@@ -191,48 +187,7 @@ function passiveFixture(): Record<string, unknown> {
       ],
       isConvertedAttribute: false,
     },
-    castData: {},
-    castType: 'Passive',
-    characterReturnToIdle: false,
-    comboSkillUIBigSpriteName: '',
-    comboSkillUISpriteName: '',
-    dontInterruptCombo: false,
-    dummyPositionOffset: {},
     durationFrame: 0,
     exclusiveFrame: 0,
-    hittableAttackRange: 0,
-    iconBgType: 'Default',
-    iconId: '',
-    level: 1,
-    needEnemyOutOfScreenWarning: false,
-    needEnemyOutOfScreenWarningOverrideValue: false,
-    offsetRecordFrame: 0,
-    overrideHittableObjAttackRange: false,
-    overrideNeedEnemyOutOfScreenWarning: false,
-    passiveSkillType: 'AddBuff',
-    rootMotionCliffCheck: false,
-    selectStrategy: {},
-    showNotRecommendState: false,
-    skillHighlightCondition: {},
-    skillId: 'passive_fixture',
-    skillName: '',
-    skillSpecification: 'Default',
-    skillTags: { predefinedTag: [] },
-    smartTargetBuffFindSettings: {},
-    smartTargetBuffIds: [],
-    smartTargetSelectStrategy: {},
-    smartTargetTagQuery: {},
-    switchToBuffConfig: {
-      condition: {},
-      buffs: [],
-      buffSource: {},
-      targets: {},
-      asSkillCast: false,
-    },
-    switchToCenterBeforeCast: false,
-    tagDuringAttach: {},
-    toggleBuffs: [],
-    uiRangeHints: [],
-    useAIExclusiveFrame: false,
   };
 }

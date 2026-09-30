@@ -8,7 +8,7 @@
  */
 import path from 'node:path';
 import fs from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { planOperatorDefinition } from '../../scripts/planOperatorDefinition.ts';
 import { verifyGameDataSnapshot } from '../../scripts/verifyGameDataSnapshot.ts';
 import { loadSourceCatalog } from '../../scripts/downloadGameDataSources.ts';
@@ -33,25 +33,28 @@ const slugs: string[] =
         fs.readFileSync('tools/game-data-compiler/config/operators.json', 'utf8'),
       ).operators.map((operator: { slug: string }) => operator.slug)
     : ['perlica', 'arclight'];
+const skillSettingCatalog = path.join(
+  'tmp/optimization-differential',
+  'skill-setting.catalog.json',
+);
 
 describe.skipIf(!sourceRoot || !globalBuffCatalog)('生成优化的双路模拟等价', () => {
   // 全批次累计的优化裁剪量；若优化器对真实来源完全不再生效，等价对比就退化成空转，必须显式失败。
   let totalReduction = 0;
 
+  beforeAll(async () => {
+    await verifyGameDataSnapshot(
+      sourceRoot!,
+      await loadSourceCatalog('tools/game-data-compiler/game-data-sources.json'),
+    );
+    fs.mkdirSync(path.dirname(skillSettingCatalog), { recursive: true });
+    fs.writeFileSync(skillSettingCatalog, JSON.stringify(generatedSkillSettings));
+  }, 120_000);
+
   it.each(slugs)(
     '%s 的 off/apply 候选保持命中、状态、资源、诊断和可见曲线',
     async slug => {
       const root = sourceRoot!;
-      await verifyGameDataSnapshot(
-        root,
-        await loadSourceCatalog('tools/game-data-compiler/game-data-sources.json'),
-      );
-      const skillSettingCatalog = path.join(
-        'tmp/optimization-differential',
-        'skill-setting.catalog.json',
-      );
-      fs.mkdirSync(path.dirname(skillSettingCatalog), { recursive: true });
-      fs.writeFileSync(skillSettingCatalog, JSON.stringify(generatedSkillSettings));
       const planInput = {
         manifest: 'tools/game-data-compiler/config/operators.json',
         sourceRoot: root,

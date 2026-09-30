@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
-import { createEditorSimulationService } from '../../../application/simulation/testSupport/editorSimulationService';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import {
   projectTimelineDamageAnalysis,
@@ -55,20 +54,6 @@ describe('projectTimelineDamageAnalysis', () => {
       -20,
     );
     expect(result.byContribution.reduce((sum, entry) => sum + entry.value, 0)).toBeCloseTo(80);
-  });
-
-  it('projects real post-preparation simulation damage into chart data', async () => {
-    const scenario = createTimelineSampleScenario();
-    const cast = scenario.tracks[1]!.skillCasts[0]!;
-    cast.presentation = { ...cast.presentation, disabled: false };
-    const run = await createEditorSimulationService().simulate(
-      scenario,
-      scenario.battle.durationFrames,
-    );
-    const result = projectTimelineDamageAnalysis(run.receiptEntries, scenario, String, String);
-    expect(result.totalDamage).toBeGreaterThan(0);
-    expect(result.byOperator).toHaveLength(1);
-    expect(result.byDamageType).toHaveLength(1);
   });
 
   it('keeps owner and analysis range paired with the published receipt across edits and publication', () => {

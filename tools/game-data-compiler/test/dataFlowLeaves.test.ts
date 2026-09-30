@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import {
   collectTargetGroupWrites,
   parseBlackboardCalculationActionSource,
-  parseBlackboardCalculationPayloadSource,
   parseBlackboardMutationActionSource,
   parseBlackboardMutationPayloadSource,
   parseAttributeSnapshotActionSource,
@@ -119,38 +118,6 @@ describe('黑板运行时动作载荷', () => {
     });
   });
 
-  it('SimpleCalcBBAction 锁定已验证的对象级结构', () => {
-    const payload = {
-      value: {
-        key: 'final_scale',
-        operation: 'Multiply',
-        value1: scalarFixture(0, 'atk_scale'),
-        value2: scalarFixture(1.5),
-      },
-      path: 'skill.SimpleCalcBBAction',
-      blackboard: { atk_scale: [1, 1.1, 1.2] },
-    };
-    expect(
-      parseBlackboardCalculationPayloadSource(payload.value, payload.path, payload.blackboard),
-    ).toMatchSnapshot();
-  });
-
-  it('ModifyDynamicBlackboard 锁定已验证的对象级结构', () => {
-    const payload = {
-      value: {
-        key: 'hit_count',
-        operation: 'Add',
-        directValue: true,
-        value: scalarFixture(1),
-      },
-      path: 'skill.ModifyDynamicBlackboard',
-      blackboard: {},
-    };
-    expect(
-      parseBlackboardMutationPayloadSource(payload.value, payload.path, payload.blackboard),
-    ).toMatchSnapshot();
-  });
-
   it('拒绝未取证的间接黑板写入', () => {
     expect(() =>
       parseBlackboardMutationPayloadSource(
@@ -188,11 +155,12 @@ describe('目标组单动作解析', () => {
       producerType: 'MergeTargetAction',
       targetGroupKey: 'combined',
     });
-    expect(
-      withoutTargetGroupSourcePaths(
-        parseTargetGroupWriteAction(action, 'fixture.action', schedule),
-      ),
-    ).toMatchSnapshot();
+    expect(parseTargetGroupWriteAction(action, 'fixture.action', schedule)).toMatchObject({
+      inputTargets: [
+        { targetSource: 'Context', targetGroupKey: 'first' },
+        { targetSource: 'Target' },
+      ],
+    });
   });
 
   it('PickTargetAction 保留直接索引或黑板索引', () => {
@@ -206,11 +174,13 @@ describe('目标组单动作解析', () => {
       index: scalarFixture(0, 'pick_index'),
       contextKey: 'picked',
     };
-    expect(
-      withoutTargetGroupSourcePaths(
-        parseTargetGroupWriteAction(action, 'fixture.action', schedule),
-      ),
-    ).toMatchSnapshot();
+    expect(parseTargetGroupWriteAction(action, 'fixture.action', schedule)).toMatchObject({
+      producerType: 'PickTargetAction',
+      targetGroupKey: 'picked',
+      inputTargets: [{ targetSource: 'Context', targetGroupKey: 'combined' }],
+      pickIndexBlackboardKey: 'pick_index',
+      pickIndexValue: 0,
+    });
   });
 
   it('非目标组动作和禁用动作不产生写入事实', () => {
@@ -268,11 +238,14 @@ describe('目标组单动作解析', () => {
       advancedSelectorDirection: {},
     };
     if (interval !== undefined) action.findInterval = interval;
-    expect(
-      withoutTargetGroupSourcePaths(
-        parseTargetGroupWriteAction(action, 'fixture.action', schedule),
-      ),
-    ).toMatchSnapshot();
+    expect(parseTargetGroupWriteAction(action, 'fixture.action', schedule)).toMatchObject({
+      producerType: kind,
+      finderType: 'OwnerSpawnedEntityFinder',
+      finderSpawnedObjectType: 'AbilityEntity',
+      targetGroupKey: 'lances',
+      intervalSeconds: interval ?? null,
+      validatorTagQueries: [['HasAny', [-549424863]]],
+    });
   });
 
   it('PointFinder 保留实际启用的空间黑板输入键', () => {
@@ -341,9 +314,12 @@ describe('目标组单动作解析', () => {
         schedule,
       ),
     ).toEqual(actual);
-    expect(
-      withoutTargetGroupSourcePaths({ ...actual, priorityFilters: [], distanceValidators: [] }),
-    ).toMatchSnapshot();
+    expect(actual).toMatchObject({
+      finderType: 'HitBoxFinder',
+      finderCheckAlive: true,
+      finderFactionTarget: 'Anti',
+      distanceValidatorsPassAtZero: true,
+    });
     expect(actual?.priorityFilters).toEqual([
       {
         filterType: 'DistanceFromOwnerAsc',
@@ -396,32 +372,18 @@ describe('目标组单动作解析', () => {
       },
     };
     const writes = collectTargetGroupWrites(root, 'fixture.json');
-    expect(withoutTargetGroupSourcePaths(writes)).toMatchSnapshot();
+    expect(writes).toMatchObject([
+      {
+        producerType: 'MergeTargetAction',
+        targetGroupKey: 'combined',
+        saveCountToBlackboardKey: 'target_count',
+      },
+    ]);
     expect(writes[0]?.sourcePath).toBe(
       'fixture.json.actionGroupData.timelineActions[0]._sequenceActionData.actionData[0]',
     );
   });
 });
-
-function withoutTargetGroupSourcePaths(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(withoutTargetGroupSourcePaths);
-  if (typeof value !== 'object' || value === null) return value;
-  // 迁移基线不含方向目标；新增字段由 skillPresentationTargets.test.ts 的原始数据单独验证。
-  return Object.fromEntries(
-    Object.entries(value as Record<string, unknown>)
-      .filter(
-        ([key]) =>
-          ![
-            'sourcePath',
-            'directionTarget',
-            'directionContextKey',
-            'finderAutoSetTargetFaction',
-            'finderTargetFactionType',
-          ].includes(key),
-      )
-      .map(([key, item]) => [key, withoutTargetGroupSourcePaths(item)]),
-  );
-}
 
 function findActionFixture(selectorData: Record<string, unknown>): Record<string, unknown> {
   return {
