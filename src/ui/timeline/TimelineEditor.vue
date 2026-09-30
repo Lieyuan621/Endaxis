@@ -1090,7 +1090,6 @@ async function openProjectContent(content: string): Promise<boolean> {
           timingAdjustments: [],
           skillFormAdjustments: [],
           controlSwitchAdjustments: [],
-          inferredControlSwitches: [],
         },
         true,
       );
