@@ -11,6 +11,7 @@ const props = defineProps<{
   currentScenarioName: string;
   scenarioCount: number;
   maxDuration: number;
+  allowLongImage?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -206,6 +207,7 @@ function imageOptions() {
             </span>
           </EaButton>
           <EaButton
+            v-if="allowLongImage !== false"
             class="export-action-card"
             size="lg"
             type="button"

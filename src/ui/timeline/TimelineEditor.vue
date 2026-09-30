@@ -83,6 +83,8 @@ import TimelineRuler from './components/TimelineRuler.vue';
 import TimelineTrackHeader from './components/TimelineTrackHeader.vue';
 import OperatorAvatar from '../components/OperatorAvatar.vue';
 import TimelineWorkbenchShell from './components/TimelineWorkbenchShell.vue';
+import type { MobileLibraryEntry, MobileTrack } from './mobile/MobileTimelineWorkbench.vue';
+import { isNativeApp } from '../../platform/nativeBridge';
 import TimelineResourceCurves from './results/TimelineResourceCurves.vue';
 import TimelineSimulationErrorNotice from './results/TimelineSimulationErrorNotice.vue';
 import TimelineTrackGauge from './results/TimelineTrackGauge.vue';
@@ -355,7 +357,10 @@ import {
   type TimelineCastAlignmentMode,
 } from './interaction/timelineCastAlignment';
 import { useTimelineZoom } from './interaction/useTimelineZoom';
-import type { TimelineOperationMarkerInput } from './timelineOperationMarkers';
+import {
+  timelineOperationKeycapLabel,
+  type TimelineOperationMarkerInput,
+} from './timelineOperationMarkers';
 import { projectRossiComboSuccessCastIds } from '../operators/rossi/comboSuccessEvidence';
 import {
   canCreateSkillCastConnection,
@@ -376,6 +381,10 @@ import {
   projectTimelineHitOccurrences,
   type TimelineHitEffectLabel,
 } from './results/timelineHitEffects';
+import {
+  projectHitDamageReceipts,
+  type HitDamageReceipt,
+} from '../../core/projection/hitEffectProjection';
 import { projectPublishedHitDetail } from './results/publishedHitDetail';
 import { layoutEnemyDamageHits } from './results/enemyDamageHitLayout';
 import { useSimulationReceiptSelection } from './results/useSimulationReceiptSelection';
@@ -469,9 +478,32 @@ const DamageAnalysisDialog = defineLazyDialog(() => import('./results/DamageAnal
 const TimelineShortcutHelpDialog = defineLazyDialog(
   () => import('./interaction/TimelineShortcutHelpDialog.vue'),
 );
+const MobileTimelineWorkbench = defineAsyncComponent(
+  () => import('./mobile/MobileTimelineWorkbench.vue'),
+);
 
 const { t, te, locale } = useI18n({ useScope: 'global' });
 const { appearance, setAppearance } = useAppearance();
+function detectTouchLayout(): boolean {
+  if (isNativeApp()) return true;
+  if (window.innerWidth > 1366) return false;
+  const coarsePointer = window.matchMedia?.('(pointer: coarse)').matches ?? false;
+  const mobilePlatform = /Android|iPad|iPhone|iPod/i.test(navigator.userAgent);
+  const iPadDesktopAgent = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+  return coarsePointer || mobilePlatform || iPadDesktopAgent;
+}
+const mobileLayout = ref(detectTouchLayout());
+function refreshTouchLayout(): void {
+  mobileLayout.value = detectTouchLayout();
+}
+onMounted(() => {
+  window.addEventListener('resize', refreshTouchLayout, { passive: true });
+  window.addEventListener('orientationchange', refreshTouchLayout, { passive: true });
+});
+onScopeDispose(() => {
+  window.removeEventListener('resize', refreshTouchLayout);
+  window.removeEventListener('orientationchange', refreshTouchLayout);
+});
 const TIMELINE_TRACK_HEADER_WIDTH = 180;
 const TIMELINE_RULER_HEIGHT = 60;
 const TIMELINE_SCROLLBAR_SIZE = 12;
@@ -1427,6 +1459,224 @@ const maximumUltimateEnergyByTrack = computed(() =>
   viewModel.value.tracks.map(track => track.maxUltimateEnergy),
 );
 const selectedTrackModel = computed(() => viewModel.value.tracks[selectedTrack.value]!);
+const MOBILE_STATUS_BAR_COLORS: Readonly<Record<string, string>> = {
+  Fire: '#f5222d',
+  Pulse: '#ffec3d',
+  Cryst: '#1890ff',
+  Natural: '#52c41a',
+  Physical: '#d9d9d9',
+};
+function mobileStatusBarColor(segment: BuffTimelineSegment): string {
+  return MOBILE_STATUS_BAR_COLORS[segment.abnormalColorType ?? ''] ?? '#8c8c8c';
+}
+const mobileEnemyBuffsByCastId = computed(() => {
+  const casts = viewModel.value.tracks.flatMap(track =>
+    track.skillCasts.map(cast => ({
+      id: cast.id,
+      operatorId: track.operatorInstanceId,
+      startFrame: castActualStartFrame(cast.id, cast.startFrame),
+      endFrame: visibleSkillEndFrames.value.get(cast.id) ?? cast.startFrame + cast.durationFrames,
+    })),
+  );
+  const castsById = new Map(casts.map(cast => [cast.id, cast]));
+  const grouped = new Map<string, Map<string, BuffTimelineSegment>>();
+  for (const segment of buffTimelineSegments.value) {
+    if (
+      segment.targetId !== SINGLE_ENEMY_TARGET_ID ||
+      !isEnemyTimelineBuffVisible(segment) ||
+      (!attachmentBuffIds.has(segment.buffId) &&
+        segment.iconStyleInSquad !== 'SpellAbnormal' &&
+        !isPhysicalStatusRowBuff(segment)) ||
+      (buffIcon(segment) ?? segment.iconPath ?? getIconAssetPath(segment.iconId)) == null
+    )
+      continue;
+    const directCast = castsById.get(segment.sourceActionId ?? '');
+    const cast =
+      directCast ??
+      casts
+        .filter(
+          candidate =>
+            segment.sourceId !== undefined &&
+            candidate.operatorId === segment.sourceId &&
+            segment.startFrame >= candidate.startFrame - 2 &&
+            segment.startFrame <= candidate.endFrame + 2,
+        )
+        .sort((left, right) => right.startFrame - left.startFrame)[0];
+    if (cast === undefined) continue;
+    const castId = cast.id;
+    const badges = grouped.get(castId) ?? new Map<string, BuffTimelineSegment>();
+    const previous = badges.get(segment.buffId);
+    if (
+      previous === undefined ||
+      (segment.durationEndFrame ?? segment.endFrame) - segment.startFrame >
+        (previous.durationEndFrame ?? previous.endFrame) - previous.startFrame
+    )
+      badges.set(segment.buffId, segment);
+    grouped.set(castId, badges);
+  }
+  return new Map(
+    [...grouped].map(([castId, badges]) => [
+      castId,
+      [...badges.values()].sort((left, right) => left.startFrame - right.startFrame),
+    ]),
+  );
+});
+const mobileTracks = computed<MobileTrack[]>(() =>
+  viewModel.value.tracks.map(track => {
+    const loadout = loadoutModels.value[track.trackIndex];
+    return {
+      index: track.trackIndex,
+      name: operatorName(track.operatorSlug),
+      avatar:
+        track.operatorAssetSlug === null ? null : getOperatorAvatarPath(track.operatorAssetSlug),
+      operatorLevel: loadout?.operator?.level ?? null,
+      operatorPotential: loadout?.operator?.potential ?? null,
+      setBonus: activeGearSetLabelsByTrack.value[track.trackIndex] ?? '',
+      weapon:
+        loadout?.weapon === null || loadout?.weapon === undefined
+          ? null
+          : {
+              name:
+                loadout.weapon.definition.displayName ??
+                getWeaponGameName(
+                  loadout.weapon.definition.assetSlug ?? loadout.weapon.weaponSlug,
+                  locale.value,
+                ),
+              icon: loadout.weapon.definition.iconPath ?? null,
+              level: loadout.weapon.level,
+            },
+      gears: (['armor', 'gloves', 'accessory1', 'accessory2'] as const).map(slot => {
+        const gear = loadout?.gears[slot];
+        return {
+          slot,
+          name:
+            gear === null || gear === undefined
+              ? ''
+              : (gear.definition.displayName ??
+                getGearPieceGameName(gear.definition.assetSlug ?? gear.gearSlug, locale.value)),
+          icon: gear?.definition.iconPath ?? null,
+        };
+      }),
+      casts: track.skillCasts.map(cast => {
+        const visualStartFrame = castActualStartFrame(cast.id, cast.startFrame);
+        const combatBuffs = mobileEnemyBuffsByCastId.value.get(cast.id) ?? [];
+        const combatBadges = combatBuffs.flatMap(segment => {
+          const icon = buffIcon(segment) ?? segment.iconPath ?? getIconAssetPath(segment.iconId);
+          if (icon == null) return [];
+          const sourceName = buffSourceName(segment);
+          return [
+            {
+              id: segment.buffId,
+              icon,
+              title:
+                buffDisplayName(segment) ??
+                resolveBuffDisplayName(
+                  segment.buffId,
+                  { t, te },
+                  {
+                    attribute: segment.simpleModifierAttribute,
+                    slot: segment.simpleModifierSlot,
+                    value: segment.simpleModifierValue,
+                  },
+                  sourceName,
+                  operatorBuffDisplayNameKeys.value,
+                ),
+              layers: segment.layers,
+            },
+          ];
+        });
+        const effectDurationBars = combatBuffs.flatMap((segment, lane) => {
+          const endFrame = segment.durationEndFrame ?? segment.endFrame;
+          return attachmentBuffIds.has(segment.buffId) || endFrame <= segment.startFrame
+            ? []
+            : [
+                {
+                  id: `effect-${segment.buffId}`,
+                  startFrame: segment.startFrame,
+                  endFrame,
+                  lane,
+                  color: mobileStatusBarColor(segment),
+                },
+              ];
+        });
+        const markers = castHitMarkers(track.trackIndex, cast.id);
+        const markerIdentities = new Set(
+          markers.map(marker => `${marker.hitId}:${marker.executionFrame ?? -1}`),
+        );
+        const damageByOccurrence = new Map(
+          (hitOccurrences.value.get(cast.id) ?? []).map(hit => [
+            `${hit.hitId}:${hit.frame}`,
+            hit.label.damage.reduce((sum, damage) => sum + damage.value, 0),
+          ]),
+        );
+        return {
+          id: cast.id,
+          label: timelineCastLabel(cast, track),
+          startFrame: cast.startFrame,
+          visualStartFrame,
+          durationFrames: Math.max(
+            0,
+            (visibleSkillEndFrames.value.get(cast.id) ?? cast.startFrame + cast.durationFrames) -
+              visualStartFrame,
+          ),
+          color: cast.color ?? skillAccentColor(cast.operationType, track.operatorSlug),
+          isAttack: cast.operationType === 'basicAttack',
+          disabled: cast.disabled,
+          locked: cast.locked,
+          combatBadges,
+          hitMarkers: markers.map(marker => ({
+            hitId: marker.hitId,
+            frame:
+              marker.executionFrame ??
+              visualStartFrame + Math.round(marker.leftPx / pxPerFrame.value),
+            ...(marker.executionFrame === undefined
+              ? {}
+              : { executionFrame: marker.executionFrame }),
+            damage: damageByOccurrence.get(`${marker.hitId}:${marker.executionFrame ?? -1}`) ?? 0,
+          })),
+          effectHits: (mobileDamageReceiptsByCast.value.get(cast.id) ?? [])
+            .filter(receipt => !markerIdentities.has(`${receipt.hitId}:${receipt.frame}`))
+            .map(receipt => ({
+              sequence: receipt.sequence,
+              frame: receipt.frame,
+              damage: receipt.value,
+              ...(receipt.hitId === undefined ? {} : { hitId: receipt.hitId }),
+            })),
+          durationBars: [
+            ...effectDurationBars,
+            ...cooldownBarsForCast(cast.id, visualStartFrame).map((bar, index) => ({
+              id: `cooldown-${index}`,
+              startFrame: visualStartFrame + bar.offsetFrames,
+              endFrame: visualStartFrame + bar.offsetFrames + bar.durationFrames,
+              lane: effectDurationBars.length + index,
+              color: '#ff6fae',
+            })),
+          ],
+        };
+      }),
+    };
+  }),
+);
+const mobileLibrary = computed<MobileLibraryEntry[]>(() =>
+  selectedTrackModel.value.skillLibrary.map(entry => ({
+    entryKey: entry.entryKey,
+    label: skillLibraryEntryName(entry),
+    operationType: skillLibraryTypeLabel(entry),
+    color: skillAccentColor(entry.operationType, selectedTrackModel.value.operatorSlug),
+    icon:
+      entry.operationType === 'battleSkill' ||
+      entry.operationType === 'comboSkill' ||
+      entry.operationType === 'ultimate'
+        ? skillDisplayIcon(entry.operationType, selectedTrackModel.value.operatorSlug)
+        : '',
+    durationFrames: entry.skills.reduce((total, skill) => total + skill.timelineBlockFrames, 0),
+    skills: entry.skills.map(skill => ({
+      skillKey: skill.skillKey,
+      label:
+        timelineSkillSegmentLabel(entry, skill.skillKey, skillSegmentLabels()) ?? skill.skillKey,
+    })),
+  })),
+);
 const selectedConsumableUse = computed(() => {
   const id = selectedConsumableUseId.value;
   if (id === null) return null;
@@ -2230,6 +2480,20 @@ const rulerOperations = computed<TimelineOperationMarkerInput[]>(() => {
   }
   return operations;
 });
+const mobileOperationHints = computed(() =>
+  rulerOperations.value.map(operation => ({
+    id: operation.id,
+    frame: operation.frame,
+    label: timelineOperationKeycapLabel(
+      operation.kind,
+      operation.trackIndex,
+      keycapMode.value,
+      true,
+    ),
+    kind: operation.kind,
+    perfect: operation.perfect === true,
+  })),
+);
 const publishedTimeDilationBands = computed(() => {
   if (simulationRun.value === null) return [];
   return projectTimelineTimeDilationBands(publishedReceiptEntries.value, simulationRun.value.frame);
@@ -3123,6 +3387,17 @@ const hitOccurrences = computed(
       ),
     ),
 );
+const mobileDamageReceiptsByCast = computed(() => {
+  const byCast = new Map<string, HitDamageReceipt[]>();
+  for (const receipt of projectHitDamageReceipts(publishedReceiptEntries.value)) {
+    if (receipt.castId === undefined || !compatibleSkillCastReceiptIds.value.has(receipt.castId))
+      continue;
+    const entries = byCast.get(receipt.castId) ?? [];
+    entries.push(receipt);
+    byCast.set(receipt.castId, entries);
+  }
+  return byCast;
+});
 function castHitMarkers(trackIndex: TrackIndex, castId: string): TimelineHitMarkerView[] {
   if (simulationRun.value !== null && !compatibleSkillCastReceiptIds.value.has(castId)) return [];
   const castModel = viewModel.value.tracks[trackIndex]?.skillCasts.find(
@@ -5950,6 +6225,65 @@ function setSelectedCastColor(color: string | null): void {
 function setPanelDialogVisible(visible: boolean): void {
   if (!visible) panelDialogTrack.value = null;
 }
+
+function selectMobileCast(skillCastId: string): void {
+  applyActionSelection(selectTimelineAction(actionSelection.value, skillCastId, false));
+}
+
+function moveMobileCast(skillCastId: string, trackIndex: TrackIndex, frame: number): void {
+  if (configurationReadOnly.value || isHistoricalSkillInput(skillCastId)) return;
+  commitScenario('moveSkillCast', current =>
+    moveSkillCast(current, trackIndex, skillCastId, frame, displayedSkillCastStartFrames.value),
+  );
+}
+
+function placeMobileSkill(
+  entryKey: string,
+  skillKey: string | undefined,
+  trackIndex: TrackIndex,
+  frame: number,
+): void {
+  if (configurationReadOnly.value) return;
+  const entry = viewModel.value.tracks[trackIndex]?.skillLibrary.find(
+    candidate => candidate.entryKey === entryKey,
+  );
+  if (entry === undefined) return;
+  void placeGroup(entry.skillGroupKey, skillKey, frame, trackIndex, entry.variantKey);
+}
+
+function setMobilePrepFrames(frames: number): void {
+  if (configurationReadOnly.value) return;
+  commitScenario('setBattlePrepFrames', current => setBattlePrepFrames(current, frames));
+}
+
+function setMobileDurationFrames(frames: number): void {
+  if (configurationReadOnly.value) return;
+  commitScenario('setBattleDurationFrames', current => setBattleDurationFrames(current, frames));
+}
+
+function toggleMobilePrep(): void {
+  commitScenario('setTimelinePrepExpanded', current =>
+    setTimelinePrepExpanded(current, !current.editor.prepExpanded),
+  );
+}
+
+function openMobileHitDetail(
+  trackIndex: TrackIndex,
+  castId: string,
+  hitId: string,
+  executionFrame?: number,
+): void {
+  hitDetailTarget.value = {
+    trackIndex,
+    castId,
+    hitId,
+    ...(executionFrame === undefined ? {} : { executionFrame }),
+  };
+}
+
+function setMobileGuideFrame(frame: number | null): void {
+  cursorGuide.value = frame === null ? null : { leftPx: 0, sampleFrame: frame };
+}
 </script>
 
 <template>
@@ -5966,7 +6300,122 @@ function setPanelDialogVisible(visible: boolean): void {
     accept="application/json,.json,image/png,.png"
     @change="handleProjectFileChange"
   />
+  <MobileTimelineWorkbench
+    v-if="mobileLayout"
+    :scenario-name="scenario.name"
+    :scenarios="projectScenarios"
+    :active-scenario-id="activeProjectScenarioId"
+    :tracks="mobileTracks"
+    :library="mobileLibrary"
+    :selected-track="selectedTrack"
+    :selected-cast-id="selectedCastId"
+    :prep-frames="scenario.battle.prepFrames"
+    :duration-frames="scenario.battle.durationFrames"
+    :prep-expanded="scenario.editor.prepExpanded"
+    :minimum-editable-frame="minimumEditableInputFrame"
+    :read-only="configurationReadOnly"
+    :can-undo="canUndo"
+    :can-redo="canRedo"
+    :enemy-name="enemyHudName"
+    :analysis="damageAnalysis"
+    :freeze-bands="timeDilationBands"
+    :stagger-bands="poiseBrokenSegments"
+    :operation-hints="mobileOperationHints"
+    :keycap-mode="keycapMode"
+    :locale="locale === 'en' ? 'en' : 'zh-CN'"
+    :appearance="appearance"
+    :guide-metrics="cursorGuideMetrics"
+    :guide-enemy-effects="cursorEnemyEffects.effects"
+    :guide-enemy-effect-overflow="cursorEnemyEffects.overflow"
+    @select-scenario="selectScenario"
+    @rename-scenario="renameScenario"
+    @add-scenario="addScenario"
+    @duplicate-scenario="duplicateScenario"
+    @delete-scenario="removeScenario"
+    @undo="restoreEditorHistory('undo')"
+    @redo="restoreEditorHistory('redo')"
+    @open-project="requestOpenProject"
+    @receive-project="requestReceiveProject"
+    @export-project="showExportDialog = true"
+    @reset-project="resetDialogVisible = true"
+    @select-track="selectTrack"
+    @swap-tracks="swapTrackOrder"
+    @open-operator="openOperatorDialog"
+    @open-weapon="openWeaponDialog"
+    @open-gear="openGearDialog"
+    @open-operator-build="showOperatorBuildDialog = true"
+    @open-weapon-build="showWeaponBuildDialog = true"
+    @open-gear-build="showGearBuildDialog = true"
+    @open-stats="openPanelDialog"
+    @select-cast="selectMobileCast"
+    @move-cast="moveMobileCast"
+    @place-skill="placeMobileSkill"
+    @delete-cast="deleteSelectedActions"
+    @toggle-cast-disabled="setSelectedCastDisabled(!selectedCastModel?.cast.presentation?.disabled)"
+    @set-prep-frames="setMobilePrepFrames"
+    @set-duration-frames="setMobileDurationFrames"
+    @toggle-prep="toggleMobilePrep"
+    @hit-detail="openMobileHitDetail"
+    @guide-frame="setMobileGuideFrame"
+    @set-locale="selectTimelineLocale"
+    @set-appearance="setAppearance"
+    @set-keycap-mode="keycapMode = $event"
+  >
+    <template #enemy>
+      <EnemySettingsPanel
+        :read-only="configurationReadOnly"
+        :enemy="scenario.enemy"
+        :definition="selectedEnemyDefinition"
+        :enemies="enemies"
+        :fps="PROJECT_FPS"
+        :name-of="enemyName"
+        :labels="{
+          all: t('common.all'),
+          close: t('common.close'),
+          confirm: t('common.confirm'),
+          custom: t('resourceMonitor.enemy.custom'),
+          customDescription: t('resourceMonitor.enemy.customDesc'),
+          unknown: t('resourceMonitor.enemy.unknown'),
+          clickToChange: t('resourceMonitor.enemy.clickToChange'),
+          selectTitle: t('resourceMonitor.enemy.dialogTitle'),
+          searchPlaceholder: t('resourceMonitor.enemy.searchPlaceholder'),
+          level: t('resourceMonitor.enemy.level'),
+          empty: t('resourceMonitor.enemy.empty'),
+          editStats: t('resourceMonitor.enemy.editStats'),
+          editStatsTitle: t('resourceMonitor.enemy.editStatsTitle'),
+          enemyHp: t('resourceMonitor.labels.enemyHp'),
+          defense: t('statDetail.defense'),
+          finisherMultiplier: `${t('skillType.execution')}${t('hitDetail.multipliers')}`,
+          maximumStagger: t('resourceMonitor.labels.maxStagger'),
+          staggerNodes: t('resourceMonitor.labels.staggerNodes'),
+          nodeDuration: t('resourceMonitor.labels.nodeDuration'),
+          brokenDuration: t('resourceMonitor.labels.breakDuration'),
+          finisherRecovery: t('resourceMonitor.labels.executionRecovery'),
+          superArmor: t('resourceMonitor.labels.superArmor'),
+          resistances: t('resourceMonitor.labels.resistanceTitle'),
+          resistance: {
+            physical: t('resourceMonitor.resistance.physical'),
+            heat: t('resourceMonitor.resistance.heat'),
+            cryo: t('resourceMonitor.resistance.cryo'),
+            electric: t('resourceMonitor.resistance.electric'),
+            nature: t('resourceMonitor.resistance.nature'),
+          },
+          tier: {
+            normal: t('enemyTier.normal'),
+            advanced: t('enemyTier.advanced'),
+            elite: t('enemyTier.elite'),
+            boss: t('enemyTier.boss'),
+            leader: t('enemyTier.leader'),
+          },
+        }"
+        @select-definition="selectDefinitionEnemy"
+        @select-custom="selectCustomEnemy"
+        @save="saveEnemyValues"
+      />
+    </template>
+  </MobileTimelineWorkbench>
   <TimelineWorkbenchShell
+    v-else
     :collapsed-monitor-section-count="collapsedMonitorSectionCount"
     @left-collapsed-change="leftPanelCollapsed = $event"
     :labels="{
@@ -7819,6 +8268,7 @@ function setPanelDialogVisible(visible: boolean): void {
     :current-scenario-name="scenario.name"
     :scenario-count="projectScenarios.length"
     :max-duration="Math.max(10, Math.round(scenario.battle.durationFrames / PROJECT_FPS))"
+    :allow-long-image="!mobileLayout"
     @update:visible="showExportDialog = $event"
     @export-json="exportProject"
     @copy-code="copyProjectCode"
