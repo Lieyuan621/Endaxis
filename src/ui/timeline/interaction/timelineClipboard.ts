@@ -1,17 +1,16 @@
 /**
- * 负责复制、粘贴时间轴技能及闪避标签。技能内部的连线随复制一起重建。
- * 剪贴板属于编辑器临时状态；粘贴会为技能、连线及闪避标签重新分配文档 ID。
+ * 复制、粘贴时间轴混合选区，使用一个时间原点。技能内部连线与接续关系随复制一起重建。
+ * 剪贴板属于编辑器临时状态；粘贴为所有对象和连线重新分配文档 ID。
  */
 import type {
   ConnectionDocument,
   ConnectionEndpoint,
-  DodgeMarkerDocument,
   ScenarioDocument,
   SkillCastDocument,
   TrackIndex,
 } from '../../../core/project/schema';
 import type { TimelineDocumentIdAllocator } from './placeSkillGroup';
-import { addDodgeMarker } from './timelineDocumentCommands';
+import { type TimelineItem, type TimelineItemRef, type TimelinePointCopy } from './timelineItems';
 
 interface ClipboardCast {
   readonly trackIndex: TrackIndex;
@@ -22,23 +21,34 @@ export interface TimelineActionClipboard {
   readonly originFrame: number;
   readonly casts: readonly ClipboardCast[];
   readonly connections: readonly ConnectionDocument[];
-  readonly dodgeMarker?: DodgeMarkerDocument;
+  readonly points?: readonly TimelinePointCopy[];
 }
 
 export interface PasteTimelineActionsResult {
   readonly scenario: ScenarioDocument;
   readonly skillCastIds: readonly string[];
-  readonly dodgeMarkerId?: string;
+  readonly itemRefs: readonly TimelineItemRef[];
 }
 
-export function copyTimelineDodgeMarker(
+/** 混合选区使用同一原点。技能内部连接仍由技能复制规则处理。 */
+export function copyTimelineItems(
   scenario: ScenarioDocument,
-  id: string,
+  items: readonly TimelineItem[],
+  starts: ReadonlyMap<string, number>,
 ): TimelineActionClipboard | null {
-  const marker = scenario.battle.dodgeMarkers?.find(item => item.id === id);
-  return marker === undefined
-    ? null
-    : { originFrame: marker.frame, casts: [], connections: [], dodgeMarker: cloneValue(marker) };
+  if (!items.length || items.some(item => item.ref.kind !== 'skill' && !item.copy)) return null;
+  const skills = copyTimelineActions(
+    scenario,
+    new Set(items.filter(item => item.ref.kind === 'skill').map(item => item.ref.id)),
+    starts,
+  );
+  const points = items.flatMap(item => (item.copy ? [item.copy()] : []));
+  return {
+    casts: skills?.casts ?? [],
+    connections: skills?.connections ?? [],
+    points,
+    originFrame: Math.min(skills?.originFrame ?? Infinity, ...points.map(point => point.frame)),
+  };
 }
 
 function cloneValue<T>(value: T): T {
@@ -111,19 +121,26 @@ export function pasteTimelineActions(
   if (!Number.isInteger(startFrame) || startFrame < -scenario.battle.prepFrames) {
     throw new RangeError('startFrame must be an integer within the visible timeline');
   }
-  if (clipboard.dodgeMarker !== undefined) {
-    const marker = {
-      ...cloneValue(clipboard.dodgeMarker),
-      id: ids.allocate('dodge'),
-      frame: startFrame,
-    };
-    return {
-      scenario: addDodgeMarker(scenario, marker),
-      skillCastIds: [],
-      dodgeMarkerId: marker.id,
-    };
-  }
-  if (clipboard.casts.length === 0) return { scenario, skillCastIds: [] };
+  if (clipboard.casts.length === 0 && !clipboard.points?.length)
+    return { scenario, skillCastIds: [], itemRefs: [] };
+  const minimum = Math.max(
+    scenario.inheritance?.frame ?? -scenario.battle.prepFrames,
+    ...(clipboard.points ?? []).map(
+      point => point.minimumFrame - (point.frame - clipboard.originFrame),
+    ),
+  );
+  const maximumOffset = Math.max(
+    0,
+    ...clipboard.casts.flatMap(entry =>
+      entry.cast.placement.startFrame === undefined
+        ? []
+        : [entry.cast.placement.startFrame - clipboard.originFrame],
+    ),
+    ...(clipboard.points ?? []).map(point => point.frame - clipboard.originFrame),
+  );
+  const maximum = scenario.battle.durationFrames - maximumOffset;
+  if (maximum < minimum) throw new RangeError('Clipboard selection does not fit the timeline');
+  startFrame = Math.max(minimum, Math.min(maximum, startFrame));
 
   const castIds = new Map<string, string>();
   for (const entry of clipboard.casts) {
@@ -163,5 +180,12 @@ export function pasteTimelineActions(
     if (from === null || to === null) continue;
     connections.push({ ...connection, id: ids.allocate('connection'), from, to });
   }
-  return { scenario: { ...scenario, tracks, connections }, skillCastIds: createdIds };
+  let next = { ...scenario, tracks, connections };
+  const itemRefs: TimelineItemRef[] = createdIds.map(id => ({ kind: 'skill', id }));
+  for (const point of clipboard.points ?? []) {
+    const id = ids.allocate(point.kind);
+    next = point.paste(next, id, startFrame + point.frame - clipboard.originFrame);
+    itemRefs.push({ kind: point.kind, id });
+  }
+  return { scenario: next, skillCastIds: createdIds, itemRefs };
 }

@@ -441,40 +441,6 @@ function locateSkillCast(scenario: ScenarioDocument, trackIndex: TrackIndex, ski
   return { track, castIndex, cast: track.skillCasts[castIndex]! };
 }
 
-/** 移动一项已放置技能，并保持其他轨道与技能对象引用不变。 */
-export function moveSkillCast(
-  scenario: ScenarioDocument,
-  trackIndex: TrackIndex,
-  skillCastId: string,
-  startFrame: number,
-  resolvedStartFrames?: ReadonlyMap<string, number>,
-): ScenarioDocument {
-  if (!Number.isInteger(startFrame) || startFrame < -scenario.battle.prepFrames) {
-    throw new RangeError('startFrame must be an integer within the visible timeline');
-  }
-  const { track, castIndex, cast } = locateSkillCast(scenario, trackIndex, skillCastId);
-  const chain = getSkillCastPlacementChains(track.skillCasts).find(chain =>
-    chain.casts.some(member => member.id === skillCastId),
-  )!;
-  if (chain.casts.length > 1)
-    return moveSkillCasts(
-      scenario,
-      new Set([skillCastId]),
-      trackIndex,
-      skillCastId,
-      startFrame,
-      resolvedStartFrames,
-    );
-  if (cast.presentation?.locked) return scenario;
-  if (cast.placement.startFrame === startFrame) return scenario;
-
-  const skillCasts = [...track.skillCasts];
-  skillCasts[castIndex] = { ...cast, placement: { startFrame } };
-  const tracks = [...scenario.tracks] as ScenarioDocument['tracks'];
-  tracks[trackIndex] = { ...track, skillCasts };
-  return { ...scenario, tracks };
-}
-
 function skillCastFrame(
   cast: SkillCastDocument,
   resolvedStartFrames?: ReadonlyMap<string, number>,
@@ -504,74 +470,6 @@ function locateSkillCasts(
     }
   }
   return located;
-}
-
-/**
- * 让当前选择集按同一帧差整体移动，保持跨轨道动作之间的相对位置。
- * 涉及的链含锁定动作时整组不移动；边界只约束组首作者帧，尚未执行的后项可以超出模拟终点。
- */
-export function moveSkillCasts(
-  scenario: ScenarioDocument,
-  skillCastIds: ReadonlySet<string>,
-  anchorTrackIndex: TrackIndex,
-  anchorSkillCastId: string,
-  requestedAnchorStartFrame: number,
-  resolvedStartFrames?: ReadonlyMap<string, number>,
-  minimumFrame = -scenario.battle.prepFrames,
-): ScenarioDocument {
-  if (
-    !Number.isInteger(requestedAnchorStartFrame) ||
-    requestedAnchorStartFrame < -scenario.battle.prepFrames
-  ) {
-    throw new RangeError(
-      'requestedAnchorStartFrame must be an integer within the visible timeline',
-    );
-  }
-  if (!skillCastIds.has(anchorSkillCastId)) {
-    throw new Error(`selection does not contain anchor skill cast '${anchorSkillCastId}'`);
-  }
-
-  const anchor = locateSkillCast(scenario, anchorTrackIndex, anchorSkillCastId).cast;
-  const located = locateSkillCasts(scenario, skillCastIds);
-  if (located.length !== skillCastIds.size) {
-    throw new Error('selection contains a missing or duplicate skill cast identity');
-  }
-  const affected = scenario.tracks.flatMap(track =>
-    track === null
-      ? []
-      : getSkillCastPlacementChains(track.skillCasts).filter(chain =>
-          chain.casts.some(cast => skillCastIds.has(cast.id)),
-        ),
-  );
-  const members = affected.flatMap(chain => chain.casts);
-  if (members.some(cast => cast.presentation?.locked)) return scenario;
-  const anchors = new Set(affected.map(chain => chain.anchor.id));
-  const requestedDelta = requestedAnchorStartFrame - skillCastFrame(anchor, resolvedStartFrames);
-  const frames = affected.map(chain => chain.anchor.placement.startFrame!);
-  const minimumStartFrame = Math.min(...frames);
-  const maximumStartFrame = Math.max(...frames);
-  const delta = Math.max(
-    minimumFrame - minimumStartFrame,
-    Math.min(scenario.battle.durationFrames - maximumStartFrame, requestedDelta),
-  );
-  if (delta === 0) return scenario;
-
-  const tracks = scenario.tracks.map(track => {
-    if (track === null) return null;
-    if (!track.skillCasts.some(cast => anchors.has(cast.id))) return track;
-    return {
-      ...track,
-      skillCasts: track.skillCasts.map(cast =>
-        anchors.has(cast.id)
-          ? {
-              ...cast,
-              placement: { startFrame: cast.placement.startFrame! + delta },
-            }
-          : cast,
-      ),
-    };
-  }) as ScenarioDocument['tracks'];
-  return { ...scenario, tracks };
 }
 
 /** 把同轨连续选区变成手动链；已有链必须完整选中，技能块和连线身份均不重建。 */
@@ -826,16 +724,6 @@ export function setSkillCastForcedCritical(
   return { ...scenario, tracks };
 }
 
-/** 删除动作块及其连线。 */
-export function removeSkillCast(
-  scenario: ScenarioDocument,
-  trackIndex: TrackIndex,
-  skillCastId: string,
-): ScenarioDocument {
-  locateSkillCast(scenario, trackIndex, skillCastId);
-  return removeSkillCasts(scenario, new Set([skillCastId]));
-}
-
 /**
  * 一次删除任意轨道上的多个动作，并统一清理连线。
  * 不存在的 ID 会被忽略，便于临时选择集合在撤销、重做或切换干员后安全收敛。
@@ -960,25 +848,6 @@ export function addCycleBoundary(
   };
 }
 
-export function moveCycleBoundary(
-  scenario: ScenarioDocument,
-  id: string,
-  frame: number,
-): ScenarioDocument {
-  requireTimelineMarkerFrame(scenario, frame);
-  const index = scenario.battle.cycleBoundaries.findIndex(item => item.id === id);
-  if (index < 0 || scenario.battle.cycleBoundaries[index]!.frame === frame) return scenario;
-  const cycleBoundaries = [...scenario.battle.cycleBoundaries];
-  cycleBoundaries[index] = { ...cycleBoundaries[index]!, frame };
-  return { ...scenario, battle: { ...scenario.battle, cycleBoundaries } };
-}
-
-export function removeCycleBoundary(scenario: ScenarioDocument, id: string): ScenarioDocument {
-  const cycleBoundaries = scenario.battle.cycleBoundaries.filter(item => item.id !== id);
-  if (cycleBoundaries.length === scenario.battle.cycleBoundaries.length) return scenario;
-  return { ...scenario, battle: { ...scenario.battle, cycleBoundaries } };
-}
-
 export function addControlSwitch(
   scenario: ScenarioDocument,
   id: string,
@@ -999,19 +868,6 @@ export function addControlSwitch(
   };
 }
 
-export function moveControlSwitch(
-  scenario: ScenarioDocument,
-  id: string,
-  frame: number,
-): ScenarioDocument {
-  requireTimelineMarkerFrame(scenario, frame, -scenario.battle.prepFrames);
-  const index = scenario.battle.controlSwitches.findIndex(item => item.id === id);
-  if (index < 0 || scenario.battle.controlSwitches[index]!.frame === frame) return scenario;
-  const controlSwitches = [...scenario.battle.controlSwitches];
-  controlSwitches[index] = { ...controlSwitches[index]!, frame };
-  return { ...scenario, battle: { ...scenario.battle, controlSwitches } };
-}
-
 export function setControlSwitchTrack(
   scenario: ScenarioDocument,
   id: string,
@@ -1023,12 +879,6 @@ export function setControlSwitchTrack(
     return scenario;
   const controlSwitches = [...scenario.battle.controlSwitches];
   controlSwitches[index] = { ...controlSwitches[index]!, trackIndex };
-  return { ...scenario, battle: { ...scenario.battle, controlSwitches } };
-}
-
-export function removeControlSwitch(scenario: ScenarioDocument, id: string): ScenarioDocument {
-  const controlSwitches = scenario.battle.controlSwitches.filter(item => item.id !== id);
-  if (controlSwitches.length === scenario.battle.controlSwitches.length) return scenario;
   return { ...scenario, battle: { ...scenario.battle, controlSwitches } };
 }
 
@@ -1054,21 +904,6 @@ export function addDodgeMarker(
   };
 }
 
-export function moveDodgeMarker(
-  scenario: ScenarioDocument,
-  id: string,
-  frame: number,
-): ScenarioDocument {
-  requireTimelineMarkerFrame(scenario, frame, -scenario.battle.prepFrames);
-  const current = scenario.battle.dodgeMarkers ?? [];
-  const index = current.findIndex(item => item.id === id);
-  if (index < 0 || current[index]!.frame === frame) return scenario;
-  const dodgeMarkers = [...current];
-  dodgeMarkers[index] = { ...dodgeMarkers[index]!, frame };
-  resolveDodgeMarkerLastInputFrame(dodgeMarkers[index]!);
-  return { ...scenario, battle: { ...scenario.battle, dodgeMarkers } };
-}
-
 /** 更新闪避方向、目标轨道或极限闪避声明；时间由移动命令单独维护。 */
 export function updateDodgeMarker(
   scenario: ScenarioDocument,
@@ -1088,13 +923,6 @@ export function updateDodgeMarker(
   resolveDodgeMarkerLastInputFrame(updated);
   const dodgeMarkers = [...current];
   dodgeMarkers[index] = updated;
-  return { ...scenario, battle: { ...scenario.battle, dodgeMarkers } };
-}
-
-export function removeDodgeMarker(scenario: ScenarioDocument, id: string): ScenarioDocument {
-  const current = scenario.battle.dodgeMarkers ?? [];
-  const dodgeMarkers = current.filter(item => item.id !== id);
-  if (dodgeMarkers.length === current.length) return scenario;
   return { ...scenario, battle: { ...scenario.battle, dodgeMarkers } };
 }
 
@@ -1122,20 +950,6 @@ export function addExternalEventMarker(
   };
 }
 
-export function moveExternalEventMarker(
-  scenario: ScenarioDocument,
-  id: string,
-  frame: number,
-): ScenarioDocument {
-  requireTimelineMarkerFrame(scenario, frame);
-  const current = scenario.battle.externalEventMarkers ?? [];
-  const index = current.findIndex(item => item.id === id);
-  if (index < 0 || current[index]!.frame === frame) return scenario;
-  const externalEventMarkers = [...current];
-  externalEventMarkers[index] = { ...externalEventMarkers[index]!, frame };
-  return { ...scenario, battle: { ...scenario.battle, externalEventMarkers } };
-}
-
 /** 更新外部事实本身；时间轴位置继续由专用移动命令维护。 */
 export function updateExternalEventMarker(
   scenario: ScenarioDocument,
@@ -1154,15 +968,5 @@ export function updateExternalEventMarker(
   if (updated.target === marker.target && updated.event === marker.event) return scenario;
   const externalEventMarkers = [...current];
   externalEventMarkers[index] = updated;
-  return { ...scenario, battle: { ...scenario.battle, externalEventMarkers } };
-}
-
-export function removeExternalEventMarker(
-  scenario: ScenarioDocument,
-  id: string,
-): ScenarioDocument {
-  const current = scenario.battle.externalEventMarkers ?? [];
-  const externalEventMarkers = current.filter(item => item.id !== id);
-  if (externalEventMarkers.length === current.length) return scenario;
   return { ...scenario, battle: { ...scenario.battle, externalEventMarkers } };
 }

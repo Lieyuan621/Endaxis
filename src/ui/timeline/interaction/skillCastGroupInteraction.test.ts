@@ -3,7 +3,6 @@ import { createEmptyScenario } from '../../../core/project/createProject';
 import type { SkillCastDocument } from '../../../core/project/schema';
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
 import {
-  expandSkillCastGroupSelection,
   findSkillCastGroupInsertion,
   matchingPublishedSkillCastIds,
   projectCompatibleHitFrames,
@@ -136,17 +135,6 @@ describe('连续组选择与移动', () => {
       ['b', { afterCastId: 'a' }],
       ['a', { startFrame: 10 }],
     ]);
-  });
-
-  it('拖动扩展整条链，不改变原来的成员选择集合', () => {
-    const scenario = fixture([
-      cast('a', { startFrame: 10 }),
-      cast('b', { afterCastId: 'a' }),
-      cast('c', { startFrame: 90 }),
-    ]);
-    const selected = new Set(['b']);
-    expect(expandSkillCastGroupSelection(scenario, selected)).toEqual(new Set(['a', 'b']));
-    expect(selected).toEqual(new Set(['b']));
   });
 
   it('等待模拟时整组同移，新回执到达后立即采用改变的间距', () => {

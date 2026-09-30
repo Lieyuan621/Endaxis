@@ -4596,7 +4596,7 @@
     },
     "selection": {
       "deleted": "已删除",
-      "selectedCount": "选中了 {count} 个动作"
+      "selectedCount": "选中了 {count} 个对象"
     },
     "toolbar": {
       "buffLayoutCompact": "紧凑",

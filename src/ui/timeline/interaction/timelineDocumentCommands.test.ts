@@ -19,17 +19,10 @@ import {
   addCycleBoundary,
   addDodgeMarker,
   applyInitialUltimateEnergyPreset,
-  moveControlSwitch,
-  moveDodgeMarker,
-  removeControlSwitch,
-  removeDodgeMarker,
   clearSimulationRangeBoundary,
   createSkillCastGroup,
   insertSkillCastIntoGroup,
   dissolveSkillCastGroups,
-  moveSkillCast,
-  moveSkillCasts,
-  removeSkillCast,
   removeSkillCasts,
   setSkillCastForcedCritical,
   setReactionDamageForcedCritical,
@@ -316,51 +309,6 @@ describe('手动技能组命令', () => {
     expect(createSkillCastGroup(original, new Set(['cast:1', 'other']), frames)).toBe(original);
   });
 
-  it('拖动一个成员或多选同组成员只平移一次组首，其他成员保持相对关系', () => {
-    const original = grouped();
-    const actual = new Map([...frames, ['cast:2', 22], ['cast:3', 40]]);
-    for (const moved of [
-      moveSkillCast(original, 0, 'cast:2', 32, actual),
-      moveSkillCasts(original, new Set(['cast:1', 'cast:2']), 0, 'cast:2', 32, actual),
-    ]) {
-      expect(moved.tracks[0]!.skillCasts[0]!.placement).toEqual({ startFrame: 20 });
-      expect(moved.tracks[0]!.skillCasts[1]).toBe(original.tracks[0]!.skillCasts[1]);
-      expect(moved.tracks[0]!.skillCasts[2]).toBe(original.tracks[0]!.skillCasts[2]);
-      expect(moved.tracks[0]!.skillCasts[3]).toBe(original.tracks[0]!.skillCasts[3]);
-    }
-    original.battle.durationFrames = 60;
-    const limited = moveSkillCasts(
-      original,
-      new Set(['cast:2', 'cast:4']),
-      0,
-      'cast:2',
-      100,
-      actual,
-    );
-    expect(limited.tracks[0]!.skillCasts[0]!.placement).toEqual({ startFrame: 20 });
-    expect(limited.tracks[0]!.skillCasts[3]!.placement).toEqual({ startFrame: 60 });
-    expect(() => moveSkillCast(original, 0, 'cast:2', 32)).toThrow('resolved integer start frame');
-  });
-
-  it('未选中的组员锁定也会阻止整组移动', () => {
-    const original = grouped();
-    original.tracks[0]!.skillCasts[2]!.presentation = { locked: true };
-    expect(moveSkillCast(original, 0, 'cast:2', 40, frames)).toBe(original);
-    expect(moveSkillCasts(original, new Set(['cast:2', 'cast:4']), 0, 'cast:2', 40, frames)).toBe(
-      original,
-    );
-  });
-
-  it('组尾超出模拟终点时仍只限制组首，拖动不会反向跳跃或卡死', () => {
-    const original = grouped();
-    original.battle.durationFrames = 60;
-    const pendingTail = new Map([...frames, ['cast:2', 100], ['cast:3', 200]]);
-    const moved = moveSkillCast(original, 0, 'cast:1', 20, pendingTail);
-    expect(moved.tracks[0]!.skillCasts[0]!.placement).toEqual({ startFrame: 20 });
-    expect(moved.tracks[0]!.skillCasts[2]).toBe(original.tracks[0]!.skillCasts[2]);
-    expect(moveSkillCast(original, 0, 'cast:1', 10, pendingTail)).toBe(original);
-  });
-
   it('显式拆组保存当时显示位置，选中一项即解散整组且不影响独立项', () => {
     const original = grouped();
     const actual = new Map([...frames, ['cast:2', 27], ['cast:3', 51]]);
@@ -378,14 +326,14 @@ describe('手动技能组命令', () => {
 
   it('删中间项重连，删组首交出原锚点，只移除指向被删技能块的连线', () => {
     const original = grouped();
-    const middle = removeSkillCast(original, 0, 'cast:2');
+    const middle = removeSkillCasts(original, new Set(['cast:2']));
     expect(middle.tracks[0]!.skillCasts.map(cast => cast.placement)).toEqual([
       { startFrame: 10 },
       { afterCastId: 'cast:1' },
       { startFrame: 50 },
     ]);
     expect(middle.connections).toEqual(original.connections);
-    const head = removeSkillCast(original, 0, 'cast:1');
+    const head = removeSkillCasts(original, new Set(['cast:1']));
     expect(head.tracks[0]!.skillCasts.map(cast => cast.placement)).toEqual([
       { startFrame: 10 },
       { afterCastId: 'cast:2' },
@@ -412,7 +360,7 @@ describe('手动技能组命令', () => {
   });
 });
 
-describe('moveSkillCast', () => {
+describe('skill document editing', () => {
   it('clears stale casts, connections and track equipment when changing operator', () => {
     const original = scenario();
     original.tracks[0] = {
@@ -540,16 +488,6 @@ describe('moveSkillCast', () => {
     ).toThrow('track 0 is empty');
   });
 
-  it('does not move a locked cast', () => {
-    const original = scenario(true);
-    expect(moveSkillCast(original, 0, 'cast:1', 75)).toBe(original);
-  });
-
-  it('rejects invalid frames and missing cast identities', () => {
-    expect(() => moveSkillCast(scenario(), 0, 'cast:1', 1.5)).toThrow('visible timeline');
-    expect(() => moveSkillCast(scenario(), 0, 'missing', 30)).toThrow("no skill cast 'missing'");
-  });
-
   it('stores forced critical hits by stable step key and removes empty simulation inputs', () => {
     const original = scenario();
     const forced = setSkillCastForcedCritical(original, 0, 'cast:1', 'damage:1', true);
@@ -580,7 +518,7 @@ describe('moveSkillCast', () => {
       },
     ];
 
-    const removed = removeSkillCast(original, 0, 'cast:1');
+    const removed = removeSkillCasts(original, new Set(['cast:1']));
     expect(removed.tracks[0]!.skillCasts).toEqual([]);
     expect(removed.connections.map(connection => connection.id)).toEqual(['connection:2']);
     expect(original.tracks[0]!.skillCasts).toHaveLength(1);
@@ -594,10 +532,10 @@ describe('moveSkillCast', () => {
     }));
     original.tracks[0]!.skillCasts = grouped;
 
-    const twoMembers = removeSkillCast(original, 0, 'cast:2');
+    const twoMembers = removeSkillCasts(original, new Set(['cast:2']));
     expect(twoMembers.tracks[0]!.skillCasts.map(value => value.id)).toEqual(['cast:1', 'cast:3']);
 
-    const oneMember = removeSkillCast(twoMembers, 0, 'cast:1');
+    const oneMember = removeSkillCasts(twoMembers, new Set(['cast:1']));
     expect(oneMember.tracks[0]!.skillCasts.map(value => value.id)).toEqual(['cast:3']);
   });
 
@@ -636,65 +574,6 @@ describe('moveSkillCast', () => {
   });
 });
 
-describe('moveSkillCasts', () => {
-  function multiTrackScenario() {
-    const value = scenario();
-    value.tracks[0]!.skillCasts.push({
-      ...cast(),
-      id: 'cast:2',
-      placement: { startFrame: 60 },
-    });
-    value.tracks[1] = {
-      id: 'track:1',
-      operator: null,
-      weapon: null,
-      gears: { armor: null, gloves: null, accessory1: null, accessory2: null },
-      initialState: { ultimateEnergy: 0 },
-      skillCasts: [{ ...cast(), id: 'cast:3', placement: { startFrame: 90 } }],
-    };
-    value.battle.durationFrames = 120;
-    return value;
-  }
-
-  it('moves selected casts across tracks while preserving their relative positions', () => {
-    const original = multiTrackScenario();
-    const moved = moveSkillCasts(original, new Set(['cast:1', 'cast:3']), 0, 'cast:1', 45);
-
-    expect(moved.tracks[0]!.skillCasts.map(value => value.placement.startFrame)).toEqual([45, 60]);
-    expect(moved.tracks[1]!.skillCasts[0]!.placement.startFrame).toBe(105);
-    expect(original.tracks[0]!.skillCasts[0]!.placement.startFrame).toBe(30);
-  });
-
-  it('clamps the shared delta at both timeline boundaries', () => {
-    const original = multiTrackScenario();
-    const selection = new Set(['cast:1', 'cast:3']);
-    const movedLeft = moveSkillCasts(original, selection, 0, 'cast:1', 0);
-    const movedRight = moveSkillCasts(original, selection, 0, 'cast:1', 100);
-
-    expect(movedLeft.tracks[0]!.skillCasts[0]!.placement.startFrame).toBe(0);
-    expect(movedLeft.tracks[1]!.skillCasts[0]!.placement.startFrame).toBe(60);
-    expect(movedRight.tracks[0]!.skillCasts[0]!.placement.startFrame).toBe(60);
-    expect(movedRight.tracks[1]!.skillCasts[0]!.placement.startFrame).toBe(120);
-  });
-
-  it('keeps the whole selection unchanged when any selected cast is locked', () => {
-    const original = multiTrackScenario();
-    original.tracks[1]!.skillCasts[0]!.presentation = { locked: true };
-
-    expect(moveSkillCasts(original, new Set(['cast:1', 'cast:3']), 0, 'cast:1', 45)).toBe(original);
-  });
-
-  it('rejects stale selections and anchors outside the selection', () => {
-    const original = multiTrackScenario();
-    expect(() => moveSkillCasts(original, new Set(['cast:1', 'missing']), 0, 'cast:1', 45)).toThrow(
-      'missing or duplicate',
-    );
-    expect(() => moveSkillCasts(original, new Set(['cast:3']), 0, 'cast:1', 45)).toThrow(
-      'does not contain anchor',
-    );
-  });
-});
-
 describe('timeline marker commands', () => {
   it('sets, clamps and clears the optional simulation range immutably', () => {
     const original = scenario();
@@ -714,7 +593,6 @@ describe('timeline marker commands', () => {
   it('adds track-bound control switches only to occupied tracks', () => {
     const original = scenario();
     const added = addControlSwitch(original, 'switch:1', 30, 0);
-    expect(moveControlSwitch(added, 'switch:1', 75).battle.controlSwitches[0]?.frame).toBe(75);
     const occupiedSecondTrack = {
       ...added,
       tracks: [added.tracks[0], { ...added.tracks[0]!, id: 'track:2' }, null, null],
@@ -725,22 +603,17 @@ describe('timeline marker commands', () => {
     ).toBe(1);
     expect(setControlSwitchTrack(added, 'missing', 0)).toBe(added);
     expect(() => setControlSwitchTrack(added, 'switch:1', 1)).toThrow('track 1 is empty');
-    expect(removeControlSwitch(added, 'switch:1').battle.controlSwitches).toEqual([]);
     expect(() => addControlSwitch(original, 'switch:2', 30, 1)).toThrow('track 1 is empty');
   });
 
-  it('places and moves control switches throughout the preparation range', () => {
+  it('places control switches throughout the preparation range', () => {
     const original = scenario();
     original.battle.prepFrames = 150;
     const added = addControlSwitch(original, 'switch:prep', -120, 0);
     expect(added.battle.controlSwitches[0]?.frame).toBe(-120);
-    expect(moveControlSwitch(added, 'switch:prep', -150).battle.controlSwitches[0]?.frame).toBe(
-      -150,
-    );
-    expect(() => moveControlSwitch(added, 'switch:prep', -151)).toThrow('editable timeline');
   });
 
-  it('adds, configures, moves and removes dodge markers on occupied tracks', () => {
+  it('adds and configures dodge markers on occupied tracks', () => {
     const original = scenario();
     original.battle.prepFrames = 30;
     const added = addDodgeMarker(original, {
@@ -754,7 +627,6 @@ describe('timeline marker commands', () => {
       direction: 'backward',
       mode: { kind: 'perfectDodge', successDelayFrames: 5 },
     });
-    const moved = moveDodgeMarker(configured, 'dodge:1', 20);
 
     expect(configured.battle.dodgeMarkers?.[0]).toEqual({
       id: 'dodge:1',
@@ -763,8 +635,6 @@ describe('timeline marker commands', () => {
       direction: 'backward',
       mode: { kind: 'perfectDodge', successDelayFrames: 5 },
     });
-    expect(moved.battle.dodgeMarkers?.[0]?.frame).toBe(20);
-    expect(removeDodgeMarker(moved, 'dodge:1').battle.dodgeMarkers).toEqual([]);
     expect(() =>
       addDodgeMarker(original, {
         id: 'empty',

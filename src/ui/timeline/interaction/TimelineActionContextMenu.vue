@@ -18,6 +18,8 @@ const props = defineProps<{
   locked: boolean;
   disabled: boolean;
   inputReadOnly?: boolean;
+  deleteDisabled?: boolean;
+  skillOptions?: boolean;
   color: string | null;
   compactVisible?: boolean;
   compactDisabledReason?: string;
@@ -124,7 +126,7 @@ onBeforeUnmount(() => {
         type="button"
         role="menuitem"
         @click="$emit('delete')"
-        :disabled="inputReadOnly"
+        :disabled="deleteDisabled || inputReadOnly"
       >
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <polyline points="3 6 5 6 21 6"></polyline>
@@ -135,107 +137,109 @@ onBeforeUnmount(() => {
         <span>{{ t('common.delete') }}</span>
         <kbd>Delete</kbd>
       </EaButton>
-      <div class="divider"></div>
-      <EaButton
-        v-if="createGroupVisible"
-        class="menu-item"
-        variant="ghost"
-        size="sm"
-        type="button"
-        role="menuitem"
-        :disabled="inputReadOnly || Boolean(createGroupDisabledReason)"
-        :title="createGroupDisabledReason"
-        @click="$emit('createGroup')"
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-2 2M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l2-2"
-          ></path>
-        </svg>
-        <span>{{ t('timeline.continuousGroup.create') }}</span>
-      </EaButton>
-      <EaButton
-        v-if="dissolveGroupVisible"
-        class="menu-item"
-        variant="ghost"
-        size="sm"
-        type="button"
-        role="menuitem"
-        @click="$emit('dissolveGroup')"
-        :disabled="inputReadOnly"
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="m3 3 18 18M9 14l-1 1M15 9l1-1M7 8l-3 3a5 5 0 0 0 7 7l1-1M12 7l1-1a5 5 0 0 1 7 7l-3 3"
-          ></path>
-        </svg>
-        <span>{{ t('timeline.continuousGroup.dissolve') }}</span>
-      </EaButton>
-      <EaButton
-        variant="ghost"
-        size="sm"
-        v-if="compactVisible"
-        class="menu-item"
-        type="button"
-        role="menuitem"
-        :disabled="inputReadOnly || Boolean(compactDisabledReason)"
-        :title="compactDisabledReason"
-        @click="$emit('compact')"
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M3 4v16M7 7h5v10H7zM15 7h6v10h-6z"></path>
-        </svg>
-        <span>{{ t('timeline.compactSelection.label') }}</span>
-      </EaButton>
-      <EaButton
-        class="menu-item"
-        variant="ghost"
-        size="sm"
-        type="button"
-        role="menuitem"
-        @click="$emit('toggleLock')"
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-          <path v-if="locked" d="M7 11V7a5 5 0 0 1 9.9-1"></path>
-          <path v-else d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-        </svg>
-        <span>{{ t(locked ? 'contextMenu.unlockPosition' : 'contextMenu.lockPosition') }}</span>
-      </EaButton>
-      <EaButton
-        class="menu-item"
-        variant="ghost"
-        size="sm"
-        type="button"
-        role="menuitem"
-        @click="$emit('toggleDisabled')"
-        :disabled="inputReadOnly"
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="12" cy="12" r="10"></circle>
-          <path v-if="disabled" d="M9 12l2 2 4-4"></path>
-          <line v-else x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
-        </svg>
-        <span>{{ t(disabled ? 'contextMenu.enableCalc' : 'contextMenu.disableCalc') }}</span>
-      </EaButton>
-      <div class="divider"></div>
-      <div class="menu-label">{{ t('contextMenu.color') }}</div>
-      <div class="color-grid">
+      <template v-if="skillOptions !== false">
+        <div class="divider"></div>
+        <EaButton
+          v-if="createGroupVisible"
+          class="menu-item"
+          variant="ghost"
+          size="sm"
+          type="button"
+          role="menuitem"
+          :disabled="inputReadOnly || Boolean(createGroupDisabledReason)"
+          :title="createGroupDisabledReason"
+          @click="$emit('createGroup')"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-2 2M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l2-2"
+            ></path>
+          </svg>
+          <span>{{ t('timeline.continuousGroup.create') }}</span>
+        </EaButton>
+        <EaButton
+          v-if="dissolveGroupVisible"
+          class="menu-item"
+          variant="ghost"
+          size="sm"
+          type="button"
+          role="menuitem"
+          @click="$emit('dissolveGroup')"
+          :disabled="inputReadOnly"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="m3 3 18 18M9 14l-1 1M15 9l1-1M7 8l-3 3a5 5 0 0 0 7 7l1-1M12 7l1-1a5 5 0 0 1 7 7l-3 3"
+            ></path>
+          </svg>
+          <span>{{ t('timeline.continuousGroup.dissolve') }}</span>
+        </EaButton>
         <EaButton
           variant="ghost"
           size="sm"
-          icon-only
-          v-for="option in colors"
-          :key="option.value ?? 'default'"
+          v-if="compactVisible"
+          class="menu-item"
           type="button"
-          class="color-dot"
-          :style="{ background: option.swatch }"
-          :title="t(option.labelKey)"
-          :aria-label="t(option.labelKey)"
-          @click="$emit('setColor', option.value)"
-          :pressed="color === option.value"
-        ></EaButton>
-      </div>
+          role="menuitem"
+          :disabled="inputReadOnly || Boolean(compactDisabledReason)"
+          :title="compactDisabledReason"
+          @click="$emit('compact')"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 4v16M7 7h5v10H7zM15 7h6v10h-6z"></path>
+          </svg>
+          <span>{{ t('timeline.compactSelection.label') }}</span>
+        </EaButton>
+        <EaButton
+          class="menu-item"
+          variant="ghost"
+          size="sm"
+          type="button"
+          role="menuitem"
+          @click="$emit('toggleLock')"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path v-if="locked" d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+            <path v-else d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span>{{ t(locked ? 'contextMenu.unlockPosition' : 'contextMenu.lockPosition') }}</span>
+        </EaButton>
+        <EaButton
+          class="menu-item"
+          variant="ghost"
+          size="sm"
+          type="button"
+          role="menuitem"
+          @click="$emit('toggleDisabled')"
+          :disabled="inputReadOnly"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path v-if="disabled" d="M9 12l2 2 4-4"></path>
+            <line v-else x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+          </svg>
+          <span>{{ t(disabled ? 'contextMenu.enableCalc' : 'contextMenu.disableCalc') }}</span>
+        </EaButton>
+        <div class="divider"></div>
+        <div class="menu-label">{{ t('contextMenu.color') }}</div>
+        <div class="color-grid">
+          <EaButton
+            variant="ghost"
+            size="sm"
+            icon-only
+            v-for="option in colors"
+            :key="option.value ?? 'default'"
+            type="button"
+            class="color-dot"
+            :style="{ background: option.swatch }"
+            :title="t(option.labelKey)"
+            :aria-label="t(option.labelKey)"
+            @click="$emit('setColor', option.value)"
+            :pressed="color === option.value"
+          ></EaButton>
+        </div>
+      </template>
     </div>
   </Teleport>
 </template>

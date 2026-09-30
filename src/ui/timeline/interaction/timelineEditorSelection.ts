@@ -1,92 +1,114 @@
 import type { TrackIndex } from '../../../core/project/schema';
 import {
   createEmptyTimelineActionSelection,
+  selectTimelineAction,
   type TimelineActionSelection,
 } from './timelineActionSelection';
+import { timelineItemKey, type TimelineItem, type TimelineMarkerKind } from './timelineItems';
+export type { TimelineMarkerKind } from './timelineItems';
 
-export type TimelineMarkerKind =
-  | 'cycleBoundary'
-  | 'controlSwitch'
-  | 'externalEvent'
-  | 'dodge'
-  | 'simulationStart'
-  | 'simulationEnd';
-
-export type TimelinePrimarySelection =
-  | { readonly kind: 'none' }
-  | { readonly kind: 'track'; readonly trackIndex: TrackIndex }
-  | { readonly kind: 'actions' }
-  | {
-      readonly kind: 'marker';
-      readonly markerKind: TimelineMarkerKind;
-      readonly id: string;
-    };
-
-/**
- * 时间轴唯一的选择状态。
- *
- * `activeTrackIndex` 是技能库和放置上下文，即使点击空白清除 Inspector 选区也不会丢失；
- * `primary` 则是互斥的可视选择身份。动作保留自己的多选集合，但只在 primary=actions 时生效。
- * 清空临时选区只清除可视选择，技能库仍保留最后使用的放置轨道。
- */
+/** 只有一个编辑选区。轨道是放置上下文，主选对象只决定检查器内容。 */
 export interface TimelineEditorSelection {
   readonly activeTrackIndex: TrackIndex;
-  readonly actions: TimelineActionSelection;
-  readonly primary: TimelinePrimarySelection;
+  readonly items: TimelineActionSelection;
+  readonly trackSelected: boolean;
 }
-
 export function createTimelineEditorSelection(
   activeTrackIndex: TrackIndex,
-  actions: TimelineActionSelection = createEmptyTimelineActionSelection(),
+  skills: TimelineActionSelection = createEmptyTimelineActionSelection(),
 ): TimelineEditorSelection {
-  return {
-    activeTrackIndex,
-    actions,
-    primary: actions.selectedIds.size > 0 ? { kind: 'actions' } : { kind: 'none' },
-  };
+  return selectTimelineActionsIdentity(
+    { activeTrackIndex, items: createEmptyTimelineActionSelection(), trackSelected: false },
+    skills,
+  );
 }
-
 export function selectTimelineTrackIdentity(
-  _selection: TimelineEditorSelection,
+  selection: TimelineEditorSelection,
   trackIndex: TrackIndex,
 ): TimelineEditorSelection {
   return {
+    ...clearTimelineEditorSelection(selection),
     activeTrackIndex: trackIndex,
-    actions: createEmptyTimelineActionSelection(),
-    primary: { kind: 'track', trackIndex },
+    trackSelected: true,
   };
 }
-
 export function selectTimelineActionsIdentity(
   selection: TimelineEditorSelection,
-  actions: TimelineActionSelection,
-  activeTrackIndex: TrackIndex = selection.activeTrackIndex,
+  skills: TimelineActionSelection,
+  activeTrackIndex = selection.activeTrackIndex,
 ): TimelineEditorSelection {
   return {
     activeTrackIndex,
-    actions,
-    primary: actions.selectedIds.size > 0 ? { kind: 'actions' } : { kind: 'none' },
+    trackSelected: false,
+    items: {
+      selectedIds: new Set(
+        [...skills.selectedIds].map(id => timelineItemKey({ kind: 'skill', id })),
+      ),
+      primaryId:
+        skills.primaryId === null ? null : timelineItemKey({ kind: 'skill', id: skills.primaryId }),
+    },
   };
 }
-
 export function selectTimelineMarkerIdentity(
   selection: TimelineEditorSelection,
-  markerKind: TimelineMarkerKind,
+  kind: TimelineMarkerKind,
   id: string,
 ): TimelineEditorSelection {
   return {
-    activeTrackIndex: selection.activeTrackIndex,
-    actions: createEmptyTimelineActionSelection(),
-    primary: { kind: 'marker', markerKind, id },
+    ...selection,
+    trackSelected: false,
+    items: selectTimelineAction(selection.items, timelineItemKey({ kind, id }), false),
   };
 }
-
 export function clearTimelineEditorSelection(
   selection: TimelineEditorSelection,
 ): TimelineEditorSelection {
+  return { ...selection, items: createEmptyTimelineActionSelection(), trackSelected: false };
+}
+export function selectTimelineItem(
+  selection: TimelineEditorSelection,
+  item: TimelineItem,
+  additive = false,
+  preserve = false,
+): TimelineEditorSelection {
+  const items =
+    preserve && selection.items.selectedIds.has(item.key)
+      ? { ...selection.items, primaryId: item.key }
+      : selectTimelineAction(selection.items, item.key, additive && item.multiple);
   return {
-    activeTrackIndex: selection.activeTrackIndex,
-    actions: createEmptyTimelineActionSelection(),
-    primary: { kind: 'none' },
+    activeTrackIndex: item.trackIndex ?? selection.activeTrackIndex,
+    trackSelected: false,
+    items,
+  };
+}
+export function selectedTimelineSkills(
+  selection: TimelineActionSelection,
+  items: ReadonlyMap<string, TimelineItem>,
+): TimelineActionSelection {
+  const skills = [...selection.selectedIds].flatMap(key => {
+    const item = items.get(key);
+    return item?.ref.kind === 'skill' ? [item.ref.id] : [];
+  });
+  const primary = selection.primaryId === null ? undefined : items.get(selection.primaryId);
+  return {
+    selectedIds: new Set(skills),
+    primaryId: primary?.ref.kind === 'skill' ? primary.ref.id : null,
+  };
+}
+export function reconcileTimelineItems(
+  selection: TimelineEditorSelection,
+  items: ReadonlyMap<string, TimelineItem>,
+): TimelineEditorSelection {
+  const selectedIds = new Set([...selection.items.selectedIds].filter(key => items.has(key)));
+  if (selectedIds.size === selection.items.selectedIds.size) return selection;
+  return {
+    ...selection,
+    items: {
+      selectedIds,
+      primaryId:
+        selection.items.primaryId !== null && selectedIds.has(selection.items.primaryId)
+          ? selection.items.primaryId
+          : (selectedIds.values().next().value ?? null),
+    },
   };
 }

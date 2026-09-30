@@ -8,6 +8,7 @@ const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
   readOnly?: boolean;
+  canCopy?: boolean;
   inheritanceBoundary?: boolean;
   cycleBoundary?: boolean;
   sourceAvailable?: boolean;
@@ -119,19 +120,19 @@ onBeforeUnmount(() => {
         <span>{{ t('inheritance.createHere') }}</span>
       </EaButton>
       <div v-if="cycleBoundary && !inheritanceBoundary" class="divider"></div>
+      <EaButton
+        v-if="existingLabel && canCopy && !inheritanceBoundary"
+        type="button"
+        role="menuitem"
+        class="menu-item"
+        @click="$emit('copyMarker')"
+      >
+        <span class="menu-icon" aria-hidden="true">⧉</span>
+        <span>{{ labels.copyMarker }}</span>
+        <kbd>Ctrl+C</kbd>
+      </EaButton>
       <fieldset v-if="!inheritanceBoundary" :disabled="readOnly" class="menu-actions">
         <template v-if="existingLabel">
-          <EaButton
-            v-if="existingDodgeMode"
-            type="button"
-            role="menuitem"
-            class="menu-item"
-            @click="$emit('copyMarker')"
-          >
-            <span class="menu-icon" aria-hidden="true">⧉</span>
-            <span>{{ labels.copyMarker }}</span>
-            <kbd>Ctrl+C</kbd>
-          </EaButton>
           <EaButton
             v-if="existingDodgeMode"
             type="button"

@@ -17,9 +17,12 @@ html,
   box-sizing: border-box;
 }
 
-* {
-  scrollbar-color: var(--ea-scrollbar-thumb, #9a9a9a) transparent;
-  scrollbar-width: thin;
+/* 两套滚动条样式互斥：标准属性会覆盖伪元素样式，WebKit 的 thin 还可能没有可拖动滑块。 */
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-color: var(--ea-scrollbar-thumb, #9a9a9a) transparent;
+    scrollbar-width: thin;
+  }
 }
 
 ::-webkit-scrollbar {

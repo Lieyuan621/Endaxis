@@ -1,5 +1,73 @@
 import { test, expect, box, openPerlica, startPlacement, placeBasicGroup } from './helpers';
 
+test('技能、闪避和切人共用选区，整体移动、右键删除和撤销', async ({ page }) => {
+  await openPerlica(page);
+  await placeBasicGroup(page);
+  const lane = await box(page.locator('.track-lane').first());
+  await page.mouse.click(lane.x + 430, lane.y + lane.height - 8, { button: 'right' });
+  await page.getByRole('menuitem', { name: '在此处闪避', exact: true }).click();
+  await page.mouse.click(lane.x + 510, lane.y + lane.height - 8, { button: 'right' });
+  await page.getByRole('menuitem', { name: '在此处切入' }).hover();
+  await page.locator('.submenu-list').getByRole('menuitem', { name: '佩丽卡' }).click();
+
+  const skill = page.locator('.timeline-action-block').first();
+  const dodge = page.locator('.dodge-marker').first();
+  const control = page.locator('.track-switch-marker:not(.track-switch-marker--automatic)').first();
+  await skill.click();
+  await dodge.click({ modifiers: ['ControlOrMeta'] });
+  await control.click({ modifiers: ['ControlOrMeta'] });
+  await expect(skill).toHaveAttribute('data-selected', 'true');
+  await expect(dodge).toHaveClass(/selected/);
+  await expect(control).toHaveClass(/selected/);
+  const before = await Promise.all([box(skill), box(dodge), box(control)]);
+  await page.mouse.move(before[1]!.x + before[1]!.width / 2, before[1]!.y + 10);
+  await page.mouse.down();
+  await page.mouse.move(before[1]!.x + before[1]!.width / 2 + 60, before[1]!.y + 10, { steps: 12 });
+  await page.mouse.up();
+  await expect(page.locator('.timeline-action-block.is-moving')).toHaveCount(0);
+  for (const [i, locator] of [skill, dodge, control].entries()) {
+    await expect.poll(async () => (await box(locator)).x - before[i]!.x).toBeCloseTo(60, 0);
+  }
+  await dodge.click({ button: 'right' });
+  await expect(skill).toHaveAttribute('data-selected', 'true');
+  await expect(page.getByRole('menuitem', { name: /复制/ })).toBeEnabled();
+  await page.getByRole('menuitem', { name: /复制/ }).click();
+  await page.mouse.move(lane.x + 680, lane.y + lane.height - 8);
+  await page.keyboard.press('ControlOrMeta+v');
+  await expect(page.locator('.timeline-action-block')).toHaveCount(5);
+  await expect(page.locator('.dodge-marker')).toHaveCount(2);
+  await expect(
+    page.locator('.track-switch-marker:not(.track-switch-marker--automatic)'),
+  ).toHaveCount(2);
+  await page.keyboard.press('ControlOrMeta+z');
+  await expect(page.locator('.timeline-action-block')).toHaveCount(4);
+  await skill.click();
+  await dodge.click({ modifiers: ['ControlOrMeta'] });
+  await control.click({ modifiers: ['ControlOrMeta'] });
+  await dodge.click({ button: 'right' });
+  await page.getByRole('menuitem', { name: /删除/ }).click();
+  await expect(dodge).toHaveCount(0);
+  await expect(control).toHaveCount(0);
+  await expect(page.locator('.timeline-action-block')).toHaveCount(3);
+  await page.keyboard.press('ControlOrMeta+z');
+  await expect(dodge).toHaveCount(1);
+  await expect(control).toHaveCount(1);
+  await expect(page.locator('.timeline-action-block')).toHaveCount(4);
+  // 框选也必须收集标记；模拟产生的自动主控投影不能混进编辑集合。
+  await page.keyboard.down('ControlOrMeta');
+  await page.mouse.move(lane.x + 200, lane.y + 3);
+  await page.mouse.down();
+  await page.mouse.move(lane.x + 620, lane.y + lane.height - 4, { steps: 10 });
+  await page.mouse.up();
+  await page.keyboard.up('ControlOrMeta');
+  await expect(skill).toHaveAttribute('data-selected', 'true');
+  await expect(dodge).toHaveClass(/selected/);
+  await expect(control).toHaveClass(/selected/);
+  await expect(page.locator('.track-switch-marker--automatic[data-timeline-item-key]')).toHaveCount(
+    0,
+  );
+});
+
 test('拖入连续组后确认插入，并能撤销加入操作', async ({ page }) => {
   await openPerlica(page);
   await placeBasicGroup(page);

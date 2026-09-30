@@ -132,8 +132,6 @@ import { useScenarioSimulation } from './useScenarioSimulation';
 import { formatSkillBlockWarnings } from './skillBlockWarnings';
 import { projectCombatHudSnapshot } from '../../core/projection/combatHudSnapshot';
 import { projectActiveGearSetLabels } from './library/activeGearSetHint';
-import { passedTimelineDragThreshold } from './interaction/timelineDragThreshold';
-import { projectTimelineEdgeAutoScrollDelta } from './interaction/timelineEdgeAutoScroll';
 import { resolveTimelineMarkerPointerFrame } from './interaction/timelineMarkerMoveGeometry';
 import { resolveOperatorPanelContributionSourceLabel } from './library/operatorPanelContributionPresentation';
 import type { OperatorPanelContributionReceipt } from '../../core/compiler/resolveOperatorPanel';
@@ -229,6 +227,7 @@ import {
   frameToTimelinePx,
   resolveTimelineCursorGuidePosition,
   timelinePxToFrame,
+  timelinePxToExactFrame,
   timelineTotalWidth,
 } from './timelineGeometry';
 import {
@@ -246,8 +245,8 @@ import { useTimelineLoadoutEditor } from './library/useTimelineLoadoutEditor';
 import { timelineVisibleSkillEnds } from './timelineVisibleSkillEnds';
 import {
   matchingPublishedSkillCastIds,
-  projectCompatibleHitFrames,
   projectMovingSkillCastStartFrames,
+  projectCompatibleHitFrames,
   projectSkillCastInputFacts,
   resolveSkillCastGroupSelection,
   findSkillCastGroupInsertion,
@@ -255,12 +254,21 @@ import {
 import { useTimelineEnemyEditor } from './useTimelineEnemyEditor';
 import {
   createEmptyTimelineActionSelection,
-  deleteSelectedTimelineActions,
-  reconcileTimelineActionSelection,
   selectTimelineAction,
   type TimelineActionSelection,
 } from './interaction/timelineActionSelection';
 import {
+  collectTimelineItems,
+  timelineItemKey,
+  planTimelineItemMove,
+  moveTimelineItems,
+  removeTimelineItems,
+  type TimelineItemKind,
+} from './interaction/timelineItems';
+import {
+  selectedTimelineSkills,
+  selectTimelineItem,
+  reconcileTimelineItems,
   clearTimelineEditorSelection,
   createTimelineEditorSelection,
   selectTimelineActionsIdentity,
@@ -269,8 +277,7 @@ import {
   type TimelineMarkerKind,
 } from './interaction/timelineEditorSelection';
 import {
-  copyTimelineActions,
-  copyTimelineDodgeMarker,
+  copyTimelineItems,
   pasteTimelineActions,
   type TimelineActionClipboard,
 } from './interaction/timelineClipboard';
@@ -278,8 +285,6 @@ import {
   createSkillCastGroup,
   insertSkillCastIntoGroup,
   dissolveSkillCastGroups,
-  moveSkillCasts,
-  moveSkillCast,
   swapTimelineTracks,
   setSkillCastLocked,
   setSkillCastDisabled,
@@ -300,19 +305,11 @@ import {
   setUnifiedInitialUltimateEnergy,
   type TrackGearSlot,
   addCycleBoundary,
-  moveCycleBoundary,
-  removeCycleBoundary,
   addControlSwitch,
-  moveControlSwitch,
   setControlSwitchTrack,
-  removeControlSwitch,
   addDodgeMarker,
-  moveDodgeMarker,
-  removeDodgeMarker,
   updateDodgeMarker,
   addExternalEventMarker,
-  moveExternalEventMarker,
-  removeExternalEventMarker,
   setSimulationRangeBoundary,
   clearSimulationRangeBoundary,
 } from './interaction/timelineDocumentCommands';
@@ -349,7 +346,7 @@ import {
   snapTimelineFrame,
 } from './interaction/timelineSnap';
 import { findAdjacentOccupiedTrack } from './interaction/timelineTrackSelection';
-import { useTimelineCastMove } from './interaction/useTimelineCastMove';
+import { useTimelineItemMove } from './interaction/useTimelineItemMove';
 import { resolveTimelineLibraryDropFrame } from './interaction/timelineLibraryDropGeometry';
 import {
   resolveTimelineCastAlignmentFrame,
@@ -648,7 +645,26 @@ const selectedTrack = computed<TrackIndex>({
     timelineSelection.value = selectTimelineTrackIdentity(timelineSelection.value, trackIndex);
   },
 });
-const actionSelection = computed(() => timelineSelection.value.actions);
+const timelineItems = computed(() => collectTimelineItems(scenario.value));
+const itemSelection = computed(() => timelineSelection.value.items);
+const primaryItem = computed(() =>
+  itemSelection.value.primaryId === null
+    ? null
+    : (timelineItems.value.get(itemSelection.value.primaryId) ?? null),
+);
+const actionSelection = computed(() =>
+  selectedTimelineSkills(itemSelection.value, timelineItems.value),
+);
+const selectedItems = computed(() =>
+  [...itemSelection.value.selectedIds].flatMap(key => {
+    const item = timelineItems.value.get(key);
+    return item ? [item] : [];
+  }),
+);
+const onlySkillsSelected = computed(
+  () =>
+    selectedItems.value.length > 0 && selectedItems.value.every(item => item.ref.kind === 'skill'),
+);
 const selectedCastId = computed(() => actionSelection.value.primaryId);
 const showDamageAnalysis = ref(false);
 const showExportDialog = ref(false);
@@ -722,18 +738,15 @@ interface TimelineLibraryPlacement {
   readonly skillKey?: string;
 }
 const libraryPlacement = ref<TimelineLibraryPlacement | null>(null);
-const selectedConsumableUseId = ref<string | null>(null);
+const selectedConsumableUseId = computed<string | null>({
+  get: () => (primaryItem.value?.ref.kind === 'consumableUse' ? primaryItem.value.ref.id : null),
+  set: id => {
+    if (id === null) {
+      if (primaryItem.value?.ref.kind === 'consumableUse') clearTimelineSelection();
+    } else selectItem('consumableUse', id);
+  },
+});
 const consumableDialogTarget = ref<{ trackIndex: TrackIndex; frame: number } | null>(null);
-const consumableMoveGesture = shallowRef<{
-  pointerId: number;
-  trackIndex: TrackIndex;
-  useId: string;
-  initialPointerX: number;
-  initialPointerY: number;
-  initialFrame: number;
-  previewFrame: number;
-  dragStarted: boolean;
-} | null>(null);
 const workbenchInputRegion = useKeyboardInputRegion({
   label: 'timeline-workbench',
   parent: null,
@@ -773,8 +786,10 @@ const groupInsertPrompt = ref<{
 } | null>(null);
 const selectedMarker = computed<{ kind: TimelineMarkerKind; id: string } | null>({
   get: () => {
-    const primary = timelineSelection.value.primary;
-    return primary.kind === 'marker' ? { kind: primary.markerKind, id: primary.id } : null;
+    const ref = primaryItem.value?.ref;
+    return ref && ref.kind !== 'skill' && ref.kind !== 'consumableUse'
+      ? { kind: ref.kind, id: ref.id }
+      : null;
   },
   set: marker => {
     timelineSelection.value =
@@ -792,23 +807,6 @@ const markerContextTarget = ref<{
     | { kind: TimelineMarkerKind; id: string; label: string }
     | { kind: 'consumableUse'; id: string; label: string };
 } | null>(null);
-const markerMoveGesture = shallowRef<{
-  pointerId: number;
-  initialPointerX: number;
-  initialPointerY: number;
-  latestPointerX: number;
-  latestPointerY: number;
-  dragStarted: boolean;
-  kind: TimelineMarkerKind;
-  id: string;
-  initialFrame: number;
-  previewFrame: number;
-  /** 闪避拖动期间的原轴；预览可模拟，松手后才提交一次编辑记录。 */
-  baseScenario: ScenarioDocument;
-} | null>(null);
-let stopMarkerMove: (() => void) | null = null;
-let markerMoveAutoScrollFrame: number | null = null;
-
 /** 初始方案只在挂载时读取；编辑会话不回写调用方传入的对象。 */
 const props = defineProps<{
   initialScenario?: ScenarioDocument;
@@ -937,11 +935,10 @@ const unsubscribeScenarioSession = scenarioSession.subscribe(snapshot => {
   scenario.value = snapshot.scenario;
   canUndo.value = scenarioSession.canUndo;
   canRedo.value = scenarioSession.canRedo;
-  if (timelineSelection.value.primary.kind === 'actions') {
-    applyActionSelection(
-      reconcileTimelineActionSelection(actionSelection.value, snapshot.scenario),
-    );
-  }
+  timelineSelection.value = reconcileTimelineItems(
+    timelineSelection.value,
+    collectTimelineItems(snapshot.scenario),
+  );
 });
 const unsubscribeProjectSession = projectSession.subscribe(snapshot => {
   emit('projectChange', snapshot.project);
@@ -957,8 +954,7 @@ onScopeDispose(() => {
   scenarioSession.dispose();
   finishCompactTrackResize();
   cancelConnectionDrag();
-  cancelCastMove();
-  stopMarkerMove?.();
+  cancelItemMove();
 });
 
 function commitScenario(
@@ -2398,49 +2394,62 @@ function resolveDisplayedSkillStarts(document: ScenarioDocument): ReadonlyMap<st
 }
 
 const resolvedSkillCastStartFrames = computed(() => resolveDisplayedSkillStarts(scenario.value));
-const { castMoveGesture, beginCastMove, cancelCastMove, discardCastMove, consumeCastClick } =
-  useTimelineCastMove({
-    prepEndFrame: computed(() => scenario.value.inheritance?.frame ?? 0),
-    isInputReadOnly: isHistoricalSkillInput,
-    minimumInputFrame: minimumEditableInputFrame,
-    scenario,
-    actionSelection,
-    interactionSession,
-    simulationService,
-    resolvedSkillCastStartFrames,
-    timelineScroll,
-    pxPerFrame,
-    snapFrames,
-    cursorFrame,
-    trackHeaderWidth: TIMELINE_TRACK_HEADER_WIDTH,
-    rulerHeight: TIMELINE_RULER_HEIGHT,
-    verticalAutoScrollEnabled: () => buffLayoutMode.value !== 'compact',
-    timelineFramePx,
-    alignSelectedCastToTarget,
-    applyActionSelection,
-    commitScenario,
-    simulateNow,
-    warnLocked: () => ElMessage.warning(t('timelineGrid.action.locked')),
-    onDropped: offerJoinContinuousGroup,
-  });
+const {
+  gesture: itemMoveGesture,
+  begin: beginItemMove,
+  cancel: cancelItemMove,
+  discard: discardItemMove,
+  consumeClick: consumeItemClick,
+} = useTimelineItemMove({
+  scenario,
+  items: timelineItems,
+  selection: itemSelection,
+  applySelection: applyItemSelection,
+  interactionSession,
+  simulationService,
+  viewport: timelineScroll,
+  snapFrames,
+  headerWidth: TIMELINE_TRACK_HEADER_WIDTH,
+  rulerHeight: TIMELINE_RULER_HEIGHT,
+  verticalAutoScroll: () => buffLayoutMode.value !== 'compact',
+  pointerFrame: x => {
+    const left = timelineSurface.value?.getBoundingClientRect().left ?? 0;
+    return timelinePxToExactFrame(
+      x - left - TIMELINE_TRACK_HEADER_WIDTH,
+      scenario.value.battle.prepFrames,
+      pxPerFrame.value,
+      scenario.value.editor.prepExpanded,
+      scenario.value.inheritance?.frame ?? 0,
+    );
+  },
+  commit: commitScenario,
+  simulate: simulateNow,
+  blocked: () => ElMessage.warning(t('timelineGrid.action.locked')),
+  dropped: (event, items) => {
+    if (items.length === 1 && items[0]!.ref.kind === 'skill')
+      offerJoinContinuousGroup(event, items[0]!.trackIndex!, [items[0]!.ref.id]);
+  },
+});
 const displayedSkillCastStartFrames = computed(() => {
-  const gesture = castMoveGesture.value;
-  // 等待新回执时只平移上一版完整结果；新回执发布后，立即使用其中的组内间距。
-  const publishedStarts =
+  const gesture = itemMoveGesture.value;
+  let starts: ReadonlyMap<string, number> =
     gesture === null
       ? resolvedSkillCastStartFrames.value
       : resolveDisplayedSkillStarts(gesture.baseScenario);
-  return projectMovingSkillCastStartFrames(
-    publishedStarts,
-    gesture === null
-      ? null
-      : {
-          anchorId: gesture.skillCastId,
-          castIds: gesture.skillCastIds,
-          baseStartFrames: gesture.baseStartFrames,
-          previewActualFrame: gesture.previewActualFrame,
-        },
-  );
+  if (gesture === null) return starts;
+  // 各连续组使用自己的锚点校正，已发布的新结果不再重复叠加拖动位移。
+  for (const anchor of gesture.plan.anchors) {
+    if (anchor.ref.kind !== 'skill') continue;
+    starts = projectMovingSkillCastStartFrames(starts, {
+      anchorId: anchor.ref.id,
+      castIds: gesture.plan.items
+        .filter(item => item.ref.kind === 'skill' && item.moveAnchor === anchor.key)
+        .map(item => item.ref.id),
+      baseStartFrames: starts,
+      previewActualFrame: anchor.frame! + gesture.delta,
+    });
+  }
+  return starts;
 });
 const skillCastGroupsByTrack = computed(() =>
   scenario.value.tracks.map(track =>
@@ -2498,7 +2507,7 @@ const rulerOperations = computed<TimelineOperationMarkerInput[]>(() => {
       id: `switch:${marker.id}`,
       kind: 'switch',
       trackIndex: marker.trackIndex,
-      frame: displayedMarkerFrame('controlSwitch', marker.id, marker.frame),
+      frame: marker.frame,
     });
   }
   return operations;
@@ -2529,10 +2538,12 @@ const publishedTimeDilationPreviewFacts = computed(() =>
   ),
 );
 const timeDilationBands = computed(() => {
-  const gesture = castMoveGesture.value;
+  const gesture = itemMoveGesture.value;
   const deltas = new Map<string, number>();
   if (gesture !== null) {
-    for (const castId of gesture.skillCastIds) {
+    for (const castId of gesture.plan.items
+      .filter(item => item.ref.kind === 'skill')
+      .map(item => item.ref.id)) {
       const publishedFrame = skillCastActualStartFrames.value.get(castId);
       const displayedFrame = displayedSkillCastStartFrames.value.get(castId);
       if (publishedFrame === undefined || displayedFrame === undefined) continue;
@@ -2763,6 +2774,7 @@ function castAlignmentSpan(castId: string) {
 }
 
 function alignSelectedCastToTarget(event: PointerEvent, targetCastId: string): boolean {
+  if (!onlySkillsSelected.value) return false;
   const sourceCastId = actionSelection.value.primaryId;
   if (!event.altKey || sourceCastId === null || sourceCastId === targetCastId) return false;
   event.preventDefault();
@@ -2783,14 +2795,11 @@ function alignSelectedCastToTarget(event: PointerEvent, targetCastId: string): b
     minimumFrame: minimumEditableInputFrame.value,
     maximumFrame: scenario.value.battle.durationFrames,
   });
-  const changed = commitScenario('alignSkillCast', current =>
-    moveSkillCast(
-      current,
-      source.trackIndex,
-      source.anchorId,
-      frame,
-      displayedSkillCastStartFrames.value,
-    ),
+  const plan = planTimelineItemMove(timelineItems.value, itemSelection.value.selectedIds);
+  if (!plan) return true;
+  const changed = commitScenario(
+    'alignTimelineItems',
+    current => moveTimelineItems(current, plan, frame - source.startFrame).scenario,
   );
   alignmentGuide.value = null;
   if (changed) ElMessage.success(alignmentPresentation(mode).result);
@@ -4071,8 +4080,9 @@ function selectedLibrarySkillDurationFrames(): number {
 }
 
 function isTrackIdentitySelected(trackIndex: TrackIndex): boolean {
-  const primary = timelineSelection.value.primary;
-  return primary.kind === 'track' && primary.trackIndex === trackIndex;
+  return (
+    timelineSelection.value.trackSelected && timelineSelection.value.activeTrackIndex === trackIndex
+  );
 }
 
 function locateBattleLogEntry(frame: number, castId: string | null): void {
@@ -4309,16 +4319,50 @@ function updateSelectedCastConnection(
   );
 }
 
-function handleActionSelection(event: MouseEvent, skillCastId: string): void {
-  if (consumeCastClick(skillCastId)) return;
+function applyItemSelection(selection: TimelineActionSelection): void {
+  const item =
+    selection.primaryId === null ? undefined : timelineItems.value.get(selection.primaryId);
+  timelineSelection.value = {
+    activeTrackIndex: item?.trackIndex ?? selectedTrack.value,
+    items: selection,
+    trackSelected: false,
+  };
+  selectedLibrarySkill.value = null;
   selectedConnectionId.value = null;
   connectionContextTarget.value = null;
-  selectedConsumableUseId.value = null;
-  applyActionSelection(
-    selectTimelineAction(actionSelection.value, skillCastId, event.ctrlKey || event.metaKey),
+}
+function selectItem(kind: TimelineItemKind, id: string, additive = false, preserve = false): void {
+  const item = timelineItems.value.get(timelineItemKey({ kind, id }));
+  if (!item) return;
+  const current =
+    selectedItems.value.some(selected => !selected.multiple) && additive
+      ? clearTimelineEditorSelection(timelineSelection.value)
+      : timelineSelection.value;
+  const next = selectTimelineItem(current, item, additive, preserve);
+  applyItemSelection(next.items);
+}
+function isItemSelected(kind: TimelineItemKind, id: string): boolean {
+  return itemSelection.value.selectedIds.has(timelineItemKey({ kind, id }));
+}
+function itemDragging(kind: TimelineItemKind, id: string): boolean {
+  const gesture = itemMoveGesture.value;
+  return (
+    !!gesture?.dragStarted &&
+    !gesture.committed &&
+    gesture.plan.items.some(item => item.key === timelineItemKey({ kind, id }))
   );
 }
-
+function handleItemSelection(event: MouseEvent, kind: TimelineItemKind, id: string): void {
+  if (consumeItemClick(timelineItemKey({ kind, id }))) return;
+  selectItem(kind, id, event.ctrlKey || event.metaKey);
+}
+function handleActionSelection(event: MouseEvent, id: string): void {
+  handleItemSelection(event, 'skill', id);
+}
+function beginCastMove(event: PointerEvent, _trackIndex: TrackIndex, id: string): void {
+  if (alignSelectedCastToTarget(event, id)) return;
+  beginItemMove(event, timelineItemKey({ kind: 'skill', id }));
+}
 function skillSegments(entry: TimelineSkillLibraryEntryViewModel) {
   return entry.skills.map(skill => ({
     id: skill.skillKey,
@@ -4358,8 +4402,8 @@ const { marqueeStyle, beginMarqueeGesture, consumeLaneClickSuppression } =
   useTimelineMarqueeGesture({
     interactionSession,
     surface: timelineSurface,
-    getSelection: () => actionSelection.value,
-    applySelection: applyActionSelection,
+    getSelection: () => itemSelection.value,
+    applySelection: applyItemSelection,
   });
 const { isPanning, beginViewportPan } = useTimelineViewportPan({
   viewport: timelineScroll,
@@ -4414,7 +4458,6 @@ function addConsumableFromDialog(consumableId: string): void {
   consumableDialogTarget.value = null;
   selectedTrack.value = target.trackIndex;
   selectedConsumableUseId.value = id;
-  clearTimelineSelection();
 }
 
 function updateSelectedConsumableUse(patch: { frame?: number; consumableId?: string }): void {
@@ -4439,115 +4482,37 @@ function setSelectedConsumableId(value: EaSelectValue | EaSelectValue[]): void {
   if (typeof value === 'string') updateSelectedConsumableUse({ consumableId: value });
 }
 
+function setItemFrame(kind: TimelineItemKind, id: string, frame: number): void {
+  if (!Number.isInteger(frame)) return;
+  const key = timelineItemKey({ kind, id });
+  const item = timelineItems.value.get(key);
+  const plan = planTimelineItemMove(timelineItems.value, new Set([key]));
+  if (!item || !plan) {
+    ElMessage.warning(t('timelineGrid.action.locked'));
+    return;
+  }
+  const origin =
+    item.frame ?? (kind === 'skill' ? displayedSkillCastStartFrames.value.get(id) : undefined);
+  if (origin === undefined) return;
+  commitScenario(
+    'moveTimelineItems',
+    current => moveTimelineItems(current, plan, frame - origin).scenario,
+  );
+}
+function removeItem(kind: TimelineItemKind, id: string): boolean {
+  const item = timelineItems.value.get(timelineItemKey({ kind, id }));
+  return (
+    item !== undefined &&
+    commitScenario('removeTimelineItems', current => removeTimelineItems(current, [item]))
+  );
+}
 function setSelectedConsumableFrame(value: number | undefined): void {
-  if (!Number.isInteger(value)) return;
-  updateSelectedConsumableUse({
-    frame: Math.max(
-      minimumEditableInputFrame.value,
-      Math.min(scenario.value.battle.durationFrames, value!),
-    ),
-  });
+  if (value !== undefined && selectedConsumableUseId.value !== null)
+    setItemFrame('consumableUse', selectedConsumableUseId.value, value);
 }
-
 function removeSelectedConsumableUse(): void {
-  const selected = selectedConsumableUse.value;
-  if (selected === null) return;
-  commitScenario('removeConsumableUse', current => ({
-    ...current,
-    tracks: current.tracks.map((track, index) =>
-      index !== selected.trackIndex || track === null
-        ? track
-        : {
-            ...track,
-            consumableUses: (track.consumableUses ?? []).filter(use => use.id !== selected.use.id),
-          },
-    ) as typeof current.tracks,
-  }));
-  selectedConsumableUseId.value = null;
-}
-
-function displayedConsumableUseFrame(useId: string, frame: number): number {
-  const gesture = consumableMoveGesture.value;
-  return gesture?.useId === useId ? gesture.previewFrame : frame;
-}
-
-function beginConsumableUseMove(
-  event: PointerEvent,
-  trackIndex: TrackIndex,
-  useId: string,
-  frame: number,
-): void {
-  if (event.button !== 0 || interactionSession.current !== null) return;
-  const surface = timelineSurface.value;
-  if (surface === null) return;
-  event.preventDefault();
-  event.stopPropagation();
-  selectedTrack.value = trackIndex;
-  clearTimelineSelection();
-  selectedConsumableUseId.value = useId;
-  if (isHistoricalInputFrame(frame)) return;
-  const lease = interactionSession.tryStart('consumable-use-move', () => {
-    consumableMoveGesture.value = null;
-  });
-  if (lease === null) return;
-  const grabOffsetPx =
-    event.clientX -
-    surface.getBoundingClientRect().left -
-    TIMELINE_TRACK_HEADER_WIDTH -
-    timelineFramePx(frame);
-  consumableMoveGesture.value = {
-    pointerId: event.pointerId,
-    trackIndex,
-    useId,
-    initialPointerX: event.clientX,
-    initialPointerY: event.clientY,
-    initialFrame: frame,
-    previewFrame: frame,
-    dragStarted: false,
-  };
-  const move = (moveEvent: PointerEvent) => {
-    const gesture = consumableMoveGesture.value;
-    if (gesture === null || moveEvent.pointerId !== gesture.pointerId) return;
-    const dragStarted =
-      gesture.dragStarted ||
-      passedTimelineDragThreshold(
-        gesture.initialPointerX,
-        gesture.initialPointerY,
-        moveEvent.clientX,
-        moveEvent.clientY,
-      );
-    consumableMoveGesture.value = {
-      ...gesture,
-      dragStarted,
-      previewFrame: dragStarted
-        ? pointerMarkerFrame(moveEvent.clientX, grabOffsetPx, -scenario.value.battle.prepFrames)
-        : gesture.initialFrame,
-    };
-  };
-  const cleanup = () => {
-    lease.release();
-    window.removeEventListener('pointermove', move);
-    window.removeEventListener('pointerup', finish);
-    window.removeEventListener('pointercancel', cancel);
-  };
-  const finish = (finishEvent: PointerEvent) => {
-    move(finishEvent);
-    const gesture = consumableMoveGesture.value;
-    if (gesture === null || finishEvent.pointerId !== gesture.pointerId) return;
-    consumableMoveGesture.value = null;
-    cleanup();
-    if (gesture.dragStarted && gesture.previewFrame !== gesture.initialFrame) {
-      updateSelectedConsumableUse({ frame: gesture.previewFrame });
-    }
-  };
-  const cancel = (cancelEvent: PointerEvent) => {
-    if (cancelEvent.pointerId !== consumableMoveGesture.value?.pointerId) return;
-    consumableMoveGesture.value = null;
-    cleanup();
-  };
-  window.addEventListener('pointermove', move);
-  window.addEventListener('pointerup', finish);
-  window.addEventListener('pointercancel', cancel);
+  if (selectedConsumableUseId.value !== null)
+    removeItem('consumableUse', selectedConsumableUseId.value);
 }
 
 function handleTimelineLaneClick(event: MouseEvent): void {
@@ -4600,9 +4565,7 @@ function openExistingConsumableContextMenu(
 ): void {
   event.preventDefault();
   event.stopPropagation();
-  selectedTrack.value = trackIndex;
-  selectedConsumableUseId.value = useId;
-  clearTimelineSelection();
+  selectItem('consumableUse', useId, false, true);
   markerContextTarget.value = {
     x: event.clientX,
     y: event.clientY,
@@ -4630,6 +4593,8 @@ function openExistingMarkerContextMenu(
 ): void {
   event.preventDefault();
   event.stopPropagation();
+  selectItem(kind, id, false, true);
+  contextMenuTarget.value = null;
   markerContextTarget.value = {
     x: event.clientX,
     y: event.clientY,
@@ -4784,70 +4749,31 @@ function setDodgeMarkerModeFromContext(mode: 'dodge' | 'perfectDodge'): void {
   markerContextTarget.value = null;
 }
 
-function copyDodgeMarkerFromContext(): void {
-  const existing = markerContextTarget.value?.existing;
-  if (existing?.kind !== 'dodge') return;
-  timelineClipboard.value = copyTimelineDodgeMarker(scenario.value, existing.id);
+function copyMarkerFromContext(): void {
+  copySelectedActions();
   markerContextTarget.value = null;
 }
 
 function removeSelectedMarker(kind: TimelineMarkerKind, id: string): boolean {
-  const changed = commitScenario('removeTimelineMarker', current =>
-    kind === 'cycleBoundary'
-      ? removeCycleBoundary(current, id)
-      : kind === 'controlSwitch'
-        ? removeControlSwitch(current, id)
-        : kind === 'externalEvent'
-          ? removeExternalEventMarker(current, id)
-          : kind === 'dodge'
-            ? removeDodgeMarker(current, id)
-            : clearSimulationRangeBoundary(current, kind === 'simulationStart' ? 'start' : 'end'),
-  );
-  if (changed) selectedMarker.value = null;
-  return changed;
+  return removeItem(kind, id);
 }
 
 function removeMarkerFromContext(): void {
-  const existing = markerContextTarget.value?.existing;
-  if (existing === undefined) return;
-  if (existing.kind === 'consumableUse') {
-    selectedConsumableUseId.value = existing.id;
-    removeSelectedConsumableUse();
-  } else {
-    removeSelectedMarker(existing.kind, existing.id);
-  }
+  deleteSelectedActions();
   markerContextTarget.value = null;
 }
 
 function setSelectedExternalEventFrame(frame: number): void {
   const marker = selectedExternalEventMarker.value;
-  if (marker === null) return;
-  commitScenario('moveExternalEventMarker', current =>
-    moveExternalEventMarker(current, marker.id, frame),
-  );
+  if (marker !== null) setItemFrame('externalEvent', marker.id, frame);
 }
-
 function removeSelectedExternalEvent(): void {
   const marker = selectedExternalEventMarker.value;
-  if (marker !== null) removeSelectedMarker('externalEvent', marker.id);
+  if (marker !== null) removeItem('externalEvent', marker.id);
 }
-
 function setSelectedDocumentMarkerFrame(frame: number): void {
   const marker = selectedDocumentMarker.value;
-  if (marker === null) return;
-  commitScenario('moveTimelineMarker', current =>
-    marker.kind === 'cycleBoundary'
-      ? moveCycleBoundary(current, marker.id, frame)
-      : marker.kind === 'controlSwitch'
-        ? moveControlSwitch(current, marker.id, frame)
-        : marker.kind === 'dodge'
-          ? moveDodgeMarker(current, marker.id, frame)
-          : setSimulationRangeBoundary(
-              current,
-              marker.kind === 'simulationStart' ? 'start' : 'end',
-              frame,
-            ),
-  );
+  if (marker !== null) setItemFrame(marker.kind, marker.id, frame);
 }
 
 function setTimelinePrepFrames(frames: number): void {
@@ -4997,11 +4923,6 @@ function removeSelectedDocumentMarker(): void {
   if (marker !== null) removeSelectedMarker(marker.kind, marker.id);
 }
 
-function displayedMarkerFrame(kind: TimelineMarkerKind, id: string, frame: number): number {
-  const gesture = markerMoveGesture.value;
-  return gesture?.kind === kind && gesture.id === id ? gesture.previewFrame : frame;
-}
-
 function isHistoricalInputFrame(frame: number): boolean {
   const boundary = scenario.value.inheritance?.frame;
   return boundary !== undefined && frame < boundary;
@@ -5015,173 +4936,6 @@ function isHistoricalSkillInput(id: string): boolean {
       );
   }
   return false;
-}
-
-function beginMarkerMove(
-  event: PointerEvent,
-  kind: TimelineMarkerKind,
-  id: string,
-  frame: number,
-  trackIndex: TrackIndex = selectedTrack.value,
-): void {
-  if (event.button !== 0) return;
-  if (interactionSession.current !== null) return;
-  event.preventDefault();
-  event.stopPropagation();
-  stopMarkerMove?.();
-  if (trackIndex !== selectedTrack.value) selectedTrack.value = trackIndex;
-  if (
-    (kind === 'simulationStart' && configurationReadOnly.value) ||
-    ((kind === 'controlSwitch' || kind === 'externalEvent' || kind === 'dodge') &&
-      isHistoricalInputFrame(frame))
-  ) {
-    clearTimelineSelection();
-    selectedMarker.value = { kind, id };
-    return;
-  }
-  const surface = timelineSurface.value;
-  if (surface === null) return;
-  const lease = interactionSession.tryStart('marker-move', () => stopMarkerMove?.());
-  if (lease === null) return;
-  const grabOffsetPx =
-    event.clientX -
-    surface.getBoundingClientRect().left -
-    TIMELINE_TRACK_HEADER_WIDTH -
-    timelineFramePx(frame);
-  const wasComboControlSelected =
-    selectedMarker.value?.kind === kind &&
-    selectedMarker.value.id === id &&
-    selectedExternalEventMarker.value?.event.kind === 'comboCooldownControl';
-  clearTimelineSelection();
-  selectedMarker.value = { kind, id };
-  markerMoveGesture.value = {
-    pointerId: event.pointerId,
-    initialPointerX: event.clientX,
-    initialPointerY: event.clientY,
-    latestPointerX: event.clientX,
-    latestPointerY: event.clientY,
-    dragStarted: false,
-    kind,
-    id,
-    initialFrame: frame,
-    previewFrame: frame,
-    baseScenario: scenario.value,
-  };
-  if (kind === 'dodge') simulationService.beginInteractiveSession();
-  const update = (pointerId: number, clientX: number, clientY: number, fromAutoScroll = false) => {
-    let gesture = markerMoveGesture.value;
-    if (gesture === null || gesture.pointerId !== pointerId) return;
-    if (!fromAutoScroll) {
-      gesture = { ...gesture, latestPointerX: clientX, latestPointerY: clientY };
-      markerMoveGesture.value = gesture;
-    }
-    if (
-      !gesture.dragStarted &&
-      !passedTimelineDragThreshold(
-        gesture.initialPointerX,
-        gesture.initialPointerY,
-        clientX,
-        clientY,
-      )
-    ) {
-      return;
-    }
-    if (!fromAutoScroll) scheduleMarkerMoveAutoScroll(update);
-    const previewFrame = pointerMarkerFrame(
-      clientX,
-      grabOffsetPx,
-      kind === 'dodge'
-        ? (scenario.value.inheritance?.frame ?? -scenario.value.battle.prepFrames)
-        : kind === 'controlSwitch'
-          ? -scenario.value.battle.prepFrames
-          : 0,
-    );
-    if (previewFrame === gesture.previewFrame) return;
-    markerMoveGesture.value = {
-      ...gesture,
-      dragStarted: true,
-      previewFrame,
-    };
-    if (kind === 'dodge') {
-      scenario.value = moveDodgeMarker(gesture.baseScenario, id, previewFrame);
-    }
-  };
-  const move = (moveEvent: PointerEvent) =>
-    update(moveEvent.pointerId, moveEvent.clientX, moveEvent.clientY);
-  const cleanup = () => {
-    if (kind === 'dodge') simulationService.endInteractiveSession();
-    lease.release();
-    window.removeEventListener('pointermove', move);
-    window.removeEventListener('pointerup', finish);
-    window.removeEventListener('pointercancel', cancel);
-    if (markerMoveAutoScrollFrame !== null) cancelAnimationFrame(markerMoveAutoScrollFrame);
-    markerMoveAutoScrollFrame = null;
-    stopMarkerMove = null;
-  };
-  const cancel = (cancelEvent?: PointerEvent) => {
-    const gesture = markerMoveGesture.value;
-    if (cancelEvent !== undefined && gesture?.pointerId !== cancelEvent.pointerId) return;
-    if (gesture?.kind === 'dodge') scenario.value = gesture.baseScenario;
-    markerMoveGesture.value = null;
-    cleanup();
-  };
-  const finish = (finishEvent: PointerEvent) => {
-    update(finishEvent.pointerId, finishEvent.clientX, finishEvent.clientY);
-    const gesture = markerMoveGesture.value;
-    if (gesture === null || gesture.pointerId !== finishEvent.pointerId) return;
-    markerMoveGesture.value = null;
-    cleanup();
-    if (!gesture.dragStarted && wasComboControlSelected) clearTimelineSelection();
-    if (gesture.kind === 'dodge') scenario.value = gesture.baseScenario;
-    if (gesture.previewFrame === gesture.initialFrame) return;
-    commitScenario('moveTimelineMarker', current =>
-      gesture.kind === 'cycleBoundary'
-        ? moveCycleBoundary(current, gesture.id, gesture.previewFrame)
-        : gesture.kind === 'controlSwitch'
-          ? moveControlSwitch(current, gesture.id, gesture.previewFrame)
-          : gesture.kind === 'externalEvent'
-            ? moveExternalEventMarker(current, gesture.id, gesture.previewFrame)
-            : gesture.kind === 'dodge'
-              ? moveDodgeMarker(current, gesture.id, gesture.previewFrame)
-              : setSimulationRangeBoundary(
-                  current,
-                  gesture.kind === 'simulationStart' ? 'start' : 'end',
-                  gesture.previewFrame,
-                ),
-    );
-  };
-  stopMarkerMove = cancel;
-  window.addEventListener('pointermove', move);
-  window.addEventListener('pointerup', finish);
-  window.addEventListener('pointercancel', cancel);
-}
-
-function scheduleMarkerMoveAutoScroll(
-  update: (pointerId: number, clientX: number, clientY: number, fromAutoScroll?: boolean) => void,
-): void {
-  if (markerMoveAutoScrollFrame !== null) return;
-  const tick = () => {
-    markerMoveAutoScrollFrame = null;
-    const gesture = markerMoveGesture.value;
-    const viewport = timelineScroll.value;
-    if (gesture === null || viewport === null || !gesture.dragStarted) return;
-    const rect = viewport.getBoundingClientRect();
-    const delta = projectTimelineEdgeAutoScrollDelta({
-      pointerX: gesture.latestPointerX,
-      pointerY: gesture.latestPointerY,
-      left: rect.left + TIMELINE_TRACK_HEADER_WIDTH,
-      right: rect.right,
-      top: rect.top + TIMELINE_RULER_HEIGHT,
-      bottom: rect.bottom,
-    });
-    if (delta.x === 0) return;
-    const previousLeft = viewport.scrollLeft;
-    viewport.scrollLeft += delta.x;
-    if (viewport.scrollLeft === previousLeft) return;
-    update(gesture.pointerId, gesture.latestPointerX, gesture.latestPointerY, true);
-    markerMoveAutoScrollFrame = requestAnimationFrame(tick);
-  };
-  markerMoveAutoScrollFrame = requestAnimationFrame(tick);
 }
 
 function updateCursorGuide(event: MouseEvent): void {
@@ -5523,7 +5277,7 @@ function resetTransientScenarioUi(): void {
   groupInsertPrompt.value = null;
   skillGraphEditorTarget.value = null;
   // 丢弃旧方案的拖动预览，不能让取消回调把旧草稿写回已切换的方案。
-  discardCastMove();
+  discardItemMove();
   interactionSession.cancel();
   selectedTrack.value = 0;
   clearTimelineSelection();
@@ -5657,11 +5411,8 @@ function restoreEditorHistory(direction: 'undo' | 'redo'): boolean {
 }
 
 function openCastContextMenu(event: MouseEvent, trackIndex: TrackIndex, skillCastId: string): void {
-  if (actionSelection.value.selectedIds.has(skillCastId)) {
-    applyActionSelection({ ...actionSelection.value, primaryId: skillCastId });
-  } else {
-    applyActionSelection(selectTimelineAction(actionSelection.value, skillCastId, false));
-  }
+  selectItem('skill', skillCastId, false, true);
+  markerContextTarget.value = null;
   contextMenuTarget.value = { x: event.clientX, y: event.clientY, trackIndex, skillCastId };
 }
 
@@ -5701,27 +5452,22 @@ function joinDroppedSkillToGroup(): void {
 
 function toggleContextCastField(field: 'locked' | 'disabled'): void {
   const target = contextMenuTarget.value;
-  if (target === null) return;
+  if (target === null || !onlySkillsSelected.value) return;
   const cast = scenario.value.tracks[target.trackIndex]?.skillCasts.find(
     candidate => candidate.id === target.skillCastId,
   );
   if (cast === undefined) return;
-  const currentValue = cast.presentation?.[field] ?? false;
+  const value = !(cast.presentation?.[field] ?? false);
   const command = field === 'locked' ? setSkillCastLocked : setSkillCastDisabled;
-  commitScenario(`toggleSkillCast${field.charAt(0).toUpperCase() + field.slice(1)}`, current =>
-    command(current, target.trackIndex, target.skillCastId, !currentValue),
+  const items = selectedItems.value;
+  commitScenario('setSkillCastPresentation', current =>
+    items.reduce((next, item) => command(next, item.trackIndex!, item.ref.id, value), current),
   );
   contextMenuTarget.value = null;
 }
 
 function deleteContextCast(): void {
-  const target = contextMenuTarget.value;
-  if (target === null) return;
-  const selection = actionSelection.value.selectedIds.has(target.skillCastId)
-    ? actionSelection.value
-    : selectTimelineAction(actionSelection.value, target.skillCastId, false);
-  deleteSelectedTimelineActions(scenarioSession, selection);
-  clearTimelineSelection();
+  deleteSelectedActions();
   contextMenuTarget.value = null;
 }
 
@@ -5747,6 +5493,7 @@ const selectionIncludesContinuousGroup = computed(() =>
 );
 
 function createSelectedSkillCastGroup(): void {
+  if (!onlySkillsSelected.value) return;
   const selection = continuousGroupSelection.value;
   if (!selection.ok || selection.alreadyGrouped) return;
   const starts = displayedSkillCastStartFrames.value;
@@ -5757,6 +5504,7 @@ function createSelectedSkillCastGroup(): void {
 }
 
 function dissolveSelectedSkillCastGroups(): void {
+  if (!onlySkillsSelected.value) return;
   const starts = displayedSkillCastStartFrames.value;
   const selectedIds = actionSelection.value.selectedIds;
   commitScenario('dissolveSkillCastGroups', current =>
@@ -5779,6 +5527,7 @@ function skillCastGroupEndFrame(castIds: readonly string[]): number {
 }
 
 async function compactSelectedSkills(): Promise<void> {
+  if (!onlySkillsSelected.value) return;
   const selection = compactSelection.value;
   contextMenuTarget.value = null;
   if (!selection.ok) return;
@@ -5833,84 +5582,45 @@ function pasteClipboardAtTimelinePosition(): void {
         )
       : pointerMarkerFrame(timelinePointerClientX.value, 0, minimumFrame);
   const result = pasteTimelineActions(scenario.value, clipboard, pasteFrame, ids);
-  if (result.dodgeMarkerId !== undefined) {
-    if (commitScenario('pasteDodgeMarker', () => result.scenario)) {
-      clearTimelineSelection();
-      selectedMarker.value = { kind: 'dodge', id: result.dodgeMarkerId };
-    }
-    return;
-  }
-  if (result.skillCastIds.length === 0) return;
-  commitScenario('pasteSkillCasts', () => result.scenario);
-  applyActionSelection({
-    selectedIds: new Set(result.skillCastIds),
-    primaryId: result.skillCastIds.at(-1) ?? null,
-  });
+  if (!result.itemRefs.length) return;
+  if (!commitScenario('pasteTimelineItems', () => result.scenario)) return;
+  const keys = result.itemRefs.map(timelineItemKey);
+  applyItemSelection({ selectedIds: new Set(keys), primaryId: keys.at(-1) ?? null });
 }
 
 function copySelectedActions(): boolean {
-  if (selectedMarker.value?.kind === 'dodge') {
-    timelineClipboard.value = copyTimelineDodgeMarker(scenario.value, selectedMarker.value.id);
-    return timelineClipboard.value !== null;
-  }
-  if (actionSelection.value.selectedIds.size === 0) return false;
-  timelineClipboard.value = copyTimelineActions(
+  timelineClipboard.value = copyTimelineItems(
     scenario.value,
-    actionSelection.value.selectedIds,
+    selectedItems.value,
     displayedSkillCastStartFrames.value,
   );
   return timelineClipboard.value !== null;
 }
-
 function deleteSelectedActions(): boolean {
-  if (selectedMarker.value !== null) {
-    return removeSelectedMarker(selectedMarker.value.kind, selectedMarker.value.id);
+  if (!selectedItems.value.length) return false;
+  if (selectedItems.value.some(item => item.blocked)) {
+    ElMessage.warning(t('timelineGrid.action.locked'));
+    return true;
   }
-  const deleted = deleteSelectedTimelineActions(scenarioSession, actionSelection.value);
+  const items = selectedItems.value;
+  const deleted = commitScenario('removeTimelineItems', current =>
+    removeTimelineItems(current, items),
+  );
   if (deleted) clearTimelineSelection();
   return deleted;
 }
-
-function nudgeSelectedActions(deltaFrames: -1 | 1): boolean {
-  const marker = selectedExternalEventMarker.value ?? selectedDocumentMarker.value;
-  if (marker !== null) {
-    const frame = Math.max(
-      0,
-      Math.min(scenario.value.battle.durationFrames, marker.frame + deltaFrames * snapFrames.value),
-    );
-    if (frame !== marker.frame) {
-      if (selectedExternalEventMarker.value !== null) {
-        commitScenario('moveExternalEventMarker', current =>
-          moveExternalEventMarker(current, marker.id, frame),
-        );
-      } else {
-        setSelectedDocumentMarkerFrame(frame);
-      }
-    }
-    // Consume the shortcut even at a boundary; it must not scroll the page.
+function nudgeSelectedActions(direction: -1 | 1): boolean {
+  if (!selectedItems.value.length) return false;
+  const plan = planTimelineItemMove(timelineItems.value, itemSelection.value.selectedIds);
+  if (!plan) {
+    ElMessage.warning(t('timelineGrid.action.locked'));
     return true;
   }
-  const selection = actionSelection.value;
-  const anchorSkillCastId = selection.primaryId ?? selection.selectedIds.values().next().value;
-  if (anchorSkillCastId === undefined) return false;
-  for (const [trackIndex, track] of scenario.value.tracks.entries()) {
-    const anchor = track?.skillCasts.find(cast => cast.id === anchorSkillCastId);
-    if (anchor === undefined) continue;
-    return commitScenario('moveSkillCasts', current =>
-      moveSkillCasts(
-        current,
-        selection.selectedIds,
-        trackIndex as TrackIndex,
-        anchorSkillCastId,
-        Math.max(
-          minimumEditableInputFrame.value,
-          resolvedSkillCastStartFrames.value.get(anchor.id)! + deltaFrames * snapFrames.value,
-        ),
-        resolvedSkillCastStartFrames.value,
-      ),
-    );
-  }
-  return false;
+  commitScenario(
+    'moveTimelineItems',
+    current => moveTimelineItems(current, plan, direction * snapFrames.value).scenario,
+  );
+  return true;
 }
 
 function toggleSnapPrecision(): boolean {
@@ -6180,10 +5890,13 @@ function setSelectedContingencyContractTagIds(tagIds: readonly number[]): void {
 }
 
 function setContextCastColor(color: string | null): void {
-  const target = contextMenuTarget.value;
-  if (target === null) return;
+  if (contextMenuTarget.value === null || !onlySkillsSelected.value) return;
+  const items = selectedItems.value;
   commitScenario('setSkillCastColor', current =>
-    setSkillCastColor(current, target.trackIndex, target.skillCastId, color),
+    items.reduce(
+      (next, item) => setSkillCastColor(next, item.trackIndex!, item.ref.id, color),
+      current,
+    ),
   );
   contextMenuTarget.value = null;
 }
@@ -6236,16 +5949,8 @@ function rollGlobalRandomSeed(): void {
 
 function setSelectedCastStartFrame(frame: number): void {
   const selected = selectedCastModel.value;
-  if (selected === null || selected.cast.placement.afterCastId !== undefined) return;
-  commitScenario('moveSkillCast', current =>
-    moveSkillCast(
-      current,
-      selected.trackIndex,
-      selected.cast.id,
-      frame,
-      displayedSkillCastStartFrames.value,
-    ),
-  );
+  if (selected !== null && selected.cast.placement.afterCastId === undefined)
+    setItemFrame('skill', selected.cast.id, frame);
 }
 
 function setSelectedCastLocked(locked: boolean): void {
@@ -6280,11 +5985,8 @@ function selectMobileCast(skillCastId: string): void {
   applyActionSelection(selectTimelineAction(actionSelection.value, skillCastId, false));
 }
 
-function moveMobileCast(skillCastId: string, trackIndex: TrackIndex, frame: number): void {
-  if (configurationReadOnly.value || isHistoricalSkillInput(skillCastId)) return;
-  commitScenario('moveSkillCast', current =>
-    moveSkillCast(current, trackIndex, skillCastId, frame, displayedSkillCastStartFrames.value),
-  );
+function moveMobileCast(skillCastId: string, _trackIndex: TrackIndex, frame: number): void {
+  setItemFrame('skill', skillCastId, frame);
 }
 
 function placeMobileSkill(
@@ -6918,14 +6620,14 @@ function setMobileGuideFrame(frame: number | null): void {
             class="simulation-range-dim simulation-range-dim--start"
             :style="{
               left: `${TIMELINE_TRACK_HEADER_WIDTH}px`,
-              width: `${timelineFramePx(displayedMarkerFrame('simulationStart', 'simulationStart', scenario.battle.simulationRange.startFrame))}px`,
+              width: `${timelineFramePx(scenario.battle.simulationRange.startFrame)}px`,
             }"
           ></div>
           <div
             v-if="scenario.battle.simulationRange?.endFrame !== undefined"
             class="simulation-range-dim simulation-range-dim--end"
             :style="{
-              left: `${TIMELINE_TRACK_HEADER_WIDTH + timelineFramePx(displayedMarkerFrame('simulationEnd', 'simulationEnd', scenario.battle.simulationRange.endFrame))}px`,
+              left: `${TIMELINE_TRACK_HEADER_WIDTH + timelineFramePx(scenario.battle.simulationRange.endFrame)}px`,
             }"
           ></div>
           <div
@@ -6934,15 +6636,14 @@ function setMobileGuideFrame(frame: number | null): void {
             "
             class="timeline-marker simulation-range-marker simulation-range-marker--start"
             :class="{ selected: selectedMarker?.kind === 'simulationStart' }"
+            data-timeline-single-item
             :style="{
-              left: `${TIMELINE_TRACK_HEADER_WIDTH + timelineFramePx(displayedMarkerFrame('simulationStart', 'simulationStart', scenario.battle.simulationRange.startFrame))}px`,
+              left: `${TIMELINE_TRACK_HEADER_WIDTH + timelineFramePx(scenario.battle.simulationRange.startFrame)}px`,
             }"
             @pointerdown="
-              beginMarkerMove(
+              beginItemMove(
                 $event,
-                'simulationStart',
-                'simulationStart',
-                scenario.battle.simulationRange.startFrame,
+                timelineItemKey({ kind: 'simulationStart', id: 'simulationStart' }),
               )
             "
             @contextmenu="
@@ -6960,15 +6661,7 @@ function setMobileGuideFrame(frame: number | null): void {
               )
             "
           >
-            <span>{{
-              formatGuideFrame(
-                displayedMarkerFrame(
-                  'simulationStart',
-                  'simulationStart',
-                  scenario.battle.simulationRange.startFrame,
-                ),
-              )
-            }}</span>
+            <span>{{ formatGuideFrame(scenario.battle.simulationRange.startFrame) }}</span>
             <b>{{
               t(
                 configurationReadOnly
@@ -6981,16 +6674,12 @@ function setMobileGuideFrame(frame: number | null): void {
             v-if="scenario.battle.simulationRange?.endFrame !== undefined"
             class="timeline-marker simulation-range-marker simulation-range-marker--end"
             :class="{ selected: selectedMarker?.kind === 'simulationEnd' }"
+            data-timeline-single-item
             :style="{
-              left: `${TIMELINE_TRACK_HEADER_WIDTH + timelineFramePx(displayedMarkerFrame('simulationEnd', 'simulationEnd', scenario.battle.simulationRange.endFrame))}px`,
+              left: `${TIMELINE_TRACK_HEADER_WIDTH + timelineFramePx(scenario.battle.simulationRange.endFrame)}px`,
             }"
             @pointerdown="
-              beginMarkerMove(
-                $event,
-                'simulationEnd',
-                'simulationEnd',
-                scenario.battle.simulationRange.endFrame,
-              )
+              beginItemMove($event, timelineItemKey({ kind: 'simulationEnd', id: 'simulationEnd' }))
             "
             @contextmenu="
               openExistingMarkerContextMenu(
@@ -7003,15 +6692,7 @@ function setMobileGuideFrame(frame: number | null): void {
               )
             "
           >
-            <span>{{
-              formatGuideFrame(
-                displayedMarkerFrame(
-                  'simulationEnd',
-                  'simulationEnd',
-                  scenario.battle.simulationRange.endFrame,
-                ),
-              )
-            }}</span>
+            <span>{{ formatGuideFrame(scenario.battle.simulationRange.endFrame) }}</span>
             <b>{{ t('timeline.markerLabels.simulationEnd') }}</b>
           </div>
           <div
@@ -7019,13 +6700,16 @@ function setMobileGuideFrame(frame: number | null): void {
             :key="boundary.id"
             class="timeline-marker cycle-boundary-marker"
             :class="{
-              selected:
-                selectedMarker?.kind === 'cycleBoundary' && selectedMarker.id === boundary.id,
+              selected: isItemSelected('cycleBoundary', boundary.id),
             }"
             :style="{
-              left: `${TIMELINE_TRACK_HEADER_WIDTH + timelineFramePx(displayedMarkerFrame('cycleBoundary', boundary.id, boundary.frame))}px`,
+              left: `${TIMELINE_TRACK_HEADER_WIDTH + timelineFramePx(boundary.frame)}px`,
             }"
-            @pointerdown="beginMarkerMove($event, 'cycleBoundary', boundary.id, boundary.frame)"
+            :data-timeline-item-key="timelineItemKey({ kind: 'cycleBoundary', id: boundary.id })"
+            @click.stop="handleItemSelection($event, 'cycleBoundary', boundary.id)"
+            @pointerdown="
+              beginItemMove($event, timelineItemKey({ kind: 'cycleBoundary', id: boundary.id }))
+            "
             @contextmenu="
               openExistingMarkerContextMenu(
                 $event,
@@ -7037,9 +6721,7 @@ function setMobileGuideFrame(frame: number | null): void {
               )
             "
           >
-            <span>{{
-              formatGuideFrame(displayedMarkerFrame('cycleBoundary', boundary.id, boundary.frame))
-            }}</span>
+            <span>{{ formatGuideFrame(boundary.frame) }}</span>
             <b>{{ t('timeline.markerLabels.cycleBoundary') }}</b>
           </div>
           <div
@@ -7051,13 +6733,17 @@ function setMobileGuideFrame(frame: number | null): void {
             :class="{
               'combo-cooldown-guide': true,
               'is-ready': marker.event.mode === 'ready',
-              selected: selectedMarker?.kind === 'externalEvent' && selectedMarker.id === marker.id,
+              selected: isItemSelected('externalEvent', marker.id),
             }"
             :title="t(`comboControl.${marker.event.mode}`)"
             :style="{
-              left: `${TIMELINE_TRACK_HEADER_WIDTH + timelineFramePx(displayedMarkerFrame('externalEvent', marker.id, marker.frame))}px`,
+              left: `${TIMELINE_TRACK_HEADER_WIDTH + timelineFramePx(marker.frame)}px`,
             }"
-            @pointerdown="beginMarkerMove($event, 'externalEvent', marker.id, marker.frame)"
+            :data-timeline-item-key="timelineItemKey({ kind: 'externalEvent', id: marker.id })"
+            @click.stop="handleItemSelection($event, 'externalEvent', marker.id)"
+            @pointerdown="
+              beginItemMove($event, timelineItemKey({ kind: 'externalEvent', id: marker.id }))
+            "
             @contextmenu="
               openExistingMarkerContextMenu(
                 $event,
@@ -7301,19 +6987,19 @@ function setMobileGuideFrame(frame: number | null): void {
                   icon-only
                   class="timeline-marker consumable-use-marker"
                   :class="{
-                    dragging:
-                      consumableMoveGesture?.useId === use.id && consumableMoveGesture.dragStarted,
+                    dragging: itemDragging('consumableUse', use.id),
+                    selected: isItemSelected('consumableUse', use.id),
                   }"
-                  :pressed="selectedConsumableUseId === use.id"
+                  :pressed="isItemSelected('consumableUse', use.id)"
+                  :data-timeline-item-key="timelineItemKey({ kind: 'consumableUse', id: use.id })"
                   :style="{
-                    left: `${timelineFramePx(displayedConsumableUseFrame(use.id, use.frame))}px`,
+                    left: `${timelineFramePx(use.frame)}px`,
                   }"
                   :title="getConsumableGameName(use.consumableId)"
-                  @pointerdown="beginConsumableUseMove($event, track.trackIndex, use.id, use.frame)"
-                  @click.stop="
-                    selectedConsumableUseId = use.id;
-                    clearTimelineSelection();
+                  @pointerdown="
+                    beginItemMove($event, timelineItemKey({ kind: 'consumableUse', id: use.id }))
                   "
+                  @click.stop="handleItemSelection($event, 'consumableUse', use.id)"
                   @contextmenu="
                     openExistingConsumableContextMenu(
                       $event,
@@ -7339,27 +7025,20 @@ function setMobileGuideFrame(frame: number | null): void {
                   )"
                   :key="marker.id"
                   class="timeline-marker track-switch-marker"
+                  :data-timeline-item-key="
+                    timelineItemKey({ kind: 'controlSwitch', id: marker.id })
+                  "
                   :class="{
-                    selected:
-                      selectedMarker?.kind === 'controlSwitch' && selectedMarker.id === marker.id,
-                    dragging:
-                      markerMoveGesture?.kind === 'controlSwitch' &&
-                      markerMoveGesture.id === marker.id &&
-                      markerMoveGesture.dragStarted,
+                    selected: isItemSelected('controlSwitch', marker.id),
+                    dragging: itemDragging('controlSwitch', marker.id),
                   }"
                   :style="{
-                    left: `${timelineFramePx(displayedMarkerFrame('controlSwitch', marker.id, marker.frame))}px`,
+                    left: `${timelineFramePx(marker.frame)}px`,
                   }"
                   @pointerdown="
-                    beginMarkerMove(
-                      $event,
-                      'controlSwitch',
-                      marker.id,
-                      marker.frame,
-                      track.trackIndex,
-                    )
+                    beginItemMove($event, timelineItemKey({ kind: 'controlSwitch', id: marker.id }))
                   "
-                  @click.stop
+                  @click.stop="handleItemSelection($event, 'controlSwitch', marker.id)"
                   @contextmenu="
                     openExistingMarkerContextMenu(
                       $event,
@@ -7377,11 +7056,7 @@ function setMobileGuideFrame(frame: number | null): void {
                     :src="getOperatorAvatarPath(track.operatorAssetSlug ?? track.operatorSlug)"
                   />
                   <span class="track-switch-marker__time">
-                    {{
-                      formatGuideFrame(
-                        displayedMarkerFrame('controlSwitch', marker.id, marker.frame),
-                      )
-                    }}
+                    {{ formatGuideFrame(marker.frame) }}
                   </span>
                   <i class="track-switch-marker__pointer"></i>
                 </div>
@@ -7414,26 +7089,24 @@ function setMobileGuideFrame(frame: number | null): void {
                   )"
                   :key="marker.id"
                   class="timeline-marker dodge-marker"
+                  :data-timeline-item-key="timelineItemKey({ kind: 'dodge', id: marker.id })"
                   :class="{
                     'dodge-marker--perfect': marker.mode.kind === 'perfectDodge',
                     'dodge-marker--warning': dodgeMarkerWarningIds.has(marker.id),
-                    selected: selectedMarker?.kind === 'dodge' && selectedMarker.id === marker.id,
-                    dragging:
-                      markerMoveGesture?.kind === 'dodge' &&
-                      markerMoveGesture.id === marker.id &&
-                      markerMoveGesture.dragStarted,
+                    selected: isItemSelected('dodge', marker.id),
+                    dragging: itemDragging('dodge', marker.id),
                   }"
                   :style="{
-                    left: `${timelineFramePx(displayedMarkerFrame('dodge', marker.id, marker.frame))}px`,
+                    left: `${timelineFramePx(marker.frame)}px`,
                   }"
                   :title="
                     dodgeMarkerDiagnosticsById.get(marker.id)?.join('\n') ||
                     t(`timeline.markerLabels.${marker.mode.kind}`)
                   "
                   @pointerdown="
-                    beginMarkerMove($event, 'dodge', marker.id, marker.frame, track.trackIndex)
+                    beginItemMove($event, timelineItemKey({ kind: 'dodge', id: marker.id }))
                   "
-                  @click.stop
+                  @click.stop="handleItemSelection($event, 'dodge', marker.id)"
                   @contextmenu="
                     openExistingMarkerContextMenu(
                       $event,
@@ -7506,11 +7179,8 @@ function setMobileGuideFrame(frame: number | null): void {
                   :duration-pending="castActualDurationPending(cast.id, cast.durationFrames)"
                   :selected="actionSelection.selectedIds.has(cast.id)"
                   :perfect="perfectComboCastIds.has(cast.id)"
-                  :moving="
-                    !castMoveGesture?.committed &&
-                    castMoveGesture?.dragStarted &&
-                    castMoveGesture?.skillCastIds.includes(cast.id)
-                  "
+                  :moving="itemDragging('skill', cast.id)"
+                  :data-timeline-item-key="timelineItemKey({ kind: 'skill', id: cast.id })"
                   :disabled="cast.disabled"
                   :locked="cast.locked"
                   :edited="cast.edited"
@@ -7974,15 +7644,22 @@ function setMobileGuideFrame(frame: number | null): void {
   />
   <TimelineActionContextMenu
     :input-read-only="[...actionSelection.selectedIds].some(isHistoricalSkillInput)"
+    :delete-disabled="selectedItems.some(item => item.blocked)"
+    :skill-options="onlySkillsSelected"
     :visible="contextMenuTarget !== null"
     :x="contextMenuTarget?.x ?? 0"
     :y="contextMenuTarget?.y ?? 0"
-    :label="selectedCastModel?.label ?? ''"
+    :label="
+      selectedItems.length > 1
+        ? t('timelineGrid.selection.selectedCount', { count: selectedItems.length })
+        : (selectedCastModel?.label ?? '')
+    "
     :locked="selectedCastModel?.cast.presentation?.locked ?? false"
     :disabled="selectedCastModel?.cast.presentation?.disabled ?? false"
     :color="selectedCastModel?.cast.presentation?.color ?? null"
-    :compact-visible="actionSelection.selectedIds.size > 1"
+    :compact-visible="onlySkillsSelected && actionSelection.selectedIds.size > 1"
     :create-group-visible="
+      onlySkillsSelected &&
       actionSelection.selectedIds.size > 1 &&
       !(continuousGroupSelection.ok && continuousGroupSelection.alreadyGrouped)
     "
@@ -7991,7 +7668,7 @@ function setMobileGuideFrame(frame: number | null): void {
         ? undefined
         : t(`timeline.continuousGroup.${continuousGroupSelection.reason}`)
     "
-    :dissolve-group-visible="selectionIncludesContinuousGroup"
+    :dissolve-group-visible="onlySkillsSelected && selectionIncludesContinuousGroup"
     :compact-disabled-reason="
       compactSelection.ok ? undefined : t(`timeline.compactSelection.${compactSelection.reason}`)
     "
@@ -8006,7 +7683,13 @@ function setMobileGuideFrame(frame: number | null): void {
     @set-color="setContextCastColor"
   />
   <TimelineMarkerContextMenu
-    :cycle-boundary="markerContextTarget?.existing?.kind === 'cycleBoundary'"
+    :cycle-boundary="
+      selectedItems.length === 1 && markerContextTarget?.existing?.kind === 'cycleBoundary'
+    "
+    :can-copy="
+      selectedItems.length > 0 &&
+      selectedItems.every(item => item.ref.kind === 'skill' || item.copy)
+    "
     :inheritance-boundary="
       configurationReadOnly && markerContextTarget?.existing?.kind === 'simulationStart'
     "
@@ -8015,9 +7698,9 @@ function setMobileGuideFrame(frame: number | null): void {
     "
     @open-source="openInheritedSource"
     :read-only="
-      scenario.inheritance !== undefined &&
-      ((markerContextTarget?.frame ?? 0) < scenario.inheritance.frame ||
-        markerContextTarget?.existing?.kind === 'simulationStart')
+      markerContextTarget?.existing
+        ? selectedItems.some(item => item.blocked)
+        : isHistoricalInputFrame(markerContextTarget?.frame ?? 0)
     "
     :can-inherit="
       !creatingInheritedScenario &&
@@ -8046,9 +7729,15 @@ function setMobileGuideFrame(frame: number | null): void {
     "
     :has-simulation-start="scenario.battle.simulationRange?.startFrame !== undefined"
     :has-simulation-end="scenario.battle.simulationRange?.endFrame !== undefined"
-    :existing-label="markerContextTarget?.existing?.label"
+    :existing-label="
+      markerContextTarget?.existing
+        ? selectedItems.length > 1
+          ? t('timelineGrid.selection.selectedCount', { count: selectedItems.length })
+          : markerContextTarget.existing.label
+        : undefined
+    "
     :existing-dodge-mode="
-      markerContextTarget?.existing?.kind === 'dodge'
+      selectedItems.length === 1 && markerContextTarget?.existing?.kind === 'dodge'
         ? scenario.battle.dodgeMarkers?.find(
             marker => marker.id === markerContextTarget?.existing?.id,
           )?.mode.kind
@@ -8056,8 +7745,8 @@ function setMobileGuideFrame(frame: number | null): void {
     "
     :labels="{
       title: t('timeline.markerContext.title'),
-      deleteMarker: t('timeline.markerContext.deleteMarker'),
-      copyMarker: t('timeline.markerContext.copyMarker'),
+      deleteMarker: t('common.delete'),
+      copyMarker: t('common.copy'),
       addCycle: t('timeline.markerContext.addCycle'),
       addSimulationStart: t('timeline.markerContext.addSimulationStart'),
       removeSimulationStart: t('timeline.markerContext.removeSimulationStart'),
@@ -8078,7 +7767,7 @@ function setMobileGuideFrame(frame: number | null): void {
     @add-switch="addSwitchMarkerFromContext"
     @add-dodge="addDodgeMarkerFromContext"
     @set-dodge-mode="setDodgeMarkerModeFromContext"
-    @copy-marker="copyDodgeMarkerFromContext"
+    @copy-marker="copyMarkerFromContext"
     @use-consumable="openConsumableSelectionFromContext"
     @control-combo-cooldown="
       addMarkerFromContext($event === 'ready' ? 'comboReady' : 'comboCooldown')

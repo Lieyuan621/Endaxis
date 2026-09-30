@@ -3,11 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import type { ScenarioDocument, SkillCastDocument } from '../../../core/project/schema';
 import type { TimelineDocumentIdAllocator, TimelineDocumentIdKind } from './placeSkillGroup';
-import {
-  copyTimelineActions,
-  copyTimelineDodgeMarker,
-  pasteTimelineActions,
-} from './timelineClipboard';
+import { copyTimelineActions, copyTimelineItems, pasteTimelineActions } from './timelineClipboard';
+import { collectTimelineItems, timelineItemKey } from './timelineItems';
 
 function ids(): TimelineDocumentIdAllocator {
   const counters = new Map<TimelineDocumentIdKind, number>();
@@ -96,9 +93,12 @@ describe('timelineClipboard', () => {
         mode: { kind: 'perfectDodge', successDelayFrames: 8 },
       },
     ];
-    const clipboard = copyTimelineDodgeMarker(original, 'dodge:source')!;
+    const item = collectTimelineItems(original).get(
+      timelineItemKey({ kind: 'dodge', id: 'dodge:source' }),
+    )!;
+    const clipboard = copyTimelineItems(original, [item], new Map())!;
     const pasted = pasteTimelineActions(original, clipboard, 80, ids());
-    expect(pasted.dodgeMarkerId).toBe('dodge:new:1');
+    expect(pasted.itemRefs).toEqual([{ kind: 'dodge', id: 'dodge:new:1' }]);
     expect(pasted.skillCastIds).toEqual([]);
     expect(pasted.scenario.battle.dodgeMarkers).toEqual([
       original.battle.dodgeMarkers[0],
@@ -111,9 +111,14 @@ describe('timelineClipboard', () => {
       },
     ]);
     expect(original.battle.dodgeMarkers).toHaveLength(1);
-    expect(() =>
-      pasteTimelineActions(original, clipboard, original.battle.durationFrames + 1, ids()),
-    ).toThrow('editable timeline');
+    expect(
+      pasteTimelineActions(
+        original,
+        clipboard,
+        original.battle.durationFrames + 1,
+        ids(),
+      ).scenario.battle.dodgeMarkers?.at(-1)?.frame,
+    ).toBe(original.battle.durationFrames);
   });
 
   it('完整组仅平移组首，并重映射内部前驱及技能块连线', () => {

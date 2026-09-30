@@ -4579,7 +4579,7 @@
     },
     "selection": {
       "deleted": "Deleted",
-      "selectedCount": "{count} actions selected"
+      "selectedCount": "{count} items selected"
     },
     "toolbar": {
       "buffLayoutCompact": "Compact",

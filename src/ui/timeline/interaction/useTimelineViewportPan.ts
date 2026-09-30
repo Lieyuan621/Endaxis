@@ -15,6 +15,8 @@ export interface UseTimelineViewportPanOptions {
 }
 
 const INTERACTIVE_PAN_EXCLUSION_SELECTOR = [
+  '[data-timeline-item-key]',
+  '[data-timeline-single-item]',
   '[data-timeline-action-id]',
   '[data-timeline-interactive]',
   'button',

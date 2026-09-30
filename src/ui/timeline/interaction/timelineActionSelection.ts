@@ -1,10 +1,4 @@
-/**
- * 管理时间轴动作的临时选择集合，并把批量删除作为一次编辑会话提交。
- * 选择状态只属于当前 UI 会话，不得写入存档、快照或导出数据。
- */
-import type { ScenarioEditingSession } from '../../../application/editor/scenarioEditorSession';
-import type { ScenarioDocument } from '../../../core/project/schema';
-import { removeSkillCasts } from './timelineDocumentCommands';
+/** 编辑器临时选区的集合操作。键可以是时间轴对象引用，也可以是技能专属操作的投影 ID。 */
 
 export interface TimelineActionSelection {
   readonly selectedIds: ReadonlySet<string>;
@@ -36,29 +30,4 @@ export function selectTimelineAction(
   }
   selectedIds.add(skillCastId);
   return { selectedIds, primaryId: skillCastId };
-}
-
-export function reconcileTimelineActionSelection(
-  selection: TimelineActionSelection,
-  scenario: ScenarioDocument,
-): TimelineActionSelection {
-  const existingIds = new Set(
-    scenario.tracks.flatMap(track => track?.skillCasts.map(cast => cast.id) ?? []),
-  );
-  const selectedIds = new Set([...selection.selectedIds].filter(id => existingIds.has(id)));
-  if (selectedIds.size === selection.selectedIds.size) return selection;
-  const primaryId =
-    selection.primaryId !== null && selectedIds.has(selection.primaryId)
-      ? selection.primaryId
-      : (selectedIds.values().next().value ?? null);
-  return { selectedIds, primaryId };
-}
-
-export function deleteSelectedTimelineActions(
-  session: ScenarioEditingSession,
-  selection: TimelineActionSelection,
-): boolean {
-  return session.commit('removeSkillCasts', scenario =>
-    removeSkillCasts(scenario, selection.selectedIds),
-  );
 }

@@ -115,21 +115,6 @@ export function resolveSkillCastGroupSelection(
   };
 }
 
-/** 移动任意成员时连同整条链移动；普通点击和删除仍保留成员级选择。 */
-export function expandSkillCastGroupSelection(
-  scenario: ScenarioDocument,
-  selectedIds: ReadonlySet<string>,
-): ReadonlySet<string> {
-  const expanded = new Set(selectedIds);
-  for (const track of scenario.tracks) {
-    for (const chain of getSkillCastPlacementChains(track?.skillCasts ?? [])) {
-      if (chain.casts.some(cast => selectedIds.has(cast.id)))
-        for (const cast of chain.casts) expanded.add(cast.id);
-    }
-  }
-  return expanded;
-}
-
 /** 组标记和成员共同使用这个位置；快模拟发布后立即采用新间距，只补尚未发布的整体位移。 */
 export function projectMovingSkillCastStartFrames(
   starts: ReadonlyMap<string, number>,

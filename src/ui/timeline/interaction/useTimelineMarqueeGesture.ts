@@ -40,11 +40,11 @@ function isMarqueeDrag(gesture: TimelineMarqueeGesture): boolean {
 }
 
 function collectActionRectangles(surface: HTMLElement): readonly TimelineActionRectangle[] {
-  return Array.from(surface.querySelectorAll<HTMLElement>('[data-timeline-action-id]')).map(
+  return Array.from(surface.querySelectorAll<HTMLElement>('[data-timeline-item-key]')).map(
     element => {
       const bounds = element.getBoundingClientRect();
       return {
-        id: element.dataset.timelineActionId ?? '',
+        id: element.dataset.timelineItemKey ?? '',
         x: bounds.left,
         y: bounds.top,
         width: bounds.width,
@@ -109,7 +109,8 @@ export function useTimelineMarqueeGesture(options: UseTimelineMarqueeGestureOpti
     const target = event.target;
     if (
       event.button !== 0 ||
-      (target instanceof Element && target.closest('[data-timeline-action-id]') !== null)
+      (target instanceof Element &&
+        target.closest('[data-timeline-item-key], [data-timeline-single-item]') !== null)
     ) {
       return;
     }
