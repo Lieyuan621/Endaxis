@@ -402,7 +402,7 @@ import {
   resolvePublishedEquipmentTrait,
 } from './results/publishedBuffSource';
 import { createCombatObjectIconResolver } from './results/combatObjectIcons';
-import { isEnemyTimelineBuffVisible } from './results/enemyStatusRows';
+import { isEnemyTimelineBuffVisible, layoutEnemyStatusRows } from './results/enemyStatusRows';
 import {
   isPhysicalStatusRowBuff,
   projectPhysicalStatusDisplay,
@@ -1502,18 +1502,28 @@ const mobileEnemyBuffsByCastId = computed(() => {
     })),
   );
   const castsById = new Map(casts.map(cast => [cast.id, cast]));
+  const receiptsBySequence = new Map(
+    publishedReceiptEntries.value.map(entry => [entry.sequence, entry]),
+  );
   const grouped = new Map<string, Map<string, BuffTimelineSegment>>();
-  for (const segment of buffTimelineSegments.value) {
+  for (const segment of [
+    ...buffTimelineSegments.value.filter(buff => !isPhysicalStatusRowBuff(buff)),
+    ...mobilePhysicalStatusSegments.value,
+  ]) {
     if (
       segment.targetId !== SINGLE_ENEMY_TARGET_ID ||
-      !isEnemyTimelineBuffVisible(segment) ||
+      (!isPhysicalStatusRowBuff(segment) && !isEnemyTimelineBuffVisible(segment)) ||
       (!attachmentBuffIds.has(segment.buffId) &&
         segment.iconStyleInSquad !== 'SpellAbnormal' &&
         !isPhysicalStatusRowBuff(segment)) ||
       (buffIcon(segment) ?? segment.iconPath ?? getIconAssetPath(segment.iconId)) == null
     )
       continue;
-    const directCast = castsById.get(segment.sourceActionId ?? '');
+    const receipt = receiptsBySequence.get(segment.startSequence ?? -1);
+    const receiptCastId = receipt?.data?.castId;
+    const directCast =
+      (typeof receiptCastId === 'string' ? castsById.get(receiptCastId) : undefined) ??
+      castsById.get(segment.sourceActionId ?? '');
     const cast =
       directCast ??
       casts
@@ -2968,6 +2978,16 @@ const buffTimelineSegments = computed(() => {
     ? []
     : projectBuffTimelineViz(publishedReceiptEntries.value, current.frame);
 });
+const physicalStatusSegments = computed(() =>
+  projectPhysicalStatusDisplay(publishedReceiptEntries.value, simulationRun.value?.frame ?? 0, {
+    enemySuperArmor: scenario.value.enemy.editable.superArmor,
+  }).filter(segment => segment.targetId === SINGLE_ENEMY_TARGET_ID),
+);
+const mobilePhysicalStatusSegments = computed(() => {
+  const physical = physicalStatusSegments.value;
+  const hiddenIcons = layoutEnemyStatusRows(physical, [], attachmentBuffIds).hiddenIcons;
+  return physical.filter(segment => !hiddenIcons.has(segment));
+});
 
 /** 光标快照只消费已经生成的生命周期段，不回查或重算 Buff 运行时。 */
 const combatHudInitialSkillSlots = computed(() =>
@@ -3139,11 +3159,7 @@ const positionedBuffsByTarget = computed(() => {
     list.push(segment);
     grouped.set(segment.targetId, list);
   }
-  const physical = projectPhysicalStatusDisplay(
-    publishedReceiptEntries.value,
-    simulationRun.value?.frame ?? 0,
-    { enemySuperArmor: scenario.value.enemy.editable.superArmor },
-  ).filter(segment => segment.targetId === SINGLE_ENEMY_TARGET_ID);
+  const physical = physicalStatusSegments.value;
   if (physical.length && !grouped.has(SINGLE_ENEMY_TARGET_ID))
     grouped.set(SINGLE_ENEMY_TARGET_ID, []);
   const positioned = new Map<string, PositionedDisplayBuffTimelineSegment[]>();
@@ -8653,19 +8669,10 @@ button:disabled {
   z-index: 100;
   min-width: 0;
   height: 12px;
-  overflow-x: scroll;
+  overflow-x: auto;
   overflow-y: hidden;
-  /* 独立导航条必须常驻；WebKit 的 thin/自动滚动条可能不绘制滑块。 */
-  scrollbar-width: auto;
-  /* 避免 Chromium 的标准颜色声明覆盖下方伪元素尺寸，挤出仅 12px 的容器。 */
-  scrollbar-color: auto;
   opacity: 0.7;
   transition: opacity 200ms ease;
-}
-
-.timeline-horizontal-scrollbar::-webkit-scrollbar {
-  display: block;
-  height: 10px;
 }
 
 .timeline-horizontal-scrollbar:hover,

@@ -703,8 +703,6 @@ function locateEntry(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): 
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: var(--ea-fg-faint, #666) transparent;
 }
 .simlog-types :deep(.ea-filter-chip) {
   max-width: 100%;

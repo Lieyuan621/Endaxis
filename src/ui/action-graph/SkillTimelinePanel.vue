@@ -785,7 +785,6 @@ onBeforeUnmount(() => {
   min-height: 0;
   overflow: auto;
   overscroll-behavior: contain;
-  scrollbar-width: thin;
 }
 .timeline-content {
   min-height: 100%;

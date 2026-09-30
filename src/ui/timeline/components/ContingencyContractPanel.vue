@@ -363,7 +363,6 @@ function description(tag: ContingencyContractTagPresentation): string {
   overflow-x: auto;
   overflow-y: hidden;
   padding: 10px 12px 18px;
-  scrollbar-width: thin;
   scrollbar-color: rgba(188, 40, 36, 0.7) var(--ea-border-soft);
   background: var(--ea-workbench-panel);
 }
