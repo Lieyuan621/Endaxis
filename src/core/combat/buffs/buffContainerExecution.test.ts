@@ -43,7 +43,7 @@ it('restores instance data and stacking membership after recycling a branch', ()
     definitionId: 'buff',
     sourceId: 'source',
   });
-  const group = createBuffStackingState();
+  const group = createBuffStackingState('unlimited');
   state.instances.set(1, instance);
   state.memberIds.push(1);
   group.members.push(1);

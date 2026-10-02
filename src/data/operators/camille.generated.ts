@@ -986,7 +986,7 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
 export const camilleChr_0033_camille_power_attack: SkillDefinition = {
   key: 'chr_0033_camille_power_attack',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
-  timelineBlockFrames: 39,
+  timelineBlockFrames: 51,
   naturalDurationFrames: 230,
   exclusiveFrame: 50,
   offsetRecordFrame: 0,
@@ -4158,9 +4158,9 @@ export const camille: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
+          skillKey: 'chr_0033_camille_ultimate_skill',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
-          skillKey: 'chr_0033_camille_ultimate_skill',
         },
       ],
     },

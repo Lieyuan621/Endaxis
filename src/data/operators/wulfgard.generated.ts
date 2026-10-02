@@ -752,7 +752,7 @@ export const wulfgardChr_0006_wolfgd_power_attack: SkillDefinition = {
   actionGraph: wulfgardChr_0006_wolfgd_power_attackActionGraph,
   key: 'chr_0006_wolfgd_power_attack',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
-  timelineBlockFrames: 34,
+  timelineBlockFrames: 61,
   naturalDurationFrames: 150,
   exclusiveFrame: 60,
   offsetRecordFrame: 0,
@@ -2142,17 +2142,17 @@ export const wulfgard: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0006_wolfgd_normal_skill',
           blackboardKey: 'returnskillpower',
           operation: 'assign',
           value: [5, 10],
-          skillKey: 'chr_0006_wolfgd_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0006_wolfgd_normal_skill',
           blackboardKey: 'talent2',
           operation: 'assign',
           value: [1, 1],
-          skillKey: 'chr_0006_wolfgd_normal_skill',
         },
       ],
     },
@@ -2170,17 +2170,17 @@ export const wulfgard: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0006_wolfgd_normal_skill',
           blackboardKey: 'potential_skillpower',
           operation: 'assign',
           value: 10,
-          skillKey: 'chr_0006_wolfgd_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0006_wolfgd_normal_skill',
           blackboardKey: 'potential_2',
           operation: 'assign',
           value: 1,
-          skillKey: 'chr_0006_wolfgd_normal_skill',
         },
       ],
     },
@@ -2189,17 +2189,17 @@ export const wulfgard: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0006_wolfgd_normal_skill',
           blackboardKey: 'potential_3',
           operation: 'assign',
           value: 1,
-          skillKey: 'chr_0006_wolfgd_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0006_wolfgd_normal_skill',
           blackboardKey: 'teammate_percent',
           operation: 'assign',
           value: 0.5,
-          skillKey: 'chr_0006_wolfgd_normal_skill',
         },
       ],
     },
@@ -2208,9 +2208,9 @@ export const wulfgard: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
+          skillKey: 'chr_0006_wolfgd_ultimate_skill',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
-          skillKey: 'chr_0006_wolfgd_ultimate_skill',
         },
       ],
     },
@@ -2219,10 +2219,10 @@ export const wulfgard: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0006_wolfgd_ultimate_skill',
           blackboardKey: 'potential_5',
           operation: 'assign',
           value: 1,
-          skillKey: 'chr_0006_wolfgd_ultimate_skill',
         },
       ],
     },

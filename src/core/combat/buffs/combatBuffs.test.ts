@@ -26,6 +26,66 @@ import { StateStepper } from '../runtime/stateStepper';
 
 type Attribute = 'attack';
 
+it('拒绝非法刷新寿命时不执行增强动作，也不改变组、实例或属性', () => {
+  const container = new CombatBuffContainer('owner', new CombatAttributeSet<Attribute>());
+  const events: string[] = [];
+  const definition: CombatBuffDefinition<Attribute> = {
+    id: 'validated-refresh',
+    stackingType: 'enhanceAndRefresh',
+    durationSeconds: 8,
+    maxStackCount: 4,
+    actions: {
+      beforeEnhance: () => {
+        events.push('before');
+      },
+    },
+  };
+  container.add(definition, 'source');
+  const before = structuredClone(container.runtimeState);
+  expect(() => container.add({ ...definition, durationSeconds: NaN }, 'source')).toThrow();
+  expect(events).toEqual([]);
+  expect(container.runtimeState).toEqual(before);
+});
+
+it('空叠层组的类型约束在切面恢复后保持一致，同类型仍能重新施加', () => {
+  const definition: CombatBuffDefinition<Attribute> = {
+    id: 'expired-group',
+    stackingKey: 'shared',
+    stackingType: 'unique',
+    durationSeconds: 1,
+  };
+  const original = new CombatBuffContainer('owner', new CombatAttributeSet<Attribute>());
+  original.add(definition, 'source');
+  original.tick(2);
+  original.recycleFinishedBuffs();
+  const saved = structuredClone(original.runtimeState);
+  expect(saved.stackingGroups.get('shared')?.members).toEqual([]);
+  const restored = new CombatBuffContainer(
+    'owner',
+    new CombatAttributeSet(saved.attributes),
+    undefined,
+    null,
+    ActionBlackboard.bindRuntimeState(saved.entityBlackboard),
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    saved,
+  );
+  restored.bindRestoredInstances(() => {
+    throw new Error('空组不应恢复或执行实例');
+  });
+  for (const container of [original, restored]) {
+    expect(() => container.add({ ...definition, stackingType: 'stack' }, 'source')).toThrow(
+      'changed type',
+    );
+    expect(container.add(definition, 'source')).not.toBeNull();
+  }
+  expect(restored.runtimeState).toEqual(original.runtimeState);
+});
+
 it('引用在回收回调中仍有效，回收后失效；错误编号和宿主仍拒绝', () => {
   const container = new CombatBuffContainer('owner', new CombatAttributeSet<Attribute>());
   const definition: CombatBuffDefinition<Attribute> = { id: 'same', stackingType: 'unlimited' };
@@ -3019,17 +3079,21 @@ describe('CombatBuffContainer', () => {
     expect(container.add(definition, 'operator')).not.toBeNull();
   });
 
-  it('ignoreAddingCooldown 只跳过检查，成功添加仍创建新的冷却标记', () => {
+  it('ignoreAddingCooldown 只跳过检查，叠层拒绝后仍保留新冷却标记', () => {
     const container = new CombatBuffContainer('operator', new CombatAttributeSet<string>());
     const bypass = {
       id: 'arrow-buffer',
-      stackingType: 'unlimited',
+      stackingType: 'unique',
       addingCooldownSeconds: 0.2,
       ignoreAddingCooldown: true,
     } as const;
-    expect(container.add(bypass, 'operator')).not.toBeNull();
-    expect(container.add(bypass, 'operator')).not.toBeNull();
+    const first = requireAddedBuff(container.add(bypass, 'operator'));
+    container.tick(0.2);
+    expect(container.add(bypass, 'operator')).toBeNull();
+    first.finish('other', null);
     expect(container.add({ ...bypass, ignoreAddingCooldown: false }, 'operator')).toBeNull();
+    container.tick(0.2);
+    expect(container.add({ ...bypass, ignoreAddingCooldown: false }, 'operator')).not.toBeNull();
   });
 
   it('Main 属性修正在 Buff 安装时由所属干员身份延迟解析', () => {

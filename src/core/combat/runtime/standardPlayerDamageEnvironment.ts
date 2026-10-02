@@ -124,15 +124,15 @@ const MULTIPLICATIVE_ATTRIBUTE_SLOTS = new Set(['finalMultiplier', 'baseFinalMul
  * 只有“一项属性修正、一个非单位槽位”才可自动摘要。
  * 这里记录原始事实，不在战斗回执中写本地化名称或猜测复杂 Buff 的总效果。
  */
-function simpleAttributeModifierFact(buff: CombatBuff<string>):
+function simpleAttributeModifierFact(modifiers: CombatBuff<string>['attributeModifiers']):
   | {
       readonly simpleModifierAttribute: string;
       readonly simpleModifierSlot: string;
       readonly simpleModifierValue: number;
     }
   | undefined {
-  if (buff.attributeModifiers.length !== 1) return undefined;
-  const modifier = buff.attributeModifiers[0]!;
+  if (modifiers.length !== 1) return undefined;
+  const modifier = modifiers[0]!;
   const changed = Object.entries(modifier.values).filter(([slot, value]) => {
     const identity = MULTIPLICATIVE_ATTRIBUTE_SLOTS.has(slot) ? 1 : 0;
     return Math.abs(value - identity) > 0.0000001;
@@ -401,6 +401,8 @@ export class StandardPlayerDamageEnvironment {
       (buff, producedBy) => this.#recordBuffCreated(buff, producedBy),
       (buff, previousLayers, sourceId, skillCastInfo, producedBy) =>
         this.#recordBuffStackChanged(buff, previousLayers, sourceId, skillCastInfo, producedBy),
+      (buff, previous) => this.#recordBuffModifierChanged(buff, previous),
+      buff => this.#recordBuffEnabledChanged(buff),
     );
     this.#enemyBuffRuntime = new BuffDefinitionOperationTarget(
       this.#enemyBuffs,
@@ -551,6 +553,8 @@ export class StandardPlayerDamageEnvironment {
           (buff, producedBy) => this.#recordBuffCreated(buff, producedBy),
           (buff, previousLayers, sourceId, skillCastInfo, producedBy) =>
             this.#recordBuffStackChanged(buff, previousLayers, sourceId, skillCastInfo, producedBy),
+          (buff, previous) => this.#recordBuffModifierChanged(buff, previous),
+          buff => this.#recordBuffEnabledChanged(buff),
         );
         if (restoredState === undefined) container.addEntityTags(bornTags);
         return new BuffDefinitionOperationTarget(
@@ -1227,6 +1231,8 @@ export class StandardPlayerDamageEnvironment {
         (buff, producedBy) => this.#recordBuffCreated(buff, producedBy),
         (buff, previousLayers, sourceId, skillCastInfo, producedBy) =>
           this.#recordBuffStackChanged(buff, previousLayers, sourceId, skillCastInfo, producedBy),
+        (buff, previous) => this.#recordBuffModifierChanged(buff, previous),
+        buff => this.#recordBuffEnabledChanged(buff),
       );
       runtime = new BuffDefinitionOperationTarget(
         container,
@@ -1772,6 +1778,68 @@ export class StandardPlayerDamageEnvironment {
     });
   }
 
+  /** 候选实例的启用状态由叠层执行器决定；只观察边界，不在展示端重算优先级或上限。 */
+  #recordBuffEnabledChanged(buff: CombatBuff<string>): void {
+    // 没有图标或展示子项的内部 Buff 不产生额外展示回执。
+    const presentations = [
+      buff.definition.presentation,
+      ...(buff.definition.childPresentations ?? []).map(child => child.presentation),
+    ];
+    if (
+      !presentations.some(
+        presentation =>
+          presentation !== undefined &&
+          presentation.visible !== false &&
+          (presentation.visible === true ||
+            presentation.iconId !== undefined ||
+            presentation.iconPath !== undefined ||
+            presentation.showInSquadIcon === true ||
+            presentation.showInHeadBarCommon === true ||
+            presentation.showInHeadBarAttached === true),
+      )
+    )
+      return;
+    this.#requireReceipt().record({
+      frame: this.#requireClock().frame,
+      time: this.#requireClock().time,
+      event: 'BuffEnabledChanged',
+      sourceId: buff.sourceId,
+      targetId: buff.owner.ownerId,
+      data: {
+        buffId: buff.definition.id,
+        instanceId: buff.instanceId,
+        enabled: buff.isEnabled,
+      },
+    });
+  }
+
+  /** 值刷新不等于重施加；只记录变化后的单属性事实，避免静态刷新产生重复回执。 */
+  #recordBuffModifierChanged(
+    buff: CombatBuff<string>,
+    previous: CombatBuff<string>['attributeModifiers'],
+  ): void {
+    const before = simpleAttributeModifierFact(previous);
+    const after = simpleAttributeModifierFact(buff.attributeModifiers);
+    if (
+      before?.simpleModifierAttribute === after?.simpleModifierAttribute &&
+      before?.simpleModifierSlot === after?.simpleModifierSlot &&
+      before?.simpleModifierValue === after?.simpleModifierValue
+    )
+      return;
+    this.#requireReceipt().record({
+      frame: this.#requireClock().frame,
+      time: this.#requireClock().time,
+      event: 'BuffModifierChanged',
+      sourceId: buff.sourceId,
+      targetId: buff.owner.ownerId,
+      data: {
+        buffId: buff.definition.id,
+        instanceId: buff.instanceId,
+        ...(after ?? {}),
+      },
+    });
+  }
+
   /** Buff 施加成功后记录实例身份与原生展示数据，供时间轴还原生命周期和图标。 */
   #recordOwnedBuffApplied(
     ownerId: string,
@@ -1786,14 +1854,22 @@ export class StandardPlayerDamageEnvironment {
     const clock = this.#clock;
     const receipt = this.#receipt;
     const presentation = buff.definition.presentation;
-    const simpleModifier = simpleAttributeModifierFact(buff);
+    const simpleModifier = simpleAttributeModifierFact(buff.attributeModifiers);
     const recordPresentation = (
       eventName: 'BuffApplied' | 'BuffPresentationStarted',
       buffId: string,
       currentPresentation:
         NonNullable<CombatBuff<string>['definition']['presentation']> | undefined,
       parentBuffId?: string,
-    ): void =>
+    ): void => {
+      // SpellAbnormal 的等级存于实例黑板 count；enhanceCount 仍只表示 Buff 叠层。
+      // 普通 Buff 即使有同名计数也不能把它当成显示等级；缺少等级的图标沿用叠层显示。
+      const level =
+        currentPresentation?.iconStyleInSquad === 'SpellAbnormal'
+          ? buff.blackboard.getNumber('count')
+          : undefined;
+      const displayCount =
+        level !== undefined && Number.isSafeInteger(level) && level > 0 ? level : undefined;
       receipt.record({
         frame: clock.frame,
         time: clock.time,
@@ -1810,6 +1886,8 @@ export class StandardPlayerDamageEnvironment {
             ? {}
             : { physicalInflictionType: event.physicalInflictionType }),
           layers: buff.enhanceCount,
+          enabled: buff.isEnabled,
+          ...(displayCount === undefined ? {} : { displayCount }),
           stackingType: buff.definition.stackingType,
           hasFiniteLifetime: buff.remainingDuration !== null,
           sourceActionId: buff.sourceActionId,
@@ -1881,6 +1959,7 @@ export class StandardPlayerDamageEnvironment {
               }),
         },
       });
+    };
     recordPresentation('BuffApplied', buff.definition.id, presentation);
     if (ownerId !== 'enemy') {
       this.#buffProgress.register(

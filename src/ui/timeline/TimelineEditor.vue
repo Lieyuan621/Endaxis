@@ -84,7 +84,8 @@ import TimelineTrackHeader from './components/TimelineTrackHeader.vue';
 import OperatorAvatar from '../components/OperatorAvatar.vue';
 import TimelineWorkbenchShell from './components/TimelineWorkbenchShell.vue';
 import type { MobileLibraryEntry, MobileTrack } from './mobile/MobileTimelineWorkbench.vue';
-import { isNativeApp } from '../../platform/nativeBridge';
+import { useRuntimeEnvironment } from '../useRuntimeEnvironment';
+import { resolveTimelineLayout } from './timelineLayoutPolicy';
 import TimelineResourceCurves from './results/TimelineResourceCurves.vue';
 import TimelineSimulationErrorNotice from './results/TimelineSimulationErrorNotice.vue';
 import TimelineTrackGauge from './results/TimelineTrackGauge.vue';
@@ -373,7 +374,6 @@ import {
   type TimelineHitMarkerView,
 } from './results/timelineHitProjection';
 import {
-  projectHitEffectsByCast,
   projectTimelineHitReceipts,
   projectTimelineHitOccurrences,
   type TimelineHitEffectLabel,
@@ -481,26 +481,8 @@ const MobileTimelineWorkbench = defineAsyncComponent(
 
 const { t, te, locale } = useI18n({ useScope: 'global' });
 const { appearance, setAppearance } = useAppearance();
-function detectTouchLayout(): boolean {
-  if (isNativeApp()) return true;
-  if (window.innerWidth > 1366) return false;
-  const coarsePointer = window.matchMedia?.('(pointer: coarse)').matches ?? false;
-  const mobilePlatform = /Android|iPad|iPhone|iPod/i.test(navigator.userAgent);
-  const iPadDesktopAgent = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
-  return coarsePointer || mobilePlatform || iPadDesktopAgent;
-}
-const mobileLayout = ref(detectTouchLayout());
-function refreshTouchLayout(): void {
-  mobileLayout.value = detectTouchLayout();
-}
-onMounted(() => {
-  window.addEventListener('resize', refreshTouchLayout, { passive: true });
-  window.addEventListener('orientationchange', refreshTouchLayout, { passive: true });
-});
-onScopeDispose(() => {
-  window.removeEventListener('resize', refreshTouchLayout);
-  window.removeEventListener('orientationchange', refreshTouchLayout);
-});
+const environment = useRuntimeEnvironment();
+const mobileLayout = computed(() => resolveTimelineLayout(environment.value) === 'mobile');
 const TIMELINE_TRACK_HEADER_WIDTH = 180;
 const TIMELINE_RULER_HEIGHT = 60;
 const TIMELINE_SCROLLBAR_SIZE = 12;
@@ -709,7 +691,6 @@ const timelineVerticalScrollRange = ref(0);
 const timelineVerticalScrollbarHeight = computed(() =>
   Math.max(0, timelineViewportHeight.value - TIMELINE_RULER_HEIGHT - TIMELINE_SCROLLBAR_SIZE),
 );
-let timelineResizeObserver: ResizeObserver | null = null;
 const connectionDrag = ref<{
   /** 面板按钮启动的连线等待下一次点击目标，因此没有固定 pointerId。 */
   pointerId: number | null;
@@ -753,6 +734,8 @@ const workbenchInputRegion = useKeyboardInputRegion({
   active: () => true,
 });
 const interactionSession = provideInteractionSession(workbenchInputRegion);
+// 两套工作台更换时结束旧 DOM 上的手势，避免旋转后残留拖动预览或提交旧指针事件。
+watch(mobileLayout, () => interactionSession.cancel(), { flush: 'sync' });
 const serviceModalBoundary = useAsyncModalBoundary(interactionSession, workbenchInputRegion);
 const trackDropRegions = new Map<TrackIndex, HTMLElement>();
 function registerTrackDropRegion(trackIndex: TrackIndex, element: unknown): void {
@@ -1832,6 +1815,7 @@ const {
   performanceSamples: simulationPerformanceSamples,
   diagnosticsByCastId,
   simulateNow,
+  ensureCurrentSimulation,
   resetPublication: resetSimulationPublication,
 } = useScenarioSimulation({
   scenario,
@@ -2423,7 +2407,7 @@ const {
     );
   },
   commit: commitScenario,
-  simulate: simulateNow,
+  simulate: ensureCurrentSimulation,
   blocked: () => ElMessage.warning(t('timelineGrid.action.locked')),
   dropped: (event, items) => {
     if (items.length === 1 && items[0]!.ref.kind === 'skill')
@@ -2641,18 +2625,19 @@ function updateTimelineVerticalScroll(event: Event): void {
   if (viewport !== null && scrollbar !== null) syncTimelineVerticalScroll(scrollbar, viewport);
 }
 
-onMounted(() => {
-  updateTimelineViewportMetrics();
-  if (typeof ResizeObserver === 'undefined' || timelineScroll.value === null) return;
-  timelineResizeObserver = new ResizeObserver(updateTimelineViewportMetrics);
-  timelineResizeObserver.observe(timelineScroll.value);
-  if (timelineSurface.value !== null) timelineResizeObserver.observe(timelineSurface.value);
-});
-
-onScopeDispose(() => {
-  timelineResizeObserver?.disconnect();
-  timelineResizeObserver = null;
-});
+// 移动/桌面布局会替换这些 DOM；观察当前引用，不能只在编辑器第一次挂载时绑定。
+watch(
+  [timelineScroll, timelineSurface],
+  ([viewport, surface], _previous, onCleanup) => {
+    updateTimelineViewportMetrics();
+    if (typeof ResizeObserver === 'undefined' || viewport === null) return;
+    const observer = new ResizeObserver(updateTimelineViewportMetrics);
+    observer.observe(viewport);
+    if (surface !== null) observer.observe(surface);
+    onCleanup(() => observer.disconnect());
+  },
+  { flush: 'post' },
+);
 
 function castTimeDilationSegments(
   castId: string,
@@ -2913,34 +2898,6 @@ function castWarningTitle(castId: string, definitionUnavailable = false): string
 
 // 同一发布回执只解析一次；不能每个技能、每次指针移动都重扫整份日志。
 const hitReceipts = computed(() => projectTimelineHitReceipts(publishedReceiptEntries.value));
-const castHitEffects = computed(() => {
-  const current = simulationRun.value;
-  if (current === null) {
-    return new Map<string, ReadonlyMap<string, TimelineHitEffectLabel>>();
-  }
-  const byCastId = new Map<string, ReadonlyMap<string, TimelineHitEffectLabel>>();
-  const models = new Map(
-    viewModel.value.tracks.flatMap(track => track.skillCasts).map(cast => [cast.id, cast]),
-  );
-  for (const track of scenario.value.tracks) {
-    if (track === null) continue;
-    for (const cast of track.skillCasts) {
-      if (!compatibleSkillCastReceiptIds.value.has(cast.id)) continue;
-      const castModel = models.get(cast.id);
-      byCastId.set(
-        cast.id,
-        projectHitEffectsByCast(
-          scenario.value,
-          publishedReceiptEntries.value,
-          cast.id,
-          castModel?.hitMarkers ?? [],
-          hitReceipts.value,
-        ),
-      );
-    }
-  }
-  return byCastId;
-});
 const hitActualFrames = computed(() =>
   projectCompatibleHitFrames(hitReceipts.value.damages, compatibleSkillCastReceiptIds.value),
 );
@@ -3455,7 +3412,6 @@ function castHitMarkers(trackIndex: TrackIndex, castId: string): TimelineHitMark
     candidate => candidate.id === castId,
   );
   if (castModel === undefined || cast === undefined) return [];
-  const effects = castHitEffects.value.get(castId);
   const publishedStartFrame = skillCastActualStartFrames.value.get(castId) ?? castModel.startFrame;
   if (simulationRun.value !== null) {
     return (hitOccurrences.value.get(castId) ?? []).map(hit => ({
@@ -3482,7 +3438,6 @@ function castHitMarkers(trackIndex: TrackIndex, castId: string): TimelineHitMark
           hitActualFrames.value.get(marker.hitId) ?? publishedStartFrame + marker.frameOffset,
         ) - timelineFramePx(publishedStartFrame),
       forcedCritical: cast.simulationInputs?.criticalOverrides?.[marker.stepKey] === true,
-      ...(effects === undefined ? {} : { title: hitMarkerTitle(effects.get(marker.hitId)) }),
     }));
 }
 
@@ -8015,7 +7970,6 @@ function setMobileGuideFrame(frame: number | null): void {
       title: t('timeline.buffDetail.title'),
       source: t('timeline.buffDetail.source'),
       effect: t('timeline.buffDetail.effect'),
-      layers: t('timeline.buffDetail.layers'),
       start: t('timeline.buffDetail.start'),
       startReason: t('timeline.buffDetail.startReason'),
       end: t('timeline.buffDetail.end'),
@@ -8337,7 +8291,8 @@ button:disabled {
   grid-row: 1;
   width: 100%;
   min-height: 0;
-  overflow-x: hidden;
+  /* 隐藏原生滚动条但保留触摸平移；独立滚动槽继续使用同一 scroll 事件同步。 */
+  overflow-x: auto;
   overflow-y: auto;
   scrollbar-width: none;
 }
@@ -8411,6 +8366,11 @@ button:disabled {
   min-height: 100%;
   -webkit-user-select: none;
   user-select: none;
+}
+
+/* 空白处由浏览器平移；可编辑对象独占自己的拖动，不能被原生平移取消。 */
+.timeline-surface :is([data-timeline-item-key], [data-timeline-single-item]) {
+  touch-action: none;
 }
 
 /* 标尺和左上工具区仍有可编辑数字框；只为真实文本编辑控件恢复选择。 */

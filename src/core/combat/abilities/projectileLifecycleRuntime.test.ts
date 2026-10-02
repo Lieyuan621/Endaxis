@@ -21,7 +21,7 @@ describe('ProjectileLifecycleRuntime', () => {
       resolveHost: () => host,
     });
     restored.advanceFrame();
-    expect(events).toEqual(['block', 'finish']);
+    expect(events).toEqual(['block']);
     expect(original.getUnfinishedTargets()).toHaveLength(1);
     expect(restored.getUnfinishedTargets()).toHaveLength(0);
     const afterLanding = new ProjectileLifecycleRuntime(() => 2, {
@@ -30,7 +30,7 @@ describe('ProjectileLifecycleRuntime', () => {
     });
     afterLanding.advanceFrame();
     afterLanding.advanceFrame();
-    expect(events).toEqual(['block', 'finish', 'reset']);
+    expect(events).toEqual(['block', 'reset']);
   });
 
   it('到达不结束的投射物恢复后不重复到达，并等待原寿命到期', () => {

@@ -689,7 +689,7 @@ export const perlicaChr_0004_pelica_power_attack: SkillDefinition = {
   actionGraph: perlicaChr_0004_pelica_power_attackActionGraph,
   key: 'chr_0004_pelica_power_attack',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
-  timelineBlockFrames: 35,
+  timelineBlockFrames: 51,
   naturalDurationFrames: 135,
   exclusiveFrame: 50,
   offsetRecordFrame: 0,
@@ -1462,10 +1462,10 @@ export const perlica: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0004_pelica_combo_skill',
           blackboardKey: 'talent2',
           operation: 'assign',
           value: 1,
-          skillKey: 'chr_0004_pelica_combo_skill',
         },
       ],
     },
@@ -1476,10 +1476,10 @@ export const perlica: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0004_pelica_combo_skill',
           blackboardKey: 'duration',
           operation: 'multiply',
           value: 1.75,
-          skillKey: 'chr_0004_pelica_combo_skill',
         },
       ],
     },
@@ -1488,9 +1488,9 @@ export const perlica: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
+          skillKey: 'chr_0004_pelica_ultimate_skill',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
-          skillKey: 'chr_0004_pelica_ultimate_skill',
         },
       ],
     },
@@ -1508,10 +1508,10 @@ export const perlica: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0004_pelica_combo_skill',
           blackboardKey: 'extra_scaling',
           operation: 'assign',
           value: 1.33,
-          skillKey: 'chr_0004_pelica_combo_skill',
         },
       ],
     },
@@ -1520,10 +1520,10 @@ export const perlica: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0004_pelica_ultimate_skill',
           blackboardKey: 'crit',
           operation: 'add',
           value: 0.3,
-          skillKey: 'chr_0004_pelica_ultimate_skill',
         },
       ],
     },

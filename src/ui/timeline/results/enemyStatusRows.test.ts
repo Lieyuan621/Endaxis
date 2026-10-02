@@ -10,6 +10,8 @@ function buff(buffId: string, extras: Partial<BuffTimelineSegment> = {}): BuffTi
     instanceId: 1,
     startFrame: 0,
     endFrame: 100,
+    enabled: true,
+    enhanceCount: extras.layers ?? 1,
     layers: 1,
     placement: 'upper',
     ...extras,

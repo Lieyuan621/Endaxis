@@ -3194,7 +3194,7 @@ describe('CombatRuntimeAssembly', () => {
     expect(saved.nextSkillSlotReplacementId).toBe(1);
   });
 
-  it('changes an unplaced skill group without fabricating cooldown ledgers', () => {
+  it('changes an unplaced skill slot without fabricating cooldown ledgers', () => {
     const ultimate = skill({
       castId: 'ultimate-cast',
       skillGroupKey: 'ultimate',
@@ -3219,7 +3219,12 @@ describe('CombatRuntimeAssembly', () => {
       ],
     });
     const assembly = createAssembly(
-      [ultimate],
+      [
+        ultimate,
+        ...['comboSkill', 'enhancedComboSkill'].map(skillId =>
+          skill({ skillId, skillType: 'comboSkill', costs: [], costFrame: undefined }),
+        ),
+      ],
       undefined,
       undefined,
       emptyEnemyBuffRuntime,
@@ -3237,7 +3242,11 @@ describe('CombatRuntimeAssembly', () => {
       ],
     );
 
+    const cooldownsBefore = structuredClone(
+      assembly.stateGraph.operators.get('operator')!.cooldowns,
+    );
     expect(assembly.tryStartSkill('operator', 'ultimate', 'ultimate-cast')).toBe(true);
+    expect(assembly.stateGraph.operators.get('operator')!.cooldowns).toEqual(cooldownsBefore);
     expect(assembly.receipt.entries).toContainEqual(
       expect.objectContaining({
         event: 'SkillSlotChanged',

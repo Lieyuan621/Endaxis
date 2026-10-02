@@ -25,7 +25,10 @@ import type { CompiledOperatorActiveSkillRuntimeDefinitionSource } from './activ
 import type { CompiledAbilityEntityTemplateCatalogSource } from '../../compiler/abilities/abilityEntityCatalog.ts';
 import { compileAbilityEntityTemplateCatalogSource } from '../../compiler/abilities/abilityEntityCatalog.ts';
 import { compileAbilityEntityDefinitionSource } from '../../compiler/abilities/abilityEntityDefinition.ts';
-import { compileStandardStumpBuffClosure } from '../../compiler/buffs/standardStumpBuffClosure.ts';
+import {
+  compileStandardStumpBuffClosure,
+  planStandardStumpBuffPruning,
+} from '../../compiler/buffs/standardStumpBuffClosure.ts';
 import type { CompiledBuffDefinitionSource } from '../../compiler/buffs/buffProjectionTypes.ts';
 import { assignGeneratedDamageStepKeys } from '../../compiler/publication/definitionStepKeys.ts';
 import type { PassiveSkillCompilationBatchSource } from '../../compiler/skills/passiveSkillBatch.ts';
@@ -317,6 +320,7 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
   > = {};
   let entityCatalog = input.entityCatalog;
   let roots = baseRoots;
+  let preliminaryBuffSources: ReadonlyMap<string, BuffRuntimeSource> = new Map();
   let changed = true;
   while (changed) {
     changed = false;
@@ -365,7 +369,7 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
     roots = [
       ...new Set([...baseRoots, ...collectCompiledBuffIds(preliminaryAbilityEntityDefinitions)]),
     ];
-    const sources = collectBuffRuntimeClosure(
+    preliminaryBuffSources = collectBuffRuntimeClosure(
       roots,
       input.loadBuff,
       globalBuffCatalog,
@@ -375,7 +379,7 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
       ]),
       new Map((input.dashBuffs ?? []).map(item => [item.buffId, item.blackboard] as const)),
     );
-    for (const source of sources.values()) {
+    for (const source of preliminaryBuffSources.values()) {
       const sequences = [
         ...(buffShowsTimelineActions(source)
           ? source.graph.timelineActions.map(item => item.sequence)
@@ -507,14 +511,27 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
     }
   }
   const preliminaryEntityBuffIds = collectCompiledBuffIds(preliminaryAbilityEntityDefinitions);
-  const entityBuffIdentityReads = collectCompiledBuffIdentityReadIds(
+  const programBuffIdentityReads = collectCompiledBuffIdentityReadIds([
     preliminaryAbilityEntityDefinitions,
+    ...combatSkills.map(item => item.definition),
+    talents,
+    potentials,
+    ...basePassivePlans.flatMap(plan => plan.definitions),
+    input.comboSkillConditions ?? [],
+  ]);
+  // 实体内的空标记可能被实体外的关键词增强或战斗条件读取；闭包发现完成前不得裁掉创建动作。
+  // 此处只保护角色自身的根，实体创建的 Buff 仍须通过表现裁剪判定。
+  const { observedBuffIds } = planStandardStumpBuffPruning(
+    baseRoots,
+    preliminaryBuffSources,
+    input.loadBuff,
+    programBuffIdentityReads,
   );
   const entityVisualOnlyBuffIds = new Set(
     collectCombatInvisibleBuffClosureIds(
       [...preliminaryEntityBuffIds],
       input.loadBuff,
-      entityBuffIdentityReads,
+      observedBuffIds,
     ),
   );
   const compiledAbilityEntityDefinitions = Object.fromEntries(
@@ -634,11 +651,7 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
     },
     input.createBuffProjectionExtensions,
     rootBuffOwnerTargets,
-    new Set([
-      ...entityBuffIdentityReads,
-      ...collectCompiledBuffIdentityReadIds(combatSkills.map(item => item.definition)),
-      ...collectCompiledBuffIdentityReadIds(input.comboSkillConditions ?? []),
-    ]),
+    programBuffIdentityReads,
     input.gameplayTagRegistry,
     rootBuffSourceTargets,
     provenDefaultKeywordCarrierRootIds,
@@ -1026,8 +1039,7 @@ export function selectSingleSkillTimelineBlockFrames(
               routableSkillIds.has(id) &&
               (followUp !== undefined
                 ? id === followUp
-                : !['battleSkill', 'comboSkill', 'ultimate'].includes(group.operationType) ||
-                  basicAttackSkillIds.has(id)),
+                : group.operationType === 'basicAttack' || basicAttackSkillIds.has(id)),
           ),
       );
       // 预览优先采用无条件窗口。只有条件窗口时，也展示可接续的候选时长，

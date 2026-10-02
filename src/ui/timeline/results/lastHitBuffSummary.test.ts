@@ -23,15 +23,25 @@ describe('last hit buff summary', () => {
       ).buffs.map(b => b.buffId),
     ).toEqual(['ending', 'starting']);
   });
-  it('keeps the maximum layer count per definition without conflating distinct definitions', () => {
+  it('uses the new phase at a decrease boundary rather than the previous maximum', () => {
+    const phases = [buff('a', 0, 10, 4), buff('a', 10, 20, 3), buff('a', 20, 30, 1)];
+    for (const values of [phases, [...phases].reverse()]) {
+      expect(summarizeLastHitBuffs(values, 10).buffs.map(b => b.layers)).toEqual([3]);
+      expect(summarizeLastHitBuffs(values, 20).buffs.map(b => b.layers)).toEqual([1]);
+      expect(summarizeLastHitBuffs(values, 30).buffs.map(b => b.layers)).toEqual([1]);
+    }
+  });
+  it('keeps a terminal damage endpoint but does not resurrect a just-suppressed or zero-count state', () => {
     expect(
-      summarizeLastHitBuffs([buff('a'), buff('a', 2, 10, 3), buff('b', 0, 10, 2)], 10).buffs.map(
-        b => [b.buffId, b.layers],
-      ),
-    ).toEqual([
-      ['a', 3],
-      ['b', 2],
-    ]);
+      summarizeLastHitBuffs(
+        [
+          { ...buff('suppressed'), endReason: 'enabledChanged' },
+          { ...buff('zero'), endReason: 'stackChanged' },
+          { ...buff('expired'), endReason: 'lifetime' },
+        ],
+        10,
+      ).buffs.map(b => b.buffId),
+    ).toEqual(['expired']);
   });
   it('orders consistently and reports overflow after eight distinct buffs', () => {
     const result = summarizeLastHitBuffs(

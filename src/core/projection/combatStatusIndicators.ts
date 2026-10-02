@@ -2,7 +2,7 @@
  * 把已发生的 Buff 显示生命周期投影为 HUD 状态指示器。
  * 本层只保留原生显示去向，不决定页面布局，也不反向影响模拟。
  */
-import type { BuffTimelineSegment } from './buffTimelineViz';
+import { mergeOverlappingBuffTimelineSegments, type BuffTimelineSegment } from './buffTimelineViz';
 
 export const COMBAT_STATUS_DISPLAY_SLOTS = [
   'headBarCommon',
@@ -25,6 +25,11 @@ export interface CombatStatusIndicator {
   readonly buffId: string;
   readonly instanceId: number;
   readonly layers: number;
+  readonly enabled: boolean;
+  readonly enhanceCount: number;
+  readonly displayCount?: number;
+  /** 与时间轴使用同一批原始候选窗口，包含被抑制的实例与同帧变化。 */
+  readonly windows: readonly BuffTimelineSegment[];
   readonly startFrame: number;
   readonly endFrame: number;
   readonly startReason?: BuffTimelineSegment['startReason'];
@@ -97,7 +102,7 @@ export function projectCombatStatusIndicators(
   frame: number,
 ): readonly CombatStatusIndicator[] {
   if (!Number.isFinite(frame)) throw new RangeError('status indicator frame must be finite');
-  return segments
+  return mergeOverlappingBuffTimelineSegments(segments)
     .flatMap(segment => {
       if (segment.startFrame > frame || frame >= segment.endFrame) return [];
       const slots = displaySlots(segment);
@@ -116,6 +121,10 @@ export function projectCombatStatusIndicators(
           buffId: segment.buffId,
           instanceId: segment.instanceId,
           layers: segment.layers,
+          enabled: segment.enabled,
+          enhanceCount: segment.enhanceCount,
+          ...(segment.displayCount === undefined ? {} : { displayCount: segment.displayCount }),
+          windows: segment.windows,
           startFrame: segment.startFrame,
           endFrame: segment.endFrame,
           ...(segment.startReason === undefined ? {} : { startReason: segment.startReason }),

@@ -334,7 +334,7 @@ describe('assembly 原生常驻连携条件', () => {
     ).toBe(true);
   });
 
-  it('条件读取具体技能冷却，候选窗口仍交给当前输入形态施放', () => {
+  it('条件触发后替换槽位，候选窗口仍交给当前输入形态施放', () => {
     const f = setup();
     let observed = -1;
     f.owner.skillSlotGroups[0]!.replacementSkillKeys.push('replacement');
@@ -494,7 +494,7 @@ describe('assembly 原生常驻连携条件', () => {
     },
   );
 
-  it('具体连携未放置时仍按其静态冷却账本判断，不随替换槽漂移', () => {
+  it('未放置连携换槽继承进度后，按当前形态的冷却时长判断', () => {
     const f = setup();
     f.owner.skillSlotGroups[0]!.replacementSkillKeys.push('variant');
     f.owner.skills = [
@@ -540,8 +540,68 @@ describe('assembly 原生常驻连携条件', () => {
     expect(f.pending).toHaveLength(0);
     assembly.advanceFrames(299);
     f.emit();
+    expect(f.pending).toHaveLength(0);
+    assembly.advanceFrame();
+    f.emit();
     expect(f.pending).toHaveLength(1);
   });
+
+  it('换入零冷却的连携后续段时正常检查条件，不误判为缺少账本', () => {
+    const f = setup();
+    f.owner.skillSlotGroups[0]!.replacementSkillKeys.push('follow-up');
+    f.owner.skills.push(
+      { ...combo('follow-up'), cooldownFrames: undefined, costFrame: 0 },
+      action('switch', [
+        {
+          kind: 'changeSkillSlot',
+          parameters: {
+            skillSlotKey: 'combo',
+            targetSkillKey: 'follow-up',
+            inheritOriginSkillCooldownProgress: false,
+          },
+        },
+      ]),
+    );
+    const assembly = new CombatRuntimeAssembly(f.options);
+    expect(assembly.tryStartSkill('owner', 'combo')).toBe(true);
+    assembly.advanceFrames(6);
+    f.emit();
+    expect(f.pending).toHaveLength(0);
+    expect(assembly.tryStartSkill('owner', 'switch')).toBe(true);
+    f.emit();
+    expect(f.pending).toHaveLength(1);
+    expect(assembly.comboWindows.first).toMatchObject({
+      nextSkillKey: 'combo',
+      nativeCondition: { skillSlotKey: 'combo', assignPairs: { local: 1 } },
+    });
+  });
+
+  it.each(['missing-ledger', 'missing-start-frame'])(
+    '当前槽位 %s 时明确失败，不回退到条件原技能',
+    failure => {
+      const f = setup();
+      f.owner.skillSlotGroups[0]!.replacementSkillKeys.push('missing');
+      f.owner.skills.push(
+        action('switch', [
+          {
+            kind: 'changeSkillSlot',
+            parameters: {
+              skillSlotKey: 'combo',
+              targetSkillKey: 'missing',
+              inheritOriginSkillCooldownProgress: false,
+            },
+          },
+        ]),
+      );
+      if (failure === 'missing-start-frame')
+        f.owner.skills.push({ ...combo('missing'), costFrame: undefined });
+      const assembly = new CombatRuntimeAssembly(f.options);
+      expect(assembly.tryStartSkill('owner', 'switch')).toBe(true);
+      expect(f.emit).toThrow('combo condition requires current ComboSkill cooldown');
+      expect(f.pending).toHaveLength(0);
+      expect(assembly.comboWindows.pending).toHaveLength(0);
+    },
+  );
 
   it('固定定义与重复放置共享一次冷却推进', () => {
     const f = setup();
@@ -749,33 +809,53 @@ describe('assembly 原生常驻连携条件', () => {
     expect(f.pending[0]?.assignPairs).toEqual({ local: 1, label: 'condition' });
   });
 
-  it('槽位替换前后始终读取条件绑定技能的冷却', () => {
-    const f = setup();
-    f.owner.skillSlotGroups[0]!.replacementSkillKeys.push('variant');
-    f.owner.skills.push(combo('variant'));
-    const change = (targetSkillKey: string): ActionGraphStep => ({
-      kind: 'changeSkillSlot',
-      parameters: { skillSlotKey: 'combo', targetSkillKey },
-    });
-    f.owner.skills.push(
-      action('to-variant', [change('variant')]),
-      action('to-base', [change('combo')]),
-    );
-    const assembly = new CombatRuntimeAssembly(f.options);
-    assembly.tryStartSkill('owner', 'combo');
-    assembly.advanceFrames(6);
-    f.emit();
-    expect(f.pending).toHaveLength(0);
-    assembly.tryStartSkill('owner', 'to-variant');
-    f.emit();
-    expect(f.pending).toHaveLength(0);
-    assembly.tryStartSkill('owner', 'to-base');
-    f.emit();
-    expect(f.pending).toHaveLength(0);
-    assembly.advanceFrames(294);
-    f.emit();
-    expect(f.pending).toHaveLength(1);
-  });
+  it.each(['combo', 'variant'])(
+    '%s 施放后，换入和换出形态都重新读取当前槽位冷却，保留条件身份',
+    coolingSkillKey => {
+      const f = setup();
+      f.owner.skillSlotGroups[0]!.replacementSkillKeys.push('variant');
+      f.owner.skills.push(combo('variant'));
+      for (const targetSkillKey of ['combo', 'variant']) {
+        f.owner.skills.push(
+          action(`switch-${targetSkillKey}`, [
+            {
+              kind: 'changeSkillSlot',
+              parameters: {
+                skillSlotKey: 'combo',
+                targetSkillKey,
+                inheritOriginSkillCooldownProgress: false,
+              },
+            },
+          ]),
+        );
+      }
+      const assembly = new CombatRuntimeAssembly(f.options);
+      const readySkillKey = coolingSkillKey === 'combo' ? 'variant' : 'combo';
+      expect(assembly.tryStartSkill('owner', `switch-${coolingSkillKey}`)).toBe(true);
+      f.emit();
+      expect(assembly.tryStartSkill('owner', 'combo')).toBe(true);
+      expect(assembly.comboWindows.pending).toHaveLength(0);
+      assembly.advanceFrames(6);
+      f.emit();
+      expect(f.pending).toHaveLength(1);
+      expect(assembly.comboWindows.pending).toHaveLength(0);
+      expect(assembly.tryStartSkill('owner', `switch-${readySkillKey}`)).toBe(true);
+      f.emit();
+      expect(f.pending).toHaveLength(2);
+      expect(assembly.comboWindows.first).toMatchObject({
+        nextSkillKey: 'combo',
+        nativeCondition: { skillSlotKey: 'combo', assignPairs: { local: 2 } },
+      });
+      expect(assembly.comboWindows.consume('owner', readySkillKey, 'combo').consumed).toBe(true);
+      expect(assembly.tryStartSkill('owner', `switch-${coolingSkillKey}`)).toBe(true);
+      f.emit();
+      expect(f.pending).toHaveLength(2);
+      expect(assembly.comboWindows.pending).toHaveLength(0);
+      assembly.advanceFrames(294);
+      f.emit();
+      expect(f.pending.map(value => value.assignPairs?.local)).toEqual([1, 2, 3]);
+    },
+  );
 
   it.each(['disabled', 'dead', 'silenced'] as const)(
     '%s 门禁按实时来源查询，不求值、不改变局部快照',

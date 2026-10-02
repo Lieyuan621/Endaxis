@@ -898,7 +898,7 @@ export const antalChr_0023_antal_power_attackActionGraph = {
 export const antalChr_0023_antal_power_attack: SkillDefinition = {
   key: 'chr_0023_antal_power_attack',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
-  timelineBlockFrames: 32,
+  timelineBlockFrames: 43,
   naturalDurationFrames: 124,
   exclusiveFrame: 42,
   offsetRecordFrame: 0,
@@ -3409,10 +3409,10 @@ export const antal: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0023_antal_ultimate_skill',
           blackboardKey: 'rate',
           operation: 'multiply',
           value: 1.1,
-          skillKey: 'chr_0023_antal_ultimate_skill',
         },
       ],
     },
@@ -3421,9 +3421,9 @@ export const antal: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
+          skillKey: 'chr_0023_antal_ultimate_skill',
           resource: 'ultimateEnergy',
           multiplier: 0.9,
-          skillKey: 'chr_0023_antal_ultimate_skill',
         },
       ],
     },
@@ -3432,17 +3432,17 @@ export const antal: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0023_antal_normal_skill',
           blackboardKey: 'potential_3',
           operation: 'assign',
           value: 1,
-          skillKey: 'chr_0023_antal_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0023_antal_normal_skill',
           blackboardKey: 'potential_3_atb',
           operation: 'add',
           value: 15,
-          skillKey: 'chr_0023_antal_normal_skill',
         },
       ],
     },
@@ -3458,24 +3458,24 @@ export const antal: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0023_antal_normal_skill',
           blackboardKey: 'potential_5',
           operation: 'assign',
           value: 1,
-          skillKey: 'chr_0023_antal_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0023_antal_normal_skill',
           blackboardKey: 'delay_time',
           operation: 'add',
           value: 20,
-          skillKey: 'chr_0023_antal_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0023_antal_normal_skill',
           blackboardKey: 'potential_5_rate',
           operation: 'add',
           value: 0.04,
-          skillKey: 'chr_0023_antal_normal_skill',
         },
       ],
     },

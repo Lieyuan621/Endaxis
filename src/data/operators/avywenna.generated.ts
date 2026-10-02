@@ -728,7 +728,7 @@ export const avywennaChr_0012_avywen_power_attackActionGraph = {
 export const avywennaChr_0012_avywen_power_attack: SkillDefinition = {
   key: 'chr_0012_avywen_power_attack',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
-  timelineBlockFrames: 29,
+  timelineBlockFrames: 45,
   naturalDurationFrames: 207,
   exclusiveFrame: 44,
   offsetRecordFrame: 0,
@@ -2526,24 +2526,24 @@ export const avywenna: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          blackboardKey: 'talent0_usp',
-          operation: 'assign',
-          value: [3, 4],
           skillKey: 'chr_0012_avywen_normal_skill',
-        },
-        {
-          kind: 'patchSkillBlackboard',
           blackboardKey: 'talent0_usp',
           operation: 'assign',
           value: [3, 4],
+        },
+        {
+          kind: 'patchSkillBlackboard',
           skillKey: 'chr_0012_avywen_combo_skill',
-        },
-        {
-          kind: 'patchSkillBlackboard',
           blackboardKey: 'talent0_usp',
           operation: 'assign',
           value: [3, 4],
+        },
+        {
+          kind: 'patchSkillBlackboard',
           skillKey: 'chr_0012_avywen_ultimate_skill',
+          blackboardKey: 'talent0_usp',
+          operation: 'assign',
+          value: [3, 4],
         },
       ],
       attachedBuffs: [{ buffId: 'buff_chr_0012_avywen_talent_0' }],
@@ -2553,17 +2553,17 @@ export const avywenna: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0012_avywen_ultimate_skill',
           blackboardKey: 'pulse_vul_rate',
           operation: 'assign',
           value: [0.06, 0.1],
-          skillKey: 'chr_0012_avywen_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0012_avywen_ultimate_skill',
           blackboardKey: 'pulse_vul_duration',
           operation: 'assign',
           value: [10, 10],
-          skillKey: 'chr_0012_avywen_ultimate_skill',
         },
       ],
     },
@@ -2574,24 +2574,24 @@ export const avywenna: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          blackboardKey: 'talent0_usp',
-          operation: 'add',
-          value: 2,
           skillKey: 'chr_0012_avywen_normal_skill',
-        },
-        {
-          kind: 'patchSkillBlackboard',
           blackboardKey: 'talent0_usp',
           operation: 'add',
           value: 2,
+        },
+        {
+          kind: 'patchSkillBlackboard',
           skillKey: 'chr_0012_avywen_combo_skill',
-        },
-        {
-          kind: 'patchSkillBlackboard',
           blackboardKey: 'talent0_usp',
           operation: 'add',
           value: 2,
+        },
+        {
+          kind: 'patchSkillBlackboard',
           skillKey: 'chr_0012_avywen_ultimate_skill',
+          blackboardKey: 'talent0_usp',
+          operation: 'add',
+          value: 2,
         },
       ],
     },
@@ -2600,17 +2600,17 @@ export const avywenna: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0012_avywen_combo_skill',
           blackboardKey: 'potential_2',
           operation: 'assign',
           value: 20,
-          skillKey: 'chr_0012_avywen_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0012_avywen_ultimate_skill',
           blackboardKey: 'potential_2',
           operation: 'assign',
           value: 20,
-          skillKey: 'chr_0012_avywen_ultimate_skill',
         },
       ],
     },
@@ -2626,9 +2626,9 @@ export const avywenna: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
+          skillKey: 'chr_0012_avywen_ultimate_skill',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
-          skillKey: 'chr_0012_avywen_ultimate_skill',
         },
       ],
     },
@@ -2637,10 +2637,10 @@ export const avywenna: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0012_avywen_normal_skill',
           blackboardKey: 'potential_5_rate',
           operation: 'assign',
           value: 1.15,
-          skillKey: 'chr_0012_avywen_normal_skill',
         },
       ],
     },

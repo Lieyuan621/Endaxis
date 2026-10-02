@@ -6,6 +6,8 @@ import {
   storePostSkillCastRequest,
   takePostSkillCastRequest,
   takeBeforeSkillCastPreparation,
+  replaceAbilitySkillSlot,
+  finishAbilitySkillSlotReplacement,
 } from './abilitySystemExecution';
 import type { RuntimeSkillInterruptReason, RuntimeSkillTransition } from '../skills/skillRuntime';
 import type { RuntimeSkillState } from '../state/abilityState';
@@ -51,6 +53,52 @@ class FixtureRuntime implements AbilitySkillRuntime {
 const beforeCastPayload = { sourceId: 'owner', targetId: 'owner', skillId: 'test', skillCastId: 1 };
 
 describe('AbilitySystemRuntime', () => {
+  it('换入连携槽改变原生类型，切面恢复与撤销均保留类型写入', () => {
+    const options = () => ({
+      skills: [
+        new FixtureRuntime('base', [], 'comboSkill'),
+        new FixtureRuntime('replacement', [], 'battleSkill'),
+      ],
+      skillSlotGroups: [
+        {
+          skillSlotKey: 'combo',
+          input: 'comboSkill' as const,
+          baseSkillKey: 'base',
+          replacementSkillKeys: ['replacement'],
+        },
+      ],
+    });
+    const original = new AbilitySystemRuntime(options());
+    const host = (ability: AbilitySystemRuntime) => ({
+      currentSkillKey: (slot: string) => ability.currentSkillKeyForSlot(slot),
+      changeSkillSlot: (slot: string, skill: string, _inherit: boolean, reverting?: boolean) => {
+        ability.changeSkillSlot(slot, skill, reverting);
+      },
+    });
+    const registrationId = replaceAbilitySkillSlot(
+      original.runtimeState,
+      {
+        skillSlotKey: 'combo',
+        targetSkillKey: 'replacement',
+        inheritOriginSkillCooldownProgress: false,
+      },
+      host(original),
+    );
+    expect(original.nativeSkillTypeForSkill('replacement')).toBe('comboSkill');
+    original.changeNativeSkillType('base', 'attachSkill');
+    const restored = new AbilitySystemRuntime(options(), structuredClone(original.runtimeState));
+    finishAbilitySkillSlotReplacement(
+      restored.runtimeState,
+      'combo',
+      registrationId,
+      host(restored),
+    );
+    expect(restored.currentSkillKeyForSlot('combo')).toBe('base');
+    expect(restored.nativeSkillTypeForSkill('replacement')).toBe('comboSkill');
+    expect(restored.nativeSkillTypeForSkill('base')).toBe('attachSkill');
+    expect(original.currentSkillKeyForSlot('combo')).toBe('replacement');
+  });
+
   it.each([false, true])('只推进活跃技能，结束后休眠且再次启动会唤醒，共享冷却=%s', shared => {
     const events: string[] = [];
     const skill = new FixtureRuntime('active', events);
@@ -884,8 +932,8 @@ describe('AbilitySystemRuntime', () => {
   });
 
   it.each(
-    (['battleSkill', 'comboSkill', 'ultimate'] as const).flatMap(skillType =>
-      [undefined, 'battle'].map(followUp => ({ skillType, followUp })),
+    (['battleSkill', 'comboSkill', 'ultimate', 'finisher', 'plungingAttack'] as const).flatMap(
+      skillType => [undefined, 'battle'].map(followUp => ({ skillType, followUp })),
     ),
   )(
     '$skillType follows the configured display target ($followUp), or defaults to basic attack',

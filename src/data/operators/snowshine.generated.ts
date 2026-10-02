@@ -508,7 +508,7 @@ export const snowshineChr_0014_aurora_power_attack: SkillDefinition = {
   actionGraph: snowshineChr_0014_aurora_power_attackActionGraph,
   key: 'chr_0014_aurora_power_attack',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
-  timelineBlockFrames: 41,
+  timelineBlockFrames: 76,
   naturalDurationFrames: 133,
   exclusiveFrame: 75,
   offsetRecordFrame: 0,
@@ -1866,10 +1866,10 @@ export const snowshine: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0014_aurora_normal_skill',
           blackboardKey: 'talent_2_sup',
           operation: 'assign',
           value: [6, 10],
-          skillKey: 'chr_0014_aurora_normal_skill',
         },
       ],
     },
@@ -1880,10 +1880,10 @@ export const snowshine: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0014_aurora_normal_skill',
           blackboardKey: 'potential_1',
           operation: 'assign',
           value: 1,
-          skillKey: 'chr_0014_aurora_normal_skill',
         },
       ],
     },
@@ -1892,17 +1892,17 @@ export const snowshine: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0014_aurora_ultimate_skill',
           blackboardKey: 'potential_2',
           operation: 'assign',
           value: 1,
-          skillKey: 'chr_0014_aurora_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0014_aurora_ultimate_skill',
           blackboardKey: 'potential_2_range',
           operation: 'assign',
           value: 0.2,
-          skillKey: 'chr_0014_aurora_ultimate_skill',
         },
       ],
     },
@@ -1911,10 +1911,10 @@ export const snowshine: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0014_aurora_ultimate_skill',
           blackboardKey: 'extra_duration',
           operation: 'add',
           value: 2,
-          skillKey: 'chr_0014_aurora_ultimate_skill',
         },
       ],
     },
@@ -1930,10 +1930,10 @@ export const snowshine: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0014_aurora_normal_skill',
           blackboardKey: 'potential_5_atb',
           operation: 'assign',
           value: 10,
-          skillKey: 'chr_0014_aurora_normal_skill',
         },
       ],
     },

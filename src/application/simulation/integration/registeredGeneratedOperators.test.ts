@@ -2132,8 +2132,7 @@ describe('registered generated operators', () => {
         sourceId: 'track:zhuang-fangyi',
         data: expect.objectContaining({
           castId: enhancedBattleCastId,
-          stepKey:
-            'abilityentity_chr_0030_zhuangfy_normal_skill_ult:chr_0030_zhuangfy_normal_skill_ult_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_12/action',
+          skillMultiplierSourceKey: 'atk_scale_final',
         }),
       }),
     );
@@ -2141,7 +2140,7 @@ describe('registered generated operators', () => {
       entry =>
         entry.event === 'DamageApplied' &&
         entry.data?.castId === enhancedBattleCastId &&
-        String(entry.data?.stepKey).includes('/nodes/dealDamage_12/action'),
+        entry.skillMultiplierCalculation?.operation === 'multiply',
     );
     expect(enhancedHit?.data?.skillMultiplierSourceKey).toBe('atk_scale_final');
     expect(enhancedHit?.skillMultiplierCalculation).toMatchObject({
@@ -2158,13 +2157,27 @@ describe('registered generated operators', () => {
       entry =>
         entry.event === 'DamageApplied' &&
         entry.data?.castId === enhancedBattleCastId &&
-        /\/nodes\/dealDamage_[45]\/action/.test(String(entry.data?.stepKey)),
+        entry.skillMultiplierCalculation?.operation === 'add',
     );
     expect(ordinaryHit?.skillMultiplierCalculation).toMatchObject({
       operation: 'add',
       leftKey: 'atk_scale',
       rightKey: 'atk_up_final',
     });
+    expect(
+      result.receiptEntries
+        .filter(
+          entry => entry.event === 'DamageApplied' && entry.data?.castId === enhancedBattleCastId,
+        )
+        .map(entry => entry.data?.['damageScale:enhanced']),
+    ).toEqual([1.2, 1.22, 1.24, 1.26]);
+    // 在周期雷击之后、末击之前保存；恢复必须保留本次施法注入的关键词增强规则。
+    const original = createEditorSimulationService().createCombatSession(placed);
+    original.advanceToFrame(140);
+    const restored = original.fork(original.runtime.save());
+    original.advanceToFrame(300);
+    restored.advanceToFrame(300);
+    expect(restored.collectResult()).toEqual(original.collectResult());
     expect(result.receiptEntries).toContainEqual(
       expect.objectContaining({
         event: 'ElementalInflictionApplied',
@@ -3251,6 +3264,17 @@ describe('registered generated operators', () => {
         },
       },
     });
+
+    // 落地与超时是替代路径：首 Tick 生成，三秒后不能再生成第二份。
+    expect(
+      result.receiptEntries
+        .filter(
+          entry =>
+            entry.event === 'AbilityEntitySpawned' &&
+            entry.data?.abilityEntityId === 'abilityentity_chr_0027_tangtang_comboskill_water',
+        )
+        .map(entry => entry.frame),
+    ).toEqual([28]);
 
     expect(result.receiptEntries).toContainEqual(
       expect.objectContaining({

@@ -13,6 +13,8 @@
     <title>Endaxis - 《明日方舟：终末地》排轴工具</title>
     <script>
       (function () {
+        // 模块加载前只适配原生首帧遮罩；标记契约同 src/platform/runtimeEnvironment.ts。
+        // 此处不能选择布局或推断输入能力，避免启动代码变成第二套运行环境判断。
         document.documentElement.classList.toggle(
           'native-app',
           /\bEndaxisApp\//i.test(navigator.userAgent || ''),

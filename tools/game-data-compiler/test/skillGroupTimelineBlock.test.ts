@@ -150,35 +150,41 @@ describe('基础攻击技能块窗口', () => {
 });
 
 describe('单技能入口的预览宽度', () => {
-  it('只有条件普攻接续时使用候选窗口预览，保留实际条件判定', () => {
-    const combo = {
-      ...skill('combo', [
-        { startFrame: 5, endFrame: 70, skillIds: ['internal'], direct: false },
-        { startFrame: 40, endFrame: 70, skillIds: ['attack'], direct: false },
-      ]),
-      timelineBlockFrames: 180,
-      naturalDurationFrames: 70,
-    };
-    const definitions = new Map([
-      ['combo', combo],
-      ['attack', skill('attack', [])],
-      ['internal', skill('internal', [])],
-    ]);
-    selectSingleSkillTimelineBlockFrames(
-      definitions,
-      [
-        { operationType: 'comboSkill', skillKeys: ['combo'], replacementPlacements: {} },
-        {
-          operationType: 'basicAttack',
-          skillKeys: ['internal'],
-          variants: [{ skillKeys: ['attack'] }],
-          replacementPlacements: { internal: 'internal' },
-        },
-      ],
-      new Set(['internal']),
-    );
-    expect(definitions.get('combo')).toEqual({ ...combo, timelineBlockFrames: 40 });
-  });
+  it.each(['comboSkill', 'finisher', 'plungingAttack'] as const)(
+    '%s 忽略更早的战技窗口，以普攻候选窗口预览',
+    operationType => {
+      const combo = {
+        ...skill('combo', [
+          { startFrame: 5, endFrame: 70, skillIds: ['internal'], direct: false },
+          { startFrame: 10, endFrame: 70, skillIds: ['battle'], direct: true },
+          { startFrame: 40, endFrame: 70, skillIds: ['attack'], direct: false },
+        ]),
+        timelineBlockFrames: 180,
+        naturalDurationFrames: 70,
+      };
+      const definitions = new Map([
+        ['combo', combo],
+        ['attack', skill('attack', [])],
+        ['internal', skill('internal', [])],
+        ['battle', skill('battle', [])],
+      ]);
+      selectSingleSkillTimelineBlockFrames(
+        definitions,
+        [
+          { operationType, skillKeys: ['combo'], replacementPlacements: {} },
+          { operationType: 'battleSkill', skillKeys: ['battle'], replacementPlacements: {} },
+          {
+            operationType: 'basicAttack',
+            skillKeys: ['internal'],
+            variants: [{ skillKeys: ['attack'] }],
+            replacementPlacements: { internal: 'internal' },
+          },
+        ],
+        new Set(['internal']),
+      );
+      expect(definitions.get('combo')).toEqual({ ...combo, timelineBlockFrames: 40 });
+    },
+  );
   it('连携序列和战技的提前窗口不再缩短非普攻块宽', () => {
     const definitions = new Map([
       [

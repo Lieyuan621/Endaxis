@@ -865,7 +865,7 @@ export const fluoriteChr_0022_bounda_power_attack: SkillDefinition = {
   actionGraph: fluoriteChr_0022_bounda_power_attackActionGraph,
   key: 'chr_0022_bounda_power_attack',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
-  timelineBlockFrames: 22,
+  timelineBlockFrames: 46,
   naturalDurationFrames: 127,
   exclusiveFrame: 45,
   offsetRecordFrame: 0,
@@ -2483,17 +2483,17 @@ export const fluorite: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0022_bounda_normal_skill',
           blackboardKey: 'duration_potential',
           operation: 'assign',
           value: 6,
-          skillKey: 'chr_0022_bounda_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0022_bounda_normal_skill',
           blackboardKey: 'potential_lv',
           operation: 'assign',
           value: 3,
-          skillKey: 'chr_0022_bounda_normal_skill',
         },
       ],
     },
@@ -2502,9 +2502,9 @@ export const fluorite: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
+          skillKey: 'chr_0022_bounda_ultimate_skill',
           resource: 'ultimateEnergy',
           multiplier: 0.9,
-          skillKey: 'chr_0022_bounda_ultimate_skill',
         },
       ],
     },

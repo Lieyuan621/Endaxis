@@ -606,7 +606,7 @@ export const daPanChr_0018_dapan_power_attack: SkillDefinition = {
   actionGraph: daPanChr_0018_dapan_power_attackActionGraph,
   key: 'chr_0018_dapan_power_attack',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
-  timelineBlockFrames: 35,
+  timelineBlockFrames: 47,
   naturalDurationFrames: 215,
   exclusiveFrame: 46,
   offsetRecordFrame: 0,
@@ -2883,31 +2883,31 @@ export const daPan: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0018_dapan_ultimate_skill',
           blackboardKey: 'talent_1',
           operation: 'assign',
           value: [1, 1],
-          skillKey: 'chr_0018_dapan_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0018_dapan_ultimate_skill',
           blackboardKey: 'talent_1_stack',
           operation: 'assign',
           value: [1, 2],
-          skillKey: 'chr_0018_dapan_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0018_dapan_ultimate_skill',
           blackboardKey: 'talent_1_duration',
           operation: 'assign',
           value: [20, 20],
-          skillKey: 'chr_0018_dapan_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0018_dapan_ultimate_skill',
           blackboardKey: 'talent_1_cd_reduce',
           operation: 'assign',
           value: [0.4, 0.4],
-          skillKey: 'chr_0018_dapan_ultimate_skill',
         },
       ],
     },
@@ -2918,17 +2918,17 @@ export const daPan: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0018_dapan_ultimate_skill',
           blackboardKey: 'potential_1_dmg_up',
           operation: 'assign',
           value: 0.3,
-          skillKey: 'chr_0018_dapan_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0018_dapan_ultimate_skill',
           blackboardKey: 'potential_1_duration',
           operation: 'assign',
           value: 15,
-          skillKey: 'chr_0018_dapan_ultimate_skill',
         },
       ],
     },
@@ -2937,17 +2937,17 @@ export const daPan: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0018_dapan_ultimate_skill',
           blackboardKey: 'talent_1_stack',
           operation: 'add',
           value: 1,
-          skillKey: 'chr_0018_dapan_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0018_dapan_ultimate_skill',
           blackboardKey: 'talent_1_duration',
           operation: 'add',
           value: 10,
-          skillKey: 'chr_0018_dapan_ultimate_skill',
         },
       ],
     },
@@ -2963,9 +2963,9 @@ export const daPan: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
+          skillKey: 'chr_0018_dapan_ultimate_skill',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
-          skillKey: 'chr_0018_dapan_ultimate_skill',
         },
       ],
     },
@@ -2974,10 +2974,10 @@ export const daPan: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0018_dapan_normal_skill',
           blackboardKey: 'potential_5_interval',
           operation: 'assign',
           value: 45,
-          skillKey: 'chr_0018_dapan_normal_skill',
         },
       ],
     },

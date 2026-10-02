@@ -779,7 +779,7 @@ export const gilbertaChr_0013_aglina_power_attackActionGraph = {
 export const gilbertaChr_0013_aglina_power_attack: SkillDefinition = {
   key: 'chr_0013_aglina_power_attack',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
-  timelineBlockFrames: 43,
+  timelineBlockFrames: 51,
   naturalDurationFrames: 125,
   exclusiveFrame: 50,
   offsetRecordFrame: 0,
@@ -2531,31 +2531,31 @@ export const gilberta: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0013_aglina_normal_skill',
           blackboardKey: 'heal_scale',
           operation: 'assign',
           value: [0.6, 0.9],
-          skillKey: 'chr_0013_aglina_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0013_aglina_normal_skill',
           blackboardKey: 'heal_const',
           operation: 'assign',
           value: [72, 108],
-          skillKey: 'chr_0013_aglina_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0013_aglina_combo_skill',
           blackboardKey: 'heal_scale',
           operation: 'assign',
           value: [0.6, 0.9],
-          skillKey: 'chr_0013_aglina_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0013_aglina_combo_skill',
           blackboardKey: 'heal_const',
           operation: 'assign',
           value: [72, 108],
-          skillKey: 'chr_0013_aglina_combo_skill',
         },
       ],
     },
@@ -2566,24 +2566,24 @@ export const gilberta: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0013_aglina_normal_skill',
           blackboardKey: 'potential',
           operation: 'assign',
           value: 1,
-          skillKey: 'chr_0013_aglina_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0013_aglina_normal_skill',
           blackboardKey: 'radiusadd_display',
           operation: 'assign',
           value: 0.2,
-          skillKey: 'chr_0013_aglina_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0013_aglina_normal_skill',
           blackboardKey: 'radius',
           operation: 'assign',
           value: 6.3,
-          skillKey: 'chr_0013_aglina_normal_skill',
         },
       ],
     },
@@ -2592,17 +2592,17 @@ export const gilberta: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0013_aglina_ultimate_skill',
           blackboardKey: 'potential2',
           operation: 'assign',
           value: 1,
-          skillKey: 'chr_0013_aglina_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0013_aglina_ultimate_skill',
           blackboardKey: 'potential2_onceadd',
           operation: 'assign',
           value: 0.1,
-          skillKey: 'chr_0013_aglina_ultimate_skill',
         },
       ],
     },
@@ -2623,22 +2623,22 @@ export const gilberta: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
+          skillKey: 'chr_0013_aglina_ultimate_skill',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
-          skillKey: 'chr_0013_aglina_ultimate_skill',
         },
       ],
     },
     {
       levels: 1,
       modifiers: [
-        { kind: 'addSkillCooldownFrames', frames: -60, skillKey: 'chr_0013_aglina_combo_skill' },
+        { kind: 'addSkillCooldownFrames', skillKey: 'chr_0013_aglina_combo_skill', frames: -60 },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0013_aglina_combo_skill',
           blackboardKey: 'atk_scale',
           operation: 'multiply',
           value: 1.3,
-          skillKey: 'chr_0013_aglina_combo_skill',
         },
       ],
     },

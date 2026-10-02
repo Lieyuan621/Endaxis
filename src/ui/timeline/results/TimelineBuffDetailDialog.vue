@@ -3,7 +3,11 @@ import { EaButton, EaDialog } from '../../../design-system/index';
 import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { BuffDetailInstance, BuffDetailTarget } from './buffDetail';
+import {
+  initialBuffDetailInstanceIndex,
+  type BuffDetailInstance,
+  type BuffDetailTarget,
+} from './buffDetail';
 import CombatObjectOriginGraph from './CombatObjectOriginGraph.vue';
 import { CombatObjectOrigins } from '../../../core/projection/combatObjectOrigins';
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
@@ -25,7 +29,6 @@ const props = defineProps<{
     title: string;
     source: string;
     effect: string;
-    layers: string;
     start: string;
     startReason: string;
     end: string;
@@ -43,17 +46,23 @@ const emit = defineEmits<{
 const instanceIndex = ref(0);
 watch(
   () => props.target,
-  () => {
-    instanceIndex.value = 0;
+  target => {
+    instanceIndex.value = initialBuffDetailInstanceIndex(target);
   },
+  { immediate: true },
 );
 const activeInstance = computed<BuffDetailInstance | null>(() => {
   if (props.target === null) return null;
   return (
     props.target.instances?.[instanceIndex.value] ?? {
+      instanceId: props.target.instanceId,
+      startSequence: props.target.startSequence,
       ...(props.target.sourceName === undefined ? {} : { sourceName: props.target.sourceName }),
       startFrame: props.target.startFrame,
       endFrame: props.target.endFrame,
+      enabled: props.target.enabled,
+      enhanceCount: props.target.enhanceCount,
+      displayCount: props.target.displayCount,
       layers: props.target.layers,
       ...(props.target.startReason === undefined ? {} : { startReason: props.target.startReason }),
       ...(props.target.endReason === undefined ? {} : { endReason: props.target.endReason }),
@@ -94,6 +103,13 @@ function seconds(frames: number): string {
 }
 
 function startReasonText(instance: BuffDetailInstance): string {
+  if (
+    instance.startReason === 'modifierChanged' ||
+    instance.startReason === 'enabledChanged' ||
+    instance.startReason === 'stackChanged'
+  ) {
+    return t(`timeline.buffDetail.startReasons.${instance.startReason}`);
+  }
   if (instance.startReason === 'presentationStarted') {
     return instance.parentBuffId === undefined
       ? t('timeline.buffDetail.startReasons.presentationStarted')
@@ -140,20 +156,27 @@ function endReasonText(instance: BuffDetailInstance): string {
     >
       <template v-if="target !== null && activeInstance !== null">
         <header class="buff-detail__header">
-          <span class="buff-detail__icon">
+          <span class="buff-detail__icon" :class="{ 'is-suppressed': !activeInstance.enabled }">
             <img v-if="activeInstance.icon" :src="activeInstance.icon" alt="" />
             <span v-else>+</span>
             <span class="buff-detail__count">{{ activeInstance.layers }}</span>
           </span>
           <strong>{{ activeInstance.title ?? target.title }}</strong>
           <span v-if="(target.instances?.length ?? 0) > 1" class="buff-detail__pager">
-            <EaButton size="sm" icon-only :disabled="instanceIndex === 0" @click="instanceIndex--">
+            <EaButton
+              size="sm"
+              icon-only
+              :aria-label="t('timeline.buffDetail.previousWindow')"
+              :disabled="instanceIndex === 0"
+              @click="instanceIndex--"
+            >
               ‹
             </EaButton>
             <span>{{ instanceIndex + 1 }} / {{ target.instances!.length }}</span>
             <EaButton
               size="sm"
               icon-only
+              :aria-label="t('timeline.buffDetail.nextWindow')"
               :disabled="instanceIndex >= target.instances!.length - 1"
               @click="instanceIndex++"
             >
@@ -162,7 +185,27 @@ function endReasonText(instance: BuffDetailInstance): string {
           </span>
         </header>
 
+        <dl class="buff-detail__facts buff-detail__summary">
+          <dt>{{ t('timeline.buffDetail.selectedPhase') }}</dt>
+          <dd>{{ labels.frames(target.startFrame) }} – {{ labels.frames(target.endFrame) }}</dd>
+          <dt>{{ t('timeline.buffDetail.effectiveCount') }}</dt>
+          <dd>{{ target.enabled ? target.enhanceCount : 0 }}</dd>
+          <template v-if="target.displayCount !== undefined">
+            <dt>{{ t('timeline.buffDetail.effectiveDisplayCount') }}</dt>
+            <dd>{{ target.enabled ? target.displayCount : 0 }}</dd>
+          </template>
+        </dl>
         <dl class="buff-detail__facts">
+          <dt>{{ t('timeline.buffDetail.state') }}</dt>
+          <dd>
+            {{
+              t(
+                activeInstance.enabled
+                  ? 'timeline.buffDetail.states.effective'
+                  : 'timeline.buffDetail.states.suppressed',
+              )
+            }}
+          </dd>
           <template v-if="activeInstance.sourceName">
             <dt>{{ labels.source }}</dt>
             <dd>{{ activeInstance.sourceName }}</dd>
@@ -171,8 +214,12 @@ function endReasonText(instance: BuffDetailInstance): string {
             <dt>{{ labels.effect }}</dt>
             <dd>{{ activeInstance.modifierSummary }}</dd>
           </template>
-          <dt>{{ labels.layers }}</dt>
-          <dd>{{ activeInstance.layers }}</dd>
+          <dt>{{ t('timeline.buffDetail.enhanceCount') }}</dt>
+          <dd>{{ activeInstance.enhanceCount }}</dd>
+          <template v-if="activeInstance.displayCount !== undefined">
+            <dt>{{ t('timeline.buffDetail.displayCount') }}</dt>
+            <dd>{{ activeInstance.displayCount }}</dd>
+          </template>
           <dt>{{ labels.start }}</dt>
           <dd>
             {{ seconds(activeInstance.startFrame) }} ·
@@ -193,6 +240,9 @@ function endReasonText(instance: BuffDetailInstance): string {
             <code>{{ activeInstance.buffId ?? target.buffId }}</code>
           </dd>
         </dl>
+        <p v-if="!activeInstance.enabled" class="buff-detail__suppressed-hint">
+          {{ t('timeline.buffDetail.suppressedHint') }}
+        </p>
         <CombatObjectOriginGraph
           v-if="originRoot && originSequence !== undefined && receiptEntries?.length"
           :key="`${originRoot.ownerId}:${originRoot.instanceId}:${originSequence}`"
@@ -242,6 +292,16 @@ function endReasonText(instance: BuffDetailInstance): string {
   font-weight: 700;
 }
 
+.buff-detail__icon.is-suppressed {
+  opacity: 0.55;
+}
+
+.buff-detail__suppressed-hint {
+  margin: var(--ea-space-3) 0 0;
+  color: var(--ea-fg-muted);
+  font-size: 12px;
+}
+
 .buff-detail__icon img {
   width: 100%;
   height: 100%;
@@ -272,6 +332,10 @@ function endReasonText(instance: BuffDetailInstance): string {
   padding: 14px;
   border: 1px solid var(--ea-border);
   background: var(--ea-fill-soft);
+}
+
+.buff-detail__summary {
+  margin-bottom: var(--ea-space-3);
 }
 
 .buff-detail__facts dt {

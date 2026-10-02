@@ -1705,8 +1705,237 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
       launchProjectile_12: {
         action: {
           kind: 'launchProjectile',
-          parameters: { finish: 3, recycleDelaySeconds: 30 },
+          parameters: { finish: 'firstTickBlock', recycleDelaySeconds: 30 },
           callbacks: [
+            {
+              event: 'block',
+              skill: {
+                skillId: 'chr_0027_tangtang_combo_skill_water_gene',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 900,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { duration_water: 30, potential1: 0, radius: 4 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'conditional_16' } },
+                ],
+                actionGraph: {
+                  main: {
+                    nodes: {
+                      createAbilityEntityTimedMarker_8: {
+                        action: {
+                          kind: 'createAbilityEntityTimedMarker',
+                          parameters: {
+                            markerId: 'tangtang_waterabilityentity01',
+                            durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
+                            autoFinishByAction: false,
+                            timeDomain: 'global',
+                          },
+                        },
+                        next: null,
+                      },
+                      forEachContextTarget_13: {
+                        action: {
+                          kind: 'forEachContextTarget',
+                          parameters: { contextKey: 'water_abilityentity01' },
+                          body: { $sequence: 'createAbilityEntityTimedMarker_8' },
+                        },
+                        next: null,
+                      },
+                      applyBuff_14: {
+                        action: {
+                          kind: 'applyBuff',
+                          parameters: {
+                            buffId: 'buff_chr_0027_tangtang_water',
+                            target: 'caster',
+                            inheritSourceSkillCastInfo: true,
+                            copiedBlackboardAssignments: { duration_water: 'duration_water' },
+                          },
+                        },
+                        next: 'forEachContextTarget_13',
+                      },
+                      spawnAbilityEntity_15: {
+                        action: {
+                          kind: 'spawnAbilityEntity',
+                          parameters: {
+                            abilityEntityId: 'abilityentity_chr_0027_tangtang_comboskill_water',
+                            childSkillId: 'chr_0027_tangtang_combo_skill_water',
+                            inheritActionBlackboard: true,
+                            dieWhenSourceDies: false,
+                            saveToContextKey: 'water_abilityentity01',
+                          },
+                        },
+                        next: 'applyBuff_14',
+                      },
+                      forEachContextTarget_7: {
+                        action: {
+                          kind: 'forEachContextTarget',
+                          parameters: { contextKey: 'water_abilityentity02' },
+                          body: { $sequence: 'createAbilityEntityTimedMarker_8' },
+                        },
+                        next: null,
+                      },
+                      createAbilityEntityTimedMarker_2: {
+                        action: {
+                          kind: 'createAbilityEntityTimedMarker',
+                          parameters: {
+                            markerId: 'tangtang_waterabilityentity02',
+                            durationSeconds: { kind: 'valueNode', nodeId: 'data_2' },
+                            autoFinishByAction: false,
+                            timeDomain: 'global',
+                          },
+                        },
+                        next: null,
+                      },
+                      forEachContextTarget_4: {
+                        action: {
+                          kind: 'forEachContextTarget',
+                          parameters: { contextKey: 'water_abilityentity02' },
+                          body: { $sequence: 'createAbilityEntityTimedMarker_2' },
+                        },
+                        next: null,
+                      },
+                      createAbilityEntityTimedMarker_1: {
+                        action: {
+                          kind: 'createAbilityEntityTimedMarker',
+                          parameters: {
+                            markerId: 'tangtang_waterabilityentity03',
+                            durationSeconds: { kind: 'valueNode', nodeId: 'data_3' },
+                            autoFinishByAction: false,
+                            timeDomain: 'global',
+                          },
+                        },
+                        next: null,
+                      },
+                      forEachContextTarget_3: {
+                        action: {
+                          kind: 'forEachContextTarget',
+                          parameters: { contextKey: 'water_abilityentity02' },
+                          body: { $sequence: 'createAbilityEntityTimedMarker_1' },
+                        },
+                        next: null,
+                      },
+                      conditional_6: {
+                        action: {
+                          kind: 'conditional',
+                          parameters: {
+                            condition: { kind: 'conditionNode', nodeId: 'data_4' },
+                            alwaysNext: true,
+                          },
+                          whenTrue: { $sequence: 'forEachContextTarget_3' },
+                          whenFalse: { $sequence: 'forEachContextTarget_4' },
+                        },
+                        next: null,
+                      },
+                      conditional_9: {
+                        action: {
+                          kind: 'conditional',
+                          parameters: {
+                            condition: { kind: 'conditionNode', nodeId: 'data_5' },
+                            alwaysNext: true,
+                          },
+                          whenTrue: { $sequence: 'conditional_6' },
+                          whenFalse: { $sequence: 'forEachContextTarget_7' },
+                        },
+                        next: null,
+                      },
+                      findOwnerSpawnedAbilityEntities_10: {
+                        action: {
+                          kind: 'findOwnerSpawnedAbilityEntities',
+                          parameters: {
+                            saveToContextKey: 'water_group',
+                            abilityEntityIds: ['abilityentity_chr_0027_tangtang_comboskill_water'],
+                          },
+                        },
+                        next: 'conditional_9',
+                      },
+                      applyBuff_11: {
+                        action: {
+                          kind: 'applyBuff',
+                          parameters: {
+                            buffId: 'buff_chr_0027_tangtang_water',
+                            target: 'caster',
+                            inheritSourceSkillCastInfo: true,
+                            copiedBlackboardAssignments: { duration_water: 'duration_water' },
+                          },
+                        },
+                        next: 'findOwnerSpawnedAbilityEntities_10',
+                      },
+                      spawnAbilityEntity_12: {
+                        action: {
+                          kind: 'spawnAbilityEntity',
+                          parameters: {
+                            abilityEntityId: 'abilityentity_chr_0027_tangtang_comboskill_water',
+                            childSkillId: 'chr_0027_tangtang_combo_skill_water',
+                            inheritActionBlackboard: true,
+                            dieWhenSourceDies: false,
+                            saveToContextKey: 'water_abilityentity02',
+                          },
+                        },
+                        next: 'applyBuff_11',
+                      },
+                      conditional_16: {
+                        action: {
+                          kind: 'conditional',
+                          parameters: {
+                            condition: { kind: 'conditionNode', nodeId: 'data_6' },
+                            alwaysNext: true,
+                          },
+                          whenTrue: { $sequence: 'spawnAbilityEntity_12' },
+                          whenFalse: { $sequence: 'spawnAbilityEntity_15' },
+                        },
+                        next: null,
+                      },
+                    },
+                    dataNodes: {
+                      data_1: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'duration_water' },
+                      },
+                      data_2: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'duration_water' },
+                      },
+                      data_3: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'duration_water' },
+                      },
+                      data_4: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'abilityEntityTimedMarkerPresent',
+                          contextKey: 'water_group',
+                          markerId: 'tangtang_waterabilityentity02',
+                        },
+                      },
+                      data_5: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'abilityEntityTimedMarkerPresent',
+                          contextKey: 'water_group',
+                          markerId: 'tangtang_waterabilityentity01',
+                        },
+                      },
+                      data_6: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'buffIdStackCompare',
+                          target: 'caster',
+                          buffIds: ['buff_chr_0027_tangtang_water'],
+                          operator: 'greater',
+                          value: { kind: 'constant', value: 0 },
+                        },
+                      },
+                    },
+                  },
+                  macros: {},
+                },
+              },
+            },
             {
               event: 'finish',
               skill: {
@@ -3704,38 +3933,38 @@ export const tangtang: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0027_tangtang_combo_skill',
           blackboardKey: 'talent1_speed',
           operation: 'assign',
           value: [1, 1],
-          skillKey: 'chr_0027_tangtang_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0027_tangtang_combo_skill',
           blackboardKey: 'ratio_speedreduction',
           operation: 'assign',
           value: [0.2, 0.4],
-          skillKey: 'chr_0027_tangtang_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0027_tangtang_combo_skill',
           blackboardKey: 'ratio_speed',
           operation: 'assign',
           value: [0.1, 0.2],
-          skillKey: 'chr_0027_tangtang_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0027_tangtang_combo_skill',
           blackboardKey: 'duration_talent1buff',
           operation: 'assign',
           value: [3, 3],
-          skillKey: 'chr_0027_tangtang_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0027_tangtang_combo_skill',
           blackboardKey: 'range_talent1buff',
           operation: 'assign',
           value: [5, 5],
-          skillKey: 'chr_0027_tangtang_combo_skill',
         },
       ],
     },
@@ -3744,31 +3973,31 @@ export const tangtang: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0027_tangtang_ultimate_skill',
           blackboardKey: 'talent2',
           operation: 'assign',
           value: [1, 1],
-          skillKey: 'chr_0027_tangtang_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0027_tangtang_combo_skill',
           blackboardKey: 'talent2',
           operation: 'assign',
           value: [1, 1],
-          skillKey: 'chr_0027_tangtang_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          blackboardKey: 'dmg_up_water_ult',
-          operation: 'assign',
-          value: [0.4, 0.6],
           skillKey: 'chr_0027_tangtang_ultimate_skill',
-        },
-        {
-          kind: 'patchSkillBlackboard',
           blackboardKey: 'dmg_up_water_ult',
           operation: 'assign',
           value: [0.4, 0.6],
+        },
+        {
+          kind: 'patchSkillBlackboard',
           skillKey: 'chr_0027_tangtang_combo_skill',
+          blackboardKey: 'dmg_up_water_ult',
+          operation: 'assign',
+          value: [0.4, 0.6],
         },
       ],
     },
@@ -3777,27 +4006,27 @@ export const tangtang: OperatorDefinition = {
     {
       levels: 1,
       modifiers: [
-        { kind: 'addSkillCooldownFrames', frames: -60, skillKey: 'chr_0027_tangtang_combo_skill' },
+        { kind: 'addSkillCooldownFrames', skillKey: 'chr_0027_tangtang_combo_skill', frames: -60 },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0027_tangtang_combo_skill',
           blackboardKey: 'potential1',
           operation: 'assign',
           value: 1,
-          skillKey: 'chr_0027_tangtang_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0027_tangtang_normal_skill',
           blackboardKey: 'atb_return',
           operation: 'add',
           value: 5,
-          skillKey: 'chr_0027_tangtang_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0027_tangtang_combo_skill',
           blackboardKey: 'atk_scale',
           operation: 'multiply',
           value: 1.2,
-          skillKey: 'chr_0027_tangtang_combo_skill',
         },
       ],
     },
@@ -3813,45 +4042,45 @@ export const tangtang: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0027_tangtang_normal_skill',
           blackboardKey: 'potential3',
           operation: 'assign',
           value: 1,
-          skillKey: 'chr_0027_tangtang_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0027_tangtang_normal_skill',
           blackboardKey: 'rate_spellvulnerable',
           operation: 'add',
           value: 0.05,
-          skillKey: 'chr_0027_tangtang_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0027_tangtang_normal_skill',
           blackboardKey: 'rate_spellvulnerable_02',
           operation: 'add',
           value: 0.05,
-          skillKey: 'chr_0027_tangtang_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0027_tangtang_ultimate_skill',
           blackboardKey: 'rate_spellvulnerable',
           operation: 'add',
           value: 0.05,
-          skillKey: 'chr_0027_tangtang_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0027_tangtang_ultimate_skill',
           blackboardKey: 'rate_spellvulnerable_02',
           operation: 'add',
           value: 0.05,
-          skillKey: 'chr_0027_tangtang_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0027_tangtang_normal_skill',
           blackboardKey: 'atk_scale_1',
           operation: 'multiply',
           value: 1.1,
-          skillKey: 'chr_0027_tangtang_normal_skill',
         },
         {
           kind: 'patchPassiveBlackboard',
@@ -3867,9 +4096,9 @@ export const tangtang: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
+          skillKey: 'chr_0027_tangtang_ultimate_skill',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
-          skillKey: 'chr_0027_tangtang_ultimate_skill',
         },
       ],
     },
@@ -3878,52 +4107,52 @@ export const tangtang: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
-          blackboardKey: 'potential5',
-          operation: 'assign',
-          value: 1,
           skillKey: 'chr_0027_tangtang_ultimate_skill',
-        },
-        {
-          kind: 'patchSkillBlackboard',
           blackboardKey: 'potential5',
           operation: 'assign',
           value: 1,
-          skillKey: 'chr_0027_tangtang_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0027_tangtang_combo_skill',
+          blackboardKey: 'potential5',
+          operation: 'assign',
+          value: 1,
+        },
+        {
+          kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0027_tangtang_ultimate_skill',
           blackboardKey: 'atk_scale_1',
           operation: 'multiply',
           value: 1.15,
-          skillKey: 'chr_0027_tangtang_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0027_tangtang_ultimate_skill',
           blackboardKey: 'atk_scale_2',
           operation: 'multiply',
           value: 1.15,
-          skillKey: 'chr_0027_tangtang_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0027_tangtang_ultimate_skill',
           blackboardKey: 'atk_scale_3',
           operation: 'multiply',
           value: 1.15,
-          skillKey: 'chr_0027_tangtang_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
-          blackboardKey: 'dmg_up_water_ult',
-          operation: 'add',
-          value: 0.8,
           skillKey: 'chr_0027_tangtang_combo_skill',
-        },
-        {
-          kind: 'patchSkillBlackboard',
           blackboardKey: 'dmg_up_water_ult',
           operation: 'add',
           value: 0.8,
+        },
+        {
+          kind: 'patchSkillBlackboard',
           skillKey: 'chr_0027_tangtang_ultimate_skill',
+          blackboardKey: 'dmg_up_water_ult',
+          operation: 'add',
+          value: 0.8,
         },
       ],
     },

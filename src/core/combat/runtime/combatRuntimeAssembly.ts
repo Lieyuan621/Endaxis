@@ -3642,9 +3642,16 @@ export class CombatRuntimeAssembly {
           ),
           isOwnerAlive: () => eligibility.isAlive(operatorId),
           isOwnerSilenced: () => eligibility.isSilenced(operatorId),
-          currentComboCooldown: () =>
-            this.#skillCooldowns.get(`${operatorId}\u0000${program.skillKey}`)?.cooldown
-              .comboConditionSnapshot ?? null,
+          currentComboCooldown: () => {
+            const skillKey = this.#requireAbilitySystem(operatorId).currentSkillKeyForSlot(
+              program.skillSlotKey,
+            );
+            const cooldown = this.#skillCooldowns.get(`${operatorId}\u0000${skillKey}`)?.cooldown;
+            if (cooldown === undefined) return null;
+            // 零冷却形态在定义中省略周期，已有账本始终就绪；不等于缺少当前技能。
+            if (!cooldown.snapshot.configured) return { oneReady: true };
+            return cooldown.comboConditionSnapshot;
+          },
           resolveTarget: entityId => this.#resolveRuntimeTarget(entityId),
           onPending: value => {
             this.comboWindows.open(
@@ -3678,9 +3685,11 @@ export class CombatRuntimeAssembly {
     skillSlotKey: string,
     targetSkillKey: string,
     inheritOriginSkillCooldownProgress: boolean,
+    reverting = false,
   ): void {
     const abilitySystem = this.#requireAbilitySystem(operatorId);
-    const previousSkillKey = abilitySystem.changeSkillSlot(skillSlotKey, targetSkillKey);
+    const previousNativeSkillType = abilitySystem.nativeSkillTypeForSkill(targetSkillKey);
+    const previousSkillKey = abilitySystem.changeSkillSlot(skillSlotKey, targetSkillKey, reverting);
     let inheritedCooldownProgress: number | undefined;
     try {
       if (inheritOriginSkillCooldownProgress && previousSkillKey !== targetSkillKey) {
@@ -3698,7 +3707,8 @@ export class CombatRuntimeAssembly {
         }
       }
     } catch (error) {
-      abilitySystem.changeSkillSlot(skillSlotKey, previousSkillKey);
+      abilitySystem.changeSkillSlot(skillSlotKey, previousSkillKey, true);
+      abilitySystem.changeNativeSkillType(targetSkillKey, previousNativeSkillType);
       throw error;
     }
     this.receipt.record({
@@ -3749,8 +3759,8 @@ export class CombatRuntimeAssembly {
     return {
       currentSkillKey: group =>
         this.#requireAbilitySystem(operatorId).currentSkillKeyForSlot(group),
-      changeSkillSlot: (group, skill, inherit) =>
-        this.#changeSkillSlot(operatorId, group, skill, inherit),
+      changeSkillSlot: (group, skill, inherit, reverting) =>
+        this.#changeSkillSlot(operatorId, group, skill, inherit, reverting),
     };
   }
 

@@ -91,7 +91,6 @@ export function compileStandardStumpBuffClosure(
     provenDefaultKeywordCarrierRootIds,
     rootBuffBlackboards,
   );
-  const rootBuffIdSet = new Set(rootBuffIds);
   const {
     owners: buffOwnerTargets,
     sources: buffSourceTargets,
@@ -103,87 +102,20 @@ export function compileStandardStumpBuffClosure(
     globalBuffCatalog,
     rootBuffCapturedTargetGroups,
   );
-  const keywordOverrideChildIds = new Set(
-    [...sources.values()].flatMap(source =>
-      buffActionNodes(source).flatMap(node =>
-        node.metadata.enabled &&
-        node.body.kind === 'leaf' &&
-        node.body.value.family === 'keywordBuff' &&
-        node.body.value.action.overrideChildBuffId &&
-        node.body.value.action.childBuffId.blackboardKey === null &&
-        node.body.value.action.childBuffId.value.length > 0
-          ? [node.body.value.action.childBuffId.value]
-          : [],
-      ),
-    ),
-  );
-  const keywordEnhancementTriggerIds = new Set(
-    [...sources.values()].flatMap(source =>
-      buffActionNodes(source).flatMap(node =>
-        node.metadata.enabled &&
-        node.body.kind === 'leaf' &&
-        node.body.value.family === 'keywordBuff'
-          ? node.body.value.action.enhancements.flatMap(enhancement => enhancement.buffIds)
-          : [],
-      ),
-    ),
-  );
-  const conditionReadsByBuff = new Map(
-    [...sources].map(
-      ([id, source]) =>
-        [
-          id,
-          buffActionNodes(source).flatMap(node =>
-            node.metadata.enabled &&
-            node.body.kind === 'leaf' &&
-            node.body.value.family === 'condition'
-              ? collectConditionBuffIds(node.body.value.action)
-              : node.metadata.enabled &&
-                  node.body.kind === 'leaf' &&
-                  node.body.value.family === 'buffQuery'
-                ? collectConditionBuffIds(node.body.value.action)
-                : [],
-          ),
-        ] as const,
-    ),
+  const { omittedBuffIds } = planStandardStumpBuffPruning(
+    rootBuffIds,
+    sources,
+    id => {
+      const value = typeof buffData === 'function' ? buffData(id) : buffData[id];
+      if (value === undefined) throw new Error(`BuffData.${id}: missing definition`);
+      return value;
+    },
+    preserveBuffIds,
   );
   const skillSettingCatalog =
     skillSettingCatalogValue === undefined
       ? undefined
       : parseSkillSettingCatalogSource(skillSettingCatalogValue);
-  const observedBuffIds = new Set([
-    ...preserveBuffIds,
-    ...keywordOverrideChildIds,
-    ...keywordEnhancementTriggerIds,
-  ]);
-  let omittedBuffIds: Set<string>;
-  // 先裁纯表现链，再保留仍会执行的条件所读取的身份。被裁掉的表现监听器
-  // 不能反过来保活整条表现链；有效监听新增的身份则需继续向创建者传播。
-  for (;;) {
-    omittedBuffIds = new Set(
-      [
-        ...collectCombatInvisibleBuffClosureIds(
-          [...sources.keys()],
-          id => {
-            const value = typeof buffData === 'function' ? buffData(id) : buffData[id];
-            if (value === undefined) throw new Error(`BuffData.${id}: missing definition`);
-            return value;
-          },
-          observedBuffIds,
-        ),
-      ].filter(
-        id =>
-          !preserveBuffIds.has(id) &&
-          !keywordOverrideChildIds.has(id) &&
-          !keywordEnhancementTriggerIds.has(id) &&
-          (!rootBuffIdSet.has(id) || isPresentationOnlyBuffStackEffect(sources.get(id)!)),
-      ),
-    );
-    const previousSize = observedBuffIds.size;
-    for (const [id, reads] of conditionReadsByBuff)
-      if (!omittedBuffIds.has(id)) for (const read of reads) observedBuffIds.add(read);
-    if (observedBuffIds.size === previousSize) break;
-  }
   const diagnostics: StandardStumpBuffClosureDiagnostic[] = [];
   for (const id of omittedBuffIds) {
     diagnostics.push({
@@ -330,6 +262,86 @@ export function compileStandardStumpBuffClosure(
     omittedBuffIds,
     diagnostics,
   };
+}
+
+/** 实体子技能和最终 Buff 闭包必须使用同一组外部身份读者，再决定哪些表现链可裁剪。 */
+export function planStandardStumpBuffPruning(
+  rootBuffIds: readonly string[],
+  sources: ReadonlyMap<string, BuffRuntimeSource>,
+  loadBuff: (id: string) => unknown,
+  preserveBuffIds: ReadonlySet<string> = new Set(),
+): { readonly omittedBuffIds: Set<string>; readonly observedBuffIds: ReadonlySet<string> } {
+  const rootBuffIdSet = new Set(rootBuffIds);
+  const keywordOverrideChildIds = new Set(
+    [...sources.values()].flatMap(source =>
+      buffActionNodes(source).flatMap(node =>
+        node.metadata.enabled &&
+        node.body.kind === 'leaf' &&
+        node.body.value.family === 'keywordBuff' &&
+        node.body.value.action.overrideChildBuffId &&
+        node.body.value.action.childBuffId.blackboardKey === null &&
+        node.body.value.action.childBuffId.value.length > 0
+          ? [node.body.value.action.childBuffId.value]
+          : [],
+      ),
+    ),
+  );
+  const keywordEnhancementTriggerIds = new Set(
+    [...sources.values()].flatMap(source =>
+      buffActionNodes(source).flatMap(node =>
+        node.metadata.enabled &&
+        node.body.kind === 'leaf' &&
+        node.body.value.family === 'keywordBuff'
+          ? node.body.value.action.enhancements.flatMap(enhancement => enhancement.buffIds)
+          : [],
+      ),
+    ),
+  );
+  const conditionReadsByBuff = new Map(
+    [...sources].map(
+      ([id, source]) =>
+        [
+          id,
+          buffActionNodes(source).flatMap(node =>
+            node.metadata.enabled &&
+            node.body.kind === 'leaf' &&
+            node.body.value.family === 'condition'
+              ? collectConditionBuffIds(node.body.value.action)
+              : node.metadata.enabled &&
+                  node.body.kind === 'leaf' &&
+                  node.body.value.family === 'buffQuery'
+                ? collectConditionBuffIds(node.body.value.action)
+                : [],
+          ),
+        ] as const,
+    ),
+  );
+  const observedBuffIds = new Set([
+    ...preserveBuffIds,
+    ...keywordOverrideChildIds,
+    ...keywordEnhancementTriggerIds,
+  ]);
+  let omittedBuffIds: Set<string>;
+  // 先裁纯表现链，再保留仍会执行的条件所读取的身份。被裁掉的表现监听器
+  // 不能反过来保活整条表现链；有效监听新增的身份则需继续向创建者传播。
+  for (;;) {
+    omittedBuffIds = new Set(
+      [
+        ...collectCombatInvisibleBuffClosureIds([...sources.keys()], loadBuff, observedBuffIds),
+      ].filter(
+        id =>
+          !preserveBuffIds.has(id) &&
+          !keywordOverrideChildIds.has(id) &&
+          !keywordEnhancementTriggerIds.has(id) &&
+          (!rootBuffIdSet.has(id) || isPresentationOnlyBuffStackEffect(sources.get(id)!)),
+      ),
+    );
+    const previousSize = observedBuffIds.size;
+    for (const [id, reads] of conditionReadsByBuff)
+      if (!omittedBuffIds.has(id)) for (const read of reads) observedBuffIds.add(read);
+    if (observedBuffIds.size === previousSize) break;
+  }
+  return { omittedBuffIds, observedBuffIds };
 }
 
 function collectConditionBuffIds(value: unknown): string[] {

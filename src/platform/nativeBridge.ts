@@ -1,3 +1,5 @@
+import { readRuntimeEnvironment } from './runtimeEnvironment';
+
 declare global {
   interface Window {
     EndaxisHandleBack?: () => boolean;
@@ -18,7 +20,7 @@ if (typeof window !== 'undefined') {
 }
 
 export function isNativeApp(): boolean {
-  return typeof navigator !== 'undefined' && /\bEndaxisApp\//i.test(navigator.userAgent);
+  return readRuntimeEnvironment().host === 'endaxis-app';
 }
 
 export function registerBackHandler(handler: () => boolean): () => void {

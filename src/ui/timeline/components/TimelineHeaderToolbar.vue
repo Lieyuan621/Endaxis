@@ -823,7 +823,10 @@ onBeforeUnmount(() => {
   height: 50px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
   padding: 0 10px 0 0;
   box-sizing: border-box;
   cursor: default;
@@ -836,7 +839,8 @@ onBeforeUnmount(() => {
   height: 36px;
   padding: 0 10px;
   flex: 1;
-  min-width: 0;
+  /* 标题操作与至少一小段页签保持可达；更窄时由整条工具栏滚动。 */
+  min-width: 360px;
   margin-right: 20px;
   background: linear-gradient(90deg, rgb(255 255 255 / 3%) 0%, transparent 100%);
 }
@@ -853,7 +857,7 @@ onBeforeUnmount(() => {
 }
 
 .ts-tabs-group {
-  min-width: 0;
+  min-width: 80px;
   flex-grow: 1;
   display: flex;
   align-items: center;
@@ -1221,12 +1225,6 @@ onBeforeUnmount(() => {
   font-size: 12px;
 }
 
-@media (max-width: 1080px) {
-  .command-button--analysis,
-  .ts-header-group {
-    display: none;
-  }
-}
 @media (hover: hover) and (pointer: fine) {
   .ts-tab-item.ea-button:hover:not(:disabled):not([aria-pressed='true']) {
     background-color: var(--ea-hover-fill);

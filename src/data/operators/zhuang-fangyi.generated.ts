@@ -6169,13 +6169,13 @@ export const zhuangFangyi: OperatorDefinition = {
         scheduledSequences: [
           { startFrame: 0, endFrame: 12, sequence: { $sequence: 'calculateActionValue_1' } },
           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'conditional_3' } },
-          { startFrame: 12, endFrame: 64, sequence: { $sequence: 'repeatEachTick_10' } },
-          { startFrame: 69, endFrame: 70, sequence: { $sequence: 'calculateActionValue_14' } },
-          { startFrame: 12, endFrame: 64, sequence: { $sequence: 'repeatEachTick_16' } },
-          { startFrame: 12, endFrame: 64, sequence: { $sequence: 'repeatEachTick_19' } },
-          { startFrame: 15, endFrame: 64, sequence: { $sequence: 'repeatEachTick_22' } },
-          { startFrame: 67, endFrame: 71, sequence: { $sequence: 'repeatEachTick_25' } },
-          { startFrame: 67, endFrame: 70, sequence: { $sequence: 'createTimedMarker_26' } },
+          { startFrame: 12, endFrame: 64, sequence: { $sequence: 'repeatEachTick_11' } },
+          { startFrame: 69, endFrame: 70, sequence: { $sequence: 'applyBuff_16' } },
+          { startFrame: 12, endFrame: 64, sequence: { $sequence: 'repeatEachTick_18' } },
+          { startFrame: 12, endFrame: 64, sequence: { $sequence: 'repeatEachTick_21' } },
+          { startFrame: 15, endFrame: 64, sequence: { $sequence: 'repeatEachTick_24' } },
+          { startFrame: 67, endFrame: 71, sequence: { $sequence: 'repeatEachTick_27' } },
+          { startFrame: 67, endFrame: 70, sequence: { $sequence: 'createTimedMarker_28' } },
         ],
         actionGraph: {
           main: {
@@ -6255,33 +6255,44 @@ export const zhuangFangyi: OperatorDefinition = {
                 },
                 next: 'modifyActionValue_6',
               },
-              jumpTimeline_8: {
+              applyBuff_8: {
+                action: {
+                  kind: 'applyBuff',
+                  parameters: {
+                    buffId: 'buff_chr_0030_zhuangfy_talent1_mark',
+                    target: 'caster',
+                    inheritSourceSkillCastInfo: true,
+                  },
+                },
+                next: 'conditional_7',
+              },
+              jumpTimeline_9: {
                 action: { kind: 'jumpTimeline', parameters: { destinationFrame: 64 } },
                 next: null,
               },
-              conditional_9: {
+              conditional_10: {
                 action: {
                   kind: 'conditional',
                   parameters: {
                     condition: { kind: 'conditionNode', nodeId: 'data_11' },
                     alwaysNext: true,
                   },
-                  whenTrue: { $sequence: 'conditional_7' },
-                  whenFalse: { $sequence: 'jumpTimeline_8' },
+                  whenTrue: { $sequence: 'applyBuff_8' },
+                  whenFalse: { $sequence: 'jumpTimeline_9' },
                 },
                 next: null,
               },
-              repeatEachTick_10: {
+              repeatEachTick_11: {
                 action: {
                   kind: 'repeatEachTick',
                   parameters: {
                     nativeTickInterval: { executeEachFrame: false, intervalSeconds: 0.2 },
                   },
-                  body: { $sequence: 'conditional_9' },
+                  body: { $sequence: 'conditional_10' },
                 },
                 next: null,
               },
-              startTimeDilation_11: {
+              startTimeDilation_12: {
                 action: {
                   kind: 'startTimeDilation',
                   parameters: {
@@ -6297,7 +6308,7 @@ export const zhuangFangyi: OperatorDefinition = {
                 },
                 next: null,
               },
-              dealDamage_12: {
+              dealDamage_13: {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
@@ -6307,18 +6318,18 @@ export const zhuangFangyi: OperatorDefinition = {
                     features: ['canBreakWeakness'],
                     stagger: { kind: 'valueNode', nodeId: 'data_13' },
                   },
-                  key: 'abilityentity_chr_0030_zhuangfy_normal_skill_ult:chr_0030_zhuangfy_normal_skill_ult_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_12/action',
+                  key: 'abilityentity_chr_0030_zhuangfy_normal_skill_ult:chr_0030_zhuangfy_normal_skill_ult_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_13/action',
                 },
-                next: 'startTimeDilation_11',
+                next: 'startTimeDilation_12',
               },
-              applyElementalInfliction_13: {
+              applyElementalInfliction_14: {
                 action: {
                   kind: 'applyElementalInfliction',
                   parameters: { element: 'electric', isExtra: false },
                 },
-                next: 'dealDamage_12',
+                next: 'dealDamage_13',
               },
-              calculateActionValue_14: {
+              calculateActionValue_15: {
                 action: {
                   kind: 'calculateActionValue',
                   parameters: {
@@ -6328,9 +6339,20 @@ export const zhuangFangyi: OperatorDefinition = {
                     right: { kind: 'valueNode', nodeId: 'data_15' },
                   },
                 },
-                next: 'applyElementalInfliction_13',
+                next: 'applyElementalInfliction_14',
               },
-              repeatEachTick_16: {
+              applyBuff_16: {
+                action: {
+                  kind: 'applyBuff',
+                  parameters: {
+                    buffId: 'buff_chr_0030_zhuangfy_talent1_mark',
+                    target: 'caster',
+                    inheritSourceSkillCastInfo: true,
+                  },
+                },
+                next: 'calculateActionValue_15',
+              },
+              repeatEachTick_18: {
                 action: {
                   kind: 'repeatEachTick',
                   parameters: {
@@ -6340,7 +6362,7 @@ export const zhuangFangyi: OperatorDefinition = {
                 },
                 next: null,
               },
-              modifyActionValue_17: {
+              modifyActionValue_19: {
                 action: {
                   kind: 'modifyActionValue',
                   parameters: {
@@ -6351,28 +6373,28 @@ export const zhuangFangyi: OperatorDefinition = {
                 },
                 next: null,
               },
-              conditional_18: {
+              conditional_20: {
                 action: {
                   kind: 'conditional',
                   parameters: {
                     condition: { kind: 'conditionNode', nodeId: 'data_18' },
                     alwaysNext: true,
                   },
-                  whenTrue: { $sequence: 'modifyActionValue_17' },
+                  whenTrue: { $sequence: 'modifyActionValue_19' },
                 },
                 next: null,
               },
-              repeatEachTick_19: {
+              repeatEachTick_21: {
                 action: {
                   kind: 'repeatEachTick',
                   parameters: {
                     nativeTickInterval: { executeEachFrame: false, intervalSeconds: 0.2 },
                   },
-                  body: { $sequence: 'conditional_18' },
+                  body: { $sequence: 'conditional_20' },
                 },
                 next: null,
               },
-              createSpatialPointTargets_20: {
+              createSpatialPointTargets_22: {
                 action: {
                   kind: 'createSpatialPointTargets',
                   parameters: {
@@ -6382,7 +6404,7 @@ export const zhuangFangyi: OperatorDefinition = {
                 },
                 next: null,
               },
-              modifyActionValue_21: {
+              modifyActionValue_23: {
                 action: {
                   kind: 'modifyActionValue',
                   parameters: {
@@ -6391,19 +6413,19 @@ export const zhuangFangyi: OperatorDefinition = {
                     value: { kind: 'constant', value: 1 },
                   },
                 },
-                next: 'createSpatialPointTargets_20',
+                next: 'createSpatialPointTargets_22',
               },
-              repeatEachTick_22: {
+              repeatEachTick_24: {
                 action: {
                   kind: 'repeatEachTick',
                   parameters: {
                     nativeTickInterval: { executeEachFrame: false, intervalSeconds: 0.2 },
                   },
-                  body: { $sequence: 'modifyActionValue_21' },
+                  body: { $sequence: 'modifyActionValue_23' },
                 },
                 next: null,
               },
-              createSpatialPointTargets_23: {
+              createSpatialPointTargets_25: {
                 action: {
                   kind: 'createSpatialPointTargets',
                   parameters: {
@@ -6413,7 +6435,7 @@ export const zhuangFangyi: OperatorDefinition = {
                 },
                 next: null,
               },
-              modifyActionValue_24: {
+              modifyActionValue_26: {
                 action: {
                   kind: 'modifyActionValue',
                   parameters: {
@@ -6422,19 +6444,19 @@ export const zhuangFangyi: OperatorDefinition = {
                     value: { kind: 'constant', value: 3 },
                   },
                 },
-                next: 'createSpatialPointTargets_23',
+                next: 'createSpatialPointTargets_25',
               },
-              repeatEachTick_25: {
+              repeatEachTick_27: {
                 action: {
                   kind: 'repeatEachTick',
                   parameters: {
                     nativeTickInterval: { executeEachFrame: false, intervalSeconds: 0.2 },
                   },
-                  body: { $sequence: 'modifyActionValue_24' },
+                  body: { $sequence: 'modifyActionValue_26' },
                 },
                 next: null,
               },
-              createTimedMarker_26: {
+              createTimedMarker_28: {
                 action: {
                   kind: 'createTimedMarker',
                   parameters: {

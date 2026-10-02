@@ -7033,7 +7033,7 @@ export const typhoeusChr_0034_typhoea_power_attackActionGraph = {
 export const typhoeusChr_0034_typhoea_power_attack: SkillDefinition = {
   key: 'chr_0034_typhoea_power_attack',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
-  timelineBlockFrames: 40,
+  timelineBlockFrames: 73,
   naturalDurationFrames: 180,
   exclusiveFrame: 72,
   offsetRecordFrame: 0,
@@ -12159,17 +12159,17 @@ export const typhoeus: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0034_typhoea_ultimate_skillfloating',
           blackboardKey: 'potential_atkup',
           operation: 'assign',
           value: 1,
-          skillKey: 'chr_0034_typhoea_ultimate_skillfloating',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0034_typhoea_ultimate_skillfloating',
           blackboardKey: 'atk_up',
           operation: 'assign',
           value: 0.18,
-          skillKey: 'chr_0034_typhoea_ultimate_skillfloating',
         },
       ],
       attachedBuffs: [
@@ -12216,9 +12216,9 @@ export const typhoeus: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
+          skillKey: 'chr_0034_typhoea_ultimate_skillfloating',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
-          skillKey: 'chr_0034_typhoea_ultimate_skillfloating',
         },
       ],
     },
@@ -12227,10 +12227,10 @@ export const typhoeus: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0034_typhoea_ultimate_skillfloating',
           blackboardKey: 'arrow_num_given',
           operation: 'add',
           value: 1,
-          skillKey: 'chr_0034_typhoea_ultimate_skillfloating',
         },
         {
           kind: 'patchSkillBlackboard',
@@ -12269,10 +12269,10 @@ export const typhoeus: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0034_typhoea_ultimate_skillfloating',
           blackboardKey: 'potential_damge_up',
           operation: 'assign',
           value: 1.2,
-          skillKey: 'chr_0034_typhoea_ultimate_skillfloating',
         },
       ],
     },

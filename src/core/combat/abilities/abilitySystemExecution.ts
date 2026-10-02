@@ -5,7 +5,12 @@ import type { CombatSkillCastInfo, PostSkillCastRequest } from '../state/foundat
 /** 执行时才绑定当前分支的槽位、冷却账本与回执，不保存这些函数。 */
 export interface SkillSlotReplacementHost {
   currentSkillKey(group: string): string;
-  changeSkillSlot(group: string, skill: string, inheritCooldown: boolean): void;
+  changeSkillSlot(
+    group: string,
+    skill: string,
+    inheritCooldown: boolean,
+    reverting?: boolean,
+  ): void;
 }
 
 /** 先撤销同槽旧替换，再读取还原目标；不把旧替换层层压栈。 */
@@ -57,6 +62,7 @@ export function finishAbilitySkillSlotReplacement(
     group,
     replacement.revertedSkillKey,
     replacement.inheritOriginSkillCooldownProgress,
+    true,
   );
 }
 

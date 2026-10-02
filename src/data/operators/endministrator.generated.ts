@@ -890,7 +890,7 @@ export const endministratorChr_0003_endminf_power_attack2ActionGraph = {
 export const endministratorChr_0003_endminf_power_attack2: SkillDefinition = {
   key: 'chr_0003_endminf_power_attack2',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
-  timelineBlockFrames: 27,
+  timelineBlockFrames: 48,
   naturalDurationFrames: 192,
   exclusiveFrame: 47,
   offsetRecordFrame: 0,

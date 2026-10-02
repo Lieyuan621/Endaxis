@@ -888,7 +888,7 @@ export const pogranichnikChr_0029_pograni_power_attackActionGraph = {
 export const pogranichnikChr_0029_pograni_power_attack: SkillDefinition = {
   key: 'chr_0029_pograni_power_attack',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
-  timelineBlockFrames: 27,
+  timelineBlockFrames: 48,
   naturalDurationFrames: 145,
   exclusiveFrame: 47,
   offsetRecordFrame: 0,
@@ -3860,17 +3860,17 @@ export const pogranichnik: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0029_pograni_normal_skill',
           blackboardKey: 'has_potential1',
           operation: 'assign',
           value: 1,
-          skillKey: 'chr_0029_pograni_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0029_pograni_normal_skill',
           blackboardKey: 'atb_return',
           operation: 'assign',
           value: 15,
-          skillKey: 'chr_0029_pograni_normal_skill',
         },
       ],
     },
@@ -3905,22 +3905,22 @@ export const pogranichnik: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
+          skillKey: 'chr_0029_pograni_ultimate_skill',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
-          skillKey: 'chr_0029_pograni_ultimate_skill',
         },
       ],
     },
     {
       levels: 1,
       modifiers: [
-        { kind: 'addSkillCooldownFrames', frames: -60, skillKey: 'chr_0029_pograni_combo_skill' },
+        { kind: 'addSkillCooldownFrames', skillKey: 'chr_0029_pograni_combo_skill', frames: -60 },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0029_pograni_combo_skill',
           blackboardKey: 'atb_ratio',
           operation: 'assign',
           value: 1.2,
-          skillKey: 'chr_0029_pograni_combo_skill',
         },
       ],
     },

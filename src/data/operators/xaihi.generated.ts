@@ -788,7 +788,7 @@ export const xaihiChr_0011_seraph_power_attack: SkillDefinition = {
   actionGraph: xaihiChr_0011_seraph_power_attackActionGraph,
   key: 'chr_0011_seraph_power_attack',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
-  timelineBlockFrames: 34,
+  timelineBlockFrames: 51,
   naturalDurationFrames: 160,
   exclusiveFrame: 50,
   offsetRecordFrame: 0,
@@ -2351,24 +2351,24 @@ export const xaihi: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0011_seraph_combo_skill',
           blackboardKey: 'exist_talent_1',
           operation: 'assign',
           value: [1, 1],
-          skillKey: 'chr_0011_seraph_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0011_seraph_combo_skill',
           blackboardKey: 'cryst_up',
           operation: 'assign',
           value: [0.07, 0.1],
-          skillKey: 'chr_0011_seraph_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0011_seraph_combo_skill',
           blackboardKey: 'duration',
           operation: 'assign',
           value: [5, 5],
-          skillKey: 'chr_0011_seraph_combo_skill',
         },
       ],
     },
@@ -2377,10 +2377,10 @@ export const xaihi: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0011_seraph_ultimate_skill',
           blackboardKey: 'exist_talent_2',
           operation: 'assign',
           value: 1,
-          skillKey: 'chr_0011_seraph_ultimate_skill',
         },
       ],
     },
@@ -2391,10 +2391,10 @@ export const xaihi: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0011_seraph_normal_skill',
           blackboardKey: 'atk_up',
           operation: 'add',
           value: 0.05,
-          skillKey: 'chr_0011_seraph_normal_skill',
         },
       ],
     },
@@ -2403,9 +2403,9 @@ export const xaihi: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
+          skillKey: 'chr_0011_seraph_ultimate_skill',
           resource: 'ultimateEnergy',
           multiplier: 0.9,
-          skillKey: 'chr_0011_seraph_ultimate_skill',
         },
       ],
     },
@@ -2414,10 +2414,10 @@ export const xaihi: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0011_seraph_combo_skill',
           blackboardKey: 'potential_3',
           operation: 'assign',
           value: 1,
-          skillKey: 'chr_0011_seraph_combo_skill',
         },
       ],
     },
@@ -2433,24 +2433,24 @@ export const xaihi: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0011_seraph_ultimate_skill',
           blackboardKey: 'atk_up',
           operation: 'multiply',
           value: 1.1,
-          skillKey: 'chr_0011_seraph_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0011_seraph_ultimate_skill',
           blackboardKey: 'wisd_up',
           operation: 'multiply',
           value: 1.1,
-          skillKey: 'chr_0011_seraph_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0011_seraph_ultimate_skill',
           blackboardKey: 'wisd_max',
           operation: 'multiply',
           value: 1.1,
-          skillKey: 'chr_0011_seraph_ultimate_skill',
         },
       ],
     },

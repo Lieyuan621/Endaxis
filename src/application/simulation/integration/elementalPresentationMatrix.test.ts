@@ -14,7 +14,10 @@ import { elementalAttachments } from '../../../data/buffs/elementalAttachments';
 import { compoundStatusFactories } from '../../../data/buffs/compoundStatusFactories';
 import { skillSettings } from '../../../data/combat/skillSettings';
 import { ScenarioSimulationService } from '../scenarioSimulationService';
-import { projectBuffTimelineViz } from '../../../core/projection/buffTimelineViz';
+import {
+  mergeOverlappingBuffTimelineSegments,
+  projectBuffTimelineViz,
+} from '../../../core/projection/buffTimelineViz';
 import { projectEnemyEffectViz } from '../../../core/projection/enemyEffectViz';
 import {
   projectAttachmentContinuations,
@@ -222,9 +225,19 @@ it.each(compoundStatusFactories.factories)(
 it('preserves attachment stacking, capped refresh and natural expiry', async () => {
   const { segments, viz } = await run(Array.from({ length: 5 }, () => 'electric'));
   const attachments = segments.filter(s => attachmentIds.has(s.buffId));
-  expect(attachments.map(s => s.layers)).toEqual([1, 2, 3, 4, 4]);
+  const visible = mergeOverlappingBuffTimelineSegments(attachments);
+  expect(visible.map(s => s.layers)).toEqual([1, 2, 3, 4, 4]);
+  expect(visible.every(s => s.startFrame < s.endFrame)).toBe(true);
+  // 增强先产生稀疏层数回执，再在同帧完整记录施加；原始窗口保留两者，不能重复画图标。
+  const stackChanges = attachments.filter(s => s.startReason === 'stackChanged');
+  expect(stackChanges.map(s => s.enhanceCount)).toEqual([2, 3, 4]);
+  expect(stackChanges.every(s => s.startFrame === s.endFrame && s.endReason === 'reapplied')).toBe(
+    true,
+  );
+  for (const change of stackChanges)
+    expect(visible.some(s => s.windows.includes(change))).toBe(true);
   expect(new Set(attachments.map(s => s.instanceId)).size).toBe(1);
-  expect(projectAttachmentContinuations(attachments, attachmentIds).size).toBe(4);
+  expect(projectAttachmentContinuations(visible, attachmentIds).size).toBe(4);
   expect(attachments.at(-1)!.endFrame).toBeLessThan(1800);
   expect(viz.markers.filter(m => m.kind === 'attachmentTrigger')).toEqual([]);
 });

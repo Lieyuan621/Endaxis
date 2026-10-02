@@ -2387,6 +2387,7 @@
       "SkillStarted": "技能启动",
       "DamageApplied": "造成伤害",
       "ElementalAttachmentConverted": "附着转化",
+      "BuffModifierChanged": "Buff 效果数值变化",
       "BuffApplied": "施加 / 刷新",
       "BuffStackChanged": "层数变化",
       "BuffEnhanceAttempted": "叠层尝试",
@@ -2557,6 +2558,7 @@
       "SpChanged": "技力变化",
       "UltimateEnergyChanged": "终结技能量变化",
       "StatusChanged": "状态变化",
+      "BuffModifierChanged": "Buff 效果数值变化",
       "BuffApplied": "Buff 施加",
       "BuffFinished": "Buff 结束",
       "BuffReleased": "Buff 回收",
@@ -3207,6 +3209,7 @@
       "effects": "实际产生的效果",
       "effectFrame": "第 {frame} 帧",
       "effectEvents": {
+        "BuffModifierChanged": "Buff 效果数值变化",
         "BuffApplied": "施加 Buff",
         "BuffStackChanged": "Buff 层数变化",
         "SpChanged": "技力变化",
@@ -4448,6 +4451,7 @@
       "frames": "{value} 帧",
       "buffId": "原始 Buff ID",
       "startReasons": {
+        "modifierChanged": "效果数值变化",
         "applied": "Buff 实例施加成功",
         "presentationStarted": "随父 Buff 开始显示",
         "presentationStartedWithParent": "随父 Buff「{parentBuffId}」开始显示",
@@ -4456,9 +4460,12 @@
         "extended": "同一实例再次施加并延长持续时间",
         "durationOverwritten": "同一实例再次施加并重设持续时间",
         "modified": "同一实例再次施加并更新状态",
-        "reapplied": "同一实例被再次施加"
+        "reapplied": "同一实例被再次施加",
+        "enabledChanged": "生效状态变化",
+        "stackChanged": "强化层数变化"
       },
       "endReasons": {
+        "modifierChanged": "效果数值变化",
         "reapplied": "同一实例再次施加，当前层数阶段结束",
         "lifetime": "持续时间耗尽，自然结束",
         "ignite": "被点燃并消耗",
@@ -4467,9 +4474,24 @@
         "absorbed": "被吸收",
         "other": "由其他游戏规则结束",
         "released": "宿主释放时移除",
-        "simulationEnd": "模拟结束时仍在持续",
-        "unknown": "未记录结束原因"
-      }
+        "simulationEnd": "模拟结束时仍然存在",
+        "unknown": "未记录结束原因",
+        "enabledChanged": "生效状态变化",
+        "stackChanged": "强化层数变化"
+      },
+      "selectedPhase": "选中阶段",
+      "effectiveCount": "有效层数",
+      "effectiveDisplayCount": "生效显示等级",
+      "previousWindow": "上一个窗口",
+      "nextWindow": "下一个窗口",
+      "state": "此窗口的状态",
+      "states": {
+        "effective": "生效",
+        "suppressed": "被压制"
+      },
+      "enhanceCount": "原始强化层数",
+      "displayCount": "显示等级",
+      "suppressedHint": "此候选仍保留记录，但在该窗口内不提供有效层数或效果。"
     },
     "hitDetail": {
       "frame": "帧",

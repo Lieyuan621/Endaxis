@@ -54,9 +54,10 @@ export interface UseScenarioSimulationResult {
   readonly diagnosticsByCastId: ComputedRef<
     ReadonlyMap<string, readonly TimelineSkillDiagnosticReason[]>
   >;
-  /** 立即取消等待并执行一次模拟。 */
-  /** 立即运行并返回本次结果是否成功成为新的已发布快照。 */
+  /** 取消等待并立即模拟，返回本次结果是否成功成为新的已发布快照。 */
   readonly simulateNow: () => Promise<boolean>;
+  /** 等待当前输入的完整结果；空闲且已有当前有效发布时不强制重跑。 */
+  readonly ensureCurrentSimulation: () => Promise<boolean>;
   /** 导入/替换整个项目时清除结果，即使新项目复用了相同的方案 ID。 */
   readonly resetPublication: () => void;
 }
@@ -214,6 +215,21 @@ export function useScenarioSimulation(
     return runSimulation();
   }
 
+  function ensureCurrentSimulation(): Promise<boolean> {
+    // 仅复用没有失效、没有待执行刷新且绑定当前输入的完整发布。
+    // 同引用的显式重跑仍须等待，不能拿刷新前的旧结果提前结束手势。
+    if (
+      activeRunCount === 0 &&
+      pendingTimer === null &&
+      !stale.value &&
+      error.value === null &&
+      publishedState.value?.scenario === options.scenario.value
+    ) {
+      return Promise.resolve(true);
+    }
+    return simulateNow();
+  }
+
   function resetPublication(): void {
     publicationEpoch += 1;
     latestRunId += 1;
@@ -356,6 +372,7 @@ export function useScenarioSimulation(
     performanceSamples,
     diagnosticsByCastId,
     simulateNow,
+    ensureCurrentSimulation,
     resetPublication,
   };
 }

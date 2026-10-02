@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { collectOperatorBuffDisplayNameKeys, resolveBuffDisplayName } from './buffDisplayName';
+import {
+  collectOperatorBuffDisplayNameKeys,
+  resolveBuffDisplayName,
+  resolveSimpleBuffModifierDisplayName,
+} from './buffDisplayName';
 import { compoundStatusFactories } from '../../../data/buffs/compoundStatusFactories';
 import zh from '../../../i18n/locales/zh-CN.json';
 
@@ -17,6 +21,24 @@ const i18n = {
 };
 
 describe('Buff display name', () => {
+  it('将历史增幅事实显示为属性数值摘要', () => {
+    const translate = {
+      te: (key: string) => key === 'effects.name.ampBonus:electric',
+      t: () => zh.effects.name['ampBonus:electric'],
+    };
+    expect(
+      [0.18, 0.2, 0.22].map(value =>
+        resolveSimpleBuffModifierDisplayName(
+          {
+            attribute: 'electricEnhancedDamageIncrease',
+            slot: 'baseAddition',
+            value,
+          },
+          translate,
+        ),
+      ),
+    ).toEqual(['电磁增幅+18%', '电磁增幅+20%', '电磁增幅+22%']);
+  });
   it('names global modifiers without exposing the internal Buff ID', () => {
     expect(
       resolveBuffDisplayName('scenario:custom-values', {

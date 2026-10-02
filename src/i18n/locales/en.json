@@ -2370,6 +2370,7 @@
       "SkillStarted": "Skill started",
       "DamageApplied": "Damage dealt",
       "ElementalAttachmentConverted": "Attachment conversion",
+      "BuffModifierChanged": "Buff effect value changed",
       "BuffApplied": "Apply / refresh",
       "BuffStackChanged": "Stack change",
       "BuffEnhanceAttempted": "Stack attempt",
@@ -2540,6 +2541,7 @@
       "SpChanged": "SP change",
       "UltimateEnergyChanged": "Ultimate energy change",
       "StatusChanged": "Status change",
+      "BuffModifierChanged": "Buff effect value changed",
       "BuffApplied": "Buff apply",
       "BuffFinished": "Buff end",
       "BuffReleased": "Buff released",
@@ -3190,6 +3192,7 @@
       "effects": "Effects produced",
       "effectFrame": "Frame {frame}",
       "effectEvents": {
+        "BuffModifierChanged": "Buff effect value changed",
         "BuffApplied": "Buff applied",
         "BuffStackChanged": "Buff stacks changed",
         "SpChanged": "SP changed",
@@ -4431,6 +4434,7 @@
       "frames": "Frame {value}",
       "buffId": "Original Buff ID",
       "startReasons": {
+        "modifierChanged": "Effect value changed",
         "applied": "The Buff instance was applied successfully",
         "presentationStarted": "Shown when its parent Buff started",
         "presentationStartedWithParent": "Shown when parent Buff “{parentBuffId}” started",
@@ -4439,9 +4443,12 @@
         "extended": "Reapplied to the same instance and extended its duration",
         "durationOverwritten": "Reapplied to the same instance and reset its duration",
         "modified": "Reapplied to the same instance and updated its state",
-        "reapplied": "Reapplied to the same instance"
+        "reapplied": "Reapplied to the same instance",
+        "enabledChanged": "Effective state changed",
+        "stackChanged": "Enhancement count changed"
       },
       "endReasons": {
+        "modifierChanged": "Effect value changed",
         "reapplied": "The same instance was reapplied, ending this stack phase",
         "lifetime": "Its duration expired naturally",
         "ignite": "Ignited and consumed",
@@ -4450,9 +4457,24 @@
         "absorbed": "Absorbed",
         "other": "Ended by another game rule",
         "released": "Removed when its owner was released",
-        "simulationEnd": "Still active when the simulation ended",
-        "unknown": "No end reason was recorded"
-      }
+        "simulationEnd": "Still present when the simulation ended",
+        "unknown": "No end reason was recorded",
+        "enabledChanged": "Effective state changed",
+        "stackChanged": "Enhancement count changed"
+      },
+      "selectedPhase": "Selected phase",
+      "effectiveCount": "Effective stacks",
+      "effectiveDisplayCount": "Effective displayed level",
+      "previousWindow": "Previous window",
+      "nextWindow": "Next window",
+      "state": "State in this window",
+      "states": {
+        "effective": "Effective",
+        "suppressed": "Suppressed"
+      },
+      "enhanceCount": "Raw enhancement count",
+      "displayCount": "Displayed level",
+      "suppressedHint": "This candidate remains recorded but contributes no active stacks or effects during this window."
     },
     "hitDetail": {
       "frame": "Frame",

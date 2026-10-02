@@ -832,7 +832,7 @@ export const arcaneChr_0032_lizhiyan_power_attackActionGraph = {
 export const arcaneChr_0032_lizhiyan_power_attack: SkillDefinition = {
   key: 'chr_0032_lizhiyan_power_attack',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
-  timelineBlockFrames: 34,
+  timelineBlockFrames: 52,
   naturalDurationFrames: 163,
   exclusiveFrame: 51,
   offsetRecordFrame: 21,
@@ -6976,6 +6976,7 @@ export const arcane: OperatorDefinition = {
       modifiers: [
         {
           kind: 'addSkillCooldownFrames',
+          skillKey: 'chr_0032_lizhiyan_combo_skill',
           frames: -180,
           condition: {
             kind: 'deckAttributeCompare',
@@ -6983,7 +6984,6 @@ export const arcane: OperatorDefinition = {
             operator: 'greaterOrEqual',
             right: 'will',
           },
-          skillKey: 'chr_0032_lizhiyan_combo_skill',
         },
       ],
       passiveSkills: [arcanePassive2],
@@ -7002,34 +7002,35 @@ export const arcane: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0032_lizhiyan_combo_skill',
           blackboardKey: 'atk_scale_touch',
           operation: 'multiply',
           value: 1.3,
-          skillKey: 'chr_0032_lizhiyan_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0032_lizhiyan_combo_skill',
           blackboardKey: 'atk_scale_boom',
           operation: 'multiply',
           value: 1.3,
-          skillKey: 'chr_0032_lizhiyan_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0032_lizhiyan_combo_skill',
           blackboardKey: 'atk_scale_laser1',
           operation: 'multiply',
           value: 1.3,
-          skillKey: 'chr_0032_lizhiyan_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0032_lizhiyan_combo_skill',
           blackboardKey: 'atk_scale_laser2',
           operation: 'multiply',
           value: 1.3,
-          skillKey: 'chr_0032_lizhiyan_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0032_lizhiyan_combo_skill',
           blackboardKey: 'atb_return_wisd',
           operation: 'add',
           value: 10,
@@ -7039,10 +7040,10 @@ export const arcane: OperatorDefinition = {
             operator: 'greaterOrEqual',
             right: 'will',
           },
-          skillKey: 'chr_0032_lizhiyan_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0032_lizhiyan_combo_skill',
           blackboardKey: 'rate_pre',
           operation: 'add',
           value: 0.06,
@@ -7052,7 +7053,6 @@ export const arcane: OperatorDefinition = {
             operator: 'less',
             right: 'will',
           },
-          skillKey: 'chr_0032_lizhiyan_combo_skill',
         },
       ],
     },

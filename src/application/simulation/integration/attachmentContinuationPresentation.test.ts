@@ -4,7 +4,10 @@ import { gameDataRepository } from '../../../data/gameDataRepository';
 import { elementalAttachments } from '../../../data/buffs/elementalAttachments';
 import { skillSettings } from '../../../data/combat/skillSettings';
 import { ScenarioSimulationService } from '../scenarioSimulationService';
-import { projectBuffTimelineViz } from '../../../core/projection/buffTimelineViz';
+import {
+  mergeOverlappingBuffTimelineSegments,
+  projectBuffTimelineViz,
+} from '../../../core/projection/buffTimelineViz';
 import {
   projectAttachmentContinuations,
   projectAttachmentConversionLinks,
@@ -118,9 +121,14 @@ it.each(['repeat', 'convert', 'consume'])(
         .filter(buff => buff.role?.kind === 'elementalAttachment')
         .map(buff => buff.id),
     );
-    const segments = projectBuffTimelineViz(run.receiptEntries, 240).filter(segment =>
+    const raw = projectBuffTimelineViz(run.receiptEntries, 240).filter(segment =>
       ids.has(segment.buffId),
     );
+    const segments = mergeOverlappingBuffTimelineSegments(raw);
+    expect(raw.filter(segment => segment.startFrame === segment.endFrame)).toEqual([
+      expect.objectContaining({ startReason: 'stackChanged', endReason: 'reapplied', layers: 2 }),
+    ]);
+    expect(segments.every(segment => segment.startFrame < segment.endFrame)).toBe(true);
     expect(segments.map(segment => segment.layers)).toEqual([1, 2]);
     expect(segments[0]!.endFrame).toBe(segments[1]!.startFrame);
     expect([...projectAttachmentContinuations(segments, ids)]).toEqual([segments[0]]);

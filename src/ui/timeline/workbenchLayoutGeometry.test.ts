@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { resolveMonitorSectionLayout } from './results/monitorSectionMinimums';
 import {
   resolveWorkbenchBottomHeight,
   resolveWorkbenchBottomHeightBounds,
@@ -15,8 +16,8 @@ describe('workbench bottom panel geometry', () => {
   it.each([
     [0, 240],
     [1, 180],
-    [2, 120],
-  ])('uses the legacy minimum with %i folded sections', (count, minimum) => {
+    [2, 138],
+  ])('folds %i sections without clipping the remaining monitor content', (count, minimum) => {
     expect(resolveWorkbenchBottomHeightBounds(1080, 240, count).minimum).toBe(minimum);
     expect(resolveWorkbenchBottomHeight(1080, 1, false, count)).toBe(minimum);
   });
@@ -39,6 +40,27 @@ describe('workbench bottom panel geometry', () => {
       minimum: 240,
       maximum: 509,
     });
+  });
+
+  it('keeps expanded tools reachable by workbench scrolling in a short desktop viewport', () => {
+    const height = resolveWorkbenchBottomHeight(400, 240, false);
+    const sections = resolveMonitorSectionLayout(
+      height,
+      { affliction: false, poise: false, sp: false },
+      { affliction: 2, poise: 1, sp: 3 },
+    );
+    const contentHeight = Object.values(sections.rects).reduce(
+      (sum, section) => sum + section.shellHeight,
+      0,
+    );
+    expect(resolveWorkbenchBottomHeightBounds(400, 240)).toEqual({
+      minimum: height,
+      maximum: height,
+    });
+    expect(height).toBe(138);
+    expect(contentHeight).toBeLessThanOrEqual(height);
+    expect(resolveWorkbenchBottomHeight(400, 120, false, 2)).toBe(height);
+    expect(resolveWorkbenchBottomHeight(400, 240, true)).toBe(0);
   });
 
   it('matches the main branch responsive side-panel cap', () => {

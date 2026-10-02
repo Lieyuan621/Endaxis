@@ -211,6 +211,23 @@ describe('独立到达回调的编译', () => {
         runtime: { ...input.runtime, hitAndBlockDetectDelayTime: 1 },
       }),
     ).toThrow('outside the proven zero-distance block shape');
+    input.launch = {
+      ...input.launch,
+      callbacks: [
+        ...input.launch.callbacks,
+        { event: 'finish', enabled: true, skillId: 'callback' },
+      ],
+    };
+    expect(projectFixture(input).steps).toEqual([
+      expect.objectContaining({
+        kind: 'launchProjectile',
+        parameters: expect.objectContaining({ finish: 'firstTickBlock' }),
+        callbacks: [
+          expect.objectContaining({ event: 'block' }),
+          expect.objectContaining({ event: 'finish' }),
+        ],
+      }),
+    ]);
   });
 
   it('没有场景表面时自定义表面阻挡层不改变到达程序，敌人层不能被忽略', () => {

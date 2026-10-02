@@ -9,6 +9,8 @@ const buff = (instanceId: number, startFrame: number, endFrame: number): BuffTim
   targetId: 'enemy',
   startFrame,
   endFrame,
+  enabled: true,
+  enhanceCount: 1,
   layers: 1,
   placement: 'upper',
   iconStyleInSquad: 'SpellAbnormal',

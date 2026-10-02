@@ -16,6 +16,8 @@ const segment = (
   startFrame,
   endFrame,
   layers: 1,
+  enhanceCount: 1,
+  enabled: true,
   placement: 'upper',
   ...extra,
 });

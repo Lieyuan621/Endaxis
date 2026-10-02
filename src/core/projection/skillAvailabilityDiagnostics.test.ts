@@ -19,6 +19,34 @@ function receipt(
 }
 
 describe('projectSkillAvailabilityDiagnostics', () => {
+  it('关联重复及乱序序号时仍取输入中第一个事实，不跨过缺少详情的事实', () => {
+    const diagnostics = projectSkillAvailabilityDiagnostics([
+      receipt(9, 'SkillInputResolvedToDifferentSkill', {
+        frame: 30,
+        data: { skillId: 'other', actualSkillId: 'first' },
+      }),
+      receipt(2, 'SkillInputResolvedToDifferentSkill', {
+        data: { skillId: 'battleSkill', actualSkillId: 'second' },
+      }),
+      receipt(9, 'SkillCostUnavailableAtStart'),
+      receipt(2, 'SkillInputResolvedToDifferentSkill', {
+        data: { skillId: 'battleSkill', actualSkillId: 'duplicate' },
+      }),
+      receipt(4, 'SkillInputResolutionUnknown'),
+      receipt(4, 'SkillInputResolutionUnknown', {
+        data: { skillId: 'battleSkill', reason: 'later detail' },
+      }),
+    ]);
+    expect(diagnostics[1]).toEqual({
+      frame: 12,
+      sourceId: 'perlica',
+      skillId: 'battleSkill',
+      reasons: ['skillInputMismatch', 'resourceUnavailable', 'skillInputUnknown'],
+      receiptSequences: [2, 9, 2, 4, 4],
+      actualSkillId: 'first',
+    });
+  });
+
   it('实际执行的技能仍显示闪避窗口未开放的原因', () => {
     expect(
       projectSkillAvailabilityDiagnostics([

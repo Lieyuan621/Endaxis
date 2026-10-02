@@ -133,9 +133,16 @@ export function useTimelineItemMove(options: Options) {
     const settling = { ...current, committed: true };
     gesture.value = settling;
     try {
-      options.scenario.value = current.baseScenario;
-      if (options.commit('moveTimelineItems', () => final))
-        options.dropped?.(event, current.plan.items);
+      // 编辑会话持有原文档，提交最终预览无需先广播原位置；失败才回滚。
+      let committed: boolean;
+      try {
+        committed = options.commit('moveTimelineItems', () => final);
+      } catch (error) {
+        options.scenario.value = current.baseScenario;
+        throw error;
+      }
+      if (committed) options.dropped?.(event, current.plan.items);
+      else options.scenario.value = current.baseScenario;
       await nextTick();
       await options.simulate();
     } finally {

@@ -443,13 +443,15 @@ watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
 .workbench-layout {
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   display: grid;
   /*
    * 时间轴内部会用较高层级抬起选中和拖动中的技能块。工作台必须形成自己的
    * 堆叠上下文，避免这些内部层级越过 append-to-body 的编辑器遮罩和弹窗。
    */
   isolation: isolate;
-  overflow: hidden;
+  /* 窄屏桌面模式保留面板最小尺寸，通过原生滚动访问两侧和底部，不覆盖折叠偏好。 */
+  overflow: auto;
   background: var(--ea-workbench);
   color: var(--ea-fg);
   font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;

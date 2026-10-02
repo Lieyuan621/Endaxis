@@ -1,4 +1,5 @@
-import { computed, effectScope, shallowRef } from 'vue';
+import { computed, effectScope, shallowRef, watch } from 'vue';
+import { ScenarioEditorSession } from '../../../application/editor/scenarioEditorSession';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import { createInteractionSession } from '../../interaction/interactionSession';
@@ -51,10 +52,13 @@ function fixture(readOnly = false, minimumInputFrame = 0, blocked = false) {
   const actionSelection = shallowRef(createEmptyTimelineActionSelection());
   const interactionSession = createInteractionSession();
   const simulationService = { beginInteractiveSession: vi.fn(), endInteractiveSession: vi.fn() };
+  const session = new ScenarioEditorSession(original);
+  session.subscribe(snapshot => {
+    scenario.value = snapshot.scenario;
+  });
   const commitScenario = vi.fn(
     (_name: string, command: (current: typeof original) => typeof original) => {
-      scenario.value = command(scenario.value);
-      return true;
+      return session.commit(_name, command);
     },
   );
   const simulateNow = vi.fn(async () => true);
@@ -109,6 +113,7 @@ function fixture(readOnly = false, minimumInputFrame = 0, blocked = false) {
   );
   return {
     scenario,
+    session,
     pointerFrame,
     original,
     begin,
@@ -134,6 +139,46 @@ function fixture(readOnly = false, minimumInputFrame = 0, blocked = false) {
 }
 
 describe('timeline item move lifecycle', () => {
+  it('直接提交最终预览，不广播原位置，且正式编辑历史支持单次撤销重做', async () => {
+    const f = fixture();
+    const preview = f.scenario.value;
+    const broadcasts: unknown[] = [];
+    const stop = watch(f.scenario, value => broadcasts.push(value), { flush: 'sync' });
+    try {
+      f.finish();
+      await vi.waitFor(() => expect(f.movement.gesture.value).toBeNull());
+      expect(broadcasts).toEqual([]);
+      expect(f.session.snapshot.scenario).toBe(preview);
+      expect(f.session.undo()).toBe(true);
+      expect(f.scenario.value).toBe(f.original);
+      expect(f.session.canUndo).toBe(false);
+      expect(f.session.redo()).toBe(true);
+      expect(f.scenario.value).toBe(preview);
+    } finally {
+      stop();
+      f.scope.stop();
+    }
+  });
+
+  it('提交抛错时还原原始输入，不留下预览或撤销记录', async () => {
+    const f = fixture();
+    const report = vi.spyOn(console, 'error').mockImplementation(() => {});
+    f.commitScenario.mockImplementation(() => {
+      throw new Error('commit failed');
+    });
+    try {
+      f.finish();
+      await vi.waitFor(() => expect(report).toHaveBeenCalled());
+      expect(f.scenario.value).toBe(f.original);
+      expect(f.session.canUndo).toBe(false);
+      expect(f.movement.gesture.value).toBeNull();
+      expect(f.interactionSession.current).toBeNull();
+    } finally {
+      report.mockRestore();
+      f.scope.stop();
+    }
+  });
+
   it('交互被屏障阻止时不遗留拖动状态或启动模拟', () => {
     const f = fixture(false, 0, true);
     expect(f.movement.gesture.value).toBeNull();

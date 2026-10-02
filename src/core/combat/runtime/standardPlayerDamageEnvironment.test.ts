@@ -1,3 +1,9 @@
+import bedazzlingNightDebut from '../../../data/equipment/generated-weapons/polearm/wpn_lance_0014.generated';
+import {
+  projectBuffTimelineViz,
+  mergeOverlappingBuffTimelineSegments,
+} from '../../projection/buffTimelineViz';
+import { projectCombatStatusIndicators } from '../../projection/combatStatusIndicators';
 import { withAbilityEventResponseContext } from '../events/abilityEventResponseContext';
 import { CombatVitals } from '../resources/combatVitals';
 import type { BoundCombatBattleRuntimes } from './combatRuntimeAssembly';
@@ -613,6 +619,7 @@ import { skillSettings } from '../../../data/combat/skillSettings';
 import type {
   ResolvedActionSequence,
   ResolvedCombatStepForKind,
+  ResolvedSkillBuffDefinition,
 } from '../../compiler/combatProgram';
 import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
 import type {
@@ -3080,6 +3087,384 @@ describe('StandardPlayerDamageEnvironment', () => {
         layers: 1,
       },
     });
+  });
+
+  it('曜夜八个存活候选只显示实际四层，恢复后替补启用与伤害完全一致', () => {
+    const context = createContext();
+    const receipt = context.receipt as CombatReceiptCollector;
+    const environment = createEnvironment();
+    const executor = environment.runtimeOptions.createOperationExecutor(context);
+    const runtime = environment.runtimeOptions.createOperatorBuffRuntime!(
+      'operator',
+      context.panel,
+    );
+    if (!(runtime instanceof BuffDefinitionOperationTarget)) throw new Error('fixture');
+    const buffId = 'buff_wpn_lance_0014_damageup';
+    const definition = bedazzlingNightDebut.buffDefinitions[buffId];
+    for (let index = 0; index < 8; index++) {
+      runtime.apply({
+        buffId,
+        sourceId: index % 2 === 0 ? 'operator' : 'other-source',
+        blackboardValues: {
+          atk_up: 0.035 + index * 0.007,
+          duration2: 20,
+          // 上限在组首次施加时读取；后来候选的黑板不能改变组上限。
+          max_stack: index === 0 ? 4 : 7,
+        },
+        definition,
+      });
+      context.clock.advanceFrame();
+    }
+    expect(runtime.container.buffs.filter(buff => !buff.isFinished)).toHaveLength(8);
+    expect(
+      runtime.container.buffs.filter(buff => buff.isEnabled).map(buff => buff.instanceId),
+    ).toEqual([5, 6, 7, 8]);
+    const segments = projectBuffTimelineViz(receipt.entries, 100);
+    const phase = mergeOverlappingBuffTimelineSegments(segments).find(
+      segment => segment.startFrame === 7,
+    )!;
+    expect(phase.layers).toBe(4);
+    expect(phase.members.map(member => member.instanceId)).toEqual([5, 6, 7, 8]);
+    expect(new Set(phase.windows.map(window => window.instanceId)).size).toBe(8);
+    expect(projectCombatStatusIndicators(segments, 7).map(indicator => indicator.layers)).toEqual([
+      4,
+    ]);
+
+    const savedHistory = receipt.history.snapshot();
+    const originalPrefix = savedHistory.toArray();
+    const saved = structuredClone({
+      environment: environment.runtimeState,
+      events: new Map(
+        ['enemy', 'operator', 'other-source'].map(id => [
+          id,
+          environment.eventsFor(id).runtimeState,
+        ]),
+      ),
+      enemyBuffs: environment.runtimeOptions.enemyBuffRuntime.runtimeState!,
+      operatorBuffs: runtime.runtimeState,
+    });
+    const restored = new StandardPlayerDamageEnvironment({
+      ...environment.options,
+      enemyVitals: CombatVitals.bindRuntimeState(saved.environment.enemyVitals),
+      restoredState: saved.environment,
+      restoredEventStates: saved.events,
+      restoredBuffStates: {
+        enemy: saved.enemyBuffs,
+        operators: new Map([['operator', saved.operatorBuffs]]),
+      },
+    });
+    const restoredReceipt = new CombatReceiptCollector(savedHistory);
+    const restoredContext = { ...createContext(), receipt: restoredReceipt };
+    for (let frame = 0; frame < context.clock.frame; frame++) restoredContext.clock.advanceFrame();
+    const restoredExecutor = restored.runtimeOptions.createOperationExecutor(restoredContext);
+    const restoredRuntime = restored.runtimeOptions.createOperatorBuffRuntime!(
+      'operator',
+      restoredContext.panel,
+    );
+    if (!(restoredRuntime instanceof BuffDefinitionOperationTarget)) throw new Error('fixture');
+    restoredRuntime.bindRestoredDefinitionInstances(id => (id === buffId ? definition : undefined));
+    expect(restoredReceipt.entries).toEqual(originalPrefix);
+    expect(
+      restoredRuntime.container.buffs.filter(buff => buff.isEnabled).map(buff => buff.instanceId),
+    ).toEqual([5, 6, 7, 8]);
+
+    for (const [currentRuntime, currentContext, currentExecutor, currentReceipt] of [
+      [runtime, context, executor, receipt],
+      [restoredRuntime, restoredContext, restoredExecutor, restoredReceipt],
+    ] as const) {
+      currentExecutor.execute(damageStep);
+      const before = currentReceipt.entries.length;
+      for (const buff of currentRuntime.container.buffs) {
+        if (buff.isEnabled) buff.enable();
+        else buff.disable();
+      }
+      expect(currentReceipt.entries).toHaveLength(before);
+      for (const instanceId of [8, 7, 6, 5]) {
+        currentRuntime.container.buffs
+          .find(buff => buff.instanceId === instanceId)!
+          .finish('lifetime');
+        const active = currentRuntime.container.buffs.filter(buff => buff.isEnabled);
+        expect(active).toHaveLength(4);
+        expect(
+          projectCombatStatusIndicators(
+            projectBuffTimelineViz(currentReceipt.entries, 100),
+            currentContext.clock.frame,
+          ).map(indicator => indicator.layers),
+        ).toEqual([4]);
+        currentContext.clock.advanceFrame();
+      }
+      expect(
+        currentRuntime.container.buffs.filter(buff => buff.isEnabled).map(buff => buff.instanceId),
+      ).toEqual([1, 2, 3, 4]);
+      currentExecutor.execute(damageStep);
+    }
+    expect(restoredReceipt.entries).toEqual(receipt.entries);
+    expect(savedHistory.toArray()).toEqual(originalPrefix);
+    expect(restored.enemyVitals.health).toBe(environment.enemyVitals.health);
+    const hits = receipt.entries.filter(entry => entry.event === 'DamageApplied');
+    expect(hits).toHaveLength(2);
+    expect(hits[0]!.data!.value).toBeGreaterThan(hits[1]!.data!.value as number);
+  });
+
+  it('共享组跨 Buff 身份竞争，独立组同名 Buff 可同时生效，零上限不制造图标', () => {
+    const context = createContext();
+    const receipt = context.receipt as CombatReceiptCollector;
+    const environment = createEnvironment();
+    environment.runtimeOptions.createOperationExecutor(context);
+    const runtime = environment.runtimeOptions.createOperatorBuffRuntime!('operator');
+    if (!(runtime instanceof BuffDefinitionOperationTarget)) throw new Error('fixture');
+    const apply = (buffId: string, stackingKey: string, priority: number, maxStackCount = 1) =>
+      runtime.apply({
+        buffId,
+        sourceId: 'operator',
+        blackboardValues: {},
+        definition: {
+          stackingType: 'highPriorityWithMaxStack',
+          stackingKey,
+          priority,
+          maxStackCount,
+          durationSeconds: 5,
+          presentation: { showInSquadIcon: true },
+        },
+      });
+    apply('same-icon', 'first-group', 1);
+    apply('same-icon', 'second-group', 1);
+    apply('suppressed-icon', 'shared-group', 1);
+    apply('winner-icon', 'shared-group', 2);
+    apply('zero-icon', 'zero-group', 1, 0);
+    expect(
+      projectCombatStatusIndicators(projectBuffTimelineViz(receipt.entries, 30), 0).map(
+        indicator => [indicator.buffId, indicator.layers],
+      ),
+    ).toEqual([
+      ['same-icon', 2],
+      ['winner-icon', 1],
+    ]);
+    context.clock.advanceFrame();
+    runtime.container.findFirstByIds(['winner-icon'])!.finish('lifetime');
+    expect(
+      projectCombatStatusIndicators(projectBuffTimelineViz(receipt.entries, 30), 1).map(
+        indicator => [indicator.buffId, indicator.layers],
+      ),
+    ).toEqual([
+      ['same-icon', 2],
+      ['suppressed-icon', 1],
+    ]);
+    const zero = projectBuffTimelineViz(receipt.entries, 30).find(
+      segment => segment.buffId === 'zero-icon',
+    )!;
+    expect(zero.enabled).toBe(false);
+    expect(zero.endFrame).toBe(30);
+  });
+
+  it('自动增长和消费减层也刷新摘要，静止满层不重复追加状态事实', () => {
+    const context = createContext();
+    const receipt = context.receipt as CombatReceiptCollector;
+    const environment = createEnvironment();
+    environment.runtimeOptions.createOperationExecutor(context);
+    const runtime = environment.runtimeOptions.createOperatorBuffRuntime!(
+      'operator',
+      context.panel,
+    );
+    if (!(runtime instanceof BuffDefinitionOperationTarget)) throw new Error('fixture');
+    runtime.apply({
+      buffId: 'growing',
+      sourceId: 'operator',
+      blackboardValues: {},
+      definition: {
+        stackingType: 'timedGrowingEnhance',
+        maxStackCount: 2,
+        durationSeconds: 1,
+        attributeModifiers: [{ attribute: 'Atk', slot: 'baseMultiplier', value: 0.1 }],
+        presentation: { showInSquadIcon: true },
+      },
+    });
+    const buff = runtime.container.findFirstByIds(['growing'])!;
+    context.clock.advanceFrame();
+    buff.tick(1);
+    expect(buff.enhanceCount).toBe(2);
+    const count = receipt.entries.length;
+    for (let index = 0; index < 60; index++) buff.tick(1 / 30);
+    expect(receipt.entries).toHaveLength(count);
+    context.clock.advanceFrame();
+    buff.decreaseEnhanceCount(1, 'early');
+    expect(buff.enhanceCount).toBe(1);
+    const segments = projectBuffTimelineViz(receipt.entries, 10);
+    expect(
+      [0, 1, 2].map(frame => {
+        const indicator = projectCombatStatusIndicators(segments, frame)[0]!;
+        return [indicator.layers, indicator.simpleModifierValue];
+      }),
+    ).toEqual([
+      [1, 0.1],
+      [2, undefined],
+      [1, 0.1],
+    ]);
+    expect(receipt.entries.filter(entry => entry.event === 'BuffApplied')).toHaveLength(1);
+    expect(receipt.entries.filter(entry => entry.event === 'BuffModifierChanged')).toHaveLength(2);
+  });
+
+  it('普通 Buff 的 count 黑板不会覆盖实际叠层或展示子图标', () => {
+    const context = createContext();
+    const receipt = context.receipt as CombatReceiptCollector;
+    const environment = createEnvironment();
+    environment.runtimeOptions.createOperationExecutor(context);
+    const runtime = environment.runtimeOptions.createOperatorBuffRuntime!('operator');
+    const apply = () =>
+      runtime.apply!({
+        buffId: 'ordinary-counter',
+        sourceId: 'operator',
+        blackboardValues: { count: 99 },
+        definition: {
+          stackingType: 'enhanceAndRefresh',
+          maxStackCount: 3,
+          durationSeconds: 5,
+          presentation: { showInSquadIcon: true, iconStyleInSquad: 'LifeTime' },
+          childPresentations: [
+            {
+              buffId: 'ordinary-counter-icon',
+              presentation: { showInSquadIcon: true, iconStyleInSquad: 'LifeTime' },
+            },
+          ],
+        },
+      });
+    apply();
+    context.clock.advanceFrame();
+    apply();
+    const visible = receipt.entries.filter(
+      entry => entry.event === 'BuffApplied' || entry.event === 'BuffPresentationStarted',
+    );
+    expect(visible.map(entry => entry.data?.layers)).toEqual([1, 1, 2, 2]);
+    expect(visible.every(entry => entry.data?.displayCount === undefined)).toBe(true);
+  });
+
+  it('关键词数值变化更新历史和当前图标，恢复后不重施加且静态刷新不增长回执', () => {
+    const context = createContext();
+    const receipt = context.receipt as CombatReceiptCollector;
+    const environment = createEnvironment();
+    environment.runtimeOptions.createOperationExecutor(context);
+    const runtime = environment.runtimeOptions.createOperatorBuffRuntime!(
+      'operator',
+      context.panel,
+    );
+    if (!(runtime instanceof BuffDefinitionOperationTarget)) throw new Error('fixture');
+    const definition: ResolvedSkillBuffDefinition = {
+      stackingType: 'unique',
+      durationSeconds: 5,
+      blackboard: { rate: 0.18 },
+      keywordEnhancements: [
+        {
+          triggerBuffIds: ['marker'],
+          operation: 'add',
+          targetKey: 'rate',
+          initialValue: { blackboardKey: 'rate' },
+          value: 0.02,
+        },
+      ],
+      attributeModifiers: [
+        {
+          attribute: 'electricDamageIncrease',
+          slot: 'baseAddition',
+          value: { blackboardKey: 'rate' },
+        },
+      ],
+      presentation: { showInSquadIcon: true },
+      childPresentations: [{ buffId: 'carrier-icon', presentation: { showInSquadIcon: true } }],
+    };
+    runtime.apply({ buffId: 'carrier', sourceId: 'operator', blackboardValues: {}, definition });
+    const carrier = runtime.container.findFirstByIds(['carrier'])!;
+    context.clock.advanceFrame();
+    runtime.container.add({ id: 'marker', stackingType: 'stack' }, 'operator');
+    expect(carrier.attributeModifiers[0]!.values.baseAddition).toBeCloseTo(0.2);
+    const savedHistory = receipt.history.snapshot();
+    const saved = structuredClone({
+      environment: environment.runtimeState,
+      events: new Map([
+        ['enemy', environment.eventsFor('enemy').runtimeState],
+        ['operator', environment.eventsFor('operator').runtimeState],
+      ]),
+      enemyBuffs: environment.runtimeOptions.enemyBuffRuntime.runtimeState!,
+      operatorBuffs: runtime.runtimeState,
+    });
+    const originalPrefix = savedHistory.toArray();
+    const restored = new StandardPlayerDamageEnvironment({
+      ...environment.options,
+      enemyVitals: CombatVitals.bindRuntimeState(saved.environment.enemyVitals),
+      restoredState: saved.environment,
+      restoredEventStates: saved.events,
+      restoredBuffStates: {
+        enemy: saved.enemyBuffs,
+        operators: new Map([['operator', saved.operatorBuffs]]),
+      },
+    });
+    const restoredReceipt = new CombatReceiptCollector(savedHistory);
+    const restoredContext = { ...createContext(), receipt: restoredReceipt };
+    restoredContext.clock.advanceFrame();
+    bindBattleWithoutProjectiles(restored, restoredContext);
+    const restoredRuntime = restored.runtimeOptions.createOperatorBuffRuntime!('operator');
+    if (!(restoredRuntime instanceof BuffDefinitionOperationTarget)) throw new Error('fixture');
+    restoredRuntime.bindRestoredDefinitionInstances(id =>
+      id === 'carrier' ? definition : { stackingType: 'stack' },
+    );
+    expect(restoredReceipt.entries).toEqual(originalPrefix);
+    restoredContext.clock.advanceFrame();
+    restoredRuntime.container.add({ id: 'marker', stackingType: 'stack' }, 'operator');
+    const restoredCarrier = restoredRuntime.container.findFirstByIds(['carrier'])!;
+    const count = restoredReceipt.entries.length;
+    for (let index = 0; index < 60; index++) restoredCarrier.refreshAttributeModifierValues();
+    expect(restoredReceipt.entries).toHaveLength(count);
+    expect(restoredCarrier.attributeModifiers[0]!.values.baseAddition).toBeCloseTo(0.22);
+    expect(carrier.attributeModifiers[0]!.values.baseAddition).toBeCloseTo(0.2);
+    expect(savedHistory.toArray()).toEqual(originalPrefix);
+    const changes = restoredReceipt.entries.filter(entry => entry.event === 'BuffModifierChanged');
+    expect(changes).toHaveLength(2);
+    expect(changes[0]!.data!.simpleModifierValue).toBeCloseTo(0.2);
+    expect(changes[1]!.data!.simpleModifierValue).toBeCloseTo(0.22);
+    const segments = projectBuffTimelineViz(restoredReceipt.entries, 10);
+    for (const buffId of ['carrier', 'carrier-icon']) {
+      const values = segments.filter(segment => segment.buffId === buffId);
+      expect(values.map(segment => [segment.startFrame, segment.endFrame, segment.layers])).toEqual(
+        [
+          [0, 1, 1],
+          [1, 2, 1],
+          [2, 10, 1],
+        ],
+      );
+      expect(values[0]!.simpleModifierValue).toBeCloseTo(0.18);
+      expect(values[1]!.simpleModifierValue).toBeCloseTo(0.2);
+      expect(values[2]!.simpleModifierValue).toBeCloseTo(0.22);
+      expect(values[1]!.startReason).toBe('modifierChanged');
+    }
+    for (const indicator of projectCombatStatusIndicators(segments, 1))
+      expect(indicator.simpleModifierValue).toBeCloseTo(0.2);
+    // 归零后清除旧摘要；同帧第二次变化保留序号，不能继续显示上一时刻的 22%。
+    restoredCarrier.blackboard.assignDynamic('rate', 0);
+    restoredCarrier.refreshAttributeModifierValues();
+    const cleared = projectBuffTimelineViz(restoredReceipt.entries, 10);
+    const visible = mergeOverlappingBuffTimelineSegments(cleared);
+    expect(visible.filter(segment => segment.startFrame === segment.endFrame)).toEqual([]);
+    for (const buffId of ['carrier', 'carrier-icon']) {
+      const phase = visible.find(segment => segment.buffId === buffId && segment.startFrame === 2)!;
+      expect(phase.simpleModifierValue).toBeUndefined();
+      expect(phase.windows).toHaveLength(2);
+      expect(phase.windows[1]!.simpleModifierValue).toBeCloseTo(0.22);
+      expect(phase.windows[1]!.startSequence).toBeLessThan(phase.startSequence!);
+    }
+    expect(
+      projectCombatStatusIndicators(cleared, 2).every(
+        indicator => indicator.simpleModifierValue === undefined,
+      ),
+    ).toBe(true);
+    restoredContext.clock.advanceFrame();
+    restoredCarrier.finish('lifetime');
+    expect(
+      projectCombatStatusIndicators(projectBuffTimelineViz(restoredReceipt.entries, 10), 3),
+    ).toEqual([]);
+    expect(
+      restoredReceipt.entries.filter(
+        entry => entry.event === 'BuffApplied' && entry.data?.buffId === 'carrier',
+      ),
+    ).toHaveLength(1);
   });
 
   it('records visible operator Buff instances with their native icon identity', () => {

@@ -496,7 +496,8 @@ export class CombatBuff<Key extends string> {
       throw new Error(`buff '${definition.id}' source attribute binding requires owner identity`);
     }
     const initializedKeywordRates = new Set<string>();
-    for (const enhancement of definition.keywordEnhancements ?? []) {
+    this.#state.keywordEnhancements = definition.keywordEnhancements ?? [];
+    for (const enhancement of this.#state.keywordEnhancements) {
       if (initializedKeywordRates.has(enhancement.targetKey)) continue;
       const initialValue = resolveOptionalBuffNumber(
         definition.id,
@@ -692,7 +693,7 @@ export class CombatBuff<Key extends string> {
 
   applyKeywordEnhancements(onAddedBuffId: string): boolean {
     let changed = false;
-    for (const enhancement of this.definition.keywordEnhancements ?? []) {
+    for (const enhancement of this.#state.keywordEnhancements) {
       if (!enhancement.triggerBuffIds.includes(onAddedBuffId)) continue;
       const operand = resolveOptionalBuffNumber(
         this.definition.id,
@@ -736,6 +737,7 @@ export class CombatBuff<Key extends string> {
   enable(): void {
     if (this.#state.lifecycle.finished || this.#state.lifecycle.enabled) return;
     this.#state.lifecycle.enabled = true;
+    this.owner.onBuffEnabledChanged?.(this);
     if (!this.#state.lifecycle.started) {
       this.#state.lifecycle.started = true;
       this.definition.actions?.start?.(this);
@@ -783,6 +785,7 @@ export class CombatBuff<Key extends string> {
     this.removeAttributeModifiers();
     this.unregisterSharedSpGainModifiers();
     this.#state.lifecycle.enabled = false;
+    this.owner.onBuffEnabledChanged?.(this);
   }
 
   /** 宿主释放与 MarkFinish 不同：不受 finishable 限制，不伪造结束原因/减层通知。 */
@@ -1052,12 +1055,15 @@ export class CombatBuff<Key extends string> {
   }
 
   private replaceAttributeModifiers(replacements: readonly CombatAttributeModifier<Key>[]): void {
+    const previous = this.attributeModifiers;
     replaceBuffAttributeModifiers(
       this.#state.attributes,
       this.#state.lifecycle.enabled,
       replacements,
       this.owner.attributes,
     );
+    // 所有重建路径都使用同一事实观察：显式刷新、自动增强、消费减层以及 Modify。
+    this.owner.onBuffAttributeModifiersRefreshed?.(this, previous);
   }
 
   private addExtendTags(): void {
@@ -1251,6 +1257,13 @@ export class CombatBuffContainer<Key extends string> {
       skillCastInfo?: CombatSkillCastInfo | null,
       producedBy?: import('../receipt/combatReceipt').CombatObjectRef,
     ) => void,
+    /** 只读观察属性修正重建；观察者仅在摘要事实变化时记录，不发布原生事件。 */
+    readonly onBuffAttributeModifiersRefreshed?: (
+      buff: CombatBuff<Key>,
+      previous: readonly CombatAttributeModifier<Key>[],
+    ) => void,
+    /** 只读观察真实启停边界；结束/释放已有独立事实，恢复绑定不得重放。 */
+    readonly onBuffEnabledChanged?: (buff: CombatBuff<Key>) => void,
   ) {
     if (restoredState === undefined) {
       this.#state = createBuffContainerState(
@@ -1318,13 +1331,11 @@ export class CombatBuffContainer<Key extends string> {
       for (const shield of buff.shields) this.#shieldBindings.set(shield.runtimeState, shield);
     }
     for (const [key, state] of this.#state.stackingGroups) {
-      if (state.members.length === 0) continue;
-      const first = this.#requireMember(state.members[0]!);
-      const group = new BuffStackingGroup(this, key, first.definition.stackingType, state);
+      const group = new BuffStackingGroup(this, key, state.stackingType, state);
       for (const instanceId of state.members) {
         const buff = this.#requireMember(instanceId);
         const stackingKey = buff.definition.stackingKey ?? buff.definition.id;
-        if (stackingKey !== key || buff.definition.stackingType !== first.definition.stackingType) {
+        if (stackingKey !== key || buff.definition.stackingType !== state.stackingType) {
           throw new Error(`restored Buff stacking group '${key}' has incompatible members`);
         }
         group.bindRestored(buff);
@@ -2198,7 +2209,7 @@ class BuffStackingGroup<Key extends string> {
     readonly owner: CombatBuffContainer<Key>,
     readonly key: string,
     readonly stackingType: BuffStackingType,
-    state = createBuffStackingState(),
+    state = createBuffStackingState(stackingType),
   ) {
     this.#state = state;
   }
@@ -2354,9 +2365,10 @@ class BuffStackingGroup<Key extends string> {
   ): CombatBuff<Key> {
     if (existing === undefined) return this.allocateEnhanced(definition, sourceId, options);
 
+    const incomingDuration = resolveIncomingDuration(definition, options);
     existing.executeBeforeEnhance(sourceId);
     this.enhanceWithinLimit(existing, sourceId, options);
-    existing.refreshDuration(resolveIncomingDuration(definition, options));
+    existing.refreshDuration(incomingDuration);
     existing.executeAfterEnhance(sourceId, options?.skillCastInfo ?? null);
     return existing;
   }

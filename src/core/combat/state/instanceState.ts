@@ -35,6 +35,10 @@ import {
   type TimelineRuntimeState,
 } from './actionState';
 import { type DamageType } from '../../game-data/operatorDefinition';
+import type {
+  BuffKeywordEnhancementDefinition,
+  BuffStackingType,
+} from '../../../../packages/game-data-contract/src/buffs';
 import {
   type AbilityEntityChildSkillState,
   type CallbackSkillHostState,
@@ -221,13 +225,15 @@ export function createBuffTriggerState(): BuffTriggerState {
 
 /** 同一目标内一个叠层组的成员与计数。成员只保存该目标容器内的 Buff 实例编号。 */
 export interface BuffStackingState {
+  /** 空组仍保留类型约束；切面恢复不能从已回收的成员推断。 */
+  readonly stackingType: BuffStackingType;
   readonly members: number[];
   currentStackCount: number;
   maxStackCount: number;
 }
 
-export function createBuffStackingState(): BuffStackingState {
-  return { members: [], currentStackCount: 0, maxStackCount: 0 };
+export function createBuffStackingState(stackingType: BuffStackingType): BuffStackingState {
+  return { stackingType, members: [], currentStackCount: 0, maxStackCount: 0 };
 }
 
 export interface BuffShieldState {
@@ -294,6 +300,8 @@ export interface BuffInstanceState<Key extends string> {
   readonly recycleCallbackIds: number[];
   nextRecycleCallbackId: number;
   sharedSpGainModifiers: readonly SharedSpGainModifier[];
+  /** 创建动作注入的关键词规则属于实例；按公共 Buff 定义恢复会丢失本次施法的参数。 */
+  keywordEnhancements: readonly BuffKeywordEnhancementDefinition[];
   readonly identity: BuffInstanceIdentity;
   sourceActionId: string;
   definitionOwnerId: string;
@@ -321,6 +329,7 @@ export function createBuffInstanceState<Key extends string>(
     recycleCallbackIds: [],
     nextRecycleCallbackId: 0,
     sharedSpGainModifiers: [],
+    keywordEnhancements: [],
     identity,
     sourceActionId: identity.definitionId,
     definitionOwnerId: identity.sourceId,

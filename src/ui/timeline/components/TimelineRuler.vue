@@ -575,6 +575,7 @@ function seek(event: MouseEvent): void {
   width: 14px;
   margin-left: -7px;
   cursor: ew-resize;
+  touch-action: none;
 }
 
 .axis-boundary::before {

@@ -59,8 +59,28 @@ function readReason(event: string): SkillAvailabilityDiagnosticReason | undefine
 export function projectSkillAvailabilityDiagnostics(
   entries: readonly CombatReceiptEntry[],
 ): readonly SkillAvailabilityDiagnostic[] {
-  return reduceSkillDiagnostics(entries, readReason).map(diagnostic => {
-    const related = entries.filter(entry => diagnostic.receiptSequences.includes(entry.sequence));
+  const diagnostics = reduceSkillDiagnostics(entries, readReason);
+  if (diagnostics.length === 0) return diagnostics;
+  // 索引仅在本次投影内存活；保留重复序号及输入位置，不假定外部回执已排序。
+  const detailsBySequence = new Map<number, { entry: CombatReceiptEntry; index: number }[]>();
+  for (let index = 0; index < entries.length; index++) {
+    const entry = entries[index]!;
+    if (
+      entry.event !== 'SkillInputResolvedToDifferentSkill' &&
+      entry.event !== 'SkillInputResolutionUnknown' &&
+      entry.event !== 'SkillInputCannotInterruptCurrentSkill' &&
+      entry.event !== 'SkillInputInterruptionUnknown'
+    )
+      continue;
+    const details = detailsBySequence.get(entry.sequence);
+    if (details === undefined) detailsBySequence.set(entry.sequence, [{ entry, index }]);
+    else details.push({ entry, index });
+  }
+  return diagnostics.map(diagnostic => {
+    const related = diagnostic.receiptSequences
+      .flatMap(sequence => detailsBySequence.get(sequence) ?? [])
+      .sort((left, right) => left.index - right.index)
+      .map(detail => detail.entry);
     const mismatch = related.find(entry => entry.event === 'SkillInputResolvedToDifferentSkill');
     const inputUnknown = related.find(entry => entry.event === 'SkillInputResolutionUnknown');
     const interruptionBlocked = related.find(

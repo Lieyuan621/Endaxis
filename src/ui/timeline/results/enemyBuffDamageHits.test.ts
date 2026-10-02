@@ -23,6 +23,8 @@ const segment: BuffTimelineSegment = {
   targetId: 'enemy',
   startFrame: 0,
   endFrame: 10,
+  enabled: true,
+  enhanceCount: 1,
   layers: 1,
   placement: 'upper',
 };
@@ -33,7 +35,7 @@ const applied: CombatReceiptEntry = {
   time: 0,
   sourceId: 'operator',
   targetId: 'enemy',
-  data: { buffId: 'status', instanceId: 2, layers: 1, visible: true },
+  data: { buffId: 'status', instanceId: 2, layers: 1, enabled: true, visible: true },
 };
 
 it('retains actual damage only and opens each receipt without counting the audit twice', () => {
@@ -106,7 +108,7 @@ it('does not confuse instance, owner, target, frame or hidden helper identities'
       segment,
     ]),
   ).toBeUndefined();
-  const next = { ...segment, startFrame: 10, endFrame: 20, layers: 2 };
+  const next = { ...segment, startFrame: 10, endFrame: 20, enhanceCount: 2, layers: 2 };
   expect(findBuffDamageSegment(hit(), [segment, next])).toBe(next);
   const others = [
     { ...hit(2), frame: 11 },

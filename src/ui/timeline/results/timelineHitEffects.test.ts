@@ -60,7 +60,7 @@ it('keeps target-owned Buff receipts out of skill markers while retaining delega
     event: 'BuffApplied',
     sourceId: 'rossi',
     targetId: 'enemy',
-    data: { buffId: 'bleed', instanceId: 1, layers: 1, visible: true },
+    data: { buffId: 'bleed', instanceId: 1, layers: 1, enabled: true, visible: true },
   };
   const delegated = {
     ...buff,

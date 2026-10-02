@@ -36,8 +36,14 @@ export interface CombatReceiptSink {
 /** 稳定且仅追加的事实记录；本地化与展示均属于投影。 */
 export class CombatReceiptCollector implements CombatReceiptSink {
   readonly history: CombatReceiptHistory;
+  /** 已发布数值的派生索引；恢复时只读固定前缀重建，分支之间不共享。 */
+  readonly #passiveUiValues = new Map<string, { sourceId: string; value: number }>();
   constructor(saved?: CombatReceiptView) {
     this.history = saved?.fork() ?? new CombatReceiptHistory();
+    if (saved !== undefined)
+      for (const entry of saved.entries())
+        if (entry.event === 'CharacterPassiveUiValueChanged' && entry.targetId !== undefined)
+          this.#recordPassiveUiValue(entry, false);
   }
 
   get entries(): readonly CombatReceiptEntry[] {
@@ -45,6 +51,33 @@ export class CombatReceiptCollector implements CombatReceiptSink {
   }
 
   record(entry: Omit<CombatReceiptEntry, 'sequence'>): void {
-    this.history.append(entry);
+    if (entry.event === 'CharacterPassiveUiValueChanged' && entry.targetId !== undefined)
+      this.#recordPassiveUiValue(entry, true);
+    else this.history.append(entry);
+  }
+
+  /** 仅压缩同一目标连续收到的相同原始数值；首次零、换来源和附加证据均保留。 */
+  #recordPassiveUiValue(entry: Omit<CombatReceiptEntry, 'sequence'>, append: boolean): void {
+    const targetId = entry.targetId!;
+    const value = entry.data?.value;
+    if (
+      entry.sourceId === undefined ||
+      typeof value !== 'number' ||
+      !Number.isFinite(value) ||
+      Object.keys(entry.data!).length !== 1 ||
+      entry.subject !== undefined ||
+      entry.producedBy !== undefined ||
+      entry.runtimeSource !== undefined ||
+      entry.skillMultiplierCalculation !== undefined ||
+      entry.appliedDamageModifiers !== undefined
+    ) {
+      if (append) this.history.append(entry);
+      this.#passiveUiValues.delete(targetId);
+      return;
+    }
+    const previous = this.#passiveUiValues.get(targetId);
+    if (previous?.sourceId === entry.sourceId && Object.is(previous.value, value)) return;
+    if (append) this.history.append(entry);
+    this.#passiveUiValues.set(targetId, { sourceId: entry.sourceId, value });
   }
 }

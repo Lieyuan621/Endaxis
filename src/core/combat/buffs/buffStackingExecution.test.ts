@@ -14,7 +14,7 @@ import {
 function createSession() {
   return new StateStepper(
     {
-      group: { ...createBuffStackingState(), members: [1, 2] },
+      group: { ...createBuffStackingState('highPriority'), members: [1, 2] },
       buffs: new Map([
         [1, { finished: false, enabled: false }],
         [2, { finished: false, enabled: false }],
@@ -52,7 +52,11 @@ function createSession() {
 
 describe('Buff stacking data', () => {
   it('checks the limit after BeforeEnhance changes the group synchronously', () => {
-    const state = { ...createBuffStackingState(), currentStackCount: 1, maxStackCount: 2 };
+    const state = {
+      ...createBuffStackingState('timedGrowingEnhance'),
+      currentStackCount: 1,
+      maxStackCount: 2,
+    };
     const events: string[] = [];
     applyTimedBuffEnhancement(state, {
       before: () => {
@@ -76,7 +80,7 @@ describe('Buff stacking data', () => {
     const session = new StateStepper(
       {
         group: {
-          ...createBuffStackingState(),
+          ...createBuffStackingState('enhance'),
           members: [1],
           currentStackCount: 1,
           maxStackCount: 2,

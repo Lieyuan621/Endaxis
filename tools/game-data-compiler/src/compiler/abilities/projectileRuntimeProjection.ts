@@ -261,9 +261,11 @@ export function createZeroDistanceProjectileProjectionExtensionSource(input: {
       throw new Error(`${sourcePath}: projectile source must resolve to Source or Owner`);
     if (!hasNoModeledBlockingSurfaces(runtime))
       throw new Error(`${sourcePath}: projectile environment blocking is not modeled`);
-    // 恢复原有零空间落地近似，只覆盖以阻挡结束飞行的独立落地路线。
-    // 同时存在 hit/reach 的弹体仍按各自已证明的命中/到达路线处理。
-    const landsOnFirstTick = enabled.length === 1 && enabled[0]!.event === 'block';
+    // 零空间模型将独立落地路线近似为首个 Tick 阻挡；Finish 是超时兜底，
+    // 不应使落地退化为等待寿命耗尽。同时有 hit/reach 的路线不套用此近似。
+    const landsOnFirstTick =
+      enabled.some(route => route.event === 'block') &&
+      enabled.every(route => route.event === 'block' || route.event === 'finish');
     if (landsOnFirstTick) assertSupportedFirstTickBlockShape(runtime, sourcePath);
     const routes = enabled.flatMap(route =>
       route.event === 'block' && !landsOnFirstTick
@@ -415,6 +417,7 @@ export function createZeroDistanceProjectileProjectionExtensionSource(input: {
           ),
         })),
         allowMissingEntityBlackboardEvidence: true,
+        blockEndsFlight: landsOnFirstTick,
         body: projectionContext.graph.sequence([
           {
             kind: 'launchProjectile',
@@ -781,7 +784,7 @@ function assertSupportedFirstTickReachShape(
   }
 }
 
-/** 场景表面不在零空间战斗模型中；不因此创建阻挡事件或阻挡回调。 */
+/** 首 Tick 落地是零空间投影约定；只接受无碰撞延迟、非分段的简单落地弹体。 */
 function assertSupportedFirstTickBlockShape(runtime: ProjectileRuntimeSource, path: string): void {
   const segment = runtime.moveSegments[0];
   if (

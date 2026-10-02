@@ -618,8 +618,8 @@ export class AbilitySystemRuntime implements FrameRuntime {
     return group.currentSkillKey;
   }
 
-  /** 只改变后续释放的槽位解析；已经进入 casting 的实例保持原引用。 */
-  changeSkillSlot(skillSlotKey: string, targetSkillKey: string): string {
+  /** 换入时按原生槽位修改技能类型；撤销只还原槽位，不撤销既有类型写入。 */
+  changeSkillSlot(skillSlotKey: string, targetSkillKey: string, reverting = false): string {
     const group = this.runtimeState.skillSlotGroups.get(skillSlotKey);
     if (group === undefined) {
       throw new Error(`unknown ability skill slot group '${skillSlotKey}'`);
@@ -630,6 +630,16 @@ export class AbilitySystemRuntime implements FrameRuntime {
       );
     }
     const previousSkillKey = group.currentSkillKey;
+    if (!reverting && group.input !== 'basicAttack') {
+      this.changeNativeSkillType(
+        targetSkillKey,
+        group.input === 'battleSkill'
+          ? 'normalSkill'
+          : group.input === 'comboSkill'
+            ? 'comboSkill'
+            : 'ultimateSkill',
+      );
+    }
     group.currentSkillKey = targetSkillKey;
     return previousSkillKey;
   }
@@ -1407,10 +1417,9 @@ export class AbilitySystemRuntime implements FrameRuntime {
       return;
     }
     if (skill !== this.#currentSkill) return;
+    // 普攻连段保留连段窗口；其余玩家技能统一参照普攻，显式参照在下方优先处理。
     const usesBasicAttackBoundary =
-      skill.skillType === 'battleSkill' ||
-      skill.skillType === 'comboSkill' ||
-      skill.skillType === 'ultimate';
+      skill.skillType !== undefined && skill.skillType !== 'basicAttack';
     if (skill.state !== 'casting') {
       if (
         (!usesBasicAttackBoundary && skill.timelineBlockFollowUpSkillId === undefined) ||

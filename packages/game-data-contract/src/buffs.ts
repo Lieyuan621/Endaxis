@@ -692,13 +692,13 @@ export type BuffDefinitionProperties = {
   readonly stackingType: BuffStackingType;
   /** Buff 所属的叠加组；不填时使用 Buff ID，同一组必须使用相同的叠加方式。 */
   readonly stackingKey?: string;
-  /** 高优先级模式的启用顺序，以及 Stack 满层时选择被替换实例的顺序。 */
+  /** 仅两种高优先级模式读取此值决定启用顺序；Stack 使用剩余寿命与实例编号选择替换项。 */
   readonly priority?: BuffPriority;
   /** 普通 Buff 的持续秒数；不填表示无限持续。定时成长型 Buff 用它表示自动加层周期。 */
   readonly durationSeconds?: BuffDuration;
-  /** 成功添加后在接收者上创建的同 ID 再次添加冷却；使用普通战斗时间计时。 */
+  /** 在创建/叠层前登记的同 ID 添加冷却；后续被叠层策略拒绝也不撤销，使用普通战斗时间。 */
   readonly addingCooldownSeconds?: BuffDuration;
-  /** 是否跳过已有添加冷却的拦截；成功添加后仍会创建新的添加冷却。 */
+  /** 只跳过已有冷却检查，仍在创建/叠层前登记本次冷却。 */
   readonly ignoreAddingCooldown?: boolean;
   /** Buff 启用期间执行 trigger 生命周期动作的时间间隔。 */
   readonly triggerIntervalSeconds?: BuffDuration;

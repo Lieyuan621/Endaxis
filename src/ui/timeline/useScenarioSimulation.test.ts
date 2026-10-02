@@ -1,5 +1,5 @@
 import { effectScope, nextTick, shallowRef } from 'vue';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { ScenarioDocument } from '../../core/project/schema';
 import { ScenarioEditorSession } from '../../application/editor/scenarioEditorSession';
 import { createEmptyScenario } from '../../core/project/createProject';
@@ -759,6 +759,64 @@ describe('useScenarioSimulation', () => {
 
       expect(result.run.value).not.toBeNull();
       expect(result.stale.value).toBe(true);
+    } finally {
+      scope.stop();
+    }
+  });
+
+  it('确保当前结果复用有效发布，但等待同引用强制刷新，并在失败或重置后重新计算', async () => {
+    const initial = createPerlicaScenario();
+    const completed = await service.simulate(initial, 120);
+    const scenario = shallowRef(initial);
+    let finish!: (run: ScenarioSimulationRun) => void;
+    let fail!: (error: Error) => void;
+    const simulate = vi.fn(
+      () =>
+        new Promise<ScenarioSimulationRun>((resolve, reject) => {
+          finish = resolve;
+          fail = reject;
+        }),
+    );
+    const scope = effectScope();
+    const result = scope.run(() =>
+      useScenarioSimulation({
+        scenario,
+        service: { simulate, subscribePerformance: () => () => {} },
+      }),
+    )!;
+    try {
+      const first = result.ensureCurrentSimulation();
+      finish(completed);
+      expect(await first).toBe(true);
+      expect(await result.ensureCurrentSimulation()).toBe(true);
+      expect(simulate).toHaveBeenCalledTimes(1);
+
+      const forced = result.simulateNow();
+      let ensured = false;
+      const pending = result.ensureCurrentSimulation().then(value => {
+        ensured = true;
+        return value;
+      });
+      await nextTick();
+      expect(ensured).toBe(false);
+      finish(completed);
+      expect(await forced).toBe(true);
+      expect(await pending).toBe(true);
+      expect(simulate).toHaveBeenCalledTimes(2);
+
+      const failed = result.simulateNow();
+      fail(new Error('refresh failed'));
+      expect(await failed).toBe(false);
+      const retry = result.ensureCurrentSimulation();
+      expect(simulate).toHaveBeenCalledTimes(4);
+      finish(completed);
+      expect(await retry).toBe(true);
+
+      result.resetPublication();
+      const reset = result.ensureCurrentSimulation();
+      expect(simulate).toHaveBeenCalledTimes(5);
+      finish(completed);
+      expect(await reset).toBe(true);
     } finally {
       scope.stop();
     }

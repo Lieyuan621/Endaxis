@@ -44,6 +44,8 @@ export function compileProjectileLaunchScopeSource(input: {
   readonly body: CompiledBuffSequenceSource;
   /** 仅限调用方已由完整 ProjectileData 证明不需要实体黑板的特殊回调。 */
   readonly allowMissingEntityBlackboardEvidence?: boolean;
+  /** Block 结束飞行时不会触发超时 Finish，二者可复用同一技能而无重入。 */
+  readonly blockEndsFlight?: boolean;
 }): CompiledActionBlackboardScopeSource {
   const { sourcePath, launch, template, invocations } = input;
   const projectedInvocations = invocations;
@@ -81,15 +83,20 @@ export function compileProjectileLaunchScopeSource(input: {
       throw new Error(`${sourcePath}: invalid enabled projectile callback ${callback.event}`);
     routes.set(callback.event, callback.skillId);
   }
-  const skills = new Set<string>();
+  const skills = new Map<string, ProjectileSkillCallbackSource['event']>();
   for (const invocation of projectedInvocations) {
     if (routes.get(invocation.event) !== invocation.skillId)
       throw new Error(
         `${sourcePath}: callback ${invocation.event} does not match the native route`,
       );
-    if (skills.has(invocation.skillId))
+    const previous = skills.get(invocation.skillId);
+    const exclusiveBlockFinish =
+      input.blockEndsFlight &&
+      ((previous === 'block' && invocation.event === 'finish') ||
+        (previous === 'finish' && invocation.event === 'block'));
+    if (previous !== undefined && !exclusiveBlockFinish)
       throw new Error(`${sourcePath}: repeated callback skill requires restart semantics`);
-    skills.add(invocation.skillId);
+    skills.set(invocation.skillId, invocation.event);
   }
   return {
     kind: 'withActionBlackboardScope',

@@ -3920,7 +3920,7 @@ export const yvonneChr_0017_yvonne_power_attackActionGraph = {
 export const yvonneChr_0017_yvonne_power_attack: SkillDefinition = {
   key: 'chr_0017_yvonne_power_attack',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
-  timelineBlockFrames: 29,
+  timelineBlockFrames: 46,
   naturalDurationFrames: 135,
   exclusiveFrame: 45,
   offsetRecordFrame: 0,
@@ -7016,7 +7016,6 @@ export const yvonne: OperatorDefinition = {
     {
       key: 'enhancedBasicAttack',
       operationType: 'basicAttack',
-      nameKey: 'skillNames.enhanced',
       placementPolicy: {
         kind: 'recursiveInput',
         firstSkillKey: 'chr_0017_yvonne_ult_attack1_1',
@@ -7024,6 +7023,7 @@ export const yvonne: OperatorDefinition = {
         maxSegments: 24,
         fallback: 'sequence',
       },
+      nameKey: 'skillNames.enhanced',
       skills: [
         yvonneChr_0017_yvonne_ult_attack1_1,
         yvonneChr_0017_yvonne_ult_attack2_1,
@@ -7126,38 +7126,38 @@ export const yvonne: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0017_yvonne_combo_skill',
           blackboardKey: 'has_potential1',
           operation: 'assign',
           value: 1,
-          skillKey: 'chr_0017_yvonne_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0017_yvonne_combo_skill',
           blackboardKey: 'radius',
           operation: 'assign',
           value: 5,
-          skillKey: 'chr_0017_yvonne_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0017_yvonne_combo_skill',
           blackboardKey: 'interval',
           operation: 'assign',
           value: 0.5,
-          skillKey: 'chr_0017_yvonne_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0017_yvonne_combo_skill',
           blackboardKey: 'maxcnt',
           operation: 'assign',
           value: 6,
-          skillKey: 'chr_0017_yvonne_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0017_yvonne_combo_skill',
           blackboardKey: 'usp_extra',
           operation: 'assign',
           value: 25,
-          skillKey: 'chr_0017_yvonne_combo_skill',
         },
       ],
     },
@@ -7192,17 +7192,17 @@ export const yvonne: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0017_yvonne_normal_skill',
           blackboardKey: 'atb_return',
           operation: 'assign',
           value: 10,
-          skillKey: 'chr_0017_yvonne_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0017_yvonne_normal_skill',
           blackboardKey: 'has_potential2',
           operation: 'assign',
           value: 1,
-          skillKey: 'chr_0017_yvonne_normal_skill',
         },
       ],
     },
@@ -7211,24 +7211,24 @@ export const yvonne: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0017_yvonne_ultimate_skill',
           blackboardKey: 'has_potential5',
           operation: 'assign',
           value: 1,
-          skillKey: 'chr_0017_yvonne_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0017_yvonne_ultimate_skill',
           blackboardKey: 'atk_up',
           operation: 'assign',
           value: 0.1,
-          skillKey: 'chr_0017_yvonne_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0017_yvonne_ultimate_skill',
           blackboardKey: 'crit_dmg_up',
           operation: 'assign',
           value: 0.3,
-          skillKey: 'chr_0017_yvonne_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',

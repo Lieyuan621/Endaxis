@@ -3458,7 +3458,8 @@ export const definitionSchemas = {
               },
             ],
             optional: true,
-            description: '高优先级模式的启用顺序，以及 Stack 满层时选择被替换实例的顺序。',
+            description:
+              '仅两种高优先级模式读取此值决定启用顺序；Stack 使用剩余寿命与实例编号选择替换项。',
           },
           durationSeconds: {
             kind: 'union',
@@ -3717,7 +3718,8 @@ export const definitionSchemas = {
               },
             ],
             optional: true,
-            description: '高优先级模式的启用顺序，以及 Stack 满层时选择被替换实例的顺序。',
+            description:
+              '仅两种高优先级模式读取此值决定启用顺序；Stack 使用剩余寿命与实例编号选择替换项。',
           },
           durationSeconds: {
             kind: 'union',

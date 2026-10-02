@@ -707,7 +707,7 @@ export const lifengChr_0015_lifeng_power_attack: SkillDefinition = {
   actionGraph: lifengChr_0015_lifeng_power_attackActionGraph,
   key: 'chr_0015_lifeng_power_attack',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
-  timelineBlockFrames: 33,
+  timelineBlockFrames: 69,
   naturalDurationFrames: 194,
   exclusiveFrame: 68,
   offsetRecordFrame: 0,
@@ -1931,17 +1931,17 @@ export const lifeng: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0015_lifeng_normal_skill',
           blackboardKey: 'phy_resist_down',
           operation: 'add',
           value: 0.05,
-          skillKey: 'chr_0015_lifeng_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0015_lifeng_normal_skill',
           blackboardKey: 'num',
           operation: 'assign',
           value: 2,
-          skillKey: 'chr_0015_lifeng_normal_skill',
         },
       ],
     },
@@ -1971,9 +1971,9 @@ export const lifeng: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
+          skillKey: 'chr_0015_lifeng_ultimate_skill',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
-          skillKey: 'chr_0015_lifeng_ultimate_skill',
         },
       ],
     },

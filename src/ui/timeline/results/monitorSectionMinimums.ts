@@ -21,6 +21,9 @@ export const MONITOR_MAXIMUM_HEIGHT = 520;
 export const MONITOR_MINIMUM_EXPANDED_BODY_SPACE = 96;
 
 const monitorSectionKeys: readonly MonitorSectionKey[] = ['affliction', 'poise', 'sp'];
+/** 容纳三段标题与最小展开内容，供工作台短屏滚动边界复用。 */
+export const MONITOR_MINIMUM_CONTENT_HEIGHT =
+  MONITOR_MINIMUM_EXPANDED_BODY_SPACE + monitorSectionKeys.length * MONITOR_SECTION_TOPBAR_HEIGHT;
 
 /** 旧版按可用高度压缩图标，行间距固定为 4px；低于 14px 时由区域裁切。 */
 export function enemyStatusRowSize(bodyHeight: number, rowCount: number): number {

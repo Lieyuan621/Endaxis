@@ -156,7 +156,7 @@ export function advanceProjectileLifetimes(
       instance.phase = 'finished';
       instance.remainingReachTicks = null;
       instance.remainingSeconds = instance.recycleDelaySeconds;
-      host.finish(instance.instanceId);
+      // 原生 Block 已执行落地技能；以 Block 原因结束不再执行超时 Finish 技能。
       continue;
     }
     // 原生 Update 使用 remaining <= 0，不能套用 isReady 的 epsilon。

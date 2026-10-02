@@ -62,6 +62,20 @@ const SIMPLE_MODIFIER_PRESENTATIONS: Readonly<Record<string, SimpleModifierPrese
   },
   'cryoDamageIncrease\u0000baseAddition': { nameKey: 'dmgBonus:cryo', format: 'percent' },
   'natureDamageIncrease\u0000baseAddition': { nameKey: 'dmgBonus:nature', format: 'percent' },
+  'physicalEnhancedDamageIncrease\u0000baseAddition': {
+    nameKey: 'ampBonus:physical',
+    format: 'percent',
+  },
+  'heatEnhancedDamageIncrease\u0000baseAddition': { nameKey: 'ampBonus:heat', format: 'percent' },
+  'electricEnhancedDamageIncrease\u0000baseAddition': {
+    nameKey: 'ampBonus:electric',
+    format: 'percent',
+  },
+  'cryoEnhancedDamageIncrease\u0000baseAddition': { nameKey: 'ampBonus:cryo', format: 'percent' },
+  'natureEnhancedDamageIncrease\u0000baseAddition': {
+    nameKey: 'ampBonus:nature',
+    format: 'percent',
+  },
   'physicalVulnerabilityIncrease\u0000baseAddition': {
     nameKey: 'susceptibility:physical',
     format: 'percent',

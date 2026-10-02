@@ -1,6 +1,6 @@
 /**
  * 把 Buff 生命周期回执投影成时间轴可画的持续段。
- * 这里只解释已发生的施加、叠层和结束事实；展示位置和样式属于 UI。
+ * 这里只解释已发生的施加、叠层、数值变化和结束事实；展示位置和样式属于 UI。
  */
 import type { CombatReceiptEntry, CombatReceiptValue } from '../combat/receipt/combatReceipt';
 
@@ -11,17 +11,35 @@ export interface BuffTimelineSegment {
   readonly buffId: string;
   readonly instanceId: number;
   readonly startFrame: number;
-  /** 形成这一展示段的回执序号；同帧的多次叠层也必须分别截断。 */
+  /** 形成这一展示段的回执序号；同帧的多次叠层或改值仍保留各自历史。 */
   readonly startSequence?: number;
   readonly endFrame: number;
+  /** 切段或生命周期结束回执序号，区分同帧先命中后改值与相反顺序。 */
+  readonly endSequence?: number;
   /** 图标持续条的原生倒计时终点；缺省与 Buff 生命周期终点一致。 */
   readonly durationEndFrame?: number;
+  /** 原生容器是否选中此实例；禁用候选仍保留生命周期，不能计入生效层数。 */
+  readonly enabled: boolean;
+  /** 实例原始增强次数；合并展示段为生效成员的总和，原值保存在 windows 中。 */
+  readonly enhanceCount: number;
+  /** 原生明确提供的显示等级（如法术异常）；不以增强次数冒充等级。 */
+  readonly displayCount?: number;
+  /** 图标显示数量；原始段为显示等级或增强次数，合并段只统计生效成员。 */
   readonly layers: number;
-  /** 当前展示段从何种生命周期变化开始。 */
-  readonly startReason?: 'applied' | 'reapplied' | 'presentationStarted';
+  /** 当前展示段从何种生命周期或数值变化开始。 */
+  readonly startReason?:
+    | 'applied'
+    | 'reapplied'
+    | 'presentationStarted'
+    | 'modifierChanged'
+    | 'enabledChanged'
+    | 'stackChanged';
   /** 当前展示段为何结束；simulationEnd 表示模拟结束时 Buff 仍然存在。 */
   readonly endReason?:
     | 'reapplied'
+    | 'modifierChanged'
+    | 'enabledChanged'
+    | 'stackChanged'
     | 'lifetime'
     | 'ignite'
     | 'early'
@@ -116,7 +134,8 @@ function buildContinuousInstanceRuns(
 
 /**
  * 仅合并挂在同一目标上的同 ID Buff，且不同实例的连续生命周期必须真正重叠。
- * 每个输出段对应一次层数变化，层数为该时段内所有实例层数之和；归零不产生段。
+ * 每个输出段对应一次层数、数值或启用状态变化；只统计原生容器启用的成员。
+ * 同 ID 可以属于不同 stackingKey 分组，不能由叠加类型猜测应生效几份。
  */
 export function mergeOverlappingBuffTimelineSegments(
   segments: readonly BuffTimelineSegment[],
@@ -143,14 +162,32 @@ export function mergeOverlappingBuffTimelineSegments(
     for (const component of components) {
       const componentSegments = component.flatMap(run => run.segments);
       if (component.length === 1) {
+        // 同帧连续改值只画最后的状态；中间事实仍保留在详情窗口，不能产生重叠旧图标。
+        const superseded = componentSegments.filter(
+          segment => segment.startFrame === segment.endFrame,
+        );
         result.push(
           ...componentSegments
-            .filter(segment => segment.layers > 0)
-            .map(segment => ({ ...segment, members: [segment], windows: [segment] })),
+            .filter(
+              segment => segment.enabled && segment.layers > 0 && !superseded.includes(segment),
+            )
+            .map(segment => ({
+              ...segment,
+              members: [segment],
+              windows: [
+                segment,
+                ...componentSegments.filter(
+                  previous =>
+                    previous !== segment &&
+                    (!previous.enabled ||
+                      (superseded.includes(previous) &&
+                        previous.startFrame === segment.startFrame)),
+                ),
+              ],
+            })),
         );
         continue;
       }
-      const placement = componentSegments[0]!.placement;
       const boundaries = [
         ...new Set(componentSegments.flatMap(s => [s.startFrame, s.endFrame])),
       ].sort((a, b) => a - b);
@@ -159,16 +196,35 @@ export function mergeOverlappingBuffTimelineSegments(
         const endFrame = boundaries[index + 1]!;
         if (endFrame <= startFrame) continue;
         const members = componentSegments.filter(
-          segment => segment.startFrame <= startFrame && segment.endFrame >= endFrame,
+          segment =>
+            segment.enabled && segment.startFrame <= startFrame && segment.endFrame >= endFrame,
         );
         const layers = members.reduce((sum, segment) => sum + segment.layers, 0);
         if (layers <= 0 || members.length === 0) continue;
         const representative = members.at(-1)!;
+        const {
+          simpleModifierAttribute: _attribute,
+          simpleModifierSlot: _slot,
+          simpleModifierValue: _value,
+          displayCount: _displayCount,
+          startSequence: _startSequence,
+          endSequence: _endSequence,
+          ...presentation
+        } = representative;
+        const modifier = unambiguousModifierFact(members);
+        const startSequences = boundarySequences(componentSegments, startFrame);
+        const endSequences = boundarySequences(componentSegments, endFrame);
         result.push({
-          ...representative,
-          placement,
+          ...presentation,
+          ...(modifier ?? {}),
+          ...(members.every(member => member.displayCount !== undefined)
+            ? { displayCount: layers }
+            : {}),
+          enhanceCount: members.reduce((sum, member) => sum + member.enhanceCount, 0),
           startFrame,
+          ...(startSequences.length === 0 ? {} : { startSequence: Math.max(...startSequences) }),
           endFrame,
+          ...(endSequences.length === 0 ? {} : { endSequence: Math.min(...endSequences) }),
           durationEndFrame: endFrame,
           layers,
           members,
@@ -180,6 +236,42 @@ export function mergeOverlappingBuffTimelineSegments(
   return result.sort(
     (left, right) => left.startFrame - right.startFrame || left.instanceId - right.instanceId,
   );
+}
+
+/** 合并阶段开始于同帧最后一次状态变化；结束于该帧第一次切段。 */
+function boundarySequences(segments: readonly BuffTimelineSegment[], frame: number): number[] {
+  return segments.flatMap(segment => [
+    ...(segment.startFrame === frame && segment.startSequence !== undefined
+      ? [segment.startSequence]
+      : []),
+    ...(segment.endFrame === frame && segment.endSequence !== undefined
+      ? [segment.endSequence]
+      : []),
+  ]);
+}
+
+/** 原生修正槽可以非加算；摘要只保留各生效实例完全一致的事实，不推测合并公式。 */
+function unambiguousModifierFact(
+  members: readonly BuffTimelineSegment[],
+): SimpleModifierFact | undefined {
+  const first = members[0];
+  if (
+    first?.simpleModifierAttribute === undefined ||
+    first.simpleModifierSlot === undefined ||
+    first.simpleModifierValue === undefined ||
+    !members.every(
+      member =>
+        member.simpleModifierAttribute === first.simpleModifierAttribute &&
+        member.simpleModifierSlot === first.simpleModifierSlot &&
+        member.simpleModifierValue === first.simpleModifierValue,
+    )
+  )
+    return undefined;
+  return {
+    simpleModifierAttribute: first.simpleModifierAttribute,
+    simpleModifierSlot: first.simpleModifierSlot,
+    simpleModifierValue: first.simpleModifierValue,
+  };
 }
 
 /** 仅使用执行实例的可见段；末帧伤害可归属结束段，叠层边界优先使用新段。 */
@@ -194,23 +286,50 @@ export function findBuffTimelineSegmentForDamage<T extends BuffTimelineSegment>(
     !Number.isInteger(entry.data.buffInstanceId)
   )
     return undefined;
+  // Start 内的首次伤害可能先记录，Applied 随后才写入；只允许首次施加作同帧回退。
+  const isInitialStart = (candidate: BuffTimelineSegment) =>
+    candidate.startFrame === entry.frame &&
+    (candidate.startReason === 'applied' || candidate.startReason === 'presentationStarted');
+  const matchesInstance = (candidate: BuffTimelineSegment) =>
+    candidate.targetId === entry.targetId &&
+    candidate.targetId === entry.data!.buffOwnerId &&
+    candidate.buffId === entry.data!.buffId &&
+    candidate.instanceId === entry.data!.buffInstanceId &&
+    candidate.startFrame <= entry.frame &&
+    candidate.endFrame >= entry.frame &&
+    (candidate.startFrame !== entry.frame ||
+      candidate.startSequence === undefined ||
+      candidate.startSequence <= entry.sequence ||
+      isInitialStart(candidate));
   return segments
     .filter(segment => {
+      if (segment.startFrame > entry.frame || segment.endFrame < entry.frame) return false;
       const candidates =
         'members' in segment && Array.isArray(segment.members)
           ? (segment.members as readonly BuffTimelineSegment[])
           : [segment];
-      return candidates.some(
-        candidate =>
-          candidate.targetId === entry.targetId &&
-          candidate.targetId === entry.data!.buffOwnerId &&
-          candidate.buffId === entry.data!.buffId &&
-          candidate.instanceId === entry.data!.buffInstanceId &&
-          candidate.startFrame <= entry.frame &&
-          candidate.endFrame >= entry.frame,
+      if (
+        segment.startFrame === entry.frame &&
+        segment.startSequence !== undefined &&
+        segment.startSequence > entry.sequence
+      )
+        return [
+          ...candidates,
+          ...('windows' in segment && Array.isArray(segment.windows)
+            ? (segment.windows as readonly BuffTimelineSegment[])
+            : []),
+        ].some(candidate => matchesInstance(candidate) && isInitialStart(candidate));
+      if (candidates.some(matchesInstance)) return true;
+      // 同帧终结伤害的来源可能已从最终生效成员中移除，仍可用原始窗口追溯。
+      return (
+        'windows' in segment &&
+        Array.isArray(segment.windows) &&
+        (segment.windows as readonly BuffTimelineSegment[]).some(matchesInstance)
       );
     })
-    .sort((a, b) => b.startFrame - a.startFrame)[0];
+    .sort(
+      (a, b) => b.startFrame - a.startFrame || (b.startSequence ?? -1) - (a.startSequence ?? -1),
+    )[0];
 }
 
 function requireData(entry: CombatReceiptEntry): Readonly<Record<string, CombatReceiptValue>> {
@@ -239,6 +358,18 @@ function requireNumber(
   const value = data[key];
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     throw new Error(`receipt ${entry.sequence} '${entry.event}' has no finite ${key}`);
+  }
+  return value;
+}
+
+function requireBoolean(
+  entry: CombatReceiptEntry,
+  data: Readonly<Record<string, CombatReceiptValue>>,
+  key: string,
+): boolean {
+  const value = data[key];
+  if (typeof value !== 'boolean') {
+    throw new Error(`receipt ${entry.sequence} '${entry.event}' has no boolean ${key}`);
   }
   return value;
 }
@@ -294,18 +425,36 @@ function sourceFrameKey(entry: CombatReceiptEntry): string | undefined {
  * 原生“战斗修正父 Buff + 纯展示子 Buff”会在同帧使用同一 sourceActionId。
  * 仅当该来源帧只有一种严格单属性事实时才允许展示子项继承摘要；多项效果保持无摘要。
  */
+interface InheritedModifierFact {
+  readonly fact: SimpleModifierFact;
+  readonly sourceInstances: ReadonlySet<string>;
+}
+
+function buffOwnerInstanceKey(ownerId: string, instanceId: number): string {
+  return `${ownerId}\u0000${instanceId}`;
+}
+
 function collectUnambiguousModifierFacts(
   entries: readonly CombatReceiptEntry[],
-): ReadonlyMap<string, SimpleModifierFact> {
-  const candidates = new Map<string, Map<string, SimpleModifierFact>>();
+): ReadonlyMap<string, InheritedModifierFact> {
+  const candidates = new Map<
+    string,
+    Map<string, { fact: SimpleModifierFact; sourceInstances: Set<string> }>
+  >();
   for (const entry of entries) {
     if (entry.event !== 'BuffApplied' || entry.data === undefined) continue;
     const key = sourceFrameKey(entry);
     const fact = simpleModifierFact(entry.data);
     if (key === undefined || fact === undefined) continue;
     const identity = `${fact.simpleModifierAttribute}\u0000${fact.simpleModifierSlot}\u0000${fact.simpleModifierValue}`;
-    const values = candidates.get(key) ?? new Map<string, SimpleModifierFact>();
-    values.set(identity, fact);
+    const values =
+      candidates.get(key) ??
+      new Map<string, { fact: SimpleModifierFact; sourceInstances: Set<string> }>();
+    const candidate = values.get(identity) ?? { fact, sourceInstances: new Set<string>() };
+    const instanceId = optionalNumber(entry.data, 'instanceId');
+    if (entry.targetId !== undefined && instanceId !== undefined)
+      candidate.sourceInstances.add(buffOwnerInstanceKey(entry.targetId, instanceId));
+    values.set(identity, candidate);
     candidates.set(key, values);
   }
   return new Map(
@@ -372,6 +521,7 @@ function projectBuffSegments(
   const open = new Map<string, BuffTimelineSegment>();
   const closed: BuffTimelineSegment[] = [];
   const inheritedModifierFacts = collectUnambiguousModifierFacts(entries);
+  const modifierSourceByInstance = new Map<string, string>();
   const iconDurationSourceFinishFrames = new Map<string, number>();
   for (const entry of entries) {
     if (
@@ -388,7 +538,11 @@ function projectBuffSegments(
       entry.event === 'BuffFinished' ||
       entry.event === 'BuffReleased' ||
       entry.event === 'BuffPresentationFinished';
-    if (!isApplied && !isFinished) continue;
+    const isModifierChanged = entry.event === 'BuffModifierChanged';
+    const isEnabledChanged = entry.event === 'BuffEnabledChanged';
+    const isStackChanged = entry.event === 'BuffStackChanged';
+    if (!isApplied && !isFinished && !isModifierChanged && !isEnabledChanged && !isStackChanged)
+      continue;
     if (entry.targetId === undefined) {
       throw new Error(`receipt ${entry.sequence} '${entry.event}' has no targetId`);
     }
@@ -396,6 +550,91 @@ function projectBuffSegments(
     const buffId = requireString(entry, data, 'buffId');
     const instanceId = requireNumber(entry, data, 'instanceId');
     const key = instanceKey(entry.targetId, buffId, instanceId);
+
+    if (isEnabledChanged || isStackChanged) {
+      const enabled = isEnabledChanged ? requireBoolean(entry, data, 'enabled') : undefined;
+      const enhanceCount = isStackChanged ? requireNumber(entry, data, 'layers') : undefined;
+      // 只有同一实例的虚拟子图标沿用父状态；真正创建的子 Buff 拥有自己的启用与叠层事实。
+      // 首次 Applied 前的启用通知没有旧展示段，后续 Applied 会给出完整状态。
+      for (const [activeKey, active] of open) {
+        if (
+          active.targetId !== entry.targetId ||
+          active.instanceId !== instanceId ||
+          (active.buffId !== buffId && active.parentBuffId !== buffId)
+        )
+          continue;
+        if (
+          (isEnabledChanged && active.enabled === enabled) ||
+          (isStackChanged && active.enhanceCount === enhanceCount)
+        )
+          continue;
+        const reason = isEnabledChanged ? 'enabledChanged' : 'stackChanged';
+        closed.push({
+          ...active,
+          endFrame: entry.frame,
+          endSequence: entry.sequence,
+          endReason: reason,
+          ...(active.durationEndFrame === undefined
+            ? {}
+            : { durationEndFrame: Math.min(active.durationEndFrame, entry.frame) }),
+        });
+        open.set(activeKey, {
+          ...active,
+          ...(enabled === undefined ? {} : { enabled }),
+          ...(enhanceCount === undefined
+            ? {}
+            : { enhanceCount, layers: active.displayCount ?? enhanceCount }),
+          startFrame: entry.frame,
+          startSequence: entry.sequence,
+          startReason: reason,
+        });
+      }
+      continue;
+    }
+
+    if (isModifierChanged) {
+      // 子图标沿用真实父实例的属性摘要；不改变层数、来源或生命周期。
+      for (const [activeKey, active] of open) {
+        const isOwnOrPresentation =
+          active.targetId === entry.targetId &&
+          active.instanceId === instanceId &&
+          (active.buffId === buffId || active.parentBuffId === buffId);
+        const isProducedChild =
+          modifierSourceByInstance.get(activeKey) ===
+          buffOwnerInstanceKey(entry.targetId, instanceId);
+        if (!isOwnOrPresentation && !isProducedChild) continue;
+        const fact = simpleModifierFact(data);
+        if (
+          active.simpleModifierAttribute === fact?.simpleModifierAttribute &&
+          active.simpleModifierSlot === fact?.simpleModifierSlot &&
+          active.simpleModifierValue === fact?.simpleModifierValue
+        )
+          continue;
+        closed.push({
+          ...active,
+          endFrame: entry.frame,
+          endSequence: entry.sequence,
+          endReason: 'modifierChanged',
+          ...(active.durationEndFrame === undefined
+            ? {}
+            : { durationEndFrame: Math.min(active.durationEndFrame, entry.frame) }),
+        });
+        const {
+          simpleModifierAttribute: _attribute,
+          simpleModifierSlot: _slot,
+          simpleModifierValue: _value,
+          ...unchanged
+        } = active;
+        open.set(activeKey, {
+          ...unchanged,
+          ...(fact ?? {}),
+          startFrame: entry.frame,
+          startSequence: entry.sequence,
+          startReason: 'modifierChanged',
+        });
+      }
+      continue;
+    }
 
     if (isFinished) {
       const active = open.get(key);
@@ -405,6 +644,7 @@ function projectBuffSegments(
         closed.push({
           ...active,
           endFrame: entry.frame,
+          endSequence: entry.sequence,
           endReason:
             entry.event === 'BuffReleased'
               ? 'released'
@@ -433,14 +673,28 @@ function projectBuffSegments(
       )
     )
       continue;
-    const modifierFact =
-      simpleModifierFact(data) ??
-      (sourceFrameKey(entry) === undefined
+    const ownModifierFact = simpleModifierFact(data);
+    const inheritedFact =
+      sourceFrameKey(entry) === undefined
         ? undefined
-        : inheritedModifierFacts.get(sourceFrameKey(entry)!));
+        : inheritedModifierFacts.get(sourceFrameKey(entry)!);
+    const modifierFact = ownModifierFact ?? inheritedFact?.fact;
+    modifierSourceByInstance.delete(key);
+    // 真正创建出的子 Buff 与父 Buff 的实例号不同。只有摘要来自明确的产生者时才跟随其更新，
+    // 同帧同来源的旧回退本身不构成父子关系，也不能把相同数值的其他实例误连起来。
+    if (ownModifierFact === undefined && entry.producedBy?.kind === 'buff') {
+      const sourceKey = buffOwnerInstanceKey(entry.producedBy.ownerId, entry.producedBy.instanceId);
+      if (inheritedFact?.sourceInstances.has(sourceKey))
+        modifierSourceByInstance.set(key, sourceKey);
+    }
     const previous = open.get(key);
     if (previous !== undefined) {
-      closed.push({ ...previous, endFrame: entry.frame, endReason: 'reapplied' });
+      closed.push({
+        ...previous,
+        endFrame: entry.frame,
+        endSequence: entry.sequence,
+        endReason: 'reapplied',
+      });
     }
     open.set(key, {
       ...(entry.sourceId === undefined ? {} : { sourceId: entry.sourceId }),
@@ -474,7 +728,12 @@ function projectBuffSegments(
                 optionalString(data, 'iconDurationSourceTargetId')!,
               ) ?? endFrame,
           }),
-      layers: requireNumber(entry, data, 'layers'),
+      enabled: requireBoolean(entry, data, 'enabled'),
+      enhanceCount: requireNumber(entry, data, 'layers'),
+      ...(optionalNumber(data, 'displayCount') === undefined
+        ? {}
+        : { displayCount: optionalNumber(data, 'displayCount') }),
+      layers: optionalNumber(data, 'displayCount') ?? requireNumber(entry, data, 'layers'),
       ...copyOptionalBoolean(data, 'hasFiniteLifetime'),
       placement: presentationPlacement(data),
       ...(modifierFact ?? {}),

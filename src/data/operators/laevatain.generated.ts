@@ -1651,7 +1651,7 @@ export const laevatainChr_0016_laevat_power_attack: SkillDefinition = {
   actionGraph: laevatainChr_0016_laevat_power_attackActionGraph,
   key: 'chr_0016_laevat_power_attack',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
-  timelineBlockFrames: 42,
+  timelineBlockFrames: 51,
   naturalDurationFrames: 141,
   exclusiveFrame: 50,
   offsetRecordFrame: 0,
@@ -5144,9 +5144,9 @@ export const laevatain: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
+          skillKey: 'chr_0016_laevat_ultimate_skill',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
-          skillKey: 'chr_0016_laevat_ultimate_skill',
         },
       ],
     },

@@ -559,7 +559,7 @@ export const arclightChr_0007_ikut_power_attackActionGraph = {
 export const arclightChr_0007_ikut_power_attack: SkillDefinition = {
   key: 'chr_0007_ikut_power_attack',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
-  timelineBlockFrames: 40,
+  timelineBlockFrames: 69,
   naturalDurationFrames: 131,
   exclusiveFrame: 68,
   offsetRecordFrame: 0,
@@ -1813,31 +1813,31 @@ export const arclight: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0007_ikut_normal_skill',
           blackboardKey: 'talent_1',
           operation: 'assign',
           value: [1, 1],
-          skillKey: 'chr_0007_ikut_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0007_ikut_normal_skill',
           blackboardKey: 'duration',
           operation: 'assign',
           value: [15, 15],
-          skillKey: 'chr_0007_ikut_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0007_ikut_normal_skill',
           blackboardKey: 'pulse_up',
           operation: 'add',
           value: [0.0005, 0.0008],
-          skillKey: 'chr_0007_ikut_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0007_ikut_normal_skill',
           blackboardKey: 'count',
           operation: 'assign',
           value: [3, 3],
-          skillKey: 'chr_0007_ikut_normal_skill',
         },
       ],
     },
@@ -1854,10 +1854,10 @@ export const arclight: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0007_ikut_normal_skill',
           blackboardKey: 'atb',
           operation: 'add',
           value: 10,
-          skillKey: 'chr_0007_ikut_normal_skill',
         },
       ],
     },
@@ -1873,10 +1873,10 @@ export const arclight: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0007_ikut_normal_skill',
           blackboardKey: 'pulse_up',
           operation: 'multiply',
           value: 1.3,
-          skillKey: 'chr_0007_ikut_normal_skill',
         },
       ],
     },
@@ -1885,9 +1885,9 @@ export const arclight: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
+          skillKey: 'chr_0007_ikut_ultimate_skill',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
-          skillKey: 'chr_0007_ikut_ultimate_skill',
         },
       ],
     },
@@ -1896,10 +1896,10 @@ export const arclight: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0007_ikut_normal_skill',
           blackboardKey: 'count',
           operation: 'assign',
           value: 2,
-          skillKey: 'chr_0007_ikut_normal_skill',
         },
       ],
       attachedBuffs: [{ buffId: 'buff_chr_0007_ikut_finish_count_p5' }],

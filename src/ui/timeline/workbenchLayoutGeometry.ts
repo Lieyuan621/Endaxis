@@ -1,3 +1,5 @@
+import { MONITOR_MINIMUM_CONTENT_HEIGHT } from './results/monitorSectionMinimums';
+
 /** 与 main 分支一致：50px 已包含顶栏下边框。 */
 export const WORKBENCH_HEADER_HEIGHT = 50;
 export const WORKBENCH_ACTIVITY_BAR_WIDTH = 48;
@@ -28,8 +30,8 @@ export function resolveWorkbenchSidePanelMaximumWidth(
 }
 
 /**
- * Mirrors the legacy workbench's observable sizing rule: preserve the timeline minimum first,
- * then let the bottom panel shrink below its normal 240px minimum when the viewport is short.
+ * 优先保留时间轴高度，短窗口允许底栏缩小至监视器最小内容高度。再小则由工作台滚动，
+ * 避免展开的监视区变为零高度；拖动边界与实际展示使用同一规则。
  */
 export function resolveWorkbenchBottomHeightBounds(
   workbenchHeight: number,
@@ -39,7 +41,7 @@ export function resolveWorkbenchBottomHeightBounds(
   const maximum =
     workbenchHeight > 0
       ? Math.max(
-          0,
+          MONITOR_MINIMUM_CONTENT_HEIGHT,
           workbenchHeight -
             WORKBENCH_HEADER_HEIGHT -
             WORKBENCH_TIMELINE_MIN_HEIGHT -
@@ -48,8 +50,11 @@ export function resolveWorkbenchBottomHeightBounds(
       : Math.max(0, fallbackHeight);
   return {
     minimum: Math.min(
-      WORKBENCH_BOTTOM_DEFAULT_HEIGHT *
-        (1 - Math.min(2, Math.max(0, collapsedSectionCount)) * 0.25),
+      Math.max(
+        MONITOR_MINIMUM_CONTENT_HEIGHT,
+        WORKBENCH_BOTTOM_DEFAULT_HEIGHT *
+          (1 - Math.min(2, Math.max(0, collapsedSectionCount)) * 0.25),
+      ),
       maximum,
     ),
     maximum,

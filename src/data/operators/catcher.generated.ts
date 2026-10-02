@@ -583,7 +583,7 @@ export const catcherChr_0020_meurs_power_attack: SkillDefinition = {
   actionGraph: catcherChr_0020_meurs_power_attackActionGraph,
   key: 'chr_0020_meurs_power_attack',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
-  timelineBlockFrames: 35,
+  timelineBlockFrames: 76,
   naturalDurationFrames: 135,
   exclusiveFrame: 75,
   offsetRecordFrame: 0,
@@ -1999,17 +1999,17 @@ export const catcher: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0020_meurs_ultimate_skill',
           blackboardKey: 'talent_1',
           operation: 'assign',
           value: [1, 2],
-          skillKey: 'chr_0020_meurs_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0020_meurs_ultimate_skill',
           blackboardKey: 'atk_scale_shockwave',
           operation: 'assign',
           value: [0.3, 0.45],
-          skillKey: 'chr_0020_meurs_ultimate_skill',
         },
       ],
     },
@@ -2036,10 +2036,10 @@ export const catcher: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0020_meurs_combo_skill',
           blackboardKey: 'potential3_duration',
           operation: 'assign',
           value: 5,
-          skillKey: 'chr_0020_meurs_combo_skill',
         },
       ],
     },
@@ -2048,9 +2048,9 @@ export const catcher: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
+          skillKey: 'chr_0020_meurs_ultimate_skill',
           resource: 'ultimateEnergy',
           multiplier: 0.9,
-          skillKey: 'chr_0020_meurs_ultimate_skill',
         },
       ],
     },
@@ -2059,10 +2059,10 @@ export const catcher: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0020_meurs_normal_skill',
           blackboardKey: 'potential5_atb',
           operation: 'assign',
           value: 10,
-          skillKey: 'chr_0020_meurs_normal_skill',
         },
       ],
     },

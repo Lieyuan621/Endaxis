@@ -578,7 +578,7 @@ export const estellaChr_0021_whiten_power_attack: SkillDefinition = {
   actionGraph: estellaChr_0021_whiten_power_attackActionGraph,
   key: 'chr_0021_whiten_power_attack',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
-  timelineBlockFrames: 30,
+  timelineBlockFrames: 51,
   naturalDurationFrames: 151,
   exclusiveFrame: 50,
   offsetRecordFrame: 0,
@@ -2883,17 +2883,17 @@ export const estella: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0021_whiten_combo_skill',
           blackboardKey: 'has_potential1',
           operation: 'assign',
           value: 1,
-          skillKey: 'chr_0021_whiten_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0021_whiten_combo_skill',
           blackboardKey: 'rate_plus',
           operation: 'assign',
           value: 3,
-          skillKey: 'chr_0021_whiten_combo_skill',
         },
       ],
     },
@@ -2902,9 +2902,9 @@ export const estella: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
+          skillKey: 'chr_0021_whiten_ultimate_skill',
           resource: 'ultimateEnergy',
           multiplier: 0.9,
-          skillKey: 'chr_0021_whiten_ultimate_skill',
         },
       ],
     },
@@ -2913,17 +2913,17 @@ export const estella: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0021_whiten_normal_skill',
           blackboardKey: 'distance',
           operation: 'assign',
           value: 12,
-          skillKey: 'chr_0021_whiten_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0021_whiten_normal_skill',
           blackboardKey: 'dmg_up',
           operation: 'assign',
           value: 0.4,
-          skillKey: 'chr_0021_whiten_normal_skill',
         },
       ],
     },
