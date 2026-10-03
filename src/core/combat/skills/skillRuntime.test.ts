@@ -2280,6 +2280,12 @@ describe('SkillRuntime', () => {
 
     expect(fixture.runtime.state).toBe('casting');
     expect(fixture.resources.sp).toBe(99);
+    expect(
+      fixture.receipt.entries.find(entry => entry.event === 'SkillCostUnavailableAtStart')?.data,
+    ).toMatchObject({ spNeed: 100, spCurrent: 99 });
+    expect(
+      fixture.receipt.entries.find(entry => entry.event === 'SkillCostRejected')?.data,
+    ).toMatchObject({ spNeed: 100, spCurrent: 99 });
     expect(fixture.receipt.entries.map(entry => entry.event)).toEqual([
       'SkillCostUnavailableAtStart',
       'SkillStarted',

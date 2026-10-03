@@ -2835,7 +2835,7 @@
       "specialAttackUnknown": "模拟暂时无法判断此时应使用普通攻击、下落攻击还是处决。",
       "definitionUnavailable": "无法读取该技能的数据，未能模拟。请重新放置技能；若使用了自定义技能，请检查其设置。",
       "unknown": "模拟暂时无法判断该技能是否能在此时释放。",
-      "stillSimulated": "模拟仍按时间轴执行{skill}。"
+      "stillSimulated": "模拟程序将强制执行{skill}。"
     },
     "continuousGroup": {
       "join": "加入连续组",

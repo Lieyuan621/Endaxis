@@ -971,7 +971,7 @@ function formatDurationFrames(frames: number): string {
 
 :global(.timeline-warning-tooltip) {
   max-width: min(320px, calc(100vw - 48px));
-  white-space: normal;
+  white-space: pre-line;
   overflow-wrap: anywhere;
 }
 

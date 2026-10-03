@@ -130,7 +130,7 @@ import {
 import { createEditorSimulationService } from '../../application/simulation/editorSimulationService';
 import { WorkerScenarioSimulationService } from '../../application/simulation/workerScenarioSimulationService';
 import { useScenarioSimulation } from './useScenarioSimulation';
-import { formatSkillBlockWarnings } from './skillBlockWarnings';
+import { formatSkillBlockWarnings, indexSkillResourceWarnings } from './skillBlockWarnings';
 import { projectCombatHudSnapshot } from '../../core/projection/combatHudSnapshot';
 import { projectActiveGearSetLabels } from './library/activeGearSetHint';
 import { resolveTimelineMarkerPointerFrame } from './interaction/timelineMarkerMoveGeometry';
@@ -2866,10 +2866,15 @@ const skillLibraryReverseIndices = computed(() =>
   viewModel.value.tracks.map(track => indexSkillLibrarySegments(track.skillLibrary)),
 );
 
+const skillResourceWarnings = computed(() =>
+  indexSkillResourceWarnings(publishedReceiptEntries.value),
+);
+
 function castWarningTitle(castId: string, definitionUnavailable = false): string {
   if (!definitionUnavailable && !compatibleSkillCastReceiptIds.value.has(castId)) return '';
   return formatSkillBlockWarnings({
     reasons: diagnosticsByCastId.value.get(castId) ?? [],
+    resourceWarnings: skillResourceWarnings.value.get(castId),
     skillLabel: axisSkillBlockLabel(castId),
     definitionUnavailable,
     castLabel: axisSkillBlockLabel,

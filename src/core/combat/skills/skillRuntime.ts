@@ -770,8 +770,10 @@ export class SkillRuntime {
         remainingFrames: this.#cooldown.snapshot.remainingFrames,
       });
     }
-    if (!this.#execution.preparedSkipApplyCost && !this.#canPay(this.#resolvedCosts())) {
-      this.record('SkillCostUnavailableAtStart');
+    if (!this.#execution.preparedSkipApplyCost) {
+      const startCosts = this.#resolvedCosts();
+      if (!this.#canPay(startCosts))
+        this.#recordCostUnavailable('SkillCostUnavailableAtStart', startCosts);
     }
 
     this.runtimeState.markedCanDash = false;
@@ -917,6 +919,23 @@ export class SkillRuntime {
     return true;
   }
 
+  /** 在失败发生时记录余额与已解析费用，展示端不重新计算支付条件。 */
+  #recordCostUnavailable(event: string, costs: CompiledSkillExecutionProgram['costs']): void {
+    const resources = this.#dependencies.resources;
+    const detail: Record<string, number> = {};
+    if (resources !== null) {
+      for (const cost of costs) {
+        if (resources.canPay(this.#hostIdentity.actionOwnerId, [cost])) continue;
+        detail[`${cost.resource}Need`] = cost.value;
+        detail[`${cost.resource}Current`] =
+          cost.resource === 'sp'
+            ? resources.sp
+            : resources.getUltimateEnergy(this.#hostIdentity.actionOwnerId);
+      }
+    }
+    this.record(event, detail);
+  }
+
   #applyCost(emitSkillEvent: boolean): boolean {
     const costs = this.#resolvedCosts(this.#execution.preparationCast);
     if (this.#dependencies.resources === null) this.#requireNoResourceCost(costs);
@@ -927,7 +946,7 @@ export class SkillRuntime {
             forceTimelinePayment: this.#execution.forceTimelinePayment,
           });
     if (!payment.paid) {
-      this.record('SkillCostRejected');
+      this.#recordCostUnavailable('SkillCostRejected', costs);
       return false;
     }
     this.#execution.appliedCost = true;

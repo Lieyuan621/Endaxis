@@ -2818,7 +2818,7 @@
       "specialAttackUnknown": "The simulation cannot yet determine whether this should be a basic attack, plunge attack, or execution.",
       "definitionUnavailable": "The skill data could not be read, so it could not be simulated. Place the skill again; if it is custom, check its settings.",
       "unknown": "The simulation cannot yet determine whether this skill can be used at this time.",
-      "stillSimulated": "The simulation still executes {skill} as placed on the timeline."
+      "stillSimulated": "The simulator will force {skill} to execute."
     },
     "continuousGroup": {
       "join": "Join continuous group",

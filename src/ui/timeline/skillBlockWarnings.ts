@@ -3,6 +3,43 @@ import type { TimelineSkillDiagnosticReason } from './useScenarioSimulation';
 import type { SkillAvailabilityDiagnosticReason } from '../../core/projection/skillAvailabilityDiagnostics';
 import type { SkillExecutionDiagnosticReason } from '../../core/projection/skillExecutionDiagnostics';
 import type { ComboWindowDiagnosticReason } from '../../core/projection/comboWindowDiagnostics';
+import type { CombatReceiptEntry } from '../../core/combat/receipt/combatReceipt';
+
+type ResourceWarningReason = 'resourceUnavailable' | 'costPaymentRejected';
+type ResourceWarning = { resource: 'sp' | 'ultimateEnergy'; need: number; current: number };
+type ResourceWarnings = Partial<Record<ResourceWarningReason, ResourceWarning[]>>;
+
+/** 一次索引已发布回执；每个技能块只读取自己的不足事实。 */
+export function indexSkillResourceWarnings(
+  entries: readonly CombatReceiptEntry[],
+): Map<string, ResourceWarnings> {
+  const result = new Map<string, ResourceWarnings>();
+  for (const entry of entries) {
+    const reason =
+      entry.event === 'SkillCostUnavailableAtStart'
+        ? 'resourceUnavailable'
+        : entry.event === 'SkillCostRejected'
+          ? 'costPaymentRejected'
+          : undefined;
+    const castId = entry.data?.castId;
+    if (reason === undefined || typeof castId !== 'string') continue;
+    const warnings = result.get(castId) ?? {};
+    for (const resource of ['sp', 'ultimateEnergy'] as const) {
+      const need = entry.data?.[`${resource}Need`];
+      const current = entry.data?.[`${resource}Current`];
+      if (
+        typeof need !== 'number' ||
+        typeof current !== 'number' ||
+        !Number.isFinite(need) ||
+        !Number.isFinite(current)
+      )
+        continue;
+      (warnings[reason] ??= []).push({ resource, need, current });
+    }
+    result.set(castId, warnings);
+  }
+  return result;
+}
 
 type Translate = (key: string, values?: Record<string, string>) => string;
 
@@ -44,6 +81,7 @@ function inputUnknownKey(detail: string): string {
 export function formatSkillBlockWarnings(options: {
   reasons: readonly TimelineSkillDiagnosticReason[];
   skillLabel?: string;
+  resourceWarnings?: ResourceWarnings;
   /** 读取定义失败时不把原始异常和技能 ID 直接显示在技能块上。 */
   definitionUnavailable?: boolean;
   castLabel: (castId: string) => string | undefined;
@@ -58,6 +96,21 @@ export function formatSkillBlockWarnings(options: {
   if (options.definitionUnavailable) return text('definitionUnavailable');
 
   const lines = options.reasons.map(reason => {
+    if (reason === 'resourceUnavailable' || reason === 'costPaymentRejected') {
+      const details = options.resourceWarnings?.[reason];
+      if (details?.length)
+        return details
+          .map(detail =>
+            t(
+              `actionItem.requisiteTitle.${detail.resource === 'sp' ? 'spInsufficient' : 'gaugeInsufficient'}`,
+              {
+                need: String(Number(detail.need.toFixed(3))),
+                current: String(Number(detail.current.toFixed(3))),
+              },
+            ),
+          )
+          .join('\n');
+    }
     if (reason.startsWith('skillInputMismatch:')) {
       const actualId = /, actual '(.+)'$/.exec(reason)?.[1];
       const actual = actualId === undefined ? undefined : options.actualSkillLabel?.(actualId);
