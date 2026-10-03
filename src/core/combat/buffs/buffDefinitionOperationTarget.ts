@@ -416,8 +416,8 @@ export class BuffDefinitionOperationTarget<Key extends string>
     this.container.recycleFinishedBuffs();
   }
 
-  getCountByIds(ids: readonly string[]): number {
-    return this.container.getCountByIds(ids);
+  getCountByIds(ids: readonly string[], skillCastId?: number): number {
+    return this.container.getCountByIds(ids, skillCastId);
   }
 
   getInstanceCountByIds(ids: readonly string[]): number {
@@ -479,24 +479,27 @@ export class BuffDefinitionOperationTarget<Key extends string>
     tags: readonly GameplayTag[],
     type: GameplayTagQueryType,
     exact?: boolean,
+    skillCastId?: number,
   ): number {
-    return this.container.getCountByTags(tags, type, exact);
+    return this.container.getCountByTags(tags, type, exact, skillCastId);
   }
 
   getDistinctIdCountByTags(
     tags: readonly GameplayTag[],
     type: GameplayTagQueryType,
     exact?: boolean,
+    skillCastId?: number,
   ): number {
-    return this.container.getDistinctIdCountByTags(tags, type, exact);
+    return this.container.getDistinctIdCountByTags(tags, type, exact, skillCastId);
   }
 
   getInstanceCountByTags(
     tags: readonly GameplayTag[],
     type: GameplayTagQueryType,
     exact?: boolean,
+    skillCastId?: number,
   ): number {
-    return this.container.getInstanceCountByTags(tags, type, exact);
+    return this.container.getInstanceCountByTags(tags, type, exact, skillCastId);
   }
 
   matchesEntityTags(

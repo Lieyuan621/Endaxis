@@ -450,11 +450,12 @@ describe('BuffDefinitionOperationTarget', () => {
     expect(container.getCountById(definition.id)).toBe(0);
   });
 
-  it('stores the supplied skill-cast snapshot on the created Buff instance', () => {
+  it('保留施法来源，并隔离连续施法的 Buff 计数', () => {
     const container = new CombatBuffContainer<never>('operator', new CombatAttributeSet<never>());
     const definition: CombatBuffDefinition<never> = {
       id: 'inherited-cast',
-      stackingType: 'unique',
+      stackingType: 'unlimited',
+      applyTags: ['Skill/InflictionCounter'],
     };
     const target = new BuffDefinitionOperationTarget(container, {
       get: () => definition,
@@ -474,6 +475,22 @@ describe('BuffDefinitionOperationTarget', () => {
     });
 
     expect(container.buffs[0]?.skillCastInfo).toEqual(skillCastInfo);
+    target.apply({
+      buffId: definition.id,
+      sourceId: 'operator',
+      blackboardValues: {},
+      skillCastInfo: { ...skillCastInfo, skillCastId: 4 },
+    });
+    const count = (cast?: number) => [
+      target.getCountByIds([definition.id], cast),
+      target.getCountByTags(definition.applyTags!, 'hasAny', false, cast),
+      target.getDistinctIdCountByTags(definition.applyTags!, 'hasAny', false, cast),
+      target.getInstanceCountByTags(definition.applyTags!, 'hasAny', false, cast),
+    ];
+    expect(count()).toEqual([2, 2, 1, 2]);
+    expect(count(3)).toEqual([1, 1, 1, 1]);
+    expect(count(4)).toEqual([1, 1, 1, 1]);
+    expect(count(5)).toEqual([0, 0, 0, 0]);
   });
 
   it('rejects lifecycle sequences until a Buff-owned sequence runtime is configured', () => {
