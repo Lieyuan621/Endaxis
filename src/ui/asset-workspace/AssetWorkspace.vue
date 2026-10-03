@@ -1,8 +1,17 @@
 <script setup lang="ts">
-import { computed, markRaw, onBeforeUnmount, reactive, ref, toRaw, type Raw } from 'vue';
+import { ownedActionResourceNavigationKey } from '../field-editor/ownedResourceNavigation';
+import { ownedActionResourceLink } from './ownedActionResourceNavigation';
+import { computed, provide, markRaw, onBeforeUnmount, reactive, ref, toRaw, type Raw } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { EaButton, EaCloseButton, EaInput } from '@/design-system';
 import { ElConfigProvider } from 'element-plus';
+import {
+  workspaceReferenceChoices,
+  type WorkspaceReferenceAsset,
+} from './workspaceReferenceChoices';
+import { referenceNavigationKey } from '../field-editor/referenceNavigation';
+import type { ReferenceNavigationTarget } from '../../application/editor/referenceResolver';
+import type { CommonDefinitionSource } from '../../core/game-data/gameDataRepository';
 import AssetCatalogBrowser from './AssetCatalogBrowser.vue';
 import ResourceTools from './ResourceTools.vue';
 import WorkspaceIcon from './WorkspaceIcon.vue';
@@ -13,7 +22,10 @@ import {
   type OperatorResourceCommand,
 } from '../../application/editor/operatorResourceCommands';
 import InputRegionBoundary from '../keyboard/InputRegionBoundary.vue';
+import { useSchemaReferences } from '../definition-editor/schemaReferenceContext';
 import DefinitionField from '../definition-editor/DefinitionField.vue';
+import { definitionConditionContextKey } from '../field-editor/inlineConditionContext';
+import { inlineConditionBlackboardContext } from '../../application/editor/inlineConditionContext';
 import EditorInspector from '../editor/EditorInspector.vue';
 import WeaponGrowthFields from '../editor/WeaponGrowthFields.vue';
 import { resourceEditorSelection } from '../editor/resourceEditorView';
@@ -33,7 +45,6 @@ import {
 import { supportsCustomAsset } from './workspaceAssetDefinition';
 import { WorkspaceNavigation, type WorkspaceLocation } from './workspaceNavigation';
 import { definitionSchemas } from '../definition-editor/definitionSchemas.generated';
-import type { DefinitionFieldSchema } from '../definition-editor/fieldSchema';
 import { fieldValueAt, fieldSchemaForValue } from '../definition-editor/definitionFieldRuntime';
 import type { SkillDefinition } from '../../core/game-data/operatorDefinition';
 import type { ActionGraphResourceOwner } from '../../application/editor/actionGraphResourceEditing';
@@ -49,6 +60,8 @@ import {
 const props = defineProps<{
   assets: readonly WorkspaceAssetSource[];
   initialAsset: string;
+  initialReference?: ReferenceNavigationTarget;
+  sharedSources?: readonly CommonDefinitionSource[];
   saveAsset: (request: WorkspaceAssetSave) => void | Promise<void>;
 }>();
 const emit = defineEmits<{ close: [] }>();
@@ -139,7 +152,7 @@ const graphOpen = computed({
   },
 });
 function canLeaveGraphFields() {
-  return !graphOpen.value || graphEditor.canLeaveFields();
+  return !graphOpen.value || !!resourceDiscovery.value.error || graphEditor.canLeaveFields();
 }
 const pendingClose = ref<string | 'workspace' | null>(null);
 const navigation = reactive(new WorkspaceNavigation());
@@ -232,18 +245,37 @@ function resourceLabel(resource: WorkspaceDefinitionResource): string {
     return `${tr(resource.path[0] === 'talents' ? 'catalog.kinds.talent' : 'catalog.kinds.potential')} ${Number(resource.path[1]) + 1}`;
   return resource.identity;
 }
-const resources = computed(() => describeWorkspaceResources(draft.value.edit, resourceLabel));
+const resourceDiscovery = computed(() => {
+  try {
+    return { resources: describeWorkspaceResources(draft.value.edit, resourceLabel), error: '' };
+  } catch (cause) {
+    return {
+      resources: [
+        {
+          id: '[]',
+          kind: draft.value.edit.kind,
+          name: draft.value.name,
+          definitionResource: { kind: draft.value.edit.kind, path: [], identity: draft.value.name },
+        },
+      ],
+      error: cause instanceof Error ? cause.message : String(cause),
+    };
+  }
+});
+const resources = computed(() => resourceDiscovery.value.resources);
 const byId = computed(() => new Map(resources.value.map(resource => [resource.id, resource])));
 const references = computed(() =>
-  workspaceActionReferences(
-    draft.value.edit.definition,
-    resources.value,
-    props.assets.flatMap(asset =>
-      asset.edit.kind === 'buff' && asset.id !== active.value.session.source.id
-        ? [{ id: asset.edit.id, assetId: asset.id, name: asset.name }]
-        : [],
-    ),
-  ),
+  resourceDiscovery.value.error
+    ? []
+    : workspaceActionReferences(
+        draft.value.edit.definition,
+        resources.value,
+        props.assets.flatMap(asset =>
+          asset.edit.kind === 'buff' && asset.id !== active.value.session.source.id
+            ? [{ id: asset.edit.id, assetId: asset.id, name: asset.name }]
+            : [],
+        ),
+      ),
 );
 const selected = computed(() => byId.value.get(active.value.asset) ?? resources.value[0]!);
 const selectedValue = computed(
@@ -253,12 +285,27 @@ const selectedValue = computed(
       unknown
     >,
 );
-const selectedSchema = computed<DefinitionFieldSchema>(() =>
-  fieldSchemaForValue(
-    definitionSchemas[selected.value.definitionResource.kind],
-    selectedValue.value,
+useSchemaReferences(() => definitionSchemas[selected.value.definitionResource.kind]);
+provide(
+  definitionConditionContextKey,
+  computed(() =>
+    inlineConditionBlackboardContext(selected.value.definitionResource.kind, selectedValue.value),
   ),
 );
+const selectedResolution = computed(() => {
+  try {
+    return {
+      schema: fieldSchemaForValue(
+        definitionSchemas[selected.value.definitionResource.kind],
+        selectedValue.value,
+      ),
+      error: '',
+    };
+  } catch (cause) {
+    return { schema: undefined, error: cause instanceof Error ? cause.message : String(cause) };
+  }
+});
+const selectedSchema = computed(() => selectedResolution.value.schema);
 const fields = computed(() => {
   const schema = selectedSchema.value;
   if (schema?.kind !== 'object') return [];
@@ -296,27 +343,33 @@ const fieldPath = computed(() => [
   ...selected.value.definitionResource.path,
   ...(field.value ? [field.value] : []),
 ]);
-const referenceChoices = computed(() => ({
-  skillSlot:
-    draft.value.edit.kind === 'operator'
-      ? (draft.value.edit.definition.skillSlots ?? []).map(slot => ({
-          value: slot.key,
-          label: slot.key,
-        }))
-      : [],
-  gearSet: props.assets.flatMap(asset =>
-    asset.edit.kind === 'gearSet' ? [{ value: asset.edit.definition.slug, label: asset.name }] : [],
-  ),
-  buff: resources.value
-    .filter(resource => resource.kind === 'buff')
-    .map(resource => ({ value: resource.definitionResource.identity, label: resource.name })),
-  skill: resources.value
-    .filter(resource => resource.kind === 'skill')
-    .map(resource => ({ value: resource.definitionResource.identity, label: resource.name })),
-  abilityEntity: resources.value
-    .filter(resource => resource.kind === 'entity')
-    .map(resource => ({ value: resource.definitionResource.identity, label: resource.name })),
-}));
+const referenceAssets = computed<readonly WorkspaceReferenceAsset[]>(() => {
+  void revision.value;
+  const entries = new Map<string, WorkspaceReferenceAsset>(
+    props.assets.map(asset => [asset.id, asset]),
+  );
+  for (const doc of documents.value)
+    entries.set(doc.key, {
+      ...doc.session.source,
+      id: doc.key,
+      edit: doc.session.current.edit,
+      name: doc.session.current.name,
+      custom: doc.session.history.editable,
+      catalogId: doc.session.targetId,
+      published: props.assets.some(asset => asset.id === doc.key),
+    });
+  return [...entries.values()];
+});
+const referenceChoices = computed(() =>
+  resourceDiscovery.value.error
+    ? {}
+    : workspaceReferenceChoices(
+        referenceAssets.value.find(asset => asset.id === activeKey.value)!,
+        referenceAssets.value,
+        props.sharedSources,
+        new Map(resources.value.map(resource => [resource.id, resource.name])),
+      ),
+);
 const path = computed(() =>
   workspaceResourcePath(byId.value, selected.value.id).map(id => byId.value.get(id)!),
 );
@@ -343,7 +396,7 @@ const browserAssets = computed(() => {
   return [...entries.values()];
 });
 const graphOwner = computed(() =>
-  selectedValue.value.actionGraph
+  !resourceDiscovery.value.error && selectedValue.value.actionGraph
     ? (selectedValue.value as unknown as ActionGraphResourceOwner)
     : undefined,
 );
@@ -371,8 +424,29 @@ const graphEditor = useWorkspaceGraphEditor({
   redo: () => undo(1),
 });
 const { skill: skillGraphEditor } = graphEditor;
+provide(ownedActionResourceNavigationKey, request =>
+  ownedActionResourceLink(
+    {
+      identity: () => `${activeKey.value}:${active.value.asset}`,
+      scope: () => (graphSkill.value ? graphEditor.skill : graphEditor.resource).interactionScope,
+      ownerPath: () => selected.value.definitionResource.path,
+      address: () => (graphSkill.value ? graphEditor.skill : graphEditor.resource).address,
+      graph: () => (graphSkill.value ? graphEditor.skill : graphEditor.resource).graph,
+      definition: () => draft.value.edit.definition,
+      hasResource: path => byId.value.has(JSON.stringify(path)),
+      flush: canLeaveGraphFields,
+      reject: () => {
+        status.value = t('spawnDefinitionField.navigationChanged');
+      },
+      open: path => open(JSON.stringify(path), 'graph'),
+    },
+    request,
+  ),
+);
+
 const graphPanelProps = computed(() => ({
   editor: graphEditor,
+  referenceChoices: referenceChoices.value,
   skill: !!graphSkill.value,
   readonly: !custom.value,
   resourceKey: `${activeKey.value}:${active.value.asset}`,
@@ -410,7 +484,7 @@ async function selectDocument(key: string) {
   if (!canLeaveGraphFields()) return;
   activate(key);
 }
-async function openSource(id: string) {
+async function openSource(id: string, record = true) {
   if (!canLeaveGraphFields()) return;
   let doc = documents.value.find(item => item.key === id);
   if (!doc) {
@@ -424,9 +498,28 @@ async function openSource(id: string) {
     };
     documents.value.push(doc);
   }
-  activate(id);
+  activate(id, record);
   if (!browserPinned.value) browserVisible.value = false;
 }
+async function navigateReference(target: ReferenceNavigationTarget) {
+  if (!canLeaveGraphFields()) return;
+  const source = referenceAssets.value.find(asset => asset.id === target.assetId);
+  if (!source) return;
+  const id = JSON.stringify(target.resourcePath);
+  if (
+    !describeWorkspaceResources(source.edit, resource => resource.identity).some(
+      resource => resource.id === id,
+    )
+  )
+    return;
+  // Record only the final target so Back returns straight to the referring field/graph.
+  await openSource(target.assetId, false);
+  active.value.asset = id;
+  reconcileView();
+  if (target.page) applyPage(target.page);
+  recordNavigation();
+}
+provide(referenceNavigationKey, navigateReference);
 async function open(id: string, page?: string) {
   if (!canLeaveGraphFields()) return;
   if (!byId.value.has(id)) return;
@@ -525,7 +618,7 @@ function rename(name: string) {
 }
 function undo(direction: number) {
   if (!custom.value || saving.value || !canLeaveGraphFields()) return;
-  if (graphOpen.value) graphEditor.cancelConnection();
+  if (graphOpen.value && !resourceDiscovery.value.error) graphEditor.cancelConnection();
   if (direction < 0) active.value.session.history.undo();
   else active.value.session.history.redo();
   // 字段输入可保留选中状态；图对象可能已被撤销，不保留指向旧节点或连线的选择。
@@ -592,7 +685,9 @@ function dismissAssetBrowser(event: PointerEvent) {
   )
     browserVisible.value = false;
 }
-openSource(props.initialAsset);
+openSource(props.initialAsset).then(() => {
+  if (props.initialReference) return navigateReference(props.initialReference);
+});
 browserVisible.value = true;
 </script>
 
@@ -732,7 +827,11 @@ browserVisible.value = true;
               tr(custom ? 'draft' : 'readonly')
             }}</span
           >
-          <WorkspaceGraphPanels v-if="graphOpen" area="toolbar" v-bind="graphPanelProps" />
+          <WorkspaceGraphPanels
+            v-if="graphOpen && !resourceDiscovery.error"
+            area="toolbar"
+            v-bind="graphPanelProps"
+          />
         </div>
         <div class="ap-body rw-body">
           <ResourceTools
@@ -753,7 +852,7 @@ browserVisible.value = true;
             @open="open($event)"
             @open-asset="openSource"
           >
-            <template v-if="graphOpen" #tools="{ tab }">
+            <template v-if="graphOpen && !resourceDiscovery.error" #tools="{ tab }">
               <WorkspaceGraphPanels
                 area="tools"
                 v-bind="graphPanelProps"
@@ -778,9 +877,17 @@ browserVisible.value = true;
             :ref="value => (skillGraphEditor.editorRoot = value as HTMLElement)"
             class="ap-document"
             :class="{ 'ap-document--graph': graphOpen }"
-            @keydown="graphOpen && graphSkill && skillGraphEditor.onKeydown($event)"
+            @keydown="
+              graphOpen &&
+              !resourceDiscovery.error &&
+              graphSkill &&
+              skillGraphEditor.onKeydown($event)
+            "
           >
-            <WorkspaceGraphPanels v-if="graphOpen" area="content" v-bind="graphPanelProps" />
+            <p v-if="resourceDiscovery.error" role="alert" data-resource-discovery-error>
+              {{ resourceDiscovery.error }}
+            </p>
+            <WorkspaceGraphPanels v-else-if="graphOpen" area="content" v-bind="graphPanelProps" />
             <AssetResourceContent
               v-else
               :edit="draft.edit"
@@ -814,7 +921,11 @@ browserVisible.value = true;
           />
           <aside v-show="layout.rightOpen && !focused" class="ap-inspector">
             <div class="ap-section-heading">{{ tr('inspector') }}</div>
-            <WorkspaceGraphPanels v-if="graphOpen" area="inspector" v-bind="graphPanelProps" />
+            <WorkspaceGraphPanels
+              v-if="graphOpen && !resourceDiscovery.error"
+              area="inspector"
+              v-bind="graphPanelProps"
+            />
             <EditorInspector
               v-else
               :title="
@@ -826,7 +937,8 @@ browserVisible.value = true;
               "
               :identity="selected.definitionResource.identity"
             >
-              <template v-if="field">
+              <p v-if="selectedResolution.error" role="alert">{{ selectedResolution.error }}</p>
+              <template v-else-if="field">
                 <WeaponGrowthFields
                   v-if="
                     draft.edit.kind === 'weapon' &&
@@ -939,7 +1051,10 @@ browserVisible.value = true;
           >
             <WorkspaceIcon name="folder" :size="14" />{{ tr('library') }}
           </EaButton>
-          <span class="ap-variable-dot" />{{ status || tr('ready') }}
+          <span class="ap-variable-dot" /><span
+            :role="resourceDiscovery.error ? 'alert' : 'status'"
+            >{{ resourceDiscovery.error || status || tr('ready') }}</span
+          >
           <div class="ap-spacer" />
           {{ tr('sharedDraft') }}
         </footer>

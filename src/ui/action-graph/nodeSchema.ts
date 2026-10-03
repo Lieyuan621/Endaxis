@@ -1,7 +1,10 @@
+import type { DefinitionFieldSchema } from '../definition-editor/fieldSchema';
+import type { FieldSemanticMetadata } from '../field-editor/fieldSemantics';
 import type { ActionGraphStep } from '../../../packages/game-data-contract/src/actionGraph.ts';
 
 /** 从动作契约生成的表单字段；路径相对于节点的 action。 */
-export interface NodeFieldSchema {
+export interface NodeFieldSchema extends FieldSemanticMetadata {
+  readonly valueSchema?: DefinitionFieldSchema;
   readonly path: readonly string[];
   readonly label: string;
   readonly description: string;

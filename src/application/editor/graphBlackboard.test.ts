@@ -109,3 +109,59 @@ it('不把显式缺值默认值或外部动态键误判为越界', () => {
     ),
   ).toEqual([]);
 });
+
+it('shared and aliased string reads retain every call scope and entity read-site evidence', () => {
+  const read = {
+    action: {
+      kind: 'applyBuff' as const,
+      parameters: {
+        target: 'caster' as const,
+        buffId: { kind: 'stringNode' as const, nodeId: 'alias' },
+      },
+    },
+    next: null,
+  };
+  const graph: ActionGraphDefinition = {
+    nodes: {
+      scope: {
+        action: {
+          kind: 'withActionBlackboardScope',
+          parameters: { initialValues: { local: 1 }, inheritParent: false },
+          body: { $sequence: 'inside' },
+        },
+        next: 'outside',
+      },
+      inside: read,
+      outside: read,
+    },
+    dataNodes: {
+      alias: { type: 'string', expression: { kind: 'stringNode', nodeId: 'read' } },
+      read: { type: 'string', expression: { blackboardKey: 'local' } },
+    },
+  };
+  const analysis = analyzeGraphBlackboard(graph, ['scope']);
+  expect(analysis.dataContexts.get('read')).toEqual(new Set(['current', 'current/scope']));
+  expect(analysis.dataContexts.get('alias')).toEqual(analysis.dataContexts.get('read'));
+  expect(analysis.variables.filter(value => value.key === 'local')).toHaveLength(2);
+  for (const variable of analysis.variables.filter(value => value.key === 'local')) {
+    expect(variable.reads).toEqual(['read']);
+    expect(variable.requiredReads).toEqual(['read']);
+    expect(variable.readSites).toEqual([{ id: 'read', owner: 'data' }]);
+  }
+  expect(blackboardScopeWarnings(analysis)).toHaveLength(1);
+  const entity = analyzeGraphBlackboard(
+    {
+      ...graph,
+      dataNodes: {
+        ...graph.dataNodes,
+        read: { type: 'string', expression: { blackboardKey: 'EntityBB_marker' } },
+      },
+    },
+    ['scope'],
+  );
+  expect(
+    entity.variables
+      .filter(value => value.key === 'EntityBB_marker')
+      .every(value => value.layer === 'entity'),
+  ).toBe(true);
+});

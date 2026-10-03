@@ -1,4 +1,5 @@
-import { computed, nextTick, onBeforeUnmount, watch, ref, shallowRef } from 'vue';
+import type { GraphInteractionSnapshot } from './graphInteractionSnapshot';
+import { toRaw, computed, nextTick, onBeforeUnmount, watch, ref, shallowRef } from 'vue';
 import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills';
 import { listNodeCreations, nodeCreationGroup } from './nodeCreation';
 import { nodeName, nodeHelp } from './editorNodeText';
@@ -33,7 +34,8 @@ import {
   dataNodeInputs,
 } from '../../core/action-graph/actionGraphDataNodes';
 import { updateSkillGraph } from '../../application/editor/skillGraphCommands';
-import { writeNodeField } from './nodeFieldValues';
+import { actionTypedInputs, dataTypedInputs } from './typedGraphInputs';
+import { setGraphDataInput } from '../../application/editor/graphDataInputEditing';
 import DataNodeInspector from './DataNodeInspector.vue';
 import BlackboardPanel from './BlackboardPanel.vue';
 import { freezeGraphDocument } from '../../application/editor/immutableGraphDocument';
@@ -128,7 +130,7 @@ export function useSkillGraphEditor(document: SkillGraphDocument) {
         updateSkillGraph(skill, address.value, graph => {
           const used = [
             ...Object.values(graph.nodes).flatMap(node => listDataInputs(node.action)),
-            ...Object.values(graph.dataNodes ?? {}).flatMap(dataNodeInputs),
+            ...Object.values(graph.dataNodes ?? {}).flatMap(node => dataNodeInputs(node)),
           ].some(input => input.source === id);
           if (used) throw new Error('此数据节点仍有连线，请先从输入端断开，再删除节点。');
           const dataNodes = { ...graph.dataNodes };
@@ -139,53 +141,63 @@ export function useSkillGraphEditor(document: SkillGraphDocument) {
     )
       selectedDataId.value = null;
   }
+  const interactionScope = computed(() => JSON.stringify([document.identity(), graphKey.value]));
+  function canUseGraphSnapshot(
+    expected: GraphInteractionSnapshot = { value: graph.value, scope: interactionScope.value },
+  ): boolean {
+    if (!canLeaveFields()) return false;
+    if (
+      toRaw(expected.value) !== toRaw(graph.value) ||
+      (expected.scope !== undefined && expected.scope !== interactionScope.value)
+    ) {
+      error.value = t('graphDataInput.ownerChanged');
+      return false;
+    }
+    return true;
+  }
   function connectData(
     owner: 'action' | 'data',
     id: string,
     path: readonly string[],
     source: string | null,
-    constant?: number | boolean,
-  ) {
-    if (!canLeaveFields()) return;
-    edit(skill =>
-      updateSkillGraph(skill, address.value, graph => {
-        const target =
-          owner === 'action' ? graph.nodes[id]!.action : graph.dataNodes![id]!.expression;
+    constant?: number | boolean | string,
+    expectedGraph?: GraphInteractionSnapshot,
+  ): boolean {
+    const previousOwner =
+      owner === 'action' ? graph.value.nodes[id]?.action : graph.value.dataNodes?.[id];
+    if (!canUseGraphSnapshot(expectedGraph)) return false;
+    const currentOwner =
+      owner === 'action' ? graph.value.nodes[id]?.action : graph.value.dataNodes?.[id];
+    // A flush may reorder indexed rows. Never replay the captured old path against
+    // the newly accepted owner; the user must select its refreshed input instead.
+    if (previousOwner !== currentOwner) {
+      error.value = t('graphDataInput.ownerChanged');
+      return false;
+    }
+    return edit(document =>
+      updateSkillGraph(document, address.value, current => {
+        variables.assertConnection(current, owner, id, path, source);
+        const action = current.nodes[id]?.action;
+        const data = current.dataNodes?.[id];
         const input = (
-          owner === 'action' ? listDataInputs(target) : dataNodeInputs(graph.dataNodes![id]!)
-        ).find(input => JSON.stringify(input.path) === JSON.stringify(path));
+          owner === 'action'
+            ? action
+              ? actionTypedInputs(action)
+              : []
+            : data
+              ? dataTypedInputs(data)
+              : []
+        ).find(
+          item =>
+            item.path.length === path.length &&
+            item.path.every((part, index) => part === path[index]),
+        );
         if (!input) throw new Error('数据输入不存在');
-        const node = source === null ? null : graph.dataNodes?.[source];
-        if (source !== null && (!node || node.type !== input.type))
-          throw new Error('数据引脚类型不一致');
-        const value =
-          source === null
-            ? { kind: 'constant', value: constant ?? (input.type === 'boolean' ? false : 0) }
-            : { kind: input.type === 'boolean' ? 'conditionNode' : 'valueNode', nodeId: source };
-        const changed = writeNodeField(target, path, value);
-        return owner === 'action'
-          ? {
-              ...graph,
-              nodes: {
-                ...graph.nodes,
-                [id]: {
-                  ...graph.nodes[id]!,
-                  action: changed as (typeof graph.nodes)[string]['action'],
-                },
-              },
-            }
-          : {
-              ...graph,
-              dataNodes: {
-                ...graph.dataNodes,
-                [id]: { ...graph.dataNodes![id]!, expression: changed } as NonNullable<
-                  typeof graph.dataNodes
-                >[string],
-              },
-            };
+        return setGraphDataInput(current, owner, id, input, source, constant);
       }),
     );
   }
+
   const selectedNode = computed(() =>
     selectedId.value === null ? undefined : graph.value.nodes[selectedId.value],
   );
@@ -229,14 +241,34 @@ export function useSkillGraphEditor(document: SkillGraphDocument) {
         : t('actionGraphEditor.macroScope', { name: address.value.macroId }),
     selection: selection,
   });
-  const { analysis: blackboard, selectedScopes, variableKeys } = variables;
+  const { analysis: blackboard, selectedScopes, variableKeys, blackboardContext } = variables;
   function createVariable(
     variable: BlackboardVariable,
     write: boolean,
     point?: { x: number; y: number },
-    target?: { owner: 'action' | 'data'; id: string; path: readonly string[] },
+    target?: {
+      owner: 'action' | 'data';
+      id: string;
+      path: readonly string[];
+      graph?: GraphInteractionSnapshot;
+    },
   ) {
-    if (!canLeaveFields()) return;
+    const beforeTarget =
+      target &&
+      (target.owner === 'action'
+        ? graph.value.nodes[target.id]?.action
+        : graph.value.dataNodes?.[target.id]);
+    if (!canUseGraphSnapshot(target?.graph)) return;
+    if (
+      target &&
+      beforeTarget !==
+        (target.owner === 'action'
+          ? graph.value.nodes[target.id]?.action
+          : graph.value.dataNodes?.[target.id])
+    ) {
+      error.value = t('graphDataInput.ownerChanged');
+      return;
+    }
     if (write && variable.layer === 'parameter') {
       error.value = '宏输入参数只允许读取。';
       return;
@@ -262,7 +294,12 @@ export function useSkillGraphEditor(document: SkillGraphDocument) {
     identity: string,
     write: boolean,
     point: { x: number; y: number },
-    target?: { owner: 'action' | 'data'; id: string; path: readonly string[] },
+    target?: {
+      owner: 'action' | 'data';
+      id: string;
+      path: readonly string[];
+      graph?: GraphInteractionSnapshot;
+    },
   ) {
     const variable = variables.resolve(identity);
     if (variable) createVariable(variable, write, point, target);
@@ -353,8 +390,8 @@ export function useSkillGraphEditor(document: SkillGraphDocument) {
       changeGraph({ kind: 'macro', macroId: node.action.macroId });
     else selectNode(id);
   }
-  function disconnectInput(id: string) {
-    if (!canLeaveFields()) return;
+  function disconnectInput(id: string, expectedGraph?: GraphInteractionSnapshot) {
+    if (!canUseGraphSnapshot(expectedGraph)) return;
     // 一次断开输入的所有来源只记一次撤销，不能让半次断线暴露给界面。
     edit(skill => {
       let changed = skill;
@@ -428,12 +465,21 @@ export function useSkillGraphEditor(document: SkillGraphDocument) {
     const id = selectedId.value;
     return id !== null && edit(skill => replaceGraphNodeAction(skill, address.value, id, action));
   }
-  function connect(nodeId: string, path: readonly string[], target: string | null) {
-    if (!canLeaveFields()) return;
+  function connect(
+    nodeId: string,
+    path: readonly string[],
+    target: string | null,
+    expectedGraph?: GraphInteractionSnapshot,
+  ) {
+    if (!canUseGraphSnapshot(expectedGraph)) return;
     edit(skill => setGraphConnection(skill, address.value, nodeId, path, target));
   }
-  function connectEntry(ids: readonly string[], target: string | null) {
-    if (!canLeaveFields()) return;
+  function connectEntry(
+    ids: readonly string[],
+    target: string | null,
+    expectedGraph?: GraphInteractionSnapshot,
+  ) {
+    if (!canUseGraphSnapshot(expectedGraph)) return;
     edit(skill => editGraphEntries(skill, address.value, ids, { targetId: target }));
   }
   function applyTimelineTime(id: string, startFrame: number, endFrame: number | null): boolean {
@@ -599,6 +645,7 @@ export function useSkillGraphEditor(document: SkillGraphDocument) {
     editable,
     address,
     graphKey,
+    interactionScope,
     graph,
     graphPresentation,
     changePresentation,
@@ -629,6 +676,7 @@ export function useSkillGraphEditor(document: SkillGraphDocument) {
     entryGroups,
     blackboardPanel,
     variableKeys,
+    blackboardContext,
     blackboard,
     createVariable,
     dropVariable,

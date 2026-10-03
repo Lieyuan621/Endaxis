@@ -1,3 +1,4 @@
+import { createGraphDataResolver } from '../../core/action-graph/actionGraphData';
 import type {
   ActionGraphDefinition,
   ActionGraphNode,
@@ -130,7 +131,10 @@ export function replaceResourceNodeAction<T extends ActionGraphResourceOwner>(
   const graph = resourceGraph(owner, address);
   const source = node(graph, nodeId);
   if (source.action === action) return owner;
-  const issues = validateActionGraphStepDefinition(action, 'action');
+  const issues = validateActionGraphStepDefinition(
+    createGraphDataResolver(graph).bind(action),
+    'action',
+  );
   if (issues.length)
     throw new Error(issues.map(issue => `${issue.path}: ${issue.message}`).join('\n'));
   return updateResourceGraph(owner, address, previous => ({

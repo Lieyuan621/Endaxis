@@ -12,7 +12,10 @@ import type {
   BuffConditionTarget,
   CombatCondition,
 } from '../../../../../packages/game-data-contract/src/conditions.ts';
-import type { LevelValues } from '../../../../../packages/game-data-contract/src/primitives.ts';
+import type {
+  ActionStringOperand,
+  LevelValues,
+} from '../../../../../packages/game-data-contract/src/primitives.ts';
 
 /**
  * 经对象查询读取的黑板键。记录原有目标选择条件，不把同名键并入当前技能的 direct 板。
@@ -112,6 +115,13 @@ export function actionValueUsage(
   };
 }
 
+/** Unbound graph expressions cannot prove a key unused; resolution belongs to their graph. */
+function actionStringUsage(operand: ActionStringOperand): DefinitionValueUsage {
+  if (typeof operand === 'string') return EMPTY;
+  if ('kind' in operand) return { ...EMPTY, unknownAccess: true, mayThrow: true };
+  return { ...EMPTY, reads: new Set([operand.blackboardKey]), mayThrow: true };
+}
+
 /**
  * assignDynamic 会读取目的键的旧数值，决定是否跳过 epsilon 范围内的写入。
  * 旧值缺失时可以直接写入，因此这类读取本身不产生严格缺键错误。
@@ -186,12 +196,7 @@ export function analyzeConditionUsage(condition: CombatCondition): DefinitionVal
       return value(condition.value);
     case 'timedMarkerPresent':
     case 'abilityEntityTimedMarkerPresent':
-      return typeof condition.markerId === 'string'
-        ? outputs()
-        : {
-            ...outputs(),
-            reads: new Set([condition.markerId.blackboardKey]),
-          };
+      return mergeDefinitionValueUsage([outputs(), actionStringUsage(condition.markerId)]);
     case 'eventInflictionElementIn':
     case 'eventPhysicalInflictionTypeIn': {
       // 两类原生检查先严格读取旧值，再比较 float32 epsilon；Spell 的空键不启用保存。
@@ -416,12 +421,7 @@ export function analyzeStepUsage(
     case 'createTimedMarker':
     case 'createAbilityEntityTimedMarker': {
       const usage = effect([step.parameters.durationSeconds]);
-      return typeof step.parameters.markerId === 'string'
-        ? usage
-        : {
-            ...usage,
-            reads: new Set([...usage.reads, step.parameters.markerId.blackboardKey]),
-          };
+      return mergeDefinitionValueUsage([usage, actionStringUsage(step.parameters.markerId)]);
     }
     case 'startTimeDilation':
       return effect([
@@ -449,10 +449,10 @@ export function analyzeStepUsage(
         ...usage.reads,
         ...Object.values(step.parameters.copiedBlackboardAssignments ?? {}),
       ]);
-      if (typeof step.parameters.buffId !== 'string') {
-        reads.add(step.parameters.buffId.blackboardKey);
-      }
-      return { ...usage, reads };
+      return mergeDefinitionValueUsage([
+        { ...usage, reads },
+        actionStringUsage(step.parameters.buffId),
+      ]);
     }
     case 'createGlobalBuff':
       return effect([
@@ -518,12 +518,7 @@ export function analyzeStepUsage(
     case 'inheritSkillCastInfoForBasicAttack':
       return effect();
     case 'castSkillDuringAction':
-      return typeof step.parameters.skillId === 'string'
-        ? effect()
-        : {
-            ...effect(),
-            reads: new Set([step.parameters.skillId.blackboardKey]),
-          };
+      return mergeDefinitionValueUsage([effect(), actionStringUsage(step.parameters.skillId)]);
     default:
       // 外部未经检查的对象或新增类型都不能静默变成“没有读取”。
       return { ...EMPTY, unknownAccess: true, mayThrow: true, observable: true };

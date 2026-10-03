@@ -617,12 +617,7 @@ export interface CombatStepParameters {
   /** 按目标、来源和黑板赋值创建一个或多个 Buff 实例。 */
   applyBuff: {
     /** 动态身份在执行时从字符串黑板读取；不携带可被误用的字面回退 ID。 */
-    buffId:
-      | string
-      | {
-          /** 运行时读取 Buff ID 的动作黑板键。 */
-          readonly blackboardKey: string;
-        };
+    buffId: ActionStringOperand;
     /** 接收 Buff 的单体或队伍目标。 */
     target: BuffApplicationTarget;
     /** 原生 CreateBuffAction 的循环次数；省略时执行一次，正小数按 `int < float` 语义向上取整。 */

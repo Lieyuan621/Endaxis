@@ -1,3 +1,6 @@
+import type { ActionGraphResourceDefinition } from '../../../../packages/game-data-contract/src/actionGraph';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import { CombatActionSequenceRuntime } from '../actions/combatActionSequenceRuntime';
 import { describe, expect, it } from 'vitest';
 import type { SkillGlobalBuffDefinition } from '../../game-data/operatorDefinition';
 import type { ResolvedSkillBuffDefinition } from '../../compiler/combatProgram';
@@ -461,3 +464,117 @@ describe('GlobalBuffRuntime', () => {
     expect(recoveryModifiers.resolve(10)).toBe(10);
   });
 });
+
+it.each([false, true])(
+  'macro GlobalBuff operands remain expressions on the local board; override=%s',
+  override => {
+    const member = target('member');
+    const recovery = new SharedSpRecoveryModifierSet();
+    const global = new GlobalBuffRuntime(
+      () => [member.value],
+      () => childDefinition,
+      null,
+      recovery,
+    );
+    const executor = new GlobalBuffOperationExecutor({
+      sourceId: 'owner',
+      runtime: global,
+      delegate: { execute: () => false, evaluate: () => false },
+    });
+    const resource: ActionGraphResourceDefinition = {
+      main: {
+        nodes: {
+          call: {
+            action: {
+              kind: 'callMacro',
+              macroId: 'make',
+              arguments: { amount: { kind: 'blackboard', key: 'ratio' } },
+            },
+            next: null,
+          },
+        },
+        dataNodes: { shared: { type: 'boolean', expression: { kind: 'constant', value: true } } },
+      },
+      macros: {
+        make: {
+          parameters: ['amount'],
+          entry: { $sequence: 'global' },
+          graph: {
+            nodes: {
+              global: {
+                action: {
+                  kind: 'createGlobalBuff',
+                  parameters: {
+                    globalBuffId: 'global',
+                    count: { kind: 'valueNode', nodeId: 'shared' },
+                    ...(override
+                      ? {
+                          blackboardAssignments: {
+                            ratio: { kind: 'parameter' as const, parameter: 'amount' },
+                          },
+                        }
+                      : {}),
+                    definition: {
+                      stackingType: 'unlimited',
+                      blackboard: { ratio: 3 },
+                      durationSeconds: { blackboardKey: 'ratio' },
+                      sharedSpModifiers: [
+                        {
+                          attribute: 'spRecovery',
+                          operation: 'addition',
+                          value: { kind: 'valueNode', nodeId: 'shared' },
+                          applyToReturnSpGain: false,
+                        },
+                      ],
+                      children: [
+                        {
+                          buffId: 'child',
+                          blackboardAssignments: {
+                            parameterValue: { kind: 'parameter', parameter: 'amount' },
+                            sameNode: { kind: 'valueNode', nodeId: 'shared' },
+                            fallback: { kind: 'blackboard', key: 'creatorOnly', fallback: 5 },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+                next: null,
+              },
+            },
+            dataNodes: {
+              shared: { type: 'number', expression: { kind: 'blackboard', key: 'ratio' } },
+            },
+          },
+        },
+      },
+    };
+    const entry = createActionGraphCompilation(resource, 1, 'global-macro').compileEntry(
+      { $sequence: 'call' },
+      'start',
+    );
+    const creator = new ActionBlackboard(
+      { ratio: 2, creatorOnly: 99 },
+      new ActionBlackboard({ EntityBB_creator: 77 }),
+    );
+    const actions = new CombatActionSequenceRuntime(executor, { blackboard: creator });
+    const running = actions.createSequence(entry);
+    running.tryExecute({});
+    // count reads creator 2; each parameter/data-node expression reads local 3, or override 2.
+    const local = override ? 2 : 3;
+    expect(member.requests).toHaveLength(2);
+    for (const request of member.requests)
+      expect(request.blackboardValues).toEqual({
+        parameterValue: local,
+        sameNode: local,
+        fallback: 5,
+      });
+    expect(global.runtimeState.groups.get('global')).toHaveLength(2);
+    expect(recovery.resolve(10)).toBe(10 + local * 2);
+    creator.assign({ ratio: 50, creatorOnly: 100 });
+    const snapshot = structuredClone(running.runtimeState);
+    actions.createSequence(entry, undefined, snapshot);
+    expect(member.requests).toHaveLength(2);
+    expect(recovery.resolve(10)).toBe(10 + local * 2);
+  },
+);

@@ -2,7 +2,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { COMBAT_STEP_KINDS } from '../../packages/game-data-contract/src/actions.ts';
 import type { ActionGraphStep } from '../../packages/game-data-contract/src/actionGraph.ts';
-import { actionNodeSchemas } from '../../src/ui/action-graph/actionNodeSchemas.generated.ts';
+import type { DataNodeSchema } from '../../src/ui/action-graph/nodeSchema.ts';
+import {
+  actionNodeSchemas,
+  dataNodeSchemas,
+} from '../../src/ui/action-graph/actionNodeSchemas.generated.ts';
 import { generateActionNodeSchemas } from './generateActionNodeSchema.ts';
 
 const schemas = generateActionNodeSchemas();
@@ -70,4 +74,15 @@ test('distinguishes operand, primitive and complex data without guessing values'
   assert.equal(field('callMacro', 'macroId').control, 'string');
   assert.ok(!schemas.callMacro.fields.some(item => item.label === 'key'));
   assert.ok(!schemas.callResource.fields.some(item => item.label === 'key'));
+});
+
+test('derives the string data family from the actual contract operand without a second expression shape', () => {
+  const generated: Record<string, DataNodeSchema> = {};
+  generateActionNodeSchemas(generated);
+  assert.deepEqual(generated, dataNodeSchemas);
+  const expression = generated['string:stringOperand']!.fields[0]!;
+  assert.deepEqual(expression.path, ['expression']);
+  assert.ok(expression.semantics?.aliases?.includes('ActionStringOperand'));
+  assert.ok(expression.valueSchema);
+  assert.equal(generated['string:blackboardString'], undefined);
 });

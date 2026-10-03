@@ -12,6 +12,7 @@ import {
   requireEnum,
   validateLevelValues,
   validateActionValueOperand,
+  validateActionStringOperand,
   BUFF_APPLICATION_TARGETS_SET,
   BUFF_APPLICATION_SOURCES_SET,
   requireInteger,
@@ -42,16 +43,8 @@ export function validateBuffApplication(
       push(out, `${path}.parameters.source`, 'source and sourceContextKey are mutually exclusive');
   }
   const dynamicId = typeof parameters.buffId === 'object' && parameters.buffId !== null;
-  if (!dynamicId) requireString(parameters, 'buffId', `${path}.parameters`, out);
+  validateActionStringOperand(parameters.buffId, `${path}.parameters.buffId`, out);
   if (dynamicId) {
-    const idPath = `${path}.parameters.buffId`;
-    const reference = asRecord(parameters.buffId, idPath, out);
-    if (reference !== null) {
-      requireString(reference, 'blackboardKey', idPath, out);
-      for (const key of Object.keys(reference)) {
-        if (key !== 'blackboardKey') push(out, `${idPath}.${key}`, 'unexpected field');
-      }
-    }
     for (const field of ['durationSeconds', 'effectiveness']) {
       if (parameters[field] !== undefined)
         push(

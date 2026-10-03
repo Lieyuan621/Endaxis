@@ -10,7 +10,12 @@ import { validateActionGraphActions } from '../../core/game-data/validation/acti
 
 export type NodeCreation =
   | { key: string; kind: string; category: 'action'; action: ActionGraphStep }
-  | { key: string; kind: string; category: 'number' | 'boolean'; data: ActionGraphDataNode };
+  | {
+      key: string;
+      kind: string;
+      category: 'number' | 'boolean' | 'string';
+      data: ActionGraphDataNode;
+    };
 const unavailable = Symbol('requires a selection');
 /** 菜单分类只组织已有候选，不决定哪些节点可创建。 */
 const actionGroups: Readonly<Record<string, readonly string[]>> = {
@@ -150,6 +155,8 @@ export function listNodeCreations(): readonly NodeCreation[] {
       });
   }
   for (const [key, schema] of Object.entries(dataNodeSchemas)) {
+    // String nodes originate from an explicitly chosen key/value, never an invented identity.
+    if (key.startsWith('string:')) continue;
     const [type, kind] = key.split(':') as ['number' | 'boolean', string];
     const expression = instantiate({ kind }, schema.fields);
     if (expression)

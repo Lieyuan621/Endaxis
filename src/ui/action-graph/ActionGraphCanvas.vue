@@ -1,18 +1,27 @@
 <script setup lang="ts">
+import type { GraphInteractionSnapshot } from './graphInteractionSnapshot';
 /** 独立动作图画布。节点位置和视口只用于显示，所有程序修改都交给父级校验与提交。 */
-import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
+import {
+  shallowRef,
+  toRaw,
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  reactive,
+  ref,
+  watch,
+} from 'vue';
 import * as dagre from '@dagrejs/dagre';
-import { EaButton, EaInput, EaSelect } from '@/design-system';
+import { EaButton, EaInput } from '@/design-system';
 import type { ActionGraphDefinition } from '../../../packages/game-data-contract/src/actionGraph';
 import type { GraphEntryGroup } from '../../application/editor/actionGraphEditing';
 import { actionNodeTitle, dataNodeTitle, compactDataSymbol } from './nodePresentation';
 import { listGraphPorts } from '../../application/editor/actionGraphEditing';
 import type { GraphPresentation } from '../../core/project/graphPresentation';
-import {
-  listDataInputs,
-  dataNodeInputs,
-  dataNodeHasEffects,
-} from '../../core/action-graph/actionGraphDataNodes';
+import { type DataInput, dataNodeHasEffects } from '../../core/action-graph/actionGraphDataNodes';
+import { actionTypedInputs, dataTypedInputs } from './typedGraphInputs';
+import TypedDataInput from './TypedDataInput.vue';
 import { fieldName } from './editorNodeText';
 import GraphNodeHeader from './GraphNodeHeader.vue';
 import { createGraphCanvasView, type GraphCanvasView } from './graphCanvasView';
@@ -21,6 +30,7 @@ const { t } = useI18n();
 
 const props = defineProps<{
   graph: ActionGraphDefinition;
+  graphScope?: string;
   view?: GraphCanvasView;
   readonly?: boolean;
   creationItems: readonly { key: string; label: string; group: string }[];
@@ -37,7 +47,12 @@ const emit = defineEmits<{
     identity: string,
     write: boolean,
     point: { x: number; y: number },
-    target?: { owner: 'action' | 'data'; id: string; path: readonly string[] },
+    target?: {
+      owner: 'action' | 'data';
+      id: string;
+      path: readonly string[];
+      graph?: GraphInteractionSnapshot;
+    },
   ];
   selectData: [id: string];
   removeData: [id: string];
@@ -46,22 +61,33 @@ const emit = defineEmits<{
     id: string,
     path: readonly string[],
     source: string | null,
+    graph: GraphInteractionSnapshot,
   ];
   constantData: [
     owner: 'action' | 'data',
     id: string,
     path: readonly string[],
-    value: number | boolean,
+    value: number | boolean | string,
+    graph: GraphInteractionSnapshot,
   ];
   changePresentation: [value: GraphPresentation, userEdit: boolean];
   select: [id: string];
-  connect: [nodeId: string, path: readonly string[], targetId: string | null];
+  connect: [
+    nodeId: string,
+    path: readonly string[],
+    targetId: string | null,
+    graph: GraphInteractionSnapshot,
+  ];
   selectEntry: [id: string];
-  connectEntry: [entryIds: readonly string[], targetId: string | null];
+  connectEntry: [
+    entryIds: readonly string[],
+    targetId: string | null,
+    graph: GraphInteractionSnapshot,
+  ];
   editTimeline: [];
   clearSelection: [];
   removeNode: [id: string];
-  disconnectInput: [id: string];
+  disconnectInput: [id: string, graph: GraphInteractionSnapshot];
   openNode: [id: string];
   selectConnection: [nodeId: string | null, entryId: string | null, targetId: string];
 }>();
@@ -92,24 +118,30 @@ function layoutId(ids: Map<string, string>, prefix: string, id: string): string 
   return result;
 }
 const layoutError = ref('');
-type OutputPin =
-  | { kind: 'action'; nodeId: string; path: readonly string[]; label: string }
-  | { kind: 'entry'; groupId: string; entryIds: readonly string[]; label: string };
-type DataPin =
-  | {
-      kind: 'data-input';
-      owner: 'action' | 'data';
-      nodeId: string;
-      path: readonly string[];
-      type: 'number' | 'boolean';
-      label: string;
-    }
-  | { kind: 'data-output'; nodeId: string; type: 'number' | 'boolean'; label: string };
-type PendingConnection = OutputPin | { kind: 'input'; nodeId: string; label: string } | DataPin;
-const pendingConnection = ref<PendingConnection | null>(null);
+type GraphSnapshot = { readonly graph: GraphInteractionSnapshot };
+type OutputPin = GraphSnapshot &
+  (
+    | { kind: 'action'; nodeId: string; path: readonly string[]; label: string }
+    | { kind: 'entry'; groupId: string; entryIds: readonly string[]; label: string }
+  );
+type DataPin = GraphSnapshot &
+  (
+    | {
+        kind: 'data-input';
+        owner: 'action' | 'data';
+        nodeId: string;
+        path: readonly string[];
+        type: 'number' | 'boolean' | 'string';
+        label: string;
+      }
+    | { kind: 'data-output'; nodeId: string; type: 'number' | 'boolean' | 'string'; label: string }
+  );
+type PendingConnection =
+  OutputPin | (GraphSnapshot & { kind: 'input'; nodeId: string; label: string }) | DataPin;
+const pendingConnection = shallowRef<PendingConnection | null>(null);
 const hoveredPin = ref<string | null>(null);
 const hoveredWire = ref<string | null>(null);
-const selectedWire = ref<string | null>(null);
+const selectedWire = shallowRef<{ id: string; sourcePin: OutputPin } | null>(null);
 const contextMenu = ref<{
   x: number;
   y: number;
@@ -176,26 +208,32 @@ const nodeMetadata = computed(() =>
       if (port.path[0] === 'next')
         return {
           ...port,
+          graph: { value: toRaw(props.graph), scope: props.graphScope },
           label: t('actionGraphEditor.next'),
         };
       const fieldPath = port.path.slice(1, -1);
       const index = fieldPath.find(part => /^\d+$/.test(part));
       return {
         ...port,
+        graph: { value: toRaw(props.graph), scope: props.graphScope },
         label: `${fieldName(fieldPath)}${index === undefined ? '' : ` ${Number(index) + 1}`}`,
       };
     });
     return {
       id,
+      graph: { value: toRaw(props.graph), scope: props.graphScope },
       layoutId: layoutId(actionLayoutIds, 'action', id),
       width: NODE_WIDTH,
       kind: node.action.kind,
       title,
-      dataInputs: listDataInputs(node.action),
+      dataInputs: actionTypedInputs(node.action).map(input => ({
+        ...input,
+        graph: { value: toRaw(props.graph), scope: props.graphScope },
+      })),
       ports,
       height:
         HEADER_HEIGHT +
-        Math.max(1, ports.length, listDataInputs(node.action).length + 1) * PORT_HEIGHT +
+        Math.max(1, ports.length, actionTypedInputs(node.action).length + 1) * PORT_HEIGHT +
         12,
       isBranch: ports.length > 1,
       isCall: node.action.kind === 'callMacro' || node.action.kind === 'callResource',
@@ -205,8 +243,18 @@ const nodeMetadata = computed(() =>
 const nodeMetadataById = computed(() => new Map(nodeMetadata.value.map(node => [node.id, node])));
 const dataMetadata = computed(() =>
   Object.entries(props.graph.dataNodes ?? {}).map(([id, node]) => {
-    const inputs = dataNodeInputs(node);
-    const variable = node.expression.kind === 'blackboard' || node.expression.kind === 'parameter';
+    const inputs = dataTypedInputs(node).map(input => ({
+      ...input,
+      graph: { value: toRaw(props.graph), scope: props.graphScope },
+    }));
+    const expression = node.expression;
+    const stringRead =
+      node.type === 'string' && typeof expression === 'object' && 'blackboardKey' in expression
+        ? expression.blackboardKey
+        : undefined;
+    const numeric = node.type === 'number' ? node.expression : undefined;
+    const variable =
+      stringRead !== undefined || numeric?.kind === 'blackboard' || numeric?.kind === 'parameter';
     const title = dataNodeTitle(node);
     const symbol = compactDataSymbol(node);
     const inputTop = symbol ? 8 : HEADER_HEIGHT;
@@ -215,6 +263,7 @@ const dataMetadata = computed(() =>
       : inputTop + Math.max(1, inputs.length) * PORT_HEIGHT + 12;
     return {
       id,
+      graph: { value: toRaw(props.graph), scope: props.graphScope },
       layoutId: layoutId(dataLayoutIds, 'data', id),
       width: NODE_WIDTH,
       height,
@@ -222,13 +271,14 @@ const dataMetadata = computed(() =>
       symbol,
       outputY: variable || symbol ? height / 2 : HEADER_HEIGHT + PORT_HEIGHT / 2,
       variableName:
-        node.expression.kind === 'blackboard'
-          ? node.expression.key
-          : node.expression.kind === 'parameter'
-            ? node.expression.parameter
-            : '',
+        stringRead ??
+        (numeric?.kind === 'blackboard'
+          ? numeric.key
+          : numeric?.kind === 'parameter'
+            ? numeric.parameter
+            : ''),
       variable,
-      parameter: node.expression.kind === 'parameter',
+      parameter: numeric?.kind === 'parameter',
       inputs,
       type: node.type,
       title,
@@ -246,10 +296,11 @@ const dataModels = computed(() =>
 function dataInputPin(
   owner: 'action' | 'data',
   nodeId: string,
-  input: ReturnType<typeof listDataInputs>[number],
+  input: DataInput & GraphSnapshot,
 ): DataPin {
   return {
     kind: 'data-input',
+    graph: input.graph,
     owner,
     nodeId,
     path: input.path,
@@ -263,8 +314,16 @@ function dataInputLabel(owner: 'action' | 'data', nodeId: string, path: readonly
     return action.parameters.key;
   return fieldName(path);
 }
-function dataOutputPin(node: { id: string; type: 'number' | 'boolean' }): DataPin {
-  return { kind: 'data-output', nodeId: node.id, type: node.type, label: '结果' };
+function dataOutputPin(
+  node: { id: string; type: 'number' | 'boolean' | 'string' } & GraphSnapshot,
+): DataPin {
+  return {
+    graph: node.graph,
+    kind: 'data-output',
+    nodeId: node.id,
+    type: node.type,
+    label: '结果',
+  };
 }
 const dataConnections = computed(() => {
   const owners = [
@@ -342,6 +401,7 @@ const entryMetadata = computed(() =>
     });
     return {
       id: group.id,
+      graph: { value: toRaw(props.graph), scope: props.graphScope },
       label: group.label,
       count: group.entries.length,
       isTimeline,
@@ -377,14 +437,17 @@ function pinKey(pin: PendingConnection): string {
         : ['input', pin.nodeId],
   );
 }
-function actionPin(nodeId: string, port: ReturnType<typeof listGraphPorts>[number]): OutputPin {
-  return { kind: 'action', nodeId, path: port.path, label: port.label };
+function actionPin(
+  nodeId: string,
+  port: ReturnType<typeof listGraphPorts>[number] & GraphSnapshot,
+): OutputPin {
+  return { graph: port.graph, kind: 'action', nodeId, path: port.path, label: port.label };
 }
-function entryPin(groupId: string, entryId: string): OutputPin {
-  return { kind: 'entry', groupId, entryIds: [entryId], label: '调度出口' };
+function entryPin(groupId: string, entryId: string, graph: GraphInteractionSnapshot): OutputPin {
+  return { graph, kind: 'entry', groupId, entryIds: [entryId], label: '调度出口' };
 }
-function inputPin(nodeId: string): PendingConnection {
-  return { kind: 'input', nodeId, label: '执行入口' };
+function inputPin(nodeId: string, graph: GraphInteractionSnapshot): PendingConnection {
+  return { graph, kind: 'input', nodeId, label: '执行入口' };
 }
 const pins = computed(() => {
   const result = new Map<string, PendingConnection>();
@@ -401,7 +464,7 @@ const pins = computed(() => {
       const pin = dataInputPin('action', node.id, input);
       result.set(pinKey(pin), pin);
     }
-    const input = inputPin(node.id);
+    const input = inputPin(node.id, node.graph);
     result.set(pinKey(input), input);
     for (const port of node.ports) {
       const output = actionPin(node.id, port);
@@ -410,7 +473,7 @@ const pins = computed(() => {
   }
   for (const group of entryMetadata.value)
     for (const row of group.rows) {
-      const output = entryPin(group.id, row.id);
+      const output = entryPin(group.id, row.id, group.graph);
       result.set(pinKey(output), output);
     }
   return result;
@@ -513,7 +576,7 @@ const edgeTopology = computed(() => [
           fromAction: null,
           toAction: row.targetId,
           entryIds: row.entryIds,
-          sourcePin: entryPin(group.id, row.id),
+          sourcePin: entryPin(group.id, row.id, group.graph),
           width: ENTRY_WIDTH,
           outputY: row.outputY,
         },
@@ -527,7 +590,7 @@ const edges = computed(() =>
     const to = positions.get(edge.to) ?? { x: 0, y: 0 };
     const selected =
       selectedWire.value !== null
-        ? edge.id === selectedWire.value
+        ? edge.id === selectedWire.value.id
         : props.selectedEntryId !== null
           ? edge.entryIds.includes(props.selectedEntryId)
           : props.selectedId !== null &&
@@ -538,7 +601,7 @@ const edges = computed(() =>
       hovered:
         hoveredWire.value === edge.id ||
         hoveredPin.value === pinKey(edge.sourcePin) ||
-        hoveredPin.value === pinKey(inputPin(edge.toAction)),
+        hoveredPin.value === pinKey(inputPin(edge.toAction, edge.sourcePin.graph)),
       faded:
         (selectedWire.value !== null ||
           props.selectedEntryId !== null ||
@@ -1096,6 +1159,14 @@ function pinAtPoint(event: PointerEvent) {
 function connectPins(first: PendingConnection, second: PendingConnection): void {
   if (props.readonly) return;
   if (
+    toRaw(first.graph.value) !== toRaw(second.graph.value) ||
+    first.graph.scope !== second.graph.scope
+  ) {
+    layoutError.value = t('graphDataInput.ownerChanged');
+    cancelConnection();
+    return;
+  }
+  if (
     first.kind === 'data-input' ||
     first.kind === 'data-output' ||
     second.kind === 'data-input' ||
@@ -1110,7 +1181,7 @@ function connectPins(first: PendingConnection, second: PendingConnection): void 
         layoutError.value = '数值和布尔引脚不能相连';
         return;
       }
-      emit('connectData', input.owner, input.nodeId, input.path, output.nodeId);
+      emit('connectData', input.owner, input.nodeId, input.path, output.nodeId, input.graph);
       pendingConnection.value = null;
     }
     return;
@@ -1118,8 +1189,9 @@ function connectPins(first: PendingConnection, second: PendingConnection): void 
   const input = first.kind === 'input' ? first : second.kind === 'input' ? second : null;
   const output = first.kind !== 'input' ? first : second.kind !== 'input' ? second : null;
   if (!input || !output || !props.beforeInteraction()) return;
-  if (output.kind === 'action') emit('connect', output.nodeId, output.path, input.nodeId);
-  else emit('connectEntry', output.entryIds, input.nodeId);
+  if (output.kind === 'action')
+    emit('connect', output.nodeId, output.path, input.nodeId, output.graph);
+  else emit('connectEntry', output.entryIds, input.nodeId, output.graph);
   pendingConnection.value = null;
 }
 function startPin(event: PointerEvent, pin: PendingConnection): void {
@@ -1157,17 +1229,18 @@ function disconnectPin(pin: PendingConnection): void {
   if (props.readonly) return;
   if (!props.beforeInteraction()) return;
   if (pin.kind === 'data-input') {
-    emit('connectData', pin.owner, pin.nodeId, pin.path, null);
+    layoutError.value = t('graphDataInput.disconnectHelp');
+    locateDataInput(pin);
     cancelConnection();
     return;
   }
   if (pin.kind === 'data-output') {
-    layoutError.value = '请从需要断开的输入端断线；断线后使用默认常量';
+    layoutError.value = t('graphDataInput.disconnectOutput');
     return;
   }
-  if (pin.kind === 'input') emit('disconnectInput', pin.nodeId);
-  else if (pin.kind === 'action') emit('connect', pin.nodeId, pin.path, null);
-  else emit('connectEntry', pin.entryIds, null);
+  if (pin.kind === 'input') emit('disconnectInput', pin.nodeId, pin.graph);
+  else if (pin.kind === 'action') emit('connect', pin.nodeId, pin.path, null, pin.graph);
+  else emit('connectEntry', pin.entryIds, null, pin.graph);
   cancelConnection();
 }
 function showMenu(
@@ -1245,7 +1318,7 @@ function pinMenu(event: MouseEvent, pin: PendingConnection): void {
               pin.kind === 'input'
                 ? '断开全部输入连线'
                 : pin.kind === 'data-input'
-                  ? '断开并使用默认常量'
+                  ? t('graphDataInput.disconnect')
                   : '断开连线',
             run: () => disconnectPin(pin),
           },
@@ -1274,7 +1347,7 @@ function dataWireMenu(event: MouseEvent, edge: (typeof dataCurves.value)[number]
     { label: '定位目标节点', run: () => locateDataInput(edge.input) },
     ...(props.readonly
       ? []
-      : [{ label: '断开并使用默认常量', run: () => disconnectPin(edge.input) }]),
+      : [{ label: t('graphDataInput.disconnect'), run: () => disconnectPin(edge.input) }]),
   ]);
 }
 function dataMenu(event: MouseEvent, id: string) {
@@ -1363,7 +1436,7 @@ function clickWire(event: MouseEvent, edge: (typeof edges.value)[number]): void 
     disconnectPin(edge.sourcePin);
     return;
   }
-  selectedWire.value = edge.id;
+  selectedWire.value = { id: edge.id, sourcePin: edge.sourcePin };
   contextMenu.value = null;
   viewport.value?.focus({ preventScroll: true });
   emit('selectConnection', edge.fromAction, edge.entryIds[0] ?? null, edge.toAction);
@@ -1373,9 +1446,10 @@ function canvasKeydown(event: KeyboardEvent): void {
   if (event.key === 'Escape') {
     event.stopPropagation();
     cancelGesture();
-  } else if (event.key === 'Delete' && !props.readonly && props.beforeInteraction()) {
+  } else if (event.key === 'Delete' && !props.readonly) {
+    const wire = selectedWire.value;
+    if (!props.beforeInteraction()) return;
     event.preventDefault();
-    const wire = edges.value.find(edge => edge.id === selectedWire.value);
     if (props.selectedDataId) emit('removeData', props.selectedDataId);
     else if (wire) disconnectPin(wire.sourcePin);
     else if (props.selectedId !== null) emit('removeNode', props.selectedId);
@@ -1456,8 +1530,8 @@ function dropVariable(identity: string, event: PointerEvent, readonly: boolean) 
     ?.closest('[data-graph-pin]');
   const pin = pins.value.get(element?.getAttribute('data-graph-pin') ?? '');
   if (pin) {
-    if (pin.kind !== 'data-input' || pin.type !== 'number') {
-      layoutError.value = '变量只能拖到数值输入引脚。';
+    if (pin.kind !== 'data-input' || (pin.type !== 'number' && pin.type !== 'string')) {
+      layoutError.value = '变量只能拖到兼容的数值或字符串输入引脚。';
       return;
     }
     emit(
@@ -1465,7 +1539,7 @@ function dropVariable(identity: string, event: PointerEvent, readonly: boolean) 
       identity,
       false,
       { x: point.x - NODE_WIDTH - 80, y: point.y },
-      { owner: pin.owner, id: pin.nodeId, path: pin.path },
+      { owner: pin.owner, id: pin.nodeId, path: pin.path, graph: pin.graph },
     );
     return;
   }
@@ -1654,29 +1728,19 @@ defineExpose({
             @contextmenu.prevent.stop="pinMenu($event, dataInputPin('data', node.id, input))"
           />
           <span v-if="!node.symbol">{{ fieldName(input.path) }}</span>
-          <EaInput
-            v-if="input.source === null && input.type === 'number'"
+          <TypedDataInput
             class="data-input-row__control"
-            size="sm"
-            :disabled="readonly"
-            type="number"
-            :model-value="(input.value as { value: number }).value"
-            :aria-label="`${node.title} ${input.path.join('.')} 常量`"
-            @pointerdown.stop
-            @change="emit('constantData', 'data', node.id, input.path, Number($event))"
-          />
-          <EaSelect
-            v-else-if="input.source === null"
-            class="data-input-row__control"
-            size="sm"
-            :disabled="readonly"
-            :model-value="String((input.value as { value: boolean }).value)"
-            :options="[
-              { value: 'true', label: '成立' },
-              { value: 'false', label: '不成立' },
-            ]"
-            @pointerdown.stop
-            @change="emit('constantData', 'data', node.id, input.path, $event === 'true')"
+            :input="input"
+            :reset-key="graph.dataNodes?.[node.id]?.expression"
+            :label="`${node.title} ${input.path.join('.')}`"
+            :readonly="readonly"
+            @constant="emit('constantData', 'data', node.id, input.path, $event, input.graph)"
+            @locate="
+              id => {
+                emit('selectData', id);
+                focusData(id);
+              }
+            "
           />
         </div>
       </article>
@@ -1759,12 +1823,12 @@ defineExpose({
                 pendingConnection.groupId === group.id &&
                 pendingConnection.entryIds[0] === row.id,
             }"
-            :data-graph-pin="pinKey(entryPin(group.id, row.id))"
-            @pointerenter="hoveredPin = pinKey(entryPin(group.id, row.id))"
+            :data-graph-pin="pinKey(entryPin(group.id, row.id, group.graph))"
+            @pointerenter="hoveredPin = pinKey(entryPin(group.id, row.id, group.graph))"
             @pointerleave="hoveredPin = null"
-            @pointerdown.stop="startPin($event, entryPin(group.id, row.id))"
-            @click.stop="activatePin($event, entryPin(group.id, row.id))"
-            @contextmenu.prevent.stop="pinMenu($event, entryPin(group.id, row.id))"
+            @pointerdown.stop="startPin($event, entryPin(group.id, row.id, group.graph))"
+            @click.stop="activatePin($event, entryPin(group.id, row.id, group.graph))"
+            @contextmenu.prevent.stop="pinMenu($event, entryPin(group.id, row.id, group.graph))"
           >
             <span class="port-pin" />
           </button>
@@ -1804,12 +1868,12 @@ defineExpose({
             type="button"
             class="input-port port-button"
             :class="{ available: pendingConnection !== null && pendingConnection.kind !== 'input' }"
-            :data-graph-pin="pinKey(inputPin(node.id))"
-            @pointerenter="hoveredPin = pinKey(inputPin(node.id))"
+            :data-graph-pin="pinKey(inputPin(node.id, node.graph))"
+            @pointerenter="hoveredPin = pinKey(inputPin(node.id, node.graph))"
             @pointerleave="hoveredPin = null"
-            @pointerdown.stop="startPin($event, inputPin(node.id))"
-            @click.stop="activatePin($event, inputPin(node.id))"
-            @contextmenu.prevent.stop="pinMenu($event, inputPin(node.id))"
+            @pointerdown.stop="startPin($event, inputPin(node.id, node.graph))"
+            @click.stop="activatePin($event, inputPin(node.id, node.graph))"
+            @contextmenu.prevent.stop="pinMenu($event, inputPin(node.id, node.graph))"
           >
             <span class="port-pin" /><span class="input-label">{{
               t('actionGraphEditor.input')
@@ -1856,28 +1920,19 @@ defineExpose({
             @contextmenu.prevent.stop="pinMenu($event, dataInputPin('action', node.id, input))"
           />
           <span>{{ dataInputLabel('action', node.id, input.path) }}</span>
-          <EaInput
-            v-if="input.source === null && input.type === 'number'"
+          <TypedDataInput
             class="data-input-row__control"
-            size="sm"
-            :disabled="readonly"
-            type="number"
-            :model-value="(input.value as { value: number }).value"
-            @pointerdown.stop
-            @change="emit('constantData', 'action', node.id, input.path, Number($event))"
-          />
-          <EaSelect
-            v-else-if="input.source === null"
-            class="data-input-row__control"
-            size="sm"
-            :disabled="readonly"
-            :model-value="String((input.value as { value: boolean }).value)"
-            :options="[
-              { value: 'true', label: '成立' },
-              { value: 'false', label: '不成立' },
-            ]"
-            @pointerdown.stop
-            @change="emit('constantData', 'action', node.id, input.path, $event === 'true')"
+            :input="input"
+            :reset-key="graph.nodes[node.id]?.action"
+            :label="`${node.title} ${input.path.join('.')}`"
+            :readonly="readonly"
+            @constant="emit('constantData', 'action', node.id, input.path, $event, input.graph)"
+            @locate="
+              id => {
+                emit('selectData', id);
+                focusData(id);
+              }
+            "
           />
         </div>
       </article>
@@ -2022,6 +2077,15 @@ defineExpose({
 .data-wire.boolean {
   stroke: var(--graph-boolean-wire);
 }
+.data-node.string {
+  border-color: var(--graph-string-wire);
+}
+.data-wire.string {
+  stroke: var(--graph-string-wire);
+}
+.data-pin.string {
+  background: var(--graph-string-wire);
+}
 .data-wire.highlighted {
   stroke-width: 4;
 }
@@ -2114,6 +2178,7 @@ defineExpose({
   --graph-entry-wire: #91badb;
   --graph-data-wire: #62c5a7;
   --graph-boolean-wire: #e07987;
+  --graph-string-wire: #c69aed;
   --graph-highlight: #ffd26d;
   --graph-pending-wire: #79ceff;
   --graph-hover-wire: #ffe5a0;
@@ -2181,6 +2246,7 @@ defineExpose({
   --graph-entry-wire: #447aa5;
   --graph-data-wire: #24866b;
   --graph-boolean-wire: #bd4f60;
+  --graph-string-wire: #8751ad;
   --graph-highlight: #a67000;
   --graph-pending-wire: #267da8;
   --graph-hover-wire: #b18014;

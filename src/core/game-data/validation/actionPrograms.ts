@@ -1,3 +1,4 @@
+import { validateTimeScaleCurve } from './timeScaleCurve.ts';
 /**
  * 动作程序的严格结构校验。序列、内联能力实体和子技能互相递归，保留同一校验入口；
  * 条件和值规则独立复用，Buff 安装校验通过回调继续检查嵌套程序。
@@ -111,57 +112,6 @@ const ATTRIBUTE_MODIFIER_TIMINGS_SET = new Set<string>(ATTRIBUTE_MODIFIER_TIMING
 const BUFF_FINISH_REASONS_SET = new Set<string>(['early', 'absorbed', 'other']);
 
 const TRIGGER_SCOPES_SET = new Set<string>(SKILL_TRIGGER_SCOPES);
-
-function validateTimeScaleCurve(
-  value: unknown,
-  path: string,
-  out: SkillDefinitionValidationIssue[],
-): void {
-  const record = asRecord(value, path, out);
-  if (record === null) return;
-  const kind = requireString(record, 'kind', path, out);
-  if (kind === 'named') {
-    const key = requireString(record, 'key', path, out);
-    if (key !== null && key.length === 0) push(out, `${path}.key`, 'expected a non-empty string');
-    return;
-  }
-  if (kind !== 'inline') {
-    if (kind !== null) push(out, `${path}.kind`, "expected 'named' or 'inline'");
-    return;
-  }
-  if (!Array.isArray(record.keys) || record.keys.length === 0) {
-    push(out, `${path}.keys`, 'expected a non-empty array');
-    return;
-  }
-  let previousTime = Number.NEGATIVE_INFINITY;
-  record.keys.forEach((value, index) => {
-    const keyPath = `${path}.keys[${index}]`;
-    const key = asRecord(value, keyPath, out);
-    if (key === null) return;
-    for (const field of ['time', 'value', 'inWeight', 'outWeight']) {
-      requireFiniteNumber(key, field, keyPath, out);
-    }
-    for (const field of ['inTangent', 'outTangent']) {
-      const tangent = key[field];
-      if (typeof tangent !== 'number' || Number.isNaN(tangent))
-        push(out, `${keyPath}.${field}`, 'expected a number other than NaN');
-    }
-    const time = key.time;
-    if (typeof time === 'number' && Number.isFinite(time)) {
-      if (time <= previousTime) push(out, `${keyPath}.time`, 'expected strictly increasing times');
-      previousTime = time;
-    }
-    const weightedMode = key.weightedMode;
-    if (
-      typeof weightedMode !== 'number' ||
-      !Number.isInteger(weightedMode) ||
-      weightedMode < 0 ||
-      weightedMode > 3
-    ) {
-      push(out, `${keyPath}.weightedMode`, 'expected an integer from 0 to 3');
-    }
-  });
-}
 
 function validateCombatTargetArray(
   value: unknown,
@@ -2670,6 +2620,8 @@ export function validateActionGraphActions(
           const expression = resolver.node(id, node.type);
           if (node.type === 'boolean')
             validateCombatCondition(expression, `${path}.dataNodes.${id}`, out);
+          else if (node.type === 'string')
+            validateActionStringOperand(expression, `${path}.dataNodes.${id}`, out);
           else validateActionValueOperand(expression, `${path}.dataNodes.${id}`, out);
         }
         value = resolveGraphData(graph);

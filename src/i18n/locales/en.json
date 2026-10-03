@@ -1,4 +1,30 @@
 {
+  "blackboardField": {
+    "choose": "Choose a known key",
+    "key": "Blackboard key",
+    "scope": "Call scope",
+    "source": "Source",
+    "locate": "Go to write node",
+    "externalBuff": "This key belongs to the queried runtime Buff. The enclosing action blackboard is not its owner.",
+    "types": {
+      "number": "Number",
+      "string": "String",
+      "unknown": "Unknown type",
+      "mixed": "Mixed types",
+      "null": "null (not a number)"
+    },
+    "states": {
+      "fallback": "An explicit numeric fallback is used if this key is missing or non-numeric.",
+      "unset": "Enter a key explicitly; no default key is created.",
+      "valid": "Known compatible key",
+      "external": "Externally supplied key; availability is checked at runtime.",
+      "contextUnknown": "Runtime owner or call scope is unknown; no enclosing scope is assumed.",
+      "outOfScope": "This key is not visible in every call scope.",
+      "typeMismatch": "The known value type is incompatible with this input.",
+      "readOnly": "Macro parameters are read-only and cannot be used as write targets.",
+      "missingParameter": "Choose a declared numeric macro parameter."
+    }
+  },
   "editor": {
     "help": "Help",
     "backToAsset": "View properties",
@@ -342,7 +368,9 @@
       "condition": "Condition",
       "opaque": "Original value",
       "union": "Multiple types",
-      "null": "None"
+      "null": "None",
+      "tuple": "Fixed slots",
+      "timeScaleCurve": "Inline curve"
     },
     "editDefinition": "Edit definition",
     "options": {
@@ -508,7 +536,11 @@
       "replacementSkills": "Replacement skills",
       "routedReplacementSkills": "Cross-group routed skills",
       "presentationVariants": "Presentation forms"
-    }
+    },
+    "focusSubtree": "Focus this subtree",
+    "backToParent": "Back to parent",
+    "previousPage": "Previous rows",
+    "nextPage": "Next rows"
   },
   "actionGraphEditor": {
     "singleValue": "Single value",
@@ -526,7 +558,8 @@
       "resources": "Health & resources",
       "skills": "Skills & time",
       "number": "Calculations",
-      "boolean": "Conditions"
+      "boolean": "Conditions",
+      "string": "String data"
     },
     "noMatchingNodes": "No matching nodes",
     "addNode": "Add Node…",
@@ -1590,6 +1623,10 @@
       "parameter": {
         "name": "Parameter",
         "help": "Input supplied by the macro caller."
+      },
+      "expression": {
+        "name": "String value",
+        "help": "Literal text or a string key read at each use."
       }
     },
     "help": "Help",
@@ -2307,6 +2344,10 @@
       "deckAttributeCompare": {
         "name": "Compare Build Attributes",
         "help": "Compare two operator attributes from the build."
+      },
+      "stringOperand": {
+        "name": "String value",
+        "help": "A literal or string read from the current action blackboard. Each consumer reads its own current context."
       }
     },
     "open": "Edit skill graph",
@@ -5528,5 +5569,228 @@
       "fullyTuned": "Fully tuned",
       "tuningUnavailable": "Tuning unavailable"
     }
+  },
+  "fieldReference": {
+    "valid": "Reference resolved",
+    "invalid": "Reference not found; the original value is preserved",
+    "ambiguous": "Multiple visible targets share this ID; select a unique reference",
+    "invisible": "Reference exists outside the current owner scope",
+    "source": "Source",
+    "owner": "Owner",
+    "readOnly": "Read-only target",
+    "openTarget": "Open target",
+    "unset": "Choose a reference",
+    "unresolved": "Not found in the current candidates; the original value is preserved",
+    "empty": "No candidates available",
+    "contextUnknown": "Reference context is unavailable"
+  },
+  "fieldFallback": {
+    "no-present-type": "This contract has no editable value",
+    "graph-reference-boundary": "Edit or open the graph through its graph entry",
+    "owned-resource-boundary": "Open the owned resource to inspect it",
+    "depth-limit": "Deeper typed fields are not available in this form yet",
+    "recursive-type": "Recursive fields are not expanded in this form yet",
+    "unsupported-type": "This type is not supported by the form yet",
+    "structured-editor-pending": "Structured editor pending; the current control and validation are preserved",
+    "tuple-editor-pending": "Fixed tuple slots are preserved but cannot be edited in this form yet",
+    "condition-editor-pending": "Use the appropriate condition or graph editor"
+  },
+  "stringOperand": {
+    "mode": "Input mode",
+    "literal": "Literal",
+    "blackboard": "Read string from blackboard",
+    "current": "Stored expression",
+    "readHelp": "Reads at each use site. This is a string key expression, not a numeric data connection."
+  },
+  "blackboardMapping": {
+    "edit": "Edit mappings",
+    "replace": "Replace invalid mapping",
+    "empty": "No mappings",
+    "invalidMapping": "The original mapping is invalid and has been preserved",
+    "writeDestination": "Write destination key",
+    "copySource": "Read source key (number or string)",
+    "stringLiteral": "Literal text",
+    "value": "Value",
+    "valueMode": "Value type",
+    "levels": "Number / level values",
+    "constant": "Number constant",
+    "readNumber": "Read number from blackboard",
+    "parameter": "Numeric macro parameter",
+    "connection": "Existing numeric connection",
+    "keepConnection": "This connection is preserved; edit its connection in the graph or explicitly choose a replacement",
+    "useFallback": "Use explicit fallback",
+    "fallback": "Fallback",
+    "strictRead": "Strict read: a missing key is an error",
+    "add": "Add mapping",
+    "remove": "Remove mapping",
+    "apply": "Apply mappings",
+    "cancel": "Cancel",
+    "emptyKey": "Destination keys cannot be empty",
+    "unsafeKey": "This destination key cannot be edited safely",
+    "duplicateKey": "Destination keys must be unique",
+    "invalidValue": "Invalid value; choose a supported value type to repair it",
+    "staleDraft": "The mapping changed elsewhere. Cancel and reopen to avoid overwriting it",
+    "incompatibleSource": "A source key is outside this scope, has the wrong type, or is not a declared macro parameter",
+    "destination": {
+      "childAction": "Child action blackboard",
+      "childEntity": "Child entity blackboard",
+      "buff": "Target Buff blackboard",
+      "abilityEntity": "Spawned entity blackboard",
+      "globalBuff": "New global Buff blackboard",
+      "macroArguments": "Macro call arguments",
+      "exitBuff": "Exit Buff blackboard",
+      "globalBuffChild": "Child Buff blackboard"
+    },
+    "destinationUnknown": {
+      "childAction": "These are new child-scope declarations. The current source scope is not the destination",
+      "childEntity": "These are new entity-scope declarations. The current source scope is not the destination",
+      "buff": "Target Buff key types are not proven in this form; destination context is unknown",
+      "abilityEntity": "Spawned entity key types are not proven in this form; destination context is unknown",
+      "globalBuff": "Global Buff key types are not proven in this form; destination context is unknown",
+      "macroArguments": "Argument names must exactly match the target macro declaration; the graph validator checks the full interface on Apply",
+      "exitBuff": "Numeric sources read the current action board at action END; destination keys belong to the exit Buff, whose key types are unknown here.",
+      "globalBuffChild": "Values read the new GlobalBuff board at creation; destination keys belong to the child Buff, whose types are unknown here."
+    },
+    "applyRejected": "The change was not accepted; your draft is preserved for repair or retry",
+    "chooseValue": "Choose a value type and enter its value",
+    "argumentKey": "Declared macro parameter name",
+    "fallbackRead": "If the source is missing or not numeric, use the explicit fallback",
+    "unset": "Unset optional mapping",
+    "unsetPending": "Apply will remove this optional field completely; Cancel preserves it"
+  },
+  "conditionList": {
+    "source": "Source",
+    "orderHint": "Conditions are evaluated in order and short-circuit. Reordering can change side effects.",
+    "empty": "No conditions",
+    "invalid": "Invalid condition list",
+    "edit": "Edit list",
+    "newCondition": "New condition",
+    "choose": "Choose True or False",
+    "add": "Add condition",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "remove": "Remove",
+    "moveUpLabel": "Move condition {index} up",
+    "moveDownLabel": "Move condition {index} down",
+    "removeLabel": "Remove condition {index}",
+    "applyLabel": "Apply condition list",
+    "cancelLabel": "Cancel condition list",
+    "rejected": "The change was rejected. Your draft is still here; correct it or cancel."
+  },
+  "graphDataInput": {
+    "ownerChanged": "Fields were applied. Select the refreshed input again before changing its connection.",
+    "group": "Typed data inputs",
+    "unassigned": "Unassigned",
+    "levelValues": "Level values",
+    "expression": "Inline expression",
+    "literal": "{label} inline constant",
+    "condition": "{label} inline condition",
+    "applyLabel": "Apply {label} inline value",
+    "cancelLabel": "Cancel {label} inline edit",
+    "editLabel": "Edit {label} inline value",
+    "apply": "Apply",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "inline": "Use inline",
+    "true": "True",
+    "false": "False",
+    "source": "Source: {id}",
+    "missingSource": "Missing source · {id}",
+    "sourceLabel": "{label} connection source",
+    "chooseSource": "Connect a compatible data node",
+    "disconnectHelp": "Choose “Use inline” beside the input, enter a valid constant, and apply. Cancel keeps the existing connection.",
+    "disconnectOutput": "Choose an inline value at the consumer input. The connection remains until you apply it.",
+    "disconnect": "Choose inline value to disconnect"
+  },
+  "stringCollection": {
+    "nativeIdHint": "Enter exact native GlobalBuff IDs. IDs with no matching active instances do nothing; no asset catalog is required.",
+    "invalidNativeId": "Enter at least one nonempty ID. Whitespace, order, and duplicates are preserved.",
+    "orderHint": "Order and duplicate entries are preserved.",
+    "empty": "Empty list",
+    "edit": "Edit list",
+    "newEntry": "New entry",
+    "setEmpty": "Set empty list",
+    "invalid": "The list contains an invalid new entry.",
+    "rejected": "The change was rejected. Your draft is retained.",
+    "customTag": "Custom tag path",
+    "useTag": "Use tag",
+    "invalidTag": "Enter a readable tag path with nonempty segments.",
+    "refineSearch": "Showing the first 50 of {count} matches. Refine the path to search further."
+  },
+  "inlineCondition": {
+    "availabilityDeferred": "Read-only: this skill availability field has no established runtime consumer in this revision.",
+    "legacyHandlerDeferred": "Read-only: compilation rejects legacy skill eventHandlers without listener intervals.",
+    "edit": "Edit condition",
+    "hint": "Inline condition only. Graph connections and macro parameters are unavailable here."
+  },
+  "structuredValue": {
+    "edit": "Edit structure",
+    "stage": "Stage field",
+    "stageHint": "Stage each field, then Apply the node once.",
+    "staged": "Staged fields are not saved yet. Apply commits the complete node.",
+    "rejected": "The node rejected this change. The draft is retained."
+  },
+  "timeScaleCurve": {
+    "branch": "Curve source",
+    "named": "Named curve",
+    "inline": "Inline curve",
+    "search": "Search named curves",
+    "name": "Curve name",
+    "unknownName": "Unknown imported name. It is preserved unchanged; preview is unavailable.",
+    "unknownSelection": "Choose a curve from the current catalog.",
+    "invalid": "Choose a named or inline curve.",
+    "keyTable": "Keyframes (original order)",
+    "time": "Progress",
+    "value": "Multiplier",
+    "inTangent": "In tangent",
+    "outTangent": "Out tangent",
+    "weightedMode": "Weighted mode",
+    "inWeight": "In weight",
+    "outWeight": "Out weight",
+    "mode": "mode",
+    "finite": "Finite",
+    "mode0": "0 · None",
+    "mode1": "1 · In",
+    "mode2": "2 · Out",
+    "mode3": "3 · Both",
+    "remove": "Remove",
+    "addKey": "Add key",
+    "previous": "Previous keys",
+    "next": "Next keys",
+    "preview": "Runtime time multiplier curve preview",
+    "xAxis": "Elapsed / duration (normalized progress)",
+    "yAxis": "Y: time multiplier (dimensionless)",
+    "previewHint": "Open circles show one-sided limits; solid points show exact runtime values.",
+    "previewLimit": "Preview is limited to 128 keys. All keys remain editable and are preserved.",
+    "previewRange": "These legal numeric ranges cannot be plotted reliably. The curve data is unchanged.",
+    "edit": "Edit curve",
+    "rejected": "The curve was not accepted. Your draft is still available."
+  },
+  "skillSettingValues": {
+    "hint": "Four finite columns. Column selection is 1-based with round-to-even; out-of-range items are skipped.",
+    "invalid": "Enter exactly four finite numbers"
+  },
+  "globalBuffField": {
+    "localBoard": "Inner values read the new GlobalBuff board synchronously at creation. Numeric creation overrides win over local defaults; creator/entity keys are not inherited. Macro parameters and number-node connections remain in the enclosing graph.",
+    "graphRequired": "The enclosing graph is required to validate this connected local read",
+    "readOnly": "GlobalBuff local variables support graph reads only. Edit the definition or creation overrides to supply values."
+  },
+  "graphSequenceField": {
+    "invalid": "Invalid execution reference",
+    "empty": "Empty branch",
+    "connected": "Connected branch",
+    "absentCondition": "No extra condition",
+    "help": "Execution targets are changed with graph connections. Disconnect before removing this row.",
+    "conditionHelp": "Use the graph boolean input to set a constant or connect a condition node. Row edits preserve this condition."
+  },
+  "spawnDefinitionField": {
+    "resourceReadonly": "This slot owns independent skills. Edit an existing skill in its own resource graph; adding, removing, replacing, or reordering it here is not supported.",
+    "absent": "No owned resource is present.",
+    "invalid": "This owned-resource value cannot be listed.",
+    "navigationUnavailable": "This host cannot open that resource. Open the containing asset workspace.",
+    "resourceListHint": "Resource graphs remain independent. Up to 50 entries are shown here; the asset resource list contains the remaining entries.",
+    "assignments": "Template numbers read this spawn’s assignments: inherited direct action values, then numeric overrides, then string overrides. Missing or nonnumeric values use the required fallback. Entity template blackboard defaults are not read at this step.",
+    "finishDraft": "Stage or cancel the current definition draft before opening a child resource.",
+    "navigationChanged": "The resource changed or pending fields could not be applied. Reselect the resource before opening it."
   }
 }

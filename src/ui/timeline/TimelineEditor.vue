@@ -199,6 +199,11 @@ import { projectOpenFailureMessage } from './projectOpenFailureMessage';
 import { formatLegacyConversionReport } from './legacyConversionReport';
 import type { ProjectGameDataRepository } from '../../data/projectGameDataRepository';
 import { captureScenarioSimulationGameData } from '../../application/simulation/scenarioSimulationGameData';
+import { sharedBuffAssetId } from '../asset-workspace/workspaceReferenceChoices';
+import { referenceNavigationKey } from '../field-editor/referenceNavigation';
+import type { ReferenceNavigationTarget } from '../../application/editor/referenceResolver';
+import { operatorReferenceChoices } from '../../application/editor/operatorReferenceChoices';
+import type { ReferenceChoices } from '../definition-editor/fieldInputConfig';
 import { resolveSkillTemplateDefinition } from '../../core/compiler/resolveSkillDefinition';
 import type { SkillDefinition, OperationType } from '../../core/game-data/operatorDefinition';
 import {
@@ -1997,6 +2002,7 @@ const selectedCastModel = computed(() => {
         operationType: castModel.operationType,
         label: timelineCastLabel(castModel, trackModel),
         currentDefinition,
+        operator,
         skillLevel,
       };
     }
@@ -2004,6 +2010,7 @@ const selectedCastModel = computed(() => {
   return null;
 });
 const skillGraphEditorTarget = shallowRef<{
+  readonly operatorSlug?: string;
   readonly custom: boolean;
   readonly presentation?: import('../../core/project/graphPresentation').SkillGraphPresentation;
   readonly scenarioId: string;
@@ -2012,7 +2019,35 @@ const skillGraphEditorTarget = shallowRef<{
   readonly definition: SkillDefinition;
 } | null>(null);
 
+const skillGraphReferenceChoices = computed<ReferenceChoices | undefined>(() => {
+  void operatorDefinitionRevision.value;
+  const slug = skillGraphEditorTarget.value?.operatorSlug;
+  const operator = slug ? editorGameDataRepository.getOperator(slug) : null;
+  if (!operator) return undefined;
+  const custom = !!projectDefinitionLibrary.value.operators[operator.slug];
+  return operatorReferenceChoices(operator, editorGameDataRepository.getCommonDefinitionSources(), {
+    assetId: `operator:${operator.slug}`,
+    assetName: operator.displayName ?? operatorName(operator.slug),
+    writable: custom,
+    sourceKind: custom ? 'project' : 'builtin',
+    sharedTarget: (source, family, id) =>
+      family === 'buff'
+        ? { assetId: sharedBuffAssetId(source.id, id), resourcePath: [] }
+        : undefined,
+  });
+});
 const assetWorkspaceOpen = ref(false);
+const assetWorkspaceReference = shallowRef<ReferenceNavigationTarget>();
+provide(referenceNavigationKey, async target => {
+  await ensureAllGameData();
+  // Open above the graph dialog; closing the workspace returns to its untouched draft.
+  assetWorkspaceOpen.value = true;
+  if (!workspaceAssets.value.some(asset => asset.id === target.assetId)) {
+    assetWorkspaceOpen.value = false;
+    return;
+  }
+  assetWorkspaceReference.value = target;
+});
 const workspaceAssets = computed<readonly WorkspaceAssetSource[]>(() => {
   if (!assetWorkspaceOpen.value) return [];
   void operatorDefinitionRevision.value;
@@ -2081,7 +2116,7 @@ const workspaceAssets = computed<readonly WorkspaceAssetSource[]>(() => {
     })),
     ...editorGameDataRepository.getCommonDefinitionSources().flatMap(source =>
       Object.entries(source.buffDefinitions ?? {}).map(([id, definition]) => ({
-        id: `buff:${id}`,
+        id: sharedBuffAssetId(source.id, id),
         kind: 'buff',
         kindName: t('assetWorkspace.types.commonBuff'),
         name: resolveBuffDisplayName(id, { t, te }),
@@ -2135,6 +2170,7 @@ const workspaceAssets = computed<readonly WorkspaceAssetSource[]>(() => {
 
 async function openAssetWorkspace(): Promise<void> {
   await ensureAllGameData();
+  assetWorkspaceReference.value = undefined;
   assetWorkspaceOpen.value = true;
 }
 
@@ -2179,6 +2215,7 @@ function openSkillGraphEditor(): void {
   if (selected?.currentDefinition == null || isHistoricalSkillInput(selected.cast.id)) return;
   skillGraphEditorTarget.value = {
     custom: selected.cast.customDefinition !== undefined,
+    operatorSlug: selected.operator?.slug,
     scenarioId: scenario.value.id,
     castId: selected.cast.id,
     label: selected.label,
@@ -7795,6 +7832,7 @@ function setMobileGuideFrame(frame: number | null): void {
   <SkillGraphEditorDialog
     v-if="skillGraphEditorTarget !== null"
     :definition="skillGraphEditorTarget.definition"
+    :reference-choices="skillGraphReferenceChoices"
     :custom="skillGraphEditorTarget.custom"
     :label="skillGraphEditorTarget.label"
     :presentation="skillGraphEditorTarget.presentation"
@@ -7819,7 +7857,9 @@ function setMobileGuideFrame(frame: number | null): void {
   />
   <AssetWorkspace
     v-if="assetWorkspaceOpen && workspaceAssets.length"
-    :initial-asset="workspaceAssets[0]!.id"
+    :initial-asset="assetWorkspaceReference?.assetId ?? workspaceAssets[0]!.id"
+    :initial-reference="assetWorkspaceReference"
+    :shared-sources="editorGameDataRepository.getCommonDefinitionSources()"
     :assets="workspaceAssets"
     :save-asset="saveWorkspaceAsset"
     @close="assetWorkspaceOpen = false"

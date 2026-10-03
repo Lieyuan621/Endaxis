@@ -6,6 +6,7 @@ import {
   DEFAULT_TRUST_ATTRIBUTE_BONUS,
   type OperatorDefinition,
 } from '../../../packages/game-data-contract/src/operators';
+import { useSchemaReferences } from '../definition-editor/schemaReferenceContext';
 import DefinitionField from '../definition-editor/DefinitionField.vue';
 import { definitionSchemas } from '../definition-editor/definitionSchemas.generated';
 import type { DefinitionFieldSchema } from '../definition-editor/fieldSchema';
@@ -14,6 +15,7 @@ const props = defineProps<{ definition: OperatorDefinition; editable: boolean; p
 const emit = defineEmits<{ change: [path: readonly (string | number)[], value: unknown] }>();
 const { t } = useI18n();
 const schema = definitionSchemas.operator;
+useSchemaReferences(() => schema);
 const fields: Readonly<Record<string, DefinitionFieldSchema>> =
   schema.kind === 'object' ? schema.fields : {};
 const basicFields = [

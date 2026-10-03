@@ -1,6 +1,7 @@
 /** 可编辑动作图。节点共享定义，不共享执行实例或黑板；next 仅表示同步顺序。 */
 import type { CombatStepForKind, CombatStepKind } from './actions.ts';
 import type { ActionValueOperand, CombatCondition } from './conditions.ts';
+import type { ActionStringOperand } from './primitives.ts';
 
 export interface ActionGraphReference {
   /** null 表示空序列；不得省略一个显式存在的空分支。 */
@@ -60,7 +61,8 @@ export interface ActionGraphDefinition {
 
 export type ActionGraphDataNode =
   | { readonly type: 'number'; readonly expression: ActionValueOperand }
-  | { readonly type: 'boolean'; readonly expression: CombatCondition };
+  | { readonly type: 'boolean'; readonly expression: CombatCondition }
+  | { readonly type: 'string'; readonly expression: ActionStringOperand };
 
 /** 宏接口和内部节点只保存在这里；主图中的调用节点只保存 macroId。 */
 export interface ActionGraphMacroDefinition {

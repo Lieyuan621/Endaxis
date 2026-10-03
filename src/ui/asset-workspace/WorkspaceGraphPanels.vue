@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { ReferenceChoices } from '../definition-editor/fieldInputConfig';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { EaButton, EaInput } from '@/design-system';
@@ -10,6 +11,7 @@ import { canvasView, type WorkspaceResourceView } from './workspaceViews';
 import type { useWorkspaceGraphEditor } from './useWorkspaceGraphEditor';
 
 const props = defineProps<{
+  referenceChoices?: ReferenceChoices;
   area: 'toolbar' | 'tools' | 'content' | 'inspector';
   editor: ReturnType<typeof useWorkspaceGraphEditor>;
   skill: boolean;
@@ -133,10 +135,16 @@ const nodes = computed(() =>
     </template>
   </template>
   <template v-else>
-    <SkillGraphPanels v-if="skill" area="inspector" :editor="editor.skill" />
+    <SkillGraphPanels
+      v-if="skill"
+      area="inspector"
+      :editor="editor.skill"
+      :reference-choices="referenceChoices"
+    />
     <ResourceGraphPanels
       v-else
       area="inspector"
+      :reference-choices="referenceChoices"
       :resource-graph-editor="editor.resource"
       :readonly="readonly"
       :resource-key="resourceKey"

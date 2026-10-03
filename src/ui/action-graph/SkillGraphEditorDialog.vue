@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { ReferenceChoices } from '../definition-editor/fieldInputConfig';
 /** 技能块单独编辑时的宿主；图操作和各面板与资产工作区共用。 */
 import { computed, reactive, ref } from 'vue';
 import { EaButton, EaDialog } from '@/design-system';
@@ -16,6 +17,7 @@ import SkillGraphPanels from './SkillGraphPanels.vue';
 import { createResourceEditorView } from '../editor/resourceEditorView';
 
 const props = defineProps<{
+  referenceChoices?: ReferenceChoices;
   definition: SkillDefinition;
   custom: boolean;
   allowCustomize?: boolean;
@@ -166,7 +168,11 @@ async function save() {
         >
           <SkillGraphPanels area="tools" :editor="editor" />
           <SkillGraphPanels area="canvas" :editor="editor" />
-          <SkillGraphPanels area="inspector" :editor="editor" />
+          <SkillGraphPanels
+            area="inspector"
+            :editor="editor"
+            :reference-choices="referenceChoices"
+          />
         </div>
         <SkillGraphPanels area="timeline" :editor="editor" />
         <pre v-if="editor.error" role="alert">{{ editor.error }}</pre>

@@ -345,3 +345,101 @@ describe('黑板用途的读取对象', () => {
     ]);
   });
 });
+
+it('keeps unresolved string graphs as conservative usage barriers without inventing a blackboard key', () => {
+  const stringNode = { kind: 'stringNode' as const, nodeId: 'shared' };
+  const usages = [
+    analyzeStepUsage({ kind: 'applyBuff', parameters: { target: 'caster', buffId: stringNode } }),
+    analyzeStepUsage({
+      kind: 'castSkillDuringAction',
+      parameters: {
+        skillId: stringNode,
+        target: 'caster',
+        skipApplyCost: false,
+        inheritSourceSkillCastInfo: false,
+      },
+    }),
+    analyzeStepUsage({
+      kind: 'createTimedMarker',
+      parameters: {
+        markerId: stringNode,
+        target: 'caster',
+        durationSeconds: { kind: 'blackboard', key: 'duration' },
+        autoFinishByAction: false,
+      },
+    }),
+    analyzeStepUsage({
+      kind: 'createAbilityEntityTimedMarker',
+      parameters: {
+        markerId: stringNode,
+        durationSeconds: { kind: 'constant', value: 1 },
+        autoFinishByAction: false,
+        timeDomain: 'global',
+      },
+    }),
+    analyzeConditionUsage({ kind: 'timedMarkerPresent', target: 'caster', markerId: stringNode }),
+    analyzeConditionUsage({ kind: 'abilityEntityTimedMarkerPresent', markerId: stringNode }),
+  ];
+  for (const usage of usages) {
+    expect(usage.unknownAccess).toBe(true);
+    expect(usage.mayThrow).toBe(true);
+    expect(usage.reads.has(undefined as unknown as string)).toBe(false);
+    expect(usage.reads.has('shared')).toBe(false);
+  }
+  expect(usages[2]!.reads).toEqual(new Set(['duration']));
+  const dynamic = analyzeConditionUsage({
+    kind: 'timedMarkerPresent',
+    target: 'caster',
+    markerId: { blackboardKey: '  exact  ' },
+  });
+  expect(dynamic.reads).toEqual(new Set(['  exact  ']));
+  expect(dynamic.unknownAccess).toBe(false);
+  expect(
+    analyzeConditionUsage({ kind: 'abilityEntityTimedMarkerPresent', markerId: 'inline' }).reads
+      .size,
+  ).toBe(0);
+});
+
+it('does not prune prior writes or initial values through an unresolved string data read', () => {
+  const skill = skillFixture({
+    key: 'string-read-barrier',
+    timelineBlockFrames: 1,
+    blackboard: { retained: 1 },
+    scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'write' } }],
+    actionGraph: {
+      main: {
+        nodes: {
+          write: {
+            action: {
+              kind: 'modifyActionValue',
+              parameters: {
+                key: 'retained',
+                operation: 'assign',
+                value: { kind: 'constant', value: 2 },
+              },
+            },
+            next: 'read',
+          },
+          read: {
+            action: {
+              kind: 'createTimedMarker',
+              parameters: {
+                markerId: { kind: 'stringNode', nodeId: 'source' },
+                target: 'caster',
+                durationSeconds: { kind: 'constant', value: 1 },
+                autoFinishByAction: false,
+              },
+            },
+            next: null,
+          },
+        },
+        dataNodes: { source: { type: 'string', expression: { blackboardKey: 'runtime' } } },
+      },
+      macros: {},
+    },
+  });
+  const result = pruneUnusedGraphSkillValues(skill);
+  expect(result.skill).toBe(skill);
+  expect(result.report.removedInitialKeys).toEqual([]);
+  expect(result.report.removedWrites).toEqual([]);
+});

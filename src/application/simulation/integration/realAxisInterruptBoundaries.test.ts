@@ -11,6 +11,7 @@ const boundaries: readonly {
   gap: number;
   nextGroup?: string;
   withTangtang?: boolean;
+  replacedUltimate?: boolean;
 }[] = [
   {
     slug: 'mifu',
@@ -70,12 +71,22 @@ const boundaries: readonly {
     group: 'finisher',
     nextGroup: 'ultimate',
     gap: 51,
+    replacedUltimate: true,
   },
 ];
 
 it.each(boundaries)(
-  '$slug $current→$next：旧间隔 $gap 告警但保留输入，留足时间后可接续',
-  async ({ slug, current, next, group, gap, nextGroup = 'basicAttack', withTangtang = false }) => {
+  '$slug $current→$next：间隔 $gap 与充分间隔按当前槽位类型判断接续',
+  async ({
+    slug,
+    current,
+    next,
+    group,
+    gap,
+    nextGroup = 'basicAttack',
+    withTangtang = false,
+    replacedUltimate = false,
+  }) => {
     const service = createEditorSimulationService();
     for (const interval of [gap, 300]) {
       const startFrame = next === 'chr_0032_lizhiyan_ultimate_skill2' ? 310 : 10;
@@ -142,13 +153,34 @@ it.each(boundaries)(
       const blocked = run.receiptEntries.filter(
         e => e.event === 'SkillInputCannotInterruptCurrentSkill' && e.data?.castId === 'next',
       );
-      expect(blocked).toHaveLength(interval === gap ? 1 : 0);
+      expect(blocked).toHaveLength(interval === gap && !replacedUltimate ? 1 : 0);
       if (blocked.length) expect(blocked[0]?.data?.currentSkillId).toBe(current);
       expect(
         run.receiptEntries.find(
           e => e.event === 'SkillInputProcessed' && e.data?.castId === 'next',
         ),
       ).toMatchObject({ frame: startFrame + interval, data: { accepted: true, skillId: next } });
+      if (replacedUltimate && interval === gap) {
+        expect(
+          run.receiptEntries.find(
+            e => e.event === 'SkillSlotChanged' && e.data?.targetSkillKey === next,
+          ),
+        ).toBeDefined();
+        expect(
+          run.receiptEntries.find(
+            e => e.event === 'SkillInterrupted' && e.data?.castId === 'first',
+          ),
+        ).toMatchObject({
+          frame: startFrame + interval,
+          data: { skillId: current },
+        });
+        expect(
+          run.receiptEntries.find(e => e.event === 'SkillStarted' && e.data?.castId === 'next'),
+        ).toMatchObject({
+          frame: startFrame + interval,
+          data: { skillId: next },
+        });
+      }
       expect(scenario).toEqual(before);
     }
   },

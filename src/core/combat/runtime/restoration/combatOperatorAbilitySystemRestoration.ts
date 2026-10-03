@@ -20,6 +20,7 @@ export interface RestoreCombatOperatorAbilitySystemOptions {
   readonly runtime: Omit<
     AbilitySystemRuntimeOptions,
     | 'skills'
+    | 'skillDefinitions'
     | 'skillTickPlan'
     | 'skillSlotGroups'
     | 'playerActionRoutes'
@@ -33,11 +34,17 @@ export interface RestoreCombatOperatorAbilitySystemOptions {
 export function bindRestoredCombatOperatorAbilitySystem(
   options: RestoreCombatOperatorAbilitySystemOptions,
 ): AbilitySystemRuntime {
+  const skills = [...options.skills.values()];
+  const instantiatedSkillIds = new Set(skills.map(skill => skill.skillId));
   const ability = new AbilitySystemRuntime(
     {
       ...options.runtime,
       buffRuntime: options.operator.buffRuntime,
-      skills: [...options.skills.values()],
+      skills,
+      // 实际施放定义可覆盖静态目录；已有实例自己校验类型，目录仅补充未实例化身份。
+      skillDefinitions: [...options.cooldowns.values()]
+        .map(binding => binding.program)
+        .filter(program => !instantiatedSkillIds.has(program.skillId)),
       skillTickPlan: [...options.cooldowns].map(([skillId, binding]) => ({
         skillId,
         advanceCooldown: deltaSeconds => {

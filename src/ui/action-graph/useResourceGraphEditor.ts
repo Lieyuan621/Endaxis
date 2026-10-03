@@ -1,4 +1,5 @@
-import { computed, nextTick, ref, shallowRef, watch } from 'vue';
+import type { GraphInteractionSnapshot } from './graphInteractionSnapshot';
+import { toRaw, computed, nextTick, ref, shallowRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
   resourceEditorSelection,
@@ -32,7 +33,8 @@ import {
 import { listNodeCreations, nodeCreationGroup } from './nodeCreation';
 import { nodeName } from './editorNodeText';
 import { actionNodeTitle } from './nodePresentation';
-import { writeNodeField } from './nodeFieldValues';
+import { actionTypedInputs, dataTypedInputs } from './typedGraphInputs';
+import { setGraphDataInput } from '../../application/editor/graphDataInputEditing';
 import ActionGraphCanvas from './ActionGraphCanvas.vue';
 import ActionNodeInspector from './ActionNodeInspector.vue';
 import DataNodeInspector from './DataNodeInspector.vue';
@@ -92,7 +94,7 @@ export function useResourceGraphEditor(document: ResourceGraphDocument) {
         : t('actionGraphEditor.macroScope', { name: address.value.macroId }),
     selection: selection,
   });
-  const { analysis: blackboard, selectedScopes, variableKeys } = variables;
+  const { analysis: blackboard, selectedScopes, variableKeys, blackboardContext } = variables;
   const scopeWarnings = computed(() => blackboardScopeWarnings(blackboard.value));
   const entryGroups = computed<readonly GraphEntryGroup[]>(() => [
     {
@@ -191,9 +193,29 @@ export function useResourceGraphEditor(document: ResourceGraphDocument) {
     identity: string,
     write: boolean,
     point: { x: number; y: number },
-    target?: { owner: 'action' | 'data'; id: string; path: readonly string[] },
+    target?: {
+      owner: 'action' | 'data';
+      id: string;
+      path: readonly string[];
+      graph?: GraphInteractionSnapshot;
+    },
   ) {
-    if (!canLeaveFields()) return;
+    const beforeTarget =
+      target &&
+      (target.owner === 'action'
+        ? graph.value.nodes[target.id]?.action
+        : graph.value.dataNodes?.[target.id]);
+    if (!canUseGraphSnapshot(target?.graph)) return;
+    if (
+      target &&
+      beforeTarget !==
+        (target.owner === 'action'
+          ? graph.value.nodes[target.id]?.action
+          : graph.value.dataNodes?.[target.id])
+    ) {
+      error.value = t('graphDataInput.ownerChanged');
+      return;
+    }
     const variable = variables.resolve(identity);
     if (!variable) return;
     let id = '';
@@ -257,7 +279,7 @@ export function useResourceGraphEditor(document: ResourceGraphDocument) {
       updateResourceGraph(owner, address.value, current => {
         const used = [
           ...Object.values(current.nodes).flatMap(node => listDataInputs(node.action)),
-          ...Object.values(current.dataNodes ?? {}).flatMap(dataNodeInputs),
+          ...Object.values(current.dataNodes ?? {}).flatMap(node => dataNodeInputs(node)),
         ].some(input => input.source === id);
         if (used) throw new Error(t('definitionEditor.dataNodeStillConnected'));
         const dataNodes = { ...current.dataNodes };
@@ -267,57 +289,84 @@ export function useResourceGraphEditor(document: ResourceGraphDocument) {
     );
     if (changed) clearSelection();
   }
+  const interactionScope = computed(() => JSON.stringify([document.identity(), graphKey.value]));
+  function canUseGraphSnapshot(
+    expected: GraphInteractionSnapshot = { value: graph.value, scope: interactionScope.value },
+  ): boolean {
+    if (!canLeaveFields()) return false;
+    if (
+      toRaw(expected.value) !== toRaw(graph.value) ||
+      (expected.scope !== undefined && expected.scope !== interactionScope.value)
+    ) {
+      error.value = t('graphDataInput.ownerChanged');
+      return false;
+    }
+    return true;
+  }
   function connectData(
-    targetKind: 'action' | 'data',
+    owner: 'action' | 'data',
     id: string,
     path: readonly string[],
     source: string | null,
-    constant?: number | boolean,
-  ): void {
-    edit(owner =>
-      updateResourceGraph(owner, address.value, current => {
-        const target =
-          targetKind === 'action' ? current.nodes[id]?.action : current.dataNodes?.[id]?.expression;
-        if (!target) throw new Error('missing data target');
+    constant?: number | boolean | string,
+    expectedGraph?: GraphInteractionSnapshot,
+  ): boolean {
+    const previousOwner =
+      owner === 'action' ? graph.value.nodes[id]?.action : graph.value.dataNodes?.[id];
+    if (!canUseGraphSnapshot(expectedGraph)) return false;
+    const currentOwner =
+      owner === 'action' ? graph.value.nodes[id]?.action : graph.value.dataNodes?.[id];
+    // A flush may reorder indexed rows. Never replay the captured old path against
+    // the newly accepted owner; the user must select its refreshed input instead.
+    if (previousOwner !== currentOwner) {
+      error.value = t('graphDataInput.ownerChanged');
+      return false;
+    }
+    return edit(document =>
+      updateResourceGraph(document, address.value, current => {
+        variables.assertConnection(current, owner, id, path, source);
+        const action = current.nodes[id]?.action;
+        const data = current.dataNodes?.[id];
         const input = (
-          targetKind === 'action' ? listDataInputs(target) : dataNodeInputs(current.dataNodes![id]!)
+          owner === 'action'
+            ? action
+              ? actionTypedInputs(action)
+              : []
+            : data
+              ? dataTypedInputs(data)
+              : []
         ).find(
           item =>
             item.path.length === path.length &&
             item.path.every((part, index) => part === path[index]),
         );
-        if (!input) throw new Error('missing data input');
-        if (source !== null && current.dataNodes?.[source]?.type !== input.type)
-          throw new Error('data pin type mismatch');
-        const value =
-          source === null
-            ? { kind: 'constant', value: constant ?? (input.type === 'boolean' ? false : 0) }
-            : { kind: input.type === 'boolean' ? 'conditionNode' : 'valueNode', nodeId: source };
-        const changed = writeNodeField(target, path, value);
-        return targetKind === 'action'
-          ? {
-              ...current,
-              nodes: {
-                ...current.nodes,
-                [id]: {
-                  ...current.nodes[id]!,
-                  action: changed as (typeof current.nodes)[string]['action'],
-                },
-              },
-            }
-          : {
-              ...current,
-              dataNodes: {
-                ...current.dataNodes,
-                [id]: { ...current.dataNodes![id]!, expression: changed } as NonNullable<
-                  typeof current.dataNodes
-                >[string],
-              },
-            };
+        if (!input) throw new Error('数据输入不存在');
+        return setGraphDataInput(current, owner, id, input, source, constant);
       }),
     );
   }
-  function disconnectInput(id: string): void {
+
+  function connect(
+    nodeId: string,
+    path: readonly string[],
+    target: string | null,
+    expectedGraph?: GraphInteractionSnapshot,
+  ): boolean {
+    if (!canUseGraphSnapshot(expectedGraph)) return false;
+    return edit(owner => connectResourceNode(owner, address.value, nodeId, path, target));
+  }
+  function connectEntry(
+    ids: readonly string[],
+    target: string | null,
+    expectedGraph?: GraphInteractionSnapshot,
+  ): boolean {
+    if (!canUseGraphSnapshot(expectedGraph)) return false;
+    return edit(owner =>
+      ids.reduce((current, id) => connectResourceEntry(current, address.value, id, target), owner),
+    );
+  }
+  function disconnectInput(id: string, expectedGraph?: GraphInteractionSnapshot): void {
+    if (!canUseGraphSnapshot(expectedGraph)) return;
     edit(owner => {
       let changed = owner;
       for (const [sourceId, node] of Object.entries(graph.value.nodes))
@@ -354,6 +403,7 @@ export function useResourceGraphEditor(document: ResourceGraphDocument) {
     address,
     graph,
     graphKey,
+    interactionScope,
     graphPresentation,
     entries,
     entryGroups,
@@ -370,6 +420,7 @@ export function useResourceGraphEditor(document: ResourceGraphDocument) {
     blackboard,
     selectedScopes,
     variableKeys,
+    blackboardContext,
     scopeWarnings,
     selectedNode,
     selectedData,
@@ -391,6 +442,8 @@ export function useResourceGraphEditor(document: ResourceGraphDocument) {
     removeNode,
     removeData,
     connectData,
+    connect,
+    connectEntry,
     disconnectInput,
     changePresentation,
   };

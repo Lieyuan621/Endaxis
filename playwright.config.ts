@@ -4,6 +4,8 @@ const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:4187';
 
 export default defineConfig({
   testDir: './tests/browser',
+  // Component fixtures are served by their dedicated Vite config, not the app preview.
+  testIgnore: '**/field-components.spec.ts',
   fullyParallel: false,
   workers: 1,
   forbidOnly: !!process.env.CI,

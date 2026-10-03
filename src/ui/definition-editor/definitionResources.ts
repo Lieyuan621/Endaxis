@@ -61,6 +61,7 @@ export function listDefinitionResources(
         path: ['buff'],
         identity: 'slug' in definition ? definition.slug : definition.id,
       });
+    appendInlineSpawnResources(result, definition);
     return result;
   }
   const buffs = record(root.buffDefinitions);
@@ -151,6 +152,7 @@ export function listDefinitionResources(
     for (const [index, value] of array(root.traits).entries())
       add(result, 'gearTrait', ['traits', index], value, `${index + 1}`);
   }
+  appendInlineSpawnResources(result, definition);
   return result;
 }
 
@@ -172,5 +174,127 @@ export function resourcePresentationKey(
     } else parts.push(part);
     current = child;
   }
-  return parts.length ? parts.join('/') : 'root';
+  return isInlineSpawnResourcePath(path)
+    ? `inline:${JSON.stringify(parts)}`
+    : parts.length
+      ? parts.join('/')
+      : 'root';
+}
+
+/** Existing graph owners only; each path is a distinct resource, even with shared values.
+ * This discovers inline children, not a new runtime entity/skill ID directory. */
+export function appendInlineSpawnResources(
+  result: DefinitionResource[],
+  definition: unknown,
+): void {
+  let work = 0;
+  const spend = (count: number) => {
+    if ((work += count) > 16_384) throw new Error('inline resource discovery budget exceeded');
+  };
+  const entries = (value: unknown) => {
+    const items = Object.entries(record(value));
+    spend(items.length);
+    return items;
+  };
+  const read = (path: readonly (string | number)[]) =>
+    path.reduce<unknown>(
+      (value, key) =>
+        value && typeof value === 'object' && Object.hasOwn(value, key)
+          ? (value as Record<string | number, unknown>)[key]
+          : undefined,
+      definition,
+    );
+  const queue = result.map(resource => ({ resource, ancestors: new Set<object>() }));
+  const paths = new Set(result.map(resource => JSON.stringify(resource.path)));
+  for (let index = 0; index < queue.length; index++) {
+    if (++work > 16_384) throw new Error('inline resource discovery budget exceeded');
+    const { resource, ancestors } = queue[index]!;
+    const owner = record(read(resource.path));
+    if (!owner.actionGraph) continue;
+    if (ancestors.has(owner)) throw new Error('cyclic inline resource ownership');
+    if (ancestors.size >= 64) throw new Error('inline resource discovery depth exceeded');
+    const nextAncestors = new Set([...ancestors, owner]);
+    const graphs = record(owner.actionGraph);
+    const graphEntries: [readonly string[], unknown][] = [
+      [['main'], graphs.main],
+      ...entries(graphs.macros).map(
+        ([id, macro]) =>
+          [['macros', id, 'graph'], record(macro).graph] as [readonly string[], unknown],
+      ),
+    ];
+    for (const [graphPath, graph] of graphEntries) {
+      spend(1);
+      for (const [id, node] of entries(record(graph).nodes)) {
+        if (++work > 16_384) throw new Error('inline resource discovery budget exceeded');
+        const action = record(record(node).action);
+        if (action.kind !== 'spawnAbilityEntity') continue;
+        const entity = record(record(action.parameters).definition);
+        const prefix = [
+          ...resource.path,
+          'actionGraph',
+          ...graphPath,
+          'nodes',
+          id,
+          'action',
+          'parameters',
+          'definition',
+        ];
+        const children: [DefinitionResourceKind, readonly (string | number)[], unknown, string][] =
+          [];
+        if (entity.childSkill !== undefined)
+          children.push([
+            'abilityEntityChildSkill',
+            [...prefix, 'childSkill'],
+            entity.childSkill,
+            String(record(entity.childSkill).skillId ?? 'child'),
+          ]);
+        for (const [key, child] of entries(entity.childSkills))
+          children.push(['abilityEntityChildSkill', [...prefix, 'childSkills', key], child, key]);
+        spend(array(entity.passiveSkills).length);
+        for (const [offset, child] of array(entity.passiveSkills).entries())
+          children.push([
+            'abilityEntityPassiveSkill',
+            [...prefix, 'passiveSkills', offset],
+            child,
+            String(offset + 1),
+          ]);
+        for (const [kind, path, child, fallback] of children) {
+          if (++work > 16_384) throw new Error('inline resource discovery budget exceeded');
+          const key = JSON.stringify(path);
+          if (paths.has(key) || !record(child).actionGraph) continue;
+          paths.add(key);
+          add(result, kind, path, child, fallback);
+          queue.push({ resource: result.at(-1)!, ancestors: nextAncestors });
+        }
+      }
+    }
+  }
+}
+
+export function isInlineSpawnResourcePath(path: readonly (string | number)[]): boolean {
+  return path.some((part, index) => {
+    if (part !== 'actionGraph') return false;
+    const start =
+      path[index + 1] === 'main'
+        ? index + 2
+        : path[index + 1] === 'macros' &&
+            typeof path[index + 2] === 'string' &&
+            path[index + 3] === 'graph'
+          ? index + 4
+          : -1;
+    if (
+      start < 0 ||
+      path[start] !== 'nodes' ||
+      typeof path[start + 1] !== 'string' ||
+      path[start + 2] !== 'action' ||
+      path[start + 3] !== 'parameters' ||
+      path[start + 4] !== 'definition'
+    )
+      return false;
+    return (
+      path[start + 5] === 'childSkill' ||
+      path[start + 5] === 'childSkills' ||
+      path[start + 5] === 'passiveSkills'
+    );
+  });
 }

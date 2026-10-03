@@ -333,3 +333,74 @@ describe('工作区资产草稿', () => {
     );
   });
 });
+
+it('edits a real generated recursive Buff condition through asset history and project roundtrip', () => {
+  let condition: import('../../../packages/game-data-contract/src/modifiers').DamageModifierCondition =
+    { kind: 'buffBlackboardCompare', left: { blackboardKey: 'rate' }, operator: 'equal', right: 1 };
+  for (let depth = 0; depth < 14; depth++) condition = { kind: 'not', condition };
+  const effect = {
+    ...GLOBAL_EFFECT_PRESETS[0]!,
+    buff: {
+      ...GLOBAL_EFFECT_PRESETS[0]!.buff,
+      blackboard: { rate: 1 },
+      damageModifiers: [
+        {
+          enabledSide: 'attacker' as const,
+          processors: [
+            {
+              kind: 'damageScale' as const,
+              side: 'attacker' as const,
+              zone: 'normal' as const,
+              addition: 1,
+            },
+          ],
+          condition,
+        },
+      ],
+    },
+  };
+  const asset: WorkspaceAssetSource = {
+    id: 'globalEffect:finite',
+    kind: 'globalEffect',
+    kindName: 'Global effect',
+    name: 'Finite condition',
+    custom: false,
+    edit: { kind: 'globalEffect', definition: effect },
+  };
+  const path = [
+    'buff',
+    'damageModifiers',
+    0,
+    'condition',
+    ...Array.from({ length: 14 }, () => 'condition'),
+    'right',
+  ];
+  const readonly = new WorkspaceAssetSession(asset);
+  expect(() => readonly.change(path, 2)).toThrow(/read-only/);
+  const session = new WorkspaceAssetSession(asset, 'project:globalEffect:finite');
+  const before = session.current;
+  session.change(path, 2);
+  const changed = session.current;
+  expect(fieldValueAt(changed.edit.definition, path)).toBe(2);
+  expect(() => session.change(path, NaN)).toThrow(/finite/);
+  expect(session.current).toBe(changed);
+  expect(session.history.undo()).toBe(true);
+  expect(session.current).toBe(before);
+  expect(session.history.redo()).toBe(true);
+  expect(session.current).toBe(changed);
+  const request = session.saveRequest();
+  const project = saveProjectTemplateDefinition(
+    createEmptyProject({ createdWith: 'test' }),
+    request.draft.edit,
+    request.sourceId,
+    request.targetId,
+    request.draft.name,
+    request.replace,
+    request.draft.graphPresentations,
+  );
+  const serialized = JSON.parse(JSON.stringify(project));
+  const saved = serialized.definitionLibrary.globalEffects[request.targetId].definition;
+  expect(fieldValueAt(saved, path)).toBe(2);
+  expect(saved.buff.actionGraph).toEqual(effect.buff.actionGraph);
+  expect(fieldValueAt(effect, path)).toBe(1);
+});

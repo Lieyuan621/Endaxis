@@ -39,7 +39,13 @@ function moveDrag(event: PointerEvent) {
 function endDrag(event: PointerEvent, variable: BlackboardVariable) {
   const moved = dragging.value?.moved;
   dragging.value = undefined;
-  if (moved) emit('drop', identity(variable), event, variable.layer === 'parameter');
+  if (moved)
+    emit(
+      'drop',
+      identity(variable),
+      event,
+      variable.layer === 'parameter' || props.analysis.globalBuffScopes.has(variable.scope),
+    );
 }
 defineExpose({ resolve: (id: string) => props.analysis.variables.find(v => identity(v) === id) });
 </script>
@@ -89,13 +95,16 @@ defineExpose({ resolve: (id: string) => props.analysis.variables.find(v => ident
       <strong>{{ detail.key }}</strong
       ><EditorHelp :text="t('actionGraphEditor.variableReadHelp')" />
       <EditorHelp
-        v-if="detail.layer !== 'parameter'"
+        v-if="detail.layer !== 'parameter' && !analysis.globalBuffScopes.has(detail.scope)"
         :text="
           t(
             `actionGraphEditor.${detail.key.startsWith('EntityBB_') ? 'entityWriteHelp' : 'localWriteHelp'}`,
           )
         "
       />
+      <small v-if="analysis.globalBuffScopes.has(detail.scope)">{{
+        t('globalBuffField.readOnly')
+      }}</small>
       <p>
         {{ t('actionGraphEditor.initial') }}：{{
           detail.initial === undefined
@@ -104,7 +113,12 @@ defineExpose({ resolve: (id: string) => props.analysis.variables.find(v => ident
         }}
       </p>
       <div v-for="id in detail.reads" :key="`r:${id}`">
-        <EaButton size="sm" @click="emit('locate', id, true)">
+        <EaButton
+          size="sm"
+          @click="
+            emit('locate', id, detail.readSites?.find(site => site.id === id)?.owner !== 'action')
+          "
+        >
           {{ t('actionGraphEditor.read') }} · {{ id }}
         </EaButton>
       </div>

@@ -10,6 +10,10 @@ import type {
   DataNodeSchema,
 } from '../../src/ui/action-graph/nodeSchema.ts';
 import { renderSharedSchemaObjects } from './renderSharedSchemaObjects.ts';
+import { describeDefinitionType, composeDefinitionSchemas } from './describeDefinitionType.ts';
+import type { DefinitionFieldSchema } from '../../src/ui/definition-editor/fieldSchema.ts';
+import { createFieldSemanticExtractor } from './fieldSemantics.ts';
+import type { FieldSemanticMetadata } from '../../src/ui/field-editor/fieldSemantics.ts';
 
 const projectRoot = fileURLToPath(new URL('../../', import.meta.url));
 export const generatedSchemaPath = resolve(
@@ -26,6 +30,7 @@ interface ContractProperty {
   readonly name: string;
   readonly required: boolean;
   readonly variants: readonly PropertyVariant[];
+  readonly symbols: readonly ts.Symbol[];
 }
 
 function isPresent(type: ts.Type): boolean {
@@ -46,6 +51,7 @@ function propertiesOf(type: ts.Type, checker: ts.TypeChecker): ContractProperty[
   );
   return [...names].flatMap(name => {
     const variants: PropertyVariant[] = [];
+    const symbols: ts.Symbol[] = [];
     let required = true;
     for (const branch of branches) {
       const symbol = checker.getPropertyOfType(branch, name);
@@ -54,6 +60,7 @@ function propertiesOf(type: ts.Type, checker: ts.TypeChecker): ContractProperty[
         required = false;
         continue;
       }
+      symbols.push(symbol);
       const propertyType = checker.getTypeOfSymbolAtLocation(symbol, declaration);
       if (!isPresent(propertyType)) {
         required = false;
@@ -62,7 +69,7 @@ function propertiesOf(type: ts.Type, checker: ts.TypeChecker): ContractProperty[
       required &&= (symbol.flags & ts.SymbolFlags.Optional) === 0;
       variants.push({ symbol, type: propertyType });
     }
-    return variants.length ? [{ name, required, variants }] : [];
+    return variants.length ? [{ name, required, variants, symbols }] : [];
   });
 }
 
@@ -185,7 +192,35 @@ function fieldSchema(
   prefix: readonly string[],
   checker: ts.TypeChecker,
 ): NodeFieldSchema {
+  const extractor = createFieldSemanticExtractor(checker, projectRoot);
+  const metadata = property.variants.map(variant =>
+    extractor.metadata(extractor.context(variant.type, variant.symbol)),
+  );
+  const semantics = metadata.map(value => value.semantics!);
+  const control = classify(property.variants, checker);
+  const fallback: FieldSemanticMetadata['fallback'] =
+    control.control === 'json'
+      ? {
+          reason: semantics.some(value => value.tuple)
+            ? 'tuple-editor-pending'
+            : 'structured-editor-pending',
+        }
+      : undefined;
+  const valueVariants = property.variants.map(variant =>
+    describeDefinitionType(variant.type, checker, variant.symbol, projectRoot),
+  );
+  // Every declaration contributes its shape; an aggregated slot must not pick the first branch.
+  const valueSchema: DefinitionFieldSchema = {
+    ...composeDefinitionSchemas(valueVariants, property.name),
+    ...(property.required ? {} : { optional: true }),
+    source: distinct(
+      property.symbols.flatMap(
+        symbol => extractor.context(checker.getTypeOfSymbol(symbol), symbol).source,
+      ),
+    ),
+  };
   return {
+    valueSchema,
     path: [...prefix, property.name],
     label: property.name,
     description: distinct(
@@ -193,8 +228,29 @@ function fieldSchema(
     ).join('\n'),
     type: distinct(property.variants.map(variant => rawType(variant, checker))).join(' | '),
     required: property.required,
-    ...classify(property.variants, checker),
+    ...control,
+    semantics:
+      semantics.length === 1
+        ? semantics[0]
+        : {
+            type: distinct(property.variants.map(variant => rawType(variant, checker))).join(' | '),
+            unionVariants: semantics,
+          },
+    source: distinct(
+      property.symbols.flatMap(
+        symbol => extractor.context(checker.getTypeOfSymbol(symbol), symbol).source,
+      ),
+    ),
+    ...(fallback ? { fallback } : {}),
   };
+}
+
+/** 测试及生成共用字段入口，不依赖动作实例或运行时数据。 */
+export function describeNodeFields(
+  type: ts.Type,
+  checker: ts.TypeChecker,
+): readonly NodeFieldSchema[] {
+  return propertiesOf(type, checker).map(property => fieldSchema(property, [], checker));
 }
 
 function exportedType(
@@ -255,6 +311,24 @@ export function generateActionNodeSchemas(
           fields: properties.filter(p => p.name !== 'kind').map(p => fieldSchema(p, [], checker)),
         };
       }
+    }
+  }
+  if (dataSchemas) {
+    // The string family edits the contract operand itself, retaining literal/key-read
+    // shapes. It does not manufacture a second string expression language.
+    const nodes = exportedType(program, checker, contractPath, 'ActionGraphDataNode');
+    const stringNode = objectVariants(nodes).find(variant => {
+      const type = propertiesOf(variant, checker).find(property => property.name === 'type')
+        ?.variants[0]?.type;
+      return type?.isStringLiteral() && type.value === 'string';
+    });
+    if (stringNode) {
+      dataSchemas['string:stringOperand'] = {
+        description: '字符串常量或当前动作黑板读取；在每个消费位置独立求值。',
+        fields: propertiesOf(stringNode, checker)
+          .filter(property => property.name === 'expression')
+          .map(property => fieldSchema(property, [], checker)),
+      };
     }
   }
   const steps = exportedType(program, checker, contractPath, 'ActionGraphStep');

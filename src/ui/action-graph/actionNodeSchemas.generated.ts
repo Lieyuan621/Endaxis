@@ -2,102 +2,827 @@
 import type { ActionGraphStep } from '../../../packages/game-data-contract/src/actionGraph.ts';
 import type { ActionNodeSchema, DataNodeSchema } from './nodeSchema.ts';
 
-const actionSchemaPart_d1636631faeb7f6d = {
-  path: ['parameters', 'staggerOnlyWhenCasterControlled'],
-  label: 'staggerOnlyWhenCasterControlled',
-  description: '原生 Poise 单元 onlyEnableForMainChar；生命伤害仍正常结算。',
-  type: 'boolean',
+const actionSchemaPart_003496351f84bb24 = {
+  type: '"physical" | "heat" | "cryo" | "electric" | "nature"',
+  unionVariants: [
+    { type: '"physical"' },
+    { type: '"heat"' },
+    { type: '"cryo"' },
+    { type: '"electric"' },
+    { type: '"nature"' },
+  ],
+} as const;
+const actionSchemaPart_f49bdafe0a2efd47 = {
+  type: 'LevelValues | ActionValueOperand | undefined',
+  optional: true,
+  unionVariants: [
+    { type: 'LevelValues', aliases: ['LevelValues'] },
+    { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+  ],
+} as const;
+const actionSchemaPart_d2f1a5359267a13b = {
+  kind: 'string',
+  semantics: { type: 'string', unionVariants: [{ type: 'string' }, { type: 'string' }] },
+  source: ['packages/game-data-contract/src/conditions.ts:767:7'],
+  description: '形参名；在使用点求值，不做调用时快照。',
+} as const;
+const actionSchemaPart_ca5aad6a4eb7c168 = {
+  type: '{ readonly kind: "lowestHealthRatioOperator"; readonly excludedContextKey?: string | undefined; readonly excludeCaster?: true | undefined; readonly excludeCurrentTarget?: true | undefined; }',
+} as const;
+const actionSchemaPart_fd5369e1d63e7bbf = {
+  type: 'readonly number[]',
+  arrayElement: { type: 'number' },
+  unionVariants: [
+    { type: 'readonly number[]', arrayElement: { type: 'number' } },
+    { type: 'readonly number[]', arrayElement: { type: 'number' } },
+  ],
+} as const;
+const actionSchemaPart_726a48383a9b568f = {
+  type: '"always" | "successAndInterrupted" | "success" | "interrupted"',
+  unionVariants: [
+    { type: '"always"' },
+    { type: '"successAndInterrupted"' },
+    { type: '"success"' },
+    { type: '"interrupted"' },
+  ],
+} as const;
+const actionSchemaPart_29ed4eefc4c61701 = {
+  type: 'Omit<BuffDefinitionProperties, "damageModifiers"> & { readonly actionGraph?: ActionGraphResourceDefinition | undefined; ... 7 more ...; presentation?: CombatBuffPresentation | undefined; } & { ...; }',
+} as const;
+const actionSchemaPart_4b3bf0fec51212f9 = {
+  kind: 'number',
+  semantics: { type: 'number | undefined', optional: true },
+  source: ['packages/game-data-contract/src/conditions.ts:755:7'],
+  optional: true,
+  description: '仅在原生调用点明确使用 GetValueOrDefault 时携带；缺省仍严格报错。',
+} as const;
+const actionSchemaPart_0f38ab070df3ee7c = {
+  type: '"normalAttack" | "powerAttack" | "default" | "skill" | undefined',
+  optional: true,
+  unionVariants: [
+    { type: '"normalAttack"' },
+    { type: '"powerAttack"' },
+    { type: '"default"' },
+    { type: '"skill"' },
+  ],
+} as const;
+const actionSchemaPart_18bb1cc60c393635 = {
+  type: 'readonly ("enemy" | "caster" | "controlled")[]',
+  arrayElement: {
+    type: '"enemy" | "caster" | "controlled"',
+    unionVariants: [{ type: '"enemy"' }, { type: '"caster"' }, { type: '"controlled"' }],
+  },
+} as const;
+const actionSchemaPart_506edc52fb997d86 = {
+  type: '{ kind: "physicalInflictionApplied"; types: "crush" | "airborne" | "knockDown" | "fracture" | readonly ("crush" | "airborne" | "knockDown" | "fracture")[]; scope: "team" | "operator"; }',
+} as const;
+const actionSchemaPart_5649d7090c045506 = {
+  type: '{ kind: "specific"; key: string; } | { kind: "all" | "main" | "secondary"; }',
+  unionVariants: [
+    { type: '{ kind: "specific"; key: string; }' },
+    { type: '{ kind: "all" | "main" | "secondary"; }' },
+  ],
+} as const;
+const actionSchemaPart_15322e6cdf5ab427 = {
+  type: '"eventTarget" | "enemy" | "caster" | "buffOwner" | "buffSource"',
+  unionVariants: [
+    { type: '"eventTarget"' },
+    { type: '"enemy"' },
+    { type: '"caster"' },
+    { type: '"buffOwner"' },
+    { type: '"buffSource"' },
+  ],
+} as const;
+const actionSchemaPart_d4f3f403371c0067 = {
+  kind: 'enum',
+  options: ['constant'],
+  semantics: {
+    type: '"constant"',
+    unionVariants: [{ type: '"constant"' }, { type: '"constant"' }],
+  },
+  source: ['packages/game-data-contract/src/conditions.ts:759:7'],
+  description: '直接使用固定数值。',
+} as const;
+const actionSchemaPart_19fd1bb3d8516c57 = {
+  type: '{ kind: "elementalInflictionApplied"; elements: "physical" | "heat" | "cryo" | "electric" | "nature" | readonly ("physical" | "heat" | "cryo" | "electric" | "nature")[]; scope: "team" | "operator"; }',
+} as const;
+const actionSchemaPart_aa9b9945db0d4d7e = {
+  type: '"enemy" | "caster" | "currentAbilityEntity" | undefined',
+  optional: true,
+  unionVariants: [
+    { type: '"enemy" | "caster"', unionVariants: [{ type: '"enemy"' }, { type: '"caster"' }] },
+    { type: '"currentAbilityEntity"' },
+  ],
+} as const;
+const actionSchemaPart_18e97ee4122167c6 = {
+  kind: 'enum',
+  options: ['blackboard'],
+  semantics: {
+    type: '"blackboard"',
+    unionVariants: [{ type: '"blackboard"' }, { type: '"blackboard"' }],
+  },
+  source: ['packages/game-data-contract/src/conditions.ts:751:7'],
+  description: '从当前动作黑板读取。',
+} as const;
+const actionSchemaPart_33071b8a3fe154a1 = {
+  type: '{ values: readonly number[]; column: ActionValueOperand; storeKey: string; enhance?: { target: "caster" | "buffOwner" | "buffSource"; formula: { readonly kind: "linear"; readonly paramA: number; } | { ...; }; } | undefined; }',
+} as const;
+const actionSchemaPart_7407eaa3885aa6aa = {
+  type: 'readonly { event: "hit" | "block" | "reach" | "finish"; skill: AbilityEntityChildSkillDefinition; }[]',
+  arrayElement: {
+    type: '{ event: "hit" | "block" | "reach" | "finish"; skill: AbilityEntityChildSkillDefinition; }',
+  },
+} as const;
+const actionSchemaPart_74863957f4a6932f = {
+  kind: 'enum',
+  options: ['parameter'],
+  semantics: {
+    type: '"parameter"',
+    unionVariants: [{ type: '"parameter"' }, { type: '"parameter"' }],
+  },
+  source: ['packages/game-data-contract/src/conditions.ts:765:7'],
+  description: '引用宏调用参数；只允许出现在声明了同名参数的宏图内。',
+} as const;
+const actionSchemaPart_26f2c2926d3ef813 = {
+  kind: 'enum',
+  options: ['valueNode'],
+  semantics: {
+    type: '"valueNode"',
+    unionVariants: [{ type: '"valueNode"' }, { type: '"valueNode"' }],
+  },
+  source: ['packages/game-data-contract/src/conditions.ts:746:7'],
+  description: '从当前资源图读取数值表达式，在使用点按当前作用域求值。',
+} as const;
+const actionSchemaPart_aa4e38c35c211674 = {
+  type: 'HealCalculationAttribute',
+  unionVariants: [
+    {
+      type: '"strength" | "agility" | "intellect" | "will"',
+      unionVariants: [
+        { type: '"strength"' },
+        { type: '"agility"' },
+        { type: '"intellect"' },
+        { type: '"will"' },
+      ],
+    },
+    { type: '"maxHealth"' },
+  ],
+} as const;
+const actionSchemaPart_e27d47aed42d02c5 = {
+  type: '{ readonly attribute: "spRecovery" | "gainEfficiency" | "normalAttackEfficiency" | "powerAttackEfficiency"; readonly operation: "addition" | "multiplier"; readonly value: ActionValueOperand; readonly applyToReturnSpGain: boolean; }',
+} as const;
+const actionSchemaPart_e0e0a98fb315f0e0 = {
+  type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+  unionVariants: [
+    { type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }' },
+    { type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }' },
+  ],
+} as const;
+const actionSchemaPart_3866f1c16532b38d = {
+  type: '{ kind: "susceptibility"; damageTypes: readonly ("physical" | "heat" | "cryo" | "electric" | "nature" | "true" | "lifeDrain" | "ether")[]; value: LevelValues; attributeScaling?: { ...; } | undefined; cap?: LevelValues | undefined; }',
+} as const;
+const actionSchemaPart_4a012250bbd37c47 = {
+  type: '"assign" | "add" | "multiply" | "divide" | "floor" | "ceil" | "roundToInt"',
+  unionVariants: [
+    { type: '"assign"' },
+    { type: '"add"' },
+    { type: '"multiply"' },
+    { type: '"divide"' },
+    { type: '"floor"' },
+    { type: '"ceil"' },
+    { type: '"roundToInt"' },
+  ],
+} as const;
+const actionSchemaPart_ec6f1f9136edd174 = {
+  type: 'readonly ("crush" | "airborne" | "knockDown" | "fracture")[]',
+  arrayElement: {
+    type: '"crush" | "airborne" | "knockDown" | "fracture"',
+    unionVariants: [
+      { type: '"crush"' },
+      { type: '"airborne"' },
+      { type: '"knockDown"' },
+      { type: '"fracture"' },
+    ],
+  },
+} as const;
+const actionSchemaPart_b5492484f04969e0 = {
+  type: 'readonly ("enemy" | "caster" | "buffOwner" | "controlled")[]',
+  arrayElement: {
+    type: '"enemy" | "caster" | "buffOwner" | "controlled"',
+    unionVariants: [
+      { type: '"enemy"' },
+      { type: '"caster"' },
+      { type: '"buffOwner"' },
+      { type: '"controlled"' },
+    ],
+  },
+} as const;
+const actionSchemaPart_1764e1f29d45469e = {
+  type: 'AbilityEntityTargetQuery',
+  unionVariants: [
+    { type: '{ readonly kind: "current"; }' },
+    {
+      type: '{ readonly kind: "ownerSpawned"; readonly abilityEntityIds?: readonly string[] | undefined; }',
+    },
+    { type: '{ readonly kind: "context"; readonly contextKey: string; }' },
+  ],
+} as const;
+const actionSchemaPart_2bacd4d9c1064be0 = {
+  type: 'Readonly<Record<string, LevelValues | ActionValueOperand>> | undefined',
+  recordValue: {
+    type: 'LevelValues | ActionValueOperand',
+    unionVariants: [
+      { type: 'LevelValues', aliases: ['LevelValues'] },
+      { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+    ],
+  },
+  optional: true,
+} as const;
+const actionSchemaPart_f9555ec96b6b804d = {
+  type: '{ kind: "damageTagHit"; tag: "normalAttack" | "normalAttackLastCombo" | "powerAttack" | "normalSkill" | "comboSkill" | "ultimateSkill" | "plungingAttack" | "dashAttack" | "fireBurst" | ... 6 more ... | "natureAbnormal"; scope: "team" | "operator"; }',
+} as const;
+const actionSchemaPart_8e67163da3c2f381 = {
+  type: '"eventSource" | "enemy" | "caster" | "buffOwner" | "buffSource" | "currentAbilityEntity"',
+  unionVariants: [
+    { type: '"eventSource"' },
+    { type: '"enemy"' },
+    { type: '"caster"' },
+    { type: '"buffOwner"' },
+    { type: '"buffSource"' },
+    { type: '"currentAbilityEntity"' },
+  ],
+} as const;
+const actionSchemaPart_e8015229e9523ae4 = {
+  type: 'SkillBuffDefinition',
+  unionVariants: [actionSchemaPart_29ed4eefc4c61701, { type: 'StaticBuffDefinition' }],
+} as const;
+const actionSchemaPart_ed273cf7fb87850f = {
+  type: 'readonly ("physical" | "heat" | "cryo" | "electric" | "nature")[]',
+  arrayElement: actionSchemaPart_003496351f84bb24,
+} as const;
+const actionSchemaPart_5dca7b90ca28c5e4 = {
+  type: 'readonly { triggerBuffIds: readonly string[]; operation: "assign" | "add" | "multiply"; value: ActionValueOperand; }[] | undefined',
+  arrayElement: {
+    type: '{ triggerBuffIds: readonly string[]; operation: "assign" | "add" | "multiply"; value: ActionValueOperand; }',
+  },
+  optional: true,
+} as const;
+const actionSchemaPart_3b098870902a8933 = {
+  type: '"physical" | "heat" | "cryo" | "electric" | "nature" | "true" | "lifeDrain" | "ether"',
+  unionVariants: [
+    { type: '"physical"' },
+    { type: '"heat"' },
+    { type: '"cryo"' },
+    { type: '"electric"' },
+    { type: '"nature"' },
+    { type: '"true"' },
+    { type: '"lifeDrain"' },
+    { type: '"ether"' },
+  ],
+} as const;
+const actionSchemaPart_9dfd7c2db06aeea7 = {
+  blackboardKey: {
+    kind: 'string',
+    semantics: { type: 'string' },
+    source: ['packages/game-data-contract/src/skills.ts:95:7'],
+    description: '生成实体时读取的实体黑板键。',
+  },
+  fallback: {
+    kind: 'number',
+    semantics: { type: 'number' },
+    source: ['packages/game-data-contract/src/skills.ts:97:7'],
+    description: '黑板没有该键时使用的模板默认值。',
+  },
+} as const;
+const actionSchemaPart_dd1baf2c5dcec3b6 = {
+  type: '{ targetSide: "defender" | "attacker"; attribute: string; slot: "addition" | "multiplier" | "finalAddition" | "finalMultiplier" | "baseAddition" | "baseMultiplier" | "baseFinalAddition" | "baseFinalMultiplier"; value: ActionValueOperand; attributeTiming: "deck" | "runtime"; }',
+} as const;
+const actionSchemaPart_9b5c476fa18f23c5 = {
+  type: '"eventSource" | "enemy" | "caster" | "buffOwner" | "buffSource" | "currentAbilityEntity" | undefined',
+  optional: true,
+  unionVariants: [
+    { type: '"eventSource"' },
+    { type: '"enemy"' },
+    { type: '"caster"' },
+    { type: '"buffOwner"' },
+    { type: '"buffSource"' },
+    { type: '"currentAbilityEntity"' },
+  ],
+} as const;
+const actionSchemaPart_80825b09887cd9ab = {
+  kind: {
+    kind: 'enum',
+    options: ['valueNode'],
+    semantics: { type: '"valueNode"' },
+    source: ['packages/game-data-contract/src/conditions.ts:746:7'],
+    description: '从当前资源图读取数值表达式，在使用点按当前作用域求值。',
+  },
+  nodeId: {
+    kind: 'string',
+    semantics: { type: 'string' },
+    source: ['packages/game-data-contract/src/conditions.ts:747:7'],
+  },
+} as const;
+const actionSchemaPart_08cc55a541270d02 = {
+  kind: {
+    kind: 'enum',
+    options: ['constant'],
+    semantics: { type: '"constant"' },
+    source: ['packages/game-data-contract/src/conditions.ts:759:7'],
+    description: '直接使用固定数值。',
+  },
+  value: {
+    kind: 'number',
+    semantics: { type: 'number' },
+    source: ['packages/game-data-contract/src/conditions.ts:761:7'],
+    description: '固定数值。',
+  },
+} as const;
+const actionSchemaPart_433c3c2f8f163db2 = {
+  kind: {
+    kind: 'enum',
+    options: ['stringNode'],
+    semantics: { type: '"stringNode"' },
+    source: ['packages/game-data-contract/src/primitives.ts:67:7'],
+    description: '绑定本图字符串表达式；各使用点仍读取各自当前动作上下文。',
+  },
+  nodeId: {
+    kind: 'string',
+    semantics: { type: 'string' },
+    source: ['packages/game-data-contract/src/primitives.ts:68:7'],
+  },
+} as const;
+const actionSchemaPart_8266180f265e7365 = {
+  kind: {
+    kind: 'enum',
+    options: ['context'],
+    semantics: { type: '"context"' },
+    source: ['packages/game-data-contract/src/skills.ts:34:7'],
+    description: '动作环境查询。',
+  },
+  contextKey: {
+    kind: 'string',
+    semantics: { type: 'string' },
+    source: ['packages/game-data-contract/src/skills.ts:36:7'],
+    description: '保存能力实体目标组的动作环境键。',
+  },
+} as const;
+const actionSchemaPart_d2f289006981f90e = {
+  kind: 'number',
+  semantics: {
+    type: 'number | undefined',
+    optional: true,
+    unionVariants: [
+      { type: 'number | undefined', optional: true },
+      { type: 'number | undefined', optional: true },
+    ],
+  },
+  source: ['packages/game-data-contract/src/conditions.ts:755:7'],
+  optional: true,
+  description: '仅在原生调用点明确使用 GetValueOrDefault 时携带；缺省仍严格报错。',
+} as const;
+const actionSchemaPart_56fe9026baaf0e55 = {
+  type: '{ readonly kind: "actionOwnerAbilityEntity"; } | { readonly kind: "actionOwnerTimedMarker"; readonly markerId: string; } | undefined',
+  optional: true,
+  unionVariants: [
+    { type: '{ readonly kind: "actionOwnerAbilityEntity"; }' },
+    { type: '{ readonly kind: "actionOwnerTimedMarker"; readonly markerId: string; }' },
+  ],
+} as const;
+const actionSchemaPart_74a7beb2915a3fcd = {
+  type: '{ target: "eventSource" | "eventTarget" | "enemy" | "caster" | "buffOwner" | "buffSource" | "controlledOperator" | "currentAbilityEntity" | "currentTarget" | "actionInputTarget" | ... 4 more ... | "casterAndLowestHealthRatioOperatorExceptCaster"; buffIds: readonly string[]; } | undefined',
+  optional: true,
+} as const;
+const actionSchemaPart_2ebe2689f1674c1f = {
+  type: 'readonly AbilityEntityTargetQuery[]',
+  arrayElement: actionSchemaPart_1764e1f29d45469e,
+} as const;
+const actionSchemaPart_5d2c6cb16f534249 = {
+  type: '{ onReach?: boolean | undefined; target?: "controlledOperator" | "currentTarget" | "allOperators" | undefined; finishOnHit: boolean; hitTagFilter?: { tagQueryType: "hasAny" | "hasAll" | "exceptAny" | "exceptAll"; tags: readonly string[]; } | undefined; retryRejectedHit?: boolean | undefined; } | undefined',
+  optional: true,
+} as const;
+const actionSchemaPart_1bf22caa5117dfbd = {
+  kind: 'array',
+  element: {
+    kind: 'string',
+    semantics: { type: 'string' },
+    source: ['packages/game-data-contract/src/skills.ts:29:7'],
+  },
+  semantics: {
+    type: 'readonly string[] | undefined',
+    arrayElement: { type: 'string' },
+    optional: true,
+  },
+  source: ['packages/game-data-contract/src/skills.ts:29:7'],
+  optional: true,
+  description: '只接受这些能力实体 ID；省略时不按 ID 筛选。',
+} as const;
+const actionSchemaPart_bc1411c64bfee9b9 = {
+  kind: {
+    kind: 'enum',
+    options: ['parameter'],
+    semantics: { type: '"parameter"' },
+    source: ['packages/game-data-contract/src/conditions.ts:765:7'],
+    description: '引用宏调用参数；只允许出现在声明了同名参数的宏图内。',
+  },
+  parameter: {
+    kind: 'string',
+    semantics: { type: 'string' },
+    source: ['packages/game-data-contract/src/conditions.ts:767:7'],
+    description: '形参名；在使用点求值，不做调用时快照。',
+  },
+} as const;
+const actionSchemaPart_da4914b2f9ad0fdc = {
+  type: '{ buffId: string; target: "eventSource" | "eventTarget" | "enemy" | "caster" | "buffOwner" | "buffSource" | "controlledOperator" | "currentAbilityEntity" | "currentTarget" | "actionInputTarget" | ... 4 more ... | "casterAndLowestHealthRatioOperatorExceptCaster"; source?: "eventSource" | ... 5 more ... | undefined; b...',
+} as const;
+const actionSchemaPart_8bff7685d9d53818 = {
+  type: 'number | { reachAfterTicks: number; maxDurationSeconds: number; finishOnReach?: boolean | undefined; } | "firstTickReach" | "firstTickBlock"',
+  unionVariants: [
+    { type: 'number' },
+    { type: '"firstTickReach"' },
+    { type: '"firstTickBlock"' },
+    {
+      type: '{ reachAfterTicks: number; maxDurationSeconds: number; finishOnReach?: boolean | undefined; }',
+    },
+  ],
+} as const;
+const actionSchemaPart_03625a4c3c299b20 = {
+  type: 'readonly AbilityEntityTargetQuery[] | undefined',
+  arrayElement: actionSchemaPart_1764e1f29d45469e,
+  optional: true,
+} as const;
+const actionSchemaPart_cc3abf320dcdc8f3 = {
+  type: '"eventSource" | "eventTarget" | "enemy" | "caster" | "buffOwner" | "buffSource" | "currentAbilityEntity" | "currentTarget"',
+  unionVariants: [
+    { type: '"eventSource"' },
+    { type: '"eventTarget"' },
+    { type: '"enemy"' },
+    { type: '"caster"' },
+    { type: '"buffOwner"' },
+    { type: '"buffSource"' },
+    { type: '"currentAbilityEntity"' },
+    { type: '"currentTarget"' },
+  ],
+} as const;
+const actionSchemaPart_a62634abc5ef2702 = {
+  type: '{ kind: "id"; buffIds: readonly string[]; } | { kind: "tag"; tagQueryType: "hasAny" | "hasAll" | "exceptAny" | "exceptAll"; buffTags: readonly string[]; }',
+  unionVariants: [
+    { type: '{ kind: "id"; buffIds: readonly string[]; }' },
+    {
+      type: '{ kind: "tag"; tagQueryType: "hasAny" | "hasAll" | "exceptAny" | "exceptAll"; buffTags: readonly string[]; }',
+    },
+  ],
+} as const;
+const actionSchemaPart_6bb05f4a3c598d87 = {
+  valueSchema: {
+    kind: 'string',
+    semantics: { type: 'string | undefined', optional: true },
+    source: ['packages/game-data-contract/src/actions.ts:1572:3'],
+    optional: true,
+  },
+  path: ['key'],
+  label: 'key',
+  description: '仅当其他定义需要引用此步骤时提供。',
+  type: 'string',
   required: false,
-  control: 'boolean',
+  control: 'string',
+  semantics: { type: 'string | undefined', optional: true },
+  source: ['packages/game-data-contract/src/actions.ts:1572:3'],
 } as const;
-const actionSchemaPart_4eda6c224d74fb65 = {
-  path: ['parameters', 'damageType'],
-  label: 'damageType',
-  description: '本次生命伤害的类型。',
-  type: 'DamageType',
-  required: true,
-  control: 'select',
-  options: ['physical', 'heat', 'cryo', 'electric', 'nature', 'true', 'lifeDrain', 'ether'],
+const actionSchemaPart_6b396502298caff2 = {
+  type: '"canBreakWeakness" | "crush" | "airborne" | "knockDown" | "shatter" | "dot" | "remainArea" | "talentDamage" | "physicalInfliction"',
+  unionVariants: [
+    { type: '"canBreakWeakness"' },
+    { type: '"crush"' },
+    { type: '"airborne"' },
+    { type: '"knockDown"' },
+    { type: '"shatter"' },
+    { type: '"dot"' },
+    { type: '"remainArea"' },
+    { type: '"talentDamage"' },
+    { type: '"physicalInfliction"' },
+  ],
 } as const;
-const actionSchemaPart_1b0a537a4e7044ff = {
-  path: ['parameters', 'features'],
-  label: 'features',
-  description: '原生伤害位中与技能分类无关的行为特征。',
-  type: 'readonly DamageFeature[]',
+const actionSchemaPart_9b7a517bcc21b17b = {
+  type: 'LevelValues | ActionValueOperand',
+  unionVariants: [
+    {
+      type: 'LevelValues | ActionValueOperand',
+      unionVariants: [
+        { type: 'LevelValues', aliases: ['LevelValues'] },
+        { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+      ],
+    },
+    {
+      type: 'LevelValues | ActionValueOperand',
+      unionVariants: [
+        { type: 'LevelValues', aliases: ['LevelValues'] },
+        { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+      ],
+    },
+  ],
+} as const;
+const actionSchemaPart_4e3560cf140abc20 = {
+  valueSchema: {
+    kind: 'string',
+    semantics: { type: 'string | undefined', optional: true },
+    source: ['packages/game-data-contract/src/actionGraph.ts:16:11'],
+    optional: true,
+  },
+  path: ['parameters', 'scopeKey'],
+  label: 'scopeKey',
+  description: '',
+  type: 'string',
   required: false,
-  control: 'multiselect',
-  options: [
-    'canBreakWeakness',
-    'crush',
-    'airborne',
-    'knockDown',
-    'shatter',
-    'dot',
-    'remainArea',
-    'talentDamage',
-    'physicalInfliction',
+  control: 'string',
+  semantics: { type: 'string | undefined', optional: true },
+  source: ['packages/game-data-contract/src/actionGraph.ts:16:11'],
+} as const;
+const actionSchemaPart_8a70261398bcb594 = {
+  type: '"normalSkill" | "comboSkill" | "ultimateSkill" | "dodge" | "breakingAttack" | "passiveSkill" | "attack" | "attachSkill" | "extraActiveSkill"',
+  unionVariants: [
+    { type: '"normalSkill"' },
+    { type: '"comboSkill"' },
+    { type: '"ultimateSkill"' },
+    { type: '"dodge"' },
+    { type: '"breakingAttack"' },
+    { type: '"passiveSkill"' },
+    { type: '"attack"' },
+    { type: '"attachSkill"' },
+    { type: '"extraActiveSkill"' },
   ],
 } as const;
-const actionSchemaPart_072ac943acb3b102 = {
-  path: ['parameters', 'target'],
-  label: 'target',
-  description: '要查找 Buff 的对象。',
-  type: 'BuffSingleTarget',
-  required: true,
-  control: 'select',
-  options: [
-    'eventSource',
-    'eventTarget',
-    'enemy',
-    'caster',
-    'buffOwner',
-    'buffSource',
-    'controlledOperator',
-    'currentAbilityEntity',
-    'currentTarget',
-    'actionInputTarget',
+const actionSchemaPart_1bb173c567533d8f = {
+  type: 'readonly { side: "defender" | "attacker"; zone: "product" | "normal" | "abnormalAndBurst" | "enhanced" | "combo" | "vulnerable" | "race"; addition: ActionValueOperand; }[] | undefined',
+  arrayElement: {
+    type: '{ side: "defender" | "attacker"; zone: "product" | "normal" | "abnormalAndBurst" | "enhanced" | "combo" | "vulnerable" | "race"; addition: ActionValueOperand; }',
+  },
+  optional: true,
+} as const;
+const actionSchemaPart_6976130052645496 = {
+  kind: actionSchemaPart_d4f3f403371c0067,
+  value: {
+    kind: 'number',
+    semantics: { type: 'number', unionVariants: [{ type: 'number' }, { type: 'number' }] },
+    source: ['packages/game-data-contract/src/conditions.ts:761:7'],
+    description: '固定数值。',
+  },
+} as const;
+const actionSchemaPart_0969f8a1b9e3e9aa = {
+  kind: actionSchemaPart_26f2c2926d3ef813,
+  nodeId: {
+    kind: 'string',
+    semantics: { type: 'string', unionVariants: [{ type: 'string' }, { type: 'string' }] },
+    source: ['packages/game-data-contract/src/conditions.ts:747:7'],
+  },
+} as const;
+const actionSchemaPart_2a41b607b87df414 = {
+  type: '{ kind: "id"; buffIds: readonly string[]; } | { kind: "environment"; } | { kind: "tag"; tagQueryType: "hasAny" | "hasAll" | "exceptAny" | "exceptAll"; buffTags: readonly string[]; }',
+  unionVariants: [
+    { type: '{ kind: "id"; buffIds: readonly string[]; }' },
+    { type: '{ kind: "environment"; }' },
+    {
+      type: '{ kind: "tag"; tagQueryType: "hasAny" | "hasAll" | "exceptAny" | "exceptAll"; buffTags: readonly string[]; }',
+    },
   ],
 } as const;
-const actionSchemaPart_edf7fd41d97a1bb4 = {
-  path: ['parameters', 'tags'],
-  label: 'tags',
-  description: '本次伤害携带的技能和爆发分类标签。',
-  type: 'readonly DamageTag[]',
-  required: true,
-  control: 'multiselect',
-  options: [
-    'normalAttack',
-    'normalAttackLastCombo',
-    'powerAttack',
-    'normalSkill',
-    'comboSkill',
-    'ultimateSkill',
-    'plungingAttack',
-    'dashAttack',
-    'fireBurst',
-    'electricBurst',
-    'cryoBurst',
-    'natureBurst',
-    'fireAbnormal',
-    'electricAbnormal',
-    'cryoAbnormal',
-    'natureAbnormal',
+const actionSchemaPart_b475ae87fc099300 = {
+  kind: actionSchemaPart_74863957f4a6932f,
+  parameter: actionSchemaPart_d2f1a5359267a13b,
+} as const;
+const actionSchemaPart_8186404ecafbcd5e = {
+  type: '"eventSource" | "enemy" | "caster" | "buffOwner" | "buffSource" | "currentAbilityEntity" | "battle" | undefined',
+  optional: true,
+  unionVariants: [actionSchemaPart_8e67163da3c2f381, { type: '"battle"' }],
+} as const;
+const actionSchemaPart_0ac631d63bdf158a = {
+  type: '{ readonly kind: "type"; readonly skillType: "comboSkill" | "plungingAttack" | "basicAttack" | "battleSkill" | "ultimate" | "finisher" | "dodge"; } | { readonly kind: "id"; readonly skillId: string; }',
+  unionVariants: [
+    {
+      type: '{ readonly kind: "type"; readonly skillType: "comboSkill" | "plungingAttack" | "basicAttack" | "battleSkill" | "ultimate" | "finisher" | "dodge"; }',
+    },
+    { type: '{ readonly kind: "id"; readonly skillId: string; }' },
   ],
+} as const;
+const actionSchemaPart_0b4542d8ad93756a = {
+  type: '"eventSource" | "eventTarget" | "enemy" | "caster" | "buffOwner" | "buffSource" | "controlledOperator" | "currentAbilityEntity" | "currentTarget" | "actionInputTarget"',
+  unionVariants: [
+    { type: '"eventSource"' },
+    { type: '"eventTarget"' },
+    { type: '"enemy"' },
+    { type: '"caster"' },
+    { type: '"buffOwner"' },
+    { type: '"buffSource"' },
+    { type: '"controlledOperator"' },
+    { type: '"currentAbilityEntity"' },
+    { type: '"currentTarget"' },
+    { type: '"actionInputTarget"' },
+  ],
+} as const;
+const actionSchemaPart_6805c465ff97e754 = {
+  type: 'readonly { values: readonly number[]; column: ActionValueOperand; storeKey: string; enhance?: { target: "caster" | "buffOwner" | "buffSource"; formula: { readonly kind: "linear"; readonly paramA: number; } | { ...; }; } | undefined; }[]',
+  arrayElement: actionSchemaPart_33071b8a3fe154a1,
+} as const;
+const actionSchemaPart_fbd9797e964a589d = {
+  type: '"enemy" | "caster" | "buffOwner" | "buffSource" | "controlledOperator" | "currentTarget" | "actionInputTarget" | "lowestHealthRatioOperator" | "lowestHealthRatioOperatorExceptControlled"',
+  unionVariants: [
+    { type: '"enemy"' },
+    { type: '"caster"' },
+    { type: '"buffOwner"' },
+    { type: '"buffSource"' },
+    { type: '"controlledOperator"' },
+    { type: '"currentTarget"' },
+    { type: '"actionInputTarget"' },
+    { type: '"lowestHealthRatioOperator"' },
+    { type: '"lowestHealthRatioOperatorExceptControlled"' },
+  ],
+} as const;
+const actionSchemaPart_e2aeb91200257142 = {
+  type: '"eventSource" | "eventTarget" | "enemy" | "caster" | "buffOwner" | "buffSource" | "controlledOperator" | "currentAbilityEntity" | "currentTarget" | "actionInputTarget" | undefined',
+  optional: true,
+  unionVariants: [
+    { type: '"eventSource"' },
+    { type: '"eventTarget"' },
+    { type: '"enemy"' },
+    { type: '"caster"' },
+    { type: '"buffOwner"' },
+    { type: '"buffSource"' },
+    { type: '"controlledOperator"' },
+    { type: '"currentAbilityEntity"' },
+    { type: '"currentTarget"' },
+    { type: '"actionInputTarget"' },
+  ],
+} as const;
+const actionSchemaPart_3f870f38207524cc = {
+  kind: {
+    kind: 'enum',
+    options: ['blackboard'],
+    semantics: { type: '"blackboard"' },
+    source: ['packages/game-data-contract/src/conditions.ts:751:7'],
+    description: '从当前动作黑板读取。',
+  },
+  key: {
+    kind: 'string',
+    semantics: { type: 'string' },
+    source: ['packages/game-data-contract/src/conditions.ts:753:7'],
+    description: '要读取的黑板键。',
+  },
+  fallback: actionSchemaPart_4b3bf0fec51212f9,
+} as const;
+const actionSchemaPart_9a1e1b9752cde963 = {
+  type: 'HealCalculationAttribute',
+  unionVariants: [actionSchemaPart_aa4e38c35c211674, actionSchemaPart_aa4e38c35c211674],
+} as const;
+const actionSchemaPart_945646734abf6402 = {
+  kind: {
+    kind: 'enum',
+    options: ['ownerSpawned'],
+    semantics: { type: '"ownerSpawned"' },
+    source: ['packages/game-data-contract/src/skills.ts:27:7'],
+    description: '查找当前所有者此前生成且仍可访问的能力实体。',
+  },
+  abilityEntityIds: actionSchemaPart_1bf22caa5117dfbd,
+} as const;
+const actionSchemaPart_d86472503ad61ccf = {
+  type: '{ readonly kind: "target"; readonly target: "eventSource" | "eventTarget" | "enemy" | "caster" | "buffSource" | "currentTarget"; } | { readonly kind: "context"; readonly contextKey: string; } | { ...; }',
+  unionVariants: [
+    {
+      type: '{ readonly kind: "target"; readonly target: "eventSource" | "eventTarget" | "enemy" | "caster" | "buffSource" | "currentTarget"; }',
+    },
+    { type: '{ readonly kind: "context"; readonly contextKey: string; }' },
+    {
+      type: '{ readonly kind: "abilitySystemSource"; readonly owner: "actionSource" | "actionOwner"; }',
+    },
+  ],
+} as const;
+const actionSchemaPart_0672b286ae80e091 = {
+  type: '{ readonly kind: "allOperators"; } | { readonly kind: "controlledOperator"; } | { readonly kind: "lowestHealthRatioOperator"; readonly excludedContextKey?: string | undefined; readonly excludeCaster?: true | undefined; readonly excludeCurrentTarget?: true | undefined; }',
+  unionVariants: [
+    { type: '{ readonly kind: "allOperators"; }' },
+    { type: '{ readonly kind: "controlledOperator"; }' },
+    actionSchemaPart_ca5aad6a4eb7c168,
+  ],
+} as const;
+const actionSchemaPart_63543b616519f1b6 = {
+  type: 'readonly ("canBreakWeakness" | "crush" | "airborne" | "knockDown" | "shatter" | "dot" | "remainArea" | "talentDamage" | "physicalInfliction")[] | undefined',
+  arrayElement: actionSchemaPart_6b396502298caff2,
+  optional: true,
+} as const;
+const actionSchemaPart_4401e09354f5f7ef = {
+  type: 'readonly { targetSide: "defender" | "attacker"; attribute: string; slot: "addition" | "multiplier" | "finalAddition" | "finalMultiplier" | "baseAddition" | "baseMultiplier" | "baseFinalAddition" | "baseFinalMultiplier"; value: ActionValueOperand; attributeTiming: "deck" | "runtime"; }[] | undefined',
+  arrayElement: actionSchemaPart_dd1baf2c5dcec3b6,
+  optional: true,
+} as const;
+const actionSchemaPart_734b1f472a8dc997 = {
+  type: 'StatusModifierDefinition',
+  unionVariants: [
+    { type: '{ kind: "attackPercent"; value: LevelValues; }' },
+    actionSchemaPart_3866f1c16532b38d,
+    { type: '{ kind: "slowed"; }' },
+    { type: '{ kind: "blockResourceGain"; resource: "sp" | "ultimateEnergy"; }' },
+    {
+      type: '{ kind: "resourceCostMultiplier"; resource: "sp" | "ultimateEnergy"; value: number; }',
+    },
+    { type: '{ kind: "skillCooldownMultiplier"; skillKey: string; value: number; }' },
+  ],
+} as const;
+const actionSchemaPart_1fbfd66386e805e7 = {
+  type: '"normalAttack" | "normalAttackLastCombo" | "powerAttack" | "normalSkill" | "comboSkill" | "ultimateSkill" | "plungingAttack" | "dashAttack" | "fireBurst" | "electricBurst" | ... 5 more ... | "natureAbnormal"',
+  unionVariants: [
+    { type: '"normalAttack"' },
+    { type: '"normalAttackLastCombo"' },
+    { type: '"powerAttack"' },
+    { type: '"normalSkill"' },
+    { type: '"comboSkill"' },
+    { type: '"ultimateSkill"' },
+    { type: '"plungingAttack"' },
+    { type: '"dashAttack"' },
+    { type: '"fireBurst"' },
+    { type: '"electricBurst"' },
+    { type: '"cryoBurst"' },
+    { type: '"natureBurst"' },
+    { type: '"fireAbnormal"' },
+    { type: '"electricAbnormal"' },
+    { type: '"cryoAbnormal"' },
+    { type: '"natureAbnormal"' },
+  ],
+} as const;
+const actionSchemaPart_d39dc7b4fe37772e = {
+  type: 'readonly { buffId: string; target: "eventSource" | "eventTarget" | "enemy" | "caster" | "buffOwner" | "buffSource" | "controlledOperator" | "currentAbilityEntity" | "currentTarget" | ... 5 more ... | "casterAndLowestHealthRatioOperatorExceptCaster"; source?: "eventSource" | ... 5 more ... | undefined; blackboardAssi...',
+  arrayElement: actionSchemaPart_da4914b2f9ad0fdc,
+  optional: true,
+} as const;
+const actionSchemaPart_cc57e5c7e6582ff1 = {
+  type: 'readonly StatusModifierDefinition[] | undefined',
+  arrayElement: actionSchemaPart_734b1f472a8dc997,
+  optional: true,
+} as const;
+const actionSchemaPart_022d248c0dc21e8c = {
+  type: '"eventSource" | "eventTarget" | "enemy" | "caster" | "buffOwner" | "buffSource" | "controlledOperator" | "currentAbilityEntity" | "currentTarget" | "actionInputTarget" | "currentBuffSource"',
+  unionVariants: [actionSchemaPart_0b4542d8ad93756a, { type: '"currentBuffSource"' }],
+} as const;
+const actionSchemaPart_c5f19ce8298bd8f6 = {
+  kind: actionSchemaPart_18e97ee4122167c6,
+  key: {
+    kind: 'string',
+    semantics: { type: 'string', unionVariants: [{ type: 'string' }, { type: 'string' }] },
+    source: ['packages/game-data-contract/src/conditions.ts:753:7'],
+    description: '要读取的黑板键。',
+  },
+  fallback: actionSchemaPart_d2f289006981f90e,
+} as const;
+const actionSchemaPart_05d853296fb6215c = {
+  type: 'readonly ({ readonly kind: "target"; readonly target: "eventSource" | "eventTarget" | "enemy" | "caster" | "buffSource" | "currentTarget"; } | { readonly kind: "context"; readonly contextKey: string; } | { ...; })[]',
+  arrayElement: actionSchemaPart_d86472503ad61ccf,
+} as const;
+const actionSchemaPart_39148600bef476a7 = {
+  type: '"eventSource" | "eventTarget" | "enemy" | "caster" | "buffOwner" | "buffSource" | "controlledOperator" | "currentAbilityEntity" | "currentTarget" | "actionInputTarget" | "party" | "partyExceptCaster" | "partyExceptCasterAndSameCharacterType" | "casterAndControlledOperator" | "casterAndLowestHealthRatioOperatorExcept...',
+  unionVariants: [
+    { type: '"eventSource"' },
+    { type: '"eventTarget"' },
+    { type: '"enemy"' },
+    { type: '"caster"' },
+    { type: '"buffOwner"' },
+    { type: '"buffSource"' },
+    { type: '"controlledOperator"' },
+    { type: '"currentAbilityEntity"' },
+    { type: '"currentTarget"' },
+    { type: '"actionInputTarget"' },
+    { type: '"party"' },
+    { type: '"partyExceptCaster"' },
+    { type: '"partyExceptCasterAndSameCharacterType"' },
+    { type: '"casterAndControlledOperator"' },
+    { type: '"casterAndLowestHealthRatioOperatorExceptCaster"' },
+  ],
+} as const;
+const actionSchemaPart_029a77c3a2392a82 = {
+  type: 'SkillBuffDefinition',
+  unionVariants: [
+    actionSchemaPart_e8015229e9523ae4,
+    actionSchemaPart_e8015229e9523ae4,
+    actionSchemaPart_e8015229e9523ae4,
+  ],
+} as const;
+const actionSchemaPart_696ddc5ee252e88d = {
+  type: 'readonly ("normalAttack" | "normalAttackLastCombo" | "powerAttack" | "normalSkill" | "comboSkill" | "ultimateSkill" | "plungingAttack" | "dashAttack" | "fireBurst" | "electricBurst" | ... 5 more ... | "natureAbnormal")[]',
+  arrayElement: actionSchemaPart_1fbfd66386e805e7,
 } as const;
 export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionNodeSchema>> = {
   outputKnockDown: {
     kind: 'outputKnockDown',
     description: '报告一次对固定目标成功输出击倒；木桩模型不保存倒地控制状态。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'enum',
+          options: ['enemy', 'caster'],
+          semantics: {
+            type: '"enemy" | "caster"',
+            unionVariants: [{ type: '"enemy"' }, { type: '"caster"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:568:5'],
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '接收击倒的对象。',
@@ -105,6 +830,11 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['enemy', 'caster'],
+        semantics: {
+          type: '"enemy" | "caster"',
+          unionVariants: [{ type: '"enemy"' }, { type: '"caster"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:568:5'],
       },
     ],
   },
@@ -112,15 +842,22 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'triggerSpellBurst',
     description: 'Buff 触发周期中的原生 TriggerSpellBurstEventAction。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'enum',
+          options: ['Fire', 'Pulse', 'Cryst', 'Natural'],
+          semantics: {
+            type: '"Fire" | "Pulse" | "Cryst" | "Natural"',
+            unionVariants: [
+              { type: '"Fire"' },
+              { type: '"Pulse"' },
+              { type: '"Cryst"' },
+              { type: '"Natural"' },
+            ],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:442:5'],
+        },
         path: ['parameters', 'burstType'],
         label: 'burstType',
         description: '要触发的原生法术爆发类型。',
@@ -128,6 +865,16 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['Fire', 'Pulse', 'Cryst', 'Natural'],
+        semantics: {
+          type: '"Fire" | "Pulse" | "Cryst" | "Natural"',
+          unionVariants: [
+            { type: '"Fire"' },
+            { type: '"Pulse"' },
+            { type: '"Cryst"' },
+            { type: '"Natural"' },
+          ],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:442:5'],
       },
     ],
   },
@@ -135,29 +882,130 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'mergeContextTargets',
     description: '合并稳定目标身份并覆盖写入 Context 目标组；空 sources 用于初始化空组。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:256:5'],
+        },
         path: ['parameters', 'saveToContextKey'],
         label: 'saveToContextKey',
         description: '保存合并结果的动作环境键。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:256:5'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'union',
+            variants: [
+              {
+                kind: 'object',
+                fields: {
+                  kind: {
+                    kind: 'enum',
+                    options: ['target'],
+                    semantics: { type: '"target"' },
+                    source: ['packages/game-data-contract/src/actions.ts:261:11'],
+                    description: '加入一个按身份解析的单体目标。',
+                  },
+                  target: {
+                    kind: 'enum',
+                    options: [
+                      'eventSource',
+                      'eventTarget',
+                      'enemy',
+                      'caster',
+                      'buffSource',
+                      'currentTarget',
+                    ],
+                    semantics: {
+                      type: '"eventSource" | "eventTarget" | "enemy" | "caster" | "buffSource" | "currentTarget"',
+                      unionVariants: [
+                        { type: '"caster"' },
+                        { type: '"enemy"' },
+                        { type: '"eventTarget"' },
+                        { type: '"eventSource"' },
+                        { type: '"buffSource"' },
+                        { type: '"currentTarget"' },
+                      ],
+                    },
+                    source: ['packages/game-data-contract/src/actions.ts:263:11'],
+                    description: '要加入的对象身份。',
+                  },
+                },
+                semantics: {
+                  type: '{ readonly kind: "target"; readonly target: "eventSource" | "eventTarget" | "enemy" | "caster" | "buffSource" | "currentTarget"; }',
+                },
+                source: ['packages/game-data-contract/src/actions.ts:258:5'],
+              },
+              {
+                kind: 'object',
+                fields: {
+                  kind: {
+                    kind: 'enum',
+                    options: ['context'],
+                    semantics: { type: '"context"' },
+                    source: ['packages/game-data-contract/src/actions.ts:268:11'],
+                    description: '加入一个已有动作目标组。',
+                  },
+                  contextKey: {
+                    kind: 'string',
+                    semantics: { type: 'string' },
+                    source: ['packages/game-data-contract/src/actions.ts:270:11'],
+                    description: '已有目标组的动作环境键。',
+                  },
+                },
+                semantics: { type: '{ readonly kind: "context"; readonly contextKey: string; }' },
+                source: ['packages/game-data-contract/src/actions.ts:258:5'],
+              },
+              {
+                kind: 'object',
+                fields: {
+                  kind: {
+                    kind: 'enum',
+                    options: ['abilitySystemSource'],
+                    semantics: { type: '"abilitySystemSource"' },
+                    source: ['packages/game-data-contract/src/actions.ts:275:11'],
+                    description: '读取能力系统来源。',
+                  },
+                  owner: {
+                    kind: 'enum',
+                    options: ['actionSource', 'actionOwner'],
+                    semantics: {
+                      type: '"actionSource" | "actionOwner"',
+                      unionVariants: [{ type: '"actionSource"' }, { type: '"actionOwner"' }],
+                    },
+                    source: ['packages/game-data-contract/src/actions.ts:277:11'],
+                    description: '从动作来源或动作宿主的能力系统读取。',
+                  },
+                },
+                semantics: {
+                  type: '{ readonly kind: "abilitySystemSource"; readonly owner: "actionSource" | "actionOwner"; }',
+                },
+                source: ['packages/game-data-contract/src/actions.ts:258:5'],
+              },
+            ],
+            semantics: actionSchemaPart_d86472503ad61ccf,
+            source: ['packages/game-data-contract/src/actions.ts:258:5'],
+          },
+          semantics: actionSchemaPart_05d853296fb6215c,
+          source: ['packages/game-data-contract/src/actions.ts:258:5'],
+        },
         path: ['parameters', 'sources'],
         label: 'sources',
         description: '按顺序加入结果组的单体目标或已有目标组。',
         type: "readonly ( | { /** 加入一个按身份解析的单体目标。 */ readonly kind: 'target'; /** 要加入的对象身份。 */ readonly target: 'caster' | 'enemy' | 'eventTarget' | 'eventSource' | 'buffSource' | 'currentTarget'; } | { /** 加入一个已有动作目标组。 */ readonly kind: 'context'; /** 已有目标组的动作环境键。 */ readonly contextKey: string; } /** 原生 SourceFinder：先选动作来源/宿主，再查询其单层 AbilitySystem.source。 */ | { /** 读取能力系统来源。 */ readonly kind: 'abilitySystemSource'; /** 从动作来源或动作宿主的能力系统读取。 */ readonly owner: 'actionSource' | 'actionOwner'; } )[]",
         required: true,
         control: 'json',
+        semantics: actionSchemaPart_05d853296fb6215c,
+        source: ['packages/game-data-contract/src/actions.ts:258:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
     ],
   },
@@ -165,21 +1013,21 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'findUnfinishedProjectileTargets',
     description: '查询未结束的投射物。生成器必须先证明空间范围在固定木桩模型中覆盖这些候选。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:284:5'],
+        },
         path: ['parameters', 'saveToContextKey'],
         label: 'saveToContextKey',
         description: '保存本次查询的实例身份；后续消费者不重新查询。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:284:5'],
       },
     ],
   },
@@ -187,29 +1035,104 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'findCharacterTeamTargets',
     description: '查询当前队伍并把当时的实例身份快照覆盖写入 Context；后续消费者不得重新选人。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:289:5'],
+        },
         path: ['parameters', 'saveToContextKey'],
         label: 'saveToContextKey',
         description: '保存查询结果的动作环境键。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:289:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['allOperators'],
+                  semantics: { type: '"allOperators"' },
+                  source: ['packages/game-data-contract/src/actions.ts:295:11'],
+                  description: '队伍选择种类判别值。',
+                },
+              },
+              semantics: { type: '{ readonly kind: "allOperators"; }' },
+              source: ['packages/game-data-contract/src/actions.ts:291:5'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['controlledOperator'],
+                  semantics: { type: '"controlledOperator"' },
+                  source: ['packages/game-data-contract/src/actions.ts:300:11'],
+                  description: '队伍选择种类判别值。',
+                },
+              },
+              semantics: { type: '{ readonly kind: "controlledOperator"; }' },
+              source: ['packages/game-data-contract/src/actions.ts:291:5'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['lowestHealthRatioOperator'],
+                  semantics: { type: '"lowestHealthRatioOperator"' },
+                  source: ['packages/game-data-contract/src/actions.ts:304:11'],
+                  description: '选择生命比例最低的干员。',
+                },
+                excludedContextKey: {
+                  kind: 'string',
+                  semantics: { type: 'string | undefined', optional: true },
+                  source: ['packages/game-data-contract/src/actions.ts:306:11'],
+                  optional: true,
+                  description: '在优先级筛选之前排除既有 Context 中保存的稳定身份。',
+                },
+                excludeCaster: {
+                  kind: 'enum',
+                  options: [true],
+                  semantics: { type: 'true | undefined', optional: true },
+                  source: ['packages/game-data-contract/src/actions.ts:308:11'],
+                  optional: true,
+                  description: '在优先级筛选之前排除当前技能施术者。',
+                },
+                excludeCurrentTarget: {
+                  kind: 'enum',
+                  options: [true],
+                  semantics: { type: 'true | undefined', optional: true },
+                  source: ['packages/game-data-contract/src/actions.ts:310:11'],
+                  optional: true,
+                  description: '在 forEach Context 内排除当前迭代的干员目标。',
+                },
+              },
+              semantics: actionSchemaPart_ca5aad6a4eb7c168,
+              source: ['packages/game-data-contract/src/actions.ts:291:5'],
+            },
+          ],
+          semantics: actionSchemaPart_0672b286ae80e091,
+          source: ['packages/game-data-contract/src/actions.ts:291:5'],
+        },
         path: ['parameters', 'selection'],
         label: 'selection',
         description: '从队伍中选择全部、主控或生命比例最低的干员。',
         type: "| { /** 队伍选择种类判别值。 */ readonly kind: 'allOperators'; } /** 选择当前主控干员。 */ | { /** 队伍选择种类判别值。 */ readonly kind: 'controlledOperator'; } | { /** 选择生命比例最低的干员。 */ readonly kind: 'lowestHealthRatioOperator'; /** 在优先级筛选之前排除既有 Context 中保存的稳定身份。 */ readonly excludedContextKey?: string; /** 在优先级筛选之前排除当前技能施术者。 */ readonly excludeCaster?: true; /** 在 forEach Context 内排除当前迭代的干员目标。 */ readonly excludeCurrentTarget?: true; }",
         required: true,
         control: 'json',
+        semantics: actionSchemaPart_0672b286ae80e091,
+        source: ['packages/game-data-contract/src/actions.ts:291:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
     ],
   },
@@ -217,29 +1140,64 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'createSpatialPointTargets',
     description: '在零空间模型中只保存随机空间点的数量与稳定临时身份，不保存坐标。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:316:5'],
+        },
         path: ['parameters', 'saveToContextKey'],
         label: 'saveToContextKey',
         description: '保存临时空间点目标的动作环境键。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:316:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:318:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:318:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:318:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:318:5'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:318:5'],
+        },
         path: ['parameters', 'count'],
         label: 'count',
         description: '要创建的空间点数量。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:318:5'],
       },
     ],
   },
@@ -247,69 +1205,158 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'findOwnerSpawnedAbilityEntities',
     description: '按 owner 与生成期已解析的实体身份查询，并保存为本次释放的 Context 目标组。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:323:5'],
+        },
         path: ['parameters', 'saveToContextKey'],
         label: 'saveToContextKey',
         description: '保存查询结果的动作环境键。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:323:5'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'string',
+            semantics: { type: 'string' },
+            source: ['packages/game-data-contract/src/actions.ts:325:5'],
+          },
+          semantics: {
+            type: 'readonly string[] | undefined',
+            arrayElement: { type: 'string' },
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/actions.ts:325:5'],
+          optional: true,
+        },
         path: ['parameters', 'abilityEntityIds'],
         label: 'abilityEntityIds',
         description: '只查找这些能力实体 ID；省略时不按 ID 筛选。',
         type: 'readonly string[]',
         required: false,
         control: 'json',
+        semantics: {
+          type: 'readonly string[] | undefined',
+          arrayElement: { type: 'string' },
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/actions.ts:325:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:327:5'],
+          optional: true,
+        },
         path: ['parameters', 'ownerContextKey'],
         label: 'ownerContextKey',
         description: '省略时使用当前动作施法者；存在时从已写入 Context 的单个干员解析 owner。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: { type: 'string | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:327:5'],
       },
       {
+        valueSchema: {
+          kind: 'number',
+          semantics: { type: 'number | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:329:5'],
+          optional: true,
+        },
         path: ['parameters', 'maxTargets'],
         label: 'maxTargets',
         description: '原生查询后处理保留的目标数量；零空间模型会消去距离排序，但不能消去截断。',
         type: 'number',
         required: false,
         control: 'number',
+        semantics: { type: 'number | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:329:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:331:5'],
+          optional: true,
+        },
         path: ['parameters', 'sameSourceSkillCast'],
         label: 'sameSourceSkillCast',
         description: '使用当前技能或 Buff 继承的施法序号执行 SkillCastIdValidator。',
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: { type: 'boolean | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:331:5'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:333:5'],
+          optional: true,
+        },
         path: ['parameters', 'saveCountToBlackboardKey'],
         label: 'saveCountToBlackboardKey',
         description: '可选地把同一查询结果数量写入动作黑板，后续复用 actionValueCompare。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: { type: 'string | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:333:5'],
       },
       {
+        valueSchema: {
+          kind: 'object',
+          fields: {
+            indexBlackboardKey: {
+              kind: 'string',
+              semantics: { type: 'string' },
+              source: ['packages/game-data-contract/src/actions.ts:337:7'],
+              description: '保存下一次环形查询起点的动作黑板键。',
+            },
+            desiredCount: {
+              kind: 'number',
+              semantics: { type: 'number' },
+              source: ['packages/game-data-contract/src/actions.ts:339:7'],
+              description: '排序后希望保留的目标数。',
+            },
+            reverseFlag: {
+              kind: 'number',
+              semantics: { type: 'number' },
+              source: ['packages/game-data-contract/src/actions.ts:341:7'],
+              description: '保留原生符号语义：非负递减，负值递增。',
+            },
+          },
+          semantics: {
+            type: '{ indexBlackboardKey: string; desiredCount: number; reverseFlag: number; } | undefined',
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/actions.ts:335:5'],
+          optional: true,
+        },
         path: ['parameters', 'circularOrder'],
         label: 'circularOrder',
         description: '原生 CircularOrderSort 在项目零空间投影下以槽位 0 为起点执行的环排序。',
         type: '{ /** 保存下一次环形查询起点的动作黑板键。 */ indexBlackboardKey: string; /** 排序后希望保留的目标数。 */ desiredCount: number; /** 保留原生符号语义：非负递减，负值递增。 */ reverseFlag: number; }',
         required: false,
         control: 'json',
+        semantics: {
+          type: '{ indexBlackboardKey: string; desiredCount: number; reverseFlag: number; } | undefined',
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/actions.ts:335:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
     ],
   },
@@ -317,37 +1364,79 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'pickContextTarget',
     description: '从既有 Context 目标组按运行时索引选出一个稳定句柄，覆盖写入新组。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:347:5'],
+        },
         path: ['parameters', 'sourceContextKey'],
         label: 'sourceContextKey',
         description: '已有目标组的动作环境键。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:347:5'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:349:5'],
+        },
         path: ['parameters', 'saveToContextKey'],
         label: 'saveToContextKey',
         description: '保存单个选中目标的新动作环境键。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:349:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:351:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:351:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:351:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:351:5'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:351:5'],
+        },
         path: ['parameters', 'index'],
         label: 'index',
         description: '要选取的数组下标。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:351:5'],
       },
     ],
   },
@@ -356,23 +1445,43 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     description:
       '对 Context 中的稳定目标句柄逐一同步执行；唯一木桩/施法者已被静态证明时，\n也可直接保留原生 ForEach 的即时生命周期与“忽略子序列返回值”边界。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: [
+            'packages/game-data-contract/src/actions.ts:360:9',
+            'packages/game-data-contract/src/actions.ts:366:9',
+          ],
+          optional: true,
+        },
         path: ['parameters', 'contextKey'],
         label: 'contextKey',
         description: '要遍历的动作目标组。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: { type: 'string' },
+        source: [
+          'packages/game-data-contract/src/actions.ts:360:9',
+          'packages/game-data-contract/src/actions.ts:366:9',
+        ],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['enemy', 'caster'],
+          semantics: {
+            type: '"enemy" | "caster"',
+            unionVariants: [{ type: '"enemy"' }, { type: '"caster"' }],
+          },
+          source: [
+            'packages/game-data-contract/src/actions.ts:362:9',
+            'packages/game-data-contract/src/actions.ts:368:9',
+          ],
+          optional: true,
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '作为唯一迭代项的固定目标。',
@@ -380,14 +1489,30 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: false,
         control: 'select',
         options: ['enemy', 'caster'],
+        semantics: {
+          type: '"enemy" | "caster"',
+          unionVariants: [{ type: '"enemy"' }, { type: '"caster"' }],
+        },
+        source: [
+          'packages/game-data-contract/src/actions.ts:362:9',
+          'packages/game-data-contract/src/actions.ts:368:9',
+        ],
       },
       {
+        valueSchema: {
+          kind: 'opaque',
+          fallback: { reason: 'graph-reference-boundary' },
+          semantics: { type: 'ActionGraphReference', aliases: ['ActionGraphReference'] },
+          source: ['packages/game-data-contract/src/actions.ts:1620:21'],
+        },
         path: ['body'],
         label: 'body',
         description: '对每个目标执行的序列。',
         type: 'ActionGraphReference',
         required: true,
         control: 'sequence',
+        semantics: { type: 'ActionGraphReference', aliases: ['ActionGraphReference'] },
+        source: ['packages/game-data-contract/src/actions.ts:1620:21'],
       },
     ],
   },
@@ -395,21 +1520,21 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'readAbilityEntityRemainingDuration',
     description: '读取当前 Context 迭代目标的能力实体剩余时长到动作黑板。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:373:5'],
+        },
         path: ['parameters', 'outputKey'],
         label: 'outputKey',
         description: '保存剩余秒数的动作黑板键。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:373:5'],
       },
     ],
   },
@@ -417,85 +1542,87 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'setAbilityEntityRemainingDuration',
     description: '将当前 Context 迭代目标的能力实体剩余时长赋为一个明确数值。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:378:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:378:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:378:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:378:5'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:378:5'],
+        },
         path: ['parameters', 'value'],
         label: 'value',
         description: '新的剩余秒数。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:378:5'],
       },
     ],
   },
   finishCurrentAbilityEntity: {
     kind: 'finishCurrentAbilityEntity',
     description: '结束当前 Context 迭代目标所指向的能力实体。',
-    fields: [
-      {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-    ],
+    fields: [actionSchemaPart_6bb05f4a3c598d87],
   },
   finishActionOwnerAbilityEntity: {
     kind: 'finishActionOwnerAbilityEntity',
     description: '结束当前能力实体子技能的 ActionOwner，不受内层 forEach 当前目标覆盖。',
-    fields: [
-      {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-    ],
+    fields: [actionSchemaPart_6bb05f4a3c598d87],
   },
   finishCurrentAbilityEntityWhenSourceDies: {
     kind: 'finishCurrentAbilityEntityWhenSourceDies',
     description: '仅在当前能力实体的来源已经死亡时结束该实体。',
-    fields: [
-      {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-    ],
+    fields: [actionSchemaPart_6bb05f4a3c598d87],
   },
   startCurrentAbilityEntityChildSkill: {
     kind: 'startCurrentAbilityEntityChildSkill',
     description: '在当前 Context 迭代目标所指向的既有能力实体上启动一个无施法子技能。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'opaque',
+          fallback: { reason: 'owned-resource-boundary' },
+          semantics: { type: 'AbilityEntityChildSkillDefinition' },
+          source: ['packages/game-data-contract/src/actions.ts:389:5'],
+        },
         path: ['parameters', 'childSkill'],
         label: 'childSkill',
         description: '要启动的无施法子技能。',
         type: 'AbilityEntityChildSkillDefinition',
         required: true,
         control: 'resource',
+        semantics: { type: 'AbilityEntityChildSkillDefinition' },
+        source: ['packages/game-data-contract/src/actions.ts:389:5'],
       },
     ],
   },
@@ -503,21 +1630,21 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'startCurrentAbilityEntityChildSkillById',
     description: '在当前 Context 能力实体自己的模板中按原生 Skill ID 启动具名子技能。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:394:5'],
+        },
         path: ['parameters', 'childSkillId'],
         label: 'childSkillId',
         description: '能力实体模板中登记的原生子技能 ID。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:394:5'],
       },
     ],
   },
@@ -525,39 +1652,269 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'spawnAbilityEntity',
     description: '在零空间模型中生成一个有独立身份、生命周期和实体黑板的逻辑能力实体。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:399:5'],
+        },
         path: ['parameters', 'abilityEntityId'],
         label: 'abilityEntityId',
         description: '要生成的能力实体模板 ID。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:399:5'],
       },
       {
+        valueSchema: {
+          kind: 'object',
+          fields: {
+            bornTags: {
+              kind: 'array',
+              element: {
+                kind: 'string',
+                semantics: { type: 'string', aliases: ['GameplayTag'] },
+                source: ['packages/game-data-contract/src/skills.ts:103:3'],
+              },
+              semantics: {
+                type: 'readonly string[] | undefined',
+                arrayElement: { type: 'string', aliases: ['GameplayTag'] },
+                optional: true,
+              },
+              source: ['packages/game-data-contract/src/skills.ts:103:3'],
+              optional: true,
+              description:
+                'AbilityEntityTemplateData.bornTags；实体创建时立即成为其 AbilitySystem 自身标签。',
+            },
+            blackboard: {
+              kind: 'record',
+              value: {
+                kind: 'union',
+                variants: [
+                  {
+                    kind: 'string',
+                    semantics: { type: 'string' },
+                    source: ['packages/game-data-contract/src/skills.ts:105:3'],
+                  },
+                  {
+                    kind: 'number',
+                    semantics: { type: 'number' },
+                    source: ['packages/game-data-contract/src/skills.ts:105:3'],
+                  },
+                ],
+                semantics: {
+                  type: 'string | number',
+                  unionVariants: [{ type: 'number' }, { type: 'string' }],
+                },
+                source: ['packages/game-data-contract/src/skills.ts:105:3'],
+              },
+              semantics: {
+                type: 'Readonly<Record<string, string | number>> | undefined',
+                recordValue: {
+                  type: 'string | number',
+                  unionVariants: [{ type: 'number' }, { type: 'string' }],
+                },
+                optional: true,
+              },
+              source: ['packages/game-data-contract/src/skills.ts:105:3'],
+              optional: true,
+              description:
+                'AbilitySystemData.entityBlackboard 的模板初值；生成动作的显式赋值可覆盖同名键。',
+            },
+            lifetime: {
+              kind: 'union',
+              variants: [
+                {
+                  kind: 'object',
+                  fields: {
+                    kind: {
+                      kind: 'enum',
+                      options: ['limited'],
+                      semantics: { type: '"limited"' },
+                      source: ['packages/game-data-contract/src/skills.ts:110:9'],
+                      description: '生命周期种类判别值。',
+                    },
+                    durationSeconds: {
+                      kind: 'union',
+                      variants: [
+                        {
+                          kind: 'number',
+                          semantics: { type: 'number' },
+                          source: ['packages/game-data-contract/src/skills.ts:112:9'],
+                        },
+                        {
+                          kind: 'object',
+                          fields: actionSchemaPart_9dfd7c2db06aeea7,
+                          semantics: {
+                            type: '{ readonly blackboardKey: string; readonly fallback: number; }',
+                          },
+                          source: ['packages/game-data-contract/src/skills.ts:112:9'],
+                        },
+                      ],
+                      semantics: {
+                        type: 'AbilityEntityDefinitionNumber',
+                        unionVariants: [
+                          { type: 'number' },
+                          {
+                            type: '{ readonly blackboardKey: string; readonly fallback: number; }',
+                          },
+                        ],
+                      },
+                      source: ['packages/game-data-contract/src/skills.ts:112:9'],
+                      description: '创建后持续的秒数。',
+                    },
+                  },
+                  semantics: {
+                    type: '{ readonly kind: "limited"; readonly durationSeconds: AbilityEntityDefinitionNumber; }',
+                  },
+                  source: ['packages/game-data-contract/src/skills.ts:107:3'],
+                },
+                {
+                  kind: 'object',
+                  fields: {
+                    kind: {
+                      kind: 'enum',
+                      options: ['infinite'],
+                      semantics: { type: '"infinite"' },
+                      source: ['packages/game-data-contract/src/skills.ts:117:9'],
+                      description: '无限生命周期判别值。',
+                    },
+                  },
+                  semantics: { type: '{ readonly kind: "infinite"; }' },
+                  source: ['packages/game-data-contract/src/skills.ts:107:3'],
+                },
+              ],
+              semantics: {
+                type: '{ readonly kind: "limited"; readonly durationSeconds: AbilityEntityDefinitionNumber; } | { readonly kind: "infinite"; }',
+                unionVariants: [
+                  {
+                    type: '{ readonly kind: "limited"; readonly durationSeconds: AbilityEntityDefinitionNumber; }',
+                  },
+                  { type: '{ readonly kind: "infinite"; }' },
+                ],
+              },
+              source: ['packages/game-data-contract/src/skills.ts:107:3'],
+              description: '能力实体的寿命：限定秒数或无限持续。',
+            },
+            deathReleaseDelaySeconds: {
+              kind: 'number',
+              semantics: { type: 'number | undefined', optional: true },
+              source: ['packages/game-data-contract/src/skills.ts:120:3'],
+              optional: true,
+              description: '实体死亡后仍留在 owner children / finder 目录中的控制器回收延迟。',
+            },
+            maxStackingCount: {
+              kind: 'union',
+              variants: [
+                {
+                  kind: 'number',
+                  semantics: { type: 'number' },
+                  source: ['packages/game-data-contract/src/skills.ts:122:3'],
+                },
+                {
+                  kind: 'object',
+                  fields: actionSchemaPart_9dfd7c2db06aeea7,
+                  semantics: {
+                    type: '{ readonly blackboardKey: string; readonly fallback: number; }',
+                  },
+                  source: ['packages/game-data-contract/src/skills.ts:122:3'],
+                },
+              ],
+              semantics: {
+                type: 'AbilityEntityDefinitionNumber | undefined',
+                optional: true,
+                unionVariants: [
+                  { type: 'number' },
+                  { type: '{ readonly blackboardKey: string; readonly fallback: number; }' },
+                ],
+              },
+              source: ['packages/game-data-contract/src/skills.ts:122:3'],
+              optional: true,
+              description: '正数时，同模板新实例会按原生 Group.Add 语义同步释放最早实例。',
+            },
+            childSkill: {
+              kind: 'opaque',
+              fallback: { reason: 'owned-resource-boundary' },
+              semantics: { type: 'AbilityEntityChildSkillDefinition | undefined', optional: true },
+              source: ['packages/game-data-contract/src/skills.ts:124:3'],
+              optional: true,
+              description: '该模板只使用一个子技能时的简写定义。',
+            },
+            childSkills: {
+              kind: 'record',
+              value: {
+                kind: 'opaque',
+                fallback: { reason: 'owned-resource-boundary' },
+                semantics: { type: 'AbilityEntityChildSkillDefinition' },
+                source: ['packages/game-data-contract/src/skills.ts:126:3'],
+              },
+              semantics: {
+                type: 'Readonly<Record<string, AbilityEntityChildSkillDefinition>> | undefined',
+                recordValue: { type: 'AbilityEntityChildSkillDefinition' },
+                optional: true,
+              },
+              source: ['packages/game-data-contract/src/skills.ts:126:3'],
+              optional: true,
+              description: '同一原生实体模板可由不同 Spawn 动作绑定不同子技能；键为原生技能 ID。',
+            },
+            passiveSkills: {
+              kind: 'array',
+              element: {
+                kind: 'opaque',
+                fallback: { reason: 'owned-resource-boundary' },
+                semantics: { type: 'AbilityEntityPassiveSkillDefinition' },
+                source: ['packages/game-data-contract/src/skills.ts:128:3'],
+              },
+              semantics: {
+                type: 'readonly AbilityEntityPassiveSkillDefinition[] | undefined',
+                arrayElement: { type: 'AbilityEntityPassiveSkillDefinition' },
+                optional: true,
+              },
+              source: ['packages/game-data-contract/src/skills.ts:128:3'],
+              optional: true,
+              description: '能力实体启用期间安装的被动技能。',
+            },
+          },
+          semantics: { type: 'AbilityEntityDefinition | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:401:5'],
+          optional: true,
+        },
         path: ['parameters', 'definition'],
         label: 'definition',
         description: '手写定义可暂时内联；生成定义从干员或只读公共定义表按 ID 解析。',
         type: 'AbilityEntityDefinition',
         required: false,
         control: 'json',
+        semantics: { type: 'AbilityEntityDefinition | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:401:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:403:5'],
+          optional: true,
+        },
         path: ['parameters', 'inheritActionBlackboard'],
         label: 'inheritActionBlackboard',
         description: '原生 assignBlackboard：生成时把当前动作黑板复制为实体黑板初值。',
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: { type: 'boolean | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:403:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:405:5'],
+          optional: true,
+        },
         path: ['parameters', 'inheritSourceSkillCastInfo'],
         label: 'inheritSourceSkillCastInfo',
         description:
@@ -565,16 +1922,37 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: { type: 'boolean | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:405:5'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:407:5'],
+          optional: true,
+        },
         path: ['parameters', 'childSkillId'],
         label: 'childSkillId',
         description: '从实体模板的具名子技能集合选择本次 Spawn 绑定的原生子技能。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: { type: 'string | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:407:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['caster', 'currentAbilityEntity'],
+          semantics: {
+            type: '"caster" | "currentAbilityEntity" | undefined',
+            optional: true,
+            unionVariants: [{ type: '"caster"' }, { type: '"currentAbilityEntity"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:412:5'],
+          optional: true,
+        },
         path: ['parameters', 'source'],
         label: 'source',
         description:
@@ -583,8 +1961,21 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: false,
         control: 'select',
         options: ['caster', 'currentAbilityEntity'],
+        semantics: {
+          type: '"caster" | "currentAbilityEntity" | undefined',
+          optional: true,
+          unionVariants: [{ type: '"caster"' }, { type: '"currentAbilityEntity"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:412:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['enemy', 'caster', 'currentAbilityEntity'],
+          semantics: actionSchemaPart_aa9b9945db0d4d7e,
+          source: ['packages/game-data-contract/src/actions.ts:414:5'],
+          optional: true,
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '生成位置锚点；Buff 局部时间线中的 Owner 是当前 Buff 宿主能力实体。',
@@ -592,54 +1983,195 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: false,
         control: 'select',
         options: ['enemy', 'caster', 'currentAbilityEntity'],
+        semantics: actionSchemaPart_aa9b9945db0d4d7e,
+        source: ['packages/game-data-contract/src/actions.ts:414:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:416:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:416:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:416:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:416:5'],
+            },
+          ],
+          semantics: {
+            type: 'ActionValueOperand | undefined',
+            aliases: ['ActionValueOperand'],
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/actions.ts:416:5'],
+          optional: true,
+        },
         path: ['parameters', 'overrideDurationSeconds'],
         label: 'overrideDurationSeconds',
         description: '用动作数值覆盖模板持续时间。',
         type: 'ActionValueOperand',
         required: false,
         control: 'operand',
+        semantics: {
+          type: 'ActionValueOperand | undefined',
+          aliases: ['ActionValueOperand'],
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/actions.ts:416:5'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:418:5'],
+          optional: true,
+        },
         path: ['parameters', 'saveToContextKey'],
         label: 'saveToContextKey',
         description: '保存新实体的动作环境键。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: { type: 'string | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:418:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean' },
+          source: ['packages/game-data-contract/src/actions.ts:420:5'],
+        },
         path: ['parameters', 'dieWhenSourceDies'],
         label: 'dieWhenSourceDies',
         description: '来源结束时是否同步结束实体。',
         type: 'boolean',
         required: true,
         control: 'boolean',
+        semantics: { type: 'boolean' },
+        source: ['packages/game-data-contract/src/actions.ts:420:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:422:5'],
+          optional: true,
+        },
         path: ['parameters', 'finishByAction'],
         label: 'finishByAction',
         description: '原生 dieOnEnd：生成动作结束时同步结束本动作创建的实体。',
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: { type: 'boolean | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:422:5'],
       },
       {
+        valueSchema: {
+          kind: 'record',
+          value: {
+            kind: 'union',
+            variants: [
+              {
+                kind: 'object',
+                fields: actionSchemaPart_80825b09887cd9ab,
+                semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+                source: ['packages/game-data-contract/src/actions.ts:424:5'],
+              },
+              {
+                kind: 'object',
+                fields: actionSchemaPart_3f870f38207524cc,
+                semantics: {
+                  type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+                },
+                source: ['packages/game-data-contract/src/actions.ts:424:5'],
+              },
+              {
+                kind: 'object',
+                fields: actionSchemaPart_08cc55a541270d02,
+                semantics: { type: '{ kind: "constant"; value: number; }' },
+                source: ['packages/game-data-contract/src/actions.ts:424:5'],
+              },
+              {
+                kind: 'object',
+                fields: actionSchemaPart_bc1411c64bfee9b9,
+                semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+                source: ['packages/game-data-contract/src/actions.ts:424:5'],
+              },
+            ],
+            semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+            source: ['packages/game-data-contract/src/actions.ts:424:5'],
+          },
+          semantics: {
+            type: 'Readonly<Record<string, ActionValueOperand>> | undefined',
+            recordValue: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/actions.ts:424:5'],
+          optional: true,
+        },
         path: ['parameters', 'blackboardAssignments'],
         label: 'blackboardAssignments',
         description: '从当前动作黑板计算并覆盖实体黑板的数值。',
         type: 'Readonly<Record<string, ActionValueOperand>>',
         required: false,
         control: 'json',
+        semantics: {
+          type: 'Readonly<Record<string, ActionValueOperand>> | undefined',
+          recordValue: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/actions.ts:424:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'record',
+          value: {
+            kind: 'string',
+            semantics: { type: 'string' },
+            source: ['packages/game-data-contract/src/actions.ts:426:5'],
+          },
+          semantics: {
+            type: 'Readonly<Record<string, string>> | undefined',
+            recordValue: { type: 'string' },
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/actions.ts:426:5'],
+          optional: true,
+        },
         path: ['parameters', 'stringBlackboardAssignments'],
         label: 'stringBlackboardAssignments',
         description: '原生 SpawnAbilityEntity 的直接字符串赋值；与数值操作数分开保存。',
         type: 'Readonly<Record<string, string>>',
         required: false,
         control: 'json',
+        semantics: {
+          type: 'Readonly<Record<string, string>> | undefined',
+          recordValue: { type: 'string' },
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/actions.ts:426:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
     ],
   },
@@ -647,23 +2179,38 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'applyElementalInfliction',
     description: '为目标增加一层元素附着并触发相应事件。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:431:5'],
+          optional: true,
+        },
         path: ['parameters', 'inverseReaction'],
         label: 'inverseReaction',
         description: '只交换复合状态的选表顺序，不改变实际消耗的附着与事件元素。',
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: { type: 'boolean | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:431:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['heat', 'cryo', 'electric', 'nature'],
+          semantics: {
+            type: '"heat" | "cryo" | "electric" | "nature"',
+            unionVariants: [
+              { type: '"heat"' },
+              { type: '"cryo"' },
+              { type: '"electric"' },
+              { type: '"nature"' },
+            ],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:433:5'],
+        },
         path: ['parameters', 'element'],
         label: 'element',
         description: '要施加的元素。',
@@ -671,16 +2218,44 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['heat', 'cryo', 'electric', 'nature'],
+        semantics: {
+          type: '"heat" | "cryo" | "electric" | "nature"',
+          unionVariants: [
+            { type: '"heat"' },
+            { type: '"cryo"' },
+            { type: '"electric"' },
+            { type: '"nature"' },
+          ],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:433:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean' },
+          source: ['packages/game-data-contract/src/actions.ts:435:5'],
+        },
         path: ['parameters', 'isExtra'],
         label: 'isExtra',
         description: '是否作为额外附着传播到事件上下文。',
         type: 'boolean',
         required: true,
         control: 'boolean',
+        semantics: { type: 'boolean' },
+        source: ['packages/game-data-contract/src/actions.ts:435:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['enemy', 'buffOwner'],
+          semantics: {
+            type: '"enemy" | "buffOwner" | undefined',
+            optional: true,
+            unionVariants: [{ type: '"enemy"' }, { type: '"buffOwner"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:437:5'],
+          optional: true,
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description:
@@ -689,6 +2264,12 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: false,
         control: 'select',
         options: ['enemy', 'buffOwner'],
+        semantics: {
+          type: '"enemy" | "buffOwner" | undefined',
+          optional: true,
+          unionVariants: [{ type: '"enemy"' }, { type: '"buffOwner"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:437:5'],
       },
     ],
   },
@@ -696,31 +2277,44 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'triggerCustomAbilityEvent',
     description: '在施放者 AbilitySystem 上同步发布一个已命名的原生自定义事件。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:447:5'],
+        },
         path: ['parameters', 'eventName'],
         label: 'eventName',
         description: '发布的自定义事件名称。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:447:5'],
       },
       {
+        valueSchema: {
+          kind: 'number',
+          semantics: { type: 'number' },
+          source: ['packages/game-data-contract/src/actions.ts:449:5'],
+        },
         path: ['parameters', 'eventParam'],
         label: 'eventParam',
         description: '随事件发送的浮点参数。',
         type: 'number',
         required: true,
         control: 'number',
+        semantics: { type: 'number' },
+        source: ['packages/game-data-contract/src/actions.ts:449:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['caster'],
+          semantics: { type: '"caster"' },
+          source: ['packages/game-data-contract/src/actions.ts:451:5'],
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '事件发布到施法者的能力系统。',
@@ -728,8 +2322,21 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['caster'],
+        semantics: { type: '"caster"' },
+        source: ['packages/game-data-contract/src/actions.ts:451:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['caster', 'currentAbilityEntity'],
+          semantics: {
+            type: '"caster" | "currentAbilityEntity" | undefined',
+            optional: true,
+            unionVariants: [{ type: '"caster"' }, { type: '"currentAbilityEntity"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:453:5'],
+          optional: true,
+        },
         path: ['parameters', 'source'],
         label: 'source',
         description: '省略沿用旧定义的 caster；能力实体子技能可保留原生 ActionOwner 事件来源身份。',
@@ -737,6 +2344,12 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: false,
         control: 'select',
         options: ['caster', 'currentAbilityEntity'],
+        semantics: {
+          type: '"caster" | "currentAbilityEntity" | undefined',
+          optional: true,
+          unionVariants: [{ type: '"caster"' }, { type: '"currentAbilityEntity"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:453:5'],
       },
     ],
   },
@@ -744,15 +2357,39 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'castSkillDuringAction',
     description: '原生 CastSkill：动作栈返回后覆盖写入 AbilitySystem 的单槽延迟施放请求。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'string',
+              semantics: { type: 'string' },
+              source: ['packages/game-data-contract/src/actions.ts:458:5'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                blackboardKey: {
+                  kind: 'string',
+                  semantics: { type: 'string' },
+                  source: ['packages/game-data-contract/src/primitives.ts:63:7'],
+                  description: '读取字符串的当前动作黑板键。',
+                },
+              },
+              semantics: { type: '{ readonly blackboardKey: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:458:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_433c3c2f8f163db2,
+              semantics: { type: '{ readonly kind: "stringNode"; readonly nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:458:5'],
+            },
+          ],
+          semantics: { type: 'ActionStringOperand', aliases: ['ActionStringOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:458:5'],
+        },
         path: ['parameters', 'skillId'],
         label: 'skillId',
         description:
@@ -760,8 +2397,25 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         type: 'ActionStringOperand',
         required: true,
         control: 'json',
+        semantics: { type: 'ActionStringOperand', aliases: ['ActionStringOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:458:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['enemy', 'caster', 'actionInputTarget', 'context'],
+          semantics: {
+            type: '"enemy" | "caster" | "actionInputTarget" | "context"',
+            unionVariants: [
+              { type: '"caster"' },
+              { type: '"enemy"' },
+              { type: '"actionInputTarget"' },
+              { type: '"context"' },
+            ],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:460:5'],
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '延迟请求的目标；actionInputTarget 读取当前动作输入，事件回调中由事件绑定。',
@@ -769,38 +2423,78 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['enemy', 'caster', 'actionInputTarget', 'context'],
+        semantics: {
+          type: '"enemy" | "caster" | "actionInputTarget" | "context"',
+          unionVariants: [
+            { type: '"caster"' },
+            { type: '"enemy"' },
+            { type: '"actionInputTarget"' },
+            { type: '"context"' },
+          ],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:460:5'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:462:5'],
+          optional: true,
+        },
         path: ['parameters', 'targetContextKey'],
         label: 'targetContextKey',
         description: 'target=context 时读取保存的目标组；当前技能输入支持空组或单个实体。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: { type: 'string | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:462:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean' },
+          source: ['packages/game-data-contract/src/actions.ts:464:5'],
+        },
         path: ['parameters', 'skipApplyCost'],
         label: 'skipApplyCost',
         description: '是否跳过目标技能自己的资源消耗。',
         type: 'boolean',
         required: true,
         control: 'boolean',
+        semantics: { type: 'boolean' },
+        source: ['packages/game-data-contract/src/actions.ts:464:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean' },
+          source: ['packages/game-data-contract/src/actions.ts:466:5'],
+        },
         path: ['parameters', 'inheritSourceSkillCastInfo'],
         label: 'inheritSourceSkillCastInfo',
         description: '是否把当前施法身份传给目标技能。',
         type: 'boolean',
         required: true,
         control: 'boolean',
+        semantics: { type: 'boolean' },
+        source: ['packages/game-data-contract/src/actions.ts:466:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:468:5'],
+          optional: true,
+        },
         path: ['parameters', 'interruptCurrentSkillOnlyWhenTargetCastable'],
         label: 'interruptCurrentSkillOnlyWhenTargetCastable',
         description: '目标技能不可施放时保留当前技能；省略表示旧版无条件消费延迟请求。',
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: { type: 'boolean | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:468:5'],
       },
     ],
   },
@@ -808,15 +2502,14 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'applyKnockDown',
     description: '普通根倒地动作；破防与状态 Buff 由公共目录解析，不等同于输出一次成功事件。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'enum',
+          options: ['enemy'],
+          semantics: { type: '"enemy"' },
+          source: ['packages/game-data-contract/src/actions.ts:473:5'],
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '当前只支持对固定敌人施加倒地。',
@@ -824,32 +2517,92 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['enemy'],
+        semantics: { type: '"enemy"' },
+        source: ['packages/game-data-contract/src/actions.ts:473:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:475:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:475:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:475:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:475:5'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:475:5'],
+        },
         path: ['parameters', 'duration'],
         label: 'duration',
         description: '倒地持续秒数。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:475:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean' },
+          source: ['packages/game-data-contract/src/actions.ts:477:5'],
+        },
         path: ['parameters', 'force'],
         label: 'force',
         description: '是否强制覆盖目标当前控制状态。',
         type: 'boolean',
         required: true,
         control: 'boolean',
+        semantics: { type: 'boolean' },
+        source: ['packages/game-data-contract/src/actions.ts:477:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean' },
+          source: ['packages/game-data-contract/src/actions.ts:479:5'],
+        },
         path: ['parameters', 'isExtra'],
         label: 'isExtra',
         description: '是否作为额外物理异常传播到事件上下文。',
         type: 'boolean',
         required: true,
         control: 'boolean',
+        semantics: { type: 'boolean' },
+        source: ['packages/game-data-contract/src/actions.ts:479:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['aliveOnly', 'skipAll'],
+          semantics: {
+            type: '"aliveOnly" | "skipAll"',
+            unionVariants: [{ type: '"aliveOnly"' }, { type: '"skipAll"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:481:5'],
+        },
         path: ['parameters', 'targetFilter'],
         label: 'targetFilter',
         description: '原生 AllValid/OnlyAlive 都只选存活目标；OnlyDead 实际跳过全部目标。',
@@ -857,8 +2610,19 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['aliveOnly', 'skipAll'],
+        semantics: {
+          type: '"aliveOnly" | "skipAll"',
+          unionVariants: [{ type: '"aliveOnly"' }, { type: '"skipAll"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:481:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['always', 'successAndInterrupted', 'success', 'interrupted'],
+          semantics: actionSchemaPart_726a48383a9b568f,
+          source: ['packages/game-data-contract/src/actions.ts:483:5'],
+        },
         path: ['parameters', 'returnWhen'],
         label: 'returnWhen',
         description: '动作根据成功和打断结果返回的时机。',
@@ -866,6 +2630,8 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['always', 'successAndInterrupted', 'success', 'interrupted'],
+        semantics: actionSchemaPart_726a48383a9b568f,
+        source: ['packages/game-data-contract/src/actions.ts:483:5'],
       },
     ],
   },
@@ -874,15 +2640,17 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     description:
       '对固定敌人执行物理异常入口。公共 Buff 蓝图随使用点内联，运行时按目标当前层数\n选择首次破防或后续异常链，不把公共 Buff 变成可编辑的项目级钻石依赖。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'enum',
+          options: ['enemy'],
+          semantics: {
+            type: '"enemy"',
+            unionVariants: [{ type: '"enemy"' }, { type: '"enemy"' }, { type: '"enemy"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:491:5'],
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '当前只支持对固定敌人施加物理异常。',
@@ -890,32 +2658,126 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['enemy'],
+        semantics: {
+          type: "'enemy'",
+          unionVariants: [{ type: '"enemy"' }, { type: '"enemy"' }, { type: '"enemy"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:491:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: {
+            type: 'boolean',
+            unionVariants: [{ type: 'boolean' }, { type: 'boolean' }, { type: 'boolean' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:493:5'],
+        },
         path: ['parameters', 'isExtra'],
         label: 'isExtra',
         description: '是否作为额外物理异常传播到事件上下文。',
         type: 'boolean',
         required: true,
         control: 'boolean',
+        semantics: {
+          type: 'boolean',
+          unionVariants: [{ type: 'boolean' }, { type: 'boolean' }, { type: 'boolean' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:493:5'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string',
+            unionVariants: [{ type: 'string' }, { type: 'string' }, { type: 'string' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:495:5'],
+        },
         path: ['parameters', 'noGuardBuffId'],
         label: 'noGuardBuffId',
         description: '目标首次进入破防时使用的 Buff ID。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: {
+          type: 'string',
+          unionVariants: [{ type: 'string' }, { type: 'string' }, { type: 'string' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:495:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'opaque',
+              fallback: { reason: 'owned-resource-boundary' },
+              semantics: {
+                type: 'StaticBuffDefinition',
+                unionVariants: [
+                  { type: 'StaticBuffDefinition' },
+                  { type: 'StaticBuffDefinition' },
+                  { type: 'StaticBuffDefinition' },
+                ],
+              },
+              source: ['packages/game-data-contract/src/actions.ts:497:5'],
+            },
+            {
+              kind: 'opaque',
+              fallback: { reason: 'owned-resource-boundary' },
+              semantics: {
+                type: 'Omit<BuffDefinitionProperties, "damageModifiers"> & { readonly actionGraph?: ActionGraphResourceDefinition | undefined; ... 7 more ...; presentation?: CombatBuffPresentation | undefined; } & { ...; }',
+                unionVariants: [
+                  actionSchemaPart_29ed4eefc4c61701,
+                  actionSchemaPart_29ed4eefc4c61701,
+                  actionSchemaPart_29ed4eefc4c61701,
+                ],
+              },
+              source: ['packages/game-data-contract/src/actions.ts:497:5'],
+            },
+          ],
+          semantics: actionSchemaPart_029a77c3a2392a82,
+          source: ['packages/game-data-contract/src/actions.ts:497:5'],
+        },
         path: ['parameters', 'noGuardDefinition'],
         label: 'noGuardDefinition',
         description: '首次破防 Buff 的完整定义。',
         type: 'SkillBuffDefinition',
         required: true,
         control: 'resource',
+        semantics: actionSchemaPart_029a77c3a2392a82,
+        source: ['packages/game-data-contract/src/actions.ts:497:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'enum',
+              options: ['fracture'],
+              semantics: { type: '"fracture"' },
+              source: ['packages/game-data-contract/src/actions.ts:501:9'],
+            },
+            {
+              kind: 'enum',
+              options: ['crush'],
+              semantics: { type: '"crush"' },
+              source: ['packages/game-data-contract/src/actions.ts:509:9'],
+            },
+            {
+              kind: 'enum',
+              options: ['airborne'],
+              semantics: { type: '"airborne"' },
+              source: ['packages/game-data-contract/src/actions.ts:521:9'],
+            },
+          ],
+          source: [
+            'packages/game-data-contract/src/actions.ts:501:9',
+            'packages/game-data-contract/src/actions.ts:509:9',
+            'packages/game-data-contract/src/actions.ts:521:9',
+          ],
+        },
         path: ['parameters', 'type'],
         label: 'type',
         description: '破裂。\n粉碎。\n击飞。',
@@ -923,104 +2785,345 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['fracture', 'crush', 'airborne'],
+        semantics: {
+          type: "'fracture' | 'crush' | 'airborne'",
+          unionVariants: [{ type: '"fracture"' }, { type: '"crush"' }, { type: '"airborne"' }],
+        },
+        source: [
+          'packages/game-data-contract/src/actions.ts:501:9',
+          'packages/game-data-contract/src/actions.ts:509:9',
+          'packages/game-data-contract/src/actions.ts:521:9',
+        ],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:503:9'],
+          optional: true,
+        },
         path: ['parameters', 'fractureBuffId'],
         label: 'fractureBuffId',
         description: '破裂 Buff ID。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:503:9'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'opaque',
+              fallback: { reason: 'owned-resource-boundary' },
+              semantics: { type: 'StaticBuffDefinition' },
+              source: ['packages/game-data-contract/src/actions.ts:505:9'],
+            },
+            {
+              kind: 'opaque',
+              fallback: { reason: 'owned-resource-boundary' },
+              semantics: actionSchemaPart_29ed4eefc4c61701,
+              source: ['packages/game-data-contract/src/actions.ts:505:9'],
+            },
+          ],
+          semantics: actionSchemaPart_e8015229e9523ae4,
+          source: ['packages/game-data-contract/src/actions.ts:505:9'],
+          optional: true,
+        },
         path: ['parameters', 'fractureDefinition'],
         label: 'fractureDefinition',
         description: '破裂 Buff 定义。',
         type: 'SkillBuffDefinition',
         required: false,
         control: 'resource',
+        semantics: actionSchemaPart_e8015229e9523ae4,
+        source: ['packages/game-data-contract/src/actions.ts:505:9'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:511:9'],
+          optional: true,
+        },
         path: ['parameters', 'crushedBuffId'],
         label: 'crushedBuffId',
         description: '粉碎 Buff ID。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:511:9'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'opaque',
+              fallback: { reason: 'owned-resource-boundary' },
+              semantics: { type: 'StaticBuffDefinition' },
+              source: ['packages/game-data-contract/src/actions.ts:513:9'],
+            },
+            {
+              kind: 'opaque',
+              fallback: { reason: 'owned-resource-boundary' },
+              semantics: actionSchemaPart_29ed4eefc4c61701,
+              source: ['packages/game-data-contract/src/actions.ts:513:9'],
+            },
+          ],
+          semantics: actionSchemaPart_e8015229e9523ae4,
+          source: ['packages/game-data-contract/src/actions.ts:513:9'],
+          optional: true,
+        },
         path: ['parameters', 'crushedDefinition'],
         label: 'crushedDefinition',
         description: '粉碎 Buff 定义。',
         type: 'SkillBuffDefinition',
         required: false,
         control: 'resource',
+        semantics: actionSchemaPart_e8015229e9523ae4,
+        source: ['packages/game-data-contract/src/actions.ts:513:9'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:515:9'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:515:9'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:515:9'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:515:9'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:515:9'],
+          optional: true,
+        },
         path: ['parameters', 'damageMultiplier'],
         label: 'damageMultiplier',
         description: '粉碎伤害倍率。',
         type: 'ActionValueOperand',
         required: false,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:515:9'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean' },
+          source: ['packages/game-data-contract/src/actions.ts:517:9'],
+          optional: true,
+        },
         path: ['parameters', 'ignoreHitEffect'],
         label: 'ignoreHitEffect',
         description: '是否跳过命中特效。',
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: { type: 'boolean' },
+        source: ['packages/game-data-contract/src/actions.ts:517:9'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:523:9'],
+          optional: true,
+        },
         path: ['parameters', 'airborneBuffId'],
         label: 'airborneBuffId',
         description: '击飞 Buff ID。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:523:9'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'opaque',
+              fallback: { reason: 'owned-resource-boundary' },
+              semantics: { type: 'StaticBuffDefinition' },
+              source: ['packages/game-data-contract/src/actions.ts:525:9'],
+            },
+            {
+              kind: 'opaque',
+              fallback: { reason: 'owned-resource-boundary' },
+              semantics: actionSchemaPart_29ed4eefc4c61701,
+              source: ['packages/game-data-contract/src/actions.ts:525:9'],
+            },
+          ],
+          semantics: actionSchemaPart_e8015229e9523ae4,
+          source: ['packages/game-data-contract/src/actions.ts:525:9'],
+          optional: true,
+        },
         path: ['parameters', 'airborneDefinition'],
         label: 'airborneDefinition',
         description: '击飞 Buff 定义。',
         type: 'SkillBuffDefinition',
         required: false,
         control: 'resource',
+        semantics: actionSchemaPart_e8015229e9523ae4,
+        source: ['packages/game-data-contract/src/actions.ts:525:9'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:527:9'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:527:9'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:527:9'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:527:9'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:527:9'],
+          optional: true,
+        },
         path: ['parameters', 'duration'],
         label: 'duration',
         description: '击飞持续秒数。',
         type: 'ActionValueOperand',
         required: false,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:527:9'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:529:9'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:529:9'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:529:9'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:529:9'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:529:9'],
+          optional: true,
+        },
         path: ['parameters', 'height'],
         label: 'height',
         description: '原生击飞高度。',
         type: 'ActionValueOperand',
         required: false,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:529:9'],
       },
       {
+        valueSchema: {
+          kind: 'number',
+          semantics: { type: 'number' },
+          source: ['packages/game-data-contract/src/actions.ts:531:9'],
+          optional: true,
+        },
         path: ['parameters', 'speedFactorMultiplier'],
         label: 'speedFactorMultiplier',
         description: '原生移动速度系数。',
         type: 'number',
         required: false,
         control: 'number',
+        semantics: { type: 'number' },
+        source: ['packages/game-data-contract/src/actions.ts:531:9'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean' },
+          source: ['packages/game-data-contract/src/actions.ts:533:9'],
+          optional: true,
+        },
         path: ['parameters', 'force'],
         label: 'force',
         description: '是否强制覆盖目标当前控制状态。',
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: { type: 'boolean' },
+        source: ['packages/game-data-contract/src/actions.ts:533:9'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['aliveOnly', 'skipAll'],
+          semantics: {
+            type: '"aliveOnly" | "skipAll"',
+            unionVariants: [{ type: '"aliveOnly"' }, { type: '"skipAll"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:535:9'],
+          optional: true,
+        },
         path: ['parameters', 'targetFilter'],
         label: 'targetFilter',
         description: '原生 AllValid/OnlyAlive 都只选存活目标；OnlyDead 实际跳过全部目标。',
@@ -1028,8 +3131,20 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: false,
         control: 'select',
         options: ['aliveOnly', 'skipAll'],
+        semantics: {
+          type: '"aliveOnly" | "skipAll"',
+          unionVariants: [{ type: '"aliveOnly"' }, { type: '"skipAll"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:535:9'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['always', 'successAndInterrupted', 'success', 'interrupted'],
+          semantics: actionSchemaPart_726a48383a9b568f,
+          source: ['packages/game-data-contract/src/actions.ts:537:9'],
+          optional: true,
+        },
         path: ['parameters', 'returnWhen'],
         label: 'returnWhen',
         description: '动作根据成功和打断结果返回的时机。',
@@ -1037,6 +3152,8 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: false,
         control: 'select',
         options: ['always', 'successAndInterrupted', 'success', 'interrupted'],
+        semantics: actionSchemaPart_726a48383a9b568f,
+        source: ['packages/game-data-contract/src/actions.ts:537:9'],
       },
     ],
   },
@@ -1044,15 +3161,17 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'applyElementalReaction',
     description: '在目标身上创建一个有持续时间和效果系数的复合元素反应。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'enum',
+          options: ['electrification', 'corrosion'],
+          semantics: {
+            type: '"electrification" | "corrosion"',
+            unionVariants: [{ type: '"electrification"' }, { type: '"corrosion"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:543:5'],
+        },
         path: ['parameters', 'reaction'],
         label: 'reaction',
         description: '要创建的复合元素反应。',
@@ -1060,8 +3179,22 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['electrification', 'corrosion'],
+        semantics: {
+          type: '"electrification" | "corrosion"',
+          unionVariants: [{ type: '"electrification"' }, { type: '"corrosion"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:543:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['enemy', 'caster'],
+          semantics: {
+            type: '"enemy" | "caster"',
+            unionVariants: [{ type: '"enemy"' }, { type: '"caster"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:545:5'],
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '反应作用的对象。',
@@ -1069,30 +3202,103 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['enemy', 'caster'],
+        semantics: {
+          type: '"enemy" | "caster"',
+          unionVariants: [{ type: '"enemy"' }, { type: '"caster"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:545:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'number',
+              semantics: { type: 'number' },
+              source: ['packages/game-data-contract/src/actions.ts:547:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:547:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:547:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:547:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:547:5'],
+            },
+          ],
+          semantics: {
+            type: 'number | ActionValueOperand',
+            unionVariants: [
+              { type: 'number' },
+              { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+            ],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:547:5'],
+        },
         path: ['parameters', 'durationSeconds'],
         label: 'durationSeconds',
         description: '原生反应触发 Buff 可从当前动作黑板转交持续时间。',
         type: 'number | ActionValueOperand',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'number | ActionValueOperand',
+          unionVariants: [
+            { type: 'number' },
+            { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          ],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:547:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'number',
+          semantics: { type: 'number | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:549:5'],
+          optional: true,
+        },
         path: ['parameters', 'durationMultiplier'],
         label: 'durationMultiplier',
         description: '构筑期持续时间修正；与动作黑板基础时长分离。',
         type: 'number',
         required: false,
         control: 'number',
+        semantics: { type: 'number | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:549:5'],
       },
       {
+        valueSchema: {
+          kind: 'number',
+          semantics: { type: 'number' },
+          source: ['packages/game-data-contract/src/actions.ts:551:5'],
+        },
         path: ['parameters', 'effectiveness'],
         label: 'effectiveness',
         description: '反应效果系数。',
         type: 'number',
         required: true,
         control: 'number',
+        semantics: { type: 'number' },
+        source: ['packages/game-data-contract/src/actions.ts:551:5'],
       },
     ],
   },
@@ -1100,15 +3306,17 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'consumeElementalReaction',
     description: '从目标身上移除一个复合元素反应。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'enum',
+          options: ['electrification', 'corrosion'],
+          semantics: {
+            type: '"electrification" | "corrosion"',
+            unionVariants: [{ type: '"electrification"' }, { type: '"corrosion"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:556:5'],
+        },
         path: ['parameters', 'reaction'],
         label: 'reaction',
         description: '要移除的元素反应。',
@@ -1116,8 +3324,19 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['electrification', 'corrosion'],
+        semantics: {
+          type: '"electrification" | "corrosion"',
+          unionVariants: [{ type: '"electrification"' }, { type: '"corrosion"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:556:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['enemy'],
+          semantics: { type: '"enemy"' },
+          source: ['packages/game-data-contract/src/actions.ts:558:5'],
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '当前只支持从敌人身上移除。',
@@ -1125,6 +3344,8 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['enemy'],
+        semantics: { type: '"enemy"' },
+        source: ['packages/game-data-contract/src/actions.ts:558:5'],
       },
     ],
   },
@@ -1132,15 +3353,17 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'outputAirborne',
     description: '报告一次对固定目标成功输出浮空；木桩模型不保存位移、朝向或控制状态。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'enum',
+          options: ['enemy', 'caster'],
+          semantics: {
+            type: '"enemy" | "caster"',
+            unionVariants: [{ type: '"enemy"' }, { type: '"caster"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:563:5'],
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '接收击飞的对象。',
@@ -1148,6 +3371,11 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['enemy', 'caster'],
+        semantics: {
+          type: '"enemy" | "caster"',
+          unionVariants: [{ type: '"enemy"' }, { type: '"caster"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:563:5'],
       },
     ],
   },
@@ -1155,16 +3383,40 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'dealDamage',
     description: '造成一次按攻击力或属性计算的伤害。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
+        valueSchema: {
+          kind: 'enum',
+          options: ['physical', 'heat', 'cryo', 'electric', 'nature', 'true', 'lifeDrain', 'ether'],
+          semantics: actionSchemaPart_3b098870902a8933,
+          source: ['packages/game-data-contract/src/actions.ts:93:3'],
+        },
+        path: ['parameters', 'damageType'],
+        label: 'damageType',
+        description: '本次生命伤害的类型。',
+        type: 'DamageType',
+        required: true,
+        control: 'select',
+        options: ['physical', 'heat', 'cryo', 'electric', 'nature', 'true', 'lifeDrain', 'ether'],
+        semantics: actionSchemaPart_3b098870902a8933,
+        source: ['packages/game-data-contract/src/actions.ts:93:3'],
       },
-      actionSchemaPart_4eda6c224d74fb65,
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['standard', 'breakingAttack', 'attribute'],
+          semantics: {
+            type: '"standard" | "breakingAttack" | "attribute" | undefined',
+            optional: true,
+            unionVariants: [
+              { type: '"standard"' },
+              { type: '"breakingAttack"' },
+              { type: '"attribute"' },
+            ],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:95:3'],
+          optional: true,
+        },
         path: ['parameters', 'calculation'],
         label: 'calculation',
         description: '生成基础伤害所用的公式；标准攻击倍率路径可省略。',
@@ -1172,49 +3424,283 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: false,
         control: 'select',
         options: ['standard', 'breakingAttack', 'attribute'],
+        semantics: {
+          type: '"standard" | "breakingAttack" | "attribute" | undefined',
+          optional: true,
+          unionVariants: [
+            { type: '"standard"' },
+            { type: '"breakingAttack"' },
+            { type: '"attribute"' },
+          ],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:95:3'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'number',
+              semantics: { type: 'number' },
+              source: ['packages/game-data-contract/src/actions.ts:97:3'],
+            },
+            {
+              kind: 'array',
+              element: {
+                kind: 'number',
+                semantics: { type: 'number' },
+                source: ['packages/game-data-contract/src/actions.ts:97:3'],
+              },
+              semantics: { type: 'readonly number[]', arrayElement: { type: 'number' } },
+              source: ['packages/game-data-contract/src/actions.ts:97:3'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:97:3'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:97:3'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:97:3'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:97:3'],
+            },
+          ],
+          semantics: {
+            type: 'LevelValues | ActionValueOperand',
+            unionVariants: [
+              { type: 'LevelValues', aliases: ['LevelValues'] },
+              { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+            ],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:97:3'],
+        },
         path: ['parameters', 'attackScale'],
         label: 'attackScale',
         description: '单次命中的攻击倍率；原生允许在命中前通过动作黑板动态计算。',
         type: 'LevelValues | ActionValueOperand',
         required: true,
         control: 'levelValues',
+        semantics: {
+          type: 'LevelValues | ActionValueOperand',
+          unionVariants: [
+            { type: 'LevelValues', aliases: ['LevelValues'] },
+            { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          ],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:97:3'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:99:3'],
+          optional: true,
+        },
         path: ['parameters', 'takeAttackSnapshot'],
         label: 'takeAttackSnapshot',
         description: '原生动作 Reset 时冻结本伤害单元的攻击计算结果，后续执行复用该值。',
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: { type: 'boolean | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:99:3'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'number',
+              semantics: { type: 'number' },
+              source: ['packages/game-data-contract/src/actions.ts:101:3'],
+            },
+            {
+              kind: 'array',
+              element: {
+                kind: 'number',
+                semantics: { type: 'number' },
+                source: ['packages/game-data-contract/src/actions.ts:101:3'],
+              },
+              semantics: { type: 'readonly number[]', arrayElement: { type: 'number' } },
+              source: ['packages/game-data-contract/src/actions.ts:101:3'],
+            },
+          ],
+          semantics: { type: 'LevelValues | undefined', aliases: ['LevelValues'], optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:101:3'],
+          optional: true,
+        },
         path: ['parameters', 'calculationMultiplier'],
         label: 'calculationMultiplier',
         description: '破防攻击计算中的逐命中倍率；标准伤害不得设置。',
         type: 'LevelValues',
         required: false,
         control: 'levelValues',
+        semantics: { type: 'LevelValues | undefined', aliases: ['LevelValues'], optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:101:3'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:103:3'],
+          optional: true,
+        },
         path: ['parameters', 'calculationAttribute'],
         label: 'calculationAttribute',
         description: 'MultiplyAttributeCalculation 读取的来源实体原生属性键。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: { type: 'string | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:103:3'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'number',
+              semantics: { type: 'number' },
+              source: ['packages/game-data-contract/src/actions.ts:105:3'],
+            },
+            {
+              kind: 'array',
+              element: {
+                kind: 'number',
+                semantics: { type: 'number' },
+                source: ['packages/game-data-contract/src/actions.ts:105:3'],
+              },
+              semantics: { type: 'readonly number[]', arrayElement: { type: 'number' } },
+              source: ['packages/game-data-contract/src/actions.ts:105:3'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:105:3'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:105:3'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:105:3'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:105:3'],
+            },
+          ],
+          semantics: actionSchemaPart_f49bdafe0a2efd47,
+          source: ['packages/game-data-contract/src/actions.ts:105:3'],
+          optional: true,
+        },
         path: ['parameters', 'calculationAddition'],
         label: 'calculationAddition',
         description: 'MultiplyAttributeCalculation 在属性乘算后追加的固定或黑板值。',
         type: 'LevelValues | ActionValueOperand',
         required: false,
         control: 'levelValues',
+        semantics: actionSchemaPart_f49bdafe0a2efd47,
+        source: ['packages/game-data-contract/src/actions.ts:105:3'],
       },
-      actionSchemaPart_edf7fd41d97a1bb4,
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'enum',
+            options: [
+              'normalAttack',
+              'normalAttackLastCombo',
+              'powerAttack',
+              'normalSkill',
+              'comboSkill',
+              'ultimateSkill',
+              'plungingAttack',
+              'dashAttack',
+              'fireBurst',
+              'electricBurst',
+              'cryoBurst',
+              'natureBurst',
+              'fireAbnormal',
+              'electricAbnormal',
+              'cryoAbnormal',
+              'natureAbnormal',
+            ],
+            semantics: actionSchemaPart_1fbfd66386e805e7,
+            source: ['packages/game-data-contract/src/actions.ts:107:3'],
+          },
+          semantics: actionSchemaPart_696ddc5ee252e88d,
+          source: ['packages/game-data-contract/src/actions.ts:107:3'],
+        },
+        path: ['parameters', 'tags'],
+        label: 'tags',
+        description: '本次伤害携带的技能和爆发分类标签。',
+        type: 'readonly DamageTag[]',
+        required: true,
+        control: 'multiselect',
+        options: [
+          'normalAttack',
+          'normalAttackLastCombo',
+          'powerAttack',
+          'normalSkill',
+          'comboSkill',
+          'ultimateSkill',
+          'plungingAttack',
+          'dashAttack',
+          'fireBurst',
+          'electricBurst',
+          'cryoBurst',
+          'natureBurst',
+          'fireAbnormal',
+          'electricAbnormal',
+          'cryoAbnormal',
+          'natureAbnormal',
+        ],
+        semantics: actionSchemaPart_696ddc5ee252e88d,
+        source: ['packages/game-data-contract/src/actions.ts:107:3'],
+      },
+      {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'string',
+            semantics: { type: 'string', aliases: ['GameplayTag'] },
+            source: ['packages/game-data-contract/src/actions.ts:109:3'],
+          },
+          semantics: {
+            type: 'readonly string[] | undefined',
+            arrayElement: { type: 'string', aliases: ['GameplayTag'] },
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/actions.ts:109:3'],
+          optional: true,
+        },
         path: ['parameters', 'gameplayTags'],
         label: 'gameplayTags',
         description:
@@ -1222,48 +3708,462 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         type: 'readonly GameplayTag[]',
         required: false,
         control: 'json',
+        semantics: {
+          type: 'readonly string[] | undefined',
+          arrayElement: { type: 'string', aliases: ['GameplayTag'] },
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/actions.ts:109:3'],
+        fallback: { reason: 'structured-editor-pending' },
       },
-      actionSchemaPart_1b0a537a4e7044ff,
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'enum',
+            options: [
+              'canBreakWeakness',
+              'crush',
+              'airborne',
+              'knockDown',
+              'shatter',
+              'dot',
+              'remainArea',
+              'talentDamage',
+              'physicalInfliction',
+            ],
+            semantics: actionSchemaPart_6b396502298caff2,
+            source: ['packages/game-data-contract/src/actions.ts:111:3'],
+          },
+          semantics: actionSchemaPart_63543b616519f1b6,
+          source: ['packages/game-data-contract/src/actions.ts:111:3'],
+          optional: true,
+        },
+        path: ['parameters', 'features'],
+        label: 'features',
+        description: '原生伤害位中与技能分类无关的行为特征。',
+        type: 'readonly DamageFeature[]',
+        required: false,
+        control: 'multiselect',
+        options: [
+          'canBreakWeakness',
+          'crush',
+          'airborne',
+          'knockDown',
+          'shatter',
+          'dot',
+          'remainArea',
+          'talentDamage',
+          'physicalInfliction',
+        ],
+        semantics: actionSchemaPart_63543b616519f1b6,
+        source: ['packages/game-data-contract/src/actions.ts:111:3'],
+      },
+      {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'number',
+              semantics: { type: 'number' },
+              source: ['packages/game-data-contract/src/actions.ts:113:3'],
+            },
+            {
+              kind: 'array',
+              element: {
+                kind: 'number',
+                semantics: { type: 'number' },
+                source: ['packages/game-data-contract/src/actions.ts:113:3'],
+              },
+              semantics: { type: 'readonly number[]', arrayElement: { type: 'number' } },
+              source: ['packages/game-data-contract/src/actions.ts:113:3'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:113:3'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:113:3'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:113:3'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:113:3'],
+            },
+          ],
+          semantics: actionSchemaPart_f49bdafe0a2efd47,
+          source: ['packages/game-data-contract/src/actions.ts:113:3'],
+          optional: true,
+        },
         path: ['parameters', 'stagger'],
         label: 'stagger',
         description: '同一次命中在生命伤害之后结算的失衡伤害；原生同样允许从动作黑板读取。',
         type: 'LevelValues | ActionValueOperand',
         required: false,
         control: 'levelValues',
+        semantics: actionSchemaPart_f49bdafe0a2efd47,
+        source: ['packages/game-data-contract/src/actions.ts:113:3'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'number',
+              semantics: { type: 'number' },
+              source: ['packages/game-data-contract/src/actions.ts:115:3'],
+            },
+            {
+              kind: 'array',
+              element: {
+                kind: 'number',
+                semantics: { type: 'number' },
+                source: ['packages/game-data-contract/src/actions.ts:115:3'],
+              },
+              semantics: { type: 'readonly number[]', arrayElement: { type: 'number' } },
+              source: ['packages/game-data-contract/src/actions.ts:115:3'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:115:3'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:115:3'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:115:3'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:115:3'],
+            },
+          ],
+          semantics: actionSchemaPart_f49bdafe0a2efd47,
+          source: ['packages/game-data-contract/src/actions.ts:115:3'],
+          optional: true,
+        },
         path: ['parameters', 'staggerMultiplier'],
         label: 'staggerMultiplier',
         description: 'DefiniteValueCalculation.applyScale 启用时在失衡基础值之后乘用的倍率。',
         type: 'LevelValues | ActionValueOperand',
         required: false,
         control: 'levelValues',
+        semantics: actionSchemaPart_f49bdafe0a2efd47,
+        source: ['packages/game-data-contract/src/actions.ts:115:3'],
       },
-      actionSchemaPart_d1636631faeb7f6d,
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:117:3'],
+          optional: true,
+        },
+        path: ['parameters', 'staggerOnlyWhenCasterControlled'],
+        label: 'staggerOnlyWhenCasterControlled',
+        description: '原生 Poise 单元 onlyEnableForMainChar；生命伤害仍正常结算。',
+        type: 'boolean',
+        required: false,
+        control: 'boolean',
+        semantics: { type: 'boolean | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:117:3'],
+      },
+      {
+        valueSchema: {
+          kind: 'object',
+          fields: {
+            statusKey: {
+              kind: 'string',
+              semantics: { type: 'string' },
+              source: ['packages/game-data-contract/src/actions.ts:121:5'],
+              description: '要读取层数的状态键。',
+            },
+            target: {
+              kind: 'enum',
+              options: ['enemy', 'caster'],
+              semantics: {
+                type: '"enemy" | "caster"',
+                unionVariants: [{ type: '"enemy"' }, { type: '"caster"' }],
+              },
+              source: ['packages/game-data-contract/src/actions.ts:123:5'],
+              description: '状态所属对象。',
+            },
+            coefficient: {
+              kind: 'union',
+              variants: [
+                {
+                  kind: 'number',
+                  semantics: { type: 'number' },
+                  source: ['packages/game-data-contract/src/actions.ts:125:5'],
+                },
+                {
+                  kind: 'array',
+                  element: {
+                    kind: 'number',
+                    semantics: { type: 'number' },
+                    source: ['packages/game-data-contract/src/actions.ts:125:5'],
+                  },
+                  semantics: { type: 'readonly number[]', arrayElement: { type: 'number' } },
+                  source: ['packages/game-data-contract/src/actions.ts:125:5'],
+                },
+              ],
+              semantics: { type: 'LevelValues', aliases: ['LevelValues'] },
+              source: ['packages/game-data-contract/src/actions.ts:125:5'],
+              description: '每层额外提供的攻击倍率。',
+            },
+          },
+          semantics: {
+            type: '{ statusKey: string; target: "enemy" | "caster"; coefficient: LevelValues; } | undefined',
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/actions.ts:119:3'],
+          optional: true,
+        },
         path: ['parameters', 'attackScalePerStatusStack'],
         label: 'attackScalePerStatusStack',
         description: '每层语义化战斗状态提供的额外攻击倍率。',
         type: '{ /** 要读取层数的状态键。 */ statusKey: string; /** 状态所属对象。 */ target: CombatTarget; /** 每层额外提供的攻击倍率。 */ coefficient: LevelValues; }',
         required: false,
         control: 'json',
+        semantics: {
+          type: '{ statusKey: string; target: "enemy" | "caster"; coefficient: LevelValues; } | undefined',
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/actions.ts:119:3'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'object',
+            fields: {
+              targetSide: {
+                kind: 'enum',
+                options: ['defender', 'attacker'],
+                semantics: {
+                  type: '"defender" | "attacker"',
+                  unionVariants: [{ type: '"defender"' }, { type: '"attacker"' }],
+                },
+                source: ['packages/game-data-contract/src/actions.ts:130:5'],
+                description: '修改攻击方还是目标方。',
+              },
+              attribute: {
+                kind: 'string',
+                semantics: { type: 'string' },
+                source: ['packages/game-data-contract/src/actions.ts:132:5'],
+                description: '要修改的原生属性。',
+              },
+              slot: {
+                kind: 'enum',
+                options: [
+                  'addition',
+                  'multiplier',
+                  'finalAddition',
+                  'finalMultiplier',
+                  'baseAddition',
+                  'baseMultiplier',
+                  'baseFinalAddition',
+                  'baseFinalMultiplier',
+                ],
+                semantics: {
+                  type: '"addition" | "multiplier" | "finalAddition" | "finalMultiplier" | "baseAddition" | "baseMultiplier" | "baseFinalAddition" | "baseFinalMultiplier"',
+                  unionVariants: [
+                    { type: '"addition"' },
+                    { type: '"multiplier"' },
+                    { type: '"finalAddition"' },
+                    { type: '"finalMultiplier"' },
+                    { type: '"baseAddition"' },
+                    { type: '"baseMultiplier"' },
+                    { type: '"baseFinalAddition"' },
+                    { type: '"baseFinalMultiplier"' },
+                  ],
+                },
+                source: ['packages/game-data-contract/src/actions.ts:134:5'],
+                description: '写入的属性公式槽。',
+              },
+              value: {
+                kind: 'union',
+                variants: [
+                  {
+                    kind: 'object',
+                    fields: actionSchemaPart_80825b09887cd9ab,
+                    semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+                    source: ['packages/game-data-contract/src/actions.ts:136:5'],
+                  },
+                  {
+                    kind: 'object',
+                    fields: actionSchemaPart_3f870f38207524cc,
+                    semantics: {
+                      type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+                    },
+                    source: ['packages/game-data-contract/src/actions.ts:136:5'],
+                  },
+                  {
+                    kind: 'object',
+                    fields: actionSchemaPart_08cc55a541270d02,
+                    semantics: { type: '{ kind: "constant"; value: number; }' },
+                    source: ['packages/game-data-contract/src/actions.ts:136:5'],
+                  },
+                  {
+                    kind: 'object',
+                    fields: actionSchemaPart_bc1411c64bfee9b9,
+                    semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+                    source: ['packages/game-data-contract/src/actions.ts:136:5'],
+                  },
+                ],
+                semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+                source: ['packages/game-data-contract/src/actions.ts:136:5'],
+                description: '写入的数值。',
+              },
+              attributeTiming: {
+                kind: 'enum',
+                options: ['deck', 'runtime'],
+                semantics: {
+                  type: '"deck" | "runtime"',
+                  unionVariants: [{ type: '"deck"' }, { type: '"runtime"' }],
+                },
+                source: ['packages/game-data-contract/src/actions.ts:138:5'],
+                description: '读取构筑属性还是当前运行时属性。',
+              },
+            },
+            semantics: actionSchemaPart_dd1baf2c5dcec3b6,
+            source: ['packages/game-data-contract/src/actions.ts:128:3'],
+          },
+          semantics: actionSchemaPart_4401e09354f5f7ef,
+          source: ['packages/game-data-contract/src/actions.ts:128:3'],
+          optional: true,
+        },
         path: ['parameters', 'instantAttributeModifiers'],
         label: 'instantAttributeModifiers',
         description: '原生 DamageUnit.damageProcessors 中只对当前伤害包生效的属性修正。',
         type: 'readonly { /** 修改攻击方还是目标方。 */ targetSide: DamageModifierSide; /** 要修改的原生属性。 */ attribute: string; /** 写入的属性公式槽。 */ slot: AttributeModifierSlot; /** 写入的数值。 */ value: ActionValueOperand; /** 读取构筑属性还是当前运行时属性。 */ attributeTiming: AttributeModifierTiming; }[]',
         required: false,
         control: 'json',
+        semantics: actionSchemaPart_4401e09354f5f7ef,
+        source: ['packages/game-data-contract/src/actions.ts:128:3'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'object',
+            fields: {
+              side: {
+                kind: 'enum',
+                options: ['defender', 'attacker'],
+                semantics: {
+                  type: '"defender" | "attacker"',
+                  unionVariants: [{ type: '"defender"' }, { type: '"attacker"' }],
+                },
+                source: ['packages/game-data-contract/src/actions.ts:143:5'],
+                description: '修改攻击方还是目标方。',
+              },
+              zone: {
+                kind: 'enum',
+                options: [
+                  'product',
+                  'normal',
+                  'abnormalAndBurst',
+                  'enhanced',
+                  'combo',
+                  'vulnerable',
+                  'race',
+                ],
+                semantics: {
+                  type: '"product" | "normal" | "abnormalAndBurst" | "enhanced" | "combo" | "vulnerable" | "race"',
+                  unionVariants: [
+                    { type: '"product"' },
+                    { type: '"normal"' },
+                    { type: '"abnormalAndBurst"' },
+                    { type: '"enhanced"' },
+                    { type: '"combo"' },
+                    { type: '"vulnerable"' },
+                    { type: '"race"' },
+                  ],
+                },
+                source: ['packages/game-data-contract/src/actions.ts:145:5'],
+                description: '写入的伤害倍率区间。',
+              },
+              addition: {
+                kind: 'union',
+                variants: [
+                  {
+                    kind: 'object',
+                    fields: actionSchemaPart_80825b09887cd9ab,
+                    semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+                    source: ['packages/game-data-contract/src/actions.ts:147:5'],
+                  },
+                  {
+                    kind: 'object',
+                    fields: actionSchemaPart_3f870f38207524cc,
+                    semantics: {
+                      type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+                    },
+                    source: ['packages/game-data-contract/src/actions.ts:147:5'],
+                  },
+                  {
+                    kind: 'object',
+                    fields: actionSchemaPart_08cc55a541270d02,
+                    semantics: { type: '{ kind: "constant"; value: number; }' },
+                    source: ['packages/game-data-contract/src/actions.ts:147:5'],
+                  },
+                  {
+                    kind: 'object',
+                    fields: actionSchemaPart_bc1411c64bfee9b9,
+                    semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+                    source: ['packages/game-data-contract/src/actions.ts:147:5'],
+                  },
+                ],
+                semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+                source: ['packages/game-data-contract/src/actions.ts:147:5'],
+                description: '加入该区间的数值。',
+              },
+            },
+            semantics: {
+              type: '{ side: "defender" | "attacker"; zone: "product" | "normal" | "abnormalAndBurst" | "enhanced" | "combo" | "vulnerable" | "race"; addition: ActionValueOperand; }',
+            },
+            source: ['packages/game-data-contract/src/actions.ts:141:3'],
+          },
+          semantics: actionSchemaPart_1bb173c567533d8f,
+          source: ['packages/game-data-contract/src/actions.ts:141:3'],
+          optional: true,
+        },
         path: ['parameters', 'instantDamageScaleModifiers'],
         label: 'instantDamageScaleModifiers',
         description: '原生 DamageUnit.damageProcessors 中只对当前伤害包生效的命名伤害倍率区修正。',
         type: 'readonly { /** 修改攻击方还是目标方。 */ side: DamageScaleSide; /** 写入的伤害倍率区间。 */ zone: DamageScaleZone; /** 加入该区间的数值。 */ addition: ActionValueOperand; }[]',
         required: false,
         control: 'json',
+        semantics: actionSchemaPart_1bb173c567533d8f,
+        source: ['packages/game-data-contract/src/actions.ts:141:3'],
+        fallback: { reason: 'structured-editor-pending' },
       },
     ],
   },
@@ -1271,73 +4171,486 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'dealFixedDamage',
     description: '造成一次使用固定基础值的伤害。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
+        valueSchema: {
+          kind: 'enum',
+          options: ['physical', 'heat', 'cryo', 'electric', 'nature', 'true', 'lifeDrain', 'ether'],
+          semantics: actionSchemaPart_3b098870902a8933,
+          source: ['packages/game-data-contract/src/actions.ts:157:3'],
+        },
+        path: ['parameters', 'damageType'],
+        label: 'damageType',
+        description: '本次生命伤害的类型。',
+        type: 'DamageType',
+        required: true,
+        control: 'select',
+        options: ['physical', 'heat', 'cryo', 'electric', 'nature', 'true', 'lifeDrain', 'ether'],
+        semantics: actionSchemaPart_3b098870902a8933,
+        source: ['packages/game-data-contract/src/actions.ts:157:3'],
       },
-      actionSchemaPart_4eda6c224d74fb65,
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'number',
+              semantics: { type: 'number' },
+              source: ['packages/game-data-contract/src/actions.ts:159:3'],
+            },
+            {
+              kind: 'array',
+              element: {
+                kind: 'number',
+                semantics: { type: 'number' },
+                source: ['packages/game-data-contract/src/actions.ts:159:3'],
+              },
+              semantics: { type: 'readonly number[]', arrayElement: { type: 'number' } },
+              source: ['packages/game-data-contract/src/actions.ts:159:3'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:159:3'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:159:3'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:159:3'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:159:3'],
+            },
+          ],
+          semantics: {
+            type: 'LevelValues | ActionValueOperand',
+            unionVariants: [
+              { type: 'LevelValues', aliases: ['LevelValues'] },
+              { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+            ],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:159:3'],
+        },
         path: ['parameters', 'value'],
         label: 'value',
         description: '不依赖攻击力的基础伤害值。',
         type: 'LevelValues | ActionValueOperand',
         required: true,
         control: 'levelValues',
+        semantics: {
+          type: 'LevelValues | ActionValueOperand',
+          unionVariants: [
+            { type: 'LevelValues', aliases: ['LevelValues'] },
+            { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          ],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:159:3'],
       },
-      actionSchemaPart_edf7fd41d97a1bb4,
-      actionSchemaPart_1b0a537a4e7044ff,
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'enum',
+            options: [
+              'normalAttack',
+              'normalAttackLastCombo',
+              'powerAttack',
+              'normalSkill',
+              'comboSkill',
+              'ultimateSkill',
+              'plungingAttack',
+              'dashAttack',
+              'fireBurst',
+              'electricBurst',
+              'cryoBurst',
+              'natureBurst',
+              'fireAbnormal',
+              'electricAbnormal',
+              'cryoAbnormal',
+              'natureAbnormal',
+            ],
+            semantics: actionSchemaPart_1fbfd66386e805e7,
+            source: ['packages/game-data-contract/src/actions.ts:161:3'],
+          },
+          semantics: actionSchemaPart_696ddc5ee252e88d,
+          source: ['packages/game-data-contract/src/actions.ts:161:3'],
+        },
+        path: ['parameters', 'tags'],
+        label: 'tags',
+        description: '本次伤害携带的技能和爆发分类标签。',
+        type: 'readonly DamageTag[]',
+        required: true,
+        control: 'multiselect',
+        options: [
+          'normalAttack',
+          'normalAttackLastCombo',
+          'powerAttack',
+          'normalSkill',
+          'comboSkill',
+          'ultimateSkill',
+          'plungingAttack',
+          'dashAttack',
+          'fireBurst',
+          'electricBurst',
+          'cryoBurst',
+          'natureBurst',
+          'fireAbnormal',
+          'electricAbnormal',
+          'cryoAbnormal',
+          'natureAbnormal',
+        ],
+        semantics: actionSchemaPart_696ddc5ee252e88d,
+        source: ['packages/game-data-contract/src/actions.ts:161:3'],
+      },
+      {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'enum',
+            options: [
+              'canBreakWeakness',
+              'crush',
+              'airborne',
+              'knockDown',
+              'shatter',
+              'dot',
+              'remainArea',
+              'talentDamage',
+              'physicalInfliction',
+            ],
+            semantics: actionSchemaPart_6b396502298caff2,
+            source: ['packages/game-data-contract/src/actions.ts:163:3'],
+          },
+          semantics: actionSchemaPart_63543b616519f1b6,
+          source: ['packages/game-data-contract/src/actions.ts:163:3'],
+          optional: true,
+        },
+        path: ['parameters', 'features'],
+        label: 'features',
+        description: '原生伤害位中与技能分类无关的行为特征。',
+        type: 'readonly DamageFeature[]',
+        required: false,
+        control: 'multiselect',
+        options: [
+          'canBreakWeakness',
+          'crush',
+          'airborne',
+          'knockDown',
+          'shatter',
+          'dot',
+          'remainArea',
+          'talentDamage',
+          'physicalInfliction',
+        ],
+        semantics: actionSchemaPart_63543b616519f1b6,
+        source: ['packages/game-data-contract/src/actions.ts:163:3'],
+      },
+      {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'number',
+              semantics: { type: 'number' },
+              source: ['packages/game-data-contract/src/actions.ts:165:3'],
+            },
+            {
+              kind: 'array',
+              element: {
+                kind: 'number',
+                semantics: { type: 'number' },
+                source: ['packages/game-data-contract/src/actions.ts:165:3'],
+              },
+              semantics: { type: 'readonly number[]', arrayElement: { type: 'number' } },
+              source: ['packages/game-data-contract/src/actions.ts:165:3'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:165:3'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:165:3'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:165:3'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:165:3'],
+            },
+          ],
+          semantics: actionSchemaPart_f49bdafe0a2efd47,
+          source: ['packages/game-data-contract/src/actions.ts:165:3'],
+          optional: true,
+        },
         path: ['parameters', 'stagger'],
         label: 'stagger',
         description: '同一次命中在生命伤害之后结算的失衡伤害。',
         type: 'LevelValues | ActionValueOperand',
         required: false,
         control: 'levelValues',
+        semantics: actionSchemaPart_f49bdafe0a2efd47,
+        source: ['packages/game-data-contract/src/actions.ts:165:3'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'number',
+              semantics: { type: 'number' },
+              source: ['packages/game-data-contract/src/actions.ts:167:3'],
+            },
+            {
+              kind: 'array',
+              element: {
+                kind: 'number',
+                semantics: { type: 'number' },
+                source: ['packages/game-data-contract/src/actions.ts:167:3'],
+              },
+              semantics: { type: 'readonly number[]', arrayElement: { type: 'number' } },
+              source: ['packages/game-data-contract/src/actions.ts:167:3'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:167:3'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:167:3'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:167:3'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:167:3'],
+            },
+          ],
+          semantics: actionSchemaPart_f49bdafe0a2efd47,
+          source: ['packages/game-data-contract/src/actions.ts:167:3'],
+          optional: true,
+        },
         path: ['parameters', 'staggerMultiplier'],
         label: 'staggerMultiplier',
         description: '失衡基础值结算后乘用的倍率。',
         type: 'LevelValues | ActionValueOperand',
         required: false,
         control: 'levelValues',
+        semantics: actionSchemaPart_f49bdafe0a2efd47,
+        source: ['packages/game-data-contract/src/actions.ts:167:3'],
       },
-      actionSchemaPart_d1636631faeb7f6d,
+      {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:169:3'],
+          optional: true,
+        },
+        path: ['parameters', 'staggerOnlyWhenCasterControlled'],
+        label: 'staggerOnlyWhenCasterControlled',
+        description: '原生 Poise 单元 onlyEnableForMainChar；生命伤害仍正常结算。',
+        type: 'boolean',
+        required: false,
+        control: 'boolean',
+        semantics: { type: 'boolean | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:169:3'],
+      },
     ],
   },
   dealStagger: {
     kind: 'dealStagger',
     description: '不伴随生命伤害的独立失衡单元；数值仍会经过来源与目标的失衡倍率。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'number',
+              semantics: { type: 'number' },
+              source: ['packages/game-data-contract/src/actions.ts:577:5'],
+            },
+            {
+              kind: 'array',
+              element: {
+                kind: 'number',
+                semantics: { type: 'number' },
+                source: ['packages/game-data-contract/src/actions.ts:577:5'],
+              },
+              semantics: { type: 'readonly number[]', arrayElement: { type: 'number' } },
+              source: ['packages/game-data-contract/src/actions.ts:577:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:577:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:577:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:577:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:577:5'],
+            },
+          ],
+          semantics: {
+            type: 'LevelValues | ActionValueOperand',
+            unionVariants: [
+              { type: 'LevelValues', aliases: ['LevelValues'] },
+              { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+            ],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:577:5'],
+        },
         path: ['parameters', 'value'],
         label: 'value',
         description: '基础失衡伤害。',
         type: 'LevelValues | ActionValueOperand',
         required: true,
         control: 'levelValues',
+        semantics: {
+          type: 'LevelValues | ActionValueOperand',
+          unionVariants: [
+            { type: 'LevelValues', aliases: ['LevelValues'] },
+            { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          ],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:577:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'number',
+              semantics: { type: 'number' },
+              source: ['packages/game-data-contract/src/actions.ts:579:5'],
+            },
+            {
+              kind: 'array',
+              element: {
+                kind: 'number',
+                semantics: { type: 'number' },
+                source: ['packages/game-data-contract/src/actions.ts:579:5'],
+              },
+              semantics: { type: 'readonly number[]', arrayElement: { type: 'number' } },
+              source: ['packages/game-data-contract/src/actions.ts:579:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:579:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:579:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:579:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:579:5'],
+            },
+          ],
+          semantics: actionSchemaPart_f49bdafe0a2efd47,
+          source: ['packages/game-data-contract/src/actions.ts:579:5'],
+          optional: true,
+        },
         path: ['parameters', 'valueMultiplier'],
         label: 'valueMultiplier',
         description: 'DefiniteValueCalculation.applyScale 启用时乘用的倍率。',
         type: 'LevelValues | ActionValueOperand',
         required: false,
         control: 'levelValues',
+        semantics: actionSchemaPart_f49bdafe0a2efd47,
+        source: ['packages/game-data-contract/src/actions.ts:579:5'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'enum',
+            options: [
+              'canBreakWeakness',
+              'crush',
+              'airborne',
+              'knockDown',
+              'shatter',
+              'dot',
+              'remainArea',
+              'talentDamage',
+              'physicalInfliction',
+            ],
+            semantics: actionSchemaPart_6b396502298caff2,
+            source: ['packages/game-data-contract/src/actions.ts:581:5'],
+          },
+          semantics: actionSchemaPart_63543b616519f1b6,
+          source: ['packages/game-data-contract/src/actions.ts:581:5'],
+          optional: true,
+        },
         path: ['parameters', 'features'],
         label: 'features',
         description: '保留原生 PoisePack 的装饰位；当前木桩没有弱点窗口，但不能从数据中丢弃。',
@@ -1355,6 +4668,8 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
           'talentDamage',
           'physicalInfliction',
         ],
+        semantics: actionSchemaPart_63543b616519f1b6,
+        source: ['packages/game-data-contract/src/actions.ts:581:5'],
       },
     ],
   },
@@ -1362,15 +4677,48 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'heal',
     description: '按施法者属性计算，并写入干员生命账本的普通治疗。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'enum',
+              options: ['contextTarget'],
+              semantics: {
+                type: '"contextTarget"',
+                unionVariants: [{ type: '"contextTarget"' }, { type: '"contextTarget"' }],
+              },
+              source: ['packages/game-data-contract/src/actions.ts:65:7'],
+            },
+            {
+              kind: 'enum',
+              options: [
+                'enemy',
+                'caster',
+                'buffOwner',
+                'buffSource',
+                'controlledOperator',
+                'currentTarget',
+                'actionInputTarget',
+                'lowestHealthRatioOperator',
+                'lowestHealthRatioOperatorExceptControlled',
+              ],
+              semantics: {
+                type: '"enemy" | "caster" | "buffOwner" | "buffSource" | "controlledOperator" | "currentTarget" | "actionInputTarget" | "lowestHealthRatioOperator" | "lowestHealthRatioOperatorExceptControlled"',
+                unionVariants: [
+                  actionSchemaPart_fbd9797e964a589d,
+                  actionSchemaPart_fbd9797e964a589d,
+                ],
+              },
+              source: ['packages/game-data-contract/src/actions.ts:71:7'],
+            },
+          ],
+          source: [
+            'packages/game-data-contract/src/actions.ts:65:7',
+            'packages/game-data-contract/src/actions.ts:71:7',
+          ],
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '使用此前查询并保存的动作目标。\n使用无需额外查询键的治疗目标选择器。',
@@ -1389,16 +4737,59 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
           'lowestHealthRatioOperator',
           'lowestHealthRatioOperatorExceptControlled',
         ],
+        semantics: {
+          type: "'contextTarget' | Exclude<HealTarget, 'contextTarget'>",
+          unionVariants: [
+            { type: '"contextTarget"' },
+            { type: '"contextTarget"' },
+            actionSchemaPart_fbd9797e964a589d,
+            actionSchemaPart_fbd9797e964a589d,
+          ],
+        },
+        source: [
+          'packages/game-data-contract/src/actions.ts:65:7',
+          'packages/game-data-contract/src/actions.ts:71:7',
+        ],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string', unionVariants: [{ type: 'string' }, { type: 'string' }] },
+          source: [
+            'packages/game-data-contract/src/actions.ts:67:7',
+            'packages/game-data-contract/src/actions.ts:73:7',
+          ],
+          optional: true,
+        },
         path: ['parameters', 'contextKey'],
         label: 'contextKey',
         description: '保存目标的动作环境键。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: { type: 'string', unionVariants: [{ type: 'string' }, { type: 'string' }] },
+        source: [
+          'packages/game-data-contract/src/actions.ts:67:7',
+          'packages/game-data-contract/src/actions.ts:73:7',
+        ],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['buffOwner'],
+          semantics: {
+            type: '"buffOwner" | undefined',
+            optional: true,
+            unionVariants: [
+              { type: '"buffOwner" | undefined', optional: true },
+              { type: '"buffOwner" | undefined', optional: true },
+              { type: '"buffOwner" | undefined', optional: true },
+              { type: '"buffOwner" | undefined', optional: true },
+            ],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:586:5'],
+          optional: true,
+        },
         path: ['parameters', 'source'],
         label: 'source',
         description: '原生 Healer=ActionOwner 且动作位于 Buff 生命周期时，治疗来源是 Buff 宿主。',
@@ -1406,24 +4797,132 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: false,
         control: 'select',
         options: ['buffOwner'],
+        semantics: {
+          type: "'buffOwner'",
+          unionVariants: [
+            { type: '"buffOwner" | undefined', optional: true },
+            { type: '"buffOwner" | undefined', optional: true },
+            { type: '"buffOwner" | undefined', optional: true },
+            { type: '"buffOwner" | undefined', optional: true },
+          ],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:586:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: {
+            type: 'boolean | undefined',
+            optional: true,
+            unionVariants: [
+              { type: 'boolean | undefined', optional: true },
+              { type: 'boolean | undefined', optional: true },
+              { type: 'boolean | undefined', optional: true },
+              { type: 'boolean | undefined', optional: true },
+            ],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:588:5'],
+          optional: true,
+        },
         path: ['parameters', 'alwaysNext'],
         label: 'alwaysNext',
         description: '原生 AbilityAction.alwaysNext；false 时保留治疗应用失败的序列短路。',
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: {
+          type: 'boolean',
+          unionVariants: [
+            { type: 'boolean | undefined', optional: true },
+            { type: 'boolean | undefined', optional: true },
+            { type: 'boolean | undefined', optional: true },
+            { type: 'boolean | undefined', optional: true },
+          ],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:588:5'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'string',
+            semantics: {
+              type: 'string',
+              aliases: ['GameplayTag'],
+              unionVariants: [
+                { type: 'string', aliases: ['GameplayTag'] },
+                { type: 'string', aliases: ['GameplayTag'] },
+                { type: 'string', aliases: ['GameplayTag'] },
+                { type: 'string', aliases: ['GameplayTag'] },
+              ],
+            },
+            source: ['packages/game-data-contract/src/actions.ts:590:5'],
+          },
+          semantics: {
+            type: 'readonly string[]',
+            arrayElement: { type: 'string', aliases: ['GameplayTag'] },
+            unionVariants: [
+              {
+                type: 'readonly string[]',
+                arrayElement: { type: 'string', aliases: ['GameplayTag'] },
+              },
+              {
+                type: 'readonly string[]',
+                arrayElement: { type: 'string', aliases: ['GameplayTag'] },
+              },
+              {
+                type: 'readonly string[]',
+                arrayElement: { type: 'string', aliases: ['GameplayTag'] },
+              },
+              {
+                type: 'readonly string[]',
+                arrayElement: { type: 'string', aliases: ['GameplayTag'] },
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:590:5'],
+        },
         path: ['parameters', 'tags'],
         label: 'tags',
         description: '原生 useHealTags 开启时的 GameplayTag 整数身份。',
         type: 'readonly GameplayTag[]',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'readonly GameplayTag[]',
+          unionVariants: [
+            {
+              type: 'readonly string[]',
+              arrayElement: { type: 'string', aliases: ['GameplayTag'] },
+            },
+            {
+              type: 'readonly string[]',
+              arrayElement: { type: 'string', aliases: ['GameplayTag'] },
+            },
+            {
+              type: 'readonly string[]',
+              arrayElement: { type: 'string', aliases: ['GameplayTag'] },
+            },
+            {
+              type: 'readonly string[]',
+              arrayElement: { type: 'string', aliases: ['GameplayTag'] },
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:590:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['strength', 'agility', 'intellect', 'will', 'maxHealth'],
+          semantics: actionSchemaPart_9a1e1b9752cde963,
+          source: [
+            'packages/game-data-contract/src/actions.ts:595:11',
+            'packages/game-data-contract/src/actions.ts:610:11',
+          ],
+          optional: true,
+        },
         path: ['parameters', 'attribute'],
         label: 'attribute',
         description: '用于计算治疗的属性。',
@@ -1431,8 +4930,27 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: false,
         control: 'select',
         options: ['strength', 'agility', 'intellect', 'will', 'maxHealth'],
+        semantics: actionSchemaPart_9a1e1b9752cde963,
+        source: [
+          'packages/game-data-contract/src/actions.ts:595:11',
+          'packages/game-data-contract/src/actions.ts:610:11',
+        ],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['target'],
+          semantics: {
+            type: '"target" | undefined',
+            optional: true,
+            unionVariants: [
+              { type: '"target" | undefined', optional: true },
+              { type: '"target" | undefined', optional: true },
+            ],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:597:11'],
+          optional: true,
+        },
         path: ['parameters', 'attributeSource'],
         label: 'attributeSource',
         description: '省略时读取治疗来源；原生 valueSource=Target 时读取治疗目标。',
@@ -1440,30 +4958,275 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: false,
         control: 'select',
         options: ['target'],
+        semantics: {
+          type: "'target'",
+          unionVariants: [
+            { type: '"target" | undefined', optional: true },
+            { type: '"target" | undefined', optional: true },
+          ],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:597:11'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'number',
+              semantics: {
+                type: 'number',
+                unionVariants: [{ type: 'number' }, { type: 'number' }],
+              },
+              source: ['packages/game-data-contract/src/actions.ts:599:11'],
+            },
+            {
+              kind: 'array',
+              element: {
+                kind: 'number',
+                semantics: {
+                  type: 'number',
+                  unionVariants: [{ type: 'number' }, { type: 'number' }],
+                },
+                source: ['packages/game-data-contract/src/actions.ts:599:11'],
+              },
+              semantics: actionSchemaPart_fd5369e1d63e7bbf,
+              source: ['packages/game-data-contract/src/actions.ts:599:11'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_0969f8a1b9e3e9aa,
+              semantics: {
+                type: '{ kind: "valueNode"; nodeId: string; }',
+                unionVariants: [
+                  { type: '{ kind: "valueNode"; nodeId: string; }' },
+                  { type: '{ kind: "valueNode"; nodeId: string; }' },
+                ],
+              },
+              source: ['packages/game-data-contract/src/actions.ts:599:11'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_c5f19ce8298bd8f6,
+              semantics: actionSchemaPart_e0e0a98fb315f0e0,
+              source: ['packages/game-data-contract/src/actions.ts:599:11'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_6976130052645496,
+              semantics: {
+                type: '{ kind: "constant"; value: number; }',
+                unionVariants: [
+                  { type: '{ kind: "constant"; value: number; }' },
+                  { type: '{ kind: "constant"; value: number; }' },
+                ],
+              },
+              source: ['packages/game-data-contract/src/actions.ts:599:11'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_b475ae87fc099300,
+              semantics: {
+                type: '{ kind: "parameter"; parameter: string; }',
+                unionVariants: [
+                  { type: '{ kind: "parameter"; parameter: string; }' },
+                  { type: '{ kind: "parameter"; parameter: string; }' },
+                ],
+              },
+              source: ['packages/game-data-contract/src/actions.ts:599:11'],
+            },
+          ],
+          semantics: actionSchemaPart_9b7a517bcc21b17b,
+          source: [
+            'packages/game-data-contract/src/actions.ts:599:11',
+            'packages/game-data-contract/src/actions.ts:612:11',
+          ],
+          optional: true,
+        },
         path: ['parameters', 'multiplier'],
         label: 'multiplier',
         description: '属性乘数。',
         type: 'LevelValues | ActionValueOperand',
         required: false,
         control: 'levelValues',
+        semantics: actionSchemaPart_9b7a517bcc21b17b,
+        source: [
+          'packages/game-data-contract/src/actions.ts:599:11',
+          'packages/game-data-contract/src/actions.ts:612:11',
+        ],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'number',
+              semantics: {
+                type: 'number',
+                unionVariants: [{ type: 'number' }, { type: 'number' }],
+              },
+              source: ['packages/game-data-contract/src/actions.ts:601:11'],
+            },
+            {
+              kind: 'array',
+              element: {
+                kind: 'number',
+                semantics: {
+                  type: 'number',
+                  unionVariants: [{ type: 'number' }, { type: 'number' }],
+                },
+                source: ['packages/game-data-contract/src/actions.ts:601:11'],
+              },
+              semantics: actionSchemaPart_fd5369e1d63e7bbf,
+              source: ['packages/game-data-contract/src/actions.ts:601:11'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_0969f8a1b9e3e9aa,
+              semantics: {
+                type: '{ kind: "valueNode"; nodeId: string; }',
+                unionVariants: [
+                  { type: '{ kind: "valueNode"; nodeId: string; }' },
+                  { type: '{ kind: "valueNode"; nodeId: string; }' },
+                ],
+              },
+              source: ['packages/game-data-contract/src/actions.ts:601:11'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_c5f19ce8298bd8f6,
+              semantics: actionSchemaPart_e0e0a98fb315f0e0,
+              source: ['packages/game-data-contract/src/actions.ts:601:11'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_6976130052645496,
+              semantics: {
+                type: '{ kind: "constant"; value: number; }',
+                unionVariants: [
+                  { type: '{ kind: "constant"; value: number; }' },
+                  { type: '{ kind: "constant"; value: number; }' },
+                ],
+              },
+              source: ['packages/game-data-contract/src/actions.ts:601:11'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_b475ae87fc099300,
+              semantics: {
+                type: '{ kind: "parameter"; parameter: string; }',
+                unionVariants: [
+                  { type: '{ kind: "parameter"; parameter: string; }' },
+                  { type: '{ kind: "parameter"; parameter: string; }' },
+                ],
+              },
+              source: ['packages/game-data-contract/src/actions.ts:601:11'],
+            },
+          ],
+          semantics: actionSchemaPart_9b7a517bcc21b17b,
+          source: [
+            'packages/game-data-contract/src/actions.ts:601:11',
+            'packages/game-data-contract/src/actions.ts:614:11',
+          ],
+          optional: true,
+        },
         path: ['parameters', 'addition'],
         label: 'addition',
         description: '乘算后加入的固定治疗值。',
         type: 'LevelValues | ActionValueOperand',
         required: false,
         control: 'levelValues',
+        semantics: actionSchemaPart_9b7a517bcc21b17b,
+        source: [
+          'packages/game-data-contract/src/actions.ts:601:11',
+          'packages/game-data-contract/src/actions.ts:614:11',
+        ],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'number',
+              semantics: {
+                type: 'number',
+                unionVariants: [{ type: 'number' }, { type: 'number' }],
+              },
+              source: ['packages/game-data-contract/src/actions.ts:608:11'],
+            },
+            {
+              kind: 'array',
+              element: {
+                kind: 'number',
+                semantics: {
+                  type: 'number',
+                  unionVariants: [{ type: 'number' }, { type: 'number' }],
+                },
+                source: ['packages/game-data-contract/src/actions.ts:608:11'],
+              },
+              semantics: actionSchemaPart_fd5369e1d63e7bbf,
+              source: ['packages/game-data-contract/src/actions.ts:608:11'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_0969f8a1b9e3e9aa,
+              semantics: {
+                type: '{ kind: "valueNode"; nodeId: string; }',
+                unionVariants: [
+                  { type: '{ kind: "valueNode"; nodeId: string; }' },
+                  { type: '{ kind: "valueNode"; nodeId: string; }' },
+                ],
+              },
+              source: ['packages/game-data-contract/src/actions.ts:608:11'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_c5f19ce8298bd8f6,
+              semantics: actionSchemaPart_e0e0a98fb315f0e0,
+              source: ['packages/game-data-contract/src/actions.ts:608:11'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_6976130052645496,
+              semantics: {
+                type: '{ kind: "constant"; value: number; }',
+                unionVariants: [
+                  { type: '{ kind: "constant"; value: number; }' },
+                  { type: '{ kind: "constant"; value: number; }' },
+                ],
+              },
+              source: ['packages/game-data-contract/src/actions.ts:608:11'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_b475ae87fc099300,
+              semantics: {
+                type: '{ kind: "parameter"; parameter: string; }',
+                unionVariants: [
+                  { type: '{ kind: "parameter"; parameter: string; }' },
+                  { type: '{ kind: "parameter"; parameter: string; }' },
+                ],
+              },
+              source: ['packages/game-data-contract/src/actions.ts:608:11'],
+            },
+          ],
+          semantics: actionSchemaPart_9b7a517bcc21b17b,
+          source: [
+            'packages/game-data-contract/src/actions.ts:603:11',
+            'packages/game-data-contract/src/actions.ts:608:11',
+          ],
+          optional: true,
+        },
         path: ['parameters', 'amount'],
         label: 'amount',
         description: '直接使用的基础治疗值。',
         type: 'LevelValues | ActionValueOperand',
         required: false,
         control: 'levelValues',
+        semantics: actionSchemaPart_9b7a517bcc21b17b,
+        source: [
+          'packages/game-data-contract/src/actions.ts:603:11',
+          'packages/game-data-contract/src/actions.ts:608:11',
+        ],
       },
     ],
   },
@@ -1471,23 +5234,72 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'applyBuff',
     description: '按目标、来源和黑板赋值创建一个或多个 Buff 实例。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'string',
+              semantics: { type: 'string' },
+              source: ['packages/game-data-contract/src/actions.ts:620:5'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                blackboardKey: {
+                  kind: 'string',
+                  semantics: { type: 'string' },
+                  source: ['packages/game-data-contract/src/primitives.ts:63:7'],
+                  description: '读取字符串的当前动作黑板键。',
+                },
+              },
+              semantics: { type: '{ readonly blackboardKey: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:620:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_433c3c2f8f163db2,
+              semantics: { type: '{ readonly kind: "stringNode"; readonly nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:620:5'],
+            },
+          ],
+          semantics: { type: 'ActionStringOperand', aliases: ['ActionStringOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:620:5'],
+        },
         path: ['parameters', 'buffId'],
         label: 'buffId',
         description: '动态身份在执行时从字符串黑板读取；不携带可被误用的字面回退 ID。',
-        type: '| string | { /** 运行时读取 Buff ID 的动作黑板键。 */ readonly blackboardKey: string; }',
+        type: 'ActionStringOperand',
         required: true,
         control: 'json',
+        semantics: { type: 'ActionStringOperand', aliases: ['ActionStringOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:620:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: [
+            'eventSource',
+            'eventTarget',
+            'enemy',
+            'caster',
+            'buffOwner',
+            'buffSource',
+            'controlledOperator',
+            'currentAbilityEntity',
+            'currentTarget',
+            'actionInputTarget',
+            'party',
+            'partyExceptCaster',
+            'partyExceptCasterAndSameCharacterType',
+            'casterAndControlledOperator',
+            'casterAndLowestHealthRatioOperatorExceptCaster',
+          ],
+          semantics: actionSchemaPart_39148600bef476a7,
+          source: ['packages/game-data-contract/src/actions.ts:622:5'],
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '接收 Buff 的单体或队伍目标。',
@@ -1511,8 +5323,48 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
           'casterAndControlledOperator',
           'casterAndLowestHealthRatioOperatorExceptCaster',
         ],
+        semantics: actionSchemaPart_39148600bef476a7,
+        source: ['packages/game-data-contract/src/actions.ts:622:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:624:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:624:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:624:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:624:5'],
+            },
+          ],
+          semantics: {
+            type: 'ActionValueOperand | undefined',
+            aliases: ['ActionValueOperand'],
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/actions.ts:624:5'],
+          optional: true,
+        },
         path: ['parameters', 'count'],
         label: 'count',
         description:
@@ -1520,8 +5372,28 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         type: 'ActionValueOperand',
         required: false,
         control: 'operand',
+        semantics: {
+          type: 'ActionValueOperand | undefined',
+          aliases: ['ActionValueOperand'],
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/actions.ts:624:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: [
+            'eventSource',
+            'enemy',
+            'caster',
+            'buffOwner',
+            'buffSource',
+            'currentAbilityEntity',
+          ],
+          semantics: actionSchemaPart_9b5c476fa18f23c5,
+          source: ['packages/game-data-contract/src/actions.ts:629:5'],
+          optional: true,
+        },
         path: ['parameters', 'source'],
         label: 'source',
         description:
@@ -1537,16 +5409,70 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
           'buffSource',
           'currentAbilityEntity',
         ],
+        semantics: actionSchemaPart_9b5c476fa18f23c5,
+        source: ['packages/game-data-contract/src/actions.ts:629:5'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:631:5'],
+          optional: true,
+        },
         path: ['parameters', 'sourceContextKey'],
         label: 'sourceContextKey',
         description: '已确定为单一目标的 Context 来源，与 source 互斥；保留查询结果的实例身份。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: { type: 'string | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:631:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['actionOwnerAbilityEntity'],
+                  semantics: { type: '"actionOwnerAbilityEntity"' },
+                  source: ['packages/game-data-contract/src/actions.ts:640:11'],
+                  description: '图标时长来源判别值。',
+                },
+              },
+              semantics: { type: '{ readonly kind: "actionOwnerAbilityEntity"; }' },
+              source: ['packages/game-data-contract/src/actions.ts:636:5'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['actionOwnerTimedMarker'],
+                  semantics: { type: '"actionOwnerTimedMarker"' },
+                  source: ['packages/game-data-contract/src/actions.ts:644:11'],
+                  description: '使用动作宿主上的一个定时标记。',
+                },
+                markerId: {
+                  kind: 'string',
+                  semantics: { type: 'string' },
+                  source: ['packages/game-data-contract/src/actions.ts:646:11'],
+                  description: '定时标记 ID。',
+                },
+              },
+              semantics: {
+                type: '{ readonly kind: "actionOwnerTimedMarker"; readonly markerId: string; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:636:5'],
+            },
+          ],
+          semantics: actionSchemaPart_56fe9026baaf0e55,
+          source: ['packages/game-data-contract/src/actions.ts:636:5'],
+          optional: true,
+        },
         path: ['parameters', 'iconDurationSource'],
         label: 'iconDurationSource',
         description:
@@ -1554,8 +5480,71 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         type: "| { /** 图标时长来源判别值。 */ readonly kind: 'actionOwnerAbilityEntity'; } | { /** 使用动作宿主上的一个定时标记。 */ readonly kind: 'actionOwnerTimedMarker'; /** 定时标记 ID。 */ readonly markerId: string; }",
         required: false,
         control: 'json',
+        semantics: actionSchemaPart_56fe9026baaf0e55,
+        source: ['packages/game-data-contract/src/actions.ts:636:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'record',
+          value: {
+            kind: 'union',
+            variants: [
+              {
+                kind: 'number',
+                semantics: { type: 'number' },
+                source: ['packages/game-data-contract/src/actions.ts:652:5'],
+              },
+              {
+                kind: 'array',
+                element: {
+                  kind: 'number',
+                  semantics: { type: 'number' },
+                  source: ['packages/game-data-contract/src/actions.ts:652:5'],
+                },
+                semantics: { type: 'readonly number[]', arrayElement: { type: 'number' } },
+                source: ['packages/game-data-contract/src/actions.ts:652:5'],
+              },
+              {
+                kind: 'object',
+                fields: actionSchemaPart_80825b09887cd9ab,
+                semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+                source: ['packages/game-data-contract/src/actions.ts:652:5'],
+              },
+              {
+                kind: 'object',
+                fields: actionSchemaPart_3f870f38207524cc,
+                semantics: {
+                  type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+                },
+                source: ['packages/game-data-contract/src/actions.ts:652:5'],
+              },
+              {
+                kind: 'object',
+                fields: actionSchemaPart_08cc55a541270d02,
+                semantics: { type: '{ kind: "constant"; value: number; }' },
+                source: ['packages/game-data-contract/src/actions.ts:652:5'],
+              },
+              {
+                kind: 'object',
+                fields: actionSchemaPart_bc1411c64bfee9b9,
+                semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+                source: ['packages/game-data-contract/src/actions.ts:652:5'],
+              },
+            ],
+            semantics: {
+              type: 'LevelValues | ActionValueOperand',
+              unionVariants: [
+                { type: 'LevelValues', aliases: ['LevelValues'] },
+                { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+              ],
+            },
+            source: ['packages/game-data-contract/src/actions.ts:652:5'],
+          },
+          semantics: actionSchemaPart_2bacd4d9c1064be0,
+          source: ['packages/game-data-contract/src/actions.ts:652:5'],
+          optional: true,
+        },
         path: ['parameters', 'blackboardAssignments'],
         label: 'blackboardAssignments',
         description:
@@ -1563,16 +5552,56 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         type: 'Readonly<Record<string, LevelValues | ActionValueOperand>>',
         required: false,
         control: 'json',
+        semantics: actionSchemaPart_2bacd4d9c1064be0,
+        source: ['packages/game-data-contract/src/actions.ts:652:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'record',
+          value: {
+            kind: 'string',
+            semantics: { type: 'string' },
+            source: ['packages/game-data-contract/src/actions.ts:654:5'],
+          },
+          semantics: {
+            type: 'Readonly<Record<string, string>> | undefined',
+            recordValue: { type: 'string' },
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/actions.ts:654:5'],
+          optional: true,
+        },
         path: ['parameters', 'stringBlackboardAssignments'],
         label: 'stringBlackboardAssignments',
         description: '原生字符串输入的字面覆盖；与数值赋值分开，避免把字符串伪装成计算操作数。',
         type: 'Readonly<Record<string, string>>',
         required: false,
         control: 'json',
+        semantics: {
+          type: 'Readonly<Record<string, string>> | undefined',
+          recordValue: { type: 'string' },
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/actions.ts:654:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'record',
+          value: {
+            kind: 'string',
+            semantics: { type: 'string' },
+            source: ['packages/game-data-contract/src/actions.ts:659:5'],
+          },
+          semantics: {
+            type: 'Readonly<Record<string, string>> | undefined',
+            recordValue: { type: 'string' },
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/actions.ts:659:5'],
+          optional: true,
+        },
         path: ['parameters', 'copiedBlackboardAssignments'],
         label: 'copiedBlackboardAssignments',
         description:
@@ -1580,8 +5609,85 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         type: 'Readonly<Record<string, string>>',
         required: false,
         control: 'json',
+        semantics: {
+          type: 'Readonly<Record<string, string>> | undefined',
+          recordValue: { type: 'string' },
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/actions.ts:659:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'object',
+            fields: {
+              triggerBuffIds: {
+                kind: 'array',
+                element: {
+                  kind: 'string',
+                  semantics: { type: 'string' },
+                  source: ['packages/game-data-contract/src/actions.ts:666:7'],
+                },
+                semantics: { type: 'readonly string[]', arrayElement: { type: 'string' } },
+                source: ['packages/game-data-contract/src/actions.ts:666:7'],
+                description: '任一加入时触发强化的普通 Buff ID。',
+              },
+              operation: {
+                kind: 'enum',
+                options: ['assign', 'add', 'multiply'],
+                semantics: {
+                  type: '"assign" | "add" | "multiply"',
+                  unionVariants: [{ type: '"assign"' }, { type: '"add"' }, { type: '"multiply"' }],
+                },
+                source: ['packages/game-data-contract/src/actions.ts:668:7'],
+                description: '对关键词值执行赋值、加算或乘算。',
+              },
+              value: {
+                kind: 'union',
+                variants: [
+                  {
+                    kind: 'object',
+                    fields: actionSchemaPart_80825b09887cd9ab,
+                    semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+                    source: ['packages/game-data-contract/src/actions.ts:670:7'],
+                  },
+                  {
+                    kind: 'object',
+                    fields: actionSchemaPart_3f870f38207524cc,
+                    semantics: {
+                      type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+                    },
+                    source: ['packages/game-data-contract/src/actions.ts:670:7'],
+                  },
+                  {
+                    kind: 'object',
+                    fields: actionSchemaPart_08cc55a541270d02,
+                    semantics: { type: '{ kind: "constant"; value: number; }' },
+                    source: ['packages/game-data-contract/src/actions.ts:670:7'],
+                  },
+                  {
+                    kind: 'object',
+                    fields: actionSchemaPart_bc1411c64bfee9b9,
+                    semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+                    source: ['packages/game-data-contract/src/actions.ts:670:7'],
+                  },
+                ],
+                semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+                source: ['packages/game-data-contract/src/actions.ts:670:7'],
+                description: '从当前动作黑板或常量读取的运算值。',
+              },
+            },
+            semantics: {
+              type: '{ triggerBuffIds: readonly string[]; operation: "assign" | "add" | "multiply"; value: ActionValueOperand; }',
+            },
+            source: ['packages/game-data-contract/src/actions.ts:664:5'],
+          },
+          semantics: actionSchemaPart_5dca7b90ca28c5e4,
+          source: ['packages/game-data-contract/src/actions.ts:664:5'],
+          optional: true,
+        },
         path: ['parameters', 'keywordEnhancements'],
         label: 'keywordEnhancements',
         description:
@@ -1589,16 +5695,33 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         type: "readonly { /** 任一加入时触发强化的普通 Buff ID。 */ triggerBuffIds: readonly string[]; /** 对关键词值执行赋值、加算或乘算。 */ operation: 'assign' | 'add' | 'multiply'; /** 从当前动作黑板或常量读取的运算值。 */ value: ActionValueOperand; }[]",
         required: false,
         control: 'json',
+        semantics: actionSchemaPart_5dca7b90ca28c5e4,
+        source: ['packages/game-data-contract/src/actions.ts:664:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:673:5'],
+          optional: true,
+        },
         path: ['parameters', 'inheritSourceSkillCastInfo'],
         label: 'inheritSourceSkillCastInfo',
         description: '原生动作要求把当前施法身份复制到新 Buff 时为 true。',
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: { type: 'boolean | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:673:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:675:5'],
+          optional: true,
+        },
         path: ['parameters', 'isExtra'],
         label: 'isExtra',
         description:
@@ -1606,24 +5729,201 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: { type: 'boolean | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:675:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:677:5'],
+          optional: true,
+        },
         path: ['parameters', 'finishByAction'],
         label: 'finishByAction',
         description: '原生区域/动作生命周期结束时，只结束本步骤实际创建的 Buff 实例。',
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: { type: 'boolean | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:677:5'],
       },
       {
+        valueSchema: {
+          kind: 'object',
+          fields: {
+            target: {
+              kind: 'enum',
+              options: [
+                'eventSource',
+                'eventTarget',
+                'enemy',
+                'caster',
+                'buffOwner',
+                'buffSource',
+                'controlledOperator',
+                'currentAbilityEntity',
+                'currentTarget',
+                'actionInputTarget',
+                'party',
+                'partyExceptCaster',
+                'partyExceptCasterAndSameCharacterType',
+                'casterAndControlledOperator',
+                'casterAndLowestHealthRatioOperatorExceptCaster',
+              ],
+              semantics: actionSchemaPart_39148600bef476a7,
+              source: ['packages/game-data-contract/src/actions.ts:680:7'],
+            },
+            buffIds: {
+              kind: 'array',
+              element: {
+                kind: 'string',
+                semantics: { type: 'string' },
+                source: ['packages/game-data-contract/src/actions.ts:681:7'],
+              },
+              semantics: { type: 'readonly string[]', arrayElement: { type: 'string' } },
+              source: ['packages/game-data-contract/src/actions.ts:681:7'],
+            },
+          },
+          semantics: actionSchemaPart_74a7beb2915a3fcd,
+          source: ['packages/game-data-contract/src/actions.ts:679:5'],
+          optional: true,
+        },
         path: ['parameters', 'onActionEndFinishBuffs'],
         label: 'onActionEndFinishBuffs',
         description: '动作结束时，在回收自身创建的 Buff 后，按 ID 清理指定目标的全部匹配 Buff。',
         type: '{ target: BuffApplicationTarget; buffIds: readonly string[]; }',
         required: false,
         control: 'json',
+        semantics: actionSchemaPart_74a7beb2915a3fcd,
+        source: ['packages/game-data-contract/src/actions.ts:679:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'object',
+            fields: {
+              buffId: {
+                kind: 'string',
+                semantics: { type: 'string' },
+                source: ['packages/game-data-contract/src/actions.ts:689:7'],
+                description: '余效 Buff ID。',
+              },
+              target: {
+                kind: 'enum',
+                options: [
+                  'eventSource',
+                  'eventTarget',
+                  'enemy',
+                  'caster',
+                  'buffOwner',
+                  'buffSource',
+                  'controlledOperator',
+                  'currentAbilityEntity',
+                  'currentTarget',
+                  'actionInputTarget',
+                  'party',
+                  'partyExceptCaster',
+                  'partyExceptCasterAndSameCharacterType',
+                  'casterAndControlledOperator',
+                  'casterAndLowestHealthRatioOperatorExceptCaster',
+                ],
+                semantics: actionSchemaPart_39148600bef476a7,
+                source: ['packages/game-data-contract/src/actions.ts:691:7'],
+                description: '接收余效 Buff 的目标。',
+              },
+              source: {
+                kind: 'enum',
+                options: [
+                  'eventSource',
+                  'enemy',
+                  'caster',
+                  'buffOwner',
+                  'buffSource',
+                  'currentAbilityEntity',
+                ],
+                semantics: actionSchemaPart_9b5c476fa18f23c5,
+                source: ['packages/game-data-contract/src/actions.ts:693:7'],
+                optional: true,
+                description: '余效 Buff 的来源对象。',
+              },
+              blackboardAssignments: {
+                kind: 'record',
+                value: {
+                  kind: 'union',
+                  variants: [
+                    {
+                      kind: 'object',
+                      fields: actionSchemaPart_80825b09887cd9ab,
+                      semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+                      source: ['packages/game-data-contract/src/actions.ts:695:7'],
+                    },
+                    {
+                      kind: 'object',
+                      fields: actionSchemaPart_3f870f38207524cc,
+                      semantics: {
+                        type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+                      },
+                      source: ['packages/game-data-contract/src/actions.ts:695:7'],
+                    },
+                    {
+                      kind: 'object',
+                      fields: actionSchemaPart_08cc55a541270d02,
+                      semantics: { type: '{ kind: "constant"; value: number; }' },
+                      source: ['packages/game-data-contract/src/actions.ts:695:7'],
+                    },
+                    {
+                      kind: 'object',
+                      fields: actionSchemaPart_bc1411c64bfee9b9,
+                      semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+                      source: ['packages/game-data-contract/src/actions.ts:695:7'],
+                    },
+                  ],
+                  semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+                  source: ['packages/game-data-contract/src/actions.ts:695:7'],
+                },
+                semantics: {
+                  type: 'Readonly<Record<string, ActionValueOperand>> | undefined',
+                  recordValue: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+                  optional: true,
+                },
+                source: ['packages/game-data-contract/src/actions.ts:695:7'],
+                optional: true,
+                description: '从当前动作黑板计算并传给余效 Buff 的数值。',
+              },
+              stringBlackboardAssignments: {
+                kind: 'record',
+                value: {
+                  kind: 'string',
+                  semantics: { type: 'string' },
+                  source: ['packages/game-data-contract/src/actions.ts:697:7'],
+                },
+                semantics: {
+                  type: 'Readonly<Record<string, string>> | undefined',
+                  recordValue: { type: 'string' },
+                  optional: true,
+                },
+                source: ['packages/game-data-contract/src/actions.ts:697:7'],
+                optional: true,
+                description: '直接传给余效 Buff 的字符串值。',
+              },
+              inheritSourceSkillCastInfo: {
+                kind: 'boolean',
+                semantics: { type: 'boolean | undefined', optional: true },
+                source: ['packages/game-data-contract/src/actions.ts:699:7'],
+                optional: true,
+                description: '是否把当前施法身份传给余效 Buff。',
+              },
+            },
+            semantics: actionSchemaPart_da4914b2f9ad0fdc,
+            source: ['packages/game-data-contract/src/actions.ts:687:5'],
+          },
+          semantics: actionSchemaPart_d39dc7b4fe37772e,
+          source: ['packages/game-data-contract/src/actions.ts:687:5'],
+          optional: true,
+        },
         path: ['parameters', 'onActionEndBuffs'],
         label: 'onActionEndBuffs',
         description:
@@ -1631,8 +5931,26 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         type: 'readonly { /** 余效 Buff ID。 */ buffId: string; /** 接收余效 Buff 的目标。 */ target: BuffApplicationTarget; /** 余效 Buff 的来源对象。 */ source?: BuffApplicationSource; /** 从当前动作黑板计算并传给余效 Buff 的数值。 */ blackboardAssignments?: Readonly<Record<string, ActionValueOperand>>; /** 直接传给余效 Buff 的字符串值。 */ stringBlackboardAssignments?: Readonly<Record<string, string>>; /** 是否把当前施法身份传给余效 Buff。 */ inheritSourceSkillCastInfo?: boolean; }[]',
         required: false,
         control: 'json',
+        semantics: actionSchemaPart_d39dc7b4fe37772e,
+        source: ['packages/game-data-contract/src/actions.ts:687:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'string',
+            semantics: { type: 'string' },
+            source: ['packages/game-data-contract/src/actions.ts:705:5'],
+          },
+          semantics: {
+            type: 'readonly string[] | undefined',
+            arrayElement: { type: 'string' },
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/actions.ts:705:5'],
+          optional: true,
+        },
         path: ['parameters', 'inheritToNextSkillIds'],
         label: 'inheritToNextSkillIds',
         description:
@@ -1640,16 +5958,38 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         type: 'readonly string[]',
         required: false,
         control: 'json',
+        semantics: {
+          type: 'readonly string[] | undefined',
+          arrayElement: { type: 'string' },
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/actions.ts:705:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:707:5'],
+          optional: true,
+        },
         path: ['parameters', 'asChildBuff'],
         label: 'asChildBuff',
         description: '原生 asChildBuff：当前动作由 Buff 持有时，父 Buff 结束会同步结束该实例。',
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: { type: 'boolean | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:707:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['currentCastSkill'],
+          semantics: { type: '"currentCastSkill" | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:709:5'],
+          optional: true,
+        },
         path: ['parameters', 'lifetimeOwner'],
         label: 'lifetimeOwner',
         description: 'CreateBuffAttachingSkill：绑定事件当前技能而非动作 owner 的寿命。',
@@ -1657,22 +5997,40 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: false,
         control: 'select',
         options: ['currentCastSkill'],
+        semantics: { type: '"currentCastSkill" | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:709:5'],
       },
       {
+        valueSchema: {
+          kind: 'number',
+          semantics: { type: 'number | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:711:5'],
+          optional: true,
+        },
         path: ['parameters', 'durationSeconds'],
         label: 'durationSeconds',
         description: '覆盖本次 Buff 实例持续时间的秒数。',
         type: 'number',
         required: false,
         control: 'number',
+        semantics: { type: 'number | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:711:5'],
       },
       {
+        valueSchema: {
+          kind: 'number',
+          semantics: { type: 'number | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:713:5'],
+          optional: true,
+        },
         path: ['parameters', 'effectiveness'],
         label: 'effectiveness',
         description: '覆盖本次 Buff 实例效果系数。',
         type: 'number',
         required: false,
         control: 'number',
+        semantics: { type: 'number | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:713:5'],
       },
     ],
   },
@@ -1680,39 +6038,356 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'createGlobalBuff',
     description: '创建一个独立的战斗级 GlobalBuff 实例，并把其子 Buff 投影到当前固定队伍。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:718:5'],
+        },
         path: ['parameters', 'globalBuffId'],
         label: 'globalBuffId',
         description: '全局 Buff ID。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:718:5'],
       },
       {
+        valueSchema: {
+          kind: 'object',
+          fields: {
+            stackingType: {
+              kind: 'enum',
+              options: ['unlimited', 'stack'],
+              semantics: {
+                type: '"unlimited" | "stack"',
+                unionVariants: [{ type: '"unlimited"' }, { type: '"stack"' }],
+              },
+              source: ['packages/game-data-contract/src/buffs.ts:201:3'],
+              description: '全局 Buff 是保留所有实例，还是按最大层数保留实例。',
+            },
+            maxStackCount: {
+              kind: 'number',
+              semantics: { type: 'number | undefined', optional: true },
+              source: ['packages/game-data-contract/src/buffs.ts:203:3'],
+              optional: true,
+              description: '`stack` 模式允许同时存在的最大实例数。',
+            },
+            durationSeconds: {
+              kind: 'union',
+              variants: [
+                {
+                  kind: 'number',
+                  semantics: { type: 'number' },
+                  source: ['packages/game-data-contract/src/buffs.ts:205:3'],
+                },
+                {
+                  kind: 'object',
+                  fields: {
+                    blackboardKey: {
+                      kind: 'string',
+                      semantics: { type: 'string' },
+                      source: ['packages/game-data-contract/src/buffs.ts:264:7'],
+                      description: '读取持续秒数的 Buff 黑板键。',
+                    },
+                  },
+                  semantics: { type: '{ readonly blackboardKey: string; }' },
+                  source: ['packages/game-data-contract/src/buffs.ts:205:3'],
+                },
+              ],
+              semantics: {
+                type: 'BuffDuration | undefined',
+                optional: true,
+                unionVariants: [
+                  { type: 'number' },
+                  { type: '{ readonly blackboardKey: string; }' },
+                ],
+              },
+              source: ['packages/game-data-contract/src/buffs.ts:205:3'],
+              optional: true,
+              description: '全局 Buff 的持续时间。',
+            },
+            applyIconDurationToBuffs: {
+              kind: 'boolean',
+              semantics: { type: 'boolean | undefined', optional: true },
+              source: ['packages/game-data-contract/src/buffs.ts:207:3'],
+              optional: true,
+              description:
+                '原生父 GlobalBuff 的时长同时作为子 Buff 图标时长；不改变子 Buff 的战斗寿命归属。',
+            },
+            blackboard: {
+              kind: 'record',
+              value: {
+                kind: 'union',
+                variants: [
+                  {
+                    kind: 'null',
+                    semantics: { type: 'null' },
+                    source: ['packages/game-data-contract/src/buffs.ts:209:3'],
+                  },
+                  {
+                    kind: 'string',
+                    semantics: { type: 'string' },
+                    source: ['packages/game-data-contract/src/buffs.ts:209:3'],
+                  },
+                  {
+                    kind: 'number',
+                    semantics: { type: 'number' },
+                    source: ['packages/game-data-contract/src/buffs.ts:209:3'],
+                  },
+                ],
+                semantics: {
+                  type: 'ActionBlackboardValue',
+                  unionVariants: [{ type: 'string' }, { type: 'number' }, { type: 'null' }],
+                },
+                source: ['packages/game-data-contract/src/buffs.ts:209:3'],
+              },
+              semantics: {
+                type: 'Readonly<Record<string, ActionBlackboardValue>>',
+                recordValue: {
+                  type: 'ActionBlackboardValue',
+                  unionVariants: [{ type: 'string' }, { type: 'number' }, { type: 'null' }],
+                },
+              },
+              source: ['packages/game-data-contract/src/buffs.ts:209:3'],
+              description: '创建实例时使用的初始黑板值。',
+            },
+            sharedSpModifiers: {
+              kind: 'array',
+              element: {
+                kind: 'object',
+                fields: {
+                  attribute: {
+                    kind: 'enum',
+                    options: [
+                      'spRecovery',
+                      'gainEfficiency',
+                      'normalAttackEfficiency',
+                      'powerAttackEfficiency',
+                    ],
+                    semantics: {
+                      type: '"spRecovery" | "gainEfficiency" | "normalAttackEfficiency" | "powerAttackEfficiency"',
+                      unionVariants: [
+                        { type: '"spRecovery"' },
+                        { type: '"gainEfficiency"' },
+                        { type: '"normalAttackEfficiency"' },
+                        { type: '"powerAttackEfficiency"' },
+                      ],
+                    },
+                    source: ['packages/game-data-contract/src/buffs.ts:213:5'],
+                    description: '要修改的共享技力属性。',
+                  },
+                  operation: {
+                    kind: 'enum',
+                    options: ['addition', 'multiplier'],
+                    semantics: {
+                      type: '"addition" | "multiplier"',
+                      unionVariants: [{ type: '"addition"' }, { type: '"multiplier"' }],
+                    },
+                    source: ['packages/game-data-contract/src/buffs.ts:216:5'],
+                    description: '对该属性执行加算或乘算。',
+                  },
+                  value: {
+                    kind: 'union',
+                    variants: [
+                      {
+                        kind: 'object',
+                        fields: actionSchemaPart_80825b09887cd9ab,
+                        semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+                        source: ['packages/game-data-contract/src/buffs.ts:218:5'],
+                      },
+                      {
+                        kind: 'object',
+                        fields: actionSchemaPart_3f870f38207524cc,
+                        semantics: {
+                          type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+                        },
+                        source: ['packages/game-data-contract/src/buffs.ts:218:5'],
+                      },
+                      {
+                        kind: 'object',
+                        fields: actionSchemaPart_08cc55a541270d02,
+                        semantics: { type: '{ kind: "constant"; value: number; }' },
+                        source: ['packages/game-data-contract/src/buffs.ts:218:5'],
+                      },
+                      {
+                        kind: 'object',
+                        fields: actionSchemaPart_bc1411c64bfee9b9,
+                        semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+                        source: ['packages/game-data-contract/src/buffs.ts:218:5'],
+                      },
+                    ],
+                    semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+                    source: ['packages/game-data-contract/src/buffs.ts:218:5'],
+                    description: '写入属性的数值。',
+                  },
+                  applyToReturnSpGain: {
+                    kind: 'boolean',
+                    semantics: { type: 'boolean' },
+                    source: ['packages/game-data-contract/src/buffs.ts:220:5'],
+                    description: '是否也修改返还技力的获取量。',
+                  },
+                },
+                semantics: actionSchemaPart_e27d47aed42d02c5,
+                source: ['packages/game-data-contract/src/buffs.ts:211:3'],
+              },
+              semantics: {
+                type: 'readonly { readonly attribute: "spRecovery" | "gainEfficiency" | "normalAttackEfficiency" | "powerAttackEfficiency"; readonly operation: "addition" | "multiplier"; readonly value: ActionValueOperand; readonly applyToReturnSpGain: boolean; }[] | undefined',
+                arrayElement: actionSchemaPart_e27d47aed42d02c5,
+                optional: true,
+              },
+              source: ['packages/game-data-contract/src/buffs.ts:211:3'],
+              optional: true,
+              description: '父 GlobalBuff 启用期间注册到整场战斗共享 SP 系统的原生全局修正。',
+            },
+            children: {
+              kind: 'array',
+              element: {
+                kind: 'object',
+                fields: {
+                  buffId: {
+                    kind: 'string',
+                    semantics: { type: 'string' },
+                    source: ['packages/game-data-contract/src/buffs.ts:190:3'],
+                    description: '投影到队员身上的普通 Buff ID。',
+                  },
+                  blackboardAssignments: {
+                    kind: 'record',
+                    value: {
+                      kind: 'union',
+                      variants: [
+                        {
+                          kind: 'object',
+                          fields: actionSchemaPart_80825b09887cd9ab,
+                          semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+                          source: ['packages/game-data-contract/src/buffs.ts:192:3'],
+                        },
+                        {
+                          kind: 'object',
+                          fields: actionSchemaPart_3f870f38207524cc,
+                          semantics: {
+                            type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+                          },
+                          source: ['packages/game-data-contract/src/buffs.ts:192:3'],
+                        },
+                        {
+                          kind: 'object',
+                          fields: actionSchemaPart_08cc55a541270d02,
+                          semantics: { type: '{ kind: "constant"; value: number; }' },
+                          source: ['packages/game-data-contract/src/buffs.ts:192:3'],
+                        },
+                        {
+                          kind: 'object',
+                          fields: actionSchemaPart_bc1411c64bfee9b9,
+                          semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+                          source: ['packages/game-data-contract/src/buffs.ts:192:3'],
+                        },
+                      ],
+                      semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+                      source: ['packages/game-data-contract/src/buffs.ts:192:3'],
+                    },
+                    semantics: {
+                      type: 'Readonly<Record<string, ActionValueOperand>>',
+                      recordValue: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+                    },
+                    source: ['packages/game-data-contract/src/buffs.ts:192:3'],
+                    description: '从全局 Buff 黑板计算并传给子 Buff 的黑板值。',
+                  },
+                },
+                semantics: { type: 'SkillGlobalBuffChildDefinition' },
+                source: ['packages/game-data-contract/src/buffs.ts:223:3'],
+              },
+              semantics: {
+                type: 'readonly SkillGlobalBuffChildDefinition[]',
+                arrayElement: { type: 'SkillGlobalBuffChildDefinition' },
+              },
+              source: ['packages/game-data-contract/src/buffs.ts:223:3'],
+              description: '此全局 Buff 会投影到队员身上的普通 Buff。',
+            },
+          },
+          semantics: { type: 'SkillGlobalBuffDefinition' },
+          source: ['packages/game-data-contract/src/actions.ts:720:5'],
+        },
         path: ['parameters', 'definition'],
         label: 'definition',
         description: '全局 Buff 的完整定义。',
         type: 'SkillGlobalBuffDefinition',
         required: true,
         control: 'json',
+        semantics: { type: 'SkillGlobalBuffDefinition' },
+        source: ['packages/game-data-contract/src/actions.ts:720:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:722:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:722:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:722:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:722:5'],
+            },
+          ],
+          semantics: {
+            type: 'ActionValueOperand | undefined',
+            aliases: ['ActionValueOperand'],
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/actions.ts:722:5'],
+          optional: true,
+        },
         path: ['parameters', 'count'],
         label: 'count',
         description: '本步骤重复创建实例的次数。',
         type: 'ActionValueOperand',
         required: false,
         control: 'operand',
+        semantics: {
+          type: 'ActionValueOperand | undefined',
+          aliases: ['ActionValueOperand'],
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/actions.ts:722:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: [
+            'eventSource',
+            'enemy',
+            'caster',
+            'buffOwner',
+            'buffSource',
+            'currentAbilityEntity',
+            'battle',
+          ],
+          semantics: actionSchemaPart_8186404ecafbcd5e,
+          source: ['packages/game-data-contract/src/actions.ts:724:5'],
+          optional: true,
+        },
         path: ['parameters', 'source'],
         label: 'source',
         description: 'GodEntity 持有的原生全局实例保留 battle 来源，不伪装成某名干员。',
@@ -1728,22 +6403,82 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
           'currentAbilityEntity',
           'battle',
         ],
+        semantics: actionSchemaPart_8186404ecafbcd5e,
+        source: ['packages/game-data-contract/src/actions.ts:724:5'],
       },
       {
+        valueSchema: {
+          kind: 'record',
+          value: {
+            kind: 'union',
+            variants: [
+              {
+                kind: 'object',
+                fields: actionSchemaPart_80825b09887cd9ab,
+                semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+                source: ['packages/game-data-contract/src/actions.ts:726:5'],
+              },
+              {
+                kind: 'object',
+                fields: actionSchemaPart_3f870f38207524cc,
+                semantics: {
+                  type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+                },
+                source: ['packages/game-data-contract/src/actions.ts:726:5'],
+              },
+              {
+                kind: 'object',
+                fields: actionSchemaPart_08cc55a541270d02,
+                semantics: { type: '{ kind: "constant"; value: number; }' },
+                source: ['packages/game-data-contract/src/actions.ts:726:5'],
+              },
+              {
+                kind: 'object',
+                fields: actionSchemaPart_bc1411c64bfee9b9,
+                semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+                source: ['packages/game-data-contract/src/actions.ts:726:5'],
+              },
+            ],
+            semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+            source: ['packages/game-data-contract/src/actions.ts:726:5'],
+          },
+          semantics: {
+            type: 'Readonly<Record<string, ActionValueOperand>> | undefined',
+            recordValue: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/actions.ts:726:5'],
+          optional: true,
+        },
         path: ['parameters', 'blackboardAssignments'],
         label: 'blackboardAssignments',
         description: '覆盖全局 Buff 初始黑板的数值。',
         type: 'Readonly<Record<string, ActionValueOperand>>',
         required: false,
         control: 'json',
+        semantics: {
+          type: 'Readonly<Record<string, ActionValueOperand>> | undefined',
+          recordValue: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/actions.ts:726:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:728:5'],
+          optional: true,
+        },
         path: ['parameters', 'finishByAction'],
         label: 'finishByAction',
         description: '所在动作结束时只清理本步骤创建的 GlobalBuff 实例。',
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: { type: 'boolean | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:728:5'],
       },
     ],
   },
@@ -1751,15 +6486,17 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'finishParentGlobalBuff',
     description: '只结束当前子 Buff 精确关联的那个父 GlobalBuff 实例。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'enum',
+          options: ['early', 'other'],
+          semantics: {
+            type: '"early" | "other"',
+            unionVariants: [{ type: '"early"' }, { type: '"other"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:733:5'],
+        },
         path: ['parameters', 'reason'],
         label: 'reason',
         description: '记录到结束事件中的原因。',
@@ -1767,6 +6504,11 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['early', 'other'],
+        semantics: {
+          type: '"early" | "other"',
+          unionVariants: [{ type: '"early"' }, { type: '"other"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:733:5'],
       },
     ],
   },
@@ -1774,23 +6516,38 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'finishGlobalBuffsById',
     description: '按原生 GlobalBuffId 结束当前战斗中所有同名父实例。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'string',
+            semantics: { type: 'string' },
+            source: ['packages/game-data-contract/src/actions.ts:738:5'],
+          },
+          semantics: { type: 'readonly string[]', arrayElement: { type: 'string' } },
+          source: ['packages/game-data-contract/src/actions.ts:738:5'],
+        },
         path: ['parameters', 'globalBuffIds'],
         label: 'globalBuffIds',
         description: '要结束的全局 Buff ID。',
         type: 'readonly string[]',
         required: true,
         control: 'json',
+        semantics: { type: 'readonly string[]', arrayElement: { type: 'string' } },
+        source: ['packages/game-data-contract/src/actions.ts:738:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['early', 'other'],
+          semantics: {
+            type: '"early" | "other"',
+            unionVariants: [{ type: '"early"' }, { type: '"other"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:740:5'],
+        },
         path: ['parameters', 'reason'],
         label: 'reason',
         description: '记录到结束事件中的原因。',
@@ -1798,6 +6555,11 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['early', 'other'],
+        semantics: {
+          type: '"early" | "other"',
+          unionVariants: [{ type: '"early"' }, { type: '"other"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:740:5'],
       },
     ],
   },
@@ -1805,21 +6567,172 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'readSkillSettingData',
     description: '从版本化 SkillSetting 的四列值按运行时列号读取，并写入当前动作黑板。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'object',
+            fields: {
+              values: {
+                kind: 'array',
+                element: {
+                  kind: 'number',
+                  semantics: { type: 'number' },
+                  source: ['packages/game-data-contract/src/actions.ts:747:7'],
+                },
+                semantics: { type: 'readonly number[]', arrayElement: { type: 'number' } },
+                source: ['packages/game-data-contract/src/actions.ts:747:7'],
+                description: 'SkillSetting 中固定四列数值。',
+              },
+              column: {
+                kind: 'union',
+                variants: [
+                  {
+                    kind: 'object',
+                    fields: actionSchemaPart_80825b09887cd9ab,
+                    semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+                    source: ['packages/game-data-contract/src/actions.ts:749:7'],
+                  },
+                  {
+                    kind: 'object',
+                    fields: actionSchemaPart_3f870f38207524cc,
+                    semantics: {
+                      type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+                    },
+                    source: ['packages/game-data-contract/src/actions.ts:749:7'],
+                  },
+                  {
+                    kind: 'object',
+                    fields: actionSchemaPart_08cc55a541270d02,
+                    semantics: { type: '{ kind: "constant"; value: number; }' },
+                    source: ['packages/game-data-contract/src/actions.ts:749:7'],
+                  },
+                  {
+                    kind: 'object',
+                    fields: actionSchemaPart_bc1411c64bfee9b9,
+                    semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+                    source: ['packages/game-data-contract/src/actions.ts:749:7'],
+                  },
+                ],
+                semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+                source: ['packages/game-data-contract/src/actions.ts:749:7'],
+                description: '从 1 开始的列号。',
+              },
+              storeKey: {
+                kind: 'string',
+                semantics: { type: 'string' },
+                source: ['packages/game-data-contract/src/actions.ts:751:7'],
+                description: '保存结果的动作黑板键。',
+              },
+              enhance: {
+                kind: 'object',
+                fields: {
+                  target: {
+                    kind: 'enum',
+                    options: ['caster', 'buffOwner', 'buffSource'],
+                    semantics: {
+                      type: '"caster" | "buffOwner" | "buffSource"',
+                      unionVariants: [
+                        { type: '"caster"' },
+                        { type: '"buffOwner"' },
+                        { type: '"buffSource"' },
+                      ],
+                    },
+                    source: ['packages/game-data-contract/src/actions.ts:755:9'],
+                    description: '读取强化层数的对象。',
+                  },
+                  formula: {
+                    kind: 'union',
+                    variants: [
+                      {
+                        kind: 'object',
+                        fields: {
+                          kind: {
+                            kind: 'enum',
+                            options: ['linear'],
+                            semantics: { type: '"linear"' },
+                            source: ['packages/game-data-contract/src/actions.ts:760:15'],
+                            description: '每层按固定系数线性增加。',
+                          },
+                          paramA: {
+                            kind: 'number',
+                            semantics: { type: 'number' },
+                            source: ['packages/game-data-contract/src/actions.ts:762:15'],
+                            description: '线性公式系数。',
+                          },
+                        },
+                        semantics: {
+                          type: '{ readonly kind: "linear"; readonly paramA: number; }',
+                        },
+                        source: ['packages/game-data-contract/src/actions.ts:757:9'],
+                      },
+                      {
+                        kind: 'object',
+                        fields: {
+                          kind: {
+                            kind: 'enum',
+                            options: ['saturating'],
+                            semantics: { type: '"saturating"' },
+                            source: ['packages/game-data-contract/src/actions.ts:766:15'],
+                            description: '增幅随层数逐渐趋近上限。',
+                          },
+                          paramA: {
+                            kind: 'number',
+                            semantics: { type: 'number' },
+                            source: ['packages/game-data-contract/src/actions.ts:768:15'],
+                            description: '饱和公式的强度系数。',
+                          },
+                          paramB: {
+                            kind: 'number',
+                            semantics: { type: 'number' },
+                            source: ['packages/game-data-contract/src/actions.ts:770:15'],
+                            description: '饱和公式的衰减系数。',
+                          },
+                        },
+                        semantics: {
+                          type: '{ readonly kind: "saturating"; readonly paramA: number; readonly paramB: number; }',
+                        },
+                        source: ['packages/game-data-contract/src/actions.ts:757:9'],
+                      },
+                    ],
+                    semantics: {
+                      type: '{ readonly kind: "linear"; readonly paramA: number; } | { readonly kind: "saturating"; readonly paramA: number; readonly paramB: number; }',
+                      unionVariants: [
+                        { type: '{ readonly kind: "linear"; readonly paramA: number; }' },
+                        {
+                          type: '{ readonly kind: "saturating"; readonly paramA: number; readonly paramB: number; }',
+                        },
+                      ],
+                    },
+                    source: ['packages/game-data-contract/src/actions.ts:757:9'],
+                    description: '按层数应用的线性或饱和公式。',
+                  },
+                },
+                semantics: {
+                  type: '{ target: "caster" | "buffOwner" | "buffSource"; formula: { readonly kind: "linear"; readonly paramA: number; } | { readonly kind: "saturating"; readonly paramA: number; readonly paramB: number; }; } | undefined',
+                  optional: true,
+                },
+                source: ['packages/game-data-contract/src/actions.ts:753:7'],
+                optional: true,
+                description: '根据目标对象的强化层数进一步修正读取结果。',
+              },
+            },
+            semantics: actionSchemaPart_33071b8a3fe154a1,
+            source: ['packages/game-data-contract/src/actions.ts:745:5'],
+          },
+          semantics: actionSchemaPart_6805c465ff97e754,
+          source: ['packages/game-data-contract/src/actions.ts:745:5'],
+        },
         path: ['parameters', 'items'],
         label: 'items',
         description: '按顺序读取并写入动作黑板的数据项。',
         type: "readonly { /** SkillSetting 中固定四列数值。 */ values: readonly number[]; /** 从 1 开始的列号。 */ column: ActionValueOperand; /** 保存结果的动作黑板键。 */ storeKey: string; /** 根据目标对象的强化层数进一步修正读取结果。 */ enhance?: { /** 读取强化层数的对象。 */ target: 'caster' | 'buffOwner' | 'buffSource'; /** 按层数应用的线性或饱和公式。 */ formula: | { /** 每层按固定系数线性增加。 */ readonly kind: 'linear'; /** 线性公式系数。 */ readonly paramA: number; } | { /** 增幅随层数逐渐趋近上限。 */ readonly kind: 'saturating'; /** 饱和公式的强度系数。 */ readonly paramA: number; /** 饱和公式的衰减系数。 */ readonly paramB: number; }; }; }[]",
         required: true,
         control: 'json',
+        semantics: actionSchemaPart_6805c465ff97e754,
+        source: ['packages/game-data-contract/src/actions.ts:745:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
     ],
   },
@@ -1827,38 +6740,163 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'readBuffBlackboard',
     description: '按原生 ID 或标签查询目标的首个有效 Buff，并把其数值黑板写入当前动作黑板。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
+        valueSchema: {
+          kind: 'enum',
+          options: [
+            'eventSource',
+            'eventTarget',
+            'enemy',
+            'caster',
+            'buffOwner',
+            'buffSource',
+            'controlledOperator',
+            'currentAbilityEntity',
+            'currentTarget',
+            'actionInputTarget',
+          ],
+          semantics: actionSchemaPart_0b4542d8ad93756a,
+          source: ['packages/game-data-contract/src/actions.ts:778:5'],
+        },
+        path: ['parameters', 'target'],
+        label: 'target',
+        description: '要查找 Buff 的对象。',
+        type: 'BuffSingleTarget',
+        required: true,
+        control: 'select',
+        options: [
+          'eventSource',
+          'eventTarget',
+          'enemy',
+          'caster',
+          'buffOwner',
+          'buffSource',
+          'controlledOperator',
+          'currentAbilityEntity',
+          'currentTarget',
+          'actionInputTarget',
+        ],
+        semantics: actionSchemaPart_0b4542d8ad93756a,
+        source: ['packages/game-data-contract/src/actions.ts:778:5'],
       },
-      actionSchemaPart_072ac943acb3b102,
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['id'],
+                  semantics: { type: '"id"' },
+                  source: ['packages/game-data-contract/src/actions.ts:783:11'],
+                  description: '按 Buff ID 查找。',
+                },
+                buffIds: {
+                  kind: 'array',
+                  element: {
+                    kind: 'string',
+                    semantics: { type: 'string' },
+                    source: ['packages/game-data-contract/src/actions.ts:785:11'],
+                  },
+                  semantics: { type: 'readonly string[]', arrayElement: { type: 'string' } },
+                  source: ['packages/game-data-contract/src/actions.ts:785:11'],
+                  description: '任一匹配即可选中的 Buff ID。',
+                },
+              },
+              semantics: { type: '{ kind: "id"; buffIds: readonly string[]; }' },
+              source: ['packages/game-data-contract/src/actions.ts:780:5'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['tag'],
+                  semantics: { type: '"tag"' },
+                  source: ['packages/game-data-contract/src/actions.ts:789:11'],
+                  description: '按 Buff 标签查找。',
+                },
+                tagQueryType: {
+                  kind: 'enum',
+                  options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll'],
+                  semantics: {
+                    type: '"hasAny" | "hasAll" | "exceptAny" | "exceptAll"',
+                    unionVariants: [
+                      { type: '"hasAny"' },
+                      { type: '"hasAll"' },
+                      { type: '"exceptAny"' },
+                      { type: '"exceptAll"' },
+                    ],
+                  },
+                  source: ['packages/game-data-contract/src/actions.ts:791:11'],
+                  description: '标签集合匹配方式。',
+                },
+                buffTags: {
+                  kind: 'array',
+                  element: {
+                    kind: 'string',
+                    semantics: { type: 'string', aliases: ['GameplayTag'] },
+                    source: ['packages/game-data-contract/src/actions.ts:793:11'],
+                  },
+                  semantics: {
+                    type: 'readonly string[]',
+                    arrayElement: { type: 'string', aliases: ['GameplayTag'] },
+                  },
+                  source: ['packages/game-data-contract/src/actions.ts:793:11'],
+                  description: '参与匹配的 Buff 标签。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "tag"; tagQueryType: "hasAny" | "hasAll" | "exceptAny" | "exceptAll"; buffTags: readonly string[]; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:780:5'],
+            },
+          ],
+          semantics: actionSchemaPart_a62634abc5ef2702,
+          source: ['packages/game-data-contract/src/actions.ts:780:5'],
+        },
         path: ['parameters', 'query'],
         label: 'query',
         description: '按 ID 或标签选择 Buff。',
         type: "| { /** 按 Buff ID 查找。 */ kind: 'id'; /** 任一匹配即可选中的 Buff ID。 */ buffIds: readonly string[]; } | { /** 按 Buff 标签查找。 */ kind: 'tag'; /** 标签集合匹配方式。 */ tagQueryType: GameplayTagQueryType; /** 参与匹配的 Buff 标签。 */ buffTags: readonly GameplayTag[]; }",
         required: true,
         control: 'json',
+        semantics: actionSchemaPart_a62634abc5ef2702,
+        source: ['packages/game-data-contract/src/actions.ts:780:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:796:5'],
+        },
         path: ['parameters', 'desiredKey'],
         label: 'desiredKey',
         description: '从目标 Buff 黑板读取的键。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:796:5'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:798:5'],
+        },
         path: ['parameters', 'outputKey'],
         label: 'outputKey',
         description: '保存到当前动作黑板的键。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:798:5'],
       },
     ],
   },
@@ -1866,29 +6904,36 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'readEventBuffBlackboard',
     description: '原生 Target + Context 查询：先要求动作输入目标存在，再读取事件 Buff 的实时黑板。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:803:5'],
+        },
         path: ['parameters', 'desiredKey'],
         label: 'desiredKey',
         description: '从事件 Buff 黑板读取的键。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:803:5'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:805:5'],
+        },
         path: ['parameters', 'outputKey'],
         label: 'outputKey',
         description: '保存到当前动作黑板的键。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:805:5'],
       },
     ],
   },
@@ -1896,21 +6941,21 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'readCurrentBuffRemainingDuration',
     description: '把当前生命周期环境中有限时长 Buff 的剩余秒数写入动作黑板；无限时长写入 0。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:810:5'],
+        },
         path: ['parameters', 'outputKey'],
         label: 'outputKey',
         description: '保存剩余秒数的动作黑板键。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:810:5'],
       },
     ],
   },
@@ -1918,30 +6963,81 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'readBuffRemainingDuration',
     description: '按 ID 读取目标首个有效 Buff 的剩余秒数；无限时长写入 0。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
+        valueSchema: {
+          kind: 'enum',
+          options: [
+            'eventSource',
+            'eventTarget',
+            'enemy',
+            'caster',
+            'buffOwner',
+            'buffSource',
+            'controlledOperator',
+            'currentAbilityEntity',
+            'currentTarget',
+            'actionInputTarget',
+          ],
+          semantics: actionSchemaPart_0b4542d8ad93756a,
+          source: ['packages/game-data-contract/src/actions.ts:815:5'],
+        },
+        path: ['parameters', 'target'],
+        label: 'target',
+        description: '要查找 Buff 的对象。',
+        type: 'BuffSingleTarget',
+        required: true,
+        control: 'select',
+        options: [
+          'eventSource',
+          'eventTarget',
+          'enemy',
+          'caster',
+          'buffOwner',
+          'buffSource',
+          'controlledOperator',
+          'currentAbilityEntity',
+          'currentTarget',
+          'actionInputTarget',
+        ],
+        semantics: actionSchemaPart_0b4542d8ad93756a,
+        source: ['packages/game-data-contract/src/actions.ts:815:5'],
       },
-      actionSchemaPart_072ac943acb3b102,
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'string',
+            semantics: { type: 'string' },
+            source: ['packages/game-data-contract/src/actions.ts:817:5'],
+          },
+          semantics: { type: 'readonly string[]', arrayElement: { type: 'string' } },
+          source: ['packages/game-data-contract/src/actions.ts:817:5'],
+        },
         path: ['parameters', 'buffIds'],
         label: 'buffIds',
         description: '任一匹配即可选中的 Buff ID。',
         type: 'readonly string[]',
         required: true,
         control: 'json',
+        semantics: { type: 'readonly string[]', arrayElement: { type: 'string' } },
+        source: ['packages/game-data-contract/src/actions.ts:817:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:819:5'],
+        },
         path: ['parameters', 'outputKey'],
         label: 'outputKey',
         description: '保存剩余秒数的动作黑板键。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:819:5'],
       },
     ],
   },
@@ -1949,15 +7045,26 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'setCurrentBuffRemainingDuration',
     description: '直接修改当前生命周期环境中有限时长 Buff 的剩余秒数。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'enum',
+          options: [
+            'eventSource',
+            'eventTarget',
+            'enemy',
+            'caster',
+            'buffOwner',
+            'buffSource',
+            'controlledOperator',
+            'currentAbilityEntity',
+            'currentTarget',
+            'actionInputTarget',
+          ],
+          semantics: actionSchemaPart_e2aeb91200257142,
+          source: ['packages/game-data-contract/src/actions.ts:824:5'],
+          optional: true,
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '指定时只修改该对象拥有的当前 Buff；省略时使用当前 Buff 自身的拥有者。',
@@ -1976,8 +7083,19 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
           'currentTarget',
           'actionInputTarget',
         ],
+        semantics: actionSchemaPart_e2aeb91200257142,
+        source: ['packages/game-data-contract/src/actions.ts:824:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['assign', 'add', 'multiply'],
+          semantics: {
+            type: '"assign" | "add" | "multiply"',
+            unionVariants: [{ type: '"assign"' }, { type: '"add"' }, { type: '"multiply"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:826:5'],
+        },
         path: ['parameters', 'operation'],
         label: 'operation',
         description: '对当前剩余时间执行赋值、加算或乘算。',
@@ -1985,59 +7103,91 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['assign', 'add', 'multiply'],
+        semantics: {
+          type: '"assign" | "add" | "multiply"',
+          unionVariants: [{ type: '"assign"' }, { type: '"add"' }, { type: '"multiply"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:826:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:828:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:828:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:828:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:828:5'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:828:5'],
+        },
         path: ['parameters', 'value'],
         label: 'value',
         description: '参与运算的秒数或倍率。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:828:5'],
       },
     ],
   },
   refreshCurrentBuffAttributeModifiers: {
     kind: 'refreshCurrentBuffAttributeModifiers',
     description: '按当前 Buff 黑板重新解析并替换已注册的属性修正值。',
-    fields: [
-      {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-    ],
+    fields: [actionSchemaPart_6bb05f4a3c598d87],
   },
   skillAffix: {
     kind: 'skillAffix',
     description:
       '记录当前处理技能的附着编号并监听其直接结束；不改变 Buff 普通来源。尚不包含派生对象引用延寿。',
-    fields: [
-      {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-    ],
+    fields: [actionSchemaPart_6bb05f4a3c598d87],
   },
   readBuffStackCount: {
     kind: 'readBuffStackCount',
     description: '查询匹配 Buff 的累计强化层数或实例数，并写入当前技能实例的动作黑板。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'enum',
+          options: [
+            'eventSource',
+            'eventTarget',
+            'enemy',
+            'caster',
+            'buffOwner',
+            'buffSource',
+            'controlledOperator',
+            'currentAbilityEntity',
+            'currentTarget',
+            'actionInputTarget',
+          ],
+          semantics: actionSchemaPart_0b4542d8ad93756a,
+          source: ['packages/game-data-contract/src/actions.ts:837:5'],
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '要统计 Buff 的对象。',
@@ -2056,32 +7206,154 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
           'currentTarget',
           'actionInputTarget',
         ],
+        semantics: actionSchemaPart_0b4542d8ad93756a,
+        source: ['packages/game-data-contract/src/actions.ts:837:5'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:839:5'],
+        },
         path: ['parameters', 'outputKey'],
         label: 'outputKey',
         description: '保存统计结果的动作黑板键。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:839:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['id'],
+                  semantics: { type: '"id"' },
+                  source: ['packages/game-data-contract/src/actions.ts:844:11'],
+                  description: '按 Buff ID 统计。',
+                },
+                buffIds: {
+                  kind: 'array',
+                  element: {
+                    kind: 'string',
+                    semantics: { type: 'string' },
+                    source: ['packages/game-data-contract/src/actions.ts:846:11'],
+                  },
+                  semantics: { type: 'readonly string[]', arrayElement: { type: 'string' } },
+                  source: ['packages/game-data-contract/src/actions.ts:846:11'],
+                  description: '任一匹配即可计入的 Buff ID。',
+                },
+              },
+              semantics: { type: '{ kind: "id"; buffIds: readonly string[]; }' },
+              source: ['packages/game-data-contract/src/actions.ts:841:5'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['environment'],
+                  semantics: { type: '"environment"' },
+                  source: ['packages/game-data-contract/src/actions.ts:850:11'],
+                  description: '统计当前正在执行生命周期动作的 Buff。',
+                },
+              },
+              semantics: { type: '{ kind: "environment"; }' },
+              source: ['packages/game-data-contract/src/actions.ts:841:5'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['tag'],
+                  semantics: { type: '"tag"' },
+                  source: ['packages/game-data-contract/src/actions.ts:854:11'],
+                  description: '按 Buff 标签统计。',
+                },
+                tagQueryType: {
+                  kind: 'enum',
+                  options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll'],
+                  semantics: {
+                    type: '"hasAny" | "hasAll" | "exceptAny" | "exceptAll"',
+                    unionVariants: [
+                      { type: '"hasAny"' },
+                      { type: '"hasAll"' },
+                      { type: '"exceptAny"' },
+                      { type: '"exceptAll"' },
+                    ],
+                  },
+                  source: ['packages/game-data-contract/src/actions.ts:856:11'],
+                  description: '标签集合匹配方式。',
+                },
+                buffTags: {
+                  kind: 'array',
+                  element: {
+                    kind: 'string',
+                    semantics: { type: 'string', aliases: ['GameplayTag'] },
+                    source: ['packages/game-data-contract/src/actions.ts:858:11'],
+                  },
+                  semantics: {
+                    type: 'readonly string[]',
+                    arrayElement: { type: 'string', aliases: ['GameplayTag'] },
+                  },
+                  source: ['packages/game-data-contract/src/actions.ts:858:11'],
+                  description: '参与匹配的 Buff 标签。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "tag"; tagQueryType: "hasAny" | "hasAll" | "exceptAny" | "exceptAll"; buffTags: readonly string[]; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:841:5'],
+            },
+          ],
+          semantics: actionSchemaPart_2a41b607b87df414,
+          source: ['packages/game-data-contract/src/actions.ts:841:5'],
+        },
         path: ['parameters', 'query'],
         label: 'query',
         description: '按 ID、当前生命周期环境或标签选择 Buff。',
         type: "| { /** 按 Buff ID 统计。 */ kind: 'id'; /** 任一匹配即可计入的 Buff ID。 */ buffIds: readonly string[]; } | { /** 统计当前正在执行生命周期动作的 Buff。 */ kind: 'environment'; } | { /** 按 Buff 标签统计。 */ kind: 'tag'; /** 标签集合匹配方式。 */ tagQueryType: GameplayTagQueryType; /** 参与匹配的 Buff 标签。 */ buffTags: readonly GameplayTag[]; }",
         required: true,
         control: 'json',
+        semantics: actionSchemaPart_2a41b607b87df414,
+        source: ['packages/game-data-contract/src/actions.ts:841:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:861:5'],
+          optional: true,
+        },
         path: ['parameters', 'sameSourceSkillCast'],
         label: 'sameSourceSkillCast',
         description: '是否只统计与当前来源属于同一次技能施放的实例。',
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: { type: 'boolean | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:861:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['enhance', 'instance'],
+          semantics: {
+            type: '"enhance" | "instance" | undefined',
+            optional: true,
+            unionVariants: [{ type: '"enhance"' }, { type: '"instance"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:863:5'],
+          optional: true,
+        },
         path: ['parameters', 'countType'],
         label: 'countType',
         description: '缺省保持历史的累计强化层数；原生 BuffCount 必须显式使用 instance。',
@@ -2089,6 +7361,12 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: false,
         control: 'select',
         options: ['enhance', 'instance'],
+        semantics: {
+          type: '"enhance" | "instance" | undefined',
+          optional: true,
+          unionVariants: [{ type: '"enhance"' }, { type: '"instance"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:863:5'],
       },
     ],
   },
@@ -2096,15 +7374,23 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'finishBuffsByTag',
     description: '按原生标签查询结束目标身上的匹配 Buff；count 缺省时结束全部。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'enum',
+          options: [
+            'eventSource',
+            'eventTarget',
+            'enemy',
+            'caster',
+            'buffOwner',
+            'buffSource',
+            'currentAbilityEntity',
+            'currentTarget',
+          ],
+          semantics: actionSchemaPart_cc3abf320dcdc8f3,
+          source: ['packages/game-data-contract/src/actions.ts:868:5'],
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '要结束 Buff 的对象。',
@@ -2121,8 +7407,24 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
           'currentAbilityEntity',
           'currentTarget',
         ],
+        semantics: actionSchemaPart_cc3abf320dcdc8f3,
+        source: ['packages/game-data-contract/src/actions.ts:868:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll'],
+          semantics: {
+            type: '"hasAny" | "hasAll" | "exceptAny" | "exceptAll"',
+            unionVariants: [
+              { type: '"hasAny"' },
+              { type: '"hasAll"' },
+              { type: '"exceptAny"' },
+              { type: '"exceptAll"' },
+            ],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:870:5'],
+        },
         path: ['parameters', 'tagQueryType'],
         label: 'tagQueryType',
         description: '标签集合匹配方式。',
@@ -2130,16 +7432,54 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll'],
+        semantics: {
+          type: '"hasAny" | "hasAll" | "exceptAny" | "exceptAll"',
+          unionVariants: [
+            { type: '"hasAny"' },
+            { type: '"hasAll"' },
+            { type: '"exceptAny"' },
+            { type: '"exceptAll"' },
+          ],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:870:5'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'string',
+            semantics: { type: 'string', aliases: ['GameplayTag'] },
+            source: ['packages/game-data-contract/src/actions.ts:872:5'],
+          },
+          semantics: {
+            type: 'readonly string[]',
+            arrayElement: { type: 'string', aliases: ['GameplayTag'] },
+          },
+          source: ['packages/game-data-contract/src/actions.ts:872:5'],
+        },
         path: ['parameters', 'buffTags'],
         label: 'buffTags',
         description: '用于查找 Buff 的标签。',
         type: 'readonly GameplayTag[]',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'readonly string[]',
+          arrayElement: { type: 'string', aliases: ['GameplayTag'] },
+        },
+        source: ['packages/game-data-contract/src/actions.ts:872:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['early', 'other', 'absorbed'],
+          semantics: {
+            type: '"early" | "other" | "absorbed"',
+            unionVariants: [{ type: '"early"' }, { type: '"absorbed"' }, { type: '"other"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:874:5'],
+        },
         path: ['parameters', 'reason'],
         label: 'reason',
         description: '记录到结束事件中的原因。',
@@ -2147,14 +7487,63 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['early', 'other', 'absorbed'],
+        semantics: {
+          type: '"early" | "other" | "absorbed"',
+          unionVariants: [{ type: '"early"' }, { type: '"absorbed"' }, { type: '"other"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:874:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:876:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:876:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:876:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:876:5'],
+            },
+          ],
+          semantics: {
+            type: 'ActionValueOperand | undefined',
+            aliases: ['ActionValueOperand'],
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/actions.ts:876:5'],
+          optional: true,
+        },
         path: ['parameters', 'count'],
         label: 'count',
         description: '最多结束的实例数；省略时结束全部匹配项。',
         type: 'ActionValueOperand',
         required: false,
         control: 'operand',
+        semantics: {
+          type: 'ActionValueOperand | undefined',
+          aliases: ['ActionValueOperand'],
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/actions.ts:876:5'],
       },
     ],
   },
@@ -2162,15 +7551,30 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'finishBuffsById',
     description: '按 Buff 定义身份结束目标身上的匹配实例；count 缺省时结束全部。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'enum',
+          options: [
+            'eventSource',
+            'eventTarget',
+            'enemy',
+            'caster',
+            'buffOwner',
+            'buffSource',
+            'controlledOperator',
+            'currentAbilityEntity',
+            'currentTarget',
+            'actionInputTarget',
+            'party',
+            'partyExceptCaster',
+            'partyExceptCasterAndSameCharacterType',
+            'casterAndControlledOperator',
+            'casterAndLowestHealthRatioOperatorExceptCaster',
+          ],
+          semantics: actionSchemaPart_39148600bef476a7,
+          source: ['packages/game-data-contract/src/actions.ts:881:5'],
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '要结束 Buff 的单体或队伍目标。',
@@ -2194,16 +7598,40 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
           'casterAndControlledOperator',
           'casterAndLowestHealthRatioOperatorExceptCaster',
         ],
+        semantics: actionSchemaPart_39148600bef476a7,
+        source: ['packages/game-data-contract/src/actions.ts:881:5'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'string',
+            semantics: { type: 'string' },
+            source: ['packages/game-data-contract/src/actions.ts:883:5'],
+          },
+          semantics: { type: 'readonly string[]', arrayElement: { type: 'string' } },
+          source: ['packages/game-data-contract/src/actions.ts:883:5'],
+        },
         path: ['parameters', 'buffIds'],
         label: 'buffIds',
         description: '任一匹配即可选中的 Buff ID。',
         type: 'readonly string[]',
         required: true,
         control: 'json',
+        semantics: { type: 'readonly string[]', arrayElement: { type: 'string' } },
+        source: ['packages/game-data-contract/src/actions.ts:883:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['early', 'other', 'absorbed'],
+          semantics: {
+            type: '"early" | "other" | "absorbed"',
+            unionVariants: [{ type: '"early"' }, { type: '"absorbed"' }, { type: '"other"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:885:5'],
+        },
         path: ['parameters', 'reason'],
         label: 'reason',
         description: '记录到结束事件中的原因。',
@@ -2211,14 +7639,63 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['early', 'other', 'absorbed'],
+        semantics: {
+          type: '"early" | "other" | "absorbed"',
+          unionVariants: [{ type: '"early"' }, { type: '"absorbed"' }, { type: '"other"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:885:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:887:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:887:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:887:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:887:5'],
+            },
+          ],
+          semantics: {
+            type: 'ActionValueOperand | undefined',
+            aliases: ['ActionValueOperand'],
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/actions.ts:887:5'],
+          optional: true,
+        },
         path: ['parameters', 'count'],
         label: 'count',
         description: '最多结束的实例数；省略时结束全部匹配项。',
         type: 'ActionValueOperand',
         required: false,
         control: 'operand',
+        semantics: {
+          type: 'ActionValueOperand | undefined',
+          aliases: ['ActionValueOperand'],
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/actions.ts:887:5'],
       },
     ],
   },
@@ -2226,15 +7703,17 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'finishCurrentBuff',
     description: '结束当前正在执行生命周期或事件响应的 Buff 实例。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'enum',
+          options: ['early', 'other', 'absorbed'],
+          semantics: {
+            type: '"early" | "other" | "absorbed"',
+            unionVariants: [{ type: '"early"' }, { type: '"absorbed"' }, { type: '"other"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:892:5'],
+        },
         path: ['parameters', 'reason'],
         label: 'reason',
         description: '记录到结束事件中的原因。',
@@ -2242,8 +7721,22 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['early', 'other', 'absorbed'],
+        semantics: {
+          type: '"early" | "other" | "absorbed"',
+          unionVariants: [{ type: '"early"' }, { type: '"absorbed"' }, { type: '"other"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:892:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['actionSource', 'actionOwner'],
+          semantics: {
+            type: '"actionSource" | "actionOwner"',
+            unionVariants: [{ type: '"actionSource"' }, { type: '"actionOwner"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:894:5'],
+        },
         path: ['parameters', 'finishSource'],
         label: 'finishSource',
         description: '原生 FinishSource；不使用事件来源替代动作来源。',
@@ -2251,6 +7744,11 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['actionSource', 'actionOwner'],
+        semantics: {
+          type: '"actionSource" | "actionOwner"',
+          unionVariants: [{ type: '"actionSource"' }, { type: '"actionOwner"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:894:5'],
       },
     ],
   },
@@ -2258,21 +7756,21 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'setCurrentBuffTimePaused',
     description: '设置当前正在执行事件响应的 Buff 实例是否暂停计时。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean' },
+          source: ['packages/game-data-contract/src/actions.ts:899:5'],
+        },
         path: ['parameters', 'paused'],
         label: 'paused',
         description: '`true` 暂停，`false` 恢复。',
         type: 'boolean',
         required: true,
         control: 'boolean',
+        semantics: { type: 'boolean' },
+        source: ['packages/game-data-contract/src/actions.ts:899:5'],
       },
     ],
   },
@@ -2280,15 +7778,25 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'igniteBuffs',
     description: '以原生点燃类型同步触发目标身上所有匹配响应；来源与接收目标保持独立。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'enum',
+          options: [
+            'eventSource',
+            'eventTarget',
+            'enemy',
+            'caster',
+            'buffOwner',
+            'buffSource',
+            'controlledOperator',
+            'currentAbilityEntity',
+            'currentTarget',
+            'actionInputTarget',
+          ],
+          semantics: actionSchemaPart_0b4542d8ad93756a,
+          source: ['packages/game-data-contract/src/actions.ts:904:5'],
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '要查找点燃响应的对象。',
@@ -2307,8 +7815,28 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
           'currentTarget',
           'actionInputTarget',
         ],
+        semantics: actionSchemaPart_0b4542d8ad93756a,
+        source: ['packages/game-data-contract/src/actions.ts:904:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: [
+            'eventSource',
+            'eventTarget',
+            'enemy',
+            'caster',
+            'buffOwner',
+            'buffSource',
+            'controlledOperator',
+            'currentAbilityEntity',
+            'currentTarget',
+            'actionInputTarget',
+            'currentBuffSource',
+          ],
+          semantics: actionSchemaPart_022d248c0dc21e8c,
+          source: ['packages/game-data-contract/src/actions.ts:906:5'],
+        },
         path: ['parameters', 'source'],
         label: 'source',
         description: '点燃事件记录的来源对象。',
@@ -2328,14 +7856,23 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
           'actionInputTarget',
           'currentBuffSource',
         ],
+        semantics: actionSchemaPart_022d248c0dc21e8c,
+        source: ['packages/game-data-contract/src/actions.ts:906:5'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:908:5'],
+        },
         path: ['parameters', 'igniteType'],
         label: 'igniteType',
         description: '与 Buff 点燃响应匹配的类型名称。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:908:5'],
       },
     ],
   },
@@ -2343,15 +7880,14 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'adjustSkillCooldown',
     description: '按原生技能筛选立即修改当前冷却；比例基数是配置的基础冷却时长，绝对值单位为秒。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'enum',
+          options: ['caster'],
+          semantics: { type: '"caster"' },
+          source: ['packages/game-data-contract/src/actions.ts:913:5'],
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '当前只修改施法者技能。',
@@ -2359,16 +7895,99 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['caster'],
+        semantics: { type: '"caster"' },
+        source: ['packages/game-data-contract/src/actions.ts:913:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['type'],
+                  semantics: { type: '"type"' },
+                  source: ['packages/game-data-contract/src/actions.ts:918:11'],
+                  description: '按技能分类选择。',
+                },
+                skillType: {
+                  kind: 'enum',
+                  options: [
+                    'comboSkill',
+                    'plungingAttack',
+                    'basicAttack',
+                    'battleSkill',
+                    'ultimate',
+                    'finisher',
+                    'dodge',
+                  ],
+                  semantics: {
+                    type: '"comboSkill" | "plungingAttack" | "basicAttack" | "battleSkill" | "ultimate" | "finisher" | "dodge"',
+                    unionVariants: [
+                      { type: '"comboSkill"' },
+                      { type: '"plungingAttack"' },
+                      { type: '"basicAttack"' },
+                      { type: '"battleSkill"' },
+                      { type: '"ultimate"' },
+                      { type: '"finisher"' },
+                      { type: '"dodge"' },
+                    ],
+                  },
+                  source: ['packages/game-data-contract/src/actions.ts:920:11'],
+                  description: '目标技能分类。',
+                },
+              },
+              semantics: {
+                type: '{ readonly kind: "type"; readonly skillType: "comboSkill" | "plungingAttack" | "basicAttack" | "battleSkill" | "ultimate" | "finisher" | "dodge"; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:915:5'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['id'],
+                  semantics: { type: '"id"' },
+                  source: ['packages/game-data-contract/src/actions.ts:924:11'],
+                  description: '按原生技能 ID 选择。',
+                },
+                skillId: {
+                  kind: 'string',
+                  semantics: { type: 'string' },
+                  source: ['packages/game-data-contract/src/actions.ts:926:11'],
+                  description: '目标技能 ID。',
+                },
+              },
+              semantics: { type: '{ readonly kind: "id"; readonly skillId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:915:5'],
+            },
+          ],
+          semantics: actionSchemaPart_0ac631d63bdf158a,
+          source: ['packages/game-data-contract/src/actions.ts:915:5'],
+        },
         path: ['parameters', 'skill'],
         label: 'skill',
         description: '按技能类型或原生技能 ID 选择技能。',
         type: "| { /** 按技能分类选择。 */ readonly kind: 'type'; /** 目标技能分类。 */ readonly skillType: SkillType; } | { /** 按原生技能 ID 选择。 */ readonly kind: 'id'; /** 目标技能 ID。 */ readonly skillId: string; }",
         required: true,
         control: 'json',
+        semantics: actionSchemaPart_0ac631d63bdf158a,
+        source: ['packages/game-data-contract/src/actions.ts:915:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['reduce', 'set'],
+          semantics: {
+            type: '"reduce" | "set"',
+            unionVariants: [{ type: '"reduce"' }, { type: '"set"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:929:5'],
+        },
         path: ['parameters', 'operation'],
         label: 'operation',
         description: '减少当前冷却或直接设置剩余冷却。',
@@ -2376,8 +7995,22 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['reduce', 'set'],
+        semantics: {
+          type: '"reduce" | "set"',
+          unionVariants: [{ type: '"reduce"' }, { type: '"set"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:929:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['baseDurationRatio', 'absoluteSeconds'],
+          semantics: {
+            type: '"baseDurationRatio" | "absoluteSeconds"',
+            unionVariants: [{ type: '"baseDurationRatio"' }, { type: '"absoluteSeconds"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:931:5'],
+        },
         path: ['parameters', 'basis'],
         label: 'basis',
         description: '数值按基础冷却比例还是绝对秒数解释。',
@@ -2385,14 +8018,54 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['baseDurationRatio', 'absoluteSeconds'],
+        semantics: {
+          type: '"baseDurationRatio" | "absoluteSeconds"',
+          unionVariants: [{ type: '"baseDurationRatio"' }, { type: '"absoluteSeconds"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:931:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:933:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:933:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:933:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:933:5'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:933:5'],
+        },
         path: ['parameters', 'value'],
         label: 'value',
         description: '要减少或设置的比例或秒数。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:933:5'],
       },
     ],
   },
@@ -2400,15 +8073,14 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'holdBuffsById',
     description: '在当前调度区间存续期间禁止施法者身上已匹配的 Buff 结束。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'enum',
+          options: ['caster'],
+          semantics: { type: '"caster"' },
+          source: ['packages/game-data-contract/src/actions.ts:938:5'],
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '当前只保持施法者身上的 Buff。',
@@ -2416,14 +8088,29 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['caster'],
+        semantics: { type: '"caster"' },
+        source: ['packages/game-data-contract/src/actions.ts:938:5'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'string',
+            semantics: { type: 'string' },
+            source: ['packages/game-data-contract/src/actions.ts:940:5'],
+          },
+          semantics: { type: 'readonly string[]', arrayElement: { type: 'string' } },
+          source: ['packages/game-data-contract/src/actions.ts:940:5'],
+        },
         path: ['parameters', 'buffIds'],
         label: 'buffIds',
         description: '要阻止结束的 Buff ID。',
         type: 'readonly string[]',
         required: true,
         control: 'json',
+        semantics: { type: 'readonly string[]', arrayElement: { type: 'string' } },
+        source: ['packages/game-data-contract/src/actions.ts:940:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
     ],
   },
@@ -2432,15 +8119,14 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     description:
       '从当前技能的结束清理集合摘下目标身上的首个同 ID Buff，并在技能转场时转交同一实例。\n该步骤不创建、刷新或复制 Buff；白名单使用原生 Skill ID。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'enum',
+          options: ['caster'],
+          semantics: { type: '"caster"' },
+          source: ['packages/game-data-contract/src/actions.ts:948:5'],
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '当前只从施法者身上转交 Buff。',
@@ -2448,38 +8134,74 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['caster'],
+        semantics: { type: '"caster"' },
+        source: ['packages/game-data-contract/src/actions.ts:948:5'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:950:5'],
+        },
         path: ['parameters', 'buffId'],
         label: 'buffId',
         description: '要转交的 Buff ID。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:950:5'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'string',
+            semantics: { type: 'string' },
+            source: ['packages/game-data-contract/src/actions.ts:952:5'],
+          },
+          semantics: { type: 'readonly string[]', arrayElement: { type: 'string' } },
+          source: ['packages/game-data-contract/src/actions.ts:952:5'],
+        },
         path: ['parameters', 'inheritToNextSkillIds'],
         label: 'inheritToNextSkillIds',
         description: '可以接收此 Buff 的下一技能原生 ID。',
         type: 'readonly string[]',
         required: true,
         control: 'json',
+        semantics: { type: 'readonly string[]', arrayElement: { type: 'string' } },
+        source: ['packages/game-data-contract/src/actions.ts:952:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean' },
+          source: ['packages/game-data-contract/src/actions.ts:954:5'],
+        },
         path: ['parameters', 'finishByAction'],
         label: 'finishByAction',
         description: '此 Buff 原本是否由当前动作托管寿命。',
         type: 'boolean',
         required: true,
         control: 'boolean',
+        semantics: { type: 'boolean' },
+        source: ['packages/game-data-contract/src/actions.ts:954:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean' },
+          source: ['packages/game-data-contract/src/actions.ts:956:5'],
+        },
         path: ['parameters', 'finishWithNextSkillIfNotInherited'],
         label: 'finishWithNextSkillIfNotInherited',
         description: '没有成功转交时是否随下一技能结束。',
         type: 'boolean',
         required: true,
         control: 'boolean',
+        semantics: { type: 'boolean' },
+        source: ['packages/game-data-contract/src/actions.ts:956:5'],
       },
     ],
   },
@@ -2487,15 +8209,14 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'restrictUltimateEnergyRecovery',
     description: '在动作存续期间只允许带指定标签的正向终结技能量回复；多个实例按原生语义取并集。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'enum',
+          options: ['caster'],
+          semantics: { type: '"caster"' },
+          source: ['packages/game-data-contract/src/actions.ts:961:5'],
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '当前只限制施法者的回能。',
@@ -2503,22 +8224,50 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['caster'],
+        semantics: { type: '"caster"' },
+        source: ['packages/game-data-contract/src/actions.ts:961:5'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'string',
+            semantics: { type: 'string', aliases: ['GameplayTag'] },
+            source: ['packages/game-data-contract/src/actions.ts:963:5'],
+          },
+          semantics: {
+            type: 'readonly string[]',
+            arrayElement: { type: 'string', aliases: ['GameplayTag'] },
+          },
+          source: ['packages/game-data-contract/src/actions.ts:963:5'],
+        },
         path: ['parameters', 'allowedRecoveryTags'],
         label: 'allowedRecoveryTags',
         description: '允许通过的终结技能量回复标签。',
         type: 'readonly GameplayTag[]',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'readonly string[]',
+          arrayElement: { type: 'string', aliases: ['GameplayTag'] },
+        },
+        source: ['packages/game-data-contract/src/actions.ts:963:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean' },
+          source: ['packages/game-data-contract/src/actions.ts:965:5'],
+        },
         path: ['parameters', 'clearUltimateEnergyOnEnd'],
         label: 'clearUltimateEnergyOnEnd',
         description: '动作结束时是否清空终结技能量。',
         type: 'boolean',
         required: true,
         control: 'boolean',
+        semantics: { type: 'boolean' },
+        source: ['packages/game-data-contract/src/actions.ts:965:5'],
       },
     ],
   },
@@ -2526,15 +8275,21 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'setGlobalCooldown',
     description: '设置角色的战斗级冷却：同角色/ID 刷新剩余秒数，不受角色时间膨胀或动作结束影响。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'enum',
+          options: ['caster', 'buffOwner', 'buffSource'],
+          semantics: {
+            type: '"caster" | "buffOwner" | "buffSource"',
+            unionVariants: [
+              { type: '"caster"' },
+              { type: '"buffOwner"' },
+              { type: '"buffSource"' },
+            ],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:970:5'],
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '冷却所属的角色身份。',
@@ -2542,22 +8297,69 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['caster', 'buffOwner', 'buffSource'],
+        semantics: {
+          type: '"caster" | "buffOwner" | "buffSource"',
+          unionVariants: [{ type: '"caster"' }, { type: '"buffOwner"' }, { type: '"buffSource"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:970:5'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:972:5'],
+        },
         path: ['parameters', 'markerId'],
         label: 'markerId',
         description: '冷却标记 ID。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:972:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:974:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:974:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:974:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:974:5'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:974:5'],
+        },
         path: ['parameters', 'durationSeconds'],
         label: 'durationSeconds',
         description: '冷却持续秒数。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:974:5'],
       },
     ],
   },
@@ -2565,15 +8367,14 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'createTimedMarker',
     description: '在目标能力系统上创建定时标记；同 ID 标记不会互相覆盖。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'enum',
+          options: ['eventTarget', 'enemy', 'caster', 'buffOwner', 'buffSource'],
+          semantics: actionSchemaPart_15322e6cdf5ab427,
+          source: ['packages/game-data-contract/src/actions.ts:979:5'],
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '标记所属对象。',
@@ -2581,32 +8382,117 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['eventTarget', 'enemy', 'caster', 'buffOwner', 'buffSource'],
+        semantics: actionSchemaPart_15322e6cdf5ab427,
+        source: ['packages/game-data-contract/src/actions.ts:979:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'string',
+              semantics: { type: 'string' },
+              source: ['packages/game-data-contract/src/actions.ts:981:5'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                blackboardKey: {
+                  kind: 'string',
+                  semantics: { type: 'string' },
+                  source: ['packages/game-data-contract/src/primitives.ts:63:7'],
+                  description: '读取字符串的当前动作黑板键。',
+                },
+              },
+              semantics: { type: '{ readonly blackboardKey: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:981:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_433c3c2f8f163db2,
+              semantics: { type: '{ readonly kind: "stringNode"; readonly nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:981:5'],
+            },
+          ],
+          semantics: { type: 'ActionStringOperand', aliases: ['ActionStringOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:981:5'],
+        },
         path: ['parameters', 'markerId'],
         label: 'markerId',
         description: '标记 ID。',
         type: 'ActionStringOperand',
         required: true,
         control: 'json',
+        semantics: { type: 'ActionStringOperand', aliases: ['ActionStringOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:981:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:983:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:983:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:983:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:983:5'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:983:5'],
+        },
         path: ['parameters', 'durationSeconds'],
         label: 'durationSeconds',
         description: '标记持续秒数。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:983:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean' },
+          source: ['packages/game-data-contract/src/actions.ts:985:5'],
+        },
         path: ['parameters', 'autoFinishByAction'],
         label: 'autoFinishByAction',
         description: '是否随当前动作结束。',
         type: 'boolean',
         required: true,
         control: 'boolean',
+        semantics: { type: 'boolean' },
+        source: ['packages/game-data-contract/src/actions.ts:985:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['globalScaled'],
+          semantics: { type: '"globalScaled" | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:987:5'],
+          optional: true,
+        },
         path: ['parameters', 'timeDomain'],
         label: 'timeDomain',
         description:
@@ -2615,6 +8501,8 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: false,
         control: 'select',
         options: ['globalScaled'],
+        semantics: { type: '"globalScaled" | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:987:5'],
       },
     ],
   },
@@ -2622,39 +8510,117 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'createAbilityEntityTimedMarker',
     description: '在当前能力实体上创建定时标记；每个标记显式选择共享战斗或实体自身时钟。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'string',
+              semantics: { type: 'string' },
+              source: ['packages/game-data-contract/src/actions.ts:992:5'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                blackboardKey: {
+                  kind: 'string',
+                  semantics: { type: 'string' },
+                  source: ['packages/game-data-contract/src/primitives.ts:63:7'],
+                  description: '读取字符串的当前动作黑板键。',
+                },
+              },
+              semantics: { type: '{ readonly blackboardKey: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:992:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_433c3c2f8f163db2,
+              semantics: { type: '{ readonly kind: "stringNode"; readonly nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:992:5'],
+            },
+          ],
+          semantics: { type: 'ActionStringOperand', aliases: ['ActionStringOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:992:5'],
+        },
         path: ['parameters', 'markerId'],
         label: 'markerId',
         description: '标记 ID。',
         type: 'ActionStringOperand',
         required: true,
         control: 'json',
+        semantics: { type: 'ActionStringOperand', aliases: ['ActionStringOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:992:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:994:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:994:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:994:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:994:5'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:994:5'],
+        },
         path: ['parameters', 'durationSeconds'],
         label: 'durationSeconds',
         description: '标记持续秒数。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:994:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean' },
+          source: ['packages/game-data-contract/src/actions.ts:996:5'],
+        },
         path: ['parameters', 'autoFinishByAction'],
         label: 'autoFinishByAction',
         description: '是否随当前动作结束。',
         type: 'boolean',
         required: true,
         control: 'boolean',
+        semantics: { type: 'boolean' },
+        source: ['packages/game-data-contract/src/actions.ts:996:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['global', 'self'],
+          semantics: {
+            type: '"global" | "self"',
+            unionVariants: [{ type: '"global"' }, { type: '"self"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:998:5'],
+        },
         path: ['parameters', 'timeDomain'],
         label: 'timeDomain',
         description: '使用全局时钟还是能力实体自身时钟。',
@@ -2662,6 +8628,11 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['global', 'self'],
+        semantics: {
+          type: '"global" | "self"',
+          unionVariants: [{ type: '"global"' }, { type: '"self"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:998:5'],
       },
     ],
   },
@@ -2669,15 +8640,29 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'startTimeDilation',
     description: '创建普通全局或实体时间膨胀实例；终结技专用时间动作另行建模。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'enum',
+              options: ['global'],
+              semantics: { type: '"global"' },
+              source: ['packages/game-data-contract/src/actions.ts:1004:9'],
+            },
+            {
+              kind: 'enum',
+              options: ['entity'],
+              semantics: { type: '"entity"' },
+              source: ['packages/game-data-contract/src/actions.ts:1024:9'],
+            },
+          ],
+          source: [
+            'packages/game-data-contract/src/actions.ts:1004:9',
+            'packages/game-data-contract/src/actions.ts:1024:9',
+          ],
+        },
         path: ['parameters', 'scope'],
         label: 'scope',
         description: '对整场战斗的全局时钟生效。\n只对选定实体的自身时钟生效。',
@@ -2685,48 +8670,232 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['global', 'entity'],
+        semantics: {
+          type: "'global' | 'entity'",
+          unionVariants: [{ type: '"global"' }, { type: '"entity"' }],
+        },
+        source: [
+          'packages/game-data-contract/src/actions.ts:1004:9',
+          'packages/game-data-contract/src/actions.ts:1024:9',
+        ],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_0969f8a1b9e3e9aa,
+              semantics: {
+                type: '{ kind: "valueNode"; nodeId: string; }',
+                unionVariants: [
+                  { type: '{ kind: "valueNode"; nodeId: string; }' },
+                  { type: '{ kind: "valueNode"; nodeId: string; }' },
+                ],
+              },
+              source: [
+                'packages/game-data-contract/src/actions.ts:1006:9',
+                'packages/game-data-contract/src/actions.ts:1026:9',
+              ],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_c5f19ce8298bd8f6,
+              semantics: actionSchemaPart_e0e0a98fb315f0e0,
+              source: [
+                'packages/game-data-contract/src/actions.ts:1006:9',
+                'packages/game-data-contract/src/actions.ts:1026:9',
+              ],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_6976130052645496,
+              semantics: {
+                type: '{ kind: "constant"; value: number; }',
+                unionVariants: [
+                  { type: '{ kind: "constant"; value: number; }' },
+                  { type: '{ kind: "constant"; value: number; }' },
+                ],
+              },
+              source: [
+                'packages/game-data-contract/src/actions.ts:1006:9',
+                'packages/game-data-contract/src/actions.ts:1026:9',
+              ],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_b475ae87fc099300,
+              semantics: {
+                type: '{ kind: "parameter"; parameter: string; }',
+                unionVariants: [
+                  { type: '{ kind: "parameter"; parameter: string; }' },
+                  { type: '{ kind: "parameter"; parameter: string; }' },
+                ],
+              },
+              source: [
+                'packages/game-data-contract/src/actions.ts:1006:9',
+                'packages/game-data-contract/src/actions.ts:1026:9',
+              ],
+            },
+          ],
+          semantics: {
+            type: 'ActionValueOperand',
+            aliases: ['ActionValueOperand'],
+            unionVariants: [
+              { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+              { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+            ],
+          },
+          source: [
+            'packages/game-data-contract/src/actions.ts:1006:9',
+            'packages/game-data-contract/src/actions.ts:1026:9',
+          ],
+        },
         path: ['parameters', 'durationSeconds'],
         label: 'durationSeconds',
         description: '时间膨胀持续秒数。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: {
+          type: 'ActionValueOperand',
+          unionVariants: [
+            { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+            { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          ],
+        },
+        source: [
+          'packages/game-data-contract/src/actions.ts:1006:9',
+          'packages/game-data-contract/src/actions.ts:1026:9',
+        ],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string',
+            aliases: ['GameplayTag'],
+            unionVariants: [
+              { type: 'string', aliases: ['GameplayTag'] },
+              { type: 'string', aliases: ['GameplayTag'] },
+            ],
+          },
+          source: [
+            'packages/game-data-contract/src/actions.ts:1008:9',
+            'packages/game-data-contract/src/actions.ts:1028:9',
+          ],
+        },
         path: ['parameters', 'slot'],
         label: 'slot',
         description: '参与同类实例覆盖判断的 GameplayTag 槽。',
         type: 'GameplayTag',
         required: true,
         control: 'string',
+        semantics: {
+          type: 'GameplayTag',
+          unionVariants: [
+            { type: 'string', aliases: ['GameplayTag'] },
+            { type: 'string', aliases: ['GameplayTag'] },
+          ],
+        },
+        source: [
+          'packages/game-data-contract/src/actions.ts:1008:9',
+          'packages/game-data-contract/src/actions.ts:1028:9',
+        ],
       },
       {
+        valueSchema: {
+          kind: 'number',
+          semantics: { type: 'number', unionVariants: [{ type: 'number' }, { type: 'number' }] },
+          source: [
+            'packages/game-data-contract/src/actions.ts:1010:9',
+            'packages/game-data-contract/src/actions.ts:1030:9',
+          ],
+        },
         path: ['parameters', 'priority'],
         label: 'priority',
         description: '同槽实例竞争时的优先级。',
         type: 'number',
         required: true,
         control: 'number',
+        semantics: { type: 'number', unionVariants: [{ type: 'number' }, { type: 'number' }] },
+        source: [
+          'packages/game-data-contract/src/actions.ts:1010:9',
+          'packages/game-data-contract/src/actions.ts:1030:9',
+        ],
       },
       {
+        valueSchema: {
+          kind: 'timeScaleCurve',
+          semantics: {
+            type: 'TimeScaleCurveDefinition',
+            aliases: ['TimeScaleCurveDefinition'],
+            unionVariants: [
+              { type: 'TimeScaleCurveDefinition', aliases: ['TimeScaleCurveDefinition'] },
+              { type: 'TimeScaleCurveDefinition', aliases: ['TimeScaleCurveDefinition'] },
+            ],
+          },
+          source: [
+            'packages/game-data-contract/src/actions.ts:1012:9',
+            'packages/game-data-contract/src/actions.ts:1032:9',
+          ],
+        },
         path: ['parameters', 'curve'],
         label: 'curve',
         description: '随经过时间采样的倍率曲线。',
         type: 'TimeScaleCurveDefinition',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'TimeScaleCurveDefinition',
+          unionVariants: [
+            { type: 'TimeScaleCurveDefinition', aliases: ['TimeScaleCurveDefinition'] },
+            { type: 'TimeScaleCurveDefinition', aliases: ['TimeScaleCurveDefinition'] },
+          ],
+        },
+        source: [
+          'packages/game-data-contract/src/actions.ts:1012:9',
+          'packages/game-data-contract/src/actions.ts:1032:9',
+        ],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean', unionVariants: [{ type: 'boolean' }, { type: 'boolean' }] },
+          source: [
+            'packages/game-data-contract/src/actions.ts:1014:9',
+            'packages/game-data-contract/src/actions.ts:1034:9',
+          ],
+        },
         path: ['parameters', 'finishByAction'],
         label: 'finishByAction',
         description: '是否随当前动作结束。',
         type: 'boolean',
         required: true,
         control: 'boolean',
+        semantics: { type: 'boolean', unionVariants: [{ type: 'boolean' }, { type: 'boolean' }] },
+        source: [
+          'packages/game-data-contract/src/actions.ts:1014:9',
+          'packages/game-data-contract/src/actions.ts:1034:9',
+        ],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'enum',
+            options: ['enemy', 'caster', 'controlled'],
+            semantics: {
+              type: '"enemy" | "caster" | "controlled"',
+              unionVariants: [{ type: '"enemy"' }, { type: '"caster"' }, { type: '"controlled"' }],
+            },
+            source: ['packages/game-data-contract/src/actions.ts:1016:9'],
+          },
+          semantics: actionSchemaPart_18bb1cc60c393635,
+          source: ['packages/game-data-contract/src/actions.ts:1016:9'],
+          optional: true,
+        },
         path: ['parameters', 'ignoredTargets'],
         label: 'ignoredTargets',
         description: '不受此次全局倍率影响的角色目标。',
@@ -2734,24 +8903,134 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: false,
         control: 'multiselect',
         options: ['enemy', 'caster', 'controlled'],
+        semantics: actionSchemaPart_18bb1cc60c393635,
+        source: ['packages/game-data-contract/src/actions.ts:1016:9'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'union',
+            variants: [
+              {
+                kind: 'object',
+                fields: {
+                  kind: {
+                    kind: 'enum',
+                    options: ['current'],
+                    semantics: { type: '"current"' },
+                    source: ['packages/game-data-contract/src/skills.ts:23:7'],
+                    description: '能力实体查询种类判别值。',
+                  },
+                },
+                semantics: { type: '{ readonly kind: "current"; }' },
+                source: ['packages/game-data-contract/src/actions.ts:1018:9'],
+              },
+              {
+                kind: 'object',
+                fields: actionSchemaPart_945646734abf6402,
+                semantics: {
+                  type: '{ readonly kind: "ownerSpawned"; readonly abilityEntityIds?: readonly string[] | undefined; }',
+                },
+                source: ['packages/game-data-contract/src/actions.ts:1018:9'],
+              },
+              {
+                kind: 'object',
+                fields: actionSchemaPart_8266180f265e7365,
+                semantics: { type: '{ readonly kind: "context"; readonly contextKey: string; }' },
+                source: ['packages/game-data-contract/src/actions.ts:1018:9'],
+              },
+            ],
+            semantics: actionSchemaPart_1764e1f29d45469e,
+            source: ['packages/game-data-contract/src/actions.ts:1018:9'],
+          },
+          semantics: actionSchemaPart_03625a4c3c299b20,
+          source: ['packages/game-data-contract/src/actions.ts:1018:9'],
+          optional: true,
+        },
         path: ['parameters', 'ignoredAbilityEntityTargets'],
         label: 'ignoredAbilityEntityTargets',
         description: '不受此次全局倍率影响的能力实体。',
         type: 'readonly AbilityEntityTargetQuery[]',
         required: false,
         control: 'json',
+        semantics: actionSchemaPart_03625a4c3c299b20,
+        source: ['packages/game-data-contract/src/actions.ts:1018:9'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1020:9'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:1020:9'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1020:9'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1020:9'],
+            },
+          ],
+          semantics: {
+            type: 'ActionValueOperand | undefined',
+            aliases: ['ActionValueOperand'],
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1020:9'],
+          optional: true,
+        },
         path: ['parameters', 'influenceSkillCooldownSeconds'],
         label: 'influenceSkillCooldownSeconds',
         description: '时间膨胀期间额外影响的技能冷却秒数。',
         type: 'ActionValueOperand',
         required: false,
         control: 'operand',
+        semantics: {
+          type: 'ActionValueOperand | undefined',
+          aliases: ['ActionValueOperand'],
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1020:9'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'enum',
+            options: ['enemy', 'caster', 'buffOwner', 'controlled'],
+            semantics: {
+              type: '"enemy" | "caster" | "buffOwner" | "controlled"',
+              unionVariants: [
+                { type: '"enemy"' },
+                { type: '"caster"' },
+                { type: '"buffOwner"' },
+                { type: '"controlled"' },
+              ],
+            },
+            source: ['packages/game-data-contract/src/actions.ts:1036:9'],
+          },
+          semantics: actionSchemaPart_b5492484f04969e0,
+          source: ['packages/game-data-contract/src/actions.ts:1036:9'],
+          optional: true,
+        },
         path: ['parameters', 'targets'],
         label: 'targets',
         description: '要影响的角色目标。',
@@ -2759,22 +9038,76 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: false,
         control: 'multiselect',
         options: ['enemy', 'caster', 'buffOwner', 'controlled'],
+        semantics: actionSchemaPart_b5492484f04969e0,
+        source: ['packages/game-data-contract/src/actions.ts:1036:9'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'union',
+            variants: [
+              {
+                kind: 'object',
+                fields: {
+                  kind: {
+                    kind: 'enum',
+                    options: ['current'],
+                    semantics: { type: '"current"' },
+                    source: ['packages/game-data-contract/src/skills.ts:23:7'],
+                    description: '能力实体查询种类判别值。',
+                  },
+                },
+                semantics: { type: '{ readonly kind: "current"; }' },
+                source: ['packages/game-data-contract/src/actions.ts:1038:9'],
+              },
+              {
+                kind: 'object',
+                fields: actionSchemaPart_945646734abf6402,
+                semantics: {
+                  type: '{ readonly kind: "ownerSpawned"; readonly abilityEntityIds?: readonly string[] | undefined; }',
+                },
+                source: ['packages/game-data-contract/src/actions.ts:1038:9'],
+              },
+              {
+                kind: 'object',
+                fields: actionSchemaPart_8266180f265e7365,
+                semantics: { type: '{ readonly kind: "context"; readonly contextKey: string; }' },
+                source: ['packages/game-data-contract/src/actions.ts:1038:9'],
+              },
+            ],
+            semantics: actionSchemaPart_1764e1f29d45469e,
+            source: ['packages/game-data-contract/src/actions.ts:1038:9'],
+          },
+          semantics: actionSchemaPart_03625a4c3c299b20,
+          source: ['packages/game-data-contract/src/actions.ts:1038:9'],
+          optional: true,
+        },
         path: ['parameters', 'abilityEntityTargets'],
         label: 'abilityEntityTargets',
         description: '要影响的能力实体。',
         type: 'readonly AbilityEntityTargetQuery[]',
         required: false,
         control: 'json',
+        semantics: actionSchemaPart_03625a4c3c299b20,
+        source: ['packages/game-data-contract/src/actions.ts:1038:9'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:1040:9'],
+          optional: true,
+        },
         path: ['parameters', 'ignoreSlotCheck'],
         label: 'ignoreSlotCheck',
         description: '是否跳过同槽优先级检查并直接应用。',
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: { type: 'boolean | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:1040:9'],
       },
     ],
   },
@@ -2782,31 +9115,80 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'startUltimateTimeDilation',
     description: '终结技专用恒定全局时间倍率；实例随承载动作结束，施法者自动忽略。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'number',
+          semantics: { type: 'number' },
+          source: ['packages/game-data-contract/src/actions.ts:1045:5'],
+        },
         path: ['parameters', 'priority'],
         label: 'priority',
         description: '与其他终结技时间膨胀竞争时的优先级。',
         type: 'number',
         required: true,
         control: 'number',
+        semantics: { type: 'number' },
+        source: ['packages/game-data-contract/src/actions.ts:1045:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1047:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:1047:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1047:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1047:5'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:1047:5'],
+        },
         path: ['parameters', 'targetScale'],
         label: 'targetScale',
         description: '固定全局时间倍率。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:1047:5'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'enum',
+            options: ['enemy', 'caster', 'controlled'],
+            semantics: {
+              type: '"enemy" | "caster" | "controlled"',
+              unionVariants: [{ type: '"enemy"' }, { type: '"caster"' }, { type: '"controlled"' }],
+            },
+            source: ['packages/game-data-contract/src/actions.ts:1049:5'],
+          },
+          semantics: actionSchemaPart_18bb1cc60c393635,
+          source: ['packages/game-data-contract/src/actions.ts:1049:5'],
+        },
         path: ['parameters', 'ignoredTargets'],
         label: 'ignoredTargets',
         description: '除施法者外还要排除的角色目标。',
@@ -2814,14 +9196,60 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'multiselect',
         options: ['enemy', 'caster', 'controlled'],
+        semantics: actionSchemaPart_18bb1cc60c393635,
+        source: ['packages/game-data-contract/src/actions.ts:1049:5'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'union',
+            variants: [
+              {
+                kind: 'object',
+                fields: {
+                  kind: {
+                    kind: 'enum',
+                    options: ['current'],
+                    semantics: { type: '"current"' },
+                    source: ['packages/game-data-contract/src/skills.ts:23:7'],
+                    description: '能力实体查询种类判别值。',
+                  },
+                },
+                semantics: { type: '{ readonly kind: "current"; }' },
+                source: ['packages/game-data-contract/src/actions.ts:1051:5'],
+              },
+              {
+                kind: 'object',
+                fields: actionSchemaPart_945646734abf6402,
+                semantics: {
+                  type: '{ readonly kind: "ownerSpawned"; readonly abilityEntityIds?: readonly string[] | undefined; }',
+                },
+                source: ['packages/game-data-contract/src/actions.ts:1051:5'],
+              },
+              {
+                kind: 'object',
+                fields: actionSchemaPart_8266180f265e7365,
+                semantics: { type: '{ readonly kind: "context"; readonly contextKey: string; }' },
+                source: ['packages/game-data-contract/src/actions.ts:1051:5'],
+              },
+            ],
+            semantics: actionSchemaPart_1764e1f29d45469e,
+            source: ['packages/game-data-contract/src/actions.ts:1051:5'],
+          },
+          semantics: actionSchemaPart_03625a4c3c299b20,
+          source: ['packages/game-data-contract/src/actions.ts:1051:5'],
+          optional: true,
+        },
         path: ['parameters', 'ignoredAbilityEntityTargets'],
         label: 'ignoredAbilityEntityTargets',
         description: '不受此次倍率影响的能力实体。',
         type: 'readonly AbilityEntityTargetQuery[]',
         required: false,
         control: 'json',
+        semantics: actionSchemaPart_03625a4c3c299b20,
+        source: ['packages/game-data-contract/src/actions.ts:1051:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
     ],
   },
@@ -2829,21 +9257,21 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'hideUi',
     description: '原生 HideUIAction；区间生命周期独立于时间膨胀，不代表全部操作不可用。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean' },
+          source: ['packages/game-data-contract/src/actions.ts:1056:5'],
+        },
         path: ['parameters', 'onlyBlockInput'],
         label: 'onlyBlockInput',
         description: '`true` 时只屏蔽输入，不隐藏界面。',
         type: 'boolean',
         required: true,
         control: 'boolean',
+        semantics: { type: 'boolean' },
+        source: ['packages/game-data-contract/src/actions.ts:1056:5'],
       },
     ],
   },
@@ -2851,37 +9279,87 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'setIgnoreGlobalTimeScale',
     description: '在动作区间内切换目标能力实体是否忽略全局时间倍率。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'union',
+            variants: [
+              {
+                kind: 'object',
+                fields: {
+                  kind: {
+                    kind: 'enum',
+                    options: ['current'],
+                    semantics: { type: '"current"' },
+                    source: ['packages/game-data-contract/src/skills.ts:23:7'],
+                    description: '能力实体查询种类判别值。',
+                  },
+                },
+                semantics: { type: '{ readonly kind: "current"; }' },
+                source: ['packages/game-data-contract/src/actions.ts:1061:5'],
+              },
+              {
+                kind: 'object',
+                fields: actionSchemaPart_945646734abf6402,
+                semantics: {
+                  type: '{ readonly kind: "ownerSpawned"; readonly abilityEntityIds?: readonly string[] | undefined; }',
+                },
+                source: ['packages/game-data-contract/src/actions.ts:1061:5'],
+              },
+              {
+                kind: 'object',
+                fields: actionSchemaPart_8266180f265e7365,
+                semantics: { type: '{ readonly kind: "context"; readonly contextKey: string; }' },
+                source: ['packages/game-data-contract/src/actions.ts:1061:5'],
+              },
+            ],
+            semantics: actionSchemaPart_1764e1f29d45469e,
+            source: ['packages/game-data-contract/src/actions.ts:1061:5'],
+          },
+          semantics: actionSchemaPart_2ebe2689f1674c1f,
+          source: ['packages/game-data-contract/src/actions.ts:1061:5'],
+        },
         path: ['parameters', 'abilityEntityTargets'],
         label: 'abilityEntityTargets',
         description: '要修改的能力实体。',
         type: 'readonly AbilityEntityTargetQuery[]',
         required: true,
         control: 'json',
+        semantics: actionSchemaPart_2ebe2689f1674c1f,
+        source: ['packages/game-data-contract/src/actions.ts:1061:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean' },
+          source: ['packages/game-data-contract/src/actions.ts:1063:5'],
+        },
         path: ['parameters', 'ignore'],
         label: 'ignore',
         description: '`true` 忽略全局倍率，`false` 恢复接受全局倍率。',
         type: 'boolean',
         required: true,
         control: 'boolean',
+        semantics: { type: 'boolean' },
+        source: ['packages/game-data-contract/src/actions.ts:1063:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean' },
+          source: ['packages/game-data-contract/src/actions.ts:1065:5'],
+        },
         path: ['parameters', 'revertOnEnd'],
         label: 'revertOnEnd',
         description: '当前动作结束时是否还原原值。',
         type: 'boolean',
         required: true,
         control: 'boolean',
+        semantics: { type: 'boolean' },
+        source: ['packages/game-data-contract/src/actions.ts:1065:5'],
       },
     ],
   },
@@ -2889,21 +9367,21 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'storeCurrentTimelineFrame',
     description: '修改当前技能实例的动作黑板；不得用于跨技能持久状态。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:1070:5'],
+        },
         path: ['parameters', 'outputKey'],
         label: 'outputKey',
         description: '把 Owner AbilitySystem 当前技能的局部整数执行帧写入动作黑板。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:1070:5'],
       },
     ],
   },
@@ -2911,29 +9389,38 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'storeEventSpGainAmount',
     description: '读取当前 spGained 语义事件，分别保存原生 Value 与 RealDelta。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:1075:5'],
+          optional: true,
+        },
         path: ['parameters', 'outputKey'],
         label: 'outputKey',
         description: '效率结算后、共享技力上限截断前的 OnObtainAtb.Value。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: { type: 'string | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:1075:5'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:1077:5'],
+          optional: true,
+        },
         path: ['parameters', 'realDeltaOutputKey'],
         label: 'realDeltaOutputKey',
         description: '共享技力实际变化量 OnObtainAtb.RealDelta。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: { type: 'string | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:1077:5'],
       },
     ],
   },
@@ -2941,29 +9428,38 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'storeEventHealValues',
     description: '从当前成功治疗事件保存修正后请求值和生命账本实际变化值。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:1082:5'],
+          optional: true,
+        },
         path: ['parameters', 'finalHealOutputKey'],
         label: 'finalHealOutputKey',
         description: '保存修正后请求治疗值的动作黑板键。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: { type: 'string | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:1082:5'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:1084:5'],
+          optional: true,
+        },
         path: ['parameters', 'realHealOutputKey'],
         label: 'realHealOutputKey',
         description: '保存生命账本实际增加值的动作黑板键。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: { type: 'string | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:1084:5'],
       },
     ],
   },
@@ -2971,15 +9467,14 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'storeShieldValue',
     description: '先解析目标；新增值读取147事件，当前值读取目标实时有限护盾。缺目标/事件成功不写。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'enum',
+          options: ['actionOwner'],
+          semantics: { type: '"actionOwner"' },
+          source: ['packages/game-data-contract/src/actions.ts:1089:5'],
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '当前只读取动作所有者身上的护盾。',
@@ -2987,8 +9482,19 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['actionOwner'],
+        semantics: { type: '"actionOwner"' },
+        source: ['packages/game-data-contract/src/actions.ts:1089:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['current', 'gained'],
+          semantics: {
+            type: '"current" | "gained"',
+            unionVariants: [{ type: '"gained"' }, { type: '"current"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1091:5'],
+        },
         path: ['parameters', 'value'],
         label: 'value',
         description: '读取本次新增护盾值或当前剩余护盾值。',
@@ -2996,14 +9502,26 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['current', 'gained'],
+        semantics: {
+          type: '"current" | "gained"',
+          unionVariants: [{ type: '"gained"' }, { type: '"current"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1091:5'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:1093:5'],
+        },
         path: ['parameters', 'outputKey'],
         label: 'outputKey',
         description: '保存结果的动作黑板键。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:1093:5'],
       },
     ],
   },
@@ -3011,23 +9529,29 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'modifyActionValue',
     description: '修改当前动作黑板中的一个数值。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:1098:5'],
+        },
         path: ['parameters', 'key'],
         label: 'key',
         description: '要修改的动作黑板键。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:1098:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['assign', 'add', 'multiply', 'divide', 'floor', 'ceil', 'roundToInt'],
+          semantics: actionSchemaPart_4a012250bbd37c47,
+          source: ['packages/game-data-contract/src/actions.ts:1100:5'],
+        },
         path: ['parameters', 'operation'],
         label: 'operation',
         description: '对旧值执行的运算。',
@@ -3035,14 +9559,51 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['assign', 'add', 'multiply', 'divide', 'floor', 'ceil', 'roundToInt'],
+        semantics: actionSchemaPart_4a012250bbd37c47,
+        source: ['packages/game-data-contract/src/actions.ts:1100:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1102:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:1102:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1102:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1102:5'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:1102:5'],
+        },
         path: ['parameters', 'value'],
         label: 'value',
         description: '运算输入值。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:1102:5'],
       },
     ],
   },
@@ -3050,23 +9611,32 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'calculateActionValue',
     description: '计算两个动作黑板操作数，并将单精度结果写入当前技能实例。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:1107:5'],
+        },
         path: ['parameters', 'key'],
         label: 'key',
         description: '保存结果的动作黑板键。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:1107:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['add', 'multiply', 'divide'],
+          semantics: {
+            type: '"add" | "multiply" | "divide"',
+            unionVariants: [{ type: '"add"' }, { type: '"multiply"' }, { type: '"divide"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1109:5'],
+        },
         path: ['parameters', 'operation'],
         label: 'operation',
         description: '对左右值执行的运算。',
@@ -3074,22 +9644,97 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['add', 'multiply', 'divide'],
+        semantics: {
+          type: '"add" | "multiply" | "divide"',
+          unionVariants: [{ type: '"add"' }, { type: '"multiply"' }, { type: '"divide"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1109:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1111:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:1111:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1111:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1111:5'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:1111:5'],
+        },
         path: ['parameters', 'left'],
         label: 'left',
         description: '左操作数。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:1111:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1113:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:1113:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1113:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1113:5'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:1113:5'],
+        },
         path: ['parameters', 'right'],
         label: 'right',
         description: '右操作数。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:1113:5'],
       },
     ],
   },
@@ -3097,23 +9742,72 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'storeSourceAttributeValue',
     description: '按原生 StoreAttributeValue 语义读取动作来源实体的动态非转化属性。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['specific'],
+                  semantics: { type: '"specific"' },
+                  source: ['packages/game-data-contract/src/actions.ts:1121:11'],
+                  description: '读取指定名称的属性。',
+                },
+                key: {
+                  kind: 'string',
+                  semantics: { type: 'string' },
+                  source: ['packages/game-data-contract/src/actions.ts:1123:11'],
+                  description: '原生属性名称。',
+                },
+              },
+              semantics: { type: '{ kind: "specific"; key: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1118:5'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['all', 'main', 'secondary'],
+                  semantics: {
+                    type: '"all" | "main" | "secondary"',
+                    unionVariants: [{ type: '"main"' }, { type: '"secondary"' }, { type: '"all"' }],
+                  },
+                  source: ['packages/game-data-contract/src/actions.ts:1127:11'],
+                  description: '读取来源对象的主属性、副属性或全部四维。',
+                },
+              },
+              semantics: { type: '{ kind: "all" | "main" | "secondary"; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1118:5'],
+            },
+          ],
+          semantics: actionSchemaPart_5649d7090c045506,
+          source: ['packages/game-data-contract/src/actions.ts:1118:5'],
+        },
         path: ['parameters', 'attribute'],
         label: 'attribute',
         description: '读取指定属性、主属性、副属性或全部四维。',
         type: "| { /** 读取指定名称的属性。 */ kind: 'specific'; /** 原生属性名称。 */ key: string; } | { /** 读取来源对象的主属性、副属性或全部四维。 */ kind: 'main' | 'secondary' | 'all'; }",
         required: true,
         control: 'json',
+        semantics: actionSchemaPart_5649d7090c045506,
+        source: ['packages/game-data-contract/src/actions.ts:1118:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['armedNonConverted', 'finalNonConverted'],
+          semantics: {
+            type: '"armedNonConverted" | "finalNonConverted"',
+            unionVariants: [{ type: '"armedNonConverted"' }, { type: '"finalNonConverted"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1130:5'],
+        },
         path: ['parameters', 'stage'],
         label: 'stage',
         description: '读取装备后阶段还是最终阶段的非换算属性。',
@@ -3121,46 +9815,170 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['armedNonConverted', 'finalNonConverted'],
+        semantics: {
+          type: '"armedNonConverted" | "finalNonConverted"',
+          unionVariants: [{ type: '"armedNonConverted"' }, { type: '"finalNonConverted"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1130:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean' },
+          source: ['packages/game-data-contract/src/actions.ts:1132:5'],
+        },
         path: ['parameters', 'useFloor'],
         label: 'useFloor',
         description: '是否先对属性值向下取整。',
         type: 'boolean',
         required: true,
         control: 'boolean',
+        semantics: { type: 'boolean' },
+        source: ['packages/game-data-contract/src/actions.ts:1132:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1134:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:1134:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1134:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1134:5'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:1134:5'],
+        },
         path: ['parameters', 'divisor'],
         label: 'divisor',
         description: '属性值先除以此数。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:1134:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1136:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:1136:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1136:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1136:5'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:1136:5'],
+        },
         path: ['parameters', 'multiplier'],
         label: 'multiplier',
         description: '除法后乘以此数。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:1136:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1138:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:1138:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1138:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1138:5'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:1138:5'],
+        },
         path: ['parameters', 'base'],
         label: 'base',
         description: '最后加入的基础值。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:1138:5'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:1140:5'],
+        },
         path: ['parameters', 'targetKey'],
         label: 'targetKey',
         description: '保存结果的动作黑板键。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:1140:5'],
       },
     ],
   },
@@ -3168,15 +9986,14 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'storeEntityPropertyValue',
     description: '按原生 StoreEntityProperty 读取当前动作所有者的战斗生命/失衡账本。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'enum',
+          options: ['actionOwner'],
+          semantics: { type: '"actionOwner"' },
+          source: ['packages/game-data-contract/src/actions.ts:1145:5'],
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '当前只读取动作所有者。',
@@ -3184,8 +10001,23 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['actionOwner'],
+        semantics: { type: '"actionOwner"' },
+        source: ['packages/game-data-contract/src/actions.ts:1145:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['maxHealth', 'currentHealth', 'currentPoise'],
+          semantics: {
+            type: '"maxHealth" | "currentHealth" | "currentPoise"',
+            unionVariants: [
+              { type: '"currentHealth"' },
+              { type: '"maxHealth"' },
+              { type: '"currentPoise"' },
+            ],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1147:5'],
+        },
         path: ['parameters', 'property'],
         label: 'property',
         description: '要读取的生命或失衡账本字段。',
@@ -3193,46 +10025,174 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['maxHealth', 'currentHealth', 'currentPoise'],
+        semantics: {
+          type: '"maxHealth" | "currentHealth" | "currentPoise"',
+          unionVariants: [
+            { type: '"currentHealth"' },
+            { type: '"maxHealth"' },
+            { type: '"currentPoise"' },
+          ],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1147:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean' },
+          source: ['packages/game-data-contract/src/actions.ts:1149:5'],
+        },
         path: ['parameters', 'useFloor'],
         label: 'useFloor',
         description: '是否先对读取值向下取整。',
         type: 'boolean',
         required: true,
         control: 'boolean',
+        semantics: { type: 'boolean' },
+        source: ['packages/game-data-contract/src/actions.ts:1149:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1151:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:1151:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1151:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1151:5'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:1151:5'],
+        },
         path: ['parameters', 'divisor'],
         label: 'divisor',
         description: '读取值先除以此数。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:1151:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1153:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:1153:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1153:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1153:5'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:1153:5'],
+        },
         path: ['parameters', 'multiplier'],
         label: 'multiplier',
         description: '除法后乘以此数。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:1153:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1155:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:1155:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1155:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1155:5'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:1155:5'],
+        },
         path: ['parameters', 'base'],
         label: 'base',
         description: '最后加入的基础值。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:1155:5'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:1157:5'],
+        },
         path: ['parameters', 'targetKey'],
         label: 'targetKey',
         description: '保存结果的动作黑板键。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:1157:5'],
       },
     ],
   },
@@ -3240,15 +10200,14 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'setHealthFloor',
     description: '在动作寿命内为当前动作所有者注册生命下限；动作结束时移除同一原生句柄。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'enum',
+          options: ['actionOwner'],
+          semantics: { type: '"actionOwner"' },
+          source: ['packages/game-data-contract/src/actions.ts:1162:5'],
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '当前只为动作所有者设置生命下限。',
@@ -3256,8 +10215,19 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['actionOwner'],
+        semantics: { type: '"actionOwner"' },
+        source: ['packages/game-data-contract/src/actions.ts:1162:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['absolute', 'maxHealthRatio'],
+          semantics: {
+            type: '"absolute" | "maxHealthRatio"',
+            unionVariants: [{ type: '"absolute"' }, { type: '"maxHealthRatio"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1164:5'],
+        },
         path: ['parameters', 'mode'],
         label: 'mode',
         description: '使用绝对生命值或最大生命比例。',
@@ -3265,14 +10235,54 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['absolute', 'maxHealthRatio'],
+        semantics: {
+          type: '"absolute" | "maxHealthRatio"',
+          unionVariants: [{ type: '"absolute"' }, { type: '"maxHealthRatio"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1164:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1166:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:1166:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1166:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1166:5'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:1166:5'],
+        },
         path: ['parameters', 'value'],
         label: 'value',
         description: '生命下限数值或比例。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:1166:5'],
       },
     ],
   },
@@ -3280,15 +10290,17 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'changeResource',
     description: '按技能或养成等级解析固定数值后增减战斗资源。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'enum',
+          options: ['sp', 'ultimateEnergy'],
+          semantics: {
+            type: '"sp" | "ultimateEnergy"',
+            unionVariants: [{ type: '"sp"' }, { type: '"ultimateEnergy"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1171:5'],
+        },
         path: ['parameters', 'resource'],
         label: 'resource',
         description: '要增减的资源。',
@@ -3296,24 +10308,87 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['sp', 'ultimateEnergy'],
+        semantics: {
+          type: '"sp" | "ultimateEnergy"',
+          unionVariants: [{ type: '"sp"' }, { type: '"ultimateEnergy"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1171:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'number',
+              semantics: { type: 'number' },
+              source: ['packages/game-data-contract/src/actions.ts:1173:5'],
+            },
+            {
+              kind: 'array',
+              element: {
+                kind: 'number',
+                semantics: { type: 'number' },
+                source: ['packages/game-data-contract/src/actions.ts:1173:5'],
+              },
+              semantics: { type: 'readonly number[]', arrayElement: { type: 'number' } },
+              source: ['packages/game-data-contract/src/actions.ts:1173:5'],
+            },
+          ],
+          semantics: { type: 'LevelValues', aliases: ['LevelValues'] },
+          source: ['packages/game-data-contract/src/actions.ts:1173:5'],
+        },
         path: ['parameters', 'amount'],
         label: 'amount',
         description: '正数增加、负数减少的资源量。',
         type: 'LevelValues',
         required: true,
         control: 'levelValues',
+        semantics: { type: 'LevelValues', aliases: ['LevelValues'] },
+        source: ['packages/game-data-contract/src/actions.ts:1173:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'number',
+              semantics: { type: 'number' },
+              source: ['packages/game-data-contract/src/actions.ts:1175:5'],
+            },
+            {
+              kind: 'array',
+              element: {
+                kind: 'number',
+                semantics: { type: 'number' },
+                source: ['packages/game-data-contract/src/actions.ts:1175:5'],
+              },
+              semantics: { type: 'readonly number[]', arrayElement: { type: 'number' } },
+              source: ['packages/game-data-contract/src/actions.ts:1175:5'],
+            },
+          ],
+          semantics: { type: 'LevelValues | undefined', aliases: ['LevelValues'], optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:1175:5'],
+          optional: true,
+        },
         path: ['parameters', 'coefficient'],
         label: 'coefficient',
         description: '原生 ObtainCostAction 在资源效率链之前乘到 amount 上；省略时为 1。',
         type: 'LevelValues',
         required: false,
         control: 'levelValues',
+        semantics: { type: 'LevelValues | undefined', aliases: ['LevelValues'], optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:1175:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['caster', 'team'],
+          semantics: {
+            type: '"caster" | "team"',
+            unionVariants: [{ type: '"caster"' }, { type: '"team"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1177:5'],
+        },
         path: ['parameters', 'recipient'],
         label: 'recipient',
         description: '资源作用于施法者还是全队。',
@@ -3321,8 +10396,24 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['caster', 'team'],
+        semantics: {
+          type: '"caster" | "team"',
+          unionVariants: [{ type: '"caster"' }, { type: '"team"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1177:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['gain', 'refund'],
+          semantics: {
+            type: '"gain" | "refund" | undefined',
+            optional: true,
+            unionVariants: [{ type: '"gain"' }, { type: '"refund"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1179:5'],
+          optional: true,
+        },
         path: ['parameters', 'spGainKind'],
         label: 'spGainKind',
         description: '仅对正向技力变化有效；省略时按普通获得处理。',
@@ -3330,8 +10421,21 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: false,
         control: 'select',
         options: ['gain', 'refund'],
+        semantics: {
+          type: '"gain" | "refund" | undefined',
+          optional: true,
+          unionVariants: [{ type: '"gain"' }, { type: '"refund"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1179:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['normalAttack', 'powerAttack', 'default', 'skill'],
+          semantics: actionSchemaPart_0f38ab070df3ee7c,
+          source: ['packages/game-data-contract/src/actions.ts:1181:5'],
+          optional: true,
+        },
         path: ['parameters', 'spGainSource'],
         label: 'spGainSource',
         description: '正向技力变化来自普攻、重击、技能或默认来源。',
@@ -3339,30 +10443,56 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: false,
         control: 'select',
         options: ['normalAttack', 'powerAttack', 'default', 'skill'],
+        semantics: actionSchemaPart_0f38ab070df3ee7c,
+        source: ['packages/game-data-contract/src/actions.ts:1181:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:1183:5'],
+          optional: true,
+        },
         path: ['parameters', 'isPercentValue'],
         label: 'isPercentValue',
         description: '终结技能量专用：按最大能量的比例解释倍率链结果。',
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: { type: 'boolean | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:1183:5'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string | undefined', aliases: ['GameplayTag'], optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:1185:5'],
+          optional: true,
+        },
         path: ['parameters', 'ultimateRecoveryTag'],
         label: 'ultimateRecoveryTag',
         description: '终结技能量专用：正向回复携带的许可标签。',
         type: 'GameplayTag',
         required: false,
         control: 'string',
+        semantics: { type: 'string | undefined', aliases: ['GameplayTag'], optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:1185:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:1187:5'],
+          optional: true,
+        },
         path: ['parameters', 'ignoreUltimateEnergyGainMultiplier'],
         label: 'ignoreUltimateEnergyGainMultiplier',
         description: '终结技能量专用：跳过目标自身的回能效率。',
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: { type: 'boolean | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:1187:5'],
       },
     ],
   },
@@ -3370,15 +10500,17 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'changeResourceByActionValue',
     description: '执行时从当前技能动作黑板读取数值，再交给同一资源账本处理。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'enum',
+          options: ['sp', 'ultimateEnergy'],
+          semantics: {
+            type: '"sp" | "ultimateEnergy"',
+            unionVariants: [{ type: '"sp"' }, { type: '"ultimateEnergy"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1192:5'],
+        },
         path: ['parameters', 'resource'],
         label: 'resource',
         description: '要增减的资源。',
@@ -3386,24 +10518,124 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['sp', 'ultimateEnergy'],
+        semantics: {
+          type: '"sp" | "ultimateEnergy"',
+          unionVariants: [{ type: '"sp"' }, { type: '"ultimateEnergy"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1192:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1194:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:1194:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1194:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1194:5'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:1194:5'],
+        },
         path: ['parameters', 'amount'],
         label: 'amount',
         description: '从动作黑板或常量读取的资源量。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:1194:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'number',
+              semantics: { type: 'number' },
+              source: ['packages/game-data-contract/src/actions.ts:1196:5'],
+            },
+            {
+              kind: 'array',
+              element: {
+                kind: 'number',
+                semantics: { type: 'number' },
+                source: ['packages/game-data-contract/src/actions.ts:1196:5'],
+              },
+              semantics: { type: 'readonly number[]', arrayElement: { type: 'number' } },
+              source: ['packages/game-data-contract/src/actions.ts:1196:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1196:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:1196:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1196:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1196:5'],
+            },
+          ],
+          semantics: actionSchemaPart_f49bdafe0a2efd47,
+          source: ['packages/game-data-contract/src/actions.ts:1196:5'],
+          optional: true,
+        },
         path: ['parameters', 'coefficient'],
         label: 'coefficient',
         description: '原生 ObtainCostAction 在资源效率链之前乘到动态 amount 上；省略时为 1。',
         type: 'LevelValues | ActionValueOperand',
         required: false,
         control: 'levelValues',
+        semantics: actionSchemaPart_f49bdafe0a2efd47,
+        source: ['packages/game-data-contract/src/actions.ts:1196:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['caster', 'team'],
+          semantics: {
+            type: '"caster" | "team"',
+            unionVariants: [{ type: '"caster"' }, { type: '"team"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1198:5'],
+        },
         path: ['parameters', 'recipient'],
         label: 'recipient',
         description: '资源作用于施法者还是全队。',
@@ -3411,8 +10643,24 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['caster', 'team'],
+        semantics: {
+          type: '"caster" | "team"',
+          unionVariants: [{ type: '"caster"' }, { type: '"team"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1198:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['gain', 'refund'],
+          semantics: {
+            type: '"gain" | "refund" | undefined',
+            optional: true,
+            unionVariants: [{ type: '"gain"' }, { type: '"refund"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1200:5'],
+          optional: true,
+        },
         path: ['parameters', 'spGainKind'],
         label: 'spGainKind',
         description: '正向技力变化是正常获得还是返还。',
@@ -3420,8 +10668,21 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: false,
         control: 'select',
         options: ['gain', 'refund'],
+        semantics: {
+          type: '"gain" | "refund" | undefined',
+          optional: true,
+          unionVariants: [{ type: '"gain"' }, { type: '"refund"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1200:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['normalAttack', 'powerAttack', 'default', 'skill'],
+          semantics: actionSchemaPart_0f38ab070df3ee7c,
+          source: ['packages/game-data-contract/src/actions.ts:1202:5'],
+          optional: true,
+        },
         path: ['parameters', 'spGainSource'],
         label: 'spGainSource',
         description: '正向技力变化的动作来源。',
@@ -3429,30 +10690,56 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: false,
         control: 'select',
         options: ['normalAttack', 'powerAttack', 'default', 'skill'],
+        semantics: actionSchemaPart_0f38ab070df3ee7c,
+        source: ['packages/game-data-contract/src/actions.ts:1202:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:1204:5'],
+          optional: true,
+        },
         path: ['parameters', 'isPercentValue'],
         label: 'isPercentValue',
         description: '是否把终结技能量数值解释为最大能量比例。',
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: { type: 'boolean | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:1204:5'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string | undefined', aliases: ['GameplayTag'], optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:1206:5'],
+          optional: true,
+        },
         path: ['parameters', 'ultimateRecoveryTag'],
         label: 'ultimateRecoveryTag',
         description: '正向终结技能量回复携带的许可标签。',
         type: 'GameplayTag',
         required: false,
         control: 'string',
+        semantics: { type: 'string | undefined', aliases: ['GameplayTag'], optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:1206:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:1208:5'],
+          optional: true,
+        },
         path: ['parameters', 'ignoreUltimateEnergyGainMultiplier'],
         label: 'ignoreUltimateEnergyGainMultiplier',
         description: '是否跳过目标自身的终结技能量获取倍率。',
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: { type: 'boolean | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:1208:5'],
       },
     ],
   },
@@ -3460,65 +10747,108 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'recoverDashEnergy',
     description: '返还 PlayerController 持有的全队共享闪避体力。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1213:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:1213:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1213:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1213:5'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:1213:5'],
+        },
         path: ['parameters', 'amount'],
         label: 'amount',
         description: '返还的闪避份数；原生极限闪避公共监听器当前配置为 0.5。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:1213:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean' },
+          source: ['packages/game-data-contract/src/actions.ts:1215:5'],
+        },
         path: ['parameters', 'canRecoverWhenOverdraft'],
         label: 'canRecoverWhenOverdraft',
         description: '已进入透支时，是否允许本次返还同时解除透支。',
         type: 'boolean',
         required: true,
         control: 'boolean',
+        semantics: { type: 'boolean' },
+        source: ['packages/game-data-contract/src/actions.ts:1215:5'],
       },
     ],
   },
   recordPerfectDodge: {
     kind: 'recordPerfectDodge',
     description: '记录一次极限闪避成功，并发布原生 OnPerfectDodge 能力事件。',
-    fields: [
-      {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-    ],
+    fields: [actionSchemaPart_6bb05f4a3c598d87],
   },
   gainSquadUltimateEnergyFromSkillCost: {
     kind: 'gainSquadUltimateEnergyFromSkillCost',
     description: '按本次技能费用为全队生成终结技能量。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'number',
+              semantics: { type: 'number' },
+              source: ['packages/game-data-contract/src/actions.ts:1222:5'],
+            },
+            {
+              kind: 'array',
+              element: {
+                kind: 'number',
+                semantics: { type: 'number' },
+                source: ['packages/game-data-contract/src/actions.ts:1222:5'],
+              },
+              semantics: { type: 'readonly number[]', arrayElement: { type: 'number' } },
+              source: ['packages/game-data-contract/src/actions.ts:1222:5'],
+            },
+          ],
+          semantics: { type: 'LevelValues', aliases: ['LevelValues'] },
+          source: ['packages/game-data-contract/src/actions.ts:1222:5'],
+        },
         path: ['parameters', 'coefficient'],
         label: 'coefficient',
         description: '技能费用换算为全队终结技能量的系数。',
         type: 'LevelValues',
         required: true,
         control: 'levelValues',
+        semantics: { type: 'LevelValues', aliases: ['LevelValues'] },
+        source: ['packages/game-data-contract/src/actions.ts:1222:5'],
       },
     ],
   },
@@ -3526,23 +10856,29 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'gainFinisherSp',
     description: '按固定系数为全队生成处决技力。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'number',
+          semantics: { type: 'number' },
+          source: ['packages/game-data-contract/src/actions.ts:1227:5'],
+        },
         path: ['parameters', 'factor'],
         label: 'factor',
         description: '处决技力获取系数。',
         type: 'number',
         required: true,
         control: 'number',
+        semantics: { type: 'number' },
+        source: ['packages/game-data-contract/src/actions.ts:1227:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['team'],
+          semantics: { type: '"team"' },
+          source: ['packages/game-data-contract/src/actions.ts:1229:5'],
+        },
         path: ['parameters', 'recipient'],
         label: 'recipient',
         description: '处决技力固定发给全队。',
@@ -3550,6 +10886,8 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['team'],
+        semantics: { type: '"team"' },
+        source: ['packages/game-data-contract/src/actions.ts:1229:5'],
       },
     ],
   },
@@ -3557,23 +10895,32 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'applyStatus',
     description: '创建或增加一个兼容的语义战斗状态。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:1234:5'],
+        },
         path: ['parameters', 'statusKey'],
         label: 'statusKey',
         description: '状态 ID。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:1234:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['enemy', 'caster'],
+          semantics: {
+            type: '"enemy" | "caster"',
+            unionVariants: [{ type: '"enemy"' }, { type: '"caster"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1236:5'],
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '状态所属对象。',
@@ -3581,38 +10928,379 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['enemy', 'caster'],
+        semantics: {
+          type: '"enemy" | "caster"',
+          unionVariants: [{ type: '"enemy"' }, { type: '"caster"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1236:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'number',
+              semantics: { type: 'number' },
+              source: ['packages/game-data-contract/src/actions.ts:1238:5'],
+            },
+            {
+              kind: 'array',
+              element: {
+                kind: 'number',
+                semantics: { type: 'number' },
+                source: ['packages/game-data-contract/src/actions.ts:1238:5'],
+              },
+              semantics: { type: 'readonly number[]', arrayElement: { type: 'number' } },
+              source: ['packages/game-data-contract/src/actions.ts:1238:5'],
+            },
+          ],
+          semantics: { type: 'LevelValues | undefined', aliases: ['LevelValues'], optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:1238:5'],
+          optional: true,
+        },
         path: ['parameters', 'durationFrames'],
         label: 'durationFrames',
         description: '状态持续帧数；省略时不按时间结束。',
         type: 'LevelValues',
         required: false,
         control: 'levelValues',
+        semantics: { type: 'LevelValues | undefined', aliases: ['LevelValues'], optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:1238:5'],
       },
       {
+        valueSchema: {
+          kind: 'number',
+          semantics: { type: 'number | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:1240:5'],
+          optional: true,
+        },
         path: ['parameters', 'stacks'],
         label: 'stacks',
         description: '本次增加的层数；省略时为一层。',
         type: 'number',
         required: false,
         control: 'number',
+        semantics: { type: 'number | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:1240:5'],
       },
       {
+        valueSchema: {
+          kind: 'number',
+          semantics: { type: 'number | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:1242:5'],
+          optional: true,
+        },
         path: ['parameters', 'maxStacks'],
         label: 'maxStacks',
         description: '状态允许达到的最大层数。',
         type: 'number',
         required: false,
         control: 'number',
+        semantics: { type: 'number | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:1242:5'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'union',
+            variants: [
+              {
+                kind: 'object',
+                fields: {
+                  kind: {
+                    kind: 'enum',
+                    options: ['attackPercent'],
+                    semantics: { type: '"attackPercent"' },
+                    source: ['packages/game-data-contract/src/actions.ts:180:5'],
+                    description: '修正种类判别值。',
+                  },
+                  value: {
+                    kind: 'union',
+                    variants: [
+                      {
+                        kind: 'number',
+                        semantics: { type: 'number' },
+                        source: ['packages/game-data-contract/src/actions.ts:182:5'],
+                      },
+                      {
+                        kind: 'array',
+                        element: {
+                          kind: 'number',
+                          semantics: { type: 'number' },
+                          source: ['packages/game-data-contract/src/actions.ts:182:5'],
+                        },
+                        semantics: { type: 'readonly number[]', arrayElement: { type: 'number' } },
+                        source: ['packages/game-data-contract/src/actions.ts:182:5'],
+                      },
+                    ],
+                    semantics: { type: 'LevelValues', aliases: ['LevelValues'] },
+                    source: ['packages/game-data-contract/src/actions.ts:182:5'],
+                    description: '每层增加的攻击力比例。',
+                  },
+                },
+                semantics: { type: '{ kind: "attackPercent"; value: LevelValues; }' },
+                source: ['packages/game-data-contract/src/actions.ts:1244:5'],
+              },
+              {
+                kind: 'object',
+                fields: {
+                  kind: {
+                    kind: 'enum',
+                    options: ['susceptibility'],
+                    semantics: { type: '"susceptibility"' },
+                    source: ['packages/game-data-contract/src/actions.ts:187:5'],
+                    description: '修正种类判别值。',
+                  },
+                  damageTypes: {
+                    kind: 'array',
+                    element: {
+                      kind: 'enum',
+                      options: [
+                        'physical',
+                        'heat',
+                        'cryo',
+                        'electric',
+                        'nature',
+                        'true',
+                        'lifeDrain',
+                        'ether',
+                      ],
+                      semantics: actionSchemaPart_3b098870902a8933,
+                      source: ['packages/game-data-contract/src/actions.ts:189:5'],
+                    },
+                    semantics: {
+                      type: 'readonly ("physical" | "heat" | "cryo" | "electric" | "nature" | "true" | "lifeDrain" | "ether")[]',
+                      arrayElement: actionSchemaPart_3b098870902a8933,
+                    },
+                    source: ['packages/game-data-contract/src/actions.ts:189:5'],
+                    description: '此易伤覆盖的伤害类型。',
+                  },
+                  value: {
+                    kind: 'union',
+                    variants: [
+                      {
+                        kind: 'number',
+                        semantics: { type: 'number' },
+                        source: ['packages/game-data-contract/src/actions.ts:191:5'],
+                      },
+                      {
+                        kind: 'array',
+                        element: {
+                          kind: 'number',
+                          semantics: { type: 'number' },
+                          source: ['packages/game-data-contract/src/actions.ts:191:5'],
+                        },
+                        semantics: { type: 'readonly number[]', arrayElement: { type: 'number' } },
+                        source: ['packages/game-data-contract/src/actions.ts:191:5'],
+                      },
+                    ],
+                    semantics: { type: 'LevelValues', aliases: ['LevelValues'] },
+                    source: ['packages/game-data-contract/src/actions.ts:191:5'],
+                    description: '每层基础易伤值。',
+                  },
+                  attributeScaling: {
+                    kind: 'object',
+                    fields: {
+                      attribute: {
+                        kind: 'enum',
+                        options: ['strength', 'agility', 'intellect', 'will'],
+                        semantics: {
+                          type: '"strength" | "agility" | "intellect" | "will"',
+                          unionVariants: [
+                            { type: '"strength"' },
+                            { type: '"agility"' },
+                            { type: '"intellect"' },
+                            { type: '"will"' },
+                          ],
+                        },
+                        source: ['packages/game-data-contract/src/actions.ts:195:7'],
+                        description: '用于换算额外易伤的干员属性。',
+                      },
+                      coefficient: {
+                        kind: 'union',
+                        variants: [
+                          {
+                            kind: 'number',
+                            semantics: { type: 'number' },
+                            source: ['packages/game-data-contract/src/actions.ts:197:7'],
+                          },
+                          {
+                            kind: 'array',
+                            element: {
+                              kind: 'number',
+                              semantics: { type: 'number' },
+                              source: ['packages/game-data-contract/src/actions.ts:197:7'],
+                            },
+                            semantics: {
+                              type: 'readonly number[]',
+                              arrayElement: { type: 'number' },
+                            },
+                            source: ['packages/game-data-contract/src/actions.ts:197:7'],
+                          },
+                        ],
+                        semantics: { type: 'LevelValues', aliases: ['LevelValues'] },
+                        source: ['packages/game-data-contract/src/actions.ts:197:7'],
+                        description: '每点属性提供的易伤系数。',
+                      },
+                    },
+                    semantics: {
+                      type: '{ attribute: "strength" | "agility" | "intellect" | "will"; coefficient: LevelValues; } | undefined',
+                      optional: true,
+                    },
+                    source: ['packages/game-data-contract/src/actions.ts:193:5'],
+                    optional: true,
+                    description: '可选的属性换算额外易伤。',
+                  },
+                  cap: {
+                    kind: 'union',
+                    variants: [
+                      {
+                        kind: 'number',
+                        semantics: { type: 'number' },
+                        source: ['packages/game-data-contract/src/actions.ts:200:5'],
+                      },
+                      {
+                        kind: 'array',
+                        element: {
+                          kind: 'number',
+                          semantics: { type: 'number' },
+                          source: ['packages/game-data-contract/src/actions.ts:200:5'],
+                        },
+                        semantics: { type: 'readonly number[]', arrayElement: { type: 'number' } },
+                        source: ['packages/game-data-contract/src/actions.ts:200:5'],
+                      },
+                    ],
+                    semantics: {
+                      type: 'LevelValues | undefined',
+                      aliases: ['LevelValues'],
+                      optional: true,
+                    },
+                    source: ['packages/game-data-contract/src/actions.ts:200:5'],
+                    optional: true,
+                    description: '易伤总值上限。',
+                  },
+                },
+                semantics: actionSchemaPart_3866f1c16532b38d,
+                source: ['packages/game-data-contract/src/actions.ts:1244:5'],
+              },
+              {
+                kind: 'object',
+                fields: {
+                  kind: {
+                    kind: 'enum',
+                    options: ['slowed'],
+                    semantics: { type: '"slowed"' },
+                    source: ['packages/game-data-contract/src/actions.ts:205:5'],
+                    description: '修正种类判别值。',
+                  },
+                },
+                semantics: { type: '{ kind: "slowed"; }' },
+                source: ['packages/game-data-contract/src/actions.ts:1244:5'],
+              },
+              {
+                kind: 'object',
+                fields: {
+                  kind: {
+                    kind: 'enum',
+                    options: ['blockResourceGain'],
+                    semantics: { type: '"blockResourceGain"' },
+                    source: ['packages/game-data-contract/src/actions.ts:210:5'],
+                    description: '修正种类判别值。',
+                  },
+                  resource: {
+                    kind: 'enum',
+                    options: ['sp', 'ultimateEnergy'],
+                    semantics: {
+                      type: '"sp" | "ultimateEnergy"',
+                      unionVariants: [{ type: '"sp"' }, { type: '"ultimateEnergy"' }],
+                    },
+                    source: ['packages/game-data-contract/src/actions.ts:212:5'],
+                    description: '被阻止增加的资源。',
+                  },
+                },
+                semantics: {
+                  type: '{ kind: "blockResourceGain"; resource: "sp" | "ultimateEnergy"; }',
+                },
+                source: ['packages/game-data-contract/src/actions.ts:1244:5'],
+              },
+              {
+                kind: 'object',
+                fields: {
+                  kind: {
+                    kind: 'enum',
+                    options: ['resourceCostMultiplier'],
+                    semantics: { type: '"resourceCostMultiplier"' },
+                    source: ['packages/game-data-contract/src/actions.ts:217:5'],
+                    description: '修正种类判别值。',
+                  },
+                  resource: {
+                    kind: 'enum',
+                    options: ['sp', 'ultimateEnergy'],
+                    semantics: {
+                      type: '"sp" | "ultimateEnergy"',
+                      unionVariants: [{ type: '"sp"' }, { type: '"ultimateEnergy"' }],
+                    },
+                    source: ['packages/game-data-contract/src/actions.ts:219:5'],
+                    description: '要修改费用的资源。',
+                  },
+                  value: {
+                    kind: 'number',
+                    semantics: { type: 'number' },
+                    source: ['packages/game-data-contract/src/actions.ts:221:5'],
+                    description: '费用乘数。',
+                  },
+                },
+                semantics: {
+                  type: '{ kind: "resourceCostMultiplier"; resource: "sp" | "ultimateEnergy"; value: number; }',
+                },
+                source: ['packages/game-data-contract/src/actions.ts:1244:5'],
+              },
+              {
+                kind: 'object',
+                fields: {
+                  kind: {
+                    kind: 'enum',
+                    options: ['skillCooldownMultiplier'],
+                    semantics: { type: '"skillCooldownMultiplier"' },
+                    source: ['packages/game-data-contract/src/actions.ts:226:5'],
+                    description: '修正种类判别值。',
+                  },
+                  skillKey: {
+                    kind: 'string',
+                    semantics: { type: 'string' },
+                    source: ['packages/game-data-contract/src/actions.ts:228:5'],
+                    description: '目标技能。',
+                  },
+                  value: {
+                    kind: 'number',
+                    semantics: { type: 'number' },
+                    source: ['packages/game-data-contract/src/actions.ts:230:5'],
+                    description: '冷却时间乘数。',
+                  },
+                },
+                semantics: {
+                  type: '{ kind: "skillCooldownMultiplier"; skillKey: string; value: number; }',
+                },
+                source: ['packages/game-data-contract/src/actions.ts:1244:5'],
+              },
+            ],
+            semantics: actionSchemaPart_734b1f472a8dc997,
+            source: ['packages/game-data-contract/src/actions.ts:1244:5'],
+          },
+          semantics: actionSchemaPart_cc57e5c7e6582ff1,
+          source: ['packages/game-data-contract/src/actions.ts:1244:5'],
+          optional: true,
+        },
         path: ['parameters', 'modifiers'],
         label: 'modifiers',
         description: '每层状态提供的修正。',
         type: 'readonly StatusModifierDefinition[]',
         required: false,
         control: 'json',
+        semantics: actionSchemaPart_cc57e5c7e6582ff1,
+        source: ['packages/game-data-contract/src/actions.ts:1244:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
     ],
   },
@@ -3620,23 +11308,32 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'consumeStatus',
     description: '从一个语义战斗状态中消费层数。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:1249:5'],
+        },
         path: ['parameters', 'statusKey'],
         label: 'statusKey',
         description: '状态 ID。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:1249:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['enemy', 'caster'],
+          semantics: {
+            type: '"enemy" | "caster"',
+            unionVariants: [{ type: '"enemy"' }, { type: '"caster"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1251:5'],
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '状态所属对象。',
@@ -3644,14 +11341,27 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['enemy', 'caster'],
+        semantics: {
+          type: '"enemy" | "caster"',
+          unionVariants: [{ type: '"enemy"' }, { type: '"caster"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1251:5'],
       },
       {
+        valueSchema: {
+          kind: 'number',
+          semantics: { type: 'number | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:1253:5'],
+          optional: true,
+        },
         path: ['parameters', 'stacks'],
         label: 'stacks',
         description: '消费层数；省略时结束整个状态。',
         type: 'number',
         required: false,
         control: 'number',
+        semantics: { type: 'number | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:1253:5'],
       },
     ],
   },
@@ -3659,140 +11369,172 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'jumpTimeline',
     description: '在所在调度区间内持续检查条件，首次通过时把宿主局部时间轴推进到目的帧。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'number',
+          semantics: { type: 'number' },
+          source: ['packages/game-data-contract/src/actions.ts:1258:5'],
+        },
         path: ['parameters', 'destinationFrame'],
         label: 'destinationFrame',
         description: '条件成立时跳到的宿主局部帧。',
         type: 'number',
         required: true,
         control: 'number',
+        semantics: { type: 'number' },
+        source: ['packages/game-data-contract/src/actions.ts:1258:5'],
       },
       {
+        valueSchema: {
+          kind: 'condition',
+          fallback: { reason: 'condition-editor-pending' },
+          semantics: {
+            type: 'CombatCondition | undefined',
+            aliases: ['CombatCondition'],
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1260:5'],
+          optional: true,
+        },
         path: ['parameters', 'condition'],
         label: 'condition',
         description: '跳转条件；省略时立即跳转。',
         type: 'CombatCondition',
         required: false,
         control: 'json',
+        semantics: {
+          type: 'CombatCondition | undefined',
+          aliases: ['CombatCondition'],
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1260:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
     ],
   },
   finishTimeline: {
     kind: 'finishTimeline',
     description: '立即结束当前宿主技能时间轴；只承接原生 InterruptCurSkillAction。',
-    fields: [
-      {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-    ],
+    fields: [actionSchemaPart_6bb05f4a3c598d87],
   },
   reachSkillOperableBoundary: {
     kind: 'reachSkillOperableBoundary',
     description:
       '原生 AllowNextSkillAction 到达当前有序连段的下一技能窗口。\n生成器保留此事实，使条件分支实际执行时决定技能块边界。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'string',
+            semantics: { type: 'string' },
+            source: ['packages/game-data-contract/src/actions.ts:1270:5'],
+          },
+          semantics: { type: 'readonly string[]', arrayElement: { type: 'string' } },
+          source: ['packages/game-data-contract/src/actions.ts:1270:5'],
+        },
         path: ['parameters', 'skillIds'],
         label: 'skillIds',
         description: '此窗口允许接续的原生 Skill ID。',
         type: 'readonly string[]',
         required: true,
         control: 'json',
+        semantics: { type: 'readonly string[]', arrayElement: { type: 'string' } },
+        source: ['packages/game-data-contract/src/actions.ts:1270:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
     ],
   },
   markCurrentSkillCanDash: {
     kind: 'markCurrentSkillCanDash',
     description: '把当前技能的本次施放标为可由 Dash 输入打断。',
-    fields: [
-      {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-    ],
+    fields: [actionSchemaPart_6bb05f4a3c598d87],
   },
   markCurrentSkillCanInterrupt: {
     kind: 'markCurrentSkillCanInterrupt',
     description: '标记执行该动作的技能施放可中断，对应原生 MarkCanInterrupt。',
-    fields: [
-      {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-    ],
+    fields: [actionSchemaPart_6bb05f4a3c598d87],
   },
   conditional: {
     kind: 'conditional',
     description: '按条件选择真假分支。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'condition',
+          fallback: { reason: 'condition-editor-pending' },
+          semantics: { type: 'CombatCondition', aliases: ['CombatCondition'] },
+          source: ['packages/game-data-contract/src/actions.ts:1279:5'],
+        },
         path: ['parameters', 'condition'],
         label: 'condition',
         description: '决定执行哪个分支的条件。',
         type: 'CombatCondition',
         required: true,
         control: 'json',
+        semantics: { type: 'CombatCondition', aliases: ['CombatCondition'] },
+        source: ['packages/game-data-contract/src/actions.ts:1279:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:1281:5'],
+          optional: true,
+        },
         path: ['parameters', 'alwaysNext'],
         label: 'alwaysNext',
         description: '原生条件动作通过时无论分支结果如何都允许外层序列继续。',
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: { type: 'boolean | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:1281:5'],
       },
       {
+        valueSchema: {
+          kind: 'opaque',
+          fallback: { reason: 'graph-reference-boundary' },
+          semantics: { type: 'ActionGraphReference', aliases: ['ActionGraphReference'] },
+          source: ['packages/game-data-contract/src/actions.ts:1580:7'],
+        },
         path: ['whenTrue'],
         label: 'whenTrue',
         description: '条件成立时执行。',
         type: 'ActionGraphReference',
         required: true,
         control: 'sequence',
+        semantics: { type: 'ActionGraphReference', aliases: ['ActionGraphReference'] },
+        source: ['packages/game-data-contract/src/actions.ts:1580:7'],
       },
       {
+        valueSchema: {
+          kind: 'opaque',
+          fallback: { reason: 'graph-reference-boundary' },
+          semantics: {
+            type: 'ActionGraphReference | undefined',
+            aliases: ['ActionGraphReference'],
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1582:7'],
+          optional: true,
+        },
         path: ['whenFalse'],
         label: 'whenFalse',
         description: '条件不成立时执行；省略时不执行额外步骤。',
         type: 'ActionGraphReference',
         required: false,
         control: 'sequence',
+        semantics: {
+          type: 'ActionGraphReference | undefined',
+          aliases: ['ActionGraphReference'],
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1582:7'],
       },
     ],
   },
@@ -3800,37 +11542,134 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'switch',
     description: '原生 Switch：choice 求值一次，与各候选按 float32 差值容差 1e-5f 顺序匹配。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1286:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:1286:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1286:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1286:5'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:1286:5'],
+        },
         path: ['parameters', 'choice'],
         label: 'choice',
         description: '只求值一次的候选匹配值。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:1286:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean' },
+          source: ['packages/game-data-contract/src/actions.ts:1288:5'],
+        },
         path: ['parameters', 'alwaysNext'],
         label: 'alwaysNext',
         description: '只覆盖本步骤的返回值，不取消选中序列内部的短路；无匹配时直接返回此值。',
         type: 'boolean',
         required: true,
         control: 'boolean',
+        semantics: { type: 'boolean' },
+        source: ['packages/game-data-contract/src/actions.ts:1288:5'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'object',
+            fields: {
+              value: {
+                kind: 'union',
+                variants: [
+                  {
+                    kind: 'object',
+                    fields: actionSchemaPart_80825b09887cd9ab,
+                    semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+                    source: ['packages/game-data-contract/src/actions.ts:1635:3'],
+                  },
+                  {
+                    kind: 'object',
+                    fields: actionSchemaPart_3f870f38207524cc,
+                    semantics: {
+                      type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+                    },
+                    source: ['packages/game-data-contract/src/actions.ts:1635:3'],
+                  },
+                  {
+                    kind: 'object',
+                    fields: actionSchemaPart_08cc55a541270d02,
+                    semantics: { type: '{ kind: "constant"; value: number; }' },
+                    source: ['packages/game-data-contract/src/actions.ts:1635:3'],
+                  },
+                  {
+                    kind: 'object',
+                    fields: actionSchemaPart_bc1411c64bfee9b9,
+                    semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+                    source: ['packages/game-data-contract/src/actions.ts:1635:3'],
+                  },
+                ],
+                semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+                source: ['packages/game-data-contract/src/actions.ts:1635:3'],
+                description: '与 `switch.choice` 比较的候选值。',
+              },
+              sequence: {
+                kind: 'opaque',
+                fallback: { reason: 'graph-reference-boundary' },
+                semantics: { type: 'ActionGraphReference', aliases: ['ActionGraphReference'] },
+                source: ['packages/game-data-contract/src/actions.ts:1637:3'],
+                description: '此候选首先匹配时执行的序列。',
+              },
+            },
+            semantics: { type: 'ActionSwitchOptionDefinition' },
+            source: ['packages/game-data-contract/src/actions.ts:1587:9'],
+          },
+          semantics: {
+            type: 'readonly ActionSwitchOptionDefinition[]',
+            arrayElement: { type: 'ActionSwitchOptionDefinition' },
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1587:9'],
+        },
         path: ['options'],
         label: 'options',
         description: '按顺序尝试匹配的候选分支。',
         type: 'readonly ActionSwitchOptionDefinition[]',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'readonly ActionSwitchOptionDefinition[]',
+          arrayElement: { type: 'ActionSwitchOptionDefinition' },
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1587:9'],
+        fallback: { reason: 'structured-editor-pending' },
       },
     ],
   },
@@ -3838,23 +11677,78 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'repeatEachTick',
     description: '在承载调度区间内逐 Tick 驱动 body；可保留原生 Channeling 的扫描与单目标门槛。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'object',
+          fields: {
+            executeEachFrame: {
+              kind: 'boolean',
+              semantics: { type: 'boolean' },
+              source: ['packages/game-data-contract/src/actions.ts:1322:7'],
+              description: '是否每个模拟帧执行。',
+            },
+            triggerIntervalSeconds: {
+              kind: 'number',
+              semantics: { type: 'number' },
+              source: ['packages/game-data-contract/src/actions.ts:1324:7'],
+              description: '整体触发间隔秒数。',
+            },
+            maxCountPerTarget: {
+              kind: 'number',
+              semantics: { type: 'number' },
+              source: ['packages/game-data-contract/src/actions.ts:1326:7'],
+              description: '每个目标最多触发次数。',
+            },
+            targetTriggerIntervalSeconds: {
+              kind: 'number',
+              semantics: { type: 'number' },
+              source: ['packages/game-data-contract/src/actions.ts:1328:7'],
+              description: '同一目标再次触发前等待的秒数。',
+            },
+          },
+          semantics: {
+            type: '{ executeEachFrame: boolean; triggerIntervalSeconds: number; maxCountPerTarget: number; targetTriggerIntervalSeconds: number; } | undefined',
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1320:5'],
+          optional: true,
+        },
         path: ['parameters', 'nativeChanneling'],
         label: 'nativeChanneling',
         description: '原生 Channeling 动作的逐帧和按目标重复设置。',
         type: '{ /** 是否每个模拟帧执行。 */ executeEachFrame: boolean; /** 整体触发间隔秒数。 */ triggerIntervalSeconds: number; /** 每个目标最多触发次数。 */ maxCountPerTarget: number; /** 同一目标再次触发前等待的秒数。 */ targetTriggerIntervalSeconds: number; }',
         required: false,
         control: 'json',
+        semantics: {
+          type: '{ executeEachFrame: boolean; triggerIntervalSeconds: number; maxCountPerTarget: number; targetTriggerIntervalSeconds: number; } | undefined',
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1320:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'object',
+          fields: {
+            executeEachFrame: {
+              kind: 'boolean',
+              semantics: { type: 'boolean' },
+              source: ['packages/game-data-contract/src/actions.ts:1333:7'],
+            },
+            intervalSeconds: {
+              kind: 'number',
+              semantics: { type: 'number' },
+              source: ['packages/game-data-contract/src/actions.ts:1334:7'],
+            },
+          },
+          semantics: {
+            type: '{ executeEachFrame: boolean; intervalSeconds: number; } | undefined',
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1332:5'],
+          optional: true,
+        },
         path: ['parameters', 'nativeExecuteInterval'],
         label: 'nativeExecuteInterval',
         description:
@@ -3862,22 +11756,65 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         type: '{ executeEachFrame: boolean; intervalSeconds: number; }',
         required: false,
         control: 'json',
+        semantics: {
+          type: '{ executeEachFrame: boolean; intervalSeconds: number; } | undefined',
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1332:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'object',
+          fields: {
+            executeEachFrame: {
+              kind: 'boolean',
+              semantics: { type: 'boolean' },
+              source: ['packages/game-data-contract/src/actions.ts:1338:7'],
+              description: '是否每个模拟帧执行。',
+            },
+            intervalSeconds: {
+              kind: 'number',
+              semantics: { type: 'number' },
+              source: ['packages/game-data-contract/src/actions.ts:1340:7'],
+              description: '两次触发之间的秒数。',
+            },
+          },
+          semantics: {
+            type: '{ executeEachFrame: boolean; intervalSeconds: number; } | undefined',
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1336:5'],
+          optional: true,
+        },
         path: ['parameters', 'nativeTickInterval'],
         label: 'nativeTickInterval',
         description: '',
         type: '{ /** 是否每个模拟帧执行。 */ executeEachFrame: boolean; /** 两次触发之间的秒数。 */ intervalSeconds: number; }',
         required: false,
         control: 'json',
+        semantics: {
+          type: '{ executeEachFrame: boolean; intervalSeconds: number; } | undefined',
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1336:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'opaque',
+          fallback: { reason: 'graph-reference-boundary' },
+          semantics: { type: 'ActionGraphReference', aliases: ['ActionGraphReference'] },
+          source: ['packages/game-data-contract/src/actions.ts:1602:15'],
+        },
         path: ['body'],
         label: 'body',
         description: '每次触发时执行的序列。',
         type: 'ActionGraphReference',
         required: true,
         control: 'sequence',
+        semantics: { type: 'ActionGraphReference', aliases: ['ActionGraphReference'] },
+        source: ['packages/game-data-contract/src/actions.ts:1602:15'],
       },
     ],
   },
@@ -3885,29 +11822,65 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'repeatByActionValue',
     description: '按动作黑板或常量次数同步执行独立 body；每次都创建新的子步骤实例。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1346:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:1346:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1346:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1346:5'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:1346:5'],
+        },
         path: ['parameters', 'count'],
         label: 'count',
         description: '同步执行子序列的次数。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:1346:5'],
       },
       {
+        valueSchema: {
+          kind: 'opaque',
+          fallback: { reason: 'graph-reference-boundary' },
+          semantics: { type: 'ActionGraphReference', aliases: ['ActionGraphReference'] },
+          source: ['packages/game-data-contract/src/actions.ts:1607:17'],
+        },
         path: ['body'],
         label: 'body',
         description: '每次循环执行的序列。',
         type: 'ActionGraphReference',
         required: true,
         control: 'sequence',
+        semantics: { type: 'ActionGraphReference', aliases: ['ActionGraphReference'] },
+        source: ['packages/game-data-contract/src/actions.ts:1607:17'],
       },
     ],
   },
@@ -3915,15 +11888,19 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'launchProjectile',
     description: '发射一个独立投射物；所有事件回调共享这一个对象的寿命和实体黑板。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'enum',
+          options: ['actionSource', 'actionOwner'],
+          semantics: {
+            type: '"actionSource" | "actionOwner" | undefined',
+            optional: true,
+            unionVariants: [{ type: '"actionSource"' }, { type: '"actionOwner"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1351:5'],
+          optional: true,
+        },
         path: ['parameters', 'source'],
         label: 'source',
         description: '投射物归属动作来源（默认）或动作宿主；Buff 的二者可能不同。',
@@ -3931,46 +11908,237 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: false,
         control: 'select',
         options: ['actionSource', 'actionOwner'],
+        semantics: {
+          type: '"actionSource" | "actionOwner" | undefined',
+          optional: true,
+          unionVariants: [{ type: '"actionSource"' }, { type: '"actionOwner"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1351:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:1353:5'],
+          optional: true,
+        },
         path: ['parameters', 'syncTimeScale'],
         label: 'syncTimeScale',
         description: '订阅发射来源的时间倍率和忽略全局缩放开关，直到投射物回收。',
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: { type: 'boolean | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:1353:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'enum',
+              options: ['firstTickReach', 'firstTickBlock'],
+              source: ['packages/game-data-contract/src/actions.ts:1355:5'],
+              semantics: {
+                type: '"firstTickReach" | "firstTickBlock"',
+                unionVariants: [{ type: '"firstTickReach"' }, { type: '"firstTickBlock"' }],
+              },
+            },
+            {
+              kind: 'number',
+              semantics: { type: 'number' },
+              source: ['packages/game-data-contract/src/actions.ts:1355:5'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                reachAfterTicks: {
+                  kind: 'number',
+                  semantics: { type: 'number' },
+                  source: ['packages/game-data-contract/src/actions.ts:1361:11'],
+                },
+                maxDurationSeconds: {
+                  kind: 'number',
+                  semantics: { type: 'number' },
+                  source: ['packages/game-data-contract/src/actions.ts:1362:11'],
+                },
+                finishOnReach: {
+                  kind: 'boolean',
+                  semantics: { type: 'boolean | undefined', optional: true },
+                  source: ['packages/game-data-contract/src/actions.ts:1364:11'],
+                  optional: true,
+                  description: 'false 表示到达只触发回调，仍等待命中上限或寿命到期才结束。',
+                },
+              },
+              semantics: {
+                type: '{ reachAfterTicks: number; maxDurationSeconds: number; finishOnReach?: boolean | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:1355:5'],
+            },
+          ],
+          semantics: actionSchemaPart_8bff7685d9d53818,
+          source: ['packages/game-data-contract/src/actions.ts:1355:5'],
+        },
         path: ['parameters', 'finish'],
         label: 'finish',
         description: '正数表示超时秒数；到达规则只用于生成器已证明的零距离移动。',
         type: "| number | 'firstTickReach' /** 零空间落地近似：首个投射物 Tick 执行阻挡回调并结束飞行。 */ | 'firstTickBlock' | { reachAfterTicks: number; maxDurationSeconds: number; /** false 表示到达只触发回调，仍等待命中上限或寿命到期才结束。 */ finishOnReach?: boolean; }",
         required: true,
         control: 'json',
+        semantics: actionSchemaPart_8bff7685d9d53818,
+        source: ['packages/game-data-contract/src/actions.ts:1355:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'number',
+          semantics: { type: 'number | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:1367:5'],
+          optional: true,
+        },
         path: ['parameters', 'recycleDelaySeconds'],
         label: 'recycleDelaySeconds',
         description: '结束后的回收等待，取所有启用回调的最大技能时长。',
         type: 'number',
         required: false,
         control: 'number',
+        semantics: { type: 'number | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:1367:5'],
       },
       {
+        valueSchema: {
+          kind: 'object',
+          fields: {
+            onReach: {
+              kind: 'boolean',
+              semantics: { type: 'boolean | undefined', optional: true },
+              source: ['packages/game-data-contract/src/actions.ts:1371:7'],
+              optional: true,
+              description: '到达时直接命中发射目标，不执行碰撞阵营过滤。',
+            },
+            target: {
+              kind: 'enum',
+              options: ['controlledOperator', 'currentTarget', 'allOperators'],
+              semantics: {
+                type: '"controlledOperator" | "currentTarget" | "allOperators" | undefined',
+                optional: true,
+                unionVariants: [
+                  { type: '"controlledOperator"' },
+                  { type: '"allOperators"' },
+                  { type: '"currentTarget"' },
+                ],
+              },
+              source: ['packages/game-data-contract/src/actions.ts:1373:7'],
+              optional: true,
+              description: '发射时锁定的到达目标；省略时为敌人。',
+            },
+            finishOnHit: {
+              kind: 'boolean',
+              semantics: { type: 'boolean' },
+              source: ['packages/game-data-contract/src/actions.ts:1374:7'],
+            },
+            hitTagFilter: {
+              kind: 'object',
+              fields: {
+                tagQueryType: {
+                  kind: 'enum',
+                  options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll'],
+                  semantics: {
+                    type: '"hasAny" | "hasAll" | "exceptAny" | "exceptAll"',
+                    unionVariants: [
+                      { type: '"hasAny"' },
+                      { type: '"hasAll"' },
+                      { type: '"exceptAny"' },
+                      { type: '"exceptAll"' },
+                    ],
+                  },
+                  source: ['packages/game-data-contract/src/actions.ts:1375:24'],
+                },
+                tags: {
+                  kind: 'array',
+                  element: {
+                    kind: 'string',
+                    semantics: { type: 'string', aliases: ['GameplayTag'] },
+                    source: ['packages/game-data-contract/src/actions.ts:1375:60'],
+                  },
+                  semantics: {
+                    type: 'readonly string[]',
+                    arrayElement: { type: 'string', aliases: ['GameplayTag'] },
+                  },
+                  source: ['packages/game-data-contract/src/actions.ts:1375:60'],
+                },
+              },
+              semantics: {
+                type: '{ tagQueryType: "hasAny" | "hasAll" | "exceptAny" | "exceptAll"; tags: readonly string[]; } | undefined',
+                optional: true,
+              },
+              source: ['packages/game-data-contract/src/actions.ts:1375:7'],
+              optional: true,
+            },
+            retryRejectedHit: {
+              kind: 'boolean',
+              semantics: { type: 'boolean | undefined', optional: true },
+              source: ['packages/game-data-contract/src/actions.ts:1376:7'],
+              optional: true,
+            },
+          },
+          semantics: actionSchemaPart_5d2c6cb16f534249,
+          source: ['packages/game-data-contract/src/actions.ts:1369:5'],
+          optional: true,
+        },
         path: ['parameters', 'hit'],
         label: 'hit',
         description: '已证明的首 Tick 碰撞；省略表示没有碰撞回调。',
         type: "{ /** 到达时直接命中发射目标，不执行碰撞阵营过滤。 */ onReach?: boolean; /** 发射时锁定的到达目标；省略时为敌人。 */ target?: 'controlledOperator' | 'allOperators' | 'currentTarget'; finishOnHit: boolean; hitTagFilter?: { tagQueryType: GameplayTagQueryType; tags: readonly GameplayTag[] }; retryRejectedHit?: boolean; }",
         required: false,
         control: 'json',
+        semantics: actionSchemaPart_5d2c6cb16f534249,
+        source: ['packages/game-data-contract/src/actions.ts:1369:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'object',
+            fields: {
+              event: {
+                kind: 'enum',
+                options: ['hit', 'block', 'reach', 'finish'],
+                semantics: {
+                  type: '"hit" | "block" | "reach" | "finish"',
+                  unionVariants: [
+                    { type: '"hit"' },
+                    { type: '"block"' },
+                    { type: '"reach"' },
+                    { type: '"finish"' },
+                  ],
+                },
+                source: ['packages/game-data-contract/src/actions.ts:1613:21'],
+              },
+              skill: {
+                kind: 'opaque',
+                fallback: { reason: 'owned-resource-boundary' },
+                semantics: { type: 'AbilityEntityChildSkillDefinition' },
+                source: ['packages/game-data-contract/src/actions.ts:1614:21'],
+              },
+            },
+            semantics: {
+              type: '{ event: "hit" | "block" | "reach" | "finish"; skill: AbilityEntityChildSkillDefinition; }',
+            },
+            source: ['packages/game-data-contract/src/actions.ts:1612:19'],
+          },
+          semantics: actionSchemaPart_7407eaa3885aa6aa,
+          source: ['packages/game-data-contract/src/actions.ts:1612:19'],
+        },
         path: ['callbacks'],
         label: 'callbacks',
         description: '每项都是完整的原生回调技能，不并入发射技能的时间轴。',
         type: "readonly { event: 'hit' | 'block' | 'reach' | 'finish'; skill: AbilityEntityChildSkillDefinition; }[]",
         required: true,
         control: 'resource',
+        semantics: actionSchemaPart_7407eaa3885aa6aa,
+        source: ['packages/game-data-contract/src/actions.ts:1612:19'],
       },
     ],
   },
@@ -3978,31 +12146,75 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'setContextFlag',
     description: '在动作环境中设置一个标志。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:1382:5'],
+        },
         path: ['parameters', 'flag'],
         label: 'flag',
         description: '标志名称。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:1382:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'string',
+              semantics: { type: 'string' },
+              source: ['packages/game-data-contract/src/actions.ts:1384:5'],
+            },
+            {
+              kind: 'number',
+              semantics: { type: 'number' },
+              source: ['packages/game-data-contract/src/actions.ts:1384:5'],
+            },
+            {
+              kind: 'enum',
+              options: [false],
+              semantics: { type: 'false' },
+              source: ['packages/game-data-contract/src/actions.ts:1384:5'],
+            },
+            {
+              kind: 'enum',
+              options: [true],
+              semantics: { type: 'true' },
+              source: ['packages/game-data-contract/src/actions.ts:1384:5'],
+            },
+          ],
+          semantics: {
+            type: 'string | number | boolean',
+            unionVariants: [{ type: 'boolean' }, { type: 'number' }, { type: 'string' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1384:5'],
+        },
         path: ['parameters', 'value'],
         label: 'value',
         description: '标志值。',
         type: 'boolean | number | string',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'string | number | boolean',
+          unionVariants: [{ type: 'boolean' }, { type: 'number' }, { type: 'string' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1384:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['caster'],
+          semantics: { type: '"caster"' },
+          source: ['packages/game-data-contract/src/actions.ts:1386:5'],
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '当前只在施法者动作环境中设置。',
@@ -4010,6 +12222,8 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['caster'],
+        semantics: { type: '"caster"' },
+        source: ['packages/game-data-contract/src/actions.ts:1386:5'],
       },
     ],
   },
@@ -4017,23 +12231,31 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'openComboWindow',
     description: '为当前干员开启固定五秒的连携候选；下一段技能身份随候选进入场景级队列。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:1392:9'],
+          optional: true,
+        },
         path: ['parameters', 'nextSkillKey'],
         label: 'nextSkillKey',
         description: '候选中直接保存的下一技能键。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:1392:9'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['comboSkill'],
+          semantics: { type: '"comboSkill"' },
+          source: ['packages/game-data-contract/src/actions.ts:1397:9'],
+          optional: true,
+        },
         path: ['parameters', 'nextSkillKeyFromSlot'],
         label: 'nextSkillKeyFromSlot',
         description: '运行时从当前连携技能槽取得下一技能。',
@@ -4041,14 +12263,24 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: false,
         control: 'select',
         options: ['comboSkill'],
+        semantics: { type: '"comboSkill"' },
+        source: ['packages/game-data-contract/src/actions.ts:1397:9'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:1399:9'],
+          optional: true,
+        },
         path: ['parameters', 'ownerContextKey'],
         label: 'ownerContextKey',
         description: '原生 owner 为 Context 时取该组首个角色；省略时为当前执行干员。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: { type: 'string | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:1399:9'],
       },
     ],
   },
@@ -4056,29 +12288,92 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'showComboRingQte',
     description: '原生 ShowComboRingQte：在当前连携剩余时间上登记提示段与有效输入段。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1404:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:1404:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1404:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1404:5'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:1404:5'],
+        },
         path: ['parameters', 'earlyDurationSeconds'],
         label: 'earlyDurationSeconds',
         description: '提示出现但尚不可输入的秒数。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:1404:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1406:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:1406:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1406:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1406:5'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:1406:5'],
+        },
         path: ['parameters', 'activeDurationSeconds'],
         label: 'activeDurationSeconds',
         description: '可以成功触发连携的秒数。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:1406:5'],
       },
     ],
   },
@@ -4086,39 +12381,65 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'changeSkillSlot',
     description: '切换原生技能槽后续选择的技能；当前已启动的释放不受影响。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:1411:5'],
+        },
         path: ['parameters', 'skillSlotKey'],
         label: 'skillSlotKey',
         description: '原生槽位键，不是技能库展示组。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:1411:5'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:1413:5'],
+        },
         path: ['parameters', 'targetSkillKey'],
         label: 'targetSkillKey',
         description: '换入的技能键。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:1413:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:1415:5'],
+          optional: true,
+        },
         path: ['parameters', 'inheritOriginSkillCooldownProgress'],
         label: 'inheritOriginSkillCooldownProgress',
         description: '原生 ChangeSkillAction 在切换前把当前形态的归一化冷却进度传给目标形态。',
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: { type: 'boolean | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:1415:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['infinite', 'finishByAction'],
+          semantics: {
+            type: '"infinite" | "finishByAction" | undefined',
+            optional: true,
+            unionVariants: [{ type: '"infinite"' }, { type: '"finishByAction"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1417:5'],
+          optional: true,
+        },
         path: ['parameters', 'lifetime'],
         label: 'lifetime',
         description: '省略时为旧的显式一次换槽；原生 ChangeSkillAction 必须声明句柄寿命。',
@@ -4126,14 +12447,28 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: false,
         control: 'select',
         options: ['infinite', 'finishByAction'],
+        semantics: {
+          type: '"infinite" | "finishByAction" | undefined',
+          optional: true,
+          unionVariants: [{ type: '"infinite"' }, { type: '"finishByAction"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1417:5'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:1419:5'],
+          optional: true,
+        },
         path: ['parameters', 'revertedSkillKey'],
         label: 'revertedSkillKey',
         description: '原生指定还原技能；省略时由运行时快照替换前槽位。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: { type: 'string | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:1419:5'],
       },
     ],
   },
@@ -4141,21 +12476,21 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'overrideBasicAttackMapping',
     description: 'Buff 动作有效期间覆盖普攻命令；结束时只移除本次注册。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:1424:5'],
+        },
         path: ['parameters', 'skillId'],
         label: 'skillId',
         description: 'Buff 有效期内普通攻击操作请求的原生技能 ID。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:1424:5'],
       },
     ],
   },
@@ -4163,21 +12498,49 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'overrideMultiDashLimit',
     description: '动作有效期间覆盖当前干员可连续执行的 Dash 次数；负数表示无限。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1429:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:1429:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1429:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1429:5'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:1429:5'],
+        },
         path: ['parameters', 'dashCount'],
         label: 'dashCount',
         description: '原生 OverrideMultiDashLimit 的 dashCount，可读取动作黑板。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:1429:5'],
       },
     ],
   },
@@ -4185,23 +12548,29 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'changePlayerActionMode',
     description: 'SwitchModeAction：只改变后续玩家操作的原生路由，结束时恢复同层上一模式。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:1434:5'],
+        },
         path: ['parameters', 'modeId'],
         label: 'modeId',
         description: '要启用的模式 ID。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:1434:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['finishByAction'],
+          semantics: { type: '"finishByAction"' },
+          source: ['packages/game-data-contract/src/actions.ts:1436:5'],
+        },
         path: ['parameters', 'lifetime'],
         label: 'lifetime',
         description: '当前只支持随动作结束而恢复的模式切换。',
@@ -4209,6 +12578,8 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['finishByAction'],
+        semantics: { type: '"finishByAction"' },
+        source: ['packages/game-data-contract/src/actions.ts:1436:5'],
       },
     ],
   },
@@ -4216,23 +12587,39 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'changeNativeSkillType',
     description: 'ChangeSkillType：原地改写既有技能实例的原生分类，不替换技能槽。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actions.ts:1441:5'],
+        },
         path: ['parameters', 'targetSkillKey'],
         label: 'targetSkillKey',
         description: '要修改的技能键。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actions.ts:1441:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: [
+            'normalSkill',
+            'comboSkill',
+            'ultimateSkill',
+            'dodge',
+            'breakingAttack',
+            'passiveSkill',
+            'attack',
+            'attachSkill',
+            'extraActiveSkill',
+          ],
+          semantics: actionSchemaPart_8a70261398bcb594,
+          source: ['packages/game-data-contract/src/actions.ts:1443:5'],
+        },
         path: ['parameters', 'nativeSkillType'],
         label: 'nativeSkillType',
         description: '新的原生技能类型。',
@@ -4250,6 +12637,8 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
           'attachSkill',
           'extraActiveSkill',
         ],
+        semantics: actionSchemaPart_8a70261398bcb594,
+        source: ['packages/game-data-contract/src/actions.ts:1443:5'],
       },
     ],
   },
@@ -4257,15 +12646,17 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'setCharacterPassiveUiValue',
     description: '原生 NotifyCharPassiveUIAction：更新角色专属 HUD 数值，不修改伤害状态。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'enum',
+          options: ['enemy', 'caster'],
+          semantics: {
+            type: '"enemy" | "caster"',
+            unionVariants: [{ type: '"enemy"' }, { type: '"caster"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1448:5'],
+        },
         path: ['parameters', 'target'],
         label: 'target',
         description: '要更新专属 HUD 的对象。',
@@ -4273,51 +12664,604 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: true,
         control: 'select',
         options: ['enemy', 'caster'],
+        semantics: {
+          type: '"enemy" | "caster"',
+          unionVariants: [{ type: '"enemy"' }, { type: '"caster"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1448:5'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: actionSchemaPart_80825b09887cd9ab,
+              semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1450:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_3f870f38207524cc,
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/actions.ts:1450:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_08cc55a541270d02,
+              semantics: { type: '{ kind: "constant"; value: number; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1450:5'],
+            },
+            {
+              kind: 'object',
+              fields: actionSchemaPart_bc1411c64bfee9b9,
+              semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+              source: ['packages/game-data-contract/src/actions.ts:1450:5'],
+            },
+          ],
+          semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          source: ['packages/game-data-contract/src/actions.ts:1450:5'],
+        },
         path: ['parameters', 'value'],
         label: 'value',
         description: '写入 HUD 的数值。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+        source: ['packages/game-data-contract/src/actions.ts:1450:5'],
       },
     ],
   },
   inheritSkillCastInfoForBasicAttack: {
     kind: 'inheritSkillCastInfoForBasicAttack',
     description: 'Buff 有效期内把其来源施法身份注册为后续普通攻击的施法身份。',
-    fields: [
-      {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-    ],
+    fields: [actionSchemaPart_6bb05f4a3c598d87],
   },
   listenForCombatEvents: {
     kind: 'listenForCombatEvents',
     description:
       '在所在调度项的有效区间内监听战斗事件。\n调度项开始时注册，结束或技能中断时注销；响应序列在事件派发过程中同步执行。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'object',
+            fields: {
+              key: {
+                kind: 'string',
+                semantics: { type: 'string' },
+                source: ['packages/game-data-contract/src/actions.ts:1653:3'],
+                description: '响应在当前监听器中的唯一名称。',
+              },
+              event: {
+                kind: 'union',
+                variants: [
+                  {
+                    kind: 'object',
+                    fields: {
+                      kind: {
+                        kind: 'enum',
+                        options: ['abilityEvent'],
+                        semantics: { type: '"abilityEvent"' },
+                        source: ['packages/game-data-contract/src/actions.ts:1681:7'],
+                        description: '直接监听能力系统事件。',
+                      },
+                      event: {
+                        kind: 'enum',
+                        options: ['beforeAddedBuff', 'outputBuff', 'addedBuff'],
+                        semantics: {
+                          type: '"beforeAddedBuff" | "outputBuff" | "addedBuff"',
+                          unionVariants: [
+                            { type: '"beforeAddedBuff"' },
+                            { type: '"outputBuff"' },
+                            { type: '"addedBuff"' },
+                          ],
+                        },
+                        source: ['packages/game-data-contract/src/actions.ts:1683:7'],
+                        description: '允许直接订阅的能力事件。',
+                      },
+                    },
+                    semantics: {
+                      type: '{ kind: "abilityEvent"; event: "beforeAddedBuff" | "outputBuff" | "addedBuff"; }',
+                    },
+                    source: ['packages/game-data-contract/src/actions.ts:1655:3'],
+                  },
+                  {
+                    kind: 'object',
+                    fields: {
+                      kind: {
+                        kind: 'enum',
+                        options: ['operatorHit'],
+                        semantics: { type: '"operatorHit"' },
+                        source: ['packages/game-data-contract/src/actions.ts:1688:7'],
+                        description: '触发器种类判别值。',
+                      },
+                    },
+                    semantics: { type: '{ kind: "operatorHit"; }' },
+                    source: ['packages/game-data-contract/src/actions.ts:1655:3'],
+                  },
+                  {
+                    kind: 'object',
+                    fields: {
+                      kind: {
+                        kind: 'enum',
+                        options: ['operatorHealed'],
+                        semantics: { type: '"operatorHealed"' },
+                        source: ['packages/game-data-contract/src/actions.ts:1693:7'],
+                        description: '触发器种类判别值。',
+                      },
+                      role: {
+                        kind: 'enum',
+                        options: ['source', 'target'],
+                        semantics: {
+                          type: '"source" | "target" | undefined',
+                          optional: true,
+                          unionVariants: [{ type: '"source"' }, { type: '"target"' }],
+                        },
+                        source: ['packages/game-data-contract/src/actions.ts:1695:7'],
+                        optional: true,
+                        description: '只监听治疗来源或受治疗者；省略时两者都可触发。',
+                      },
+                    },
+                    semantics: {
+                      type: '{ kind: "operatorHealed"; role?: "source" | "target" | undefined; }',
+                    },
+                    source: ['packages/game-data-contract/src/actions.ts:1655:3'],
+                  },
+                  {
+                    kind: 'object',
+                    fields: {
+                      kind: {
+                        kind: 'enum',
+                        options: ['buffApplied'],
+                        semantics: { type: '"buffApplied"' },
+                        source: ['packages/game-data-contract/src/actions.ts:1700:7'],
+                        description: '触发器种类判别值。',
+                      },
+                    },
+                    semantics: { type: '{ kind: "buffApplied"; }' },
+                    source: ['packages/game-data-contract/src/actions.ts:1655:3'],
+                  },
+                  {
+                    kind: 'object',
+                    fields: {
+                      kind: {
+                        kind: 'enum',
+                        options: ['buffOutput'],
+                        semantics: { type: '"buffOutput"' },
+                        source: ['packages/game-data-contract/src/actions.ts:1705:7'],
+                        description: '触发器种类判别值。',
+                      },
+                    },
+                    semantics: { type: '{ kind: "buffOutput"; }' },
+                    source: ['packages/game-data-contract/src/actions.ts:1655:3'],
+                  },
+                  {
+                    kind: 'object',
+                    fields: {
+                      kind: {
+                        kind: 'enum',
+                        options: ['buffConsumed'],
+                        semantics: { type: '"buffConsumed"' },
+                        source: ['packages/game-data-contract/src/actions.ts:1710:7'],
+                        description: '触发器种类判别值。',
+                      },
+                      buffIds: {
+                        kind: 'array',
+                        element: {
+                          kind: 'string',
+                          semantics: { type: 'string' },
+                          source: ['packages/game-data-contract/src/actions.ts:1712:7'],
+                        },
+                        semantics: {
+                          type: 'readonly string[] | undefined',
+                          arrayElement: { type: 'string' },
+                          optional: true,
+                        },
+                        source: ['packages/game-data-contract/src/actions.ts:1712:7'],
+                        optional: true,
+                        description: '任一匹配即可触发的 Buff ID。',
+                      },
+                    },
+                    semantics: {
+                      type: '{ kind: "buffConsumed"; buffIds?: readonly string[] | undefined; }',
+                    },
+                    source: ['packages/game-data-contract/src/actions.ts:1655:3'],
+                  },
+                  {
+                    kind: 'object',
+                    fields: {
+                      kind: {
+                        kind: 'enum',
+                        options: ['airborneOutput'],
+                        semantics: { type: '"airborneOutput"' },
+                        source: ['packages/game-data-contract/src/actions.ts:1717:7'],
+                        description: '触发器种类判别值。',
+                      },
+                    },
+                    semantics: { type: '{ kind: "airborneOutput"; }' },
+                    source: ['packages/game-data-contract/src/actions.ts:1655:3'],
+                  },
+                  {
+                    kind: 'object',
+                    fields: {
+                      kind: {
+                        kind: 'enum',
+                        options: ['knockDownOutput'],
+                        semantics: { type: '"knockDownOutput"' },
+                        source: ['packages/game-data-contract/src/actions.ts:1722:7'],
+                        description: '触发器种类判别值。',
+                      },
+                    },
+                    semantics: { type: '{ kind: "knockDownOutput"; }' },
+                    source: ['packages/game-data-contract/src/actions.ts:1655:3'],
+                  },
+                  {
+                    kind: 'object',
+                    fields: {
+                      kind: {
+                        kind: 'enum',
+                        options: ['spGained'],
+                        semantics: { type: '"spGained"' },
+                        source: ['packages/game-data-contract/src/actions.ts:1727:7'],
+                        description: '触发器种类判别值。',
+                      },
+                      source: {
+                        kind: 'enum',
+                        options: ['normalAttack', 'powerAttack', 'default', 'skill'],
+                        semantics: actionSchemaPart_0f38ab070df3ee7c,
+                        source: ['packages/game-data-contract/src/actions.ts:1729:7'],
+                        optional: true,
+                        description: '只监听指定的技力来源。',
+                      },
+                      gainKind: {
+                        kind: 'enum',
+                        options: ['gain', 'refund'],
+                        semantics: {
+                          type: '"gain" | "refund" | undefined',
+                          optional: true,
+                          unionVariants: [{ type: '"gain"' }, { type: '"refund"' }],
+                        },
+                        source: ['packages/game-data-contract/src/actions.ts:1731:7'],
+                        optional: true,
+                        description: '只监听正常获取或返还。',
+                      },
+                    },
+                    semantics: {
+                      type: '{ kind: "spGained"; source?: "normalAttack" | "powerAttack" | "default" | "skill" | undefined; gainKind?: "gain" | "refund" | undefined; }',
+                    },
+                    source: ['packages/game-data-contract/src/actions.ts:1655:3'],
+                  },
+                  {
+                    kind: 'object',
+                    fields: {
+                      kind: {
+                        kind: 'enum',
+                        options: ['damageTagHit'],
+                        semantics: { type: '"damageTagHit"' },
+                        source: ['packages/game-data-contract/src/actions.ts:1736:7'],
+                        description: '触发器种类判别值。',
+                      },
+                      tag: {
+                        kind: 'enum',
+                        options: [
+                          'normalAttack',
+                          'normalAttackLastCombo',
+                          'powerAttack',
+                          'normalSkill',
+                          'comboSkill',
+                          'ultimateSkill',
+                          'plungingAttack',
+                          'dashAttack',
+                          'fireBurst',
+                          'electricBurst',
+                          'cryoBurst',
+                          'natureBurst',
+                          'fireAbnormal',
+                          'electricAbnormal',
+                          'cryoAbnormal',
+                          'natureAbnormal',
+                        ],
+                        semantics: actionSchemaPart_1fbfd66386e805e7,
+                        source: ['packages/game-data-contract/src/actions.ts:1738:7'],
+                        description: '要匹配的伤害标签。',
+                      },
+                      scope: {
+                        kind: 'enum',
+                        options: ['team', 'operator'],
+                        semantics: {
+                          type: '"team" | "operator"',
+                          unionVariants: [{ type: '"team"' }, { type: '"operator"' }],
+                        },
+                        source: ['packages/game-data-contract/src/actions.ts:1740:7'],
+                        description: '检查当前干员还是全队来源。',
+                      },
+                    },
+                    semantics: actionSchemaPart_f9555ec96b6b804d,
+                    source: ['packages/game-data-contract/src/actions.ts:1655:3'],
+                  },
+                  {
+                    kind: 'object',
+                    fields: {
+                      kind: {
+                        kind: 'enum',
+                        options: ['elementalInflictionApplied'],
+                        semantics: { type: '"elementalInflictionApplied"' },
+                        source: ['packages/game-data-contract/src/actions.ts:1744:7'],
+                        description: '指定范围内成功施加一种元素附着。',
+                      },
+                      elements: {
+                        kind: 'union',
+                        variants: [
+                          {
+                            kind: 'enum',
+                            options: ['physical', 'heat', 'cryo', 'electric', 'nature'],
+                            source: ['packages/game-data-contract/src/actions.ts:1746:7'],
+                            semantics: actionSchemaPart_003496351f84bb24,
+                          },
+                          {
+                            kind: 'array',
+                            element: {
+                              kind: 'enum',
+                              options: ['physical', 'heat', 'cryo', 'electric', 'nature'],
+                              semantics: actionSchemaPart_003496351f84bb24,
+                              source: ['packages/game-data-contract/src/actions.ts:1746:7'],
+                            },
+                            semantics: actionSchemaPart_ed273cf7fb87850f,
+                            source: ['packages/game-data-contract/src/actions.ts:1746:7'],
+                          },
+                        ],
+                        semantics: {
+                          type: '"physical" | "heat" | "cryo" | "electric" | "nature" | readonly ("physical" | "heat" | "cryo" | "electric" | "nature")[]',
+                          unionVariants: [
+                            actionSchemaPart_003496351f84bb24,
+                            actionSchemaPart_ed273cf7fb87850f,
+                          ],
+                        },
+                        source: ['packages/game-data-contract/src/actions.ts:1746:7'],
+                        description: '任一匹配即可成立的元素。',
+                      },
+                      scope: {
+                        kind: 'enum',
+                        options: ['team', 'operator'],
+                        semantics: {
+                          type: '"team" | "operator"',
+                          unionVariants: [{ type: '"team"' }, { type: '"operator"' }],
+                        },
+                        source: ['packages/game-data-contract/src/actions.ts:1748:7'],
+                        description: '检查当前干员还是全队来源。',
+                      },
+                    },
+                    semantics: actionSchemaPart_19fd1bb3d8516c57,
+                    source: ['packages/game-data-contract/src/actions.ts:1655:3'],
+                  },
+                  {
+                    kind: 'object',
+                    fields: {
+                      kind: {
+                        kind: 'enum',
+                        options: ['physicalInflictionApplied'],
+                        semantics: { type: '"physicalInflictionApplied"' },
+                        source: ['packages/game-data-contract/src/actions.ts:1752:7'],
+                        description: '指定范围内成功施加一种物理异常。',
+                      },
+                      types: {
+                        kind: 'union',
+                        variants: [
+                          {
+                            kind: 'enum',
+                            options: ['crush', 'airborne', 'knockDown', 'fracture'],
+                            source: ['packages/game-data-contract/src/actions.ts:1754:7'],
+                            semantics: {
+                              type: '"crush" | "airborne" | "knockDown" | "fracture"',
+                              unionVariants: [
+                                { type: '"crush"' },
+                                { type: '"airborne"' },
+                                { type: '"knockDown"' },
+                                { type: '"fracture"' },
+                              ],
+                            },
+                          },
+                          {
+                            kind: 'array',
+                            element: {
+                              kind: 'enum',
+                              options: ['crush', 'airborne', 'knockDown', 'fracture'],
+                              semantics: {
+                                type: '"crush" | "airborne" | "knockDown" | "fracture"',
+                                unionVariants: [
+                                  { type: '"crush"' },
+                                  { type: '"airborne"' },
+                                  { type: '"knockDown"' },
+                                  { type: '"fracture"' },
+                                ],
+                              },
+                              source: ['packages/game-data-contract/src/actions.ts:1754:7'],
+                            },
+                            semantics: actionSchemaPart_ec6f1f9136edd174,
+                            source: ['packages/game-data-contract/src/actions.ts:1754:7'],
+                          },
+                        ],
+                        semantics: {
+                          type: '"crush" | "airborne" | "knockDown" | "fracture" | readonly ("crush" | "airborne" | "knockDown" | "fracture")[]',
+                          unionVariants: [
+                            {
+                              type: '"crush" | "airborne" | "knockDown" | "fracture"',
+                              unionVariants: [
+                                { type: '"crush"' },
+                                { type: '"airborne"' },
+                                { type: '"knockDown"' },
+                                { type: '"fracture"' },
+                              ],
+                            },
+                            actionSchemaPart_ec6f1f9136edd174,
+                          ],
+                        },
+                        source: ['packages/game-data-contract/src/actions.ts:1754:7'],
+                        description: '任一匹配即可成立的物理异常。',
+                      },
+                      scope: {
+                        kind: 'enum',
+                        options: ['team', 'operator'],
+                        semantics: {
+                          type: '"team" | "operator"',
+                          unionVariants: [{ type: '"team"' }, { type: '"operator"' }],
+                        },
+                        source: ['packages/game-data-contract/src/actions.ts:1756:7'],
+                        description: '检查当前干员还是全队来源。',
+                      },
+                    },
+                    semantics: actionSchemaPart_506edc52fb997d86,
+                    source: ['packages/game-data-contract/src/actions.ts:1655:3'],
+                  },
+                  {
+                    kind: 'object',
+                    fields: {
+                      kind: {
+                        kind: 'enum',
+                        options: ['skillHit'],
+                        semantics: { type: '"skillHit"' },
+                        source: ['packages/game-data-contract/src/actions.ts:1761:7'],
+                        description: '触发器种类判别值。',
+                      },
+                      skillKey: {
+                        kind: 'string',
+                        semantics: { type: 'string' },
+                        source: ['packages/game-data-contract/src/actions.ts:1763:7'],
+                        description: '要匹配的执行技能。',
+                      },
+                      scope: {
+                        kind: 'enum',
+                        options: ['team', 'operator'],
+                        semantics: {
+                          type: '"team" | "operator"',
+                          unionVariants: [{ type: '"team"' }, { type: '"operator"' }],
+                        },
+                        source: ['packages/game-data-contract/src/actions.ts:1765:7'],
+                        description: '检查当前干员还是全队来源。',
+                      },
+                    },
+                    semantics: {
+                      type: '{ kind: "skillHit"; skillKey: string; scope: "team" | "operator"; }',
+                    },
+                    source: ['packages/game-data-contract/src/actions.ts:1655:3'],
+                  },
+                  {
+                    kind: 'object',
+                    fields: {
+                      kind: {
+                        kind: 'enum',
+                        options: ['enemyDefeated'],
+                        semantics: { type: '"enemyDefeated"' },
+                        source: ['packages/game-data-contract/src/actions.ts:1770:7'],
+                        description: '触发器种类判别值。',
+                      },
+                      scope: {
+                        kind: 'enum',
+                        options: ['team', 'operator'],
+                        semantics: {
+                          type: '"team" | "operator"',
+                          unionVariants: [{ type: '"team"' }, { type: '"operator"' }],
+                        },
+                        source: ['packages/game-data-contract/src/actions.ts:1772:7'],
+                        description: '检查当前干员还是全队来源。',
+                      },
+                    },
+                    semantics: { type: '{ kind: "enemyDefeated"; scope: "team" | "operator"; }' },
+                    source: ['packages/game-data-contract/src/actions.ts:1655:3'],
+                  },
+                ],
+                semantics: {
+                  type: 'CombatEventTrigger',
+                  unionVariants: [
+                    {
+                      type: '{ kind: "abilityEvent"; event: "beforeAddedBuff" | "outputBuff" | "addedBuff"; }',
+                    },
+                    { type: '{ kind: "operatorHit"; }' },
+                    { type: '{ kind: "operatorHealed"; role?: "source" | "target" | undefined; }' },
+                    { type: '{ kind: "buffApplied"; }' },
+                    { type: '{ kind: "buffOutput"; }' },
+                    { type: '{ kind: "buffConsumed"; buffIds?: readonly string[] | undefined; }' },
+                    { type: '{ kind: "airborneOutput"; }' },
+                    { type: '{ kind: "knockDownOutput"; }' },
+                    {
+                      type: '{ kind: "spGained"; source?: "normalAttack" | "powerAttack" | "default" | "skill" | undefined; gainKind?: "gain" | "refund" | undefined; }',
+                    },
+                    actionSchemaPart_f9555ec96b6b804d,
+                    actionSchemaPart_19fd1bb3d8516c57,
+                    actionSchemaPart_506edc52fb997d86,
+                    { type: '{ kind: "skillHit"; skillKey: string; scope: "team" | "operator"; }' },
+                    { type: '{ kind: "enemyDefeated"; scope: "team" | "operator"; }' },
+                  ],
+                },
+                source: ['packages/game-data-contract/src/actions.ts:1655:3'],
+                description: '要监听的战斗事件及其筛选参数。',
+              },
+              phase: {
+                kind: 'enum',
+                options: ['skill', 'dataAction'],
+                semantics: {
+                  type: '"skill" | "dataAction" | undefined',
+                  optional: true,
+                  unionVariants: [{ type: '"dataAction"' }, { type: '"skill"' }],
+                },
+                source: ['packages/game-data-contract/src/actions.ts:1657:3'],
+                optional: true,
+                description: '常驻数据动作显式使用 dataAction；技能区间监听器缺省为 skill。',
+              },
+              priority: {
+                kind: 'number',
+                semantics: { type: 'number | undefined', optional: true },
+                source: ['packages/game-data-contract/src/actions.ts:1659:3'],
+                optional: true,
+                description: '仅 dataAction 相位使用，数值越大越先执行。',
+              },
+              condition: {
+                kind: 'condition',
+                fallback: { reason: 'condition-editor-pending' },
+                semantics: {
+                  type: 'CombatCondition | undefined',
+                  aliases: ['CombatCondition'],
+                  optional: true,
+                },
+                source: ['packages/game-data-contract/src/actions.ts:1661:3'],
+                optional: true,
+                description: '事件发生后还需满足的条件。',
+              },
+              sequence: {
+                kind: 'opaque',
+                fallback: { reason: 'graph-reference-boundary' },
+                semantics: { type: 'ActionGraphReference', aliases: ['ActionGraphReference'] },
+                source: ['packages/game-data-contract/src/actions.ts:1663:3'],
+                description: '条件成立时同步执行的动作序列。',
+              },
+            },
+            semantics: { type: 'CombatEventResponseDefinition' },
+            source: ['packages/game-data-contract/src/actions.ts:1460:5'],
+          },
+          semantics: {
+            type: 'readonly CombatEventResponseDefinition[]',
+            arrayElement: { type: 'CombatEventResponseDefinition' },
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1460:5'],
+        },
         path: ['parameters', 'responses'],
         label: 'responses',
         description: '当前区间内注册的事件响应。',
         type: 'readonly CombatEventResponseDefinition[]',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'readonly CombatEventResponseDefinition[]',
+          arrayElement: { type: 'CombatEventResponseDefinition' },
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1460:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
     ],
   },
@@ -4326,14 +13270,64 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     description: '调用同一定义内的宏。内部节点由宏图保存，调用点仍有独立执行状态。',
     fields: [
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: { type: 'string' },
+          source: ['packages/game-data-contract/src/actionGraph.ts:25:3'],
+        },
         path: ['macroId'],
         label: 'macroId',
         description: '',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: { type: 'string' },
+        source: ['packages/game-data-contract/src/actionGraph.ts:25:3'],
       },
       {
+        valueSchema: {
+          kind: 'record',
+          value: {
+            kind: 'union',
+            variants: [
+              {
+                kind: 'object',
+                fields: actionSchemaPart_80825b09887cd9ab,
+                semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+                source: ['packages/game-data-contract/src/actionGraph.ts:28:3'],
+              },
+              {
+                kind: 'object',
+                fields: actionSchemaPart_3f870f38207524cc,
+                semantics: {
+                  type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+                },
+                source: ['packages/game-data-contract/src/actionGraph.ts:28:3'],
+              },
+              {
+                kind: 'object',
+                fields: actionSchemaPart_08cc55a541270d02,
+                semantics: { type: '{ kind: "constant"; value: number; }' },
+                source: ['packages/game-data-contract/src/actionGraph.ts:28:3'],
+              },
+              {
+                kind: 'object',
+                fields: actionSchemaPart_bc1411c64bfee9b9,
+                semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+                source: ['packages/game-data-contract/src/actionGraph.ts:28:3'],
+              },
+            ],
+            semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+            source: ['packages/game-data-contract/src/actionGraph.ts:28:3'],
+          },
+          semantics: {
+            type: 'Readonly<Record<string, ActionValueOperand>> | undefined',
+            recordValue: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/actionGraph.ts:28:3'],
+          optional: true,
+        },
         path: ['arguments'],
         label: 'arguments',
         description:
@@ -4341,6 +13335,13 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         type: 'Readonly<Record<string, ActionValueOperand>>',
         required: false,
         control: 'json',
+        semantics: {
+          type: 'Readonly<Record<string, ActionValueOperand>> | undefined',
+          recordValue: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/actionGraph.ts:28:3'],
+        fallback: { reason: 'structured-editor-pending' },
       },
     ],
   },
@@ -4349,12 +13350,24 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     description: '调用另一个完整资源的入口；它不是本资源的宏，也不共享节点命名空间。',
     fields: [
       {
+        valueSchema: {
+          kind: 'opaque',
+          fallback: { reason: 'owned-resource-boundary' },
+          semantics: {
+            type: '{ readonly id: string; readonly actionGraph: ActionGraphResourceDefinition; readonly entry: ActionGraphReference; }',
+          },
+          source: ['packages/game-data-contract/src/actionGraph.ts:41:3'],
+        },
         path: ['resource'],
         label: 'resource',
         description: '',
         type: '{ /** 被调用的原生资源 ID。 */ readonly id: string; readonly actionGraph: ActionGraphResourceDefinition; readonly entry: ActionGraphReference; }',
         required: true,
         control: 'resource',
+        semantics: {
+          type: '{ readonly id: string; readonly actionGraph: ActionGraphResourceDefinition; readonly entry: ActionGraphReference; }',
+        },
+        source: ['packages/game-data-contract/src/actionGraph.ts:41:3'],
       },
     ],
   },
@@ -4362,61 +13375,75 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
     kind: 'once',
     description: '同一个技能释放实例内共享的只执行一次作用域。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'opaque',
+          fallback: { reason: 'graph-reference-boundary' },
+          semantics: { type: 'ActionGraphReference', aliases: ['ActionGraphReference'] },
+          source: ['packages/game-data-contract/src/actions.ts:1592:11'],
+        },
         path: ['body'],
         label: 'body',
         description: '在此一次性作用域中执行的子序列。',
         type: 'ActionGraphReference',
         required: true,
         control: 'sequence',
+        semantics: { type: 'ActionGraphReference', aliases: ['ActionGraphReference'] },
+        source: ['packages/game-data-contract/src/actions.ts:1592:11'],
       },
-      {
-        path: ['parameters', 'scopeKey'],
-        label: 'scopeKey',
-        description: '',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
+      actionSchemaPart_4e3560cf140abc20,
     ],
   },
   withActionBlackboardScope: {
     kind: 'withActionBlackboardScope',
     description: '在一次原生子 SkillData 调用的 direct blackboard 中执行 body。',
     fields: [
+      actionSchemaPart_6bb05f4a3c598d87,
       {
-        path: ['key'],
-        label: 'key',
-        description: '仅当其他定义需要引用此步骤时提供。',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
-      {
+        valueSchema: {
+          kind: 'opaque',
+          fallback: { reason: 'graph-reference-boundary' },
+          semantics: { type: 'ActionGraphReference', aliases: ['ActionGraphReference'] },
+          source: ['packages/game-data-contract/src/actions.ts:1597:13'],
+        },
         path: ['body'],
         label: 'body',
         description: '在子动作黑板中执行的序列。',
         type: 'ActionGraphReference',
         required: true,
         control: 'sequence',
+        semantics: { type: 'ActionGraphReference', aliases: ['ActionGraphReference'] },
+        source: ['packages/game-data-contract/src/actions.ts:1597:13'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:1302:5'],
+          optional: true,
+        },
         path: ['parameters', 'alwaysNext'],
         label: 'alwaysNext',
         description: '回调边界忽略局部序列的短路结果，不阻止后续独立回调。',
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: { type: 'boolean | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:1302:5'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['parent', 'execution'],
+          semantics: {
+            type: '"parent" | "execution" | undefined',
+            optional: true,
+            unionVariants: [{ type: '"parent"' }, { type: '"execution"' }],
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1300:5'],
+          optional: true,
+        },
         path: ['parameters', 'lifetime'],
         label: 'lifetime',
         description: '默认在同一父黑板内复用；execution 用于每次发射等独立实例，不跨循环项共享。',
@@ -4424,8 +13451,20 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         required: false,
         control: 'select',
         options: ['parent', 'execution'],
+        semantics: {
+          type: '"parent" | "execution" | undefined',
+          optional: true,
+          unionVariants: [{ type: '"parent"' }, { type: '"execution"' }],
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1300:5'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean | undefined', optional: true },
+          source: ['packages/game-data-contract/src/actions.ts:1307:5'],
+          optional: true,
+        },
         path: ['parameters', 'shareParentBlackboard'],
         label: 'shareParentBlackboard',
         description:
@@ -4433,47 +13472,174 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionN
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: { type: 'boolean | undefined', optional: true },
+        source: ['packages/game-data-contract/src/actions.ts:1307:5'],
       },
       {
+        valueSchema: {
+          kind: 'record',
+          value: {
+            kind: 'union',
+            variants: [
+              {
+                kind: 'number',
+                semantics: { type: 'number' },
+                source: ['packages/game-data-contract/src/actions.ts:1309:5'],
+              },
+              {
+                kind: 'array',
+                element: {
+                  kind: 'number',
+                  semantics: { type: 'number' },
+                  source: ['packages/game-data-contract/src/actions.ts:1309:5'],
+                },
+                semantics: { type: 'readonly number[]', arrayElement: { type: 'number' } },
+                source: ['packages/game-data-contract/src/actions.ts:1309:5'],
+              },
+            ],
+            semantics: { type: 'LevelValues', aliases: ['LevelValues'] },
+            source: ['packages/game-data-contract/src/actions.ts:1309:5'],
+          },
+          semantics: {
+            type: 'Readonly<Record<string, LevelValues>>',
+            recordValue: { type: 'LevelValues', aliases: ['LevelValues'] },
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1309:5'],
+        },
         path: ['parameters', 'initialValues'],
         label: 'initialValues',
         description: '子动作黑板的初始值。',
         type: 'Readonly<Record<string, LevelValues>>',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'Readonly<Record<string, LevelValues>>',
+          recordValue: { type: 'LevelValues', aliases: ['LevelValues'] },
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1309:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: { type: 'boolean' },
+          source: ['packages/game-data-contract/src/actions.ts:1311:5'],
+        },
         path: ['parameters', 'inheritParent'],
         label: 'inheritParent',
         description: '原生 assignBlackboard：调用时把父 direct blackboard 覆盖到子初值之上。',
         type: 'boolean',
         required: true,
         control: 'boolean',
+        semantics: { type: 'boolean' },
+        source: ['packages/game-data-contract/src/actions.ts:1311:5'],
       },
       {
+        valueSchema: {
+          kind: 'record',
+          value: {
+            kind: 'union',
+            variants: [
+              {
+                kind: 'number',
+                semantics: { type: 'number' },
+                source: ['packages/game-data-contract/src/actions.ts:1313:5'],
+              },
+              {
+                kind: 'array',
+                element: {
+                  kind: 'number',
+                  semantics: { type: 'number' },
+                  source: ['packages/game-data-contract/src/actions.ts:1313:5'],
+                },
+                semantics: { type: 'readonly number[]', arrayElement: { type: 'number' } },
+                source: ['packages/game-data-contract/src/actions.ts:1313:5'],
+              },
+            ],
+            semantics: { type: 'LevelValues', aliases: ['LevelValues'] },
+            source: ['packages/game-data-contract/src/actions.ts:1313:5'],
+          },
+          semantics: {
+            type: 'Readonly<Record<string, LevelValues>> | undefined',
+            recordValue: { type: 'LevelValues', aliases: ['LevelValues'] },
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1313:5'],
+          optional: true,
+        },
         path: ['parameters', 'entityInitialValues'],
         label: 'entityInitialValues',
         description: '投射物等独立逻辑宿主在模板中声明的实体黑板；省略时继续共享父宿主实体层。',
         type: 'Readonly<Record<string, LevelValues>>',
         required: false,
         control: 'json',
+        semantics: {
+          type: 'Readonly<Record<string, LevelValues>> | undefined',
+          recordValue: { type: 'LevelValues', aliases: ['LevelValues'] },
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1313:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
       {
+        valueSchema: {
+          kind: 'record',
+          value: {
+            kind: 'union',
+            variants: [
+              {
+                kind: 'object',
+                fields: actionSchemaPart_80825b09887cd9ab,
+                semantics: { type: '{ kind: "valueNode"; nodeId: string; }' },
+                source: ['packages/game-data-contract/src/actions.ts:1315:5'],
+              },
+              {
+                kind: 'object',
+                fields: actionSchemaPart_3f870f38207524cc,
+                semantics: {
+                  type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+                },
+                source: ['packages/game-data-contract/src/actions.ts:1315:5'],
+              },
+              {
+                kind: 'object',
+                fields: actionSchemaPart_08cc55a541270d02,
+                semantics: { type: '{ kind: "constant"; value: number; }' },
+                source: ['packages/game-data-contract/src/actions.ts:1315:5'],
+              },
+              {
+                kind: 'object',
+                fields: actionSchemaPart_bc1411c64bfee9b9,
+                semantics: { type: '{ kind: "parameter"; parameter: string; }' },
+                source: ['packages/game-data-contract/src/actions.ts:1315:5'],
+              },
+            ],
+            semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+            source: ['packages/game-data-contract/src/actions.ts:1315:5'],
+          },
+          semantics: {
+            type: 'Readonly<Record<string, ActionValueOperand>> | undefined',
+            recordValue: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/actions.ts:1315:5'],
+          optional: true,
+        },
         path: ['parameters', 'entityAssignments'],
         label: 'entityAssignments',
         description: '创建独立宿主时从父动作黑板求值，并覆盖模板实体黑板初值。',
         type: 'Readonly<Record<string, ActionValueOperand>>',
         required: false,
         control: 'json',
+        semantics: {
+          type: 'Readonly<Record<string, ActionValueOperand>> | undefined',
+          recordValue: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/actions.ts:1315:5'],
+        fallback: { reason: 'structured-editor-pending' },
       },
-      {
-        path: ['parameters', 'scopeKey'],
-        label: 'scopeKey',
-        description: '',
-        type: 'string',
-        required: false,
-        control: 'string',
-      },
+      actionSchemaPart_4e3560cf140abc20,
     ],
   },
 };
@@ -4482,12 +13648,23 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '从当前资源图的数据节点读取条件；编译时绑定，不缓存判断结果。',
     fields: [
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string',
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:48:7'],
+        },
         path: ['nodeId'],
         label: 'nodeId',
         description: '',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: {
+          type: 'string',
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:48:7'],
       },
     ],
   },
@@ -4495,12 +13672,23 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '直接返回固定真假值。',
     fields: [
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: {
+            type: 'boolean',
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:55:7'],
+        },
         path: ['value'],
         label: 'value',
         description: '条件结果。',
         type: 'boolean',
         required: true,
         control: 'boolean',
+        semantics: {
+          type: 'boolean',
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:55:7'],
       },
     ],
   },
@@ -4520,6 +13708,22 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '条件种类判别值。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['caster', 'buffOwner'],
+          semantics: {
+            type: '"caster" | "buffOwner"',
+            unionVariants: [
+              {
+                type: '"caster"',
+              },
+              {
+                type: '"buffOwner"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:77:7'],
+        },
         path: ['target'],
         label: 'target',
         description: '检查施法者还是当前 Buff 持有者。',
@@ -4527,8 +13731,72 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['caster', 'buffOwner'],
+        semantics: {
+          type: '"caster" | "buffOwner"',
+          unionVariants: [
+            {
+              type: '"caster"',
+            },
+            {
+              type: '"buffOwner"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:77:7'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'enum',
+            options: ['physical', 'heat', 'cryo', 'electric', 'nature'],
+            semantics: {
+              type: '"physical" | "heat" | "cryo" | "electric" | "nature"',
+              unionVariants: [
+                {
+                  type: '"physical"',
+                },
+                {
+                  type: '"heat"',
+                },
+                {
+                  type: '"cryo"',
+                },
+                {
+                  type: '"electric"',
+                },
+                {
+                  type: '"nature"',
+                },
+              ],
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:79:7'],
+          },
+          semantics: {
+            type: 'readonly ("physical" | "heat" | "cryo" | "electric" | "nature")[]',
+            arrayElement: {
+              type: '"physical" | "heat" | "cryo" | "electric" | "nature"',
+              unionVariants: [
+                {
+                  type: '"physical"',
+                },
+                {
+                  type: '"heat"',
+                },
+                {
+                  type: '"cryo"',
+                },
+                {
+                  type: '"electric"',
+                },
+                {
+                  type: '"nature"',
+                },
+              ],
+            },
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:79:7'],
+        },
         path: ['characterTypes'],
         label: 'characterTypes',
         description: '任一匹配即可成立的角色元素类型。',
@@ -4536,6 +13804,30 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'multiselect',
         options: ['physical', 'heat', 'cryo', 'electric', 'nature'],
+        semantics: {
+          type: 'readonly ("physical" | "heat" | "cryo" | "electric" | "nature")[]',
+          arrayElement: {
+            type: '"physical" | "heat" | "cryo" | "electric" | "nature"',
+            unionVariants: [
+              {
+                type: '"physical"',
+              },
+              {
+                type: '"heat"',
+              },
+              {
+                type: '"cryo"',
+              },
+              {
+                type: '"electric"',
+              },
+              {
+                type: '"nature"',
+              },
+            ],
+          },
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:79:7'],
       },
     ],
   },
@@ -4543,6 +13835,25 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '条件种类判别值。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['eventTarget', 'caster', 'buffOwner'],
+          semantics: {
+            type: '"eventTarget" | "caster" | "buffOwner"',
+            unionVariants: [
+              {
+                type: '"caster"',
+              },
+              {
+                type: '"buffOwner"',
+              },
+              {
+                type: '"eventTarget"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:86:7'],
+        },
         path: ['target'],
         label: 'target',
         description: '要检查的干员身份。',
@@ -4550,8 +13861,81 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['eventTarget', 'caster', 'buffOwner'],
+        semantics: {
+          type: '"eventTarget" | "caster" | "buffOwner"',
+          unionVariants: [
+            {
+              type: '"caster"',
+            },
+            {
+              type: '"buffOwner"',
+            },
+            {
+              type: '"eventTarget"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:86:7'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'enum',
+            options: ['guard', 'caster', 'defender', 'vanguard', 'supporter', 'striker'],
+            semantics: {
+              type: '"guard" | "caster" | "defender" | "vanguard" | "supporter" | "striker"',
+              unionVariants: [
+                {
+                  type: '"guard"',
+                },
+                {
+                  type: '"caster"',
+                },
+                {
+                  type: '"defender"',
+                },
+                {
+                  type: '"vanguard"',
+                },
+                {
+                  type: '"supporter"',
+                },
+                {
+                  type: '"striker"',
+                },
+              ],
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:88:7'],
+          },
+          semantics: {
+            type: 'readonly ("guard" | "caster" | "defender" | "vanguard" | "supporter" | "striker")[]',
+            arrayElement: {
+              type: '"guard" | "caster" | "defender" | "vanguard" | "supporter" | "striker"',
+              unionVariants: [
+                {
+                  type: '"guard"',
+                },
+                {
+                  type: '"caster"',
+                },
+                {
+                  type: '"defender"',
+                },
+                {
+                  type: '"vanguard"',
+                },
+                {
+                  type: '"supporter"',
+                },
+                {
+                  type: '"striker"',
+                },
+              ],
+            },
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:88:7'],
+        },
         path: ['roles'],
         label: 'roles',
         description: '任一匹配即可成立的职业。',
@@ -4559,6 +13943,33 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'multiselect',
         options: ['guard', 'caster', 'defender', 'vanguard', 'supporter', 'striker'],
+        semantics: {
+          type: 'readonly ("guard" | "caster" | "defender" | "vanguard" | "supporter" | "striker")[]',
+          arrayElement: {
+            type: '"guard" | "caster" | "defender" | "vanguard" | "supporter" | "striker"',
+            unionVariants: [
+              {
+                type: '"guard"',
+              },
+              {
+                type: '"caster"',
+              },
+              {
+                type: '"defender"',
+              },
+              {
+                type: '"vanguard"',
+              },
+              {
+                type: '"supporter"',
+              },
+              {
+                type: '"striker"',
+              },
+            ],
+          },
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:88:7'],
       },
     ],
   },
@@ -4566,6 +13977,46 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '条件种类判别值。',
     fields: [
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'enum',
+            options: ['mob', 'elite', 'boss'],
+            semantics: {
+              type: '"mob" | "elite" | "boss"',
+              unionVariants: [
+                {
+                  type: '"mob"',
+                },
+                {
+                  type: '"elite"',
+                },
+                {
+                  type: '"boss"',
+                },
+              ],
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:95:7'],
+          },
+          semantics: {
+            type: 'readonly ("mob" | "elite" | "boss")[]',
+            arrayElement: {
+              type: '"mob" | "elite" | "boss"',
+              unionVariants: [
+                {
+                  type: '"mob"',
+                },
+                {
+                  type: '"elite"',
+                },
+                {
+                  type: '"boss"',
+                },
+              ],
+            },
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:95:7'],
+        },
         path: ['ranks'],
         label: 'ranks',
         description: '任一匹配即可成立的敌人强度分级。',
@@ -4573,6 +14024,24 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'multiselect',
         options: ['mob', 'elite', 'boss'],
+        semantics: {
+          type: 'readonly ("mob" | "elite" | "boss")[]',
+          arrayElement: {
+            type: '"mob" | "elite" | "boss"',
+            unionVariants: [
+              {
+                type: '"mob"',
+              },
+              {
+                type: '"elite"',
+              },
+              {
+                type: '"boss"',
+              },
+            ],
+          },
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:95:7'],
       },
     ],
   },
@@ -4580,6 +14049,34 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '比较当前单敌人的原生整数超级护甲值。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+          semantics: {
+            type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+            unionVariants: [
+              {
+                type: '"equal"',
+              },
+              {
+                type: '"notEqual"',
+              },
+              {
+                type: '"greater"',
+              },
+              {
+                type: '"greaterOrEqual"',
+              },
+              {
+                type: '"less"',
+              },
+              {
+                type: '"lessOrEqual"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:101:7'],
+        },
         path: ['operator'],
         label: 'operator',
         description: '数值比较符。',
@@ -4587,14 +14084,166 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+        semantics: {
+          type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+          unionVariants: [
+            {
+              type: '"equal"',
+            },
+            {
+              type: '"notEqual"',
+            },
+            {
+              type: '"greater"',
+            },
+            {
+              type: '"greaterOrEqual"',
+            },
+            {
+              type: '"less"',
+            },
+            {
+              type: '"lessOrEqual"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:101:7'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['valueNode'],
+                  semantics: {
+                    type: '"valueNode"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:746:7'],
+                  description: '从当前资源图读取数值表达式，在使用点按当前作用域求值。',
+                },
+                nodeId: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:747:7'],
+                },
+              },
+              semantics: {
+                type: '{ kind: "valueNode"; nodeId: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:103:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['blackboard'],
+                  semantics: {
+                    type: '"blackboard"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:751:7'],
+                  description: '从当前动作黑板读取。',
+                },
+                key: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:753:7'],
+                  description: '要读取的黑板键。',
+                },
+                fallback: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number | undefined',
+                    optional: true,
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:755:7'],
+                  optional: true,
+                  description: '仅在原生调用点明确使用 GetValueOrDefault 时携带；缺省仍严格报错。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:103:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['constant'],
+                  semantics: {
+                    type: '"constant"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:759:7'],
+                  description: '直接使用固定数值。',
+                },
+                value: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:761:7'],
+                  description: '固定数值。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "constant"; value: number; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:103:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['parameter'],
+                  semantics: {
+                    type: '"parameter"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:765:7'],
+                  description: '引用宏调用参数；只允许出现在声明了同名参数的宏图内。',
+                },
+                parameter: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:767:7'],
+                  description: '形参名；在使用点求值，不做调用时快照。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "parameter"; parameter: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:103:7'],
+            },
+          ],
+          semantics: {
+            type: 'ActionValueOperand',
+            aliases: ['ActionValueOperand'],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:103:7'],
+        },
         path: ['value'],
         label: 'value',
         description: '与敌人超级护甲比较的值。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: {
+          type: 'ActionValueOperand',
+          aliases: ['ActionValueOperand'],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:103:7'],
       },
     ],
   },
@@ -4602,6 +14251,34 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '比较镜头前向到施法者→目标方向、绕世界上轴的有符号角度。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+          semantics: {
+            type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+            unionVariants: [
+              {
+                type: '"equal"',
+              },
+              {
+                type: '"notEqual"',
+              },
+              {
+                type: '"greater"',
+              },
+              {
+                type: '"greaterOrEqual"',
+              },
+              {
+                type: '"less"',
+              },
+              {
+                type: '"lessOrEqual"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:109:7'],
+        },
         path: ['operator'],
         label: 'operator',
         description: '角度比较符。',
@@ -4609,14 +14286,166 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+        semantics: {
+          type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+          unionVariants: [
+            {
+              type: '"equal"',
+            },
+            {
+              type: '"notEqual"',
+            },
+            {
+              type: '"greater"',
+            },
+            {
+              type: '"greaterOrEqual"',
+            },
+            {
+              type: '"less"',
+            },
+            {
+              type: '"lessOrEqual"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:109:7'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['valueNode'],
+                  semantics: {
+                    type: '"valueNode"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:746:7'],
+                  description: '从当前资源图读取数值表达式，在使用点按当前作用域求值。',
+                },
+                nodeId: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:747:7'],
+                },
+              },
+              semantics: {
+                type: '{ kind: "valueNode"; nodeId: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:111:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['blackboard'],
+                  semantics: {
+                    type: '"blackboard"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:751:7'],
+                  description: '从当前动作黑板读取。',
+                },
+                key: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:753:7'],
+                  description: '要读取的黑板键。',
+                },
+                fallback: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number | undefined',
+                    optional: true,
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:755:7'],
+                  optional: true,
+                  description: '仅在原生调用点明确使用 GetValueOrDefault 时携带；缺省仍严格报错。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:111:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['constant'],
+                  semantics: {
+                    type: '"constant"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:759:7'],
+                  description: '直接使用固定数值。',
+                },
+                value: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:761:7'],
+                  description: '固定数值。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "constant"; value: number; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:111:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['parameter'],
+                  semantics: {
+                    type: '"parameter"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:765:7'],
+                  description: '引用宏调用参数；只允许出现在声明了同名参数的宏图内。',
+                },
+                parameter: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:767:7'],
+                  description: '形参名；在使用点求值，不做调用时快照。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "parameter"; parameter: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:111:7'],
+            },
+          ],
+          semantics: {
+            type: 'ActionValueOperand',
+            aliases: ['ActionValueOperand'],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:111:7'],
+        },
         path: ['value'],
         label: 'value',
         description: '与有符号角度比较的度数。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: {
+          type: 'ActionValueOperand',
+          aliases: ['ActionValueOperand'],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:111:7'],
       },
     ],
   },
@@ -4624,12 +14453,23 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '检查构筑是否启用了一个技能动作分支。',
     fields: [
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string',
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:117:7'],
+        },
         path: ['branchKey'],
         label: 'branchKey',
         description: '要检查的分支键。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: {
+          type: 'string',
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:117:7'],
       },
     ],
   },
@@ -4637,6 +14477,22 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '检查目标当前是否处于失衡状态。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['enemy', 'caster'],
+          semantics: {
+            type: '"enemy" | "caster"',
+            unionVariants: [
+              {
+                type: '"enemy"',
+              },
+              {
+                type: '"caster"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:123:7'],
+        },
         path: ['target'],
         label: 'target',
         description: '要检查的施法者或敌人。',
@@ -4644,6 +14500,18 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['enemy', 'caster'],
+        semantics: {
+          type: '"enemy" | "caster"',
+          unionVariants: [
+            {
+              type: '"enemy"',
+            },
+            {
+              type: '"caster"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:123:7'],
       },
     ],
   },
@@ -4651,6 +14519,41 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '比较目标当前生命值或当前/最大生命比例。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: [
+            'enemy',
+            'caster',
+            'buffOwner',
+            'buffSource',
+            'controlledOperator',
+            'currentTarget',
+            'actionInputTarget',
+            'lowestHealthRatioOperator',
+            'lowestHealthRatioOperatorExceptControlled',
+            'contextTarget',
+          ],
+          semantics: {
+            type: '"enemy" | "caster" | "buffOwner" | "buffSource" | "controlledOperator" | "currentTarget" | "actionInputTarget" | "lowestHealthRatioOperator" | "lowestHealthRatioOperatorExceptControlled" | "contextTarget"',
+            unionVariants: [
+              {
+                type: '"enemy" | "caster"',
+                unionVariants: [
+                  {
+                    type: '"enemy"',
+                  },
+                  {
+                    type: '"caster"',
+                  },
+                ],
+              },
+              {
+                type: '"enemy" | "caster" | "buffOwner" | "buffSource" | "controlledOperator" | "currentTarget" | "actionInputTarget" | "lowestHealthRatioOperator" | "lowestHealthRatioOperatorExceptControlled" | "contextTarget"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:129:7'],
+        },
         path: ['target'],
         label: 'target',
         description: '要检查的对象。',
@@ -4669,16 +14572,66 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
           'lowestHealthRatioOperatorExceptControlled',
           'contextTarget',
         ],
+        semantics: {
+          type: '"enemy" | "caster" | "buffOwner" | "buffSource" | "controlledOperator" | "currentTarget" | "actionInputTarget" | "lowestHealthRatioOperator" | "lowestHealthRatioOperatorExceptControlled" | "contextTarget"',
+          unionVariants: [
+            {
+              type: '"enemy" | "caster"',
+              unionVariants: [
+                {
+                  type: '"enemy"',
+                },
+                {
+                  type: '"caster"',
+                },
+              ],
+            },
+            {
+              type: '"enemy" | "caster" | "buffOwner" | "buffSource" | "controlledOperator" | "currentTarget" | "actionInputTarget" | "lowestHealthRatioOperator" | "lowestHealthRatioOperatorExceptControlled" | "contextTarget"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:129:7'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string | undefined',
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:131:7'],
+          optional: true,
+        },
         path: ['contextKey'],
         label: 'contextKey',
         description: 'target=contextTarget 时读取动作目标组中的唯一干员实例。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: {
+          type: 'string | undefined',
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:131:7'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['current', 'ratio'],
+          semantics: {
+            type: '"current" | "ratio"',
+            unionVariants: [
+              {
+                type: '"current"',
+              },
+              {
+                type: '"ratio"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:133:7'],
+        },
         path: ['valueType'],
         label: 'valueType',
         description: '比较当前生命值还是当前生命比例。',
@@ -4686,8 +14639,48 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['current', 'ratio'],
+        semantics: {
+          type: '"current" | "ratio"',
+          unionVariants: [
+            {
+              type: '"current"',
+            },
+            {
+              type: '"ratio"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:133:7'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+          semantics: {
+            type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+            unionVariants: [
+              {
+                type: '"equal"',
+              },
+              {
+                type: '"notEqual"',
+              },
+              {
+                type: '"greater"',
+              },
+              {
+                type: '"greaterOrEqual"',
+              },
+              {
+                type: '"less"',
+              },
+              {
+                type: '"lessOrEqual"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:135:7'],
+        },
         path: ['operator'],
         label: 'operator',
         description: '数值比较符。',
@@ -4695,14 +14688,166 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+        semantics: {
+          type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+          unionVariants: [
+            {
+              type: '"equal"',
+            },
+            {
+              type: '"notEqual"',
+            },
+            {
+              type: '"greater"',
+            },
+            {
+              type: '"greaterOrEqual"',
+            },
+            {
+              type: '"less"',
+            },
+            {
+              type: '"lessOrEqual"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:135:7'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['valueNode'],
+                  semantics: {
+                    type: '"valueNode"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:746:7'],
+                  description: '从当前资源图读取数值表达式，在使用点按当前作用域求值。',
+                },
+                nodeId: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:747:7'],
+                },
+              },
+              semantics: {
+                type: '{ kind: "valueNode"; nodeId: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:137:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['blackboard'],
+                  semantics: {
+                    type: '"blackboard"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:751:7'],
+                  description: '从当前动作黑板读取。',
+                },
+                key: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:753:7'],
+                  description: '要读取的黑板键。',
+                },
+                fallback: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number | undefined',
+                    optional: true,
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:755:7'],
+                  optional: true,
+                  description: '仅在原生调用点明确使用 GetValueOrDefault 时携带；缺省仍严格报错。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:137:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['constant'],
+                  semantics: {
+                    type: '"constant"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:759:7'],
+                  description: '直接使用固定数值。',
+                },
+                value: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:761:7'],
+                  description: '固定数值。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "constant"; value: number; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:137:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['parameter'],
+                  semantics: {
+                    type: '"parameter"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:765:7'],
+                  description: '引用宏调用参数；只允许出现在声明了同名参数的宏图内。',
+                },
+                parameter: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:767:7'],
+                  description: '形参名；在使用点求值，不做调用时快照。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "parameter"; parameter: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:137:7'],
+            },
+          ],
+          semantics: {
+            type: 'ActionValueOperand',
+            aliases: ['ActionValueOperand'],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:137:7'],
+        },
         path: ['value'],
         label: 'value',
         description: '与生命值或比例比较的值。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: {
+          type: 'ActionValueOperand',
+          aliases: ['ActionValueOperand'],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:137:7'],
       },
     ],
   },
@@ -4710,6 +14855,22 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '比较目标当前失衡值；目标没有失衡系统时返回原生配置值。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['enemy', 'caster'],
+          semantics: {
+            type: '"enemy" | "caster"',
+            unionVariants: [
+              {
+                type: '"enemy"',
+              },
+              {
+                type: '"caster"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:143:7'],
+        },
         path: ['target'],
         label: 'target',
         description: '要检查的施法者或敌人。',
@@ -4717,16 +14878,67 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['enemy', 'caster'],
+        semantics: {
+          type: '"enemy" | "caster"',
+          unionVariants: [
+            {
+              type: '"enemy"',
+            },
+            {
+              type: '"caster"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:143:7'],
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: {
+            type: 'boolean',
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:145:7'],
+        },
         path: ['returnValueIfMissing'],
         label: 'returnValueIfMissing',
         description: '目标没有失衡系统时直接采用的结果。',
         type: 'boolean',
         required: true,
         control: 'boolean',
+        semantics: {
+          type: 'boolean',
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:145:7'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+          semantics: {
+            type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+            unionVariants: [
+              {
+                type: '"equal"',
+              },
+              {
+                type: '"notEqual"',
+              },
+              {
+                type: '"greater"',
+              },
+              {
+                type: '"greaterOrEqual"',
+              },
+              {
+                type: '"less"',
+              },
+              {
+                type: '"lessOrEqual"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:147:7'],
+        },
         path: ['operator'],
         label: 'operator',
         description: '数值比较符。',
@@ -4734,14 +14946,166 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+        semantics: {
+          type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+          unionVariants: [
+            {
+              type: '"equal"',
+            },
+            {
+              type: '"notEqual"',
+            },
+            {
+              type: '"greater"',
+            },
+            {
+              type: '"greaterOrEqual"',
+            },
+            {
+              type: '"less"',
+            },
+            {
+              type: '"lessOrEqual"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:147:7'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['valueNode'],
+                  semantics: {
+                    type: '"valueNode"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:746:7'],
+                  description: '从当前资源图读取数值表达式，在使用点按当前作用域求值。',
+                },
+                nodeId: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:747:7'],
+                },
+              },
+              semantics: {
+                type: '{ kind: "valueNode"; nodeId: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:149:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['blackboard'],
+                  semantics: {
+                    type: '"blackboard"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:751:7'],
+                  description: '从当前动作黑板读取。',
+                },
+                key: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:753:7'],
+                  description: '要读取的黑板键。',
+                },
+                fallback: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number | undefined',
+                    optional: true,
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:755:7'],
+                  optional: true,
+                  description: '仅在原生调用点明确使用 GetValueOrDefault 时携带；缺省仍严格报错。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:149:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['constant'],
+                  semantics: {
+                    type: '"constant"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:759:7'],
+                  description: '直接使用固定数值。',
+                },
+                value: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:761:7'],
+                  description: '固定数值。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "constant"; value: number; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:149:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['parameter'],
+                  semantics: {
+                    type: '"parameter"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:765:7'],
+                  description: '引用宏调用参数；只允许出现在声明了同名参数的宏图内。',
+                },
+                parameter: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:767:7'],
+                  description: '形参名；在使用点求值，不做调用时快照。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "parameter"; parameter: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:149:7'],
+            },
+          ],
+          semantics: {
+            type: 'ActionValueOperand',
+            aliases: ['ActionValueOperand'],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:149:7'],
+        },
         path: ['value'],
         label: 'value',
         description: '与当前失衡值比较的值。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: {
+          type: 'ActionValueOperand',
+          aliases: ['ActionValueOperand'],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:149:7'],
       },
     ],
   },
@@ -4749,20 +15113,99 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '比较动作环境中的一个标志值。',
     fields: [
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string',
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:155:7'],
+        },
         path: ['flag'],
         label: 'flag',
         description: '要读取的标志名称。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: {
+          type: 'string',
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:155:7'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'string',
+              semantics: {
+                type: 'string',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:157:7'],
+            },
+            {
+              kind: 'number',
+              semantics: {
+                type: 'number',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:157:7'],
+            },
+            {
+              kind: 'enum',
+              options: [false],
+              semantics: {
+                type: 'false',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:157:7'],
+            },
+            {
+              kind: 'enum',
+              options: [true],
+              semantics: {
+                type: 'true',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:157:7'],
+            },
+          ],
+          semantics: {
+            type: 'string | number | boolean',
+            unionVariants: [
+              {
+                type: 'boolean',
+              },
+              {
+                type: 'number',
+              },
+              {
+                type: 'string',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:157:7'],
+        },
         path: ['value'],
         label: 'value',
         description: '期望的值。',
         type: 'boolean | number | string',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'string | number | boolean',
+          unionVariants: [
+            {
+              type: 'boolean',
+            },
+            {
+              type: 'number',
+            },
+            {
+              type: 'string',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:157:7'],
+        fallback: {
+          reason: 'structured-editor-pending',
+        },
       },
     ],
   },
@@ -4770,14 +15213,170 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '比较同一技能实例动作黑板中的动态值与常量，或比较两个动态值。',
     fields: [
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['valueNode'],
+                  semantics: {
+                    type: '"valueNode"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:746:7'],
+                  description: '从当前资源图读取数值表达式，在使用点按当前作用域求值。',
+                },
+                nodeId: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:747:7'],
+                },
+              },
+              semantics: {
+                type: '{ kind: "valueNode"; nodeId: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:163:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['blackboard'],
+                  semantics: {
+                    type: '"blackboard"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:751:7'],
+                  description: '从当前动作黑板读取。',
+                },
+                key: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:753:7'],
+                  description: '要读取的黑板键。',
+                },
+                fallback: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number | undefined',
+                    optional: true,
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:755:7'],
+                  optional: true,
+                  description: '仅在原生调用点明确使用 GetValueOrDefault 时携带；缺省仍严格报错。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:163:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['constant'],
+                  semantics: {
+                    type: '"constant"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:759:7'],
+                  description: '直接使用固定数值。',
+                },
+                value: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:761:7'],
+                  description: '固定数值。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "constant"; value: number; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:163:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['parameter'],
+                  semantics: {
+                    type: '"parameter"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:765:7'],
+                  description: '引用宏调用参数；只允许出现在声明了同名参数的宏图内。',
+                },
+                parameter: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:767:7'],
+                  description: '形参名；在使用点求值，不做调用时快照。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "parameter"; parameter: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:163:7'],
+            },
+          ],
+          semantics: {
+            type: 'ActionValueOperand',
+            aliases: ['ActionValueOperand'],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:163:7'],
+        },
         path: ['left'],
         label: 'left',
         description: '比较左值。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: {
+          type: 'ActionValueOperand',
+          aliases: ['ActionValueOperand'],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:163:7'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+          semantics: {
+            type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+            unionVariants: [
+              {
+                type: '"equal"',
+              },
+              {
+                type: '"notEqual"',
+              },
+              {
+                type: '"greater"',
+              },
+              {
+                type: '"greaterOrEqual"',
+              },
+              {
+                type: '"less"',
+              },
+              {
+                type: '"lessOrEqual"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:165:7'],
+        },
         path: ['operator'],
         label: 'operator',
         description: '数值比较符。',
@@ -4785,14 +15384,166 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+        semantics: {
+          type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+          unionVariants: [
+            {
+              type: '"equal"',
+            },
+            {
+              type: '"notEqual"',
+            },
+            {
+              type: '"greater"',
+            },
+            {
+              type: '"greaterOrEqual"',
+            },
+            {
+              type: '"less"',
+            },
+            {
+              type: '"lessOrEqual"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:165:7'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['valueNode'],
+                  semantics: {
+                    type: '"valueNode"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:746:7'],
+                  description: '从当前资源图读取数值表达式，在使用点按当前作用域求值。',
+                },
+                nodeId: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:747:7'],
+                },
+              },
+              semantics: {
+                type: '{ kind: "valueNode"; nodeId: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:167:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['blackboard'],
+                  semantics: {
+                    type: '"blackboard"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:751:7'],
+                  description: '从当前动作黑板读取。',
+                },
+                key: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:753:7'],
+                  description: '要读取的黑板键。',
+                },
+                fallback: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number | undefined',
+                    optional: true,
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:755:7'],
+                  optional: true,
+                  description: '仅在原生调用点明确使用 GetValueOrDefault 时携带；缺省仍严格报错。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:167:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['constant'],
+                  semantics: {
+                    type: '"constant"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:759:7'],
+                  description: '直接使用固定数值。',
+                },
+                value: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:761:7'],
+                  description: '固定数值。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "constant"; value: number; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:167:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['parameter'],
+                  semantics: {
+                    type: '"parameter"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:765:7'],
+                  description: '引用宏调用参数；只允许出现在声明了同名参数的宏图内。',
+                },
+                parameter: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:767:7'],
+                  description: '形参名；在使用点求值，不做调用时快照。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "parameter"; parameter: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:167:7'],
+            },
+          ],
+          semantics: {
+            type: 'ActionValueOperand',
+            aliases: ['ActionValueOperand'],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:167:7'],
+        },
         path: ['right'],
         label: 'right',
         description: '比较右值。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: {
+          type: 'ActionValueOperand',
+          aliases: ['ActionValueOperand'],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:167:7'],
       },
     ],
   },
@@ -4801,6 +15552,65 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
       'GetTargetBuffBBAdvanced + CompareFloat：找不到 Buff 时为 false，找到时先写动作黑板。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: [
+            'eventSource',
+            'eventTarget',
+            'enemy',
+            'caster',
+            'buffOwner',
+            'buffSource',
+            'controlledOperator',
+            'currentAbilityEntity',
+            'currentTarget',
+            'actionInputTarget',
+          ],
+          semantics: {
+            type: 'BuffConditionTarget',
+            unionVariants: [
+              {
+                type: '"eventSource" | "eventTarget" | "enemy" | "caster" | "buffOwner" | "buffSource" | "controlledOperator" | "currentAbilityEntity" | "currentTarget" | "actionInputTarget"',
+                unionVariants: [
+                  {
+                    type: '"eventSource"',
+                  },
+                  {
+                    type: '"eventTarget"',
+                  },
+                  {
+                    type: '"enemy"',
+                  },
+                  {
+                    type: '"caster"',
+                  },
+                  {
+                    type: '"buffOwner"',
+                  },
+                  {
+                    type: '"buffSource"',
+                  },
+                  {
+                    type: '"controlledOperator"',
+                  },
+                  {
+                    type: '"currentAbilityEntity"',
+                  },
+                  {
+                    type: '"currentTarget"',
+                  },
+                  {
+                    type: '"actionInputTarget"',
+                  },
+                ],
+              },
+              {
+                type: '"actionInputTarget"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:173:7'],
+        },
         path: ['target'],
         label: 'target',
         description: '要查找 Buff 的对象。',
@@ -4819,32 +15629,255 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
           'currentTarget',
           'actionInputTarget',
         ],
+        semantics: {
+          type: 'BuffConditionTarget',
+          unionVariants: [
+            {
+              type: '"eventSource" | "eventTarget" | "enemy" | "caster" | "buffOwner" | "buffSource" | "controlledOperator" | "currentAbilityEntity" | "currentTarget" | "actionInputTarget"',
+              unionVariants: [
+                {
+                  type: '"eventSource"',
+                },
+                {
+                  type: '"eventTarget"',
+                },
+                {
+                  type: '"enemy"',
+                },
+                {
+                  type: '"caster"',
+                },
+                {
+                  type: '"buffOwner"',
+                },
+                {
+                  type: '"buffSource"',
+                },
+                {
+                  type: '"controlledOperator"',
+                },
+                {
+                  type: '"currentAbilityEntity"',
+                },
+                {
+                  type: '"currentTarget"',
+                },
+                {
+                  type: '"actionInputTarget"',
+                },
+              ],
+            },
+            {
+              type: '"actionInputTarget"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:173:7'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['id'],
+                  semantics: {
+                    type: '"id"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:178:13'],
+                  description: '按 Buff ID 查找。',
+                },
+                buffIds: {
+                  kind: 'array',
+                  element: {
+                    kind: 'string',
+                    semantics: {
+                      type: 'string',
+                    },
+                    source: ['packages/game-data-contract/src/conditions.ts:180:13'],
+                  },
+                  semantics: {
+                    type: 'readonly string[]',
+                    arrayElement: {
+                      type: 'string',
+                    },
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:180:13'],
+                  description: '任一匹配即可选中的 Buff ID。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "id"; buffIds: readonly string[]; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:175:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['tag'],
+                  semantics: {
+                    type: '"tag"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:184:13'],
+                  description: '按 Buff 标签查找。',
+                },
+                tagQueryType: {
+                  kind: 'enum',
+                  options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll'],
+                  semantics: {
+                    type: '"hasAny" | "hasAll" | "exceptAny" | "exceptAll"',
+                    unionVariants: [
+                      {
+                        type: '"hasAny"',
+                      },
+                      {
+                        type: '"hasAll"',
+                      },
+                      {
+                        type: '"exceptAny"',
+                      },
+                      {
+                        type: '"exceptAll"',
+                      },
+                    ],
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:186:13'],
+                  description: '标签集合匹配方式。',
+                },
+                buffTags: {
+                  kind: 'array',
+                  element: {
+                    kind: 'string',
+                    semantics: {
+                      type: 'string',
+                      aliases: ['GameplayTag'],
+                    },
+                    source: ['packages/game-data-contract/src/conditions.ts:188:13'],
+                  },
+                  semantics: {
+                    type: 'readonly string[]',
+                    arrayElement: {
+                      type: 'string',
+                      aliases: ['GameplayTag'],
+                    },
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:188:13'],
+                  description: '参与匹配的 Buff 标签。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "tag"; tagQueryType: "hasAny" | "hasAll" | "exceptAny" | "exceptAll"; buffTags: readonly string[]; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:175:7'],
+            },
+          ],
+          semantics: {
+            type: '{ kind: "id"; buffIds: readonly string[]; } | { kind: "tag"; tagQueryType: "hasAny" | "hasAll" | "exceptAny" | "exceptAll"; buffTags: readonly string[]; }',
+            unionVariants: [
+              {
+                type: '{ kind: "id"; buffIds: readonly string[]; }',
+              },
+              {
+                type: '{ kind: "tag"; tagQueryType: "hasAny" | "hasAll" | "exceptAny" | "exceptAll"; buffTags: readonly string[]; }',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:175:7'],
+        },
         path: ['query'],
         label: 'query',
         description: '按 Buff ID 或 Buff 标签查找。',
         type: "| { /** 按 Buff ID 查找。 */ kind: 'id'; /** 任一匹配即可选中的 Buff ID。 */ buffIds: readonly string[]; } | { /** 按 Buff 标签查找。 */ kind: 'tag'; /** 标签集合匹配方式。 */ tagQueryType: GameplayTagQueryType; /** 参与匹配的 Buff 标签。 */ buffTags: readonly GameplayTag[]; }",
         required: true,
         control: 'json',
+        semantics: {
+          type: '{ kind: "id"; buffIds: readonly string[]; } | { kind: "tag"; tagQueryType: "hasAny" | "hasAll" | "exceptAny" | "exceptAll"; buffTags: readonly string[]; }',
+          unionVariants: [
+            {
+              type: '{ kind: "id"; buffIds: readonly string[]; }',
+            },
+            {
+              type: '{ kind: "tag"; tagQueryType: "hasAny" | "hasAll" | "exceptAny" | "exceptAll"; buffTags: readonly string[]; }',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:175:7'],
+        fallback: {
+          reason: 'structured-editor-pending',
+        },
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string',
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:191:7'],
+        },
         path: ['desiredKey'],
         label: 'desiredKey',
         description: '从找到的 Buff 黑板读取的键。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: {
+          type: 'string',
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:191:7'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string',
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:193:7'],
+        },
         path: ['outputKey'],
         label: 'outputKey',
         description: '把读到的值同步写入当前动作黑板的键。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: {
+          type: 'string',
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:193:7'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+          semantics: {
+            type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+            unionVariants: [
+              {
+                type: '"equal"',
+              },
+              {
+                type: '"notEqual"',
+              },
+              {
+                type: '"greater"',
+              },
+              {
+                type: '"greaterOrEqual"',
+              },
+              {
+                type: '"less"',
+              },
+              {
+                type: '"lessOrEqual"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:195:7'],
+        },
         path: ['operator'],
         label: 'operator',
         description: '数值比较符。',
@@ -4852,14 +15885,166 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+        semantics: {
+          type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+          unionVariants: [
+            {
+              type: '"equal"',
+            },
+            {
+              type: '"notEqual"',
+            },
+            {
+              type: '"greater"',
+            },
+            {
+              type: '"greaterOrEqual"',
+            },
+            {
+              type: '"less"',
+            },
+            {
+              type: '"lessOrEqual"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:195:7'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['valueNode'],
+                  semantics: {
+                    type: '"valueNode"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:746:7'],
+                  description: '从当前资源图读取数值表达式，在使用点按当前作用域求值。',
+                },
+                nodeId: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:747:7'],
+                },
+              },
+              semantics: {
+                type: '{ kind: "valueNode"; nodeId: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:197:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['blackboard'],
+                  semantics: {
+                    type: '"blackboard"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:751:7'],
+                  description: '从当前动作黑板读取。',
+                },
+                key: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:753:7'],
+                  description: '要读取的黑板键。',
+                },
+                fallback: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number | undefined',
+                    optional: true,
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:755:7'],
+                  optional: true,
+                  description: '仅在原生调用点明确使用 GetValueOrDefault 时携带；缺省仍严格报错。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:197:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['constant'],
+                  semantics: {
+                    type: '"constant"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:759:7'],
+                  description: '直接使用固定数值。',
+                },
+                value: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:761:7'],
+                  description: '固定数值。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "constant"; value: number; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:197:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['parameter'],
+                  semantics: {
+                    type: '"parameter"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:765:7'],
+                  description: '引用宏调用参数；只允许出现在声明了同名参数的宏图内。',
+                },
+                parameter: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:767:7'],
+                  description: '形参名；在使用点求值，不做调用时快照。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "parameter"; parameter: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:197:7'],
+            },
+          ],
+          semantics: {
+            type: 'ActionValueOperand',
+            aliases: ['ActionValueOperand'],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:197:7'],
+        },
         path: ['value'],
         label: 'value',
         description: '与 Buff 黑板值比较的值。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: {
+          type: 'ActionValueOperand',
+          aliases: ['ActionValueOperand'],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:197:7'],
       },
     ],
   },
@@ -4867,12 +16052,140 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '以原生 RandomUtil.Dice(float) 对动作黑板或常量概率取样。',
     fields: [
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['valueNode'],
+                  semantics: {
+                    type: '"valueNode"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:746:7'],
+                  description: '从当前资源图读取数值表达式，在使用点按当前作用域求值。',
+                },
+                nodeId: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:747:7'],
+                },
+              },
+              semantics: {
+                type: '{ kind: "valueNode"; nodeId: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:203:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['blackboard'],
+                  semantics: {
+                    type: '"blackboard"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:751:7'],
+                  description: '从当前动作黑板读取。',
+                },
+                key: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:753:7'],
+                  description: '要读取的黑板键。',
+                },
+                fallback: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number | undefined',
+                    optional: true,
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:755:7'],
+                  optional: true,
+                  description: '仅在原生调用点明确使用 GetValueOrDefault 时携带；缺省仍严格报错。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:203:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['constant'],
+                  semantics: {
+                    type: '"constant"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:759:7'],
+                  description: '直接使用固定数值。',
+                },
+                value: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:761:7'],
+                  description: '固定数值。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "constant"; value: number; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:203:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['parameter'],
+                  semantics: {
+                    type: '"parameter"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:765:7'],
+                  description: '引用宏调用参数；只允许出现在声明了同名参数的宏图内。',
+                },
+                parameter: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:767:7'],
+                  description: '形参名；在使用点求值，不做调用时快照。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "parameter"; parameter: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:203:7'],
+            },
+          ],
+          semantics: {
+            type: 'ActionValueOperand',
+            aliases: ['ActionValueOperand'],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:203:7'],
+        },
         path: ['probability'],
         label: 'probability',
         description: '0 到 1 的命中概率。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: {
+          type: 'ActionValueOperand',
+          aliases: ['ActionValueOperand'],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:203:7'],
       },
     ],
   },
@@ -4880,12 +16193,23 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '检查当前命中角色的投射物是否处于完美闪避冷却。',
     fields: [
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: {
+            type: 'boolean',
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:209:7'],
+        },
         path: ['value'],
         label: 'value',
         description: '原生 CheckProjectileInPerfectDodgeCd.isInCd。',
         type: 'boolean',
         required: true,
         control: 'boolean',
+        semantics: {
+          type: 'boolean',
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:209:7'],
       },
     ],
   },
@@ -4893,6 +16217,34 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '比较当前命中角色的投射物免疫忽略等级。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+          semantics: {
+            type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+            unionVariants: [
+              {
+                type: '"equal"',
+              },
+              {
+                type: '"notEqual"',
+              },
+              {
+                type: '"greater"',
+              },
+              {
+                type: '"greaterOrEqual"',
+              },
+              {
+                type: '"less"',
+              },
+              {
+                type: '"lessOrEqual"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:215:7'],
+        },
         path: ['operator'],
         label: 'operator',
         description: '原生 CheckProjectileIgnoreImmuneLevel.checkType。',
@@ -4900,14 +16252,49 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+        semantics: {
+          type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+          unionVariants: [
+            {
+              type: '"equal"',
+            },
+            {
+              type: '"notEqual"',
+            },
+            {
+              type: '"greater"',
+            },
+            {
+              type: '"greaterOrEqual"',
+            },
+            {
+              type: '"less"',
+            },
+            {
+              type: '"lessOrEqual"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:215:7'],
       },
       {
+        valueSchema: {
+          kind: 'number',
+          semantics: {
+            type: 'number',
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:217:7'],
+        },
         path: ['value'],
         label: 'value',
         description: '原生免疫忽略等级枚举的整数值。',
         type: 'number',
         required: true,
         control: 'number',
+        semantics: {
+          type: 'number',
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:217:7'],
       },
     ],
   },
@@ -4915,14 +16302,53 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '比较本次释放 Context 中已查询目标组的实例数量。',
     fields: [
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string',
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:223:7'],
+        },
         path: ['contextKey'],
         label: 'contextKey',
         description: '动作环境中的目标组名称。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: {
+          type: 'string',
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:223:7'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+          semantics: {
+            type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+            unionVariants: [
+              {
+                type: '"equal"',
+              },
+              {
+                type: '"notEqual"',
+              },
+              {
+                type: '"greater"',
+              },
+              {
+                type: '"greaterOrEqual"',
+              },
+              {
+                type: '"less"',
+              },
+              {
+                type: '"lessOrEqual"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:225:7'],
+        },
         path: ['operator'],
         label: 'operator',
         description: '数量比较符。',
@@ -4930,22 +16356,71 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+        semantics: {
+          type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+          unionVariants: [
+            {
+              type: '"equal"',
+            },
+            {
+              type: '"notEqual"',
+            },
+            {
+              type: '"greater"',
+            },
+            {
+              type: '"greaterOrEqual"',
+            },
+            {
+              type: '"less"',
+            },
+            {
+              type: '"lessOrEqual"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:225:7'],
       },
       {
+        valueSchema: {
+          kind: 'number',
+          semantics: {
+            type: 'number',
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:227:7'],
+        },
         path: ['value'],
         label: 'value',
         description: '与实际目标数量比较的值。',
         type: 'number',
         required: true,
         control: 'number',
+        semantics: {
+          type: 'number',
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:227:7'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string | undefined',
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:229:7'],
+          optional: true,
+        },
         path: ['outputKey'],
         label: 'outputKey',
         description: '原生 CheckEntityNum.storeKey：判断时同步保存实际数量。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: {
+          type: 'string | undefined',
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:229:7'],
       },
     ],
   },
@@ -4953,20 +16428,291 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '命名组中任一对象匹配可读类型集合；enemy 同时接受 enemyPart。',
     fields: [
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string',
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:235:7'],
+        },
         path: ['contextKey'],
         label: 'contextKey',
         description: '动作环境中的目标组名称。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: {
+          type: 'string',
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:235:7'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'enum',
+              options: ['all'],
+              source: ['packages/game-data-contract/src/conditions.ts:237:7'],
+              semantics: {
+                type: '"all"',
+                unionVariants: [
+                  {
+                    type: '"all"',
+                  },
+                ],
+              },
+            },
+            {
+              kind: 'array',
+              element: {
+                kind: 'enum',
+                options: [
+                  'enemy',
+                  'invalid',
+                  'character',
+                  'interactive',
+                  'projectile',
+                  'factoryRegion',
+                  'npc',
+                  'abilityEntity',
+                  'cinematicEntity',
+                  'remoteFactoryEntity',
+                  'creature',
+                  'godEntity',
+                  'enemyPart',
+                  'socialBuilding',
+                ],
+                semantics: {
+                  type: '"enemy" | "invalid" | "character" | "interactive" | "projectile" | "factoryRegion" | "npc" | "abilityEntity" | "cinematicEntity" | "remoteFactoryEntity" | "creature" | "godEntity" | "enemyPart" | "socialBuilding"',
+                  unionVariants: [
+                    {
+                      type: '"enemy"',
+                    },
+                    {
+                      type: '"invalid"',
+                    },
+                    {
+                      type: '"character"',
+                    },
+                    {
+                      type: '"interactive"',
+                    },
+                    {
+                      type: '"projectile"',
+                    },
+                    {
+                      type: '"factoryRegion"',
+                    },
+                    {
+                      type: '"npc"',
+                    },
+                    {
+                      type: '"abilityEntity"',
+                    },
+                    {
+                      type: '"cinematicEntity"',
+                    },
+                    {
+                      type: '"remoteFactoryEntity"',
+                    },
+                    {
+                      type: '"creature"',
+                    },
+                    {
+                      type: '"godEntity"',
+                    },
+                    {
+                      type: '"enemyPart"',
+                    },
+                    {
+                      type: '"socialBuilding"',
+                    },
+                  ],
+                },
+                source: ['packages/game-data-contract/src/conditions.ts:237:7'],
+              },
+              semantics: {
+                type: 'readonly ("enemy" | "invalid" | "character" | "interactive" | "projectile" | "factoryRegion" | "npc" | "abilityEntity" | "cinematicEntity" | "remoteFactoryEntity" | "creature" | "godEntity" | "enemyPart" | "socialBuilding")[]',
+                arrayElement: {
+                  type: '"enemy" | "invalid" | "character" | "interactive" | "projectile" | "factoryRegion" | "npc" | "abilityEntity" | "cinematicEntity" | "remoteFactoryEntity" | "creature" | "godEntity" | "enemyPart" | "socialBuilding"',
+                  unionVariants: [
+                    {
+                      type: '"enemy"',
+                    },
+                    {
+                      type: '"invalid"',
+                    },
+                    {
+                      type: '"character"',
+                    },
+                    {
+                      type: '"interactive"',
+                    },
+                    {
+                      type: '"projectile"',
+                    },
+                    {
+                      type: '"factoryRegion"',
+                    },
+                    {
+                      type: '"npc"',
+                    },
+                    {
+                      type: '"abilityEntity"',
+                    },
+                    {
+                      type: '"cinematicEntity"',
+                    },
+                    {
+                      type: '"remoteFactoryEntity"',
+                    },
+                    {
+                      type: '"creature"',
+                    },
+                    {
+                      type: '"godEntity"',
+                    },
+                    {
+                      type: '"enemyPart"',
+                    },
+                    {
+                      type: '"socialBuilding"',
+                    },
+                  ],
+                },
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:237:7'],
+            },
+          ],
+          semantics: {
+            type: 'CombatObjectTypeSelection',
+            unionVariants: [
+              {
+                type: 'readonly ("enemy" | "invalid" | "character" | "interactive" | "projectile" | "factoryRegion" | "npc" | "abilityEntity" | "cinematicEntity" | "remoteFactoryEntity" | "creature" | "godEntity" | "enemyPart" | "socialBuilding")[]',
+                arrayElement: {
+                  type: '"enemy" | "invalid" | "character" | "interactive" | "projectile" | "factoryRegion" | "npc" | "abilityEntity" | "cinematicEntity" | "remoteFactoryEntity" | "creature" | "godEntity" | "enemyPart" | "socialBuilding"',
+                  unionVariants: [
+                    {
+                      type: '"enemy"',
+                    },
+                    {
+                      type: '"invalid"',
+                    },
+                    {
+                      type: '"character"',
+                    },
+                    {
+                      type: '"interactive"',
+                    },
+                    {
+                      type: '"projectile"',
+                    },
+                    {
+                      type: '"factoryRegion"',
+                    },
+                    {
+                      type: '"npc"',
+                    },
+                    {
+                      type: '"abilityEntity"',
+                    },
+                    {
+                      type: '"cinematicEntity"',
+                    },
+                    {
+                      type: '"remoteFactoryEntity"',
+                    },
+                    {
+                      type: '"creature"',
+                    },
+                    {
+                      type: '"godEntity"',
+                    },
+                    {
+                      type: '"enemyPart"',
+                    },
+                    {
+                      type: '"socialBuilding"',
+                    },
+                  ],
+                },
+              },
+              {
+                type: '"all"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:237:7'],
+        },
         path: ['objectTypes'],
         label: 'objectTypes',
         description: '允许匹配的对象类型。',
         type: 'CombatObjectTypeSelection',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'CombatObjectTypeSelection',
+          unionVariants: [
+            {
+              type: 'readonly ("enemy" | "invalid" | "character" | "interactive" | "projectile" | "factoryRegion" | "npc" | "abilityEntity" | "cinematicEntity" | "remoteFactoryEntity" | "creature" | "godEntity" | "enemyPart" | "socialBuilding")[]',
+              arrayElement: {
+                type: '"enemy" | "invalid" | "character" | "interactive" | "projectile" | "factoryRegion" | "npc" | "abilityEntity" | "cinematicEntity" | "remoteFactoryEntity" | "creature" | "godEntity" | "enemyPart" | "socialBuilding"',
+                unionVariants: [
+                  {
+                    type: '"enemy"',
+                  },
+                  {
+                    type: '"invalid"',
+                  },
+                  {
+                    type: '"character"',
+                  },
+                  {
+                    type: '"interactive"',
+                  },
+                  {
+                    type: '"projectile"',
+                  },
+                  {
+                    type: '"factoryRegion"',
+                  },
+                  {
+                    type: '"npc"',
+                  },
+                  {
+                    type: '"abilityEntity"',
+                  },
+                  {
+                    type: '"cinematicEntity"',
+                  },
+                  {
+                    type: '"remoteFactoryEntity"',
+                  },
+                  {
+                    type: '"creature"',
+                  },
+                  {
+                    type: '"godEntity"',
+                  },
+                  {
+                    type: '"enemyPart"',
+                  },
+                  {
+                    type: '"socialBuilding"',
+                  },
+                ],
+              },
+            },
+            {
+              type: '"all"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:237:7'],
+        fallback: {
+          reason: 'structured-editor-pending',
+        },
       },
     ],
   },
@@ -4974,12 +16720,272 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '原生事件动作的 InputTarget 对象类型；与物理 eventTarget 方向可能相反。',
     fields: [
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'enum',
+              options: ['all'],
+              source: ['packages/game-data-contract/src/conditions.ts:243:7'],
+              semantics: {
+                type: '"all"',
+                unionVariants: [
+                  {
+                    type: '"all"',
+                  },
+                ],
+              },
+            },
+            {
+              kind: 'array',
+              element: {
+                kind: 'enum',
+                options: [
+                  'enemy',
+                  'invalid',
+                  'character',
+                  'interactive',
+                  'projectile',
+                  'factoryRegion',
+                  'npc',
+                  'abilityEntity',
+                  'cinematicEntity',
+                  'remoteFactoryEntity',
+                  'creature',
+                  'godEntity',
+                  'enemyPart',
+                  'socialBuilding',
+                ],
+                semantics: {
+                  type: '"enemy" | "invalid" | "character" | "interactive" | "projectile" | "factoryRegion" | "npc" | "abilityEntity" | "cinematicEntity" | "remoteFactoryEntity" | "creature" | "godEntity" | "enemyPart" | "socialBuilding"',
+                  unionVariants: [
+                    {
+                      type: '"enemy"',
+                    },
+                    {
+                      type: '"invalid"',
+                    },
+                    {
+                      type: '"character"',
+                    },
+                    {
+                      type: '"interactive"',
+                    },
+                    {
+                      type: '"projectile"',
+                    },
+                    {
+                      type: '"factoryRegion"',
+                    },
+                    {
+                      type: '"npc"',
+                    },
+                    {
+                      type: '"abilityEntity"',
+                    },
+                    {
+                      type: '"cinematicEntity"',
+                    },
+                    {
+                      type: '"remoteFactoryEntity"',
+                    },
+                    {
+                      type: '"creature"',
+                    },
+                    {
+                      type: '"godEntity"',
+                    },
+                    {
+                      type: '"enemyPart"',
+                    },
+                    {
+                      type: '"socialBuilding"',
+                    },
+                  ],
+                },
+                source: ['packages/game-data-contract/src/conditions.ts:243:7'],
+              },
+              semantics: {
+                type: 'readonly ("enemy" | "invalid" | "character" | "interactive" | "projectile" | "factoryRegion" | "npc" | "abilityEntity" | "cinematicEntity" | "remoteFactoryEntity" | "creature" | "godEntity" | "enemyPart" | "socialBuilding")[]',
+                arrayElement: {
+                  type: '"enemy" | "invalid" | "character" | "interactive" | "projectile" | "factoryRegion" | "npc" | "abilityEntity" | "cinematicEntity" | "remoteFactoryEntity" | "creature" | "godEntity" | "enemyPart" | "socialBuilding"',
+                  unionVariants: [
+                    {
+                      type: '"enemy"',
+                    },
+                    {
+                      type: '"invalid"',
+                    },
+                    {
+                      type: '"character"',
+                    },
+                    {
+                      type: '"interactive"',
+                    },
+                    {
+                      type: '"projectile"',
+                    },
+                    {
+                      type: '"factoryRegion"',
+                    },
+                    {
+                      type: '"npc"',
+                    },
+                    {
+                      type: '"abilityEntity"',
+                    },
+                    {
+                      type: '"cinematicEntity"',
+                    },
+                    {
+                      type: '"remoteFactoryEntity"',
+                    },
+                    {
+                      type: '"creature"',
+                    },
+                    {
+                      type: '"godEntity"',
+                    },
+                    {
+                      type: '"enemyPart"',
+                    },
+                    {
+                      type: '"socialBuilding"',
+                    },
+                  ],
+                },
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:243:7'],
+            },
+          ],
+          semantics: {
+            type: 'CombatObjectTypeSelection',
+            unionVariants: [
+              {
+                type: 'readonly ("enemy" | "invalid" | "character" | "interactive" | "projectile" | "factoryRegion" | "npc" | "abilityEntity" | "cinematicEntity" | "remoteFactoryEntity" | "creature" | "godEntity" | "enemyPart" | "socialBuilding")[]',
+                arrayElement: {
+                  type: '"enemy" | "invalid" | "character" | "interactive" | "projectile" | "factoryRegion" | "npc" | "abilityEntity" | "cinematicEntity" | "remoteFactoryEntity" | "creature" | "godEntity" | "enemyPart" | "socialBuilding"',
+                  unionVariants: [
+                    {
+                      type: '"enemy"',
+                    },
+                    {
+                      type: '"invalid"',
+                    },
+                    {
+                      type: '"character"',
+                    },
+                    {
+                      type: '"interactive"',
+                    },
+                    {
+                      type: '"projectile"',
+                    },
+                    {
+                      type: '"factoryRegion"',
+                    },
+                    {
+                      type: '"npc"',
+                    },
+                    {
+                      type: '"abilityEntity"',
+                    },
+                    {
+                      type: '"cinematicEntity"',
+                    },
+                    {
+                      type: '"remoteFactoryEntity"',
+                    },
+                    {
+                      type: '"creature"',
+                    },
+                    {
+                      type: '"godEntity"',
+                    },
+                    {
+                      type: '"enemyPart"',
+                    },
+                    {
+                      type: '"socialBuilding"',
+                    },
+                  ],
+                },
+              },
+              {
+                type: '"all"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:243:7'],
+        },
         path: ['objectTypes'],
         label: 'objectTypes',
         description: '允许匹配的对象类型。',
         type: 'CombatObjectTypeSelection',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'CombatObjectTypeSelection',
+          unionVariants: [
+            {
+              type: 'readonly ("enemy" | "invalid" | "character" | "interactive" | "projectile" | "factoryRegion" | "npc" | "abilityEntity" | "cinematicEntity" | "remoteFactoryEntity" | "creature" | "godEntity" | "enemyPart" | "socialBuilding")[]',
+              arrayElement: {
+                type: '"enemy" | "invalid" | "character" | "interactive" | "projectile" | "factoryRegion" | "npc" | "abilityEntity" | "cinematicEntity" | "remoteFactoryEntity" | "creature" | "godEntity" | "enemyPart" | "socialBuilding"',
+                unionVariants: [
+                  {
+                    type: '"enemy"',
+                  },
+                  {
+                    type: '"invalid"',
+                  },
+                  {
+                    type: '"character"',
+                  },
+                  {
+                    type: '"interactive"',
+                  },
+                  {
+                    type: '"projectile"',
+                  },
+                  {
+                    type: '"factoryRegion"',
+                  },
+                  {
+                    type: '"npc"',
+                  },
+                  {
+                    type: '"abilityEntity"',
+                  },
+                  {
+                    type: '"cinematicEntity"',
+                  },
+                  {
+                    type: '"remoteFactoryEntity"',
+                  },
+                  {
+                    type: '"creature"',
+                  },
+                  {
+                    type: '"godEntity"',
+                  },
+                  {
+                    type: '"enemyPart"',
+                  },
+                  {
+                    type: '"socialBuilding"',
+                  },
+                ],
+              },
+            },
+            {
+              type: '"all"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:243:7'],
+        fallback: {
+          reason: 'structured-editor-pending',
+        },
       },
     ],
   },
@@ -4987,6 +16993,25 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '比较原生事件动作 InputTarget 与 ActionSource/ActionOwner/当前主控身份。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['controlledOperator', 'actionSource', 'actionOwner'],
+          semantics: {
+            type: '"controlledOperator" | "actionSource" | "actionOwner"',
+            unionVariants: [
+              {
+                type: '"actionSource"',
+              },
+              {
+                type: '"actionOwner"',
+              },
+              {
+                type: '"controlledOperator"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:249:7'],
+        },
         path: ['other'],
         label: 'other',
         description: '与输入目标比较的另一个对象身份。',
@@ -4994,8 +17019,39 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['controlledOperator', 'actionSource', 'actionOwner'],
+        semantics: {
+          type: '"controlledOperator" | "actionSource" | "actionOwner"',
+          unionVariants: [
+            {
+              type: '"actionSource"',
+            },
+            {
+              type: '"actionOwner"',
+            },
+            {
+              type: '"controlledOperator"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:249:7'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['equal', 'notEqual'],
+          semantics: {
+            type: '"equal" | "notEqual"',
+            unionVariants: [
+              {
+                type: '"equal"',
+              },
+              {
+                type: '"notEqual"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:251:7'],
+        },
         path: ['operator'],
         label: 'operator',
         description: '判断两者相同或不同。',
@@ -5003,6 +17059,18 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['equal', 'notEqual'],
+        semantics: {
+          type: '"equal" | "notEqual"',
+          unionVariants: [
+            {
+              type: '"equal"',
+            },
+            {
+              type: '"notEqual"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:251:7'],
       },
     ],
   },
@@ -5010,14 +17078,44 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '比较命名 Context 中首个目标与动作身份；连携的 trigger 也走同一目标组协议。',
     fields: [
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string',
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:257:7'],
+        },
         path: ['contextKey'],
         label: 'contextKey',
         description: '动作环境中的目标组名称。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: {
+          type: 'string',
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:257:7'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['controlledOperator', 'actionSource', 'actionOwner'],
+          semantics: {
+            type: '"controlledOperator" | "actionSource" | "actionOwner"',
+            unionVariants: [
+              {
+                type: '"actionSource"',
+              },
+              {
+                type: '"actionOwner"',
+              },
+              {
+                type: '"controlledOperator"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:259:7'],
+        },
         path: ['other'],
         label: 'other',
         description: '与组内首个目标比较的对象身份。',
@@ -5025,8 +17123,39 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['controlledOperator', 'actionSource', 'actionOwner'],
+        semantics: {
+          type: '"controlledOperator" | "actionSource" | "actionOwner"',
+          unionVariants: [
+            {
+              type: '"actionSource"',
+            },
+            {
+              type: '"actionOwner"',
+            },
+            {
+              type: '"controlledOperator"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:259:7'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['equal', 'notEqual'],
+          semantics: {
+            type: '"equal" | "notEqual"',
+            unionVariants: [
+              {
+                type: '"equal"',
+              },
+              {
+                type: '"notEqual"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:261:7'],
+        },
         path: ['operator'],
         label: 'operator',
         description: '判断两者相同或不同。',
@@ -5034,6 +17163,18 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['equal', 'notEqual'],
+        semantics: {
+          type: '"equal" | "notEqual"',
+          unionVariants: [
+            {
+              type: '"equal"',
+            },
+            {
+              type: '"notEqual"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:261:7'],
       },
     ],
   },
@@ -5041,14 +17182,47 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '查询命名 Context 首个实体当前持有的 GameplayTag。',
     fields: [
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string',
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:267:7'],
+        },
         path: ['contextKey'],
         label: 'contextKey',
         description: '动作环境中的目标组名称。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: {
+          type: 'string',
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:267:7'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll'],
+          semantics: {
+            type: '"hasAny" | "hasAll" | "exceptAny" | "exceptAll"',
+            unionVariants: [
+              {
+                type: '"hasAny"',
+              },
+              {
+                type: '"hasAll"',
+              },
+              {
+                type: '"exceptAny"',
+              },
+              {
+                type: '"exceptAll"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:269:7'],
+        },
         path: ['tagQueryType'],
         label: 'tagQueryType',
         description: '标签集合匹配方式。',
@@ -5056,14 +17230,62 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll'],
+        semantics: {
+          type: '"hasAny" | "hasAll" | "exceptAny" | "exceptAll"',
+          unionVariants: [
+            {
+              type: '"hasAny"',
+            },
+            {
+              type: '"hasAll"',
+            },
+            {
+              type: '"exceptAny"',
+            },
+            {
+              type: '"exceptAll"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:269:7'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'string',
+            semantics: {
+              type: 'string',
+              aliases: ['GameplayTag'],
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:271:7'],
+          },
+          semantics: {
+            type: 'readonly string[]',
+            arrayElement: {
+              type: 'string',
+              aliases: ['GameplayTag'],
+            },
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:271:7'],
+        },
         path: ['tags'],
         label: 'tags',
         description: '参与匹配的实体标签。',
         type: 'readonly GameplayTag[]',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'readonly string[]',
+          arrayElement: {
+            type: 'string',
+            aliases: ['GameplayTag'],
+          },
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:271:7'],
+        fallback: {
+          reason: 'structured-editor-pending',
+        },
       },
     ],
   },
@@ -5071,14 +17293,47 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: 'CheckBuffStackNumByTag 的首目标增强层数；空组直接 false，不读取阈值。',
     fields: [
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string',
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:277:7'],
+        },
         path: ['contextKey'],
         label: 'contextKey',
         description: '动作环境中的目标组名称。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: {
+          type: 'string',
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:277:7'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll'],
+          semantics: {
+            type: '"hasAny" | "hasAll" | "exceptAny" | "exceptAll"',
+            unionVariants: [
+              {
+                type: '"hasAny"',
+              },
+              {
+                type: '"hasAll"',
+              },
+              {
+                type: '"exceptAny"',
+              },
+              {
+                type: '"exceptAll"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:279:7'],
+        },
         path: ['tagQueryType'],
         label: 'tagQueryType',
         description: '标签集合匹配方式。',
@@ -5086,16 +17341,92 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll'],
+        semantics: {
+          type: '"hasAny" | "hasAll" | "exceptAny" | "exceptAll"',
+          unionVariants: [
+            {
+              type: '"hasAny"',
+            },
+            {
+              type: '"hasAll"',
+            },
+            {
+              type: '"exceptAny"',
+            },
+            {
+              type: '"exceptAll"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:279:7'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'string',
+            semantics: {
+              type: 'string',
+              aliases: ['GameplayTag'],
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:281:7'],
+          },
+          semantics: {
+            type: 'readonly string[]',
+            arrayElement: {
+              type: 'string',
+              aliases: ['GameplayTag'],
+            },
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:281:7'],
+        },
         path: ['buffTags'],
         label: 'buffTags',
         description: '用于查找 Buff 的标签。',
         type: 'readonly GameplayTag[]',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'readonly string[]',
+          arrayElement: {
+            type: 'string',
+            aliases: ['GameplayTag'],
+          },
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:281:7'],
+        fallback: {
+          reason: 'structured-editor-pending',
+        },
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+          semantics: {
+            type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+            unionVariants: [
+              {
+                type: '"equal"',
+              },
+              {
+                type: '"notEqual"',
+              },
+              {
+                type: '"greater"',
+              },
+              {
+                type: '"greaterOrEqual"',
+              },
+              {
+                type: '"less"',
+              },
+              {
+                type: '"lessOrEqual"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:283:7'],
+        },
         path: ['operator'],
         label: 'operator',
         description: '层数比较符。',
@@ -5103,14 +17434,166 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+        semantics: {
+          type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+          unionVariants: [
+            {
+              type: '"equal"',
+            },
+            {
+              type: '"notEqual"',
+            },
+            {
+              type: '"greater"',
+            },
+            {
+              type: '"greaterOrEqual"',
+            },
+            {
+              type: '"less"',
+            },
+            {
+              type: '"lessOrEqual"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:283:7'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['valueNode'],
+                  semantics: {
+                    type: '"valueNode"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:746:7'],
+                  description: '从当前资源图读取数值表达式，在使用点按当前作用域求值。',
+                },
+                nodeId: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:747:7'],
+                },
+              },
+              semantics: {
+                type: '{ kind: "valueNode"; nodeId: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:285:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['blackboard'],
+                  semantics: {
+                    type: '"blackboard"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:751:7'],
+                  description: '从当前动作黑板读取。',
+                },
+                key: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:753:7'],
+                  description: '要读取的黑板键。',
+                },
+                fallback: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number | undefined',
+                    optional: true,
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:755:7'],
+                  optional: true,
+                  description: '仅在原生调用点明确使用 GetValueOrDefault 时携带；缺省仍严格报错。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:285:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['constant'],
+                  semantics: {
+                    type: '"constant"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:759:7'],
+                  description: '直接使用固定数值。',
+                },
+                value: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:761:7'],
+                  description: '固定数值。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "constant"; value: number; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:285:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['parameter'],
+                  semantics: {
+                    type: '"parameter"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:765:7'],
+                  description: '引用宏调用参数；只允许出现在声明了同名参数的宏图内。',
+                },
+                parameter: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:767:7'],
+                  description: '形参名；在使用点求值，不做调用时快照。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "parameter"; parameter: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:285:7'],
+            },
+          ],
+          semantics: {
+            type: 'ActionValueOperand',
+            aliases: ['ActionValueOperand'],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:285:7'],
+        },
         path: ['value'],
         label: 'value',
         description: '与累计强化层数比较的值。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: {
+          type: 'ActionValueOperand',
+          aliases: ['ActionValueOperand'],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:285:7'],
       },
     ],
   },
@@ -5118,22 +17601,88 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: 'CheckBuffStackNumAdvanced(Id) 的命名组首目标增强层数；空组直接 false。',
     fields: [
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string',
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:291:7'],
+        },
         path: ['contextKey'],
         label: 'contextKey',
         description: '动作环境中的目标组名称。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: {
+          type: 'string',
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:291:7'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'string',
+            semantics: {
+              type: 'string',
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:293:7'],
+          },
+          semantics: {
+            type: 'readonly string[]',
+            arrayElement: {
+              type: 'string',
+            },
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:293:7'],
+        },
         path: ['buffIds'],
         label: 'buffIds',
         description: '任一匹配即可选中的 Buff ID。',
         type: 'readonly string[]',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'readonly string[]',
+          arrayElement: {
+            type: 'string',
+          },
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:293:7'],
+        fallback: {
+          reason: 'structured-editor-pending',
+        },
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+          semantics: {
+            type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+            unionVariants: [
+              {
+                type: '"equal"',
+              },
+              {
+                type: '"notEqual"',
+              },
+              {
+                type: '"greater"',
+              },
+              {
+                type: '"greaterOrEqual"',
+              },
+              {
+                type: '"less"',
+              },
+              {
+                type: '"lessOrEqual"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:295:7'],
+        },
         path: ['operator'],
         label: 'operator',
         description: '层数比较符。',
@@ -5141,14 +17690,166 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+        semantics: {
+          type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+          unionVariants: [
+            {
+              type: '"equal"',
+            },
+            {
+              type: '"notEqual"',
+            },
+            {
+              type: '"greater"',
+            },
+            {
+              type: '"greaterOrEqual"',
+            },
+            {
+              type: '"less"',
+            },
+            {
+              type: '"lessOrEqual"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:295:7'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['valueNode'],
+                  semantics: {
+                    type: '"valueNode"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:746:7'],
+                  description: '从当前资源图读取数值表达式，在使用点按当前作用域求值。',
+                },
+                nodeId: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:747:7'],
+                },
+              },
+              semantics: {
+                type: '{ kind: "valueNode"; nodeId: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:297:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['blackboard'],
+                  semantics: {
+                    type: '"blackboard"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:751:7'],
+                  description: '从当前动作黑板读取。',
+                },
+                key: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:753:7'],
+                  description: '要读取的黑板键。',
+                },
+                fallback: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number | undefined',
+                    optional: true,
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:755:7'],
+                  optional: true,
+                  description: '仅在原生调用点明确使用 GetValueOrDefault 时携带；缺省仍严格报错。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:297:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['constant'],
+                  semantics: {
+                    type: '"constant"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:759:7'],
+                  description: '直接使用固定数值。',
+                },
+                value: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:761:7'],
+                  description: '固定数值。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "constant"; value: number; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:297:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['parameter'],
+                  semantics: {
+                    type: '"parameter"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:765:7'],
+                  description: '引用宏调用参数；只允许出现在声明了同名参数的宏图内。',
+                },
+                parameter: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:767:7'],
+                  description: '形参名；在使用点求值，不做调用时快照。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "parameter"; parameter: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:297:7'],
+            },
+          ],
+          semantics: {
+            type: 'ActionValueOperand',
+            aliases: ['ActionValueOperand'],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:297:7'],
+        },
         path: ['value'],
         label: 'value',
         description: '与累计强化层数比较的值。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: {
+          type: 'ActionValueOperand',
+          aliases: ['ActionValueOperand'],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:297:7'],
       },
     ],
   },
@@ -5156,6 +17857,34 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '比较当前 Context 迭代目标的有限能力实体剩余时长。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+          semantics: {
+            type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+            unionVariants: [
+              {
+                type: '"equal"',
+              },
+              {
+                type: '"notEqual"',
+              },
+              {
+                type: '"greater"',
+              },
+              {
+                type: '"greaterOrEqual"',
+              },
+              {
+                type: '"less"',
+              },
+              {
+                type: '"lessOrEqual"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:303:7'],
+        },
         path: ['operator'],
         label: 'operator',
         description: '剩余秒数比较符。',
@@ -5163,22 +17892,188 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+        semantics: {
+          type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+          unionVariants: [
+            {
+              type: '"equal"',
+            },
+            {
+              type: '"notEqual"',
+            },
+            {
+              type: '"greater"',
+            },
+            {
+              type: '"greaterOrEqual"',
+            },
+            {
+              type: '"less"',
+            },
+            {
+              type: '"lessOrEqual"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:303:7'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['valueNode'],
+                  semantics: {
+                    type: '"valueNode"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:746:7'],
+                  description: '从当前资源图读取数值表达式，在使用点按当前作用域求值。',
+                },
+                nodeId: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:747:7'],
+                },
+              },
+              semantics: {
+                type: '{ kind: "valueNode"; nodeId: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:305:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['blackboard'],
+                  semantics: {
+                    type: '"blackboard"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:751:7'],
+                  description: '从当前动作黑板读取。',
+                },
+                key: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:753:7'],
+                  description: '要读取的黑板键。',
+                },
+                fallback: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number | undefined',
+                    optional: true,
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:755:7'],
+                  optional: true,
+                  description: '仅在原生调用点明确使用 GetValueOrDefault 时携带；缺省仍严格报错。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:305:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['constant'],
+                  semantics: {
+                    type: '"constant"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:759:7'],
+                  description: '直接使用固定数值。',
+                },
+                value: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:761:7'],
+                  description: '固定数值。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "constant"; value: number; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:305:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['parameter'],
+                  semantics: {
+                    type: '"parameter"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:765:7'],
+                  description: '引用宏调用参数；只允许出现在声明了同名参数的宏图内。',
+                },
+                parameter: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:767:7'],
+                  description: '形参名；在使用点求值，不做调用时快照。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "parameter"; parameter: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:305:7'],
+            },
+          ],
+          semantics: {
+            type: 'ActionValueOperand',
+            aliases: ['ActionValueOperand'],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:305:7'],
+        },
         path: ['value'],
         label: 'value',
         description: '与剩余时长比较的秒数。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: {
+          type: 'ActionValueOperand',
+          aliases: ['ActionValueOperand'],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:305:7'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string | undefined',
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:307:7'],
+          optional: true,
+        },
         path: ['outputKey'],
         label: 'outputKey',
         description: '原生 saveCurDuration/bbKey：比较时把实际剩余时长写回当前动作黑板。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: {
+          type: 'string | undefined',
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:307:7'],
       },
     ],
   },
@@ -5186,14 +18081,41 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '检查兼容状态是否处于激活状态。',
     fields: [
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string',
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:313:7'],
+        },
         path: ['statusKey'],
         label: 'statusKey',
         description: '状态键。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: {
+          type: 'string',
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:313:7'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['enemy', 'caster'],
+          semantics: {
+            type: '"enemy" | "caster"',
+            unionVariants: [
+              {
+                type: '"enemy"',
+              },
+              {
+                type: '"caster"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:315:7'],
+        },
         path: ['target'],
         label: 'target',
         description: '要检查的对象。',
@@ -5201,14 +18123,40 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['enemy', 'caster'],
+        semantics: {
+          type: '"enemy" | "caster"',
+          unionVariants: [
+            {
+              type: '"enemy"',
+            },
+            {
+              type: '"caster"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:315:7'],
       },
       {
+        valueSchema: {
+          kind: 'number',
+          semantics: {
+            type: 'number | undefined',
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:317:7'],
+          optional: true,
+        },
         path: ['minimumStacks'],
         label: 'minimumStacks',
         description: '状态至少需要达到的层数。',
         type: 'number',
         required: false,
         control: 'number',
+        semantics: {
+          type: 'number | undefined',
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:317:7'],
       },
     ],
   },
@@ -5216,6 +18164,34 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: 'Environment 查询只读取执行中 Buff 的增强层数，不查询任何目标容器。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+          semantics: {
+            type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+            unionVariants: [
+              {
+                type: '"equal"',
+              },
+              {
+                type: '"notEqual"',
+              },
+              {
+                type: '"greater"',
+              },
+              {
+                type: '"greaterOrEqual"',
+              },
+              {
+                type: '"less"',
+              },
+              {
+                type: '"lessOrEqual"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:323:7'],
+        },
         path: ['operator'],
         label: 'operator',
         description: '层数比较符。',
@@ -5223,14 +18199,166 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+        semantics: {
+          type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+          unionVariants: [
+            {
+              type: '"equal"',
+            },
+            {
+              type: '"notEqual"',
+            },
+            {
+              type: '"greater"',
+            },
+            {
+              type: '"greaterOrEqual"',
+            },
+            {
+              type: '"less"',
+            },
+            {
+              type: '"lessOrEqual"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:323:7'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['valueNode'],
+                  semantics: {
+                    type: '"valueNode"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:746:7'],
+                  description: '从当前资源图读取数值表达式，在使用点按当前作用域求值。',
+                },
+                nodeId: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:747:7'],
+                },
+              },
+              semantics: {
+                type: '{ kind: "valueNode"; nodeId: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:325:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['blackboard'],
+                  semantics: {
+                    type: '"blackboard"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:751:7'],
+                  description: '从当前动作黑板读取。',
+                },
+                key: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:753:7'],
+                  description: '要读取的黑板键。',
+                },
+                fallback: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number | undefined',
+                    optional: true,
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:755:7'],
+                  optional: true,
+                  description: '仅在原生调用点明确使用 GetValueOrDefault 时携带；缺省仍严格报错。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:325:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['constant'],
+                  semantics: {
+                    type: '"constant"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:759:7'],
+                  description: '直接使用固定数值。',
+                },
+                value: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:761:7'],
+                  description: '固定数值。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "constant"; value: number; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:325:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['parameter'],
+                  semantics: {
+                    type: '"parameter"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:765:7'],
+                  description: '引用宏调用参数；只允许出现在声明了同名参数的宏图内。',
+                },
+                parameter: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:767:7'],
+                  description: '形参名；在使用点求值，不做调用时快照。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "parameter"; parameter: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:325:7'],
+            },
+          ],
+          semantics: {
+            type: 'ActionValueOperand',
+            aliases: ['ActionValueOperand'],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:325:7'],
+        },
         path: ['value'],
         label: 'value',
         description: '与当前 Buff 强化层数比较的值。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: {
+          type: 'ActionValueOperand',
+          aliases: ['ActionValueOperand'],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:325:7'],
       },
     ],
   },
@@ -5238,6 +18366,65 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '按原生 Buff 标签查询累计强化层数，并使用原生容差比较。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: [
+            'eventSource',
+            'eventTarget',
+            'enemy',
+            'caster',
+            'buffOwner',
+            'buffSource',
+            'controlledOperator',
+            'currentAbilityEntity',
+            'currentTarget',
+            'actionInputTarget',
+          ],
+          semantics: {
+            type: 'BuffConditionTarget',
+            unionVariants: [
+              {
+                type: '"eventSource" | "eventTarget" | "enemy" | "caster" | "buffOwner" | "buffSource" | "controlledOperator" | "currentAbilityEntity" | "currentTarget" | "actionInputTarget"',
+                unionVariants: [
+                  {
+                    type: '"eventSource"',
+                  },
+                  {
+                    type: '"eventTarget"',
+                  },
+                  {
+                    type: '"enemy"',
+                  },
+                  {
+                    type: '"caster"',
+                  },
+                  {
+                    type: '"buffOwner"',
+                  },
+                  {
+                    type: '"buffSource"',
+                  },
+                  {
+                    type: '"controlledOperator"',
+                  },
+                  {
+                    type: '"currentAbilityEntity"',
+                  },
+                  {
+                    type: '"currentTarget"',
+                  },
+                  {
+                    type: '"actionInputTarget"',
+                  },
+                ],
+              },
+              {
+                type: '"actionInputTarget"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:331:7'],
+        },
         path: ['target'],
         label: 'target',
         description: '要统计 Buff 的对象。',
@@ -5256,8 +18443,74 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
           'currentTarget',
           'actionInputTarget',
         ],
+        semantics: {
+          type: 'BuffConditionTarget',
+          unionVariants: [
+            {
+              type: '"eventSource" | "eventTarget" | "enemy" | "caster" | "buffOwner" | "buffSource" | "controlledOperator" | "currentAbilityEntity" | "currentTarget" | "actionInputTarget"',
+              unionVariants: [
+                {
+                  type: '"eventSource"',
+                },
+                {
+                  type: '"eventTarget"',
+                },
+                {
+                  type: '"enemy"',
+                },
+                {
+                  type: '"caster"',
+                },
+                {
+                  type: '"buffOwner"',
+                },
+                {
+                  type: '"buffSource"',
+                },
+                {
+                  type: '"controlledOperator"',
+                },
+                {
+                  type: '"currentAbilityEntity"',
+                },
+                {
+                  type: '"currentTarget"',
+                },
+                {
+                  type: '"actionInputTarget"',
+                },
+              ],
+            },
+            {
+              type: '"actionInputTarget"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:331:7'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll'],
+          semantics: {
+            type: '"hasAny" | "hasAll" | "exceptAny" | "exceptAll"',
+            unionVariants: [
+              {
+                type: '"hasAny"',
+              },
+              {
+                type: '"hasAll"',
+              },
+              {
+                type: '"exceptAny"',
+              },
+              {
+                type: '"exceptAll"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:333:7'],
+        },
         path: ['tagQueryType'],
         label: 'tagQueryType',
         description: '标签集合匹配方式。',
@@ -5265,24 +18518,114 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll'],
+        semantics: {
+          type: '"hasAny" | "hasAll" | "exceptAny" | "exceptAll"',
+          unionVariants: [
+            {
+              type: '"hasAny"',
+            },
+            {
+              type: '"hasAll"',
+            },
+            {
+              type: '"exceptAny"',
+            },
+            {
+              type: '"exceptAll"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:333:7'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'string',
+            semantics: {
+              type: 'string',
+              aliases: ['GameplayTag'],
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:335:7'],
+          },
+          semantics: {
+            type: 'readonly string[]',
+            arrayElement: {
+              type: 'string',
+              aliases: ['GameplayTag'],
+            },
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:335:7'],
+        },
         path: ['buffTags'],
         label: 'buffTags',
         description: '用于查找 Buff 的标签。',
         type: 'readonly GameplayTag[]',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'readonly string[]',
+          arrayElement: {
+            type: 'string',
+            aliases: ['GameplayTag'],
+          },
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:335:7'],
+        fallback: {
+          reason: 'structured-editor-pending',
+        },
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: {
+            type: 'boolean | undefined',
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:337:7'],
+          optional: true,
+        },
         path: ['sameSourceSkillCast'],
         label: 'sameSourceSkillCast',
         description: '是否只统计和当前 Buff 来自同一次技能施放的实例。',
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: {
+          type: 'boolean | undefined',
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:337:7'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+          semantics: {
+            type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+            unionVariants: [
+              {
+                type: '"equal"',
+              },
+              {
+                type: '"notEqual"',
+              },
+              {
+                type: '"greater"',
+              },
+              {
+                type: '"greaterOrEqual"',
+              },
+              {
+                type: '"less"',
+              },
+              {
+                type: '"lessOrEqual"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:339:7'],
+        },
         path: ['operator'],
         label: 'operator',
         description: '层数比较符。',
@@ -5290,14 +18633,166 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+        semantics: {
+          type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+          unionVariants: [
+            {
+              type: '"equal"',
+            },
+            {
+              type: '"notEqual"',
+            },
+            {
+              type: '"greater"',
+            },
+            {
+              type: '"greaterOrEqual"',
+            },
+            {
+              type: '"less"',
+            },
+            {
+              type: '"lessOrEqual"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:339:7'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['valueNode'],
+                  semantics: {
+                    type: '"valueNode"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:746:7'],
+                  description: '从当前资源图读取数值表达式，在使用点按当前作用域求值。',
+                },
+                nodeId: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:747:7'],
+                },
+              },
+              semantics: {
+                type: '{ kind: "valueNode"; nodeId: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:341:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['blackboard'],
+                  semantics: {
+                    type: '"blackboard"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:751:7'],
+                  description: '从当前动作黑板读取。',
+                },
+                key: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:753:7'],
+                  description: '要读取的黑板键。',
+                },
+                fallback: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number | undefined',
+                    optional: true,
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:755:7'],
+                  optional: true,
+                  description: '仅在原生调用点明确使用 GetValueOrDefault 时携带；缺省仍严格报错。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:341:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['constant'],
+                  semantics: {
+                    type: '"constant"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:759:7'],
+                  description: '直接使用固定数值。',
+                },
+                value: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:761:7'],
+                  description: '固定数值。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "constant"; value: number; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:341:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['parameter'],
+                  semantics: {
+                    type: '"parameter"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:765:7'],
+                  description: '引用宏调用参数；只允许出现在声明了同名参数的宏图内。',
+                },
+                parameter: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:767:7'],
+                  description: '形参名；在使用点求值，不做调用时快照。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "parameter"; parameter: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:341:7'],
+            },
+          ],
+          semantics: {
+            type: 'ActionValueOperand',
+            aliases: ['ActionValueOperand'],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:341:7'],
+        },
         path: ['value'],
         label: 'value',
         description: '与累计强化层数比较的值。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: {
+          type: 'ActionValueOperand',
+          aliases: ['ActionValueOperand'],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:341:7'],
       },
     ],
   },
@@ -5305,6 +18800,65 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '按原生 Buff 标签查询未结束 Buff 的不同定义 ID 数，不累计实例数或强化层数。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: [
+            'eventSource',
+            'eventTarget',
+            'enemy',
+            'caster',
+            'buffOwner',
+            'buffSource',
+            'controlledOperator',
+            'currentAbilityEntity',
+            'currentTarget',
+            'actionInputTarget',
+          ],
+          semantics: {
+            type: 'BuffConditionTarget',
+            unionVariants: [
+              {
+                type: '"eventSource" | "eventTarget" | "enemy" | "caster" | "buffOwner" | "buffSource" | "controlledOperator" | "currentAbilityEntity" | "currentTarget" | "actionInputTarget"',
+                unionVariants: [
+                  {
+                    type: '"eventSource"',
+                  },
+                  {
+                    type: '"eventTarget"',
+                  },
+                  {
+                    type: '"enemy"',
+                  },
+                  {
+                    type: '"caster"',
+                  },
+                  {
+                    type: '"buffOwner"',
+                  },
+                  {
+                    type: '"buffSource"',
+                  },
+                  {
+                    type: '"controlledOperator"',
+                  },
+                  {
+                    type: '"currentAbilityEntity"',
+                  },
+                  {
+                    type: '"currentTarget"',
+                  },
+                  {
+                    type: '"actionInputTarget"',
+                  },
+                ],
+              },
+              {
+                type: '"actionInputTarget"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:347:7'],
+        },
         path: ['target'],
         label: 'target',
         description: '要统计 Buff 的对象。',
@@ -5323,8 +18877,74 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
           'currentTarget',
           'actionInputTarget',
         ],
+        semantics: {
+          type: 'BuffConditionTarget',
+          unionVariants: [
+            {
+              type: '"eventSource" | "eventTarget" | "enemy" | "caster" | "buffOwner" | "buffSource" | "controlledOperator" | "currentAbilityEntity" | "currentTarget" | "actionInputTarget"',
+              unionVariants: [
+                {
+                  type: '"eventSource"',
+                },
+                {
+                  type: '"eventTarget"',
+                },
+                {
+                  type: '"enemy"',
+                },
+                {
+                  type: '"caster"',
+                },
+                {
+                  type: '"buffOwner"',
+                },
+                {
+                  type: '"buffSource"',
+                },
+                {
+                  type: '"controlledOperator"',
+                },
+                {
+                  type: '"currentAbilityEntity"',
+                },
+                {
+                  type: '"currentTarget"',
+                },
+                {
+                  type: '"actionInputTarget"',
+                },
+              ],
+            },
+            {
+              type: '"actionInputTarget"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:347:7'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll'],
+          semantics: {
+            type: '"hasAny" | "hasAll" | "exceptAny" | "exceptAll"',
+            unionVariants: [
+              {
+                type: '"hasAny"',
+              },
+              {
+                type: '"hasAll"',
+              },
+              {
+                type: '"exceptAny"',
+              },
+              {
+                type: '"exceptAll"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:349:7'],
+        },
         path: ['tagQueryType'],
         label: 'tagQueryType',
         description: '标签集合匹配方式。',
@@ -5332,16 +18952,92 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll'],
+        semantics: {
+          type: '"hasAny" | "hasAll" | "exceptAny" | "exceptAll"',
+          unionVariants: [
+            {
+              type: '"hasAny"',
+            },
+            {
+              type: '"hasAll"',
+            },
+            {
+              type: '"exceptAny"',
+            },
+            {
+              type: '"exceptAll"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:349:7'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'string',
+            semantics: {
+              type: 'string',
+              aliases: ['GameplayTag'],
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:351:7'],
+          },
+          semantics: {
+            type: 'readonly string[]',
+            arrayElement: {
+              type: 'string',
+              aliases: ['GameplayTag'],
+            },
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:351:7'],
+        },
         path: ['buffTags'],
         label: 'buffTags',
         description: '用于查找 Buff 的标签。',
         type: 'readonly GameplayTag[]',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'readonly string[]',
+          arrayElement: {
+            type: 'string',
+            aliases: ['GameplayTag'],
+          },
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:351:7'],
+        fallback: {
+          reason: 'structured-editor-pending',
+        },
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+          semantics: {
+            type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+            unionVariants: [
+              {
+                type: '"equal"',
+              },
+              {
+                type: '"notEqual"',
+              },
+              {
+                type: '"greater"',
+              },
+              {
+                type: '"greaterOrEqual"',
+              },
+              {
+                type: '"less"',
+              },
+              {
+                type: '"lessOrEqual"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:353:7'],
+        },
         path: ['operator'],
         label: 'operator',
         description: '数量比较符。',
@@ -5349,14 +19045,166 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+        semantics: {
+          type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+          unionVariants: [
+            {
+              type: '"equal"',
+            },
+            {
+              type: '"notEqual"',
+            },
+            {
+              type: '"greater"',
+            },
+            {
+              type: '"greaterOrEqual"',
+            },
+            {
+              type: '"less"',
+            },
+            {
+              type: '"lessOrEqual"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:353:7'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['valueNode'],
+                  semantics: {
+                    type: '"valueNode"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:746:7'],
+                  description: '从当前资源图读取数值表达式，在使用点按当前作用域求值。',
+                },
+                nodeId: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:747:7'],
+                },
+              },
+              semantics: {
+                type: '{ kind: "valueNode"; nodeId: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:355:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['blackboard'],
+                  semantics: {
+                    type: '"blackboard"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:751:7'],
+                  description: '从当前动作黑板读取。',
+                },
+                key: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:753:7'],
+                  description: '要读取的黑板键。',
+                },
+                fallback: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number | undefined',
+                    optional: true,
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:755:7'],
+                  optional: true,
+                  description: '仅在原生调用点明确使用 GetValueOrDefault 时携带；缺省仍严格报错。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:355:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['constant'],
+                  semantics: {
+                    type: '"constant"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:759:7'],
+                  description: '直接使用固定数值。',
+                },
+                value: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:761:7'],
+                  description: '固定数值。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "constant"; value: number; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:355:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['parameter'],
+                  semantics: {
+                    type: '"parameter"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:765:7'],
+                  description: '引用宏调用参数；只允许出现在声明了同名参数的宏图内。',
+                },
+                parameter: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:767:7'],
+                  description: '形参名；在使用点求值，不做调用时快照。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "parameter"; parameter: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:355:7'],
+            },
+          ],
+          semantics: {
+            type: 'ActionValueOperand',
+            aliases: ['ActionValueOperand'],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:355:7'],
+        },
         path: ['value'],
         label: 'value',
         description: '与不同 Buff ID 数量比较的值。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: {
+          type: 'ActionValueOperand',
+          aliases: ['ActionValueOperand'],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:355:7'],
       },
     ],
   },
@@ -5364,6 +19212,65 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '查询目标实体当前持有的 GameplayTag；它与 Buff 身份、数量和层数无关。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: [
+            'eventSource',
+            'eventTarget',
+            'enemy',
+            'caster',
+            'buffOwner',
+            'buffSource',
+            'controlledOperator',
+            'currentAbilityEntity',
+            'currentTarget',
+            'actionInputTarget',
+          ],
+          semantics: {
+            type: 'BuffConditionTarget',
+            unionVariants: [
+              {
+                type: '"eventSource" | "eventTarget" | "enemy" | "caster" | "buffOwner" | "buffSource" | "controlledOperator" | "currentAbilityEntity" | "currentTarget" | "actionInputTarget"',
+                unionVariants: [
+                  {
+                    type: '"eventSource"',
+                  },
+                  {
+                    type: '"eventTarget"',
+                  },
+                  {
+                    type: '"enemy"',
+                  },
+                  {
+                    type: '"caster"',
+                  },
+                  {
+                    type: '"buffOwner"',
+                  },
+                  {
+                    type: '"buffSource"',
+                  },
+                  {
+                    type: '"controlledOperator"',
+                  },
+                  {
+                    type: '"currentAbilityEntity"',
+                  },
+                  {
+                    type: '"currentTarget"',
+                  },
+                  {
+                    type: '"actionInputTarget"',
+                  },
+                ],
+              },
+              {
+                type: '"actionInputTarget"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:361:7'],
+        },
         path: ['target'],
         label: 'target',
         description: '要检查的对象。',
@@ -5382,8 +19289,74 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
           'currentTarget',
           'actionInputTarget',
         ],
+        semantics: {
+          type: 'BuffConditionTarget',
+          unionVariants: [
+            {
+              type: '"eventSource" | "eventTarget" | "enemy" | "caster" | "buffOwner" | "buffSource" | "controlledOperator" | "currentAbilityEntity" | "currentTarget" | "actionInputTarget"',
+              unionVariants: [
+                {
+                  type: '"eventSource"',
+                },
+                {
+                  type: '"eventTarget"',
+                },
+                {
+                  type: '"enemy"',
+                },
+                {
+                  type: '"caster"',
+                },
+                {
+                  type: '"buffOwner"',
+                },
+                {
+                  type: '"buffSource"',
+                },
+                {
+                  type: '"controlledOperator"',
+                },
+                {
+                  type: '"currentAbilityEntity"',
+                },
+                {
+                  type: '"currentTarget"',
+                },
+                {
+                  type: '"actionInputTarget"',
+                },
+              ],
+            },
+            {
+              type: '"actionInputTarget"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:361:7'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll'],
+          semantics: {
+            type: '"hasAny" | "hasAll" | "exceptAny" | "exceptAll"',
+            unionVariants: [
+              {
+                type: '"hasAny"',
+              },
+              {
+                type: '"hasAll"',
+              },
+              {
+                type: '"exceptAny"',
+              },
+              {
+                type: '"exceptAll"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:363:7'],
+        },
         path: ['tagQueryType'],
         label: 'tagQueryType',
         description: '标签集合匹配方式。',
@@ -5391,14 +19364,62 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll'],
+        semantics: {
+          type: '"hasAny" | "hasAll" | "exceptAny" | "exceptAll"',
+          unionVariants: [
+            {
+              type: '"hasAny"',
+            },
+            {
+              type: '"hasAll"',
+            },
+            {
+              type: '"exceptAny"',
+            },
+            {
+              type: '"exceptAll"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:363:7'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'string',
+            semantics: {
+              type: 'string',
+              aliases: ['GameplayTag'],
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:365:7'],
+          },
+          semantics: {
+            type: 'readonly string[]',
+            arrayElement: {
+              type: 'string',
+              aliases: ['GameplayTag'],
+            },
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:365:7'],
+        },
         path: ['tags'],
         label: 'tags',
         description: '参与匹配的实体标签。',
         type: 'readonly GameplayTag[]',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'readonly string[]',
+          arrayElement: {
+            type: 'string',
+            aliases: ['GameplayTag'],
+          },
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:365:7'],
+        fallback: {
+          reason: 'structured-editor-pending',
+        },
       },
     ],
   },
@@ -5406,6 +19427,65 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '按Buff 定义 身份查询累计强化层数；ID 列表按“任一匹配”处理。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: [
+            'eventSource',
+            'eventTarget',
+            'enemy',
+            'caster',
+            'buffOwner',
+            'buffSource',
+            'controlledOperator',
+            'currentAbilityEntity',
+            'currentTarget',
+            'actionInputTarget',
+          ],
+          semantics: {
+            type: 'BuffConditionTarget',
+            unionVariants: [
+              {
+                type: '"eventSource" | "eventTarget" | "enemy" | "caster" | "buffOwner" | "buffSource" | "controlledOperator" | "currentAbilityEntity" | "currentTarget" | "actionInputTarget"',
+                unionVariants: [
+                  {
+                    type: '"eventSource"',
+                  },
+                  {
+                    type: '"eventTarget"',
+                  },
+                  {
+                    type: '"enemy"',
+                  },
+                  {
+                    type: '"caster"',
+                  },
+                  {
+                    type: '"buffOwner"',
+                  },
+                  {
+                    type: '"buffSource"',
+                  },
+                  {
+                    type: '"controlledOperator"',
+                  },
+                  {
+                    type: '"currentAbilityEntity"',
+                  },
+                  {
+                    type: '"currentTarget"',
+                  },
+                  {
+                    type: '"actionInputTarget"',
+                  },
+                ],
+              },
+              {
+                type: '"actionInputTarget"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:371:7'],
+        },
         path: ['target'],
         label: 'target',
         description: '要统计 Buff 的对象。',
@@ -5424,24 +19504,137 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
           'currentTarget',
           'actionInputTarget',
         ],
+        semantics: {
+          type: 'BuffConditionTarget',
+          unionVariants: [
+            {
+              type: '"eventSource" | "eventTarget" | "enemy" | "caster" | "buffOwner" | "buffSource" | "controlledOperator" | "currentAbilityEntity" | "currentTarget" | "actionInputTarget"',
+              unionVariants: [
+                {
+                  type: '"eventSource"',
+                },
+                {
+                  type: '"eventTarget"',
+                },
+                {
+                  type: '"enemy"',
+                },
+                {
+                  type: '"caster"',
+                },
+                {
+                  type: '"buffOwner"',
+                },
+                {
+                  type: '"buffSource"',
+                },
+                {
+                  type: '"controlledOperator"',
+                },
+                {
+                  type: '"currentAbilityEntity"',
+                },
+                {
+                  type: '"currentTarget"',
+                },
+                {
+                  type: '"actionInputTarget"',
+                },
+              ],
+            },
+            {
+              type: '"actionInputTarget"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:371:7'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'string',
+            semantics: {
+              type: 'string',
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:373:7'],
+          },
+          semantics: {
+            type: 'readonly string[]',
+            arrayElement: {
+              type: 'string',
+            },
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:373:7'],
+        },
         path: ['buffIds'],
         label: 'buffIds',
         description: '任一匹配即可计入的 Buff ID。',
         type: 'readonly string[]',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'readonly string[]',
+          arrayElement: {
+            type: 'string',
+          },
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:373:7'],
+        fallback: {
+          reason: 'structured-editor-pending',
+        },
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: {
+            type: 'boolean | undefined',
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:375:7'],
+          optional: true,
+        },
         path: ['sameSourceSkillCast'],
         label: 'sameSourceSkillCast',
         description: '是否只统计和当前 Buff 来自同一次技能施放的实例。',
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: {
+          type: 'boolean | undefined',
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:375:7'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+          semantics: {
+            type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+            unionVariants: [
+              {
+                type: '"equal"',
+              },
+              {
+                type: '"notEqual"',
+              },
+              {
+                type: '"greater"',
+              },
+              {
+                type: '"greaterOrEqual"',
+              },
+              {
+                type: '"less"',
+              },
+              {
+                type: '"lessOrEqual"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:377:7'],
+        },
         path: ['operator'],
         label: 'operator',
         description: '层数比较符。',
@@ -5449,14 +19642,192 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+        semantics: {
+          type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+          unionVariants: [
+            {
+              type: '"equal"',
+            },
+            {
+              type: '"notEqual"',
+            },
+            {
+              type: '"greater"',
+            },
+            {
+              type: '"greaterOrEqual"',
+            },
+            {
+              type: '"less"',
+            },
+            {
+              type: '"lessOrEqual"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:377:7'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'number',
+              semantics: {
+                type: 'number',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:379:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['valueNode'],
+                  semantics: {
+                    type: '"valueNode"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:746:7'],
+                  description: '从当前资源图读取数值表达式，在使用点按当前作用域求值。',
+                },
+                nodeId: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:747:7'],
+                },
+              },
+              semantics: {
+                type: '{ kind: "valueNode"; nodeId: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:379:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['blackboard'],
+                  semantics: {
+                    type: '"blackboard"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:751:7'],
+                  description: '从当前动作黑板读取。',
+                },
+                key: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:753:7'],
+                  description: '要读取的黑板键。',
+                },
+                fallback: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number | undefined',
+                    optional: true,
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:755:7'],
+                  optional: true,
+                  description: '仅在原生调用点明确使用 GetValueOrDefault 时携带；缺省仍严格报错。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:379:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['constant'],
+                  semantics: {
+                    type: '"constant"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:759:7'],
+                  description: '直接使用固定数值。',
+                },
+                value: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:761:7'],
+                  description: '固定数值。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "constant"; value: number; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:379:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['parameter'],
+                  semantics: {
+                    type: '"parameter"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:765:7'],
+                  description: '引用宏调用参数；只允许出现在声明了同名参数的宏图内。',
+                },
+                parameter: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:767:7'],
+                  description: '形参名；在使用点求值，不做调用时快照。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "parameter"; parameter: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:379:7'],
+            },
+          ],
+          semantics: {
+            type: 'number | ActionValueOperand',
+            unionVariants: [
+              {
+                type: 'number',
+              },
+              {
+                type: 'ActionValueOperand',
+                aliases: ['ActionValueOperand'],
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:379:7'],
+        },
         path: ['value'],
         label: 'value',
         description: '与累计强化层数比较的值。',
         type: 'number | ActionValueOperand',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'number | ActionValueOperand',
+          unionVariants: [
+            {
+              type: 'number',
+            },
+            {
+              type: 'ActionValueOperand',
+              aliases: ['ActionValueOperand'],
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:379:7'],
+        fallback: {
+          reason: 'structured-editor-pending',
+        },
       },
     ],
   },
@@ -5464,6 +19835,25 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '查询角色的战斗级冷却；与能力系统上的同名普通标记相互隔离。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['caster', 'buffOwner', 'buffSource'],
+          semantics: {
+            type: '"caster" | "buffOwner" | "buffSource"',
+            unionVariants: [
+              {
+                type: '"caster"',
+              },
+              {
+                type: '"buffOwner"',
+              },
+              {
+                type: '"buffSource"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:385:7'],
+        },
         path: ['target'],
         label: 'target',
         description: '全局冷却所属对象。',
@@ -5471,14 +19861,40 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['caster', 'buffOwner', 'buffSource'],
+        semantics: {
+          type: '"caster" | "buffOwner" | "buffSource"',
+          unionVariants: [
+            {
+              type: '"caster"',
+            },
+            {
+              type: '"buffOwner"',
+            },
+            {
+              type: '"buffSource"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:385:7'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string',
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:387:7'],
+        },
         path: ['markerId'],
         label: 'markerId',
         description: '全局冷却标记 ID。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: {
+          type: 'string',
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:387:7'],
       },
     ],
   },
@@ -5494,6 +19910,31 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '检查目标能力系统中是否存在仍有效的原生定时标记。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['eventTarget', 'enemy', 'caster', 'buffOwner', 'buffSource'],
+          semantics: {
+            type: '"eventTarget" | "enemy" | "caster" | "buffOwner" | "buffSource"',
+            unionVariants: [
+              {
+                type: '"eventTarget"',
+              },
+              {
+                type: '"enemy"',
+              },
+              {
+                type: '"caster"',
+              },
+              {
+                type: '"buffOwner"',
+              },
+              {
+                type: '"buffSource"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:401:7'],
+        },
         path: ['target'],
         label: 'target',
         description: '定时标记所属对象。',
@@ -5501,14 +19942,102 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['eventTarget', 'enemy', 'caster', 'buffOwner', 'buffSource'],
+        semantics: {
+          type: '"eventTarget" | "enemy" | "caster" | "buffOwner" | "buffSource"',
+          unionVariants: [
+            {
+              type: '"eventTarget"',
+            },
+            {
+              type: '"enemy"',
+            },
+            {
+              type: '"caster"',
+            },
+            {
+              type: '"buffOwner"',
+            },
+            {
+              type: '"buffSource"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:401:7'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'string',
+              semantics: {
+                type: 'string',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:403:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                blackboardKey: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/primitives.ts:63:7'],
+                  description: '读取字符串的当前动作黑板键。',
+                },
+              },
+              semantics: {
+                type: '{ readonly blackboardKey: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:403:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['stringNode'],
+                  semantics: {
+                    type: '"stringNode"',
+                  },
+                  source: ['packages/game-data-contract/src/primitives.ts:67:7'],
+                  description: '绑定本图字符串表达式；各使用点仍读取各自当前动作上下文。',
+                },
+                nodeId: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/primitives.ts:68:7'],
+                },
+              },
+              semantics: {
+                type: '{ readonly kind: "stringNode"; readonly nodeId: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:403:7'],
+            },
+          ],
+          semantics: {
+            type: 'ActionStringOperand',
+            aliases: ['ActionStringOperand'],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:403:7'],
+        },
         path: ['markerId'],
         label: 'markerId',
         description: '标记 ID 或动作黑板中的标记 ID。',
         type: 'ActionStringOperand',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'ActionStringOperand',
+          aliases: ['ActionStringOperand'],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:403:7'],
+        fallback: {
+          reason: 'structured-editor-pending',
+        },
       },
     ],
   },
@@ -5516,20 +20045,101 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '检查当前能力实体或 Context 能力实体集合中仍有效的定时标记。',
     fields: [
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'string',
+              semantics: {
+                type: 'string',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:409:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                blackboardKey: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/primitives.ts:63:7'],
+                  description: '读取字符串的当前动作黑板键。',
+                },
+              },
+              semantics: {
+                type: '{ readonly blackboardKey: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:409:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['stringNode'],
+                  semantics: {
+                    type: '"stringNode"',
+                  },
+                  source: ['packages/game-data-contract/src/primitives.ts:67:7'],
+                  description: '绑定本图字符串表达式；各使用点仍读取各自当前动作上下文。',
+                },
+                nodeId: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/primitives.ts:68:7'],
+                },
+              },
+              semantics: {
+                type: '{ readonly kind: "stringNode"; readonly nodeId: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:409:7'],
+            },
+          ],
+          semantics: {
+            type: 'ActionStringOperand',
+            aliases: ['ActionStringOperand'],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:409:7'],
+        },
         path: ['markerId'],
         label: 'markerId',
         description: '标记 ID 或动作黑板中的标记 ID。',
         type: 'ActionStringOperand',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'ActionStringOperand',
+          aliases: ['ActionStringOperand'],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:409:7'],
+        fallback: {
+          reason: 'structured-editor-pending',
+        },
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string | undefined',
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:411:7'],
+          optional: true,
+        },
         path: ['contextKey'],
         label: 'contextKey',
         description: '指定时检查该动作目标组中的能力实体；省略时检查当前能力实体。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: {
+          type: 'string | undefined',
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:411:7'],
       },
     ],
   },
@@ -5537,6 +20147,31 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '匹配触发当前响应的伤害事件标签；普通技能步骤没有事件上下文。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll', 'exact'],
+          semantics: {
+            type: '"hasAny" | "hasAll" | "exceptAny" | "exceptAll" | "exact"',
+            unionVariants: [
+              {
+                type: '"hasAny"',
+              },
+              {
+                type: '"hasAll"',
+              },
+              {
+                type: '"exceptAny"',
+              },
+              {
+                type: '"exceptAll"',
+              },
+              {
+                type: '"exact"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:417:7'],
+        },
         path: ['match'],
         label: 'match',
         description: '标签集合匹配方式。',
@@ -5544,8 +20179,164 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll', 'exact'],
+        semantics: {
+          type: '"hasAny" | "hasAll" | "exceptAny" | "exceptAll" | "exact"',
+          unionVariants: [
+            {
+              type: '"hasAny"',
+            },
+            {
+              type: '"hasAll"',
+            },
+            {
+              type: '"exceptAny"',
+            },
+            {
+              type: '"exceptAll"',
+            },
+            {
+              type: '"exact"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:417:7'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'enum',
+            options: [
+              'normalAttack',
+              'normalAttackLastCombo',
+              'powerAttack',
+              'normalSkill',
+              'comboSkill',
+              'ultimateSkill',
+              'plungingAttack',
+              'dashAttack',
+              'fireBurst',
+              'electricBurst',
+              'cryoBurst',
+              'natureBurst',
+              'fireAbnormal',
+              'electricAbnormal',
+              'cryoAbnormal',
+              'natureAbnormal',
+            ],
+            semantics: {
+              type: '"normalAttack" | "normalAttackLastCombo" | "powerAttack" | "normalSkill" | "comboSkill" | "ultimateSkill" | "plungingAttack" | "dashAttack" | "fireBurst" | "electricBurst" | ... 5 more ... | "natureAbnormal"',
+              unionVariants: [
+                {
+                  type: '"normalAttack"',
+                },
+                {
+                  type: '"normalAttackLastCombo"',
+                },
+                {
+                  type: '"powerAttack"',
+                },
+                {
+                  type: '"normalSkill"',
+                },
+                {
+                  type: '"comboSkill"',
+                },
+                {
+                  type: '"ultimateSkill"',
+                },
+                {
+                  type: '"plungingAttack"',
+                },
+                {
+                  type: '"dashAttack"',
+                },
+                {
+                  type: '"fireBurst"',
+                },
+                {
+                  type: '"electricBurst"',
+                },
+                {
+                  type: '"cryoBurst"',
+                },
+                {
+                  type: '"natureBurst"',
+                },
+                {
+                  type: '"fireAbnormal"',
+                },
+                {
+                  type: '"electricAbnormal"',
+                },
+                {
+                  type: '"cryoAbnormal"',
+                },
+                {
+                  type: '"natureAbnormal"',
+                },
+              ],
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:419:7'],
+          },
+          semantics: {
+            type: 'readonly ("normalAttack" | "normalAttackLastCombo" | "powerAttack" | "normalSkill" | "comboSkill" | "ultimateSkill" | "plungingAttack" | "dashAttack" | "fireBurst" | "electricBurst" | ... 5 more ... | "natureAbnormal")[]',
+            arrayElement: {
+              type: '"normalAttack" | "normalAttackLastCombo" | "powerAttack" | "normalSkill" | "comboSkill" | "ultimateSkill" | "plungingAttack" | "dashAttack" | "fireBurst" | "electricBurst" | ... 5 more ... | "natureAbnormal"',
+              unionVariants: [
+                {
+                  type: '"normalAttack"',
+                },
+                {
+                  type: '"normalAttackLastCombo"',
+                },
+                {
+                  type: '"powerAttack"',
+                },
+                {
+                  type: '"normalSkill"',
+                },
+                {
+                  type: '"comboSkill"',
+                },
+                {
+                  type: '"ultimateSkill"',
+                },
+                {
+                  type: '"plungingAttack"',
+                },
+                {
+                  type: '"dashAttack"',
+                },
+                {
+                  type: '"fireBurst"',
+                },
+                {
+                  type: '"electricBurst"',
+                },
+                {
+                  type: '"cryoBurst"',
+                },
+                {
+                  type: '"natureBurst"',
+                },
+                {
+                  type: '"fireAbnormal"',
+                },
+                {
+                  type: '"electricAbnormal"',
+                },
+                {
+                  type: '"cryoAbnormal"',
+                },
+                {
+                  type: '"natureAbnormal"',
+                },
+              ],
+            },
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:419:7'],
+        },
         path: ['tags'],
         label: 'tags',
         description: '参与匹配的伤害标签。',
@@ -5570,6 +20361,63 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
           'cryoAbnormal',
           'natureAbnormal',
         ],
+        semantics: {
+          type: 'readonly ("normalAttack" | "normalAttackLastCombo" | "powerAttack" | "normalSkill" | "comboSkill" | "ultimateSkill" | "plungingAttack" | "dashAttack" | "fireBurst" | "electricBurst" | ... 5 more ... | "natureAbnormal")[]',
+          arrayElement: {
+            type: '"normalAttack" | "normalAttackLastCombo" | "powerAttack" | "normalSkill" | "comboSkill" | "ultimateSkill" | "plungingAttack" | "dashAttack" | "fireBurst" | "electricBurst" | ... 5 more ... | "natureAbnormal"',
+            unionVariants: [
+              {
+                type: '"normalAttack"',
+              },
+              {
+                type: '"normalAttackLastCombo"',
+              },
+              {
+                type: '"powerAttack"',
+              },
+              {
+                type: '"normalSkill"',
+              },
+              {
+                type: '"comboSkill"',
+              },
+              {
+                type: '"ultimateSkill"',
+              },
+              {
+                type: '"plungingAttack"',
+              },
+              {
+                type: '"dashAttack"',
+              },
+              {
+                type: '"fireBurst"',
+              },
+              {
+                type: '"electricBurst"',
+              },
+              {
+                type: '"cryoBurst"',
+              },
+              {
+                type: '"natureBurst"',
+              },
+              {
+                type: '"fireAbnormal"',
+              },
+              {
+                type: '"electricAbnormal"',
+              },
+              {
+                type: '"cryoAbnormal"',
+              },
+              {
+                type: '"natureAbnormal"',
+              },
+            ],
+          },
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:419:7'],
       },
     ],
   },
@@ -5577,6 +20425,31 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '匹配伤害包 DamageUnit.damageTags 的原生 GameplayTag。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll', 'exact'],
+          semantics: {
+            type: '"hasAny" | "hasAll" | "exceptAny" | "exceptAll" | "exact"',
+            unionVariants: [
+              {
+                type: '"hasAny"',
+              },
+              {
+                type: '"hasAll"',
+              },
+              {
+                type: '"exceptAny"',
+              },
+              {
+                type: '"exceptAll"',
+              },
+              {
+                type: '"exact"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:425:7'],
+        },
         path: ['match'],
         label: 'match',
         description: '标签集合匹配方式。',
@@ -5584,14 +20457,65 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll', 'exact'],
+        semantics: {
+          type: '"hasAny" | "hasAll" | "exceptAny" | "exceptAll" | "exact"',
+          unionVariants: [
+            {
+              type: '"hasAny"',
+            },
+            {
+              type: '"hasAll"',
+            },
+            {
+              type: '"exceptAny"',
+            },
+            {
+              type: '"exceptAll"',
+            },
+            {
+              type: '"exact"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:425:7'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'string',
+            semantics: {
+              type: 'string',
+              aliases: ['GameplayTag'],
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:427:7'],
+          },
+          semantics: {
+            type: 'readonly string[]',
+            arrayElement: {
+              type: 'string',
+              aliases: ['GameplayTag'],
+            },
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:427:7'],
+        },
         path: ['tags'],
         label: 'tags',
         description: '参与匹配的原生伤害 GameplayTag。',
         type: 'readonly GameplayTag[]',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'readonly string[]',
+          arrayElement: {
+            type: 'string',
+            aliases: ['GameplayTag'],
+          },
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:427:7'],
+        fallback: {
+          reason: 'structured-editor-pending',
+        },
       },
     ],
   },
@@ -5599,6 +20523,31 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '匹配触发当前响应的伤害行为特征；普通技能步骤没有事件上下文。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll', 'exact'],
+          semantics: {
+            type: '"hasAny" | "hasAll" | "exceptAny" | "exceptAll" | "exact"',
+            unionVariants: [
+              {
+                type: '"hasAny"',
+              },
+              {
+                type: '"hasAll"',
+              },
+              {
+                type: '"exceptAny"',
+              },
+              {
+                type: '"exceptAll"',
+              },
+              {
+                type: '"exact"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:433:7'],
+        },
         path: ['match'],
         label: 'match',
         description: '特征集合匹配方式。',
@@ -5606,8 +20555,115 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll', 'exact'],
+        semantics: {
+          type: '"hasAny" | "hasAll" | "exceptAny" | "exceptAll" | "exact"',
+          unionVariants: [
+            {
+              type: '"hasAny"',
+            },
+            {
+              type: '"hasAll"',
+            },
+            {
+              type: '"exceptAny"',
+            },
+            {
+              type: '"exceptAll"',
+            },
+            {
+              type: '"exact"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:433:7'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'enum',
+            options: [
+              'canBreakWeakness',
+              'crush',
+              'airborne',
+              'knockDown',
+              'shatter',
+              'dot',
+              'remainArea',
+              'talentDamage',
+              'physicalInfliction',
+            ],
+            semantics: {
+              type: '"canBreakWeakness" | "crush" | "airborne" | "knockDown" | "shatter" | "dot" | "remainArea" | "talentDamage" | "physicalInfliction"',
+              unionVariants: [
+                {
+                  type: '"canBreakWeakness"',
+                },
+                {
+                  type: '"crush"',
+                },
+                {
+                  type: '"airborne"',
+                },
+                {
+                  type: '"knockDown"',
+                },
+                {
+                  type: '"shatter"',
+                },
+                {
+                  type: '"dot"',
+                },
+                {
+                  type: '"remainArea"',
+                },
+                {
+                  type: '"talentDamage"',
+                },
+                {
+                  type: '"physicalInfliction"',
+                },
+              ],
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:435:7'],
+          },
+          semantics: {
+            type: 'readonly ("canBreakWeakness" | "crush" | "airborne" | "knockDown" | "shatter" | "dot" | "remainArea" | "talentDamage" | "physicalInfliction")[]',
+            arrayElement: {
+              type: '"canBreakWeakness" | "crush" | "airborne" | "knockDown" | "shatter" | "dot" | "remainArea" | "talentDamage" | "physicalInfliction"',
+              unionVariants: [
+                {
+                  type: '"canBreakWeakness"',
+                },
+                {
+                  type: '"crush"',
+                },
+                {
+                  type: '"airborne"',
+                },
+                {
+                  type: '"knockDown"',
+                },
+                {
+                  type: '"shatter"',
+                },
+                {
+                  type: '"dot"',
+                },
+                {
+                  type: '"remainArea"',
+                },
+                {
+                  type: '"talentDamage"',
+                },
+                {
+                  type: '"physicalInfliction"',
+                },
+              ],
+            },
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:435:7'],
+        },
         path: ['features'],
         label: 'features',
         description: '参与匹配的伤害特征。',
@@ -5625,6 +20681,42 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
           'talentDamage',
           'physicalInfliction',
         ],
+        semantics: {
+          type: 'readonly ("canBreakWeakness" | "crush" | "airborne" | "knockDown" | "shatter" | "dot" | "remainArea" | "talentDamage" | "physicalInfliction")[]',
+          arrayElement: {
+            type: '"canBreakWeakness" | "crush" | "airborne" | "knockDown" | "shatter" | "dot" | "remainArea" | "talentDamage" | "physicalInfliction"',
+            unionVariants: [
+              {
+                type: '"canBreakWeakness"',
+              },
+              {
+                type: '"crush"',
+              },
+              {
+                type: '"airborne"',
+              },
+              {
+                type: '"knockDown"',
+              },
+              {
+                type: '"shatter"',
+              },
+              {
+                type: '"dot"',
+              },
+              {
+                type: '"remainArea"',
+              },
+              {
+                type: '"talentDamage"',
+              },
+              {
+                type: '"physicalInfliction"',
+              },
+            ],
+          },
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:435:7'],
       },
     ],
   },
@@ -5632,6 +20724,85 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '匹配触发当前响应的伤害类型；未声明类型的外部事实不会命中。',
     fields: [
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'enum',
+            options: [
+              'physical',
+              'heat',
+              'cryo',
+              'electric',
+              'nature',
+              'true',
+              'lifeDrain',
+              'ether',
+            ],
+            semantics: {
+              type: '"physical" | "heat" | "cryo" | "electric" | "nature" | "true" | "lifeDrain" | "ether"',
+              unionVariants: [
+                {
+                  type: '"physical"',
+                },
+                {
+                  type: '"heat"',
+                },
+                {
+                  type: '"cryo"',
+                },
+                {
+                  type: '"electric"',
+                },
+                {
+                  type: '"nature"',
+                },
+                {
+                  type: '"true"',
+                },
+                {
+                  type: '"lifeDrain"',
+                },
+                {
+                  type: '"ether"',
+                },
+              ],
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:441:7'],
+          },
+          semantics: {
+            type: 'readonly ("physical" | "heat" | "cryo" | "electric" | "nature" | "true" | "lifeDrain" | "ether")[]',
+            arrayElement: {
+              type: '"physical" | "heat" | "cryo" | "electric" | "nature" | "true" | "lifeDrain" | "ether"',
+              unionVariants: [
+                {
+                  type: '"physical"',
+                },
+                {
+                  type: '"heat"',
+                },
+                {
+                  type: '"cryo"',
+                },
+                {
+                  type: '"electric"',
+                },
+                {
+                  type: '"nature"',
+                },
+                {
+                  type: '"true"',
+                },
+                {
+                  type: '"lifeDrain"',
+                },
+                {
+                  type: '"ether"',
+                },
+              ],
+            },
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:441:7'],
+        },
         path: ['damageTypes'],
         label: 'damageTypes',
         description: '任一匹配即可成立的伤害类型。',
@@ -5639,6 +20810,39 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'multiselect',
         options: ['physical', 'heat', 'cryo', 'electric', 'nature', 'true', 'lifeDrain', 'ether'],
+        semantics: {
+          type: 'readonly ("physical" | "heat" | "cryo" | "electric" | "nature" | "true" | "lifeDrain" | "ether")[]',
+          arrayElement: {
+            type: '"physical" | "heat" | "cryo" | "electric" | "nature" | "true" | "lifeDrain" | "ether"',
+            unionVariants: [
+              {
+                type: '"physical"',
+              },
+              {
+                type: '"heat"',
+              },
+              {
+                type: '"cryo"',
+              },
+              {
+                type: '"electric"',
+              },
+              {
+                type: '"nature"',
+              },
+              {
+                type: '"true"',
+              },
+              {
+                type: '"lifeDrain"',
+              },
+              {
+                type: '"ether"',
+              },
+            ],
+          },
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:441:7'],
       },
     ],
   },
@@ -5646,6 +20850,52 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '匹配触发当前响应的元素附着类型。',
     fields: [
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'enum',
+            options: ['heat', 'cryo', 'electric', 'nature'],
+            semantics: {
+              type: '"heat" | "cryo" | "electric" | "nature"',
+              unionVariants: [
+                {
+                  type: '"heat"',
+                },
+                {
+                  type: '"cryo"',
+                },
+                {
+                  type: '"electric"',
+                },
+                {
+                  type: '"nature"',
+                },
+              ],
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:447:7'],
+          },
+          semantics: {
+            type: 'readonly ("heat" | "cryo" | "electric" | "nature")[]',
+            arrayElement: {
+              type: '"heat" | "cryo" | "electric" | "nature"',
+              unionVariants: [
+                {
+                  type: '"heat"',
+                },
+                {
+                  type: '"cryo"',
+                },
+                {
+                  type: '"electric"',
+                },
+                {
+                  type: '"nature"',
+                },
+              ],
+            },
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:447:7'],
+        },
         path: ['elements'],
         label: 'elements',
         description: '任一匹配即可成立的元素附着类型。',
@@ -5653,14 +20903,49 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'multiselect',
         options: ['heat', 'cryo', 'electric', 'nature'],
+        semantics: {
+          type: 'readonly ("heat" | "cryo" | "electric" | "nature")[]',
+          arrayElement: {
+            type: '"heat" | "cryo" | "electric" | "nature"',
+            unionVariants: [
+              {
+                type: '"heat"',
+              },
+              {
+                type: '"cryo"',
+              },
+              {
+                type: '"electric"',
+              },
+              {
+                type: '"nature"',
+              },
+            ],
+          },
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:447:7'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string | undefined',
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:449:7'],
+          optional: true,
+        },
         path: ['outputKey'],
         label: 'outputKey',
         description: '命中后把原生元素编号写入已声明键；缺键报错，EntityBB_ 写入共享实体板。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: {
+          type: 'string | undefined',
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:449:7'],
       },
     ],
   },
@@ -5668,6 +20953,52 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '匹配来源 AbilitySystem 即将输出的物理异常类型。',
     fields: [
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'enum',
+            options: ['crush', 'airborne', 'knockDown', 'fracture'],
+            semantics: {
+              type: '"crush" | "airborne" | "knockDown" | "fracture"',
+              unionVariants: [
+                {
+                  type: '"airborne"',
+                },
+                {
+                  type: '"knockDown"',
+                },
+                {
+                  type: '"fracture"',
+                },
+                {
+                  type: '"crush"',
+                },
+              ],
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:455:7'],
+          },
+          semantics: {
+            type: 'readonly ("crush" | "airborne" | "knockDown" | "fracture")[]',
+            arrayElement: {
+              type: '"crush" | "airborne" | "knockDown" | "fracture"',
+              unionVariants: [
+                {
+                  type: '"airborne"',
+                },
+                {
+                  type: '"knockDown"',
+                },
+                {
+                  type: '"fracture"',
+                },
+                {
+                  type: '"crush"',
+                },
+              ],
+            },
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:455:7'],
+        },
         path: ['types'],
         label: 'types',
         description: '任一匹配即可成立的物理异常类型。',
@@ -5675,14 +21006,49 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'multiselect',
         options: ['crush', 'airborne', 'knockDown', 'fracture'],
+        semantics: {
+          type: 'readonly ("crush" | "airborne" | "knockDown" | "fracture")[]',
+          arrayElement: {
+            type: '"crush" | "airborne" | "knockDown" | "fracture"',
+            unionVariants: [
+              {
+                type: '"airborne"',
+              },
+              {
+                type: '"knockDown"',
+              },
+              {
+                type: '"fracture"',
+              },
+              {
+                type: '"crush"',
+              },
+            ],
+          },
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:455:7'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string | undefined',
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:457:7'],
+          optional: true,
+        },
         path: ['outputKey'],
         label: 'outputKey',
         description: '命中后把原生物理异常编号写入已声明键；规则与元素 savedKey 相同。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: {
+          type: 'string | undefined',
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:457:7'],
       },
     ],
   },
@@ -5690,6 +21056,78 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '匹配触发 Buff 响应的待施放技能类型。',
     fields: [
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'enum',
+            options: [
+              'comboSkill',
+              'plungingAttack',
+              'basicAttack',
+              'battleSkill',
+              'ultimate',
+              'finisher',
+              'dodge',
+            ],
+            semantics: {
+              type: '"comboSkill" | "plungingAttack" | "basicAttack" | "battleSkill" | "ultimate" | "finisher" | "dodge"',
+              unionVariants: [
+                {
+                  type: '"comboSkill"',
+                },
+                {
+                  type: '"plungingAttack"',
+                },
+                {
+                  type: '"basicAttack"',
+                },
+                {
+                  type: '"battleSkill"',
+                },
+                {
+                  type: '"ultimate"',
+                },
+                {
+                  type: '"finisher"',
+                },
+                {
+                  type: '"dodge"',
+                },
+              ],
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:463:7'],
+          },
+          semantics: {
+            type: 'readonly ("comboSkill" | "plungingAttack" | "basicAttack" | "battleSkill" | "ultimate" | "finisher" | "dodge")[]',
+            arrayElement: {
+              type: '"comboSkill" | "plungingAttack" | "basicAttack" | "battleSkill" | "ultimate" | "finisher" | "dodge"',
+              unionVariants: [
+                {
+                  type: '"comboSkill"',
+                },
+                {
+                  type: '"plungingAttack"',
+                },
+                {
+                  type: '"basicAttack"',
+                },
+                {
+                  type: '"battleSkill"',
+                },
+                {
+                  type: '"ultimate"',
+                },
+                {
+                  type: '"finisher"',
+                },
+                {
+                  type: '"dodge"',
+                },
+              ],
+            },
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:463:7'],
+        },
         path: ['skillTypes'],
         label: 'skillTypes',
         description: '任一匹配即可成立的技能分类。',
@@ -5705,6 +21143,36 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
           'finisher',
           'dodge',
         ],
+        semantics: {
+          type: 'readonly ("comboSkill" | "plungingAttack" | "basicAttack" | "battleSkill" | "ultimate" | "finisher" | "dodge")[]',
+          arrayElement: {
+            type: '"comboSkill" | "plungingAttack" | "basicAttack" | "battleSkill" | "ultimate" | "finisher" | "dodge"',
+            unionVariants: [
+              {
+                type: '"comboSkill"',
+              },
+              {
+                type: '"plungingAttack"',
+              },
+              {
+                type: '"basicAttack"',
+              },
+              {
+                type: '"battleSkill"',
+              },
+              {
+                type: '"ultimate"',
+              },
+              {
+                type: '"finisher"',
+              },
+              {
+                type: '"dodge"',
+              },
+            ],
+          },
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:463:7'],
       },
     ],
   },
@@ -5712,20 +21180,45 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '精确匹配当前 OnCustomAbilityEvent 的命名载荷。',
     fields: [
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string',
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:469:7'],
+        },
         path: ['eventName'],
         label: 'eventName',
         description: '要匹配的自定义事件名称。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: {
+          type: 'string',
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:469:7'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string | undefined',
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:471:7'],
+          optional: true,
+        },
         path: ['outputKey'],
         label: 'outputKey',
         description: '名称匹配后把事件 float 参数写入当前动作黑板；对应原生 savedParamKey。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: {
+          type: 'string | undefined',
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:471:7'],
       },
     ],
   },
@@ -5733,6 +21226,22 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '查询目标 AbilitySystem 当前仍在施放的技能类型；不读取事件载荷。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['caster', 'buffOwner'],
+          semantics: {
+            type: '"caster" | "buffOwner"',
+            unionVariants: [
+              {
+                type: '"caster"',
+              },
+              {
+                type: '"buffOwner"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:477:7'],
+        },
         path: ['target'],
         label: 'target',
         description: '检查施法者还是当前 Buff 持有者。',
@@ -5740,8 +21249,92 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['caster', 'buffOwner'],
+        semantics: {
+          type: '"caster" | "buffOwner"',
+          unionVariants: [
+            {
+              type: '"caster"',
+            },
+            {
+              type: '"buffOwner"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:477:7'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'enum',
+            options: [
+              'comboSkill',
+              'plungingAttack',
+              'basicAttack',
+              'battleSkill',
+              'ultimate',
+              'finisher',
+              'dodge',
+            ],
+            semantics: {
+              type: '"comboSkill" | "plungingAttack" | "basicAttack" | "battleSkill" | "ultimate" | "finisher" | "dodge"',
+              unionVariants: [
+                {
+                  type: '"comboSkill"',
+                },
+                {
+                  type: '"plungingAttack"',
+                },
+                {
+                  type: '"basicAttack"',
+                },
+                {
+                  type: '"battleSkill"',
+                },
+                {
+                  type: '"ultimate"',
+                },
+                {
+                  type: '"finisher"',
+                },
+                {
+                  type: '"dodge"',
+                },
+              ],
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:479:7'],
+          },
+          semantics: {
+            type: 'readonly ("comboSkill" | "plungingAttack" | "basicAttack" | "battleSkill" | "ultimate" | "finisher" | "dodge")[]',
+            arrayElement: {
+              type: '"comboSkill" | "plungingAttack" | "basicAttack" | "battleSkill" | "ultimate" | "finisher" | "dodge"',
+              unionVariants: [
+                {
+                  type: '"comboSkill"',
+                },
+                {
+                  type: '"plungingAttack"',
+                },
+                {
+                  type: '"basicAttack"',
+                },
+                {
+                  type: '"battleSkill"',
+                },
+                {
+                  type: '"ultimate"',
+                },
+                {
+                  type: '"finisher"',
+                },
+                {
+                  type: '"dodge"',
+                },
+              ],
+            },
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:479:7'],
+        },
         path: ['skillTypes'],
         label: 'skillTypes',
         description: '任一匹配即可成立的当前技能分类。',
@@ -5757,6 +21350,36 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
           'finisher',
           'dodge',
         ],
+        semantics: {
+          type: 'readonly ("comboSkill" | "plungingAttack" | "basicAttack" | "battleSkill" | "ultimate" | "finisher" | "dodge")[]',
+          arrayElement: {
+            type: '"comboSkill" | "plungingAttack" | "basicAttack" | "battleSkill" | "ultimate" | "finisher" | "dodge"',
+            unionVariants: [
+              {
+                type: '"comboSkill"',
+              },
+              {
+                type: '"plungingAttack"',
+              },
+              {
+                type: '"basicAttack"',
+              },
+              {
+                type: '"battleSkill"',
+              },
+              {
+                type: '"ultimate"',
+              },
+              {
+                type: '"finisher"',
+              },
+              {
+                type: '"dodge"',
+              },
+            ],
+          },
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:479:7'],
       },
     ],
   },
@@ -5764,6 +21387,78 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '匹配当前事件的来源施法类型；按原生载荷类型读取，不回退到监听 Buff 的来源。',
     fields: [
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'enum',
+            options: [
+              'comboSkill',
+              'plungingAttack',
+              'basicAttack',
+              'battleSkill',
+              'ultimate',
+              'finisher',
+              'dodge',
+            ],
+            semantics: {
+              type: '"comboSkill" | "plungingAttack" | "basicAttack" | "battleSkill" | "ultimate" | "finisher" | "dodge"',
+              unionVariants: [
+                {
+                  type: '"comboSkill"',
+                },
+                {
+                  type: '"plungingAttack"',
+                },
+                {
+                  type: '"basicAttack"',
+                },
+                {
+                  type: '"battleSkill"',
+                },
+                {
+                  type: '"ultimate"',
+                },
+                {
+                  type: '"finisher"',
+                },
+                {
+                  type: '"dodge"',
+                },
+              ],
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:485:7'],
+          },
+          semantics: {
+            type: 'readonly ("comboSkill" | "plungingAttack" | "basicAttack" | "battleSkill" | "ultimate" | "finisher" | "dodge")[]',
+            arrayElement: {
+              type: '"comboSkill" | "plungingAttack" | "basicAttack" | "battleSkill" | "ultimate" | "finisher" | "dodge"',
+              unionVariants: [
+                {
+                  type: '"comboSkill"',
+                },
+                {
+                  type: '"plungingAttack"',
+                },
+                {
+                  type: '"basicAttack"',
+                },
+                {
+                  type: '"battleSkill"',
+                },
+                {
+                  type: '"ultimate"',
+                },
+                {
+                  type: '"finisher"',
+                },
+                {
+                  type: '"dodge"',
+                },
+              ],
+            },
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:485:7'],
+        },
         path: ['skillTypes'],
         label: 'skillTypes',
         description: '任一匹配即可成立的来源技能分类。',
@@ -5779,6 +21474,36 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
           'finisher',
           'dodge',
         ],
+        semantics: {
+          type: 'readonly ("comboSkill" | "plungingAttack" | "basicAttack" | "battleSkill" | "ultimate" | "finisher" | "dodge")[]',
+          arrayElement: {
+            type: '"comboSkill" | "plungingAttack" | "basicAttack" | "battleSkill" | "ultimate" | "finisher" | "dodge"',
+            unionVariants: [
+              {
+                type: '"comboSkill"',
+              },
+              {
+                type: '"plungingAttack"',
+              },
+              {
+                type: '"basicAttack"',
+              },
+              {
+                type: '"battleSkill"',
+              },
+              {
+                type: '"ultimate"',
+              },
+              {
+                type: '"finisher"',
+              },
+              {
+                type: '"dodge"',
+              },
+            ],
+          },
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:485:7'],
       },
     ],
   },
@@ -5786,14 +21511,33 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '当前 Context 目标组是否包含事件目标。',
     fields: [
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string',
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:491:7'],
+        },
         path: ['parentContextKey'],
         label: 'parentContextKey',
         description: '要检查的动作目标组。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: {
+          type: 'string',
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:491:7'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['eventTarget'],
+          semantics: {
+            type: '"eventTarget"',
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:493:7'],
+        },
         path: ['child'],
         label: 'child',
         description: '当前只支持检查事件目标。',
@@ -5801,6 +21545,10 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['eventTarget'],
+        semantics: {
+          type: '"eventTarget"',
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:493:7'],
       },
     ],
   },
@@ -5808,12 +21556,39 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '匹配触发 Buff 响应的待施放技能稳定身份。',
     fields: [
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'string',
+            semantics: {
+              type: 'string',
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:499:7'],
+          },
+          semantics: {
+            type: 'readonly string[]',
+            arrayElement: {
+              type: 'string',
+            },
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:499:7'],
+        },
         path: ['skillIds'],
         label: 'skillIds',
         description: '任一匹配即可成立的原生技能 ID。',
         type: 'readonly string[]',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'readonly string[]',
+          arrayElement: {
+            type: 'string',
+          },
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:499:7'],
+        fallback: {
+          reason: 'structured-editor-pending',
+        },
       },
     ],
   },
@@ -5825,20 +21600,61 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '匹配触发当前响应的新施加 Buff 身份。',
     fields: [
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'string',
+            semantics: {
+              type: 'string',
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:510:7'],
+          },
+          semantics: {
+            type: 'readonly string[]',
+            arrayElement: {
+              type: 'string',
+            },
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:510:7'],
+        },
         path: ['buffIds'],
         label: 'buffIds',
         description: '任一匹配即可成立的新 Buff ID。',
         type: 'readonly string[]',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'readonly string[]',
+          arrayElement: {
+            type: 'string',
+          },
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:510:7'],
+        fallback: {
+          reason: 'structured-editor-pending',
+        },
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string | undefined',
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:512:7'],
+          optional: true,
+        },
         path: ['buffIdOutputKey'],
         label: 'buffIdOutputKey',
         description: '条件命中后把事件 Buff ID 写入当前动作黑板。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: {
+          type: 'string | undefined',
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:512:7'],
       },
     ],
   },
@@ -5850,6 +21666,28 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '匹配触发当前响应的新施加 Buff 原生标签。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll'],
+          semantics: {
+            type: '"hasAny" | "hasAll" | "exceptAny" | "exceptAll"',
+            unionVariants: [
+              {
+                type: '"hasAny"',
+              },
+              {
+                type: '"hasAll"',
+              },
+              {
+                type: '"exceptAny"',
+              },
+              {
+                type: '"exceptAll"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:523:7'],
+        },
         path: ['match'],
         label: 'match',
         description: '标签集合匹配方式。',
@@ -5857,22 +21695,84 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll'],
+        semantics: {
+          type: '"hasAny" | "hasAll" | "exceptAny" | "exceptAll"',
+          unionVariants: [
+            {
+              type: '"hasAny"',
+            },
+            {
+              type: '"hasAll"',
+            },
+            {
+              type: '"exceptAny"',
+            },
+            {
+              type: '"exceptAll"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:523:7'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'string',
+            semantics: {
+              type: 'string',
+              aliases: ['GameplayTag'],
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:525:7'],
+          },
+          semantics: {
+            type: 'readonly string[]',
+            arrayElement: {
+              type: 'string',
+              aliases: ['GameplayTag'],
+            },
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:525:7'],
+        },
         path: ['buffTags'],
         label: 'buffTags',
         description: '参与匹配的新 Buff 标签。',
         type: 'readonly GameplayTag[]',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'readonly string[]',
+          arrayElement: {
+            type: 'string',
+            aliases: ['GameplayTag'],
+          },
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:525:7'],
+        fallback: {
+          reason: 'structured-editor-pending',
+        },
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string | undefined',
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:527:7'],
+          optional: true,
+        },
         path: ['buffIdOutputKey'],
         label: 'buffIdOutputKey',
         description: 'Advanced 条件命中后把事件 Buff ID 写入当前动作黑板。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: {
+          type: 'string | undefined',
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:527:7'],
       },
     ],
   },
@@ -5880,6 +21780,28 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '按当前事件真实目标统计匹配标签的 Buff 实例数；不累计 Buff 增强层数。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll'],
+          semantics: {
+            type: '"hasAny" | "hasAll" | "exceptAny" | "exceptAll"',
+            unionVariants: [
+              {
+                type: '"hasAny"',
+              },
+              {
+                type: '"hasAll"',
+              },
+              {
+                type: '"exceptAny"',
+              },
+              {
+                type: '"exceptAll"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:533:7'],
+        },
         path: ['tagQueryType'],
         label: 'tagQueryType',
         description: '标签集合匹配方式。',
@@ -5887,16 +21809,92 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll'],
+        semantics: {
+          type: '"hasAny" | "hasAll" | "exceptAny" | "exceptAll"',
+          unionVariants: [
+            {
+              type: '"hasAny"',
+            },
+            {
+              type: '"hasAll"',
+            },
+            {
+              type: '"exceptAny"',
+            },
+            {
+              type: '"exceptAll"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:533:7'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'string',
+            semantics: {
+              type: 'string',
+              aliases: ['GameplayTag'],
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:535:7'],
+          },
+          semantics: {
+            type: 'readonly string[]',
+            arrayElement: {
+              type: 'string',
+              aliases: ['GameplayTag'],
+            },
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:535:7'],
+        },
         path: ['buffTags'],
         label: 'buffTags',
         description: '用于查找 Buff 的标签。',
         type: 'readonly GameplayTag[]',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'readonly string[]',
+          arrayElement: {
+            type: 'string',
+            aliases: ['GameplayTag'],
+          },
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:535:7'],
+        fallback: {
+          reason: 'structured-editor-pending',
+        },
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+          semantics: {
+            type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+            unionVariants: [
+              {
+                type: '"equal"',
+              },
+              {
+                type: '"notEqual"',
+              },
+              {
+                type: '"greater"',
+              },
+              {
+                type: '"greaterOrEqual"',
+              },
+              {
+                type: '"less"',
+              },
+              {
+                type: '"lessOrEqual"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:537:7'],
+        },
         path: ['operator'],
         label: 'operator',
         description: '数量比较符。',
@@ -5904,14 +21902,166 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+        semantics: {
+          type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+          unionVariants: [
+            {
+              type: '"equal"',
+            },
+            {
+              type: '"notEqual"',
+            },
+            {
+              type: '"greater"',
+            },
+            {
+              type: '"greaterOrEqual"',
+            },
+            {
+              type: '"less"',
+            },
+            {
+              type: '"lessOrEqual"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:537:7'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['valueNode'],
+                  semantics: {
+                    type: '"valueNode"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:746:7'],
+                  description: '从当前资源图读取数值表达式，在使用点按当前作用域求值。',
+                },
+                nodeId: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:747:7'],
+                },
+              },
+              semantics: {
+                type: '{ kind: "valueNode"; nodeId: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:539:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['blackboard'],
+                  semantics: {
+                    type: '"blackboard"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:751:7'],
+                  description: '从当前动作黑板读取。',
+                },
+                key: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:753:7'],
+                  description: '要读取的黑板键。',
+                },
+                fallback: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number | undefined',
+                    optional: true,
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:755:7'],
+                  optional: true,
+                  description: '仅在原生调用点明确使用 GetValueOrDefault 时携带；缺省仍严格报错。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:539:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['constant'],
+                  semantics: {
+                    type: '"constant"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:759:7'],
+                  description: '直接使用固定数值。',
+                },
+                value: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:761:7'],
+                  description: '固定数值。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "constant"; value: number; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:539:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['parameter'],
+                  semantics: {
+                    type: '"parameter"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:765:7'],
+                  description: '引用宏调用参数；只允许出现在声明了同名参数的宏图内。',
+                },
+                parameter: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:767:7'],
+                  description: '形参名；在使用点求值，不做调用时快照。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "parameter"; parameter: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:539:7'],
+            },
+          ],
+          semantics: {
+            type: 'ActionValueOperand',
+            aliases: ['ActionValueOperand'],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:539:7'],
+        },
         path: ['value'],
         label: 'value',
         description: '与 Buff 实例数比较的值。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: {
+          type: 'ActionValueOperand',
+          aliases: ['ActionValueOperand'],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:539:7'],
       },
     ],
   },
@@ -5919,6 +22069,28 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '匹配当前治疗事件携带的原生治疗标签。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll'],
+          semantics: {
+            type: '"hasAny" | "hasAll" | "exceptAny" | "exceptAll"',
+            unionVariants: [
+              {
+                type: '"hasAny"',
+              },
+              {
+                type: '"hasAll"',
+              },
+              {
+                type: '"exceptAny"',
+              },
+              {
+                type: '"exceptAll"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:545:7'],
+        },
         path: ['match'],
         label: 'match',
         description: '标签集合匹配方式。',
@@ -5926,14 +22098,62 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll'],
+        semantics: {
+          type: '"hasAny" | "hasAll" | "exceptAny" | "exceptAll"',
+          unionVariants: [
+            {
+              type: '"hasAny"',
+            },
+            {
+              type: '"hasAll"',
+            },
+            {
+              type: '"exceptAny"',
+            },
+            {
+              type: '"exceptAll"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:545:7'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'string',
+            semantics: {
+              type: 'string',
+              aliases: ['GameplayTag'],
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:547:7'],
+          },
+          semantics: {
+            type: 'readonly string[]',
+            arrayElement: {
+              type: 'string',
+              aliases: ['GameplayTag'],
+            },
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:547:7'],
+        },
         path: ['tags'],
         label: 'tags',
         description: '参与匹配的治疗标签。',
         type: 'readonly GameplayTag[]',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'readonly string[]',
+          arrayElement: {
+            type: 'string',
+            aliases: ['GameplayTag'],
+          },
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:547:7'],
+        fallback: {
+          reason: 'structured-editor-pending',
+        },
       },
     ],
   },
@@ -5941,6 +22161,54 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '匹配 OnObtainAtb 事件携带的来源与获得方式。',
     fields: [
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'enum',
+            options: ['normalAttack', 'powerAttack', 'default', 'skill'],
+            semantics: {
+              type: '"normalAttack" | "powerAttack" | "default" | "skill"',
+              unionVariants: [
+                {
+                  type: '"normalAttack"',
+                },
+                {
+                  type: '"powerAttack"',
+                },
+                {
+                  type: '"default"',
+                },
+                {
+                  type: '"skill"',
+                },
+              ],
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:553:7'],
+          },
+          semantics: {
+            type: 'readonly ("normalAttack" | "powerAttack" | "default" | "skill")[] | undefined',
+            arrayElement: {
+              type: '"normalAttack" | "powerAttack" | "default" | "skill"',
+              unionVariants: [
+                {
+                  type: '"normalAttack"',
+                },
+                {
+                  type: '"powerAttack"',
+                },
+                {
+                  type: '"default"',
+                },
+                {
+                  type: '"skill"',
+                },
+              ],
+            },
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:553:7'],
+          optional: true,
+        },
         path: ['sources'],
         label: 'sources',
         description: '允许的技力来源；省略时不筛选来源。',
@@ -5948,8 +22216,66 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: false,
         control: 'multiselect',
         options: ['normalAttack', 'powerAttack', 'default', 'skill'],
+        semantics: {
+          type: 'readonly ("normalAttack" | "powerAttack" | "default" | "skill")[] | undefined',
+          arrayElement: {
+            type: '"normalAttack" | "powerAttack" | "default" | "skill"',
+            unionVariants: [
+              {
+                type: '"normalAttack"',
+              },
+              {
+                type: '"powerAttack"',
+              },
+              {
+                type: '"default"',
+              },
+              {
+                type: '"skill"',
+              },
+            ],
+          },
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:553:7'],
       },
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'enum',
+            options: ['gain', 'refund'],
+            semantics: {
+              type: '"gain" | "refund"',
+              unionVariants: [
+                {
+                  type: '"gain"',
+                },
+                {
+                  type: '"refund"',
+                },
+              ],
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:555:7'],
+          },
+          semantics: {
+            type: 'readonly ("gain" | "refund")[] | undefined',
+            arrayElement: {
+              type: '"gain" | "refund"',
+              unionVariants: [
+                {
+                  type: '"gain"',
+                },
+                {
+                  type: '"refund"',
+                },
+              ],
+            },
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:555:7'],
+          optional: true,
+        },
         path: ['gainKinds'],
         label: 'gainKinds',
         description: '允许的正常获取或返还类型；省略时不筛选类型。',
@@ -5957,6 +22283,22 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: false,
         control: 'multiselect',
         options: ['gain', 'refund'],
+        semantics: {
+          type: 'readonly ("gain" | "refund")[] | undefined',
+          arrayElement: {
+            type: '"gain" | "refund"',
+            unionVariants: [
+              {
+                type: '"gain"',
+              },
+              {
+                type: '"refund"',
+              },
+            ],
+          },
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:555:7'],
       },
     ],
   },
@@ -5964,6 +22306,34 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '比较 OnConsumeBuff 事件快照中的实际消费层数；命中后可写入动作黑板。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+          semantics: {
+            type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+            unionVariants: [
+              {
+                type: '"equal"',
+              },
+              {
+                type: '"notEqual"',
+              },
+              {
+                type: '"greater"',
+              },
+              {
+                type: '"greaterOrEqual"',
+              },
+              {
+                type: '"less"',
+              },
+              {
+                type: '"lessOrEqual"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:561:7'],
+        },
         path: ['operator'],
         label: 'operator',
         description: '层数比较符。',
@@ -5971,22 +22341,188 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+        semantics: {
+          type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+          unionVariants: [
+            {
+              type: '"equal"',
+            },
+            {
+              type: '"notEqual"',
+            },
+            {
+              type: '"greater"',
+            },
+            {
+              type: '"greaterOrEqual"',
+            },
+            {
+              type: '"less"',
+            },
+            {
+              type: '"lessOrEqual"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:561:7'],
       },
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['valueNode'],
+                  semantics: {
+                    type: '"valueNode"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:746:7'],
+                  description: '从当前资源图读取数值表达式，在使用点按当前作用域求值。',
+                },
+                nodeId: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:747:7'],
+                },
+              },
+              semantics: {
+                type: '{ kind: "valueNode"; nodeId: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:563:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['blackboard'],
+                  semantics: {
+                    type: '"blackboard"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:751:7'],
+                  description: '从当前动作黑板读取。',
+                },
+                key: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:753:7'],
+                  description: '要读取的黑板键。',
+                },
+                fallback: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number | undefined',
+                    optional: true,
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:755:7'],
+                  optional: true,
+                  description: '仅在原生调用点明确使用 GetValueOrDefault 时携带；缺省仍严格报错。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "blackboard"; key: string; fallback?: number | undefined; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:563:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['constant'],
+                  semantics: {
+                    type: '"constant"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:759:7'],
+                  description: '直接使用固定数值。',
+                },
+                value: {
+                  kind: 'number',
+                  semantics: {
+                    type: 'number',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:761:7'],
+                  description: '固定数值。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "constant"; value: number; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:563:7'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['parameter'],
+                  semantics: {
+                    type: '"parameter"',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:765:7'],
+                  description: '引用宏调用参数；只允许出现在声明了同名参数的宏图内。',
+                },
+                parameter: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/conditions.ts:767:7'],
+                  description: '形参名；在使用点求值，不做调用时快照。',
+                },
+              },
+              semantics: {
+                type: '{ kind: "parameter"; parameter: string; }',
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:563:7'],
+            },
+          ],
+          semantics: {
+            type: 'ActionValueOperand',
+            aliases: ['ActionValueOperand'],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:563:7'],
+        },
         path: ['value'],
         label: 'value',
         description: '与实际消费层数比较的值。',
         type: 'ActionValueOperand',
         required: true,
         control: 'operand',
+        semantics: {
+          type: 'ActionValueOperand',
+          aliases: ['ActionValueOperand'],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:563:7'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string | undefined',
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:565:7'],
+          optional: true,
+        },
         path: ['outputKey'],
         label: 'outputKey',
         description: '条件命中后保存实际消费层数的动作黑板键。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: {
+          type: 'string | undefined',
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:565:7'],
       },
     ],
   },
@@ -5994,6 +22530,22 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '比较治疗事件的来源与目标身份。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['equal', 'notEqual'],
+          semantics: {
+            type: '"equal" | "notEqual"',
+            unionVariants: [
+              {
+                type: '"equal"',
+              },
+              {
+                type: '"notEqual"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:571:7'],
+        },
         path: ['operator'],
         label: 'operator',
         description: '判断事件来源与目标相同或不同。',
@@ -6001,6 +22553,18 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['equal', 'notEqual'],
+        semantics: {
+          type: '"equal" | "notEqual"',
+          unionVariants: [
+            {
+              type: '"equal"',
+            },
+            {
+              type: '"notEqual"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:571:7'],
       },
     ],
   },
@@ -6008,6 +22572,22 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '比较当前动作宿主与事件目标，不把宿主身份猜成事件来源。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['equal', 'notEqual'],
+          semantics: {
+            type: '"equal" | "notEqual"',
+            unionVariants: [
+              {
+                type: '"equal"',
+              },
+              {
+                type: '"notEqual"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:577:7'],
+        },
         path: ['operator'],
         label: 'operator',
         description: '判断动作宿主与事件目标相同或不同。',
@@ -6015,6 +22595,18 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['equal', 'notEqual'],
+        semantics: {
+          type: '"equal" | "notEqual"',
+          unionVariants: [
+            {
+              type: '"equal"',
+            },
+            {
+              type: '"notEqual"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:577:7'],
       },
     ],
   },
@@ -6022,28 +22614,70 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '原生 CheckOverHeal；非空键会在判断前接收对应事件值。',
     fields: [
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string | undefined',
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:583:7'],
+          optional: true,
+        },
         path: ['overHealKey'],
         label: 'overHealKey',
         description: '保存过量治疗值的动作黑板键。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: {
+          type: 'string | undefined',
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:583:7'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string | undefined',
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:585:7'],
+          optional: true,
+        },
         path: ['finalHealKey'],
         label: 'finalHealKey',
         description: '保存最终治疗值的动作黑板键。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: {
+          type: 'string | undefined',
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:585:7'],
       },
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string | undefined',
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:587:7'],
+          optional: true,
+        },
         path: ['realHealKey'],
         label: 'realHealKey',
         description: '保存实际恢复生命值的动作黑板键。',
         type: 'string',
         required: false,
         control: 'string',
+        semantics: {
+          type: 'string | undefined',
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:587:7'],
       },
     ],
   },
@@ -6067,20 +22701,64 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '当前施术者生成的活动能力实体中是否存在匹配模板（零空间不再做距离裁剪）。',
     fields: [
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'string',
+            semantics: {
+              type: 'string',
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:613:7'],
+          },
+          semantics: {
+            type: 'readonly string[] | undefined',
+            arrayElement: {
+              type: 'string',
+            },
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:613:7'],
+          optional: true,
+        },
         path: ['abilityEntityIds'],
         label: 'abilityEntityIds',
         description: '只匹配这些能力实体 ID；省略时接受任意 ID。',
         type: 'readonly string[]',
         required: false,
         control: 'json',
+        semantics: {
+          type: 'readonly string[] | undefined',
+          arrayElement: {
+            type: 'string',
+          },
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:613:7'],
+        fallback: {
+          reason: 'structured-editor-pending',
+        },
       },
       {
+        valueSchema: {
+          kind: 'boolean',
+          semantics: {
+            type: 'boolean | undefined',
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:615:7'],
+          optional: true,
+        },
         path: ['sameSourceSkillCast'],
         label: 'sameSourceSkillCast',
         description: '是否只接受和当前 Buff 来自同一次技能施放的实体。',
         type: 'boolean',
         required: false,
         control: 'boolean',
+        semantics: {
+          type: 'boolean | undefined',
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:615:7'],
       },
     ],
   },
@@ -6088,20 +22766,217 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '检查敌人身上是否存在指定元素附着。',
     fields: [
       {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'enum',
+              options: ['physical', 'heat', 'cryo', 'electric', 'nature'],
+              source: ['packages/game-data-contract/src/conditions.ts:621:7'],
+              semantics: {
+                type: '"physical" | "heat" | "cryo" | "electric" | "nature"',
+                unionVariants: [
+                  {
+                    type: '"physical"',
+                  },
+                  {
+                    type: '"heat"',
+                  },
+                  {
+                    type: '"cryo"',
+                  },
+                  {
+                    type: '"electric"',
+                  },
+                  {
+                    type: '"nature"',
+                  },
+                ],
+              },
+            },
+            {
+              kind: 'array',
+              element: {
+                kind: 'enum',
+                options: ['physical', 'heat', 'cryo', 'electric', 'nature'],
+                semantics: {
+                  type: '"physical" | "heat" | "cryo" | "electric" | "nature"',
+                  unionVariants: [
+                    {
+                      type: '"physical"',
+                    },
+                    {
+                      type: '"heat"',
+                    },
+                    {
+                      type: '"cryo"',
+                    },
+                    {
+                      type: '"electric"',
+                    },
+                    {
+                      type: '"nature"',
+                    },
+                  ],
+                },
+                source: ['packages/game-data-contract/src/conditions.ts:621:7'],
+              },
+              semantics: {
+                type: 'readonly ("physical" | "heat" | "cryo" | "electric" | "nature")[]',
+                arrayElement: {
+                  type: '"physical" | "heat" | "cryo" | "electric" | "nature"',
+                  unionVariants: [
+                    {
+                      type: '"physical"',
+                    },
+                    {
+                      type: '"heat"',
+                    },
+                    {
+                      type: '"cryo"',
+                    },
+                    {
+                      type: '"electric"',
+                    },
+                    {
+                      type: '"nature"',
+                    },
+                  ],
+                },
+              },
+              source: ['packages/game-data-contract/src/conditions.ts:621:7'],
+            },
+          ],
+          semantics: {
+            type: '"physical" | "heat" | "cryo" | "electric" | "nature" | readonly ("physical" | "heat" | "cryo" | "electric" | "nature")[]',
+            unionVariants: [
+              {
+                type: '"physical" | "heat" | "cryo" | "electric" | "nature"',
+                unionVariants: [
+                  {
+                    type: '"physical"',
+                  },
+                  {
+                    type: '"heat"',
+                  },
+                  {
+                    type: '"cryo"',
+                  },
+                  {
+                    type: '"electric"',
+                  },
+                  {
+                    type: '"nature"',
+                  },
+                ],
+              },
+              {
+                type: 'readonly ("physical" | "heat" | "cryo" | "electric" | "nature")[]',
+                arrayElement: {
+                  type: '"physical" | "heat" | "cryo" | "electric" | "nature"',
+                  unionVariants: [
+                    {
+                      type: '"physical"',
+                    },
+                    {
+                      type: '"heat"',
+                    },
+                    {
+                      type: '"cryo"',
+                    },
+                    {
+                      type: '"electric"',
+                    },
+                    {
+                      type: '"nature"',
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:621:7'],
+        },
         path: ['elements'],
         label: 'elements',
         description: '任一匹配即可成立的元素。',
         type: 'DamageElement | readonly DamageElement[]',
         required: true,
         control: 'json',
+        semantics: {
+          type: '"physical" | "heat" | "cryo" | "electric" | "nature" | readonly ("physical" | "heat" | "cryo" | "electric" | "nature")[]',
+          unionVariants: [
+            {
+              type: '"physical" | "heat" | "cryo" | "electric" | "nature"',
+              unionVariants: [
+                {
+                  type: '"physical"',
+                },
+                {
+                  type: '"heat"',
+                },
+                {
+                  type: '"cryo"',
+                },
+                {
+                  type: '"electric"',
+                },
+                {
+                  type: '"nature"',
+                },
+              ],
+            },
+            {
+              type: 'readonly ("physical" | "heat" | "cryo" | "electric" | "nature")[]',
+              arrayElement: {
+                type: '"physical" | "heat" | "cryo" | "electric" | "nature"',
+                unionVariants: [
+                  {
+                    type: '"physical"',
+                  },
+                  {
+                    type: '"heat"',
+                  },
+                  {
+                    type: '"cryo"',
+                  },
+                  {
+                    type: '"electric"',
+                  },
+                  {
+                    type: '"nature"',
+                  },
+                ],
+              },
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:621:7'],
+        fallback: {
+          reason: 'structured-editor-pending',
+        },
       },
       {
+        valueSchema: {
+          kind: 'number',
+          semantics: {
+            type: 'number | undefined',
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:623:7'],
+          optional: true,
+        },
         path: ['minimumStacks'],
         label: 'minimumStacks',
         description: '至少需要达到的附着层数。',
         type: 'number',
         required: false,
         control: 'number',
+        semantics: {
+          type: 'number | undefined',
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:623:7'],
       },
     ],
   },
@@ -6109,6 +22984,22 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '检查指定复合元素反应是否生效。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['electrification', 'corrosion'],
+          semantics: {
+            type: '"electrification" | "corrosion"',
+            unionVariants: [
+              {
+                type: '"electrification"',
+              },
+              {
+                type: '"corrosion"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:629:7'],
+        },
         path: ['reaction'],
         label: 'reaction',
         description: '要检查的元素反应。',
@@ -6116,14 +23007,40 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['electrification', 'corrosion'],
+        semantics: {
+          type: '"electrification" | "corrosion"',
+          unionVariants: [
+            {
+              type: '"electrification"',
+            },
+            {
+              type: '"corrosion"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:629:7'],
       },
       {
+        valueSchema: {
+          kind: 'number',
+          semantics: {
+            type: 'number | undefined',
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:631:7'],
+          optional: true,
+        },
         path: ['minimumLevel'],
         label: 'minimumLevel',
         description: '反应至少需要达到的等级。',
         type: 'number',
         required: false,
         control: 'number',
+        semantics: {
+          type: 'number | undefined',
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:631:7'],
       },
     ],
   },
@@ -6131,12 +23048,31 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '对一个子条件的结果取反。',
     fields: [
       {
+        valueSchema: {
+          kind: 'condition',
+          fallback: {
+            reason: 'condition-editor-pending',
+          },
+          semantics: {
+            type: 'CombatCondition',
+            aliases: ['CombatCondition'],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:637:7'],
+        },
         path: ['condition'],
         label: 'condition',
         description: '要取反的条件。',
         type: 'CombatCondition',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'CombatCondition',
+          aliases: ['CombatCondition'],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:637:7'],
+        fallback: {
+          reason: 'structured-editor-pending',
+        },
       },
     ],
   },
@@ -6144,12 +23080,45 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '所有子条件都成立时返回真。',
     fields: [
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'condition',
+            fallback: {
+              reason: 'condition-editor-pending',
+            },
+            semantics: {
+              type: 'CombatCondition',
+              aliases: ['CombatCondition'],
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:643:7'],
+          },
+          semantics: {
+            type: 'readonly CombatCondition[]',
+            arrayElement: {
+              type: 'CombatCondition',
+              aliases: ['CombatCondition'],
+            },
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:643:7'],
+        },
         path: ['conditions'],
         label: 'conditions',
         description: '需要同时成立的条件。',
         type: 'readonly CombatCondition[]',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'readonly CombatCondition[]',
+          arrayElement: {
+            type: 'CombatCondition',
+            aliases: ['CombatCondition'],
+          },
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:643:7'],
+        fallback: {
+          reason: 'structured-editor-pending',
+        },
       },
     ],
   },
@@ -6157,12 +23126,45 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '任一子条件成立时返回真。',
     fields: [
       {
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'condition',
+            fallback: {
+              reason: 'condition-editor-pending',
+            },
+            semantics: {
+              type: 'CombatCondition',
+              aliases: ['CombatCondition'],
+            },
+            source: ['packages/game-data-contract/src/conditions.ts:649:7'],
+          },
+          semantics: {
+            type: 'readonly CombatCondition[]',
+            arrayElement: {
+              type: 'CombatCondition',
+              aliases: ['CombatCondition'],
+            },
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:649:7'],
+        },
         path: ['conditions'],
         label: 'conditions',
         description: '只需其中一项成立的条件。',
         type: 'readonly CombatCondition[]',
         required: true,
         control: 'json',
+        semantics: {
+          type: 'readonly CombatCondition[]',
+          arrayElement: {
+            type: 'CombatCondition',
+            aliases: ['CombatCondition'],
+          },
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:649:7'],
+        fallback: {
+          reason: 'structured-editor-pending',
+        },
       },
     ],
   },
@@ -6170,6 +23172,28 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '在构筑阶段比较两项干员四维。',
     fields: [
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['strength', 'agility', 'intellect', 'will'],
+          semantics: {
+            type: '"strength" | "agility" | "intellect" | "will"',
+            unionVariants: [
+              {
+                type: '"strength"',
+              },
+              {
+                type: '"agility"',
+              },
+              {
+                type: '"intellect"',
+              },
+              {
+                type: '"will"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:655:7'],
+        },
         path: ['left'],
         label: 'left',
         description: '左侧属性。',
@@ -6177,8 +23201,54 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['strength', 'agility', 'intellect', 'will'],
+        semantics: {
+          type: '"strength" | "agility" | "intellect" | "will"',
+          unionVariants: [
+            {
+              type: '"strength"',
+            },
+            {
+              type: '"agility"',
+            },
+            {
+              type: '"intellect"',
+            },
+            {
+              type: '"will"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:655:7'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+          semantics: {
+            type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+            unionVariants: [
+              {
+                type: '"equal"',
+              },
+              {
+                type: '"notEqual"',
+              },
+              {
+                type: '"greater"',
+              },
+              {
+                type: '"greaterOrEqual"',
+              },
+              {
+                type: '"less"',
+              },
+              {
+                type: '"lessOrEqual"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:657:7'],
+        },
         path: ['operator'],
         label: 'operator',
         description: '数值比较符。',
@@ -6186,8 +23256,54 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+        semantics: {
+          type: '"equal" | "notEqual" | "greater" | "greaterOrEqual" | "less" | "lessOrEqual"',
+          unionVariants: [
+            {
+              type: '"equal"',
+            },
+            {
+              type: '"notEqual"',
+            },
+            {
+              type: '"greater"',
+            },
+            {
+              type: '"greaterOrEqual"',
+            },
+            {
+              type: '"less"',
+            },
+            {
+              type: '"lessOrEqual"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:657:7'],
       },
       {
+        valueSchema: {
+          kind: 'enum',
+          options: ['strength', 'agility', 'intellect', 'will'],
+          semantics: {
+            type: '"strength" | "agility" | "intellect" | "will"',
+            unionVariants: [
+              {
+                type: '"strength"',
+              },
+              {
+                type: '"agility"',
+              },
+              {
+                type: '"intellect"',
+              },
+              {
+                type: '"will"',
+              },
+            ],
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:659:7'],
+        },
         path: ['right'],
         label: 'right',
         description: '右侧属性。',
@@ -6195,6 +23311,24 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
         required: true,
         control: 'select',
         options: ['strength', 'agility', 'intellect', 'will'],
+        semantics: {
+          type: '"strength" | "agility" | "intellect" | "will"',
+          unionVariants: [
+            {
+              type: '"strength"',
+            },
+            {
+              type: '"agility"',
+            },
+            {
+              type: '"intellect"',
+            },
+            {
+              type: '"will"',
+            },
+          ],
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:659:7'],
       },
     ],
   },
@@ -6202,12 +23336,23 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '从当前资源图读取数值表达式，在使用点按当前作用域求值。',
     fields: [
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string',
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:747:7'],
+        },
         path: ['nodeId'],
         label: 'nodeId',
         description: '',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: {
+          type: 'string',
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:747:7'],
       },
     ],
   },
@@ -6215,20 +23360,45 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '从当前动作黑板读取。',
     fields: [
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string',
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:753:7'],
+        },
         path: ['key'],
         label: 'key',
         description: '要读取的黑板键。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: {
+          type: 'string',
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:753:7'],
       },
       {
+        valueSchema: {
+          kind: 'number',
+          semantics: {
+            type: 'number | undefined',
+            optional: true,
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:755:7'],
+          optional: true,
+        },
         path: ['fallback'],
         label: 'fallback',
         description: '仅在原生调用点明确使用 GetValueOrDefault 时携带；缺省仍严格报错。',
         type: 'number',
         required: false,
         control: 'number',
+        semantics: {
+          type: 'number | undefined',
+          optional: true,
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:755:7'],
       },
     ],
   },
@@ -6236,12 +23406,23 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '直接使用固定数值。',
     fields: [
       {
+        valueSchema: {
+          kind: 'number',
+          semantics: {
+            type: 'number',
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:761:7'],
+        },
         path: ['value'],
         label: 'value',
         description: '固定数值。',
         type: 'number',
         required: true,
         control: 'number',
+        semantics: {
+          type: 'number',
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:761:7'],
       },
     ],
   },
@@ -6249,12 +23430,103 @@ export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = {
     description: '引用宏调用参数；只允许出现在声明了同名参数的宏图内。',
     fields: [
       {
+        valueSchema: {
+          kind: 'string',
+          semantics: {
+            type: 'string',
+          },
+          source: ['packages/game-data-contract/src/conditions.ts:767:7'],
+        },
         path: ['parameter'],
         label: 'parameter',
         description: '形参名；在使用点求值，不做调用时快照。',
         type: 'string',
         required: true,
         control: 'string',
+        semantics: {
+          type: 'string',
+        },
+        source: ['packages/game-data-contract/src/conditions.ts:767:7'],
+      },
+    ],
+  },
+  'string:stringOperand': {
+    description: '字符串常量或当前动作黑板读取；在每个消费位置独立求值。',
+    fields: [
+      {
+        valueSchema: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'string',
+              semantics: {
+                type: 'string',
+              },
+              source: ['packages/game-data-contract/src/actionGraph.ts:65:32'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                blackboardKey: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/primitives.ts:63:7'],
+                  description: '读取字符串的当前动作黑板键。',
+                },
+              },
+              semantics: {
+                type: '{ readonly blackboardKey: string; }',
+              },
+              source: ['packages/game-data-contract/src/actionGraph.ts:65:32'],
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: {
+                  kind: 'enum',
+                  options: ['stringNode'],
+                  semantics: {
+                    type: '"stringNode"',
+                  },
+                  source: ['packages/game-data-contract/src/primitives.ts:67:7'],
+                  description: '绑定本图字符串表达式；各使用点仍读取各自当前动作上下文。',
+                },
+                nodeId: {
+                  kind: 'string',
+                  semantics: {
+                    type: 'string',
+                  },
+                  source: ['packages/game-data-contract/src/primitives.ts:68:7'],
+                },
+              },
+              semantics: {
+                type: '{ readonly kind: "stringNode"; readonly nodeId: string; }',
+              },
+              source: ['packages/game-data-contract/src/actionGraph.ts:65:32'],
+            },
+          ],
+          semantics: {
+            type: 'ActionStringOperand',
+            aliases: ['ActionStringOperand'],
+          },
+          source: ['packages/game-data-contract/src/actionGraph.ts:65:32'],
+        },
+        path: ['expression'],
+        label: 'expression',
+        description: '',
+        type: 'ActionStringOperand',
+        required: true,
+        control: 'json',
+        semantics: {
+          type: 'ActionStringOperand',
+          aliases: ['ActionStringOperand'],
+        },
+        source: ['packages/game-data-contract/src/actionGraph.ts:65:32'],
+        fallback: {
+          reason: 'structured-editor-pending',
+        },
       },
     ],
   },

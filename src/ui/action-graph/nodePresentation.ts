@@ -4,8 +4,11 @@ import type {
   ActionGraphDataNode,
 } from '../../../packages/game-data-contract/src/actionGraph';
 import { nodeName } from './editorNodeText';
+export function dataNodeKind(node: ActionGraphDataNode): string {
+  return node.type === 'string' ? 'stringOperand' : node.expression.kind;
+}
 export function dataNodeTitle(node: ActionGraphDataNode): string {
-  return nodeName(node.expression.kind);
+  return nodeName(dataNodeKind(node));
 }
 export function actionNodeTitle(kind: ActionGraphStep['kind']): string {
   return nodeName(kind);

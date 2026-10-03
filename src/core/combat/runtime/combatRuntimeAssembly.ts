@@ -1646,6 +1646,7 @@ export class CombatRuntimeAssembly {
           ...this.#createAbilityRuntimeBindings(operator.operatorId),
           buffRuntime,
           skills,
+          skillDefinitions: [...cooldownPrograms.values()],
           skillTickPlan: [...cooldownPrograms.keys()].map(skillId => {
             const ledger = this.#skillCooldowns.get(`${operator.operatorId}\u0000${skillId}`)!;
             return {

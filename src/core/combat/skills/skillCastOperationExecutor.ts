@@ -1,3 +1,4 @@
+import type { ActionStringOperand } from '../../../../packages/game-data-contract/src/primitives';
 import type {
   ResolvedCombatOperationStep,
   ResolvedCombatStepForKind,
@@ -85,10 +86,11 @@ export class SkillCastOperationExecutor implements CombatOperationExecutor {
 }
 
 function resolveNativeSkillId(
-  operand: string | { readonly blackboardKey: string },
+  operand: ActionStringOperand,
   context: CombatOperationContext | undefined,
 ): string {
   if (typeof operand === 'string') return operand;
+  if ('kind' in operand) throw new Error(`unbound string data node: ${operand.nodeId}`);
   const value = context?.blackboard.getString(operand.blackboardKey);
   if (value === undefined || value.length === 0) {
     throw new Error(`deferred skill id blackboard '${operand.blackboardKey}' is missing`);

@@ -426,6 +426,8 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
 
     if (step.kind === 'applyBuff') {
       const identity = step.parameters.buffId;
+      if (typeof identity !== 'string' && 'kind' in identity)
+        throw new Error(`unbound string data node: ${identity.nodeId}`);
       const dynamicId = typeof identity !== 'string';
       if (
         dynamicId &&

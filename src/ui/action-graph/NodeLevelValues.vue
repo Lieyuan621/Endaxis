@@ -3,35 +3,76 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { EaButton, EaInput, EaSelect, type EaSelectValue } from '@/design-system';
 
-const props = defineProps<{ text: string; required: boolean; label: string }>();
-const emit = defineEmits<{ change: [text: string] }>();
+const props = defineProps<{
+  text?: string;
+  value?: number | readonly number[];
+  required: boolean;
+  label: string;
+  readonly?: boolean;
+}>();
+const emit = defineEmits<{
+  change: [text: string];
+  valueChange: [value: number | readonly number[] | undefined];
+}>();
 const { t } = useI18n();
 const value = computed<number | readonly number[] | undefined>(() =>
-  props.text ? JSON.parse(props.text) : undefined,
+  props.text !== undefined ? (props.text ? JSON.parse(props.text) : undefined) : props.value,
 );
-const mode = computed(() =>
-  value.value === undefined ? 'unset' : Array.isArray(value.value) ? 'levels' : 'single',
-);
-const values = computed<readonly number[]>(() =>
-  Array.isArray(value.value) ? value.value : [value.value ?? 0],
+const mode = ref<'unset' | 'levels' | 'single'>('unset');
+const values = computed<readonly (number | undefined)[]>(() =>
+  Array.isArray(value.value)
+    ? value.value.length
+      ? value.value
+      : [undefined]
+    : [value.value as number | undefined],
 );
 const drafts = ref<string[]>([]);
-watch(values, current => (drafts.value = current.map(String)), { immediate: true });
-
-function switchMode(mode: EaSelectValue | EaSelectValue[]) {
-  if (mode !== 'unset' && mode !== 'single' && mode !== 'levels') return;
-  if (mode === 'unset') emit('change', '');
-  else emit('change', JSON.stringify(mode === 'levels' ? values.value : (values.value[0] ?? 0)));
+watch(
+  value,
+  current => {
+    mode.value = current === undefined ? 'unset' : Array.isArray(current) ? 'levels' : 'single';
+    drafts.value = values.value.map(value => (value === undefined ? '' : String(value)));
+  },
+  { immediate: true },
+);
+function publish(value: number | readonly number[] | undefined) {
+  if (props.readonly) return;
+  emit('valueChange', value);
+  emit('change', value === undefined ? '' : JSON.stringify(value));
+}
+function switchMode(next: EaSelectValue | EaSelectValue[]) {
+  if (props.readonly || (next !== 'unset' && next !== 'single' && next !== 'levels')) return;
+  if (next === 'unset' && props.required) return;
+  mode.value = next;
+  if (next === 'unset') publish(undefined);
+  else if (value.value !== undefined && values.value[0] !== undefined)
+    publish(
+      next === 'levels'
+        ? values.value.filter((value): value is number => value !== undefined)
+        : values.value[0],
+    );
 }
 function update(index: number, raw: string) {
+  if (props.readonly) return;
+  drafts.value[index] = raw;
   const nextValue = Number(raw);
   if (raw.trim() === '' || !Number.isFinite(nextValue)) {
-    drafts.value[index] = String(values.value[index]);
+    const previous = values.value[index];
+    drafts.value[index] = previous === undefined ? '' : String(previous);
     return;
   }
   const next = [...values.value];
   next[index] = nextValue;
-  emit('change', JSON.stringify(mode.value === 'levels' ? next : next[0]));
+  if (next.some(value => value === undefined)) return;
+  publish(mode.value === 'levels' ? (next as number[]) : next[0]);
+}
+function remove(index: number) {
+  publish(values.value.filter((value, i): value is number => i !== index && value !== undefined));
+}
+function add() {
+  const last = values.value.at(-1);
+  if (last !== undefined)
+    publish([...values.value.filter((value): value is number => value !== undefined), last]);
 }
 </script>
 
@@ -42,6 +83,7 @@ function update(index: number, raw: string) {
       :aria-label="label"
       size="sm"
       :model-value="mode"
+      :disabled="readonly"
       :options="[
         ...(!required ? [{ value: 'unset', label: t('actionGraphEditor.unset') }] : []),
         { value: 'single', label: t('actionGraphEditor.singleValue') },
@@ -60,23 +102,25 @@ function update(index: number, raw: string) {
           type="number"
           step="any"
           :aria-label="`${label} ${index + 1}`"
-          :model-value="drafts[index] ?? String(item)"
+          :model-value="drafts[index] ?? (item === undefined ? '' : String(item))"
+          :disabled="readonly"
           @input="drafts[index] = $event"
           @change="update(index, $event)"
         />
         <EaButton
           v-if="mode === 'levels'"
           size="sm"
-          :disabled="values.length <= 1"
+          :disabled="readonly || values.length <= 1"
           :aria-label="t('actionGraphEditor.removeValue')"
-          @click="emit('change', JSON.stringify(values.filter((_, i) => i !== index)))"
+          @click="remove(index)"
           >−</EaButton
         >
       </label>
       <EaButton
         v-if="mode === 'levels'"
         size="sm"
-        @click="emit('change', JSON.stringify([...values, values.at(-1) ?? 0]))"
+        :disabled="readonly || values.at(-1) === undefined"
+        @click="add"
         >{{ t('actionGraphEditor.addValue') }}</EaButton
       >
     </template>

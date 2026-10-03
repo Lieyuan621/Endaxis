@@ -88,7 +88,12 @@ function setup() {
     skills: [combo()],
     skillCasts: [] as { readonly castId: string; readonly program: CompiledSkillProgram }[],
     skillSlotGroups: [
-      { skillSlotKey: 'combo', baseSkillKey: 'combo', replacementSkillKeys: [] as string[] },
+      {
+        skillSlotKey: 'combo',
+        input: 'comboSkill' as const,
+        baseSkillKey: 'combo',
+        replacementSkillKeys: [] as string[],
+      },
     ],
     comboConditionPrograms: [condition],
   };
@@ -535,7 +540,19 @@ describe('assembly 原生常驻连携条件', () => {
         },
       ],
     });
-    assembly.tryStartSkill('owner', 'switch');
+    expect(assembly.tryStartSkill('owner', 'switch')).toBe(true);
+    expect(() => assembly.tryStartSkill('owner', 'variant')).toThrow(
+      "unknown ability skill 'variant'",
+    );
+    expect(
+      assembly.receipt.entries.find(entry => entry.event === 'SkillSlotChanged'),
+    ).toMatchObject({
+      data: {
+        previousSkillKey: 'combo',
+        targetSkillKey: 'variant',
+        inheritedCooldownProgress: 0.5,
+      },
+    });
     f.emit();
     expect(f.pending).toHaveLength(0);
     assembly.advanceFrames(299);
@@ -576,7 +593,7 @@ describe('assembly 原生常驻连携条件', () => {
     });
   });
 
-  it.each(['missing-ledger', 'missing-start-frame'])(
+  it.each(['missing-definition', 'missing-start-frame'])(
     '当前槽位 %s 时明确失败，不回退到条件原技能',
     failure => {
       const f = setup();
@@ -596,8 +613,17 @@ describe('assembly 原生常驻连携条件', () => {
       if (failure === 'missing-start-frame')
         f.owner.skills.push({ ...combo('missing'), costFrame: undefined });
       const assembly = new CombatRuntimeAssembly(f.options);
-      expect(assembly.tryStartSkill('owner', 'switch')).toBe(true);
-      expect(f.emit).toThrow('combo condition requires current ComboSkill cooldown');
+      if (failure === 'missing-definition') {
+        expect(() => assembly.tryStartSkill('owner', 'switch')).toThrow(
+          "unknown ability skill 'missing' for native SkillType query",
+        );
+        expect(assembly.receipt.entries.some(entry => entry.event === 'SkillSlotChanged')).toBe(
+          false,
+        );
+      } else {
+        expect(assembly.tryStartSkill('owner', 'switch')).toBe(true);
+        expect(f.emit).toThrow('combo condition requires current ComboSkill cooldown');
+      }
       expect(f.pending).toHaveLength(0);
       expect(assembly.comboWindows.pending).toHaveLength(0);
     },

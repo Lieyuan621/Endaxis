@@ -30,10 +30,68 @@ export const REFERENCE_FIELD_KIND: Readonly<
   stableSkillKeys: 'skill',
   normalAttackSkillKeys: 'skill',
   abilityEntityId: 'abilityEntity',
+  skillKeys: 'skill',
+  buffIds: 'buff',
+  triggerBuffIds: 'buff',
+  inheritToNextSkillIds: 'skill',
+  abilityEntityIds: 'abilityEntity',
 };
 
-export interface FieldChoice {
-  readonly value: string;
-  readonly label: string;
+export type { ReferenceChoices } from '../../application/editor/referenceResolver';
+
+/** Legacy plain-string references are scoped to their formal contract declarations.
+ * A coincidentally named property in an imported/custom schema is ordinary text.
+ * Keep this separate from candidates: an empty resource catalog does not erase a type.
+ */
+const REFERENCE_DECLARATION_FILES: Readonly<Record<string, readonly string[]>> = {
+  gearSetSlug: ['equipment'],
+  buffId: ['buffs', 'actions', 'operators', 'consumables'],
+  normalBuffId: ['operators'],
+  ultimateBuffId: ['operators'],
+  reserveArrowBuffId: ['operators'],
+  battleArrowBuffId: ['operators'],
+  pointBuffId: ['operators'],
+  skillGroupKey: ['operators'],
+  skillSlotKey: ['buffs', 'actions', 'skills'],
+  skillKey: ['actions', 'operators'],
+  executionSkillKey: ['skills'],
+  // Equipment skillId records provenance; it is not an operator skill reference.
+  skillId: ['actions', 'skills'],
+  targetSkillKey: ['buffs', 'actions'],
+  targetSkillId: ['skills'],
+  timelineContinuationSkillId: ['skills'],
+  timelineBlockFollowUpSkillId: ['skills'],
+  skillIds: ['actions', 'skills', 'conditions'],
+  enhancementStateBuffId: ['skills'],
+  revertedSkillKey: ['buffs', 'actions'],
+  baseSkillKey: ['skills'],
+  defaultSkillKey: ['skills'],
+  firstSkillKey: ['skills'],
+  terminalSkillKey: ['skills'],
+  placementSequenceSkillKeys: ['skills'],
+  replacementSkillKeys: ['skills'],
+  stableSkillKeys: ['skills'],
+  normalAttackSkillKeys: ['skills'],
+  abilityEntityId: ['actions', 'operators'],
+  skillKeys: ['skills'],
+  triggerBuffIds: ['actions', 'buffs'],
+  buffIds: ['actions', 'operators', 'conditions', 'modifiers'],
+  inheritToNextSkillIds: ['actions'],
+  abilityEntityIds: ['actions', 'skills', 'conditions'],
+};
+
+export function referenceKindForDeclaration(
+  name: string,
+  source: readonly string[] | undefined,
+): string | undefined {
+  const files = REFERENCE_DECLARATION_FILES[name];
+  if (!files || !source?.length) return undefined;
+  if (
+    !source.some(origin => {
+      const match = /^packages\/game-data-contract\/src\/([^/]+)\.ts:\d+:\d+$/.exec(origin);
+      return match !== null && files.includes(match[1]!);
+    })
+  )
+    return undefined;
+  return REFERENCE_FIELD_KIND[name];
 }
-export type ReferenceChoices = Readonly<Record<string, readonly FieldChoice[]>>;

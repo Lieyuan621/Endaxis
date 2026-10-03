@@ -89,6 +89,42 @@
 
 `ui/editor` 放置共用检查器等控件，`ui/definition-editor` 根据生成的字段描述选择输入方式。描述从正式类型生成，语言资源仍在统一的 i18n 目录中。可选字段允许禁用，必填但允许 `null` 的字段必须保留，并明确选择空值。
 
+`ui/field-editor/fieldEditorDispatch` 是定义字段与节点字段共用的纯分派入口。它消费生成的别名、声明来源和显式上下文，区分查看、编辑与后备原因；不读取资源库，也不按候选数量或当前值形状决定字段是否为引用。仍使用普通字符串的旧引用只在已审核的正式契约声明范围内配置，普通文字保持基础输入。
+
+引用叶子共用 `ReferenceField`，应用层 `referenceResolver` 消费明确资源族、owner、目录完整性与带来源的候选，区分未选、有效、失效、歧义、不可见和上下文未知。候选可用性与当前值状态分开；空目录仍是引用，旧值不自动选首项或清空。source-qualified 身份用于显示与导航，序列化仍是原始 ID。公共/局部 Buff 和实体冲突与编译器一致，不作局部覆盖；其他干员的同名资源不能进入当前 owner 的候选。目标可编辑性独立于可选择与可查看性，内置资源仍可跳转。
+
+宿主供给目录与导航能力，不由控件遍历全库。`operatorReferenceChoices` 只枚举确切干员及显式公共来源；实体子技能不混入干员技能命名空间。`workspaceReferenceChoices` 区分当前文档、其他 owner 与共享资源；未发布派生资产不进入全局装备套装候选，发布后的引用 ID 采用会话 targetId，不误用仍保留在编辑快照中的原 slug。工作区跳转使用资产 ID + 真实资源路径，并只记录最终目标，返回恢复原视图。共享实体没有独立资产浏览入口时保留无导航目标；缺少运行时干员上下文的独立资产明确报告未知，不猜测调用方。
+
+optional、union、array/record 和新建入口传递同一引用族，进入对象子字段时不把父级资源族扩散到黑板键等普通文字。`DefinitionValueCreator` 创建和节点已修改引用提交前再次检查当前目录，失效或歧义保留草稿并拒绝提交；目录更新不会重置输入。写入继续走原定义/图命令及历史，不另建保存通道，编辑器解析不能代替编译/运行时校验。
+
+`StringCollectionField` 只消费正式同质字符串数组描述（含等价参数联合），资源叶子复用 `ReferenceField`，标签叶子复用 `GameplayTagField`；正式 `finishGlobalBuffsById.globalBuffIds` 声明走开放 `nativeId` 文本模式，不从当前数组内容推测语义。列表查看保留原顺序、重复项和失效旧 ID；编辑先局部增删改排，一次 Apply 进入现有事务。取消、只读切换和外部替换丢弃草稿，拒绝则保留。新增资源项提交时重验最新目录；原有失效项按出现次数允许保留、移动或删除，不允许借此新增失效副本。必填不等于非空，空列表是否可用仍由领域校验决定。`ownerContextKey` 指定其他施法者时不给当前干员目录，包括尚未提交的 owner 修改。原生 GlobalBuff ID 查询要求非空列表和非空原始字符串，保留空白、顺序与重复项；未知 ID 合法且无匹配，不要求目录或提供资产导航，旧空字符串也不能借失效引用保留规则通过。此分类与真正资产引用的严格目录规则分离。
+
+图内 dealDamage 的 instantAttributeModifiers / instantDamageScaleModifiers 通过正式声明、精确 kind/path 限定结构控件权限。数值叶子使用当前动作黑板及当前宏参数；valueNode 只保留与定位，连接/断开仍走 GraphDataInputs。数组引用身份、次数和边界保护不放宽，先显式断连才能移除带连接行。replaceResourceNodeAction 校验绑定后的副本、保存原引用并验证完整 owner 图；字段 flush 后 owner 改变会终止旧 indexed 连线事件，避免对重排后的另一行写入。
+
+switch.options 与 listenForCombatEvents.parameters.responses 是精确声明限定的混合结构入口。元数据和 switch 数值通过 typed 行编辑，sequence 只显示空分支/目标并提供图导航；新行显式创建 {$sequence:null}，带连接行先显式断开才能删除，目标/data 节点不随行操作删除。listener condition 保持图拥有的原子表达式，通过 GraphDataInputs 的布尔常量/条件节点连接入口处理，新增行可省略；唯一 key、非空、phase/priority 和 endFrame 仍由原完整 validator 校验。源/目标/主宏可能在字段 flush 后改变，canvas 与 inspector 的事件使用渲染时图值及资源/主宏身份快照；host 对不上即终止旧接线并要求重选，selected-wire Delete 不重新绑定旧行索引。
+
+spawnAbilityEntity.definition 的外层值通过精确正式声明进入结构编辑；childSkill、childSkills、passiveSkills 整槽只读并保持对象身份，字段按钮按真实根相对路径打开各自独立图。工作区仅发现已有主图/宏 spawn 子资源，有限递归，不新增运行时 ID 目录；同名和共享对象按 owner 路径隔离，inline 子资源不成为普通技能候选。未暂存草稿先 Stage/Cancel，跳转 flush 后再核验资源身份；不可导航的 host 明示原因，只读仍可查看。独立图及布局复用同一资产 history 和 Back 路径。模板数值只有 number 或 blackboardKey+必填 fallback：读取可选继承的 direct snapshot、数值覆盖、字符串覆盖，不读取 definition.blackboard 默认值或共享 entity 层，不授予宏参数/图引脚。
+
+定义内联 CombatCondition 只在生成描述明确标记的装备贡献、技能 switchToBuffCast 和受限升级修正宿主开放，`InlineCombatConditionField` 复用通用字段树与数值 mapping 控件并整值提交。命令禁止跨过条件根直接写子路径；整树复用 standalone validator 与有限 schema 校验，不绑定 conditionNode/valueNode/宏 parameter。装备与技能仅提供各自初始黑板声明，未知运行时键仍标为 external/unknown；目标 Buff 读取键使用 externalBuff 语境，图写入与宏候选不成为外层条件作用域。升级 addConditionalDamage 只提供编译器支持的 targetStaggered/enemy。skill.availability 无已建立运行时消费，旧 skill.eventHandlers 非空列表被编译器拒绝；其四个入口有意保持只读并显示原因，原后备逐项保留。BuildCondition 和 Buff-local modifier 条件继续使用各自的正式类型。目录刷新保持局部草稿，提交重验；取消、只读、外部替换使旧草稿失效。编辑事务内的非法数值草稿仅按正式生成的唯一单值 kind 保留分支控件，以便原位纠错；此渲染选型不参与提交或命令校验，也不猜测未编辑导入值与未知分支。
+
+`GameplayTagField` 搜索正式路径目录并展示层级分隔，允许符合既有路径校验的自定义标签；目录不是可用标签的穷举集。每次仅渲染至多 50 个匹配候选及当前值，提供总数与继续筛选提示，避免每行实例化全部目录选项。只读态直接展示路径，可选节点标签可明确清除，字段重置/readonly 切换会失效尚未应用的路径输入。
+
+节点的 `valueSchema` 与定义表单共用 `DefinitionFieldSchema`，由纯生成器 helper 描述真实联合、对象、数组、record、固定 tuple 与字面布尔值。只有全部叶子已具备安全编辑入口的结构才进入 `StructuredValueField`；图、资源、操作数/条件上下文继续留在原入口或明确后备；正式曲线类型使用独立共享语义控件。相同形状的跨声明分支可合并显示，但必须保留来源、别名、引用角色与嵌套必填性，不能把“必填 x 或必填 y”合并成两者都可省略。
+
+`StructuredValueField` 在局部不可变值上修改，Stage field 只暂存字段，宿主 Apply 再验证完整节点并一次写入。这允许时间周期的互斥兄弟字段一起切换，不提交中间无效模式；已有列表、映射和操作数控件在整节点暂存期间也确认到同一草稿。重复打开后无修改的 Stage/Apply 只关闭本地编辑，不丢先前已接受的暂存；显式取消丢弃对应字段提案，宿主取消/readonly 或节点改变清空整个暂存。结构草稿不经过 JSON 文本中转，未修改的扩展属性与非有限数值保持原值。
+
+结构验证使用独立的值编辑上下文，查询中的普通 `key`/`skillId` 不冒充资产身份；资产命令仍保留其原身份限制。判别联合保留真正未知的原有扩展，切换分支只去掉旧分支专属的已知字段。图/资源/不可编辑子树不能通过 optional 清除或数组缩短逃逸保护；数组保留受保护子树身份和出现次数，带资产身份的行仍受原身份约束。新引用按最新目录检查，旧失效引用的保留同样按出现次数计数，不能靠复用同一对象新增失效条目。
+
+固定 tuple 使用各槽真实类型和标签，不能当同质数组增删排序；`skillAliases` 只读兼容映射和派生 `levelHp` 的只读策略向子槽继承。optional/rest tuple 仍明确不支持，不用固定槽控件虚报能力。定义侧等级值复用既有 LevelValues 控件，保留未设、单值与有序等级数组；这不授予容器数据引脚。
+
+`StringOperandField` 在字面量（有资源族时复用引用目录）与 `{ blackboardKey }` 之间显式提交切换。正式 `ActionStringOperand` 图输入还可写为 `{ kind: 'stringNode', nodeId }`，仅连接本图 `type: 'string'` 数据节点；节点表达式直接保留同一字面量/黑板读取形状，支持根输入引用链，不引入另一套字符串运算语言。未连接的详情输入仍由唯一语义控件编辑，图控件负责来源选择，连接后显式替换才断线；普通 string、资源身份、写目标和数值宏参数不获得此能力。黑板键的调用环境由 `graphBlackboard` / `blackboardFieldContext` 分析并注入控件，区分类型、可读证据、宏参数和写目标。已知局部越界与运行时可能提供的未知键分开；共享数据节点按所有使用环境展示，不能假设唯一作用域。写操作可在目标作用域创建/覆盖键，不以读取候选的旧类型限制合法写入；宏参数身份本身只读。读取其他 Buff 的字段显式使用未知外部上下文，不能冒用技能黑板。显式数值 fallback 保持非数字/缺失时的运行时语义。
+
+`BlackboardMappingField` 依据正式声明、确切路径与 record 值语义区分初值、实体赋值、数值/字符串传值和键复制。左侧是目的地写键，右侧是对应类型的表达式；宏调用实参不允许 parameter 操作数。整张映射保持本地草稿，提交通过原命令一次写入，拒绝后保留，取消不写；optional 缺省和空映射分开。对无法证明 owner 的 Buff/实体目的地，只展示未知上下文，不填造候选。
+
+数值/条件输入由 `typedGraphInputs` 将生成语义和当前值结合投影；optional 未赋值槽仍能发现，静态 number、string、BuildCondition 和写目标不因长得像表达式就获准接线。画布与检查器共享 `TypedDataInput`，展示来源并可导航；断开必须明确提交合法常量，取消保留旧线，不自动补 0/false。LevelValues 与数值操作数混合槽保留等级值编辑入口。`setGraphDataInput` 只修改一个消费者，来源不随断线删除，最终仍由原资源/技能验证与历史边界处理。
+
+`all` / `any` 的 `conditions` 使用共享 `ConditionListField` 编辑有序列表，逐项连接与常量替换仍交给数据引脚控件。追加前必须明确选择 true/false；增删和重排先留在本地草稿，Apply 一次提交，Cancel/Escape 清除本字段暂存。重复引用不合并、不重建来源；空列表保持原契约语义。接受的列表修改及所属表达式更换会失效按索引定位的内联草稿，防止重排后把旧输入写到新位置。图/节点身份变化和 readonly 切换也不允许重用旧暂存。该控件只识别正式 CombatCondition 数组，不改 BuildCondition 定义树或引入新求值规则。
+
 `application/editor` 负责不可变修改、草稿历史与项目提交；它不引用 Vue 组件、样式或界面翻译键。保存时继续使用领域校验，不能以表单校验代替完整定义校验。
 
 ### 只读、草稿与保存
@@ -158,3 +194,29 @@ Dagre 根据执行和数据依赖安排层级，同层按最早关联调度排�
 - `src/ui/action-graph/`：画布、时间编辑区、检查器和菜单。
 
 验证应覆盖只读对象不被修改、取消不留草稿、撤销重做恢复逻辑与布局、保存重开保留引用，以及共享数据节点在不同调用时分别求值。实际检查节点拖动、接线命中区、超高时间线和错误布局；类型通过不能代替浏览器验收。
+
+### 时间倍率曲线字段
+
+`TimeScaleCurveDefinition` 只按正式契约声明识别，生成纯 UI schema kind `timeScaleCurve`，不以字段名或同名外部别名推断。`TimeScaleCurveField` 同时供节点、定义字段与新建值使用，named/inline 分支、七个关键帧字段及正负无限切线在本地草稿完成。节点使用 typedDrafts 的 Stage field → 整节点 Apply，不经过 JSON 文本；definition 的命名曲线 key 在语义控件内部编辑，不开放资产身份 key。
+
+命名来源复用 `timeDilationConfig` 的 time-dilation + hit-stop 合并定义及重复键检查，选择时与提交时均按当前目录检查；未识别的导入名称可原样保留。结构校验与原动作校验复用纯曲线规则，只有切线允许 Infinity，排序、权重和 key time 不隐式修复或限制到 [0,1]。已有未知扩展保留，未知/图/资源字段不因此开放。
+
+预览调用运行时 `compileTimeScaleCurve`，按原始 key 顺序有界采样。X 是 elapsed / duration 的归一化进度，Y 是无量纲时间倍率；无限切线的阶跃不连接为斜线，精确 key 值与左右极限分别标记。关键帧分页，超出预览数量或可可靠绘制数值范围只显示预览诊断，不拒绝合法数据或修改曲线。撤销/重做继续使用既有资源图命令和会话；保存/重开复用项目的 Infinity 编码，没有更改格式或运行时求值。
+
+### 有限 schema 引用与深层视窗
+
+生成描述以每个根显式携带的 `references` 和 JSON-shaped `ref` 表达递归，取代任意深度截断。现有 schema/semantic 类型下移到无 Vue 依赖的 `core/editor`，UI 路径保留重导出；共享 resolver 和 union selection 供表单、创建、校验、静态图输入投影及审计使用，不建立全局目录注册表。每个 form 只继承自己的根引用上下文。
+
+真实值遍历拒绝循环或超过 16,384 位置 / 192 层的输入，结构匹配另设工作预算；这些是编辑安全限制，不改变运行时合法性。表单每窗 8 层、每页 50 行，深层可聚焦并保留完整路径、引用族及 readonly 权限；目标消失或分支切换关闭旧焦点。图引用身份、次数和路径仍受保护，未接入专用作用域的操作数不能借有限展开编辑 nodeId。
+
+P4.4c2 在同一精确声明准入下接入 applyBuff.keywordEnhancements、onActionEndBuffs 和 readSkillSettingData.items。triggerBuffIds 是正式 Buff 目录引用；余效 assignments 的 destination 是 exitBuff，数字源在 END 读取当前动作板，目标键类型显式未知。嵌套 mapping 浅层持有原引用，已连接项只能由 GraphDataInputs 显式断连后再改键/删除。items 的四有限列是对现有 number[] 声明的来源限定 UI 配置，提交仍遵守原 validator；storeKey 使用完整 indexed write 路由。只有确定有效、无 enhance 的前项常量列写入可覆盖后续行的数字读证据，动态/越界不推测。Creator 保留实际容器路径、宏和黑板语境；所有列表继续整字段 Stage 和整节点 Apply。未开放 GlobalBuff 局部板、序列混合容器或独立子资源，也不改变运行时执行合法性。
+
+P4.4c3 修正 createGlobalBuff.definition 的独立资源误分类：它没有 actionGraph，内层 operand 的图/宏 namespace 属于 enclosing graph。编辑器明确建立 GlobalBuff closed-local 读语境：definition.blackboard 加数值 override 目标键，override 优先且不继承 creator/entity；宏参数保留表达式身份。graphBlackboard 按 consumer field path 注册独立作用域及多 dataContexts，null 保留非数值证据；普通板仍开放。outer count/assignments 读 creator，duration/shared SP/child assignment 源读新板，child 目标键属于 child Buff。控件和连接/读节点创建共享这一语境，局部变量禁止创建 graph 写动作；全节点 sibling proposal 重验包括未修改的 definition，避免只删 override 后留下非法局部读。GlobalBuff 值仍在原运行时创建边沿同步求值，未修改领域/求值/序列化语义。
+
+### 字符串数据图边界
+
+字符串数据节点共享表达式定义，不共享读取结果；编译绑定只替换图内引用，仍在动作或条件的每个消费位置读取当时黑板。正式消费位为 `applyBuff.buffId`、`castSkillDuringAction.skillId`、两种创建定时标记的 `markerId` 与两种标记条件的 `markerId`。生成 schema 与绑定允许列表由覆盖测试锁定；数值、布尔及字符串引用不能互换，也不做隐式类型转换。
+
+主图、宏图与子资源分别解析自己的节点命名空间；缺失、未知类型、非法形状与循环在编译前拒绝。字符串读取保留每个消费点的局部板及可见性；已知类型不符的连接与字段编辑同样拒绝，外部运行时可能提供的未知键仍可表达。变量拖到正式 string 输入时以目标类型建立读取，宏参数仍只允许 number，写目标保持静态键。删除仍被消费的来源失败且不改变历史；文字、键的空白精确保留，非空限制来自原操作数契约。
+
+当前开发格式不迁移旧 string / `{ blackboardKey }`，抽取器不会自动提升旧字符串输入，也不批量重写内置定义。新引用仍位于原有 dataNodes 中；正式项目保存/导入沿原版本与领域校验边界处理，旧实现会拒绝未知 string 数据类型，而非把它当普通对象忽略。运行状态不存表达式求值缓存，checkpoint 恢复仍以既有动作与实例状态避免重放。

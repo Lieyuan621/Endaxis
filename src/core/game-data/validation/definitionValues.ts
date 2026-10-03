@@ -195,7 +195,11 @@ export function validateActionStringOperand(
     return;
   }
   const record = asRecord(value, path, out);
-  if (record !== null) requireString(record, 'blackboardKey', path, out);
+  if (record === null) return;
+  // 图引用必须先由所属图绑定；直接出现于无图上下文的操作数不能静默接受。
+  requireString(record, 'blackboardKey', path, out);
+  for (const field of Object.keys(record))
+    if (field !== 'blackboardKey') push(out, `${path}.${field}`, 'unexpected field');
 }
 
 /** 值可以是 LevelValues 或 ActionValueOperand 的字段。 */

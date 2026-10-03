@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import type { UnwrapNestedRefs } from 'vue';
+import type { ReferenceChoices } from '../definition-editor/fieldInputConfig';
+import { provide, type UnwrapNestedRefs } from 'vue';
+import { blackboardNavigationKey } from '../field-editor/blackboardFieldContext';
 import { useI18n } from 'vue-i18n';
 import ActionGraphCanvas from './ActionGraphCanvas.vue';
 import ActionNodeInspector from './ActionNodeInspector.vue';
@@ -9,13 +11,12 @@ import EditorInspector from '../editor/EditorInspector.vue';
 import type { useResourceGraphEditor } from './useResourceGraphEditor';
 import type { GraphCanvasView } from './graphCanvasView';
 import {
-  connectResourceNode,
-  connectResourceEntry,
   replaceResourceNodeAction,
   updateResourceGraph,
 } from '../../application/editor/actionGraphResourceEditing';
 
-defineProps<{
+const props = defineProps<{
+  referenceChoices?: ReferenceChoices;
   area: 'canvas' | 'inspector';
   resourceGraphEditor: UnwrapNestedRefs<ReturnType<typeof useResourceGraphEditor>>;
   readonly: boolean;
@@ -25,6 +26,9 @@ defineProps<{
   canvasView?: GraphCanvasView;
 }>();
 const { t } = useI18n();
+provide(blackboardNavigationKey, target => {
+  void props.resourceGraphEditor.locateVariable(target.id, target.owner === 'data');
+});
 </script>
 <template>
   <ActionGraphCanvas
@@ -33,6 +37,7 @@ const { t } = useI18n();
     :ref="value => (resourceGraphEditor.canvas = value as InstanceType<typeof ActionGraphCanvas>)"
     :key="`${resourceKey}:${resourceGraphEditor.graphKey}`"
     :graph="resourceGraphEditor.graph"
+    :graph-scope="resourceGraphEditor.interactionScope"
     :readonly="readonly"
     :creation-items="resourceGraphEditor.creationItems"
     :selected-id="resourceGraphEditor.selectedId"
@@ -49,36 +54,28 @@ const { t } = useI18n();
     @remove-node="resourceGraphEditor.removeNode"
     @remove-data="resourceGraphEditor.removeData"
     @disconnect-input="resourceGraphEditor.disconnectInput"
-    @connect-data="resourceGraphEditor.connectData"
+    @connect-data="
+      (owner, id, path, source, snapshot) =>
+        resourceGraphEditor.connectData(owner, id, path, source, undefined, snapshot)
+    "
     @constant-data="
-      (kind, id, path, value) => resourceGraphEditor.connectData(kind, id, path, null, value)
+      (kind, id, path, value, snapshot) =>
+        resourceGraphEditor.connectData(kind, id, path, null, value, snapshot)
     "
     @change-presentation="resourceGraphEditor.changePresentation"
     @open-node="resourceGraphEditor.openNode"
     @select-connection="resourceGraphEditor.selectConnection"
     @drop-variable="resourceGraphEditor.dropVariable"
-    @connect="
-      (id, path, target) =>
-        resourceGraphEditor.edit(owner =>
-          connectResourceNode(owner, resourceGraphEditor.address, id, path, target),
-        )
-    "
-    @connect-entry="
-      (ids, target) =>
-        resourceGraphEditor.edit(owner =>
-          ids.reduce(
-            (current, id) => connectResourceEntry(current, resourceGraphEditor.address, id, target),
-            owner,
-          ),
-        )
-    "
+    @connect="resourceGraphEditor.connect"
+    @connect-entry="resourceGraphEditor.connectEntry"
   />
-  <fieldset
-    v-else
-    :disabled="readonly && !resourceGraphEditor.selectedConnection"
-    class="ap-graph-inspector"
-  >
+  <fieldset v-else class="ap-graph-inspector">
     <DataNodeInspector
+      :reference-choices="referenceChoices"
+      :blackboard-context="resourceGraphEditor.blackboardContext"
+      :graph="resourceGraphEditor.graph"
+      :graph-scope="resourceGraphEditor.interactionScope"
+      :readonly="readonly"
       v-if="resourceGraphEditor.selectedData && resourceGraphEditor.selectedDataId"
       :key="`${resourceKey}:${resourceGraphEditor.graphKey}:${resourceGraphEditor.selectedDataId}`"
       :ref="
@@ -105,9 +102,19 @@ const { t } = useI18n();
             })),
           )
       "
+      @change-data="
+        (path, source, constant, snapshot, id) =>
+          resourceGraphEditor.connectData('data', id, path, source, constant, snapshot)
+      "
+      @locate-data="id => resourceGraphEditor.locateVariable(id, true)"
       @pending="resourceGraphEditor.pending = $event"
     />
     <ActionNodeInspector
+      :reference-choices="referenceChoices"
+      :blackboard-context="resourceGraphEditor.blackboardContext"
+      :graph="resourceGraphEditor.graph"
+      :graph-scope="resourceGraphEditor.interactionScope"
+      :readonly="readonly"
       v-else-if="resourceGraphEditor.selectedNode && resourceGraphEditor.selectedId"
       :key="`${resourceKey}:${resourceGraphEditor.graphKey}:${resourceGraphEditor.selectedId}`"
       :ref="
@@ -128,6 +135,11 @@ const { t } = useI18n();
             ),
           )
       "
+      @change-data="
+        (path, source, constant, snapshot, id) =>
+          resourceGraphEditor.connectData('action', id, path, source, constant, snapshot)
+      "
+      @locate-data="id => resourceGraphEditor.locateVariable(id, true)"
       @pending="resourceGraphEditor.pending = $event"
       @open-macro="resourceGraphEditor.changeGraph({ kind: 'macro', macroId: $event })"
     />

@@ -1,0 +1,783 @@
+{
+  "auditCommit": "6da5a59f24ca9dadcd3b75f09db9d7ed648f0928",
+  "schemaBaselineCommit": "9d838ee166949b3080acc74fa19cf751fa1fb4dc",
+  "observedJsonPositionsAtAudit": 57,
+  "notes": [
+    "Definition keys enumerate expanded schema positions; action/data keys enumerate registered fields with nested semantics. Neither is a simultaneous-control or runtime-instance count.",
+    "The 57 observed JSON positions are historical evidence; unobserved optional inputs and definition union branches remain in the gate.",
+    "Ordinary open strings are legal fields. Semantic tags and documented structural fallbacks remain pending until their editor is connected.",
+    "Boundary entries deliberately remain readonly or are filtered to resource/graph navigation; they are not JSON editor requests.",
+    "P4.4 finite schema census counts inline positions and each reachable reference body once per root context; reference edges are counted without infinitely unfolding paths. The original 131 depth-limit and 8 recursive-type positions remain individually listed in resolvedDefinitionDepthPositions; their schemas resolve without a fallback. Condition contexts and operand containers remain a separate P4 responsibility.",
+    "P4.4b1 corrects the earlier globalBuffIds catalog classification: the formal actions.ts declaration is a nonempty list of exact nonempty native IDs, not asset references. Unknown IDs are legal no-match queries. Only this historical responsibility moves to the typed native-ID collection editor; runtime semantics are unchanged.",
+    "P4.4b2 resolves exactly seven original inline CombatCondition hosts (four equipment handlers, two skill switch routes, one enemy-staggered upgrade). Four skill availability/legacy event-handler positions remain deferred with explicit source evidence. Expanded finite condition schemas increase the denominator, not the number of executable hosts.",
+    "P4.4c1 enables exactly the two dealDamage instant modifier containers. Numeric leaves use the current action board and current declared macro parameters; graph references remain identity-preserved and are connected/disconnected only by typed graph commands. All other seven structured containers and four intentional readonly condition hosts remain accounted for."
+  ],
+  "exceptions": [
+    {
+      "reason": "graph-reference-boundary",
+      "phase": "boundary",
+      "category": "graph-reference-boundary",
+      "keys": [
+        "definition/abilityEntityChildSkill/scheduledSequences/[]/sequence",
+        "definition/abilityEntityPassiveSkill/abilityEventResponses/[]/sequence",
+        "definition/abilityEntityPassiveSkill/enableSequence",
+        "definition/buff/<1>/abilityEventResponses/[]/sequence",
+        "definition/buff/<1>/damageModifiers/[]/conditionProgram",
+        "definition/buff/<1>/igniteEventResponses/[]/sequence",
+        "definition/buff/<1>/lifecycleSequences/afterEnhance",
+        "definition/buff/<1>/lifecycleSequences/beforeEnhance",
+        "definition/buff/<1>/lifecycleSequences/disable",
+        "definition/buff/<1>/lifecycleSequences/enable",
+        "definition/buff/<1>/lifecycleSequences/enhanceChanged",
+        "definition/buff/<1>/lifecycleSequences/finish",
+        "definition/buff/<1>/lifecycleSequences/start",
+        "definition/buff/<1>/lifecycleSequences/trigger",
+        "definition/buff/<1>/scheduledSequences/[]/sequence",
+        "definition/gearSet/enableSequence",
+        "definition/gearSet/eventHandlers/[]/<0>/sequence",
+        "definition/gearSet/eventHandlers/[]/<1>/sequence",
+        "definition/gearSet/initializationSequence",
+        "definition/operator/eventHandlers/[]/sequence",
+        "definition/operatorPassiveSkill/abilityEventResponses/[]/sequence",
+        "definition/operatorPassiveSkill/enableSequence",
+        "definition/operatorUpgrade/eventHandlers/[]/sequence",
+        "definition/operatorUpgrade/initializationSequence",
+        "definition/skill/<0>/eventHandlers/[]/scheduledSequences/[]/sequence",
+        "definition/skill/<0>/scheduledSequences/[]/sequence",
+        "definition/skill/<0>/switchToBuffCast/sequence",
+        "definition/skill/<1>/eventHandlers/[]/scheduledSequences/[]/sequence",
+        "definition/skill/<1>/scheduledSequences/[]/sequence",
+        "definition/skill/<1>/switchToBuffCast/sequence",
+        "definition/weaponTrait/enableSequence",
+        "definition/weaponTrait/eventHandlers/[]/<0>/sequence",
+        "definition/weaponTrait/eventHandlers/[]/<1>/sequence",
+        "definition/weaponTrait/initializationSequence"
+      ]
+    },
+    {
+      "reason": "no-present-type",
+      "phase": "boundary",
+      "category": "no-present-type",
+      "keys": [
+        "definition/buff/<0>/abilityEventResponses",
+        "definition/buff/<0>/actionGraph",
+        "definition/buff/<0>/damageModifiers/[]/conditionProgram",
+        "definition/buff/<0>/igniteEventResponses",
+        "definition/buff/<0>/lifecycleSequences",
+        "definition/buff/<0>/scheduledSequences",
+        "definition/gearSet/eventHandlers/[]/<0>/abilityEvent",
+        "definition/gearSet/eventHandlers/[]/<1>/event",
+        "definition/skill/<1>/levelSource",
+        "definition/weaponTrait/eventHandlers/[]/<0>/abilityEvent",
+        "definition/weaponTrait/eventHandlers/[]/<1>/event"
+      ]
+    },
+    {
+      "reason": "owned-resource-boundary",
+      "phase": "boundary",
+      "category": "owned-resource-boundary",
+      "keys": [
+        "definition/abilityEntity/childSkill",
+        "definition/abilityEntity/childSkills/{}",
+        "definition/abilityEntity/passiveSkills/[]",
+        "definition/gearSet/buffDefinitions/{}/<0>",
+        "definition/gearSet/buffDefinitions/{}/<1>",
+        "definition/globalEffect/buff/<0>",
+        "definition/globalEffect/buff/<1>",
+        "definition/operator/abilityEntityDefinitions/{}/childSkill",
+        "definition/operator/abilityEntityDefinitions/{}/childSkills/{}",
+        "definition/operator/abilityEntityDefinitions/{}/passiveSkills/[]",
+        "definition/operator/buffDefinitions/{}/<0>",
+        "definition/operator/buffDefinitions/{}/<1>",
+        "definition/operator/comboSkillConditions/[]",
+        "definition/operator/dodgeSkill/<0>",
+        "definition/operator/dodgeSkill/<1>",
+        "definition/operator/passiveSkills/[]",
+        "definition/operator/potentials/[]",
+        "definition/operator/skillGroups/[]/replacementSkills/[]/<0>",
+        "definition/operator/skillGroups/[]/replacementSkills/[]/<1>",
+        "definition/operator/skillGroups/[]/routedReplacementSkills/[]/skill/<0>",
+        "definition/operator/skillGroups/[]/routedReplacementSkills/[]/skill/<1>",
+        "definition/operator/skillGroups/[]/skills/<0>",
+        "definition/operator/skillGroups/[]/skills/<1>",
+        "definition/operator/skillGroups/[]/skills/<2>/[]/<0>",
+        "definition/operator/skillGroups/[]/skills/<2>/[]/<1>",
+        "definition/operator/skillGroups/[]/variants/[]/skills/<0>",
+        "definition/operator/skillGroups/[]/variants/[]/skills/<1>",
+        "definition/operator/skillGroups/[]/variants/[]/skills/<2>/[]/<0>",
+        "definition/operator/skillGroups/[]/variants/[]/skills/<2>/[]/<1>",
+        "definition/operator/talents/[]",
+        "definition/operatorUpgrade/passiveSkills/[]",
+        "definition/skillGroup/replacementSkills/[]/<0>",
+        "definition/skillGroup/replacementSkills/[]/<1>",
+        "definition/skillGroup/routedReplacementSkills/[]/skill/<0>",
+        "definition/skillGroup/routedReplacementSkills/[]/skill/<1>",
+        "definition/skillGroup/skills/<0>",
+        "definition/skillGroup/skills/<1>",
+        "definition/skillGroup/skills/<2>/[]/<0>",
+        "definition/skillGroup/skills/<2>/[]/<1>",
+        "definition/skillGroup/variants/[]/skills/<0>",
+        "definition/skillGroup/variants/[]/skills/<1>",
+        "definition/skillGroup/variants/[]/skills/<2>/[]/<0>",
+        "definition/skillGroup/variants/[]/skills/<2>/[]/<1>",
+        "definition/skillGroupVariant/skills/<0>",
+        "definition/skillGroupVariant/skills/<1>",
+        "definition/skillGroupVariant/skills/<2>/[]/<0>",
+        "definition/skillGroupVariant/skills/<2>/[]/<1>",
+        "definition/weapon/buffDefinitions/{}/<0>",
+        "definition/weapon/buffDefinitions/{}/<1>",
+        "definition/weapon/traits/[]"
+      ]
+    },
+    {
+      "reason": "condition-editor-pending",
+      "phase": "P4",
+      "category": "definition-condition",
+      "keys": [
+        "definition/skill/<0>/availability",
+        "definition/skill/<0>/eventHandlers/[]/condition",
+        "definition/skill/<1>/availability",
+        "definition/skill/<1>/eventHandlers/[]/condition"
+      ]
+    }
+  ],
+  "resolvedObservedJsonPositions": [
+    "action/adjustSkillCooldown/parameters/skill",
+    "action/applyBuff/parameters/buffId",
+    "action/applyBuff/parameters/copiedBlackboardAssignments",
+    "action/applyBuff/parameters/iconDurationSource",
+    "action/applyBuff/parameters/inheritToNextSkillIds",
+    "action/applyBuff/parameters/onActionEndFinishBuffs",
+    "action/applyBuff/parameters/stringBlackboardAssignments",
+    "action/castSkillDuringAction/parameters/skillId",
+    "action/createAbilityEntityTimedMarker/parameters/markerId",
+    "action/createTimedMarker/parameters/markerId",
+    "action/findCharacterTeamTargets/parameters/selection",
+    "action/findOwnerSpawnedAbilityEntities/parameters/abilityEntityIds",
+    "action/findOwnerSpawnedAbilityEntities/parameters/circularOrder",
+    "action/finishBuffsById/parameters/buffIds",
+    "action/finishBuffsByTag/parameters/buffTags",
+    "action/heal/parameters/tags",
+    "action/holdBuffsById/parameters/buffIds",
+    "action/inheritBuffById/parameters/inheritToNextSkillIds",
+    "action/launchProjectile/parameters/finish",
+    "action/launchProjectile/parameters/hit",
+    "action/mergeContextTargets/parameters/sources",
+    "action/reachSkillOperableBoundary/parameters/skillIds",
+    "action/readBuffBlackboard/parameters/query",
+    "action/readBuffRemainingDuration/parameters/buffIds",
+    "action/readBuffStackCount/parameters/query",
+    "action/repeatEachTick/parameters/nativeChanneling",
+    "action/repeatEachTick/parameters/nativeExecuteInterval",
+    "action/repeatEachTick/parameters/nativeTickInterval",
+    "action/restrictUltimateEnergyRecovery/parameters/allowedRecoveryTags",
+    "action/setIgnoreGlobalTimeScale/parameters/abilityEntityTargets",
+    "action/spawnAbilityEntity/parameters/stringBlackboardAssignments",
+    "action/startTimeDilation/parameters/abilityEntityTargets",
+    "action/startTimeDilation/parameters/curve",
+    "action/startTimeDilation/parameters/ignoredAbilityEntityTargets",
+    "action/startUltimateTimeDilation/parameters/ignoredAbilityEntityTargets",
+    "action/storeSourceAttributeValue/parameters/attribute",
+    "action/withActionBlackboardScope/parameters/entityInitialValues",
+    "action/withActionBlackboardScope/parameters/initialValues",
+    "data/boolean:abilityEntityTimedMarkerPresent/markerId",
+    "data/boolean:actionInputTargetObjectTypeMatch/objectTypes",
+    "data/boolean:buffBlackboardValueCompare/query",
+    "data/boolean:buffIdStackCompare/buffIds",
+    "data/boolean:buffStackCompare/buffTags",
+    "data/boolean:buffTagIdCountCompare/buffTags",
+    "data/boolean:contextTargetBuffIdStackCompare/buffIds",
+    "data/boolean:contextTargetBuffStackCompare/buffTags",
+    "data/boolean:contextTargetEntityTagMatch/tags",
+    "data/boolean:contextTargetObjectTypeMatch/objectTypes",
+    "data/boolean:entityTagMatch/tags",
+    "data/boolean:eventBuffIdMatch/buffIds",
+    "data/boolean:eventBuffTagsMatch/buffTags",
+    "data/boolean:eventDamageGameplayTagsMatch/tags",
+    "data/boolean:eventHealTagsMatch/tags",
+    "data/boolean:eventSkillIdIn/skillIds",
+    "data/boolean:ownerSpawnedAbilityEntityPresent/abilityEntityIds",
+    "data/boolean:timedMarkerPresent/markerId",
+    "action/finishGlobalBuffsById/parameters/globalBuffIds"
+  ],
+  "resolvedDefinitionDepthPositions": [
+    {
+      "key": "definition/buff/<0>/childPresentations/[]/presentation/orderPriority",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<10>/condition/<0>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<10>/condition/<11>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<10>/condition/<12>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<10>/condition/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<10>/condition/<2>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<10>/condition/<3>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<10>/condition/<4>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<10>/condition/<5>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<10>/condition/<6>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<10>/condition/<7>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<10>/condition/<8>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<10>/condition/<9>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<11>/conditions/[]/<0>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<11>/conditions/[]/<10>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<11>/conditions/[]/<12>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<11>/conditions/[]/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<11>/conditions/[]/<2>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<11>/conditions/[]/<3>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<11>/conditions/[]/<4>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<11>/conditions/[]/<5>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<11>/conditions/[]/<6>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<11>/conditions/[]/<7>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<11>/conditions/[]/<8>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<11>/conditions/[]/<9>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<12>/conditions/[]/<0>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<12>/conditions/[]/<10>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<12>/conditions/[]/<11>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<12>/conditions/[]/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<12>/conditions/[]/<2>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<12>/conditions/[]/<3>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<12>/conditions/[]/<4>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<12>/conditions/[]/<5>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<12>/conditions/[]/<6>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<12>/conditions/[]/<7>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<12>/conditions/[]/<8>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<12>/conditions/[]/<9>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<2>/value/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<6>/value/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<7>/value/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<9>/left/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<9>/right/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/processors/[]/<0>/addition/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/processors/[]/<1>/values/<0>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/processors/[]/<1>/values/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/healModifiers/[]/condition/<0>/value/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/healModifiers/[]/condition/<1>/left/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/healModifiers/[]/condition/<1>/right/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/healModifiers/[]/processors/[]/<0>/baseMultiplier/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/healModifiers/[]/processors/[]/<0>/multiplierCount/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/healModifiers/[]/processors/[]/<1>/addition/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/poiseModifiers/[]/condition/<2>/conditions/[]/<0>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/poiseModifiers/[]/condition/<2>/conditions/[]/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/poiseModifiers/[]/processors/[]/addition/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/shields/[]/damageAbsorptions/[]/ratio/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/shields/[]/damageAbsorptions/[]/scale/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/shields/[]/value/<2>/addition/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/shields/[]/value/<2>/multiplier/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/childPresentations/[]/presentation/orderPriority",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<10>/condition/<0>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<10>/condition/<11>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<10>/condition/<12>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<10>/condition/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<10>/condition/<2>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<10>/condition/<3>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<10>/condition/<4>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<10>/condition/<5>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<10>/condition/<6>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<10>/condition/<7>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<10>/condition/<8>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<10>/condition/<9>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<11>/conditions/[]/<0>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<11>/conditions/[]/<10>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<11>/conditions/[]/<12>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<11>/conditions/[]/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<11>/conditions/[]/<2>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<11>/conditions/[]/<3>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<11>/conditions/[]/<4>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<11>/conditions/[]/<5>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<11>/conditions/[]/<6>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<11>/conditions/[]/<7>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<11>/conditions/[]/<8>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<11>/conditions/[]/<9>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<12>/conditions/[]/<0>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<12>/conditions/[]/<10>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<12>/conditions/[]/<11>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<12>/conditions/[]/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<12>/conditions/[]/<2>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<12>/conditions/[]/<3>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<12>/conditions/[]/<4>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<12>/conditions/[]/<5>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<12>/conditions/[]/<6>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<12>/conditions/[]/<7>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<12>/conditions/[]/<8>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<12>/conditions/[]/<9>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<2>/value/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<6>/value/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<7>/value/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<9>/left/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<9>/right/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/processors/[]/<0>/addition/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/processors/[]/<1>/values/<0>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/processors/[]/<1>/values/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/healModifiers/[]/condition/<0>/value/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/healModifiers/[]/condition/<1>/left/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/healModifiers/[]/condition/<1>/right/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/healModifiers/[]/processors/[]/<0>/baseMultiplier/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/healModifiers/[]/processors/[]/<0>/multiplierCount/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/healModifiers/[]/processors/[]/<1>/addition/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/poiseModifiers/[]/condition/<2>/conditions/[]/<0>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/poiseModifiers/[]/condition/<2>/conditions/[]/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/poiseModifiers/[]/processors/[]/addition/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/shields/[]/damageAbsorptions/[]/ratio/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/shields/[]/damageAbsorptions/[]/scale/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/shields/[]/value/<2>/addition/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<1>/shields/[]/value/<2>/multiplier/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/gear/traits/[]/display/<0>/modifier/<0>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/gear/traits/[]/display/<0>/modifier/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/gear/traits/[]/display/<0>/modifier/<2>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/gear/traits/[]/display/<0>/modifier/<3>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/gear/traits/[]/display/<0>/modifier/<4>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/gear/traits/[]/display/<0>/modifier/<5>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/operator/abilityEntityDefinitions/{}/lifetime/<0>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/operator/abilityEntityDefinitions/{}/lifetime/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/operator/abilityEntityDefinitions/{}/maxStackingCount/<1>",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/operator/playerActionModes/[]/commandMappings/basicAttack",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/operator/playerActionModes/[]/commandMappings/battleSkill",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/operator/playerActionModes/[]/commandMappings/comboSkill",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/operator/playerActionModes/[]/commandMappings/ultimate",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/operator/skillGroups/[]/presentationVariants/[]/condition",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/operator/skillGroups/[]/variants/[]/placementPolicy",
+      "previousReason": "depth-limit"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<10>/condition/<10>",
+      "previousReason": "recursive-type"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<11>/conditions/[]/<11>",
+      "previousReason": "recursive-type"
+    },
+    {
+      "key": "definition/buff/<0>/damageModifiers/[]/condition/<12>/conditions/[]/<12>",
+      "previousReason": "recursive-type"
+    },
+    {
+      "key": "definition/buff/<0>/poiseModifiers/[]/condition/<2>/conditions/[]/<2>",
+      "previousReason": "recursive-type"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<10>/condition/<10>",
+      "previousReason": "recursive-type"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<11>/conditions/[]/<11>",
+      "previousReason": "recursive-type"
+    },
+    {
+      "key": "definition/buff/<1>/damageModifiers/[]/condition/<12>/conditions/[]/<12>",
+      "previousReason": "recursive-type"
+    },
+    {
+      "key": "definition/buff/<1>/poiseModifiers/[]/condition/<2>/conditions/[]/<2>",
+      "previousReason": "recursive-type"
+    }
+  ],
+  "resolvedDefinitionConditionPositions": [
+    "definition/gearSet/eventHandlers/[]/<0>/condition",
+    "definition/gearSet/eventHandlers/[]/<1>/condition",
+    "definition/operatorUpgrade/modifiers/[]/<0>/condition",
+    "definition/skill/<0>/switchToBuffCast/condition",
+    "definition/skill/<1>/switchToBuffCast/condition",
+    "definition/weaponTrait/eventHandlers/[]/<0>/condition",
+    "definition/weaponTrait/eventHandlers/[]/<1>/condition"
+  ],
+  "resolvedGraphOperandPositions": [
+    "action/dealDamage/parameters/instantAttributeModifiers",
+    "action/dealDamage/parameters/instantDamageScaleModifiers",
+    "action/applyBuff/parameters/keywordEnhancements",
+    "action/applyBuff/parameters/onActionEndBuffs",
+    "action/readSkillSettingData/parameters/items",
+    "action/createGlobalBuff/parameters/definition"
+  ],
+  "resolvedGraphSequencePositions": [
+    "action/switch/options",
+    "action/listenForCombatEvents/parameters/responses"
+  ],
+  "resolvedOwnedContainerPositions": ["action/spawnAbilityEntity/parameters/definition"]
+}

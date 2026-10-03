@@ -1,3 +1,4 @@
+import type { ActionStringOperand } from '../../../../packages/game-data-contract/src/primitives';
 import type { CombatCondition } from '../../game-data/operatorDefinition';
 import type { CombatOperationContext } from '../skills/skillRuntime';
 import { healAbilityEvent } from '../events/combatAbilityEvent';
@@ -219,10 +220,11 @@ export class TimedMarkerOperationExecutor implements CombatOperationExecutor {
 }
 
 function resolveMarkerId(
-  operand: string | { readonly blackboardKey: string },
+  operand: ActionStringOperand,
   context: CombatOperationContext | undefined,
 ): string {
   if (typeof operand === 'string') return operand;
+  if ('kind' in operand) throw new Error(`unbound string data node: ${operand.nodeId}`);
   const value = context?.blackboard.getString(operand.blackboardKey);
   if (value === undefined || value.length === 0) {
     throw new Error(`marker id blackboard '${operand.blackboardKey}' is missing`);

@@ -1,6 +1,8 @@
 import { supportsCustomAsset, type WorkspaceAssetDefinition } from './workspaceAssetDefinition';
 import {
   listDefinitionResources,
+  appendInlineSpawnResources,
+  isInlineSpawnResourcePath,
   type DefinitionResource,
 } from '../definition-editor/definitionResources';
 import type {
@@ -49,6 +51,7 @@ export function workspaceActionReferences(
     sharedTargets.set(buff.id, [...(sharedTargets.get(buff.id) ?? []), buff]);
   const targets = new Map<string, WorkspaceResource[]>();
   for (const resource of resources) {
+    if (isInlineSpawnResourcePath(resource.definitionResource.path)) continue;
     const key = `${resource.kind}:${resource.definitionResource.identity}`;
     targets.set(key, [...(targets.get(key) ?? []), resource]);
   }
@@ -164,7 +167,29 @@ export function describeWorkspaceResources(
           ? String(edit.definition.tagId)
           : edit.definition.id;
     const resource: WorkspaceDefinitionResource = { kind: edit.kind, path: [], identity };
-    return [{ id: '[]', kind: edit.kind, name: name(resource), definitionResource: resource }];
+    const nested: DefinitionResource[] = [];
+    if (edit.kind === 'buff') {
+      nested.push({ kind: 'buff', path: [], identity });
+      appendInlineSpawnResources(nested, edit.definition);
+    }
+    return [
+      { id: '[]', kind: edit.kind, name: name(resource), definitionResource: resource },
+      ...nested.slice(1).map(child => ({
+        id: JSON.stringify(child.path),
+        kind: navigationKind(child),
+        name: name(child),
+        parent: JSON.stringify(
+          nested
+            .filter(
+              parent =>
+                parent.path.length < child.path.length &&
+                parent.path.every((part, index) => child.path[index] === part),
+            )
+            .at(-1)?.path ?? [],
+        ),
+        definitionResource: child,
+      })),
+    ];
   }
   const definitions = listDefinitionResources(edit.kind, edit.definition).filter(
     resource => resource.kind !== 'skillGroup' && resource.kind !== 'skillGroupVariant',

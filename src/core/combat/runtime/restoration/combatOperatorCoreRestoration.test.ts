@@ -115,6 +115,7 @@ it('单个干员核心恢复保持黑板、状态、标记、冷却、技能和�
   const operator = {
     operatorId: 'operator',
     skills: [program],
+    skillCooldownPrograms: [{ ...program, nativeSkillType: 'attachSkill' as const }],
     buffRuntime: new BuffDefinitionOperationTarget(restoredBuffs, { get: () => undefined }),
     statusContainer: statusTemplate,
   };
@@ -157,5 +158,6 @@ it('单个干员核心恢复保持黑板、状态、标记、冷却、技能和�
   expect(restored.cooldowns.get('skill')!.cooldown.runtimeState).toBe(saved.cooldowns.get('skill'));
   expect(restored.skills.get('skill\u0000')!.runtimeState).toBe(saved.skills.get('skill\u0000'));
   expect(restored.ability.runtimeState).toBe(saved.ability);
+  expect(restored.ability.nativeSkillTypeForSkill('skill')).toBe('normalSkill');
   expect(restored.skills.get('skill\u0000')!.runtimeState.blackboard.entity).toBe(saved.blackboard);
 });

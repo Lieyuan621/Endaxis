@@ -157,6 +157,11 @@ export interface AbilitySystemRuntimeOptions {
   readonly buffRuntime?: AbilityBuffRuntime;
   /** 保持普通攻击、主动、被动、通用技能的原生构造顺序。 */
   readonly skills: readonly AbilitySkillRuntime[];
+  /** 静态目录只登记类型身份，不创建可施放实例；换槽与类型动作也能寻址未放置技能。 */
+  readonly skillDefinitions?: readonly Pick<
+    AbilitySkillRuntime,
+    'skillId' | 'skillType' | 'nativeSkillType'
+  >[];
   /** 完整技能目录的推进顺序；每个身份先更新共享冷却，再更新其放置实例。未放置身份只有冷却。 */
   readonly skillTickPlan?: readonly {
     readonly skillId: string;
@@ -315,12 +320,7 @@ export class AbilitySystemRuntime implements FrameRuntime {
     this.#resolveTickDeltas =
       options.resolveTickDeltas ?? (() => uniformAbilityTickDeltas(COMBAT_FRAME_INTERVAL));
     const definedNativeSkillTypes = new Map<string, NativeSkillType>();
-    for (const skill of this.#skills) {
-      const key = abilitySkillKey(skill);
-      if (this.#skillsById.has(key)) {
-        throw new Error(`duplicate ability skill '${key}'`);
-      }
-      this.#skillsById.set(key, skill);
+    for (const skill of [...(options.skillDefinitions ?? []), ...this.#skills]) {
       const nativeSkillType =
         skill.nativeSkillType ??
         (skill.skillType === undefined
@@ -338,6 +338,13 @@ export class AbilitySystemRuntime implements FrameRuntime {
         this.runtimeState.nativeSkillTypeBySkillId.set(skill.skillId, nativeSkillType);
       else if (!this.runtimeState.nativeSkillTypeBySkillId.has(skill.skillId))
         throw new Error(`restored ability has no native type for '${skill.skillId}'`);
+    }
+    for (const skill of this.#skills) {
+      const key = abilitySkillKey(skill);
+      if (this.#skillsById.has(key)) {
+        throw new Error(`duplicate ability skill '${key}'`);
+      }
+      this.#skillsById.set(key, skill);
       const transitionSkillId = skill.transitionSkillId ?? skill.skillId;
       const skillKeys = this.#skillKeysByTransitionSkillId.get(transitionSkillId) ?? new Set();
       skillKeys.add(skill.skillId);

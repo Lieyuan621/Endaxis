@@ -1,5 +1,39 @@
 <script setup lang="ts">
-import { computed, ref, shallowRef, watch } from 'vue';
+import OwnedSpawnResourceField from '../field-editor/OwnedSpawnResourceField.vue';
+import GraphRowBoundaryField from '../field-editor/GraphRowBoundaryField.vue';
+import {
+  definitionFieldWindowKey,
+  DEFINITION_FIELD_WINDOW_DEPTH,
+  DEFINITION_FIELD_WINDOW_ROWS,
+  type DefinitionFieldFocus,
+} from './definitionFieldWindow';
+import SkillSettingValuesField from '../field-editor/SkillSettingValuesField.vue';
+import { isSkillSettingValuesSchema } from '../field-editor/graphOperandContainerSchema';
+import { auditDefinitionSchema } from '../../core/editor/auditDefinitionSchema';
+import { useSchemaReferences } from './schemaReferenceContext';
+import { resolveDefinitionSchema } from '../../core/editor/resolveDefinitionSchema';
+import InlineCombatConditionField from '../field-editor/InlineCombatConditionField.vue';
+import BlackboardMappingValueField from '../field-editor/BlackboardMappingValueField.vue';
+import {
+  inlineConditionDraftKey,
+  inlineConditionEditingKey,
+} from '../field-editor/inlineConditionContext';
+import { useBlackboardFieldContext } from '../field-editor/blackboardFieldContext';
+import {
+  blackboardContextForField,
+  skillSettingItemBlackboardContext,
+} from '../../application/editor/blackboardFieldContext';
+import { schemaHasAlias } from '../../core/editor/inlineCombatCondition';
+import TimeScaleCurveField from '../field-editor/TimeScaleCurveField.vue';
+import StringCollectionField from '../field-editor/StringCollectionField.vue';
+import GameplayTagField from '../field-editor/GameplayTagField.vue';
+import { stringCollectionDescriptor } from '../field-editor/stringCollectionSchema';
+import { computed, inject, provide, ref, shallowRef, watch } from 'vue';
+import NodeLevelValues from '../action-graph/NodeLevelValues.vue';
+import BlackboardKeyField from '../field-editor/BlackboardKeyField.vue';
+import { blackboardRequestForField } from '../../application/editor/blackboardFieldContext';
+import { structuredFieldContextKey } from '../field-editor/structuredFieldContext';
+import { isReadonlyDefinitionSlot } from '../field-editor/structuredValueSchema';
 import { useI18n } from 'vue-i18n';
 import {
   EaButton,
@@ -11,22 +45,35 @@ import {
   type EaSelectValue,
 } from '@/design-system';
 import type { DefinitionFieldSchema } from './fieldSchema';
-import { REFERENCE_FIELD_KIND, type ReferenceChoices } from './fieldInputConfig';
+import { canSelectReference } from '@/application/editor/referenceResolver';
+import type { ReferenceChoices } from './fieldInputConfig';
+import { resolveFieldEditor } from '../field-editor/fieldEditorDispatch';
+import ReferenceField from '../field-editor/ReferenceField.vue';
+import BlackboardMappingField from '../field-editor/BlackboardMappingField.vue';
+import { resolveBlackboardMapping } from '../field-editor/blackboardMapping';
+import StringOperandField from '../field-editor/StringOperandField.vue';
+import EditorHelp from '../editor/EditorHelp.vue';
 import {
   editableDefault,
+  fieldValueAt,
   emptyDefinitionActionGraph,
   fieldSchemaForValue,
+  isProtectedDefinitionIdentity,
+  preserveDefinitionExtensions,
+  type DefinitionEditingContext,
 } from './definitionFieldRuntime';
 import DefinitionValueCreator from './DefinitionValueCreator.vue';
 
 defineOptions({ name: 'DefinitionField' });
 const props = defineProps<{
   name: string;
+  editingContext?: DefinitionEditingContext;
   value: unknown;
   schema?: DefinitionFieldSchema;
   path: readonly (string | number)[];
   root?: boolean;
   expandDepth?: number;
+  windowDepth?: number;
   hideLabel?: boolean;
   editable?: boolean;
   referenceChoices?: ReferenceChoices;
@@ -38,12 +85,273 @@ const emit = defineEmits<{
   openGraph: [path: readonly (string | number)[]];
 }>();
 const { t, te } = useI18n({ useScope: 'global' });
-const shape = computed(() => fieldSchemaForValue(props.schema, props.value, props.name));
-const union = computed(() => (props.schema?.kind === 'union' ? props.schema : null));
+const references = useSchemaReferences(() => props.schema);
+const inlineEditing = inject(inlineConditionEditingKey, undefined);
+const schemaProblem = computed(() => {
+  try {
+    if (props.schema) auditDefinitionSchema({ ...props.schema, references: references.value });
+    return '';
+  } catch (cause) {
+    return cause instanceof Error ? cause.message : String(cause);
+  }
+});
+const resolution = computed(() => {
+  try {
+    if (schemaProblem.value) throw new Error(schemaProblem.value);
+    let shape = fieldSchemaForValue(props.schema, props.value, props.name, references.value);
+    const declared = props.schema && resolveDefinitionSchema(props.schema, references.value);
+    // An invalid leaf (for example an empty numeric draft) must not erase the already
+    // selected condition branch. This is rendering only: Apply still uses the strict
+    // resolver and complete-condition validator, and unknown/ambiguous kinds stay opaque.
+    if (
+      inlineEditing?.value &&
+      declared?.inlineCondition &&
+      declared.kind === 'union' &&
+      shape.kind === 'opaque' &&
+      props.value &&
+      typeof props.value === 'object' &&
+      Object.hasOwn(props.value, 'kind')
+    ) {
+      const kind = (props.value as Record<string, unknown>).kind;
+      const matches = declared.variants
+        .map(variant => resolveDefinitionSchema(variant, references.value))
+        .filter(variant => {
+          if (variant.kind !== 'object' || !variant.fields.kind) return false;
+          const discriminator = resolveDefinitionSchema(variant.fields.kind, references.value);
+          return (
+            discriminator.kind === 'enum' &&
+            discriminator.options.length === 1 &&
+            discriminator.options[0] === kind
+          );
+        });
+      if (matches.length === 1) shape = matches[0]!;
+    }
+    return {
+      shape,
+      declared,
+      error: '',
+    };
+  } catch (cause) {
+    return {
+      shape: { kind: 'opaque' } as DefinitionFieldSchema,
+      declared: undefined,
+      error: cause instanceof Error ? cause.message : String(cause),
+    };
+  }
+});
+const declaredSchema = computed(() => resolution.value.declared);
+const schemaError = computed(() => resolution.value.error);
+const inlineSchema = computed(
+  () => declaredSchema.value && { ...declaredSchema.value, references: references.value },
+);
+const deferredConditionMessage = computed(() => {
+  if (props.schema?.optional || props.schema?.kind !== 'condition') return '';
+  if (
+    props.name === 'availability' &&
+    props.schema.source?.some(source =>
+      /^packages\/game-data-contract\/src\/skills\.ts:/.test(source),
+    )
+  )
+    return t('inlineCondition.availabilityDeferred');
+  if (
+    props.name === 'condition' &&
+    props.schema.source?.some(source =>
+      /^packages\/game-data-contract\/src\/actions\.ts:/.test(source),
+    )
+  )
+    return t('inlineCondition.legacyHandlerDeferred');
+  return '';
+});
+const inheritedWindow = inject(definitionFieldWindowKey, undefined);
+const ownsWindow = props.root === true || !inheritedWindow;
+const focusHistory = shallowRef<readonly DefinitionFieldFocus[]>([]);
+const focus = computed(() => focusHistory.value.at(-1));
+const window = ownsWindow
+  ? {
+      focus: (target: DefinitionFieldFocus) => {
+        focusHistory.value = [...focusHistory.value, target];
+      },
+    }
+  : inheritedWindow!;
+provide(definitionFieldWindowKey, window);
+const focusedValue = computed(
+  () => focus.value && fieldValueAt(props.value, focus.value.path.slice(props.path.length)),
+);
+watch(
+  () => props.value,
+  () => {
+    const target = focus.value;
+    if (!target || !props.schema) return;
+    try {
+      let schema = props.schema;
+      let value = props.value;
+      for (const key of target.path.slice(props.path.length)) {
+        const current = fieldSchemaForValue(schema, value, undefined, references.value);
+        const next =
+          current.kind === 'object'
+            ? current.fields[String(key)]
+            : current.kind === 'array'
+              ? current.element
+              : current.kind === 'tuple'
+                ? current.elements[Number(key)]
+                : current.kind === 'record'
+                  ? current.value
+                  : undefined;
+        if (!next) throw new Error('focus path changed');
+        schema = next;
+        value =
+          value && typeof value === 'object'
+            ? (value as Record<string | number, unknown>)[key]
+            : undefined;
+      }
+      if (value === undefined) throw new Error('focused container was removed');
+      const actual = fieldSchemaForValue(schema, value, undefined, references.value);
+      const previous = fieldSchemaForValue(target.schema, value, undefined, references.value);
+      const same =
+        actual === previous ||
+        (actual.kind === 'object' &&
+          previous.kind === 'object' &&
+          actual.fields === previous.fields) ||
+        (actual.kind === 'array' &&
+          previous.kind === 'array' &&
+          actual.element === previous.element) ||
+        (actual.kind === 'record' &&
+          previous.kind === 'record' &&
+          actual.value === previous.value) ||
+        (actual.kind === 'tuple' &&
+          previous.kind === 'tuple' &&
+          actual.elements === previous.elements);
+      if (!same) focusHistory.value = [];
+    } catch {
+      focusHistory.value = [];
+    }
+  },
+);
+const depthLimited = computed(() => (props.windowDepth ?? 0) >= DEFINITION_FIELD_WINDOW_DEPTH);
+const page = ref(0);
+const pageStart = computed(() => page.value * DEFINITION_FIELD_WINDOW_ROWS);
+function focusSubtree() {
+  if (props.schema)
+    window.focus({
+      path: props.path,
+      schema: props.schema,
+      name: props.name,
+      editable: !readonlyField.value,
+      referenceKind: referenceKind.value,
+    });
+}
+watch(
+  () => [props.schema, props.name, props.path.join('.')],
+  () => {
+    focusHistory.value = [];
+  },
+);
+function closeFocus() {
+  focusHistory.value = focusHistory.value.slice(0, -1);
+}
+const inlineDraft = inject(inlineConditionDraftKey, undefined);
+const blackboard = useBlackboardFieldContext();
+const inlineKey = computed(() => {
+  if (!inlineDraft || !props.path.length) return undefined;
+  const parent = fieldValueAt(inlineDraft.value, props.path.slice(0, -1));
+  if (
+    !parent ||
+    typeof parent !== 'object' ||
+    !('kind' in parent) ||
+    typeof parent.kind !== 'string'
+  )
+    return undefined;
+  const request = blackboardRequestForField(
+    parent.kind,
+    [props.path.at(-1)!],
+    props.schema?.source,
+  );
+  return (
+    request && {
+      request,
+      context: blackboardContextForField(blackboard.value, parent.kind, [props.path.at(-1)!]),
+    }
+  );
+});
+const structuredContext = inject(structuredFieldContextKey, undefined);
+const ownedResource = computed(
+  () => declaredSchema.value && structuredContext?.value.ownedResources?.get(declaredSchema.value),
+);
+const graphSequence = computed(
+  () =>
+    !!declaredSchema.value &&
+    !!structuredContext?.value.graphBoundaries?.sequences.has(declaredSchema.value),
+);
+const graphCondition = computed(
+  () =>
+    !!declaredSchema.value &&
+    !!structuredContext?.value.graphBoundaries?.conditions.has(declaredSchema.value),
+);
+const graphOperand = computed(
+  () =>
+    !!declaredSchema.value && !!structuredContext?.value.graphOperands?.has(declaredSchema.value),
+);
+const graphOperandContext = computed(() =>
+  skillSettingItemBlackboardContext(
+    blackboard.value,
+    structuredContext?.value.kind,
+    [...(structuredContext?.value.path ?? []), ...props.path],
+    structuredContext?.value.items,
+  ),
+);
+const connectedOperand = computed(
+  () =>
+    graphOperand.value &&
+    props.value &&
+    typeof props.value === 'object' &&
+    'kind' in props.value &&
+    props.value.kind === 'valueNode',
+);
+const keyRequest = computed(() => {
+  if (inlineKey.value) return inlineKey.value.request;
+  if (!structuredContext) return;
+  const path = [...structuredContext.value.path, ...props.path];
+  const request = blackboardRequestForField(
+    structuredContext.value.kind,
+    path,
+    props.schema?.source,
+  );
+  if (request && structuredContext.value.kind === 'spawnAbilityEntity') {
+    const parent = fieldValueAt(structuredContext.value.spawnDefinition, path.slice(2, -1));
+    return {
+      ...request,
+      fallback:
+        parent &&
+        typeof parent === 'object' &&
+        'fallback' in parent &&
+        typeof parent.fallback === 'number'
+          ? parent.fallback
+          : undefined,
+    };
+  }
+  return request;
+});
+const protectedIdentity = computed(
+  () =>
+    props.editingContext !== 'value' &&
+    (isProtectedDefinitionIdentity(props.name, props.path.length === 1) ||
+      isReadonlyDefinitionSlot(props.name, props.schema?.source)),
+);
+const shape = computed(() => resolution.value.shape);
+const union = computed(() =>
+  declaredSchema.value?.kind === 'union'
+    ? {
+        ...declaredSchema.value,
+        variants: declaredSchema.value.variants.map(variant =>
+          resolveDefinitionSchema(variant, references.value),
+        ),
+      }
+    : null,
+);
 function canChooseVariant(variant: DefinitionFieldSchema): boolean {
   return (
-    editableDefault(variant) !== undefined ||
-    ['number', 'string', 'boolean', 'enum', 'object'].includes(variant.kind)
+    editableDefault(variant, references.value) !== undefined ||
+    ['number', 'string', 'boolean', 'enum', 'object', 'tuple'].includes(variant.kind)
   );
 }
 const canSwitchUnion = computed(() => union.value?.variants.some(canChooseVariant) ?? false);
@@ -51,7 +359,6 @@ const pendingVariantIndex = ref<number | null>(null);
 const pendingVariant = computed(() =>
   pendingVariantIndex.value === null ? null : union.value?.variants[pendingVariantIndex.value],
 );
-const pendingValue = ref('');
 const unionIndex = computed(
   () =>
     pendingVariantIndex.value ??
@@ -63,12 +370,12 @@ const newItemValue = ref('');
 const expanded = ref(props.root === true || (props.expandDepth ?? 0) > 0);
 const creatingEntry = ref(false);
 const creatingValue = ref(false);
-const needsForm = (schema: DefinitionFieldSchema) => ['object', 'union'].includes(schema.kind);
+const resolved = (schema: DefinitionFieldSchema) =>
+  resolveDefinitionSchema(schema, references.value);
+const needsForm = (schema: DefinitionFieldSchema) =>
+  ['object', 'union', 'tuple', 'timeScaleCurve'].includes(resolved(schema).kind);
 const readonlyField = computed(
-  () =>
-    !props.editable ||
-    props.name === 'key' ||
-    (props.path.length === 1 && ['slug', 'gameId', 'skillId'].includes(props.name)),
+  () => !props.editable || protectedIdentity.value || !!schemaError.value,
 );
 // 禁用只移除有效数据，当前表单仍保留草稿，重新启用时恢复。
 const optionalEnabled = ref(props.value !== undefined);
@@ -82,28 +389,37 @@ watch(
 );
 const enabledSchema = computed(() => props.schema && { ...props.schema, optional: false });
 const isContainer = computed(() =>
-  ['object', 'array', 'record'].includes(
-    fieldSchemaForValue(props.schema, props.value ?? optionalDraft.value, props.name).kind,
-  ),
+  ['object', 'array', 'tuple', 'record'].includes(shape.value.kind),
 );
 function toggleOptional(checked: boolean): void {
   if (readonlyField.value) return;
   optionalEnabled.value = checked;
   if (!optionalEnabled.value) update(undefined);
   else if (optionalDraft.value !== undefined) update(optionalDraft.value);
+  else if (props.schema) {
+    const initial = editableDefault(props.schema, references.value);
+    if (initial !== undefined) update(initial);
+  }
 }
 const label = computed(() =>
   te(`definitionEditor.fields.${props.name}`)
     ? t(`definitionEditor.fields.${props.name}`)
-    : te(`definitionEditor.kinds.${props.name}`)
-      ? t(`definitionEditor.kinds.${props.name}`)
-      : props.name,
+    : props.editingContext === 'value' && te(`actionGraphEditor.fields.${props.name}.name`)
+      ? t(`actionGraphEditor.fields.${props.name}.name`)
+      : te(`definitionEditor.kinds.${props.name}`)
+        ? t(`definitionEditor.kinds.${props.name}`)
+        : props.name,
 );
-function optionLabel(option: string | number): string {
+function optionLabel(option: string | number | boolean): string {
   const key = `definitionEditor.options.${String(option)}`;
-  return te(key) ? t(key) : String(option);
+  return te(key)
+    ? t(key)
+    : props.editingContext === 'value' && te(`actionGraphEditor.options.${String(option)}`)
+      ? t(`actionGraphEditor.options.${String(option)}`)
+      : String(option);
 }
 function choiceOptions(schema: DefinitionFieldSchema, stringValues = false): EaSelectOption[] {
+  schema = resolved(schema);
   const placeholder: EaSelectOption = {
     value: '',
     label: t('definitionEditor.chooseValue'),
@@ -119,14 +435,58 @@ function choiceOptions(schema: DefinitionFieldSchema, stringValues = false): EaS
     return [
       placeholder,
       ...schema.options.map(option => ({
-        value: stringValues ? String(option) : option,
+        value: stringValues || typeof option === 'boolean' ? String(option) : option,
         label: optionLabel(option),
       })),
     ];
   return [placeholder];
 }
-const referenceKind = computed(() => props.referenceKind ?? REFERENCE_FIELD_KIND[props.name]);
-const choices = computed(() => props.referenceChoices?.[referenceKind.value ?? ''] ?? []);
+const referenceKind = computed(
+  () =>
+    (!schemaError.value &&
+      resolveFieldEditor(props.schema ?? shape.value, {
+        name: props.name,
+        referenceKind: props.referenceKind,
+        protectedIdentity: protectedIdentity.value,
+        references: references.value,
+      }).referenceKind) ||
+    undefined,
+);
+// Selecting a union keeps the semantic alias of this value, without changing
+// shape identity used by the variant selector or propagating it to object children.
+const editorSchema = computed((): DefinitionFieldSchema =>
+  !schemaError.value && props.schema?.semantics
+    ? {
+        ...shape.value,
+        inlineCondition: declaredSchema.value?.inlineCondition ?? shape.value.inlineCondition,
+        semantics: {
+          ...props.schema.semantics,
+          ...shape.value.semantics,
+          aliases: [
+            ...(props.schema.semantics.aliases ?? []),
+            ...(shape.value.semantics?.aliases ?? []),
+          ],
+        },
+      }
+    : shape.value,
+);
+const editor = computed(() =>
+  resolveFieldEditor(schemaError.value ? { kind: 'opaque' } : editorSchema.value, {
+    name: props.name,
+    referenceKind: referenceKind.value,
+    editable: props.editable === true,
+    graphOperand: graphOperand.value,
+    protectedIdentity: protectedIdentity.value,
+    references: references.value,
+  }),
+);
+function entryEditor(schema: DefinitionFieldSchema) {
+  return resolveFieldEditor(schema, {
+    referenceKind: referenceKind.value,
+    references: references.value,
+  });
+}
+const choices = computed(() => props.referenceChoices?.[referenceKind.value ?? '']);
 const objectEntries = computed(() => {
   if (shape.value.kind !== 'object') return [];
   const value = props.value as Record<string, unknown> | undefined;
@@ -139,9 +499,38 @@ const recordEntries = computed(() =>
     ? Object.entries(props.value as Record<string, unknown>)
     : [],
 );
+const arrayEntries = computed(() =>
+  Array.isArray(props.value)
+    ? props.value
+        .map((value, index) => ({ value, index }))
+        .slice(pageStart.value, pageStart.value + DEFINITION_FIELD_WINDOW_ROWS)
+    : [],
+);
+const rowCount = computed(() =>
+  shape.value.kind === 'object'
+    ? objectEntries.value.length
+    : shape.value.kind === 'record'
+      ? recordEntries.value.length
+      : Array.isArray(props.value)
+        ? props.value.length
+        : 0,
+);
+watch(
+  () => [props.value, props.schema],
+  () => {
+    page.value = Math.min(
+      page.value,
+      Math.max(0, Math.ceil(rowCount.value / DEFINITION_FIELD_WINDOW_ROWS) - 1),
+    );
+  },
+);
 function update(value: unknown) {
   if (readonlyField.value) return;
   emit('change', props.path, value);
+}
+function changeGraphOperand(value: unknown) {
+  if (connectedOperand.value || !props.schema) return;
+  update(preserveDefinitionExtensions(props.schema, props.value, value, references.value));
 }
 function createEntry(value: unknown) {
   if (readonlyField.value) return;
@@ -155,7 +544,11 @@ function createEntry(value: unknown) {
   creatingEntry.value = false;
 }
 function createValue(value: unknown) {
-  update(value);
+  update(
+    props.schema
+      ? preserveDefinitionExtensions(props.schema, props.value, value, references.value)
+      : value,
+  );
   creatingValue.value = false;
   pendingVariantIndex.value = null;
 }
@@ -204,10 +597,14 @@ function addArrayEntry() {
   }
 }
 function newEntryValue(schema: DefinitionFieldSchema): unknown {
+  schema = resolved(schema);
   if (schema.kind === 'string')
-    return referenceKind.value &&
-      choices.value.length &&
-      !choices.value.some(choice => choice.value === newItemValue.value)
+    return entryEditor(schema).control === 'reference' &&
+      !canSelectReference(
+        entryEditor(schema).referenceKind ?? '',
+        newItemValue.value,
+        props.referenceChoices?.[entryEditor(schema).referenceKind ?? ''],
+      )
       ? undefined
       : newItemValue.value;
   if (schema.kind === 'number') {
@@ -219,7 +616,7 @@ function newEntryValue(schema: DefinitionFieldSchema): unknown {
     return newItemValue.value === '' ? undefined : newItemValue.value === 'true';
   if (schema.kind === 'enum')
     return schema.options.find(option => String(option) === newItemValue.value);
-  return editableDefault(schema);
+  return editableDefault(schema, references.value);
 }
 function canAddEntry(schema: DefinitionFieldSchema): boolean {
   return newEntryValue(schema) !== undefined;
@@ -255,66 +652,70 @@ function variantLabel(variant: DefinitionFieldSchema): string {
   return t(`definitionEditor.valueTypes.${variant.kind}`);
 }
 function switchVariant(chosen: EaSelectValue | EaSelectValue[]): void {
-  if (Array.isArray(chosen)) return;
+  if (readonlyField.value || Array.isArray(chosen)) return;
   const index = Number(chosen);
   const variant = union.value?.variants[index];
   if (!variant) return;
   pendingVariantIndex.value = null;
-  pendingValue.value = '';
-  const initial = editableDefault(variant);
-  if (initial !== undefined) update(initial);
-  else if (['number', 'string', 'boolean', 'enum', 'object'].includes(variant.kind))
+  const initial = editableDefault(variant, references.value);
+  if (initial !== undefined)
+    update(preserveDefinitionExtensions(union.value!, props.value, initial, references.value));
+  else if (['number', 'string', 'boolean', 'enum', 'object', 'tuple'].includes(variant.kind))
     pendingVariantIndex.value = index;
-}
-const pendingParsedValue = computed(() => {
-  const variant = pendingVariant.value;
-  if (!variant) return undefined;
-  if (variant.kind === 'string') return pendingValue.value;
-  if (variant.kind === 'number') {
-    if (!pendingValue.value.trim()) return undefined;
-    const parsed = Number(pendingValue.value);
-    return Number.isFinite(parsed) ? parsed : undefined;
-  }
-  if (variant.kind === 'boolean')
-    return pendingValue.value === '' ? undefined : pendingValue.value === 'true';
-  if (variant.kind === 'enum')
-    return variant.options.find(option => String(option) === pendingValue.value);
-  return undefined;
-});
-function applyPendingVariant(): void {
-  if (pendingParsedValue.value === undefined) return;
-  update(pendingParsedValue.value);
-  pendingVariantIndex.value = null;
-  pendingValue.value = '';
 }
 </script>
 
 <template>
   <section
     class="definition-field"
+    :data-field-semantic="editor.semantic"
+    :data-field-control="editor.control"
+    :data-field-fallback="editor.fallback"
     :class="{
       'definition-field--root': root,
       'definition-field--optional': schema?.optional,
       'definition-field--container': isContainer,
     }"
   >
-    <template v-if="schema?.optional">
+    <p v-if="deferredConditionMessage" role="status">{{ deferredConditionMessage }}</p>
+    <p v-if="schemaError" role="alert" data-field-traversal-error>{{ schemaError }}</p>
+    <OwnedSpawnResourceField
+      v-else-if="ownedResource"
+      :value="value"
+      :slot="ownedResource"
+      :label="label"
+      :path="[...structuredContext!.path, ...path]"
+    />
+    <GraphRowBoundaryField
+      v-else-if="graphSequence || graphCondition"
+      :value="value"
+      :label="label"
+      :sequence="graphSequence"
+    />
+    <template v-else-if="schema?.optional">
       <EaCheckbox
         class="definition-field__enable"
         :model-value="optionalEnabled"
-        :disabled="readonlyField || schema.kind === 'condition' || schema.kind === 'opaque'"
+        :disabled="
+          readonlyField ||
+          schema.kind === 'condition' ||
+          schema.kind === 'opaque' ||
+          (schema.kind === 'graph' && value !== undefined)
+        "
         @change="toggleOptional"
-        >{{ label }}</EaCheckbox
-      >
+        ><span>{{ label }}<EditorHelp v-if="schema.description" :text="schema.description" /></span
+      ></EaCheckbox>
       <DefinitionField
+        :editing-context="editingContext"
         :name="name"
         :value="value ?? optionalDraft"
         :schema="enabledSchema"
         :path="path"
         :root="root"
+        :window-depth="windowDepth"
         :expand-depth="expandDepth"
         :hidden-fields="hiddenFields"
-        :editable="editable && optionalEnabled"
+        :editable="!readonlyField && optionalEnabled"
         :reference-choices="referenceChoices"
         :reference-kind="referenceKind"
         hide-label
@@ -322,15 +723,143 @@ function applyPendingVariant(): void {
         @open-graph="emit('openGraph', $event)"
       />
     </template>
+    <InlineCombatConditionField
+      v-else-if="editor.control === 'inlineCondition' && !inlineDraft"
+      :schema="inlineSchema!"
+      :value="value"
+      :editable="!readonlyField"
+      :label="label"
+      :reference-choices="referenceChoices"
+      @change="update"
+    />
+    <SkillSettingValuesField
+      v-else-if="declaredSchema && isSkillSettingValuesSchema(declaredSchema)"
+      :value="value"
+      :editable="!readonlyField"
+      :label="label"
+      @change="update"
+    />
+    <BlackboardMappingValueField
+      v-else-if="graphOperand"
+      :context="graphOperandContext"
+      :value="value"
+      mode="operand"
+      :label="label"
+      :readonly="readonlyField || !!connectedOperand"
+      @change="changeGraphOperand"
+    />
+    <BlackboardMappingValueField
+      v-else-if="editor.control === 'inlineOperand' && inlineDraft"
+      :value="value"
+      :mode="schemaHasAlias(editorSchema, 'LevelValues') ? 'levelsOrOperand' : 'operand'"
+      :label="label"
+      :readonly="readonlyField"
+      :allows-parameters="false"
+      @change="update"
+    />
+    <div v-else-if="editor.control === 'timeScaleCurve'">
+      <span v-if="!hideLabel"
+        >{{ label }}<EditorHelp v-if="schema?.description" :text="schema.description"
+      /></span>
+      <TimeScaleCurveField
+        :value="value"
+        :editable="!readonlyField"
+        :label="label"
+        @change="update"
+      />
+    </div>
+    <div v-else-if="editor.control === 'levelValues'">
+      <span v-if="!hideLabel"
+        >{{ label }}<EditorHelp v-if="schema?.description" :text="schema.description"
+      /></span>
+      <NodeLevelValues
+        :value="value as number | readonly number[] | undefined"
+        :required="!schema?.optional"
+        :readonly="readonlyField"
+        :label="label"
+        @value-change="update"
+      />
+    </div>
+    <div v-else-if="keyRequest">
+      <span v-if="!hideLabel"
+        >{{ label }}<EditorHelp v-if="schema?.description" :text="schema.description"
+      /></span>
+      <BlackboardKeyField
+        :value="value as string | undefined"
+        :context="inlineKey?.context"
+        :mode="keyRequest.mode"
+        :value-type="keyRequest.valueType"
+        :fallback="keyRequest.fallback"
+        @draft-change="structuredContext?.kind === 'spawnAbilityEntity' && update($event)"
+        :editable="!readonlyField"
+        :label="label"
+        @change="update"
+      />
+    </div>
+    <div v-else-if="editor.control === 'stringCollection'">
+      <span v-if="!hideLabel"
+        >{{ label }}<EditorHelp v-if="schema?.description" :text="schema.description"
+      /></span>
+      <StringCollectionField
+        :value="value"
+        :editable="!readonlyField"
+        required
+        :label="label"
+        :kind="stringCollectionDescriptor(editorSchema, name, referenceKind)!.kind"
+        :reference-kind="referenceKind"
+        :reference-choices="referenceChoices"
+        @change="update"
+      />
+    </div>
+    <div v-else-if="editor.control === 'gameplayTag'">
+      <span v-if="!hideLabel"
+        >{{ label }}<EditorHelp v-if="schema?.description" :text="schema.description"
+      /></span>
+      <GameplayTagField
+        :value="value as string | undefined"
+        :label="label"
+        :disabled="readonlyField"
+        @change="update"
+      />
+    </div>
+    <BlackboardMappingField
+      v-else-if="editor.control === 'blackboardMapping'"
+      :value="value"
+      :descriptor="resolveBlackboardMapping(editorSchema, name)!"
+      :preserve-connections="!!structuredContext?.graphOperands"
+      :value-schema="shape.kind === 'record' ? shape.value : undefined"
+      :editable="!readonlyField"
+      :label="label"
+      @change="update"
+    />
+    <div v-else-if="editor.control === 'stringOperand'">
+      <span v-if="!hideLabel"
+        >{{ label }}<EditorHelp v-if="schema?.description" :text="schema.description"
+      /></span>
+      <StringOperandField
+        :value="value"
+        :label="label"
+        :editable="!readonlyField"
+        required
+        :reference-kind="referenceKind"
+        :reference-choices="referenceChoices"
+        @change="update"
+      />
+    </div>
+    <p v-else-if="editor.semantic === 'valueOperand'" class="definition-field__unsupported">
+      {{ t('fieldFallback.structured-editor-pending') }}
+    </p>
     <label
       v-else-if="value === undefined"
       class="definition-field__missing"
       :class="{ 'definition-field__value-only': hideLabel }"
     >
-      <span v-if="!hideLabel">{{ label }}</span>
+      <span v-if="!hideLabel"
+        >{{ label }}<EditorHelp v-if="schema?.description" :text="schema.description"
+      /></span>
       <EaSelect
         v-if="union && canSwitchUnion"
-        :disabled="!editable"
+        :disabled="readonlyField"
         :model-value="pendingVariantIndex ?? ''"
         :options="[
           { value: '', label: t('definitionEditor.chooseValue'), disabled: true },
@@ -343,46 +872,60 @@ function applyPendingVariant(): void {
         @change="switchVariant"
       />
       <EaInput
-        v-else-if="shape.kind === 'number'"
+        v-else-if="editor.control === 'number'"
         type="number"
-        :disabled="!editable"
+        :disabled="readonlyField"
         :placeholder="t('definitionEditor.enterValue')"
         @change="updateNumber"
       />
-      <EaSelect
-        v-else-if="shape.kind === 'string' && choices.length"
-        :options="[...choices]"
-        :disabled="!editable"
-        :placeholder="t('definitionEditor.chooseValue')"
+      <ReferenceField
+        v-else-if="editor.control === 'reference'"
+        :reference-kind="editor.referenceKind!"
+        :choices="choices"
+        :label="label"
+        :disabled="readonlyField"
         @change="update($event)"
       />
       <EaInput
-        v-else-if="shape.kind === 'string'"
+        v-else-if="editor.control === 'string'"
         :model-value="''"
-        :disabled="!editable"
+        :disabled="readonlyField"
         :placeholder="t('definitionEditor.enterValue')"
         @change="update($event)"
       />
       <EaSelect
-        v-else-if="shape.kind === 'enum' || shape.kind === 'boolean'"
-        :disabled="!editable"
+        v-else-if="shape.kind === 'enum' || editor.control === 'boolean'"
+        :disabled="readonlyField"
         model-value=""
         :options="choiceOptions(shape)"
         @change="updateOptionalChoice"
       />
-      <EaButton v-else-if="shape.kind === 'graph'" :disabled="!editable" @click="addEmptyGraph">
+      <EaButton
+        v-else-if="editor.control === 'graph'"
+        :disabled="readonlyField"
+        @click="addEmptyGraph"
+      >
         {{ t('definitionEditor.addGraph') }}
       </EaButton>
       <EaButton
-        v-else-if="shape.kind === 'array' || shape.kind === 'record' || shape.kind === 'object'"
-        :disabled="!editable"
-        @click="shape.kind === 'object' ? (creatingValue = true) : addEmptyContainer()"
+        v-else-if="
+          shape.kind === 'array' ||
+          shape.kind === 'tuple' ||
+          shape.kind === 'record' ||
+          shape.kind === 'object'
+        "
+        :disabled="readonlyField"
+        @click="
+          shape.kind === 'object' || shape.kind === 'tuple'
+            ? (creatingValue = true)
+            : addEmptyContainer()
+        "
       >
         {{ t('definitionEditor.addField', { name: label }) }}
       </EaButton>
       <span v-else class="definition-field__unsupported">{{
         t(
-          shape.kind === 'condition'
+          editor.control === 'condition'
             ? 'definitionEditor.conditionAbsent'
             : 'definitionEditor.specialField',
         )
@@ -390,10 +933,10 @@ function applyPendingVariant(): void {
     </label>
     <template v-else-if="union">
       <label v-if="canSwitchUnion" class="definition-field__variant">
-        <span>{{ label }}</span>
+        <span>{{ label }}<EditorHelp v-if="schema?.description" :text="schema.description" /></span>
         <EaSelect
           :model-value="unionIndex"
-          :disabled="!editable"
+          :disabled="readonlyField"
           :options="
             union.variants.map((variant, index) => ({
               value: index,
@@ -405,22 +948,30 @@ function applyPendingVariant(): void {
         />
       </label>
       <DefinitionField
+        :editing-context="editingContext"
         v-if="!pendingVariant"
         :name="name"
         :value="value"
-        :schema="shape"
+        :schema="editorSchema"
         :path="path"
         :root="root"
+        :window-depth="windowDepth"
         :hidden-fields="hiddenFields"
-        :editable="editable"
+        :editable="!readonlyField"
         :reference-choices="referenceChoices"
+        :reference-kind="referenceKind"
         :hide-label="canSwitchUnion"
         @change="(childPath, next) => emit('change', childPath, next)"
         @open-graph="emit('openGraph', $event)"
       />
     </template>
     <template
-      v-else-if="shape.kind === 'object' || shape.kind === 'record' || shape.kind === 'array'"
+      v-else-if="
+        shape.kind === 'object' ||
+        shape.kind === 'record' ||
+        shape.kind === 'array' ||
+        shape.kind === 'tuple'
+      "
     >
       <details
         :class="{ 'definition-field__unlabelled': hideLabel }"
@@ -429,39 +980,79 @@ function applyPendingVariant(): void {
       >
         <summary>
           {{ hideLabel ? t(`definitionEditor.valueTypes.${shape.kind}`) : label }}
+          <EditorHelp v-if="schema?.description" :text="schema.description" />
           <small v-if="shape.kind === 'array'">{{ (value as unknown[]).length }}</small>
         </summary>
-        <div v-if="hideLabel || expanded" class="definition-field__children">
+        <EaButton
+          v-if="(hideLabel || expanded) && depthLimited"
+          data-field-focus
+          @click="focusSubtree"
+          >{{ t('definitionEditor.focusSubtree') }}</EaButton
+        >
+        <div v-else-if="hideLabel || expanded" class="definition-field__children">
           <template v-if="shape.kind === 'object'">
-            <template v-for="entry in objectEntries" :key="entry.key">
+            <template
+              v-for="entry in objectEntries.slice(
+                pageStart,
+                pageStart + DEFINITION_FIELD_WINDOW_ROWS,
+              )"
+              :key="entry.key"
+            >
               <DefinitionField
+                :editing-context="editingContext"
                 :name="entry.key"
                 :expand-depth="Math.max(0, (expandDepth ?? 0) - 1)"
                 :value="entry.value"
                 :schema="entry.child"
                 :path="[...path, entry.key]"
-                :editable="editable"
+                :window-depth="(windowDepth ?? 0) + 1"
+                :editable="!readonlyField"
                 :reference-choices="referenceChoices"
                 @change="(childPath, next) => emit('change', childPath, next)"
                 @open-graph="emit('openGraph', $event)"
               />
             </template>
           </template>
+          <template v-else-if="shape.kind === 'tuple'">
+            <DefinitionField
+              v-for="{ value: item, index } in arrayEntries"
+              :key="index"
+              :editing-context="editingContext"
+              :name="shape.semantics?.tuple?.elements[index]?.label ?? `${index + 1}`"
+              :value="item"
+              :schema="shape.elements[index]"
+              :path="[...path, index]"
+              :window-depth="(windowDepth ?? 0) + 1"
+              :editable="!readonlyField"
+              :reference-choices="referenceChoices"
+              :expand-depth="1"
+              @change="(childPath, next) => emit('change', childPath, next)"
+            />
+          </template>
           <template v-else-if="shape.kind === 'record'">
-            <div v-for="[key, item] in recordEntries" :key="key" class="definition-field__item">
+            <div
+              v-for="[key, item] in recordEntries.slice(
+                pageStart,
+                pageStart + DEFINITION_FIELD_WINDOW_ROWS,
+              )"
+              :key="key"
+              class="definition-field__item"
+            >
               <DefinitionField
+                :editing-context="editingContext"
                 :name="key"
                 :expand-depth="Math.max(0, (expandDepth ?? 0) - 1)"
                 :value="item"
                 :schema="shape.value"
                 :path="[...path, key]"
-                :editable="editable"
+                :window-depth="(windowDepth ?? 0) + 1"
+                :editable="!readonlyField"
                 :reference-choices="referenceChoices"
                 :reference-kind="referenceKind"
                 @change="(childPath, next) => emit('change', childPath, next)"
                 @open-graph="emit('openGraph', $event)"
               />
-              <EaButton :disabled="!editable" @click="removeRecordEntry(key)">
+              <EaButton :disabled="readonlyField" @click="removeRecordEntry(key)">
                 {{ t('common.delete') }}
               </EaButton>
             </div>
@@ -470,26 +1061,39 @@ function applyPendingVariant(): void {
                 v-model="recordKey"
                 :aria-label="t('definitionEditor.newKey')"
                 :placeholder="t('definitionEditor.newKey')"
-                :disabled="!editable"
+                :disabled="readonlyField"
+              />
+              <ReferenceField
+                v-if="entryEditor(shape.value).control === 'reference'"
+                :value="newItemValue"
+                :label="t('definitionEditor.enterValue')"
+                :reference-kind="entryEditor(shape.value).referenceKind!"
+                :choices="referenceChoices?.[entryEditor(shape.value).referenceKind ?? '']"
+                :disabled="readonlyField"
+                @change="newItemValue = $event"
               />
               <EaInput
-                v-if="shape.value.kind === 'string' || shape.value.kind === 'number'"
+                v-else-if="
+                  resolved(shape.value).kind === 'string' || resolved(shape.value).kind === 'number'
+                "
                 v-model="newItemValue"
-                :type="shape.value.kind === 'number' ? 'number' : 'text'"
+                :type="resolved(shape.value).kind === 'number' ? 'number' : 'text'"
                 :aria-label="t('definitionEditor.enterValue')"
                 :placeholder="t('definitionEditor.enterValue')"
-                :disabled="!editable"
+                :disabled="readonlyField"
               />
               <EaSelect
-                v-else-if="shape.value.kind === 'boolean' || shape.value.kind === 'enum'"
+                v-else-if="
+                  resolved(shape.value).kind === 'boolean' || resolved(shape.value).kind === 'enum'
+                "
                 v-model="newItemValue"
                 :aria-label="t('definitionEditor.chooseValue')"
-                :disabled="!editable"
+                :disabled="readonlyField"
                 :options="choiceOptions(shape.value, true)"
               />
               <EaButton
                 :disabled="
-                  !editable ||
+                  readonlyField ||
                   !recordKey.trim() ||
                   (!needsForm(shape.value) && !canAddEntry(shape.value))
                 "
@@ -499,9 +1103,12 @@ function applyPendingVariant(): void {
               </EaButton>
             </div>
             <DefinitionValueCreator
+              :editing-context="editingContext"
               v-if="creatingEntry"
               :schema="shape.value"
-              :editable="!!editable"
+              :field-path="[...path, recordKey.trim()]"
+              :reference-kind="referenceKind"
+              :editable="!readonlyField"
               :reference-choices="referenceChoices"
               @create="createEntry"
               @cancel="creatingEntry = false"
@@ -509,93 +1116,127 @@ function applyPendingVariant(): void {
           </template>
           <template v-else>
             <div
-              v-for="(item, index) in value as readonly unknown[]"
+              v-for="{ value: item, index } in arrayEntries"
               :key="index"
               class="definition-field__item"
             >
               <DefinitionField
+                :editing-context="editingContext"
                 :name="`${index + 1}`"
                 :expand-depth="Math.max(1, (expandDepth ?? 0) - 1)"
                 :value="item"
                 :schema="shape.element"
                 :path="[...path, index]"
-                :editable="editable"
+                :window-depth="(windowDepth ?? 0) + 1"
+                :editable="!readonlyField"
                 :reference-choices="referenceChoices"
                 :reference-kind="referenceKind"
                 @change="(childPath, next) => emit('change', childPath, next)"
                 @open-graph="emit('openGraph', $event)"
               />
-              <EaButton :disabled="!editable || index === 0" @click="moveArray(index, -1)">
+              <EaButton :disabled="readonlyField || index === 0" @click="moveArray(index, -1)">
                 ↑
               </EaButton>
               <EaButton
-                :disabled="!editable || index === (value as readonly unknown[]).length - 1"
+                :disabled="readonlyField || index === (value as readonly unknown[]).length - 1"
                 @click="moveArray(index, 1)"
               >
                 ↓
               </EaButton>
-              <EaButton :disabled="!editable" @click="removeArrayEntry(index)">
+              <EaButton :disabled="readonlyField" @click="removeArrayEntry(index)">
                 {{ t('common.delete') }}
               </EaButton>
             </div>
             <div class="definition-field__item">
-              <EaSelect
-                v-if="shape.element.kind === 'string' && choices.length"
-                v-model="newItemValue"
-                :aria-label="t('definitionEditor.chooseValue')"
-                :disabled="!editable"
-                :options="[
-                  { value: '', label: t('definitionEditor.chooseValue'), disabled: true },
-                  ...choices,
-                ]"
+              <ReferenceField
+                v-if="entryEditor(shape.element).control === 'reference'"
+                :value="newItemValue"
+                :label="t('definitionEditor.chooseValue')"
+                :reference-kind="entryEditor(shape.element).referenceKind!"
+                :choices="referenceChoices?.[entryEditor(shape.element).referenceKind ?? '']"
+                :disabled="readonlyField"
+                @change="newItemValue = $event"
               />
               <EaInput
-                v-else-if="shape.element.kind === 'string' || shape.element.kind === 'number'"
+                v-else-if="
+                  resolved(shape.element).kind === 'string' ||
+                  resolved(shape.element).kind === 'number'
+                "
                 v-model="newItemValue"
-                :type="shape.element.kind === 'number' ? 'number' : 'text'"
+                :type="resolved(shape.element).kind === 'number' ? 'number' : 'text'"
                 :aria-label="t('definitionEditor.enterValue')"
                 :placeholder="t('definitionEditor.enterValue')"
-                :disabled="!editable"
+                :disabled="readonlyField"
               />
               <EaSelect
-                v-else-if="shape.element.kind === 'boolean' || shape.element.kind === 'enum'"
+                v-else-if="
+                  resolved(shape.element).kind === 'boolean' ||
+                  resolved(shape.element).kind === 'enum'
+                "
                 v-model="newItemValue"
                 :aria-label="t('definitionEditor.chooseValue')"
-                :disabled="!editable"
+                :disabled="readonlyField"
                 :options="choiceOptions(shape.element, true)"
               />
               <EaButton
-                :disabled="!editable || (!needsForm(shape.element) && !canAddEntry(shape.element))"
+                :disabled="
+                  readonlyField || (!needsForm(shape.element) && !canAddEntry(shape.element))
+                "
                 @click="addArrayEntry"
               >
                 {{ t('definitionEditor.add') }}
               </EaButton>
             </div>
             <DefinitionValueCreator
+              :editing-context="editingContext"
               v-if="creatingEntry"
               :schema="shape.element"
-              :editable="!!editable"
+              :field-path="[...path, Array.isArray(value) ? value.length : 0]"
+              :reference-kind="referenceKind"
+              :editable="!readonlyField"
               :reference-choices="referenceChoices"
               @create="createEntry"
               @cancel="creatingEntry = false"
             />
           </template>
+          <nav
+            v-if="rowCount > DEFINITION_FIELD_WINDOW_ROWS"
+            class="definition-field__pages"
+            data-field-pages
+          >
+            <EaButton :disabled="page === 0" @click="page--">{{
+              t('definitionEditor.previousPage')
+            }}</EaButton>
+            <span>{{ page + 1 }} / {{ Math.ceil(rowCount / DEFINITION_FIELD_WINDOW_ROWS) }}</span>
+            <EaButton
+              :disabled="pageStart + DEFINITION_FIELD_WINDOW_ROWS >= rowCount"
+              @click="page++"
+              >{{ t('definitionEditor.nextPage') }}</EaButton
+            >
+          </nav>
         </div>
       </details>
     </template>
     <template v-else>
       <div class="definition-field__value" :class="{ 'definition-field__value-only': hideLabel }">
-        <span v-if="!hideLabel">{{ label }}</span>
+        <span v-if="!hideLabel"
+          >{{ label }}<EditorHelp v-if="schema?.description" :text="schema.description"
+        /></span>
         <EaSelect
           v-if="shape.kind === 'enum'"
           :aria-label="label"
-          :model-value="value as string | number"
-          :options="shape.options.map(option => ({ value: option, label: optionLabel(option) }))"
+          :model-value="typeof value === 'boolean' ? String(value) : (value as string | number)"
+          :options="
+            shape.options.map(option => ({
+              value: typeof option === 'boolean' ? String(option) : option,
+              label: optionLabel(option),
+            }))
+          "
           :disabled="readonlyField"
-          @change="update($event)"
+          @change="updateOptionalChoice"
         />
         <EaNumberInput
-          v-else-if="shape.kind === 'number'"
+          v-else-if="editor.control === 'number'"
           :aria-label="label"
           :model-value="value as number"
           :controls="false"
@@ -603,37 +1244,35 @@ function applyPendingVariant(): void {
           @update:model-value="updateNumberValue"
         />
         <EaCheckbox
-          v-else-if="shape.kind === 'boolean'"
+          v-else-if="editor.control === 'boolean'"
           :aria-label="label"
           :model-value="value as boolean"
           :disabled="readonlyField"
           @change="update($event)"
         />
-        <EaSelect
-          v-else-if="shape.kind === 'string' && choices.length"
-          :aria-label="label"
-          :model-value="value as string"
-          :options="[
-            ...(value && !choices.some(choice => choice.value === value)
-              ? [{ value: value as string, label: value as string }]
-              : []),
-            ...choices,
-          ]"
+        <ReferenceField
+          v-else-if="editor.control === 'reference'"
+          :value="value as string"
+          :label="label"
+          :reference-kind="editor.referenceKind!"
+          :choices="choices"
           :disabled="readonlyField"
           @change="update($event)"
         />
         <EaInput
-          v-else-if="shape.kind === 'string'"
+          v-else-if="editor.control === 'string'"
           :aria-label="label"
           :model-value="value as string"
           :disabled="readonlyField"
           @change="update($event)"
         />
-        <EaButton v-else-if="shape.kind === 'graph'" @click="emit('openGraph', path)">
+        <EaButton v-else-if="editor.control === 'graph'" @click="emit('openGraph', path)">
           {{ t('definitionEditor.openGraph') }}
         </EaButton>
-        <span v-else-if="shape.kind === 'null'">{{ t('definitionEditor.valueTypes.null') }}</span>
-        <span v-else-if="shape.kind === 'condition'" class="definition-field__unsupported">{{
+        <span v-else-if="editor.control === 'null'">{{
+          t('definitionEditor.valueTypes.null')
+        }}</span>
+        <span v-else-if="editor.control === 'condition'" class="definition-field__unsupported">{{
           t('definitionEditor.conditionReadOnly', {
             kind: (value as { kind?: string } | undefined)?.kind ?? '-',
           })
@@ -643,10 +1282,44 @@ function applyPendingVariant(): void {
         }}</span>
       </div>
     </template>
+    <section
+      v-if="ownsWindow && focus"
+      class="definition-field__focus"
+      role="dialog"
+      :aria-label="t('definitionEditor.focusSubtree')"
+      data-field-focus-window
+    >
+      <EaButton @click="closeFocus">{{ t('definitionEditor.backToParent') }}</EaButton>
+      <small>{{ focus.path.join('.') }}</small>
+      <DefinitionField
+        :name="focus.name"
+        :schema="focus.schema"
+        :value="focusedValue"
+        :path="focus.path"
+        :editing-context="editingContext"
+        :editable="editable && focus.editable"
+        :reference-kind="focus.referenceKind"
+        :reference-choices="referenceChoices"
+        :window-depth="0"
+        :expand-depth="1"
+        @change="(childPath, next) => emit('change', childPath, next)"
+        @open-graph="emit('openGraph', $event)"
+      />
+    </section>
+    <small
+      v-if="editor.fallback && !schema?.optional && !union"
+      class="definition-field__unsupported"
+    >
+      {{ t(`fieldFallback.${editor.fallback}`) }}
+    </small>
     <DefinitionValueCreator
-      v-if="creatingValue || pendingVariant?.kind === 'object'"
+      :editing-context="editingContext"
+      v-if="creatingValue || pendingVariant"
+      :key="pendingVariantIndex ?? 'create'"
       :schema="pendingVariant ?? shape"
-      :editable="!!editable"
+      :field-path="path"
+      :reference-kind="referenceKind"
+      :editable="!readonlyField"
       :reference-choices="referenceChoices"
       @create="createValue"
       @cancel="
@@ -654,49 +1327,22 @@ function applyPendingVariant(): void {
         pendingVariantIndex = null;
       "
     />
-    <div v-else-if="pendingVariant" class="definition-field__pending">
-      <EaInput
-        v-if="pendingVariant.kind === 'number' || pendingVariant.kind === 'string'"
-        v-model="pendingValue"
-        :type="pendingVariant.kind === 'number' ? 'number' : 'text'"
-        :disabled="!editable"
-        :aria-label="t('definitionEditor.enterValue')"
-      />
-      <EaSelect
-        v-else-if="pendingVariant.kind === 'boolean'"
-        v-model="pendingValue"
-        :disabled="!editable"
-        :aria-label="t('definitionEditor.chooseValue')"
-        :options="[
-          { value: '', label: t('definitionEditor.chooseValue'), disabled: true },
-          { value: 'true', label: t('definitionEditor.yes') },
-          { value: 'false', label: t('definitionEditor.no') },
-        ]"
-      />
-      <EaSelect
-        v-else-if="pendingVariant.kind === 'enum'"
-        v-model="pendingValue"
-        :disabled="!editable"
-        :aria-label="t('definitionEditor.chooseValue')"
-        :options="[
-          { value: '', label: t('definitionEditor.chooseValue'), disabled: true },
-          ...pendingVariant.options.map(option => ({
-            value: String(option),
-            label: optionLabel(option),
-          })),
-        ]"
-      />
-      <EaButton
-        :disabled="!editable || pendingParsedValue === undefined"
-        @click="applyPendingVariant"
-      >
-        {{ t('definitionEditor.applyValue') }}
-      </EaButton>
-    </div>
   </section>
 </template>
 
 <style scoped>
+.definition-field__focus {
+  padding: 12px;
+  border: 1px solid var(--ea-border-soft);
+  max-height: 70vh;
+  overflow: auto;
+}
+.definition-field__pages {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .definition-field {
   min-width: 0;
   padding: 5px 0;

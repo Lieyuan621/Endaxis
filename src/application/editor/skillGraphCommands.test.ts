@@ -426,3 +426,58 @@ it('自由展示块没有技能来源身份，携带完整定义也不能通过�
     expect(session.canUndo).toBe(false);
   }
 });
+
+it('curve graph commands preserve both infinite tangent signs through real undo, redo and project reopening', () => {
+  const { project, scenario, repository } = fixture();
+  const session = new ScenarioEditorSession(scenario);
+  const before = session.snapshot.scenario;
+  const curve = {
+    kind: 'inline' as const,
+    keys: [
+      {
+        time: -1,
+        value: 0.5,
+        inTangent: Infinity,
+        outTangent: -Infinity,
+        weightedMode: 0 as const,
+        inWeight: -2,
+        outWeight: 4,
+      },
+    ],
+  };
+  session.commit(
+    'curve',
+    editSkillCastGraph(repository, 'first', { kind: 'main' }, graph => ({
+      ...graph,
+      nodes: {
+        ...graph.nodes,
+        a: {
+          ...graph.nodes.a!,
+          action: {
+            kind: 'startTimeDilation',
+            parameters: {
+              scope: 'global',
+              slot: 'Test/Time',
+              priority: 1,
+              durationSeconds: { kind: 'constant', value: 1 },
+              finishByAction: false,
+              ignoredTargets: [],
+              curve,
+            },
+          },
+        },
+      },
+    })),
+  );
+  const after = session.snapshot.scenario;
+  expect(after).not.toBe(before);
+  session.undo();
+  expect(session.snapshot.scenario).toBe(before);
+  session.redo();
+  expect(session.snapshot.scenario).toBe(after);
+  const saved = { ...project, scenarios: [after] };
+  const text = serializeProjectDocument(saved);
+  expect(text).toContain('$endaxisNumber');
+  expect(parseProjectDocument(text)).toEqual({ ok: true, value: saved });
+  expect(parseProjectDocument(JSON.parse(text))).toEqual({ ok: true, value: saved });
+});

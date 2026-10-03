@@ -171,6 +171,19 @@ describe('definition field command boundary', () => {
       ),
     ).toThrow(/read-only/);
   });
+  it('keeps enemy derived levelHp readonly independently of tuple editing', () => {
+    const levelHp = [100, 200, 300, 400, 500, 600];
+    const enemy = { levelHp };
+    expect(() =>
+      assertEditableDefinitionField(definitionSchemas.enemy, enemy, ['levelHp'], [...levelHp, 700]),
+    ).toThrow(/cannot be changed/);
+    expect(() =>
+      assertEditableDefinitionField(definitionSchemas.enemy, enemy, ['levelHp', 0], 120),
+    ).toThrow(/cannot be changed/);
+    expect(() =>
+      assertEditableDefinitionField(definitionSchemas.enemy, enemy, ['levelHp'], levelHp),
+    ).not.toThrow();
+  });
   it('creates an optional empty graph without allowing arbitrary graph replacement', () => {
     const schema = {
       kind: 'object',
@@ -186,4 +199,25 @@ describe('definition field command boundary', () => {
       }),
     ).toThrow(/cannot be changed/);
   });
+});
+
+it('uses forbidden actionGraph declarations to distinguish static and graph-bearing Buffs', () => {
+  const graph = emptyDefinitionActionGraph();
+  const staticBuff = { stackingType: 'unlimited' };
+  const dynamicBuff = { ...staticBuff, actionGraph: graph };
+  const before = fieldSchemaForValue(definitionSchemas.buff, staticBuff);
+  const after = fieldSchemaForValue(definitionSchemas.buff, dynamicBuff);
+  expect(before.kind).toBe('object');
+  expect(after.kind).toBe('object');
+  if (before.kind !== 'object' || after.kind !== 'object')
+    throw new Error('expected distinct Buff branches');
+  expect(before.fields.actionGraph?.fallback?.reason).toBe('no-present-type');
+  expect(after.fields.actionGraph?.kind).toBe('graph');
+  expect(after.fields.actionGraph?.optional).not.toBe(true);
+  expect(() =>
+    assertEditableDefinitionField(definitionSchemas.buff, dynamicBuff, ['stackingType'], 'stack'),
+  ).not.toThrow();
+  expect(() =>
+    assertEditableDefinitionField(definitionSchemas.buff, dynamicBuff, ['actionGraph'], undefined),
+  ).toThrow();
 });

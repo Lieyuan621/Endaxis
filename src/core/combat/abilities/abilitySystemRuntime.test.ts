@@ -53,6 +53,41 @@ class FixtureRuntime implements AbilitySkillRuntime {
 const beforeCastPayload = { sourceId: 'owner', targetId: 'owner', skillId: 'test', skillCastId: 1 };
 
 describe('AbilitySystemRuntime', () => {
+  it('静态技能可换槽且类型写入可恢复，但不会生成可施放实例', () => {
+    const options = {
+      skills: [],
+      skillDefinitions: [
+        { skillId: 'base', nativeSkillType: 'comboSkill' as const },
+        { skillId: 'variant', nativeSkillType: 'normalSkill' as const },
+      ],
+      skillSlotGroups: [
+        {
+          skillSlotKey: 'combo',
+          input: 'comboSkill' as const,
+          baseSkillKey: 'base',
+          replacementSkillKeys: ['variant'],
+        },
+      ],
+    };
+    const ability = new AbilitySystemRuntime(options);
+    expect(ability.nativeSkillTypeForSkill('variant')).toBe('normalSkill');
+    ability.changeSkillSlot('combo', 'variant');
+    const restored = new AbilitySystemRuntime(options, structuredClone(ability.runtimeState));
+    expect(restored.currentSkillKeyForSlot('combo')).toBe('variant');
+    expect(restored.nativeSkillTypeForSkill('variant')).toBe('comboSkill');
+    expect(() => restored.tryStartSkill('variant')).toThrow("unknown ability skill 'variant'");
+    expect(
+      () => new AbilitySystemRuntime({ skills: [], skillDefinitions: [{ skillId: 'unknown' }] }),
+    ).toThrow('has no native or player type');
+    expect(
+      () =>
+        new AbilitySystemRuntime({
+          ...options,
+          skills: [new FixtureRuntime('variant', [], 'ultimate')],
+        }),
+    ).toThrow('inconsistent native SkillType');
+  });
+
   it('换入连携槽改变原生类型，切面恢复与撤销均保留类型写入', () => {
     const options = () => ({
       skills: [

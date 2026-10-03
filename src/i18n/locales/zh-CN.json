@@ -1,4 +1,30 @@
 {
+  "blackboardField": {
+    "choose": "选择已知键",
+    "key": "黑板键",
+    "scope": "调用作用域",
+    "source": "来源",
+    "locate": "跳转到写入节点",
+    "externalBuff": "此键属于运行时查询的 Buff，不能把当前动作黑板当作它的所属黑板。",
+    "types": {
+      "number": "数值",
+      "string": "字符串",
+      "unknown": "类型未知",
+      "mixed": "混合类型",
+      "null": "null（非数字）"
+    },
+    "states": {
+      "fallback": "此键缺失或不是数值时，使用明确配置的数值回退。",
+      "unset": "请明确填写键，不会自动创建默认键。",
+      "valid": "已知且类型兼容的键",
+      "external": "外部提供的键，是否存在由运行时检查。",
+      "contextUnknown": "运行时所属对象或调用作用域未知，不推测为当前外层作用域。",
+      "outOfScope": "此键并非在每个调用作用域中都可见。",
+      "typeMismatch": "已知值类型与此输入不兼容。",
+      "readOnly": "宏参数只读，不能用作写入目标。",
+      "missingParameter": "请选择已声明的数值宏参数。"
+    }
+  },
   "editor": {
     "help": "说明",
     "backToAsset": "查看属性",
@@ -342,7 +368,9 @@
       "condition": "条件",
       "opaque": "原始值",
       "union": "多种类型",
-      "null": "无"
+      "null": "无",
+      "tuple": "固定槽位",
+      "timeScaleCurve": "内联曲线"
     },
     "editDefinition": "编辑定义",
     "options": {
@@ -525,7 +553,11 @@
       "replacementSkills": "替换技能",
       "routedReplacementSkills": "跨组路由技能",
       "presentationVariants": "展示形态"
-    }
+    },
+    "focusSubtree": "聚焦此子树",
+    "backToParent": "返回父级",
+    "previousPage": "上一页",
+    "nextPage": "下一页"
   },
   "actionGraphEditor": {
     "singleValue": "固定数值",
@@ -543,7 +575,8 @@
       "resources": "生命与资源",
       "skills": "技能与时间",
       "number": "数值计算",
-      "boolean": "条件判断"
+      "boolean": "条件判断",
+      "string": "字符串数据"
     },
     "noMatchingNodes": "没有匹配的节点",
     "addNode": "添加节点…",
@@ -1607,6 +1640,10 @@
       "parameter": {
         "name": "参数名",
         "help": "选择调用此宏时传入的参数。"
+      },
+      "expression": {
+        "name": "字符串值",
+        "help": "字面值或在每个消费点读取的字符串黑板键。"
       }
     },
     "help": "查看说明",
@@ -2324,6 +2361,10 @@
       "deckAttributeCompare": {
         "name": "比较构筑属性",
         "help": "比较构筑中的两项干员属性。"
+      },
+      "stringOperand": {
+        "name": "字符串值",
+        "help": "字符串常量或当前动作黑板读取；每个消费点独立读取当前上下文。"
       }
     },
     "open": "编辑技能图",
@@ -5545,5 +5586,228 @@
       "fullyTuned": "满突破",
       "tuningUnavailable": "无法突破"
     }
+  },
+  "fieldReference": {
+    "valid": "引用已解析",
+    "invalid": "未找到引用；保留原始值",
+    "ambiguous": "多个可见目标使用此 ID；请选择唯一引用",
+    "invisible": "引用位于当前所有者作用域之外",
+    "source": "来源",
+    "owner": "所有者",
+    "readOnly": "只读目标",
+    "openTarget": "打开目标",
+    "unset": "选择引用",
+    "unresolved": "当前候选中未找到，保留原始值",
+    "empty": "暂无候选",
+    "contextUnknown": "缺少引用上下文"
+  },
+  "fieldFallback": {
+    "no-present-type": "契约没有可编辑的值",
+    "graph-reference-boundary": "通过图入口查看或编辑此引用",
+    "owned-resource-boundary": "请打开所属资源查看",
+    "depth-limit": "更深层的类型化字段尚未接入此表单",
+    "recursive-type": "此表单暂不展开递归类型",
+    "unsupported-type": "此类型尚未接入表单控件",
+    "structured-editor-pending": "结构化控件待接入，保留现有编辑与校验",
+    "tuple-editor-pending": "已保留固定元组槽位，此表单暂不支持编辑",
+    "condition-editor-pending": "请使用对应的条件或图编辑入口"
+  },
+  "stringOperand": {
+    "mode": "输入方式",
+    "literal": "字面值",
+    "blackboard": "从黑板读取字符串",
+    "current": "已保存表达式",
+    "readHelp": "在每个使用点读取当前上下文。这是字符串键表达式，不是数值数据连线。"
+  },
+  "blackboardMapping": {
+    "edit": "编辑映射",
+    "replace": "替换无效映射",
+    "empty": "暂无映射",
+    "invalidMapping": "原映射无效，已保留原值",
+    "writeDestination": "写入目标键",
+    "copySource": "读取来源键（数值或字符串）",
+    "stringLiteral": "字符串字面值",
+    "value": "值",
+    "valueMode": "值类型",
+    "levels": "数值／逐级值",
+    "constant": "数值常量",
+    "readNumber": "从黑板读取数值",
+    "parameter": "数值宏参数",
+    "connection": "已有数值连接",
+    "keepConnection": "保留此连接；请在图中编辑连接，或明确选择替代值",
+    "useFallback": "使用明确的回退值",
+    "fallback": "回退值",
+    "strictRead": "严格读取：缺少键时报告错误",
+    "add": "添加映射",
+    "remove": "删除映射",
+    "apply": "应用映射",
+    "cancel": "取消",
+    "emptyKey": "目标键不能为空",
+    "unsafeKey": "无法安全编辑此目标键",
+    "duplicateKey": "目标键不能重复",
+    "invalidValue": "无效值；请选择支持的值类型修复",
+    "staleDraft": "映射已在其他位置变化，请取消后重新打开，避免覆盖新值",
+    "incompatibleSource": "来源键不在当前作用域、类型不匹配，或不是已声明的宏参数",
+    "destination": {
+      "childAction": "子动作黑板",
+      "childEntity": "子实体黑板",
+      "buff": "目标 Buff 黑板",
+      "abilityEntity": "新生成实体黑板",
+      "globalBuff": "新全局 Buff 黑板",
+      "macroArguments": "宏调用实参",
+      "exitBuff": "余效 Buff 黑板",
+      "globalBuffChild": "子 Buff 黑板"
+    },
+    "destinationUnknown": {
+      "childAction": "这里声明新的子作用域初值，当前读取作用域不是写入目标",
+      "childEntity": "这里声明新的实体作用域初值，当前读取作用域不是写入目标",
+      "buff": "此表单尚无法证明目标 Buff 的键类型，目标上下文未知",
+      "abilityEntity": "此表单尚无法证明新实体的键类型，目标上下文未知",
+      "globalBuff": "此表单尚无法证明全局 Buff 的键类型，目标上下文未知",
+      "macroArguments": "实参名必须与目标宏声明完全一致；应用时由图校验器核对完整接口",
+      "exitBuff": "数值在动作 END 时读取当前动作黑板；目标键属于余效 Buff，此处目标键类型未知。",
+      "globalBuffChild": "数值在创建时读取新的 GlobalBuff 黑板；目标键属于子 Buff，此处目标键类型未知。"
+    },
+    "applyRejected": "修改尚未被接受，草稿已保留，可修复后重试",
+    "chooseValue": "选择值类型并输入数值",
+    "argumentKey": "目标宏声明的参数名",
+    "fallbackRead": "来源缺失或不是数值时，使用明确的回退值",
+    "unset": "取消设置可选映射",
+    "unsetPending": "应用后将移除此可选字段；取消则保留原映射"
+  },
+  "conditionList": {
+    "source": "来源",
+    "orderHint": "条件按顺序短路求值；调整顺序可能改变副作用。",
+    "empty": "暂无条件",
+    "invalid": "条件列表无效",
+    "edit": "编辑列表",
+    "newCondition": "新增条件",
+    "choose": "请选择真或假",
+    "add": "添加条件",
+    "moveUp": "上移",
+    "moveDown": "下移",
+    "remove": "移除",
+    "moveUpLabel": "上移条件 {index}",
+    "moveDownLabel": "下移条件 {index}",
+    "removeLabel": "移除条件 {index}",
+    "applyLabel": "应用条件列表",
+    "cancelLabel": "取消条件列表",
+    "rejected": "修改未被接受。草稿已保留，请修正或取消。"
+  },
+  "graphDataInput": {
+    "ownerChanged": "字段已应用，请重新选择刷新后的输入再修改连线。",
+    "group": "类型化数据输入",
+    "unassigned": "未赋值",
+    "levelValues": "等级值",
+    "expression": "内联表达式",
+    "literal": "{label} 内联常量",
+    "condition": "{label} 内联条件",
+    "applyLabel": "{label} 应用内联值",
+    "cancelLabel": "{label} 取消内联编辑",
+    "editLabel": "{label} 编辑内联值",
+    "apply": "应用",
+    "cancel": "取消",
+    "edit": "编辑",
+    "inline": "改为内联",
+    "true": "成立",
+    "false": "不成立",
+    "source": "来源：{id}",
+    "missingSource": "来源不存在 · {id}",
+    "sourceLabel": "{label} 连接来源",
+    "chooseSource": "连接兼容的数据节点",
+    "disconnectHelp": "请在输入旁选择“改为内联”，填写合法常量并应用；取消会保留原连线。",
+    "disconnectOutput": "请从需要断开的输入端选择内联值，原连接会保留至应用",
+    "disconnect": "选择内联值以断开"
+  },
+  "stringCollection": {
+    "nativeIdHint": "输入精确的原生 GlobalBuff ID。没有匹配的活动实例时不会产生效果，无需资产目录。",
+    "invalidNativeId": "请输入至少一个非空 ID。保留空白字符、顺序和重复项。",
+    "orderHint": "保留顺序和重复项；不会自动去重。",
+    "empty": "空列表",
+    "edit": "编辑列表",
+    "newEntry": "新增项",
+    "setEmpty": "设为空列表",
+    "invalid": "列表包含无效的新条目。",
+    "rejected": "修改被拒绝，草稿已保留。",
+    "customTag": "自定义标签路径",
+    "useTag": "使用标签",
+    "invalidTag": "请输入各级非空的可读标签路径。",
+    "refineSearch": "显示 {count} 个匹配中的前 50 个，请输入更完整路径继续筛选。"
+  },
+  "inlineCondition": {
+    "availabilityDeferred": "只读：此版本尚未建立技能 availability 字段的运行时消费路径。",
+    "legacyHandlerDeferred": "只读：编译器拒绝没有监听区间的旧技能 eventHandlers。",
+    "edit": "编辑条件",
+    "hint": "仅编辑内联条件。此处不提供图连线或宏参数。"
+  },
+  "structuredValue": {
+    "edit": "编辑结构",
+    "stage": "暂存字段",
+    "stageHint": "先暂存各字段，再统一应用整个节点。",
+    "staged": "暂存字段尚未写入；应用时一次提交完整节点。",
+    "rejected": "节点未接受此修改，草稿已保留。"
+  },
+  "timeScaleCurve": {
+    "branch": "曲线来源",
+    "named": "命名曲线",
+    "inline": "内联曲线",
+    "search": "搜索命名曲线",
+    "name": "曲线名称",
+    "unknownName": "未识别的导入名称。保留原值，暂无预览。",
+    "unknownSelection": "请从当前目录选择曲线。",
+    "invalid": "请选择命名或内联曲线。",
+    "keyTable": "关键帧（保留原始顺序）",
+    "time": "进度",
+    "value": "时间倍率",
+    "inTangent": "入切线",
+    "outTangent": "出切线",
+    "weightedMode": "加权模式",
+    "inWeight": "入权重",
+    "outWeight": "出权重",
+    "mode": "模式",
+    "finite": "有限数",
+    "mode0": "0 · 不加权",
+    "mode1": "1 · 入",
+    "mode2": "2 · 出",
+    "mode3": "3 · 双侧",
+    "remove": "移除",
+    "addKey": "添加关键帧",
+    "previous": "上一页关键帧",
+    "next": "下一页关键帧",
+    "preview": "运行时时间倍率曲线预览",
+    "xAxis": "已用时长 / 总时长（归一化进度）",
+    "yAxis": "Y：时间倍率（无量纲）",
+    "previewHint": "空心点表示单侧极限，实心点表示运行时精确值。",
+    "previewLimit": "预览最多支持 128 个关键帧。所有关键帧仍保留并可编辑。",
+    "previewRange": "当前合法数值范围无法可靠绘制，曲线数据未改变。",
+    "edit": "编辑曲线",
+    "rejected": "曲线未被接受，草稿仍保留。"
+  },
+  "skillSettingValues": {
+    "hint": "固定四列有限数值。列号从 1 开始，使用银行家舍入；越界时跳过该项。",
+    "invalid": "请输入恰好四个有限数值"
+  },
+  "globalBuffField": {
+    "localBoard": "内层数值在创建时同步读取新的 GlobalBuff 黑板；数值创建覆盖优先于本地默认值，不继承创建者或实体键。宏形参与数字节点连接仍属于当前图。",
+    "graphRequired": "需要当前所属图才能验证这项已连接的本地读取",
+    "readOnly": "GlobalBuff 局部变量只支持图读取；请编辑定义或创建覆盖来提供数值。"
+  },
+  "graphSequenceField": {
+    "invalid": "无效的执行引用",
+    "empty": "空分支",
+    "connected": "已连接分支",
+    "absentCondition": "无额外条件",
+    "help": "执行目标通过图连线修改。删除此行前请先断开连接。",
+    "conditionHelp": "通过图布尔输入设置常量或连接条件节点。行编辑会保留此条件。"
+  },
+  "spawnDefinitionField": {
+    "resourceReadonly": "此槽拥有独立技能。已有技能请进入其资源图编辑；此处不创建、删除、替换或重排资源。",
+    "absent": "没有已有子资源。",
+    "invalid": "此子资源值无法列出。",
+    "navigationUnavailable": "此宿主无法打开该资源，请进入所属资产工作区。",
+    "resourceListHint": "子资源图相互独立。此处最多列出 50 项，其余可在资产资源列表查看。",
+    "assignments": "模板数值读取本次生成赋值：继承动作直接层值后，依次应用数值和字符串覆盖；缺失或非数字时使用必填 fallback。此步骤不读取实体模板 blackboard 默认值。",
+    "finishDraft": "请先暂存或取消当前定义草稿，再打开子资源。",
+    "navigationChanged": "资源已变化或未能应用待提交字段，请重新选择资源后再打开。"
   }
 }

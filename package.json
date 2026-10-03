@@ -13,7 +13,7 @@
     "generate:definition-fields": "node --experimental-strip-types tools/editor/generateDefinitionSchemas.ts",
     "check:definition-fields": "node --experimental-strip-types tools/editor/generateDefinitionSchemas.ts --check",
     "check:editor-nodes": "node --experimental-strip-types tools/editor/generateActionNodeSchema.ts --check",
-    "test:editor-schema": "node --experimental-strip-types --test tools/editor/generateActionNodeSchema.test.ts",
+    "test:editor-schema": "node --experimental-strip-types --test tools/editor/generateActionNodeSchema.test.ts tools/editor/fieldSemantics.test.ts tools/editor/fieldCapabilities.test.ts",
     "convert:legacy-timeline": "node --experimental-strip-types tools/legacy-timeline/cli.ts",
     "build": "vite build",
     "preview": "vite preview",
@@ -68,7 +68,9 @@
     "verify:real-timeline-checkpoints": "node --experimental-strip-types tools/performance/verify-real-timeline-checkpoints.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "check:field-capabilities": "node --experimental-strip-types tools/editor/checkFieldCapabilities.ts",
+    "test:browser:fields": "playwright test --config tests/browser/fields.playwright.config.ts"
   },
   "dependencies": {
     "@dagrejs/dagre": "^3.1.1",

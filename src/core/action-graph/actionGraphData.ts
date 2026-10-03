@@ -4,6 +4,35 @@ import type {
   ActionGraphDataNode,
 } from '../../../packages/game-data-contract/src/actionGraph.ts';
 
+/** 只有契约明确声明的 ActionStringOperand 字段允许字符串接线。 */
+function actionStringField(kind: unknown): string | undefined {
+  switch (kind) {
+    case 'applyBuff':
+      return 'buffId';
+    case 'castSkillDuringAction':
+      return 'skillId';
+    case 'createTimedMarker':
+    case 'createAbilityEntityTimedMarker':
+      return 'markerId';
+  }
+}
+
+function assertStringExpression(value: unknown, id: string): void {
+  if (typeof value === 'string' && value.length > 0) return;
+  if (
+    value !== null &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    Object.keys(value).length === 1 &&
+    Object.hasOwn(value, 'blackboardKey') &&
+    'blackboardKey' in value &&
+    typeof value.blackboardKey === 'string' &&
+    value.blackboardKey.length > 0
+  )
+    return;
+  throw new Error(`data node ${id}: expected a non-empty string or string blackboard reference`);
+}
+
 export function createGraphDataResolver(graph: ActionGraphDefinition) {
   const resolved = new Map<string, unknown>();
   const visiting = new Set<string>();
@@ -11,33 +40,86 @@ export function createGraphDataResolver(graph: ActionGraphDefinition) {
     if (!graph.dataNodes || !Object.hasOwn(graph.dataNodes, id))
       throw new Error(`missing ${type} data node: ${id}`);
     const definition = graph.dataNodes[id]!;
+    if (
+      !definition ||
+      (definition.type !== 'number' &&
+        definition.type !== 'boolean' &&
+        definition.type !== 'string')
+    )
+      throw new Error(`invalid data node: ${id}`);
     if (definition.type !== type)
       throw new Error(`data node ${id}: expected ${type}, got ${definition.type}`);
     if (resolved.has(id)) return resolved.get(id);
     if (visiting.has(id)) throw new Error(`recursive data graph: ${id}`);
     visiting.add(id);
-    const result = bind(definition.expression);
-    visiting.delete(id);
-    resolved.set(id, result);
+    try {
+      const result = bind(definition.expression, type === 'string');
+      if (type === 'string') assertStringExpression(result, id);
+      resolved.set(id, result);
+      return result;
+    } finally {
+      visiting.delete(id);
+    }
+  }
+  function bind(value: unknown, stringInput?: boolean, parameterStringField?: string): unknown {
+    const result = bindValue(value, stringInput, parameterStringField);
+    if (stringInput === true) assertStringExpression(result, 'string input');
     return result;
   }
-  function bind(value: unknown): unknown {
-    if (value === null || typeof value !== 'object' || 'actionGraph' in value) return value;
-    if ('kind' in value && (value.kind === 'conditionNode' || value.kind === 'valueNode')) {
+  function bindValue(
+    value: unknown,
+    stringInput?: boolean,
+    parameterStringField?: string,
+  ): unknown {
+    if (value === null || typeof value !== 'object') return value;
+    if (
+      'kind' in value &&
+      (value.kind === 'conditionNode' || value.kind === 'valueNode' || value.kind === 'stringNode')
+    ) {
       if (
         !('nodeId' in value) ||
         typeof value.nodeId !== 'string' ||
+        value.nodeId.length === 0 ||
+        !Object.hasOwn(value, 'kind') ||
+        !Object.hasOwn(value, 'nodeId') ||
         Object.keys(value).length !== 2
       )
         throw new Error('invalid data node reference');
-      return node(value.nodeId, value.kind === 'conditionNode' ? 'boolean' : 'number');
+      if (stringInput === true && value.kind !== 'stringNode')
+        throw new Error('string input expects a stringNode data reference');
+      if (value.kind === 'stringNode' && stringInput === false)
+        throw new Error('string data reference is only allowed in an ActionStringOperand input');
+      return node(
+        value.nodeId,
+        value.kind === 'conditionNode'
+          ? 'boolean'
+          : value.kind === 'stringNode'
+            ? 'string'
+            : 'number',
+      );
     }
+    if ('actionGraph' in value) return value;
     if (Array.isArray(value)) {
-      const result = value.map(bind);
+      const result = value.map(item => bind(item, false));
       return result.every((v, i) => v === value[i]) ? value : result;
     }
     const entries = Object.entries(value);
-    const result = entries.map(([key, item]) => [key, bind(item)] as const);
+    const kind = 'kind' in value ? value.kind : undefined;
+    const conditionStringField =
+      kind === 'timedMarkerPresent' || kind === 'abilityEntityTimedMarkerPresent'
+        ? 'markerId'
+        : undefined;
+    const result = entries.map(
+      ([key, item]) =>
+        [
+          key,
+          bind(
+            item,
+            key === parameterStringField || key === conditionStringField,
+            key === 'parameters' ? actionStringField(kind) : undefined,
+          ),
+        ] as const,
+    );
     return result.every(([, item], i) => item === entries[i]![1])
       ? value
       : Object.fromEntries(result);
@@ -49,7 +131,11 @@ export function createGraphDataResolver(graph: ActionGraphDefinition) {
 export function resolveGraphData(graph: ActionGraphDefinition): ActionGraphDefinition {
   const resolver = createGraphDataResolver(graph);
   for (const [id, node] of Object.entries(graph.dataNodes ?? {})) {
-    if (!id || (node.type !== 'number' && node.type !== 'boolean'))
+    if (
+      !id ||
+      !node ||
+      (node.type !== 'number' && node.type !== 'boolean' && node.type !== 'string')
+    )
       throw new Error(`invalid data node: ${id}`);
     resolver.node(id, node.type);
   }
@@ -60,7 +146,9 @@ export function resolveGraphData(graph: ActionGraphDefinition): ActionGraphDefin
     if (!value || typeof value !== 'object' || 'actionGraph' in value) return;
     if (
       'kind' in value &&
-      (value.kind === 'conditionNode' || value.kind === 'valueNode') &&
+      (value.kind === 'conditionNode' ||
+        value.kind === 'valueNode' ||
+        value.kind === 'stringNode') &&
       'nodeId' in value
     ) {
       const id = String(value.nodeId);
@@ -91,7 +179,7 @@ export function resolveGraphData(graph: ActionGraphDefinition): ActionGraphDefin
         id,
         {
           ...node,
-          action: resolver.bind(node.action) as typeof node.action,
+          action: resolver.bind(node.action, false) as typeof node.action,
         },
       ]),
     ),
