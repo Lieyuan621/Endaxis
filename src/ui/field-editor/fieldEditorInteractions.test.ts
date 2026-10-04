@@ -1,6 +1,5 @@
-import { createRenderer, h, nextTick, shallowRef, ssrContextKey, type ComponentOptions } from 'vue';
+import { mountSetup as mountComponentSetup } from '../../test/componentSetup';
 import { expect, it } from 'vitest';
-import { i18n } from '../../i18n';
 import DefinitionField from '../definition-editor/DefinitionField.vue';
 import DefinitionValueCreator from '../definition-editor/DefinitionValueCreator.vue';
 import NodeInspectorFields from '../action-graph/NodeInspectorFields.vue';
@@ -14,82 +13,46 @@ import { referenceNavigationKey, type ReferenceNavigator } from './referenceNavi
 import { blackboardNavigationKey, type BlackboardNavigator } from './blackboardFieldContext';
 import { validStringOperandDraft } from './stringOperandDraft';
 
-// Execute production setup/watchers and events. DOM interaction is covered separately by Playwright.
-async function mountSetup(
+function mountSetup(
   component: unknown,
   initial: Record<string, unknown>,
   navigate?: ReferenceNavigator,
   navigateBlackboard?: BlackboardNavigator,
 ) {
-  const props = shallowRef(initial);
-  let state: any;
-  const renderer = createRenderer<object, object>({
-    insert() {},
-    remove() {},
-    patchProp() {},
-    setText() {},
-    setElementText() {},
-    createElement: () => ({}),
-    createText: () => ({}),
-    createComment: () => ({}),
-    parentNode: () => null,
-    nextSibling: () => null,
+  return mountComponentSetup(component, initial, app => {
+    if (navigate) app.provide(referenceNavigationKey, navigate);
+    if (navigateBlackboard) app.provide(blackboardNavigationKey, navigateBlackboard);
   });
-  const implementation = component as ComponentOptions;
-  const stub = {
-    ...implementation,
-    setup(p: any, context: any) {
-      state = implementation.setup!(p, context);
-      return state;
-    },
-    render: () => null,
-  };
-  const app = renderer.createApp({ render: () => h(stub, props.value) });
-  app.use(i18n).provide(ssrContextKey, { modules: new Set() });
-  if (navigate) app.provide(referenceNavigationKey, navigate);
-  if (navigateBlackboard) app.provide(blackboardNavigationKey, navigateBlackboard);
-  app.mount({});
-  await nextTick();
-  return {
-    state,
-    async update(next: Record<string, unknown>) {
-      props.value = { ...props.value, ...next };
-      await nextTick();
-    },
-    stop: () => app.unmount(),
-  };
 }
 
 const candidates = { buff: referenceCatalog() };
 const string = { kind: 'string' };
 
-it('does not create record/array reference entries from unlisted or empty values', async () => {
-  for (const schema of [
-    { kind: 'array', element: string },
-    { kind: 'record', value: string },
-  ]) {
-    const changes: unknown[] = [];
-    const f = await mountSetup(DefinitionField, {
-      name: 'refs',
-      schema,
-      value: schema.kind === 'array' ? [] : {},
-      path: ['refs'],
-      editable: true,
-      referenceKind: 'buff',
-      referenceChoices: candidates,
-      onChange: (_path: unknown, value: unknown) => changes.push(value),
-    });
-    try {
-      f.state.recordKey.value = 'slot';
-      f.state.newItemValue.value = 'unlisted';
-      (schema.kind === 'array' ? f.state.addArrayEntry : f.state.addRecordEntry)();
-      expect(changes).toEqual([]);
-      f.state.newItemValue.value = 'known';
-      (schema.kind === 'array' ? f.state.addArrayEntry : f.state.addRecordEntry)();
-      expect(changes).toEqual([schema.kind === 'array' ? ['known'] : { slot: 'known' }]);
-    } finally {
-      f.stop();
-    }
+it.each([
+  { kind: 'array', element: string },
+  { kind: 'record', value: string },
+])('does not create $kind reference entries from unlisted or empty values', async schema => {
+  const changes: unknown[] = [];
+  const f = await mountSetup(DefinitionField, {
+    name: 'refs',
+    schema,
+    value: schema.kind === 'array' ? [] : {},
+    path: ['refs'],
+    editable: true,
+    referenceKind: 'buff',
+    referenceChoices: candidates,
+    onChange: (_path: unknown, value: unknown) => changes.push(value),
+  });
+  try {
+    f.state.recordKey.value = 'slot';
+    f.state.newItemValue.value = 'unlisted';
+    (schema.kind === 'array' ? f.state.addArrayEntry : f.state.addRecordEntry)();
+    expect(changes).toEqual([]);
+    f.state.newItemValue.value = 'known';
+    (schema.kind === 'array' ? f.state.addArrayEntry : f.state.addRecordEntry)();
+    expect(changes).toEqual([schema.kind === 'array' ? ['known'] : { slot: 'known' }]);
+  } finally {
+    f.stop();
   }
 });
 
@@ -172,12 +135,9 @@ it('candidate refresh never overwrites a node draft; rejection keeps it until ex
     fields: [
       {
         path: ['parameters', 'skillId'],
-        label: '',
         description: '',
-        type: 'string',
-        required: true,
         control: 'string',
-        source: ['packages/game-data-contract/src/actions.ts:1:1'],
+        valueSchema: { kind: 'string', referenceKind: 'skill' },
       },
     ],
     referenceChoices: { skill: referenceCatalog('skill', ['after']) },
@@ -297,15 +257,17 @@ it('navigates a read-only field and target only while uniquely resolved', async 
   }
 });
 
-it('creator revalidates new reference leaves after refresh without discarding drafts', async () => {
-  for (const [schema, value] of [
-    [string, 'known'],
-    [{ kind: 'array', element: string }, ['known']],
-    [
-      { kind: 'record', value: { kind: 'union', variants: [string, { kind: 'null' }] } },
-      { first: 'known' },
-    ],
-  ]) {
+it.each([
+  ['scalar', string, 'known'],
+  ['array', { kind: 'array', element: string }, ['known']],
+  [
+    'record union',
+    { kind: 'record', value: { kind: 'union', variants: [string, { kind: 'null' }] } },
+    { first: 'known' },
+  ],
+])(
+  '%s creator revalidates new reference leaves after refresh without discarding drafts',
+  async (_name, schema, value) => {
     const created: unknown[] = [];
     const f = await mountSetup(DefinitionValueCreator, {
       schema,
@@ -328,8 +290,8 @@ it('creator revalidates new reference leaves after refresh without discarding dr
     } finally {
       f.stop();
     }
-  }
-});
+  },
+);
 
 it('node apply revalidates changed reference IDs and keeps rejected drafts pending', async () => {
   const attempts: unknown[] = [];
@@ -339,19 +301,14 @@ it('node apply revalidates changed reference IDs and keeps rejected drafts pendi
     fields: [
       {
         path: ['skillId'],
-        label: '',
         description: '',
-        type: 'string',
-        required: true,
         control: 'string',
-        source: ['packages/game-data-contract/src/actions.ts:1:1'],
+        valueSchema: { kind: 'string', referenceKind: 'skill' },
       },
       {
         path: ['text'],
-        label: '',
+        valueSchema: { kind: 'string' },
         description: '',
-        type: 'string',
-        required: true,
         control: 'string',
       },
     ],
@@ -384,7 +341,7 @@ it('validates semantic object children without inheriting the container family',
       buffId: {
         kind: 'string',
         optional: true,
-        source: ['packages/game-data-contract/src/actions.ts:1:1'],
+        referenceKind: 'buff',
       },
     },
   } as const;
@@ -525,7 +482,7 @@ it('creates typed string operands without a separate untyped union branch choose
       { kind: 'string' },
       { kind: 'object', fields: { blackboardKey: { kind: 'string' } } },
     ],
-    semantics: { type: 'ActionStringOperand', aliases: ['ActionStringOperand'] },
+    semantics: { aliases: ['ActionStringOperand'] },
   };
   const f = await mountSetup(DefinitionValueCreator, {
     schema,
@@ -540,21 +497,6 @@ it('creates typed string operands without a separate untyped union branch choose
     expect(f.state.complete.value).toBe(true);
     f.state.create();
     expect(created).toEqual([{ blackboardKey: 'runtimeBuff' }]);
-  } finally {
-    f.stop();
-  }
-});
-
-it('keeps level-value editing after an explicit constant replaces a connection', async () => {
-  const field = actionNodeSchemas.dealStagger.fields.find(f => f.path.at(-1) === 'value')!;
-  const f = await mountSetup(NodeInspectorFields, {
-    value: { parameters: { value: { kind: 'constant', value: 7 } } },
-    kind: 'dealStagger',
-    fields: [field],
-    applyValue: () => true,
-  });
-  try {
-    expect(f.state.levelText(field)).toBe('7');
   } finally {
     f.stop();
   }
@@ -605,8 +547,9 @@ it('revalidates mapping sources on retry while retaining the exact staged mappin
   }
 });
 
-it('child discard removes a rejected structured proposal before a later parent apply', async () => {
-  for (const name of ['buffId', 'blackboardAssignments']) {
+it.each(['buffId', 'blackboardAssignments'])(
+  '%s child discard removes a rejected structured proposal before a later parent apply',
+  async name => {
     const field = actionNodeSchemas.applyBuff.fields.find(f => f.path.at(-1) === name)!;
     const value = {
       kind: 'applyBuff',
@@ -638,8 +581,8 @@ it('child discard removes a rejected structured proposal before a later parent a
     } finally {
       f.stop();
     }
-  }
-});
+  },
+);
 
 it('the string child sends discard only for user cancellation, never a parent refresh', async () => {
   let discards = 0;

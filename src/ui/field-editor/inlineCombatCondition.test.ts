@@ -1,13 +1,6 @@
+import { mountSetup } from '../../test/componentSetup';
 import { describe, expect, it } from 'vitest';
-import {
-  createRenderer,
-  h,
-  nextTick,
-  shallowRef,
-  computed,
-  ssrContextKey,
-  type ComponentOptions,
-} from 'vue';
+import { h, computed } from 'vue';
 import { createSSRApp } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 import { ID_INJECTION_KEY, ZINDEX_INJECTION_KEY } from 'element-plus';
@@ -87,6 +80,12 @@ fixtures.push({
   },
 });
 const inline = fixtures[0]!.schema;
+// Generic editor behavior differs by condition family, not by the containing asset path.
+// Keep every host in the workspace roundtrip below, where those paths actually matter.
+const conditionFamilies = [
+  { name: 'full', schema: inline },
+  fixtures.find(fixture => fixture.name === 'upgrade')!,
+];
 const condition = {
   kind: 'actionValueCompare',
   left: { kind: 'blackboard', key: 'rate' },
@@ -94,55 +93,48 @@ const condition = {
   right: { kind: 'constant', value: 1 },
 };
 
-async function mount(component: unknown, initial: Record<string, unknown>, draft?: unknown) {
-  const props = shallowRef(initial);
-  let state: any;
-  const implementation = component as ComponentOptions;
-  const renderer = createRenderer<object, object>({
-    insert() {},
-    remove() {},
-    patchProp() {},
-    setText() {},
-    setElementText() {},
-    createElement: () => ({}),
-    createText: () => ({}),
-    createComment: () => ({}),
-    parentNode: () => null,
-    nextSibling: () => null,
-  });
-  const stub = {
-    ...implementation,
-    setup(p: any, context: any) {
-      state = implementation.setup!(p, context);
-      return state;
-    },
-    render: () => null,
-  };
-  const app = renderer.createApp({ render: () => h(stub, props.value) });
-  app.use(i18n).provide(ssrContextKey, { modules: new Set() });
-  app.provide(
-    definitionConditionContextKey,
-    computed(() => inlineConditionBlackboardContext('gearSet', { blackboard: { rate: [1, 2] } })),
-  );
-  if (draft)
+function mount(component: unknown, initial: Record<string, unknown>, draft?: unknown) {
+  return mountSetup(component, initial, app => {
     app.provide(
-      inlineConditionDraftKey,
-      computed(() => draft),
+      definitionConditionContextKey,
+      computed(() => inlineConditionBlackboardContext('gearSet', { blackboard: { rate: [1, 2] } })),
     );
-  app.mount({});
-  await nextTick();
-  return {
-    state,
-    stop: () => app.unmount(),
-    async update(value: Record<string, unknown>) {
-      props.value = { ...props.value, ...value };
-      await nextTick();
-    },
-  };
+    if (draft)
+      app.provide(
+        inlineConditionDraftKey,
+        computed(() => draft),
+      );
+  });
 }
 
 describe('generated inline definition conditions', () => {
-  it.each(fixtures)(
+  it('does not reject a reopened draft when an earlier stage finishes after cancellation', async () => {
+    const changes: unknown[] = [];
+    const host = await mount(InlineCombatConditionField, {
+      schema: inline,
+      value: condition,
+      editable: true,
+      label: 'Condition',
+      onChange: (value: unknown) => changes.push(value),
+    });
+    try {
+      host.state.begin();
+      host.state.change(['right'], { kind: 'constant', value: 2 });
+      const pending = host.state.stage();
+      host.state.discard();
+      host.state.begin();
+      await pending;
+      expect(changes).toHaveLength(1);
+      expect(host.state.editing.value).toBe(true);
+      expect(host.state.draft.value).toBe(condition);
+      expect(host.state.error.value).toBe('');
+      expect(host.state.awaitingAcceptance.value).toBe(false);
+    } finally {
+      host.stop();
+    }
+  });
+
+  it.each(conditionFamilies)(
     '$name validates creation and whole-value edits, preserving extensions and graph boundaries',
     ({ name, schema }) => {
       expect(isInlineCombatCondition(schema)).toBe(true);
@@ -345,7 +337,7 @@ describe('generated inline definition conditions', () => {
     }
   });
 
-  it.each(fixtures)(
+  it.each(conditionFamilies)(
     '$name renders readonly typed conditions without a JSON or nodeId text editor',
     async ({ name, schema }) => {
       const value = name === 'upgrade' ? { kind: 'targetStaggered', target: 'enemy' } : condition;
@@ -373,7 +365,7 @@ describe('generated inline definition conditions', () => {
   );
 });
 
-it.each(fixtures)(
+it.each(conditionFamilies)(
   '$name creates only valid condition values through the actual creator',
   async ({ name, schema }) => {
     const created: unknown[] = [];

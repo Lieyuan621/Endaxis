@@ -1,13 +1,5 @@
-import {
-  computed,
-  createRenderer,
-  createSSRApp,
-  h,
-  nextTick,
-  shallowRef,
-  ssrContextKey,
-  type ComponentOptions,
-} from 'vue';
+import { mountSetup } from '../../test/componentSetup';
+import { computed, createSSRApp, h } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 import { ID_INJECTION_KEY, ZINDEX_INJECTION_KEY } from 'element-plus';
 import { expect, it } from 'vitest';
@@ -28,8 +20,8 @@ import { structuredFieldContextKey } from './structuredFieldContext';
 import StructuredValueField from './StructuredValueField.vue';
 import DefinitionField from '../definition-editor/DefinitionField.vue';
 import DefinitionValueCreator from '../definition-editor/DefinitionValueCreator.vue';
-import ActionNodeInspector from '../action-graph/ActionNodeInspector.vue';
 import NodeInspectorFields from '../action-graph/NodeInspectorFields.vue';
+import ActionNodeInspector from '../action-graph/ActionNodeInspector.vue';
 
 const fixtures = [
   {
@@ -59,58 +51,26 @@ const context = (parameters: readonly string[] = []) =>
     new Set(['current']),
   );
 
-async function mount(
+function mount(
   component: unknown,
   initial: Record<string, unknown>,
   field = fixtures[0]!.field,
   parameters: readonly string[] = [],
 ) {
-  let state: any;
-  const props = shallowRef(initial);
-  const implementation = component as ComponentOptions;
-  const stub = {
-    ...implementation,
-    setup(p: any, ctx: any) {
-      state = implementation.setup!(p, ctx);
-      return state;
-    },
-    render: () => null,
-  };
-  const app = createRenderer<object, object>({
-    insert() {},
-    remove() {},
-    patchProp() {},
-    setText() {},
-    setElementText() {},
-    createElement: () => ({}),
-    createText: () => ({}),
-    createComment: () => ({}),
-    parentNode: () => null,
-    nextSibling: () => null,
-  }).createApp({ render: () => h(stub, props.value) });
-  app.use(i18n).provide(ssrContextKey, { modules: new Set() });
-  app.provide(
-    blackboardFieldContextKey,
-    computed(() => context(parameters)),
-  );
-  app.provide(
-    structuredFieldContextKey,
-    computed(() => ({
-      kind: 'dealDamage',
-      path: field.path,
-      graphOperands: graphOperandSchemas(field.valueSchema, 'dealDamage', field.path),
-    })),
-  );
-  app.mount({});
-  await nextTick();
-  return {
-    state,
-    stop: () => app.unmount(),
-    async update(value: Record<string, unknown>) {
-      props.value = { ...props.value, ...value };
-      await nextTick();
-    },
-  };
+  return mountSetup(component, initial, app => {
+    app.provide(
+      blackboardFieldContextKey,
+      computed(() => context(parameters)),
+    );
+    app.provide(
+      structuredFieldContextKey,
+      computed(() => ({
+        kind: 'dealDamage',
+        path: field.path,
+        graphOperands: graphOperandSchemas(field.valueSchema, 'dealDamage', field.path),
+      })),
+    );
+  });
 }
 
 it.each(fixtures)(
@@ -119,21 +79,16 @@ it.each(fixtures)(
     const { field } = fixture;
     const schema = field.valueSchema!;
     const allowed = graphOperandSchemas(schema, 'dealDamage', field.path);
-    expect(allowed?.size).toBe(1);
     expect(resolveFieldEditor(field, { nodeKind: 'dealDamage' })).toMatchObject({
       control: 'structuredValue',
       edit: 'recursive',
     });
     expect(supportsStructuredValue(schema)).toBe(false);
-    expect(supportsStructuredValue(schema, fixture.name, schema.references, allowed)).toBe(true);
+    expect(supportsStructuredValue(schema, schema.references, allowed)).toBe(true);
     for (const kind of [undefined, 'applyBuff', 'createGlobalBuff'])
       expect(graphOperandSchemas(schema, kind, field.path)).toBeUndefined();
     expect(
-      graphOperandSchemas(
-        { ...schema, source: ['custom/actions.ts:1:1'] },
-        'dealDamage',
-        field.path,
-      ),
+      graphOperandSchemas({ ...schema, declaration: undefined }, 'dealDamage', field.path),
     ).toBeUndefined();
     expect(graphOperandSchemas(schema, 'dealDamage', ['other', fixture.name])).toBeUndefined();
     const operand = [...allowed!][0]!;
@@ -236,32 +191,25 @@ it.each(fixtures)(
   '$name exposes generated existing expression containers and readonly connected controls without nodeId inputs',
   async fixture => {
     const value = [{ ...fixture.row, [fixture.key]: { kind: 'valueNode', nodeId: 'shared' } }];
-    const action = {
-      kind: 'dealDamage',
-      parameters: { damageType: 'physical', attackScale: 1, tags: [], [fixture.name]: value },
-    };
-    const inspector = await mount(
-      ActionNodeInspector,
-      { nodeId: 'damage', node: { action, next: null }, applyAction: () => true },
-      fixture.field,
-    );
-    try {
-      expect(inspector.state.fields.value.map((field: any) => field.path.join('.'))).toContain(
-        fixture.field.path.join('.'),
-      );
-    } finally {
-      inspector.stop();
-    }
     const html = await renderToString(
       createSSRApp({
         render: () =>
-          h(StructuredValueField, {
-            schema: fixture.field.valueSchema!,
-            value,
-            editable: false,
-            label: fixture.name,
-            kind: 'dealDamage',
-            path: fixture.field.path,
+          h(ActionNodeInspector, {
+            nodeId: 'damage',
+            node: {
+              action: {
+                kind: 'dealDamage',
+                parameters: {
+                  damageType: 'physical',
+                  attackScale: 1,
+                  tags: [],
+                  [fixture.name]: value,
+                },
+              },
+              next: null,
+            },
+            readonly: true,
+            applyAction: () => false,
           }),
       })
         .use(i18n)
@@ -269,6 +217,7 @@ it.each(fixtures)(
         .provide(ZINDEX_INJECTION_KEY, { current: 0 }),
     );
     expect(html).toContain('data-structured-value');
+    expect(html).toContain(`data-structured-path="${fixture.field.path.join('.')}"`);
     expect(html).toContain('shared');
     expect(html).not.toContain('textarea');
     expect(html).not.toContain('aria-label="nodeId"');

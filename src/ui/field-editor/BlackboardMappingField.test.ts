@@ -1,13 +1,5 @@
-import {
-  computed,
-  createRenderer,
-  createSSRApp,
-  h,
-  nextTick,
-  shallowRef,
-  ssrContextKey,
-  type ComponentOptions,
-} from 'vue';
+import { mountSetup } from '../../test/componentSetup';
+import { computed, createSSRApp, h, nextTick, shallowRef } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 import { ID_INJECTION_KEY, ZINDEX_INJECTION_KEY } from 'element-plus';
 import { describe, expect, it } from 'vitest';
@@ -23,48 +15,16 @@ async function mount(
   initial: Record<string, unknown>,
   initialContext = unknownBlackboardContext(),
 ) {
-  const props = shallowRef(initial);
   const context = shallowRef<BlackboardFieldContext>(initialContext);
-  let state: any;
-  const implementation = component as ComponentOptions;
-  const renderer = createRenderer<object, object>({
-    insert() {},
-    remove() {},
-    patchProp() {},
-    setText() {},
-    setElementText() {},
-    createElement: () => ({}),
-    createText: () => ({}),
-    createComment: () => ({}),
-    parentNode: () => null,
-    nextSibling: () => null,
-  });
-  const stub = {
-    ...implementation,
-    setup(p: any, c: any) {
-      state = implementation.setup!(p, c);
-      return state;
-    },
-    render: () => null,
-  };
-  const app = renderer.createApp({ render: () => h(stub, props.value) });
-  app
-    .use(i18n)
-    .provide(ssrContextKey, { modules: new Set() })
-    .provide(
+  const mounted = await mountSetup(component, initial, app => {
+    app.provide(
       blackboardFieldContextKey,
       computed(() => context.value),
     );
-  app.mount({});
-  await nextTick();
+  });
   return {
-    state,
+    ...mounted,
     context,
-    async update(next: Record<string, unknown>) {
-      props.value = { ...props.value, ...next };
-      await nextTick();
-    },
-    stop: () => app.unmount(),
   };
 }
 const known: BlackboardFieldContext = {

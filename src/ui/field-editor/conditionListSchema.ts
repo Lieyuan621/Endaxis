@@ -6,7 +6,7 @@ export function isConditionListField(schema: NodeFieldSchema | DefinitionFieldSc
   return (
     'control' in schema &&
     schema.control === 'json' &&
-    !schema.semantics?.tuple &&
-    schema.semantics?.arrayElement?.aliases?.includes('CombatCondition') === true
+    !schema.valueSchema.semantics?.tuple &&
+    schema.valueSchema.semantics?.arrayElement?.aliases?.includes('CombatCondition') === true
   );
 }

@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { computed, inject, nextTick, provide, ref, shallowRef, watch } from 'vue';
+import { computed, inject, provide, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { EaButton } from '@/design-system';
 import type { DefinitionFieldSchema } from '../definition-editor/fieldSchema';
 import type { ReferenceChoices } from '../definition-editor/fieldInputConfig';
 import DefinitionField from '../definition-editor/DefinitionField.vue';
-import { writeNodeField } from '../action-graph/nodeFieldValues';
 import { blackboardFieldContextKey } from './blackboardFieldContext';
 import { unknownBlackboardContext } from '../../application/editor/blackboardFieldContext';
 import {
@@ -15,7 +14,8 @@ import {
 } from './inlineConditionContext';
 import { assertInlineCombatCondition } from '../../core/editor/inlineCombatCondition';
 import { useSchemaReferences } from '../definition-editor/schemaReferenceContext';
-import { sameStructuredValue, validateStructuredValue } from './structuredValue';
+import { validateStructuredValue } from './structuredValue';
+import { useStructuredDraft } from './useStructuredDraft';
 
 const props = defineProps<{
   schema: DefinitionFieldSchema;
@@ -39,14 +39,23 @@ provide(
   inlineConditionDraftKey,
   computed(() => (editing.value ? draft.value : props.value)),
 );
-const editing = ref(false);
+const { editing, draft, error, awaitingAcceptance, session, reset, begin, discard, change, stage } =
+  useStructuredDraft(props, {
+    validate(next) {
+      validateStructuredValue(
+        { ...props.schema, references: references.value },
+        props.value,
+        next,
+        { choices: props.referenceChoices, blackboard: blackboard.value },
+      );
+    },
+    change: next => emit('change', next),
+    discard: () => emit('discard'),
+  });
 provide(
   inlineConditionEditingKey,
   computed(() => editing.value),
 );
-const draft = shallowRef<unknown>();
-const error = ref('');
-const awaitingAcceptance = ref(false);
 const currentProblem = computed(() => {
   if (editing.value || props.value === undefined) return '';
   try {
@@ -56,63 +65,6 @@ const currentProblem = computed(() => {
     return cause instanceof Error ? cause.message : String(cause);
   }
 });
-let session = 0;
-function reset() {
-  session++;
-  editing.value = false;
-  draft.value = undefined;
-  error.value = '';
-  awaitingAcceptance.value = false;
-}
-function begin() {
-  if (!props.editable || editing.value) return;
-  session++;
-  draft.value = props.value;
-  editing.value = true;
-  error.value = '';
-}
-function discard() {
-  reset();
-  emit('discard');
-}
-function change(path: readonly (string | number)[], value: unknown) {
-  if (!props.editable || !editing.value || awaitingAcceptance.value) return;
-  if (error.value === 'structuredValue.rejected') emit('discard');
-  error.value = '';
-  draft.value = writeNodeField(draft.value, path.map(String), value);
-}
-async function stage() {
-  if (!props.editable || !editing.value || awaitingAcceptance.value) return;
-  try {
-    validateStructuredValue(
-      { ...props.schema, references: references.value },
-      props.value,
-      draft.value,
-      {
-        choices: props.referenceChoices,
-        blackboard: blackboard.value,
-      },
-    );
-  } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : String(cause);
-    return;
-  }
-  if (sameStructuredValue(props.value, draft.value)) {
-    reset();
-    return;
-  }
-  const applying = session;
-  const next = draft.value;
-  awaitingAcceptance.value = true;
-  emit('change', next);
-  await nextTick();
-  if (!editing.value || applying !== session) return;
-  if (sameStructuredValue(props.value, next)) reset();
-  else {
-    awaitingAcceptance.value = false;
-    error.value = 'structuredValue.rejected';
-  }
-}
 watch(() => [props.value, props.editable, props.schema], reset);
 </script>
 

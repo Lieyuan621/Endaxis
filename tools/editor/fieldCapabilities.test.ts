@@ -16,11 +16,10 @@ test('checks each reachable branch, including absent inputs, without guessing fr
       fixture: {
         kind: 'object',
         fields: {
-          text: { kind: 'string', source: ['fixture.ts:1:1'] },
+          text: { kind: 'string' },
           optional: {
             kind: 'union',
             optional: true,
-            source: ['fixture.ts:2:1'],
             variants: [{ kind: 'string' }, { kind: 'opaque', fallback: { reason: 'depth-limit' } }],
           },
         },
@@ -29,16 +28,12 @@ test('checks each reachable branch, including absent inputs, without guessing fr
     {},
     {
       'number:test': {
-        description: '',
         fields: [
           {
             path: ['value'],
-            label: 'value',
             description: '',
-            type: 'ActionValueOperand',
-            required: false,
             control: 'operand',
-            source: ['fixture.ts:3:1'],
+            valueSchema: { kind: 'number', semantics: { aliases: ['ActionValueOperand'] } },
           },
         ],
       },
@@ -84,18 +79,12 @@ test('never grants string inputs numeric pins, and refuses opaque fields without
     {},
     {
       fixture: {
-        description: '',
         fields: [
           {
             path: ['marker'],
-            label: 'marker',
             description: '',
-            type: 'ActionStringOperand',
-            required: true,
             control: 'json',
-            source: ['fixture.ts:2:1'],
-            semantics: { type: 'ActionStringOperand', aliases: ['ActionStringOperand'] },
-            fallback: { reason: 'structured-editor-pending' },
+            valueSchema: { kind: 'string', semantics: { aliases: ['ActionStringOperand'] } },
           },
         ],
       },
@@ -104,8 +93,7 @@ test('never grants string inputs numeric pins, and refuses opaque fields without
   );
   assert.equal(rows.find(row => row.surface === 'action')?.connection, 'string-context');
   assert.throws(
-    () =>
-      collectFieldCapabilities({ fixture: { kind: 'opaque', source: ['fixture.ts:1:1'] } }, {}, {}),
+    () => collectFieldCapabilities({ fixture: { kind: 'opaque' } }, {}, {}),
     /unexplained schema fallback/,
   );
   assert.equal(rows.find(row => row.surface === 'action')?.control, 'stringOperand');
@@ -118,10 +106,9 @@ test('reports existing definition identity protection without treating a nested 
       fixture: {
         kind: 'object',
         fields: {
-          skillId: { kind: 'string', source: ['fixture.ts:1:1'] },
+          skillId: { kind: 'string' },
           reference: {
             kind: 'object',
-            source: ['fixture.ts:2:1'],
             fields: {
               skillId: { kind: 'string' },
               key: { kind: 'string' },
@@ -146,36 +133,31 @@ test('exposes mixed level-value and operand inputs while leaving structured oper
     {},
     {
       fixture: {
-        description: '',
         fields: [
           {
             path: ['amount'],
-            label: 'amount',
             description: '',
-            type: 'LevelValues | ActionValueOperand',
-            required: false,
             control: 'levelValues',
-            source: ['fixture.ts:1:1'],
-            semantics: {
-              type: 'LevelValues | ActionValueOperand',
-              unionVariants: [
-                { type: 'LevelValues', aliases: ['LevelValues'] },
-                { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
-              ],
+            valueSchema: {
+              kind: 'number',
+              semantics: {
+                unionVariants: [{ aliases: ['LevelValues'] }, { aliases: ['ActionValueOperand'] }],
+              },
             },
           },
           {
             path: ['operands'],
-            label: 'operands',
             description: '',
-            type: 'readonly ActionValueOperand[]',
-            required: true,
             control: 'json',
-            source: ['fixture.ts:2:1'],
-            fallback: { reason: 'structured-editor-pending' },
-            semantics: {
-              type: 'readonly ActionValueOperand[]',
-              arrayElement: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+            valueSchema: {
+              kind: 'array',
+              element: {
+                kind: 'opaque',
+                semantics: { aliases: ['ActionValueOperand'] },
+                fallback: { reason: 'structured-editor-pending' },
+              },
+              fallback: { reason: 'structured-editor-pending' },
+              semantics: { arrayElement: { aliases: ['ActionValueOperand'] } },
             },
           },
         ],
@@ -205,24 +187,20 @@ test('condition arrays have typed structural editors but do not turn their conta
 });
 
 test('typed string collections close only homogeneous formal tag/reference gaps without granting container pins', () => {
-  const source = ['packages/game-data-contract/src/actions.ts:1:1'];
   const base = {
     path: ['parameters', 'buffIds'],
-    label: '',
     description: '',
-    required: false,
-    type: 'readonly string[]',
     control: 'json' as const,
-    source,
-    fallback: { reason: 'structured-editor-pending' as const },
   };
   const [row] = collectFieldCapabilities(
     {},
     {
       fixture: {
-        description: '',
         fields: [
-          { ...base, semantics: { type: 'readonly string[]', arrayElement: { type: 'string' } } },
+          {
+            ...base,
+            valueSchema: { kind: 'array', element: { kind: 'string' }, referenceKind: 'buff' },
+          },
         ],
       },
     },
@@ -235,19 +213,22 @@ test('typed string collections close only homogeneous formal tag/reference gaps 
     {},
     {
       fixture: {
-        description: '',
         fields: [
           {
             ...base,
-            source: ['custom/actions.ts:1:1'],
-            semantics: { type: 'readonly string[]', arrayElement: { type: 'string' } },
+            valueSchema: {
+              kind: 'array',
+              element: { kind: 'string' },
+            },
           },
         ],
       },
     },
     {},
   );
-  assert.equal(plain?.fallback, 'structured-editor-pending');
+  assert.equal(plain?.control, 'structuredValue');
+  assert.equal(plain?.connection, 'none');
+  assert.equal(plain?.fallback, undefined);
 });
 
 test('the formal curve closes one historical action position without opening opaque fields or string pins', () => {
@@ -271,7 +252,7 @@ test('definition curves report structural view and field editing consistently wi
     {
       fixture: {
         kind: 'object',
-        fields: { curve: { kind: 'timeScaleCurve', source: ['fixture.ts:1:1'] } },
+        fields: { curve: { kind: 'timeScaleCurve' } },
       },
     },
     {},

@@ -1,5 +1,6 @@
 /** 编辑器文案仅从语言资源读取。 */
 import { i18n } from '../../i18n';
+import type { NodeFieldSchema } from './nodeSchema';
 import type { BlackboardScope } from '../../application/editor/graphBlackboard';
 
 export function nodeName(kind: string): string {
@@ -23,11 +24,14 @@ function fieldKey(path: readonly string[], kind?: string) {
     'value'
   );
 }
-export function optionName(value: string | number | boolean, fieldType?: string): string {
+export function optionName(
+  value: string | number | boolean,
+  labels?: NodeFieldSchema['optionLabels'],
+): string {
   if (typeof value === 'boolean')
     return i18n.global.t(`actionGraphEditor.${value ? 'enabled' : 'disabled'}`);
   if (typeof value === 'number') return String(value);
-  if (value === 'caster' && fieldType?.includes('OperatorRole'))
+  if (value === 'caster' && labels === 'operatorRole')
     return i18n.global.t('actionGraphEditor.options.roleCaster');
   return i18n.global.t(`actionGraphEditor.options.${value}`);
 }

@@ -1,19 +1,16 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
+import { isSchemaGeneratorMain } from './schemaSourceLocation.ts';
 import * as prettier from 'prettier';
 import ts from 'typescript';
+import { createFieldSemanticExtractor } from './fieldSemantics.ts';
+import { hasSemanticAlias } from '../../src/core/editor/fieldSemantics.ts';
 import type { ActionGraphStep } from '../../packages/game-data-contract/src/actionGraph.ts';
-import type {
-  ActionNodeSchema,
-  NodeFieldSchema,
-  DataNodeSchema,
-} from '../../src/ui/action-graph/nodeSchema.ts';
-import { renderSharedSchemaObjects } from './renderSharedSchemaObjects.ts';
+import type { NodeSchema, NodeFieldSchema } from '../../src/ui/action-graph/nodeSchema.ts';
+import { renderSharedSchemaValues } from './renderSharedSchemaValues.ts';
 import { describeDefinitionType, composeDefinitionSchemas } from './describeDefinitionType.ts';
 import type { DefinitionFieldSchema } from '../../src/ui/definition-editor/fieldSchema.ts';
-import { createFieldSemanticExtractor } from './fieldSemantics.ts';
-import type { FieldSemanticMetadata } from '../../src/ui/field-editor/fieldSemantics.ts';
 
 const projectRoot = fileURLToPath(new URL('../../', import.meta.url));
 export const generatedSchemaPath = resolve(
@@ -30,7 +27,6 @@ interface ContractProperty {
   readonly name: string;
   readonly required: boolean;
   readonly variants: readonly PropertyVariant[];
-  readonly symbols: readonly ts.Symbol[];
 }
 
 function isPresent(type: ts.Type): boolean {
@@ -51,7 +47,6 @@ function propertiesOf(type: ts.Type, checker: ts.TypeChecker): ContractProperty[
   );
   return [...names].flatMap(name => {
     const variants: PropertyVariant[] = [];
-    const symbols: ts.Symbol[] = [];
     let required = true;
     for (const branch of branches) {
       const symbol = checker.getPropertyOfType(branch, name);
@@ -60,7 +55,6 @@ function propertiesOf(type: ts.Type, checker: ts.TypeChecker): ContractProperty[
         required = false;
         continue;
       }
-      symbols.push(symbol);
       const propertyType = checker.getTypeOfSymbolAtLocation(symbol, declaration);
       if (!isPresent(propertyType)) {
         required = false;
@@ -69,7 +63,7 @@ function propertiesOf(type: ts.Type, checker: ts.TypeChecker): ContractProperty[
       required &&= (symbol.flags & ts.SymbolFlags.Optional) === 0;
       variants.push({ symbol, type: propertyType });
     }
-    return variants.length ? [{ name, required, variants, symbols }] : [];
+    return variants.length ? [{ name, required, variants }] : [];
   });
 }
 
@@ -82,18 +76,6 @@ function documentation(symbol: ts.Symbol | undefined, checker: ts.TypeChecker): 
     : '';
 }
 
-function rawType(variant: PropertyVariant, checker: ts.TypeChecker): string {
-  const declaration = variant.symbol.valueDeclaration ?? variant.symbol.declarations?.[0];
-  if (
-    declaration &&
-    (ts.isPropertySignature(declaration) || ts.isPropertyDeclaration(declaration)) &&
-    declaration.type
-  ) {
-    return declaration.type.getText().replace(/\s+/g, ' ').trim();
-  }
-  return checker.typeToString(variant.type, undefined, ts.TypeFormatFlags.NoTruncation);
-}
-
 function distinct(values: readonly string[]): string[] {
   return [...new Set(values.filter(Boolean))];
 }
@@ -101,9 +83,10 @@ function distinct(values: readonly string[]): string[] {
 function classify(
   variants: readonly PropertyVariant[],
   checker: ts.TypeChecker,
+  valueSchemas: readonly DefinitionFieldSchema[],
 ): Pick<NodeFieldSchema, 'control' | 'options'> {
   const types = variants.map(variant => checker.getNonNullableType(variant.type));
-  if (variants.every(variant => rawType(variant, checker).split(' | ').includes('LevelValues')))
+  if (valueSchemas.every(schema => hasSemanticAlias(schema.semantics, 'LevelValues')))
     return { control: 'levelValues' };
   const arrayElements = types.map(type =>
     checker.isArrayType(type) ? checker.getTypeArguments(type as ts.TypeReference)[0] : undefined,
@@ -126,10 +109,10 @@ function classify(
       };
     }
   }
-  if (types.every(type => type.aliasSymbol?.name === 'ActionValueOperand')) {
+  if (valueSchemas.every(schema => schema.semantics?.aliases?.includes('ActionValueOperand'))) {
     return { control: 'operand' };
   }
-  if (types.every(type => type.getSymbol()?.name === 'ActionGraphReference')) {
+  if (valueSchemas.every(schema => schema.semantics?.aliases?.includes('ActionGraphReference'))) {
     return { control: 'sequence' };
   }
   const hasActionGraph = (type: ts.Type): boolean =>
@@ -187,61 +170,54 @@ function classify(
   return { control: 'json' };
 }
 
+/** Only the contract's role vocabulary disambiguates caster from an action target. */
+function optionLabels(
+  variants: readonly PropertyVariant[],
+  checker: ts.TypeChecker,
+  control: NodeFieldSchema['control'],
+): Pick<NodeFieldSchema, 'optionLabels'> {
+  if (control !== 'select' && control !== 'multiselect') return {};
+  const extractor = createFieldSemanticExtractor(checker, projectRoot);
+  const roles = variants.every(variant => {
+    const type = checker.getNonNullableType(variant.type);
+    const context = extractor.context(type, variant.symbol);
+    const item = checker.isArrayType(type)
+      ? checker.getTypeArguments(type as ts.TypeReference)[0]
+      : undefined;
+    return extractor.isContractAlias(
+      item ? extractor.element(context, item) : context,
+      'OperatorRole',
+      'primitives.ts',
+    );
+  });
+  return roles ? { optionLabels: 'operatorRole' } : {};
+}
+
 function fieldSchema(
   property: ContractProperty,
   prefix: readonly string[],
   checker: ts.TypeChecker,
 ): NodeFieldSchema {
-  const extractor = createFieldSemanticExtractor(checker, projectRoot);
-  const metadata = property.variants.map(variant =>
-    extractor.metadata(extractor.context(variant.type, variant.symbol)),
-  );
-  const semantics = metadata.map(value => value.semantics!);
-  const control = classify(property.variants, checker);
-  const fallback: FieldSemanticMetadata['fallback'] =
-    control.control === 'json'
-      ? {
-          reason: semantics.some(value => value.tuple)
-            ? 'tuple-editor-pending'
-            : 'structured-editor-pending',
-        }
-      : undefined;
   const valueVariants = property.variants.map(variant =>
     describeDefinitionType(variant.type, checker, variant.symbol, projectRoot),
   );
+  const control = classify(property.variants, checker, valueVariants);
   // Every declaration contributes its shape; an aggregated slot must not pick the first branch.
+  // Node omission follows the property declaration, not whether its value union includes
+  // undefined. Nested optional fields keep their independently described metadata.
+  const { optional: _optional, ...shape } = composeDefinitionSchemas(valueVariants);
   const valueSchema: DefinitionFieldSchema = {
-    ...composeDefinitionSchemas(valueVariants, property.name),
+    ...shape,
     ...(property.required ? {} : { optional: true }),
-    source: distinct(
-      property.symbols.flatMap(
-        symbol => extractor.context(checker.getTypeOfSymbol(symbol), symbol).source,
-      ),
-    ),
   };
   return {
     valueSchema,
     path: [...prefix, property.name],
-    label: property.name,
     description: distinct(
       property.variants.map(variant => documentation(variant.symbol, checker)),
     ).join('\n'),
-    type: distinct(property.variants.map(variant => rawType(variant, checker))).join(' | '),
-    required: property.required,
     ...control,
-    semantics:
-      semantics.length === 1
-        ? semantics[0]
-        : {
-            type: distinct(property.variants.map(variant => rawType(variant, checker))).join(' | '),
-            unionVariants: semantics,
-          },
-    source: distinct(
-      property.symbols.flatMap(
-        symbol => extractor.context(checker.getTypeOfSymbol(symbol), symbol).source,
-      ),
-    ),
-    ...(fallback ? { fallback } : {}),
+    ...optionLabels(property.variants, checker, control.control),
   };
 }
 
@@ -268,8 +244,8 @@ function exportedType(
 
 /** 只读取契约及其依赖，不加载具体干员数据或应用代码。 */
 export function generateActionNodeSchemas(
-  dataSchemas?: Record<string, DataNodeSchema>,
-): Readonly<Record<ActionGraphStep['kind'], ActionNodeSchema>> {
+  dataSchemas?: Record<string, NodeSchema>,
+): Readonly<Record<ActionGraphStep['kind'], NodeSchema>> {
   const contractPath = resolve(projectRoot, 'packages/game-data-contract/src/actionGraph.ts');
   const program = ts.createProgram([contractPath], {
     target: ts.ScriptTarget.ES2023,
@@ -307,7 +283,6 @@ export function generateActionNodeSchemas(
         const literal = kind?.variants[0]?.type;
         if (!literal?.isStringLiteral()) continue;
         dataSchemas[`${name === 'CombatCondition' ? 'boolean' : 'number'}:${literal.value}`] = {
-          description: documentation(kind?.variants[0]?.symbol, checker),
           fields: properties.filter(p => p.name !== 'kind').map(p => fieldSchema(p, [], checker)),
         };
       }
@@ -324,7 +299,6 @@ export function generateActionNodeSchemas(
     });
     if (stringNode) {
       dataSchemas['string:stringOperand'] = {
-        description: '字符串常量或当前动作黑板读取；在每个消费位置独立求值。',
         fields: propertiesOf(stringNode, checker)
           .filter(property => property.name === 'expression')
           .map(property => fieldSchema(property, [], checker)),
@@ -332,13 +306,7 @@ export function generateActionNodeSchemas(
     }
   }
   const steps = exportedType(program, checker, contractPath, 'ActionGraphStep');
-  const parameters = exportedType(
-    program,
-    checker,
-    resolve(projectRoot, 'packages/game-data-contract/src/actions.ts'),
-    'CombatStepParameters',
-  );
-  const result: Record<string, ActionNodeSchema> = {};
+  const result: Record<string, NodeSchema> = {};
   for (const step of objectVariants(steps)) {
     const properties = propertiesOf(step, checker);
     const kindType = properties.find(property => property.name === 'kind')?.variants[0]?.type;
@@ -359,27 +327,21 @@ export function generateActionNodeSchemas(
         fields.push(fieldSchema(property, [], checker));
       }
     }
-    result[kind] = {
-      kind,
-      description:
-        documentation(checker.getPropertyOfType(parameters, kind), checker) ||
-        documentation(step.aliasSymbol ?? step.getSymbol(), checker),
-      fields,
-    };
+    result[kind] = { fields };
   }
-  return result as Readonly<Record<ActionGraphStep['kind'], ActionNodeSchema>>;
+  return result as Readonly<Record<ActionGraphStep['kind'], NodeSchema>>;
 }
 
 export async function renderActionNodeSchemas(): Promise<string> {
-  const dataSchemas: Record<string, DataNodeSchema> = {};
+  const dataSchemas: Record<string, NodeSchema> = {};
   const schemas = generateActionNodeSchemas(dataSchemas);
-  const rendered = renderSharedSchemaObjects(schemas, 'actionSchemaPart', 200);
+  const rendered = renderSharedSchemaValues([schemas, dataSchemas]);
   const source =
     `// Generated by tools/editor/generateActionNodeSchema.ts. Do not edit.\n` +
     `import type { ActionGraphStep } from '../../../packages/game-data-contract/src/actionGraph.ts';\n` +
-    `import type { ActionNodeSchema, DataNodeSchema } from './nodeSchema.ts';\n\n` +
-    `${rendered.declarations}\nexport const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], ActionNodeSchema>> = ${rendered.expression};\n` +
-    `export const dataNodeSchemas: Readonly<Record<string, DataNodeSchema>> = ${JSON.stringify(dataSchemas, null, 2)};\n`;
+    `import type { NodeSchema } from './nodeSchema.ts';\n\n` +
+    `${rendered.declarations}\nexport const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSchema>> = ${rendered.expressions[0]};\n` +
+    `export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = ${rendered.expressions[1]};\n`;
   return prettier.format(source, {
     ...(await prettier.resolveConfig(generatedSchemaPath)),
     filepath: generatedSchemaPath,
@@ -406,6 +368,6 @@ async function main(): Promise<void> {
   }
 }
 
-if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
+if (isSchemaGeneratorMain(import.meta.url)) {
   await main();
 }

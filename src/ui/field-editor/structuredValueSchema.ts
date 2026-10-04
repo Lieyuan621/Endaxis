@@ -1,3 +1,4 @@
+import type { FieldDeclarationMetadata } from '../../core/editor/fieldSemantics.ts';
 import type { SpawnResourceSlot } from './spawnDefinitionSchema.ts';
 import type { GraphContainerBoundaries } from './graphSequenceContainerSchema';
 import {
@@ -13,14 +14,13 @@ import type {
  * remain the responsibility of graph hosts, including currently absent alternatives. */
 export function supportsStructuredValue(
   schema: DefinitionFieldSchema,
-  name?: string,
   references: DefinitionSchemaReferences = schema.references ?? EMPTY_SCHEMA_REFERENCES,
   graphOperands?: ReadonlySet<DefinitionFieldSchema>,
   graphBoundaries?: GraphContainerBoundaries,
   ownedResources?: ReadonlyMap<DefinitionFieldSchema, SpawnResourceSlot>,
 ): boolean {
   const seen = new Set<DefinitionFieldSchema>();
-  function visit(schema: DefinitionFieldSchema, name?: string): boolean {
+  function visit(schema: DefinitionFieldSchema): boolean {
     schema = resolveDefinitionSchema(schema, references);
     if (ownedResources?.has(schema)) return true;
     if (graphBoundaries?.sequences.has(schema) || graphBoundaries?.conditions.has(schema))
@@ -47,30 +47,25 @@ export function supportsStructuredValue(
       case 'opaque':
         return false;
       case 'array':
-        return visit(schema.element, name);
+        return visit(schema.element);
       case 'tuple':
-        return schema.elements.every(child => visit(child));
+        return schema.elements.every(visit);
       case 'record':
-        return visit(schema.value, name);
+        return visit(schema.value);
       case 'union':
-        return schema.variants.every(child => visit(child, name));
+        return schema.variants.every(visit);
       case 'object':
-        return Object.entries(schema.fields).every(([key, child]) => visit(child, key));
+        return Object.values(schema.fields).every(visit);
       default:
         return true;
     }
   }
-  return visit(schema, name);
+  return visit(schema);
 }
 
 /** Asset compatibility tables and derived enemy tables have separate host ownership. */
-export function isReadonlyDefinitionSlot(name: string, source?: readonly string[]): boolean {
-  return (
-    (name === 'skillAliases' &&
-      !!source?.some(value => /^packages\/game-data-contract\/src\/operators\.ts:/.test(value))) ||
-    (name === 'levelHp' &&
-      !!source?.some(value => /^src\/core\/game-data\/enemyDefinition\.ts:/.test(value)))
-  );
+export function isReadonlyDefinitionSlot(declaration?: FieldDeclarationMetadata): boolean {
+  return declaration?.readonlyDeclaration === true;
 }
 
 /** 已有资产的身份字段只读；创建身份使用资源创建流程。 */

@@ -1,55 +1,22 @@
-import { createRenderer, h, nextTick, shallowRef, ssrContextKey, type ComponentOptions } from 'vue';
+import { mountSetup } from '../../test/componentSetup';
 import { expect, it } from 'vitest';
-import { i18n } from '../../i18n';
 import type { DataInput } from '../../core/action-graph/actionGraphDataNodes';
 import TypedDataInput from './TypedDataInput.vue';
 
 async function mount(input: DataInput, readonly = false) {
   const changes: (number | boolean | string)[] = [];
-  const props = shallowRef({
+  const mounted = await mountSetup(TypedDataInput, {
     input,
     readonly,
     resetKey: {} as unknown,
     label: 'test',
     onConstant: (value: number | boolean | string) => changes.push(value),
   });
-  const implementation = TypedDataInput as ComponentOptions;
-  let state: any;
-  const stub = {
-    ...implementation,
-    setup(p: any, ctx: any) {
-      state = implementation.setup!(p, ctx);
-      return state;
-    },
-    render: () => null,
-  };
-  const app = createRenderer<object, object>({
-    insert() {},
-    remove() {},
-    patchProp() {},
-    setText() {},
-    setElementText() {},
-    createElement: () => ({}),
-    createText: () => ({}),
-    createComment: () => ({}),
-    parentNode: () => null,
-    nextSibling: () => null,
-  }).createApp({ render: () => h(stub, props.value) });
-  app.use(i18n).provide(ssrContextKey, { modules: new Set() });
-  app.mount({});
-  await nextTick();
   return {
-    state,
+    ...mounted,
     changes,
-    stop: () => app.unmount(),
-    async resetOwner(resetKey: unknown) {
-      props.value = { ...props.value, resetKey };
-      await nextTick();
-    },
-    async accept(value: unknown) {
-      props.value = { ...props.value, input: { ...input, source: null, value } };
-      await nextTick();
-    },
+    resetOwner: (resetKey: unknown) => mounted.update({ resetKey }),
+    accept: (value: unknown) => mounted.update({ input: { ...input, source: null, value } }),
   };
 }
 it('keeps a connected source until explicit valid apply; empty number and cancel do not become zero', async () => {

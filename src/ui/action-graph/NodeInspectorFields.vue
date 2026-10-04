@@ -140,7 +140,7 @@ function structuredValue(field: NodeFieldSchema): unknown {
   }
 }
 function blackboardRequest(field: NodeFieldSchema) {
-  const request = blackboardRequestForField(props.kind, field.path, field.source);
+  const request = blackboardRequestForField(props.kind, field.path, field.valueSchema);
   const fallbackText = inputs.value.fallback ?? '';
   return request &&
     props.kind === 'blackboard' &&
@@ -231,7 +231,7 @@ function proposalValue(): unknown {
       field.path,
       typed
         ? typedDrafts.value[key]
-        : parseNodeField(text, { ...field, label: fieldName(field.path, props.kind) }),
+        : parseNodeField(text, field, fieldName(field.path, props.kind)),
     );
   }
   return value;
@@ -259,7 +259,7 @@ function apply(): boolean {
         continue;
       const parsed = typed
         ? typedDrafts.value[field.path.join('.')]
-        : parseNodeField(text, { ...field, label: fieldName(field.path, props.kind) });
+        : parseNodeField(text, field, fieldName(field.path, props.kind));
       if (typed && fieldEditor(field).control === 'structuredValue') {
         if (!field.valueSchema) throw new Error('missing structured value schema');
         validateStructuredValue(field.valueSchema, readNodeField(props.value, field.path), parsed, {
@@ -289,7 +289,7 @@ function apply(): boolean {
       const collection = stringCollectionDescriptor(field);
       if (
         collection &&
-        !(parsed === undefined && !field.required) &&
+        !(parsed === undefined && field.valueSchema.optional) &&
         !validStringCollection(
           parsed,
           readNodeField(props.value, field.path),
@@ -303,7 +303,7 @@ function apply(): boolean {
       }
       if (
         editor.control === 'gameplayTag' &&
-        !(parsed === undefined && !field.required) &&
+        !(parsed === undefined && field.valueSchema.optional) &&
         !validCollectionEntry(parsed, 'gameplayTag')
       ) {
         error.value = t('stringCollection.invalidTag');
@@ -312,7 +312,7 @@ function apply(): boolean {
       const mapping = resolveBlackboardMapping(field);
       if (
         mapping &&
-        !(parsed === undefined && !field.required) &&
+        !(parsed === undefined && field.valueSchema.optional) &&
         !validMappingDraft(
           parsed,
           readNodeField(props.value, field.path),
@@ -326,7 +326,7 @@ function apply(): boolean {
       const request = blackboardRequest(field);
       if (
         request &&
-        !(parsed === undefined && !field.required) &&
+        !(parsed === undefined && field.valueSchema.optional) &&
         (typeof parsed !== 'string' ||
           !resolveBlackboardKey(fieldContext(field), parsed, request).valid)
       ) {
@@ -335,7 +335,7 @@ function apply(): boolean {
       }
       if (
         editor.control === 'stringOperand' &&
-        !(parsed === undefined && !field.required) &&
+        !(parsed === undefined && field.valueSchema.optional) &&
         !validStringOperandDraft(
           parsed,
           editor.referenceKind,
@@ -348,7 +348,7 @@ function apply(): boolean {
       }
       if (
         editor.control === 'reference' &&
-        !(parsed === undefined && !field.required) &&
+        !(parsed === undefined && field.valueSchema.optional) &&
         !(
           typeof parsed === 'string' &&
           canSelectReference(
@@ -437,7 +437,7 @@ defineExpose({ apply });
           v-if="fieldEditor(field).fallback"
           :text="t(`fieldFallback.${fieldEditor(field).fallback}`)"
         />
-        <small v-if="!field.required">{{ t('actionGraphEditor.optional') }}</small>
+        <small v-if="field.valueSchema.optional">{{ t('actionGraphEditor.optional') }}</small>
       </span>
       <TimeScaleCurveField
         v-if="fieldEditor(field).control === 'timeScaleCurve'"
@@ -469,7 +469,7 @@ defineExpose({ apply });
         :key="`${field.path.join('.')}:${resetSerial}`"
         :value="displayedValue(field)"
         :editable="!readonly"
-        :required="field.required"
+        :required="!field.valueSchema.optional"
         :label="fieldName(field.path, kind)"
         :kind="stringCollectionDescriptor(field)!.kind"
         :reference-kind="stringCollectionDescriptor(field)!.referenceKind"
@@ -480,7 +480,7 @@ defineExpose({ apply });
       <GameplayTagField
         v-else-if="fieldEditor(field).control === 'gameplayTag'"
         :key="`${field.path.join('.')}:${resetSerial}`"
-        :allow-unset="!field.required"
+        :allow-unset="field.valueSchema.optional"
         :value="inputs[field.path.join('.')]"
         :disabled="readonly"
         :label="fieldName(field.path, kind)"
@@ -500,7 +500,7 @@ defineExpose({ apply });
         :value="displayedValue(field)"
         :key="`${field.path.join('.')}:${resetSerial}`"
         :descriptor="resolveBlackboardMapping(field)!"
-        :required="field.required"
+        :required="!field.valueSchema.optional"
         :editable="!readonly"
         :label="fieldName(field.path, kind)"
         @change="changeStructured(field, $event)"
@@ -524,7 +524,7 @@ defineExpose({ apply });
         :key="`${field.path.join('.')}:${resetSerial}`"
         :label="fieldName(field.path, kind)"
         :editable="!readonly"
-        :required="field.required"
+        :required="!field.valueSchema.optional"
         :reference-kind="fieldEditor(field).referenceKind"
         :reference-choices="referenceChoices"
         :blackboard-context="fieldContext(field)"
@@ -538,7 +538,7 @@ defineExpose({ apply });
       >
         <NodeLevelValues
           :text="levelText(field)"
-          :required="field.required"
+          :required="!field.valueSchema.optional"
           :label="fieldName(field.path, kind)"
           @change="
             change(field.path.join('.'), $event);
@@ -555,11 +555,11 @@ defineExpose({ apply });
           :model-value="selectedOptions(field).includes(option)"
           @change="toggleOption(field, option, $event)"
         >
-          {{ optionName(option, field.type) }}
+          {{ optionName(option, field.optionLabels) }}
         </EaCheckbox>
         <EaButton
           :disabled="readonly"
-          v-if="!field.required && inputs[field.path.join('.')]"
+          v-if="field.valueSchema.optional && inputs[field.path.join('.')]"
           size="sm"
           @click="
             change(field.path.join('.'), '');
@@ -575,7 +575,7 @@ defineExpose({ apply });
         :label="fieldName(field.path, kind)"
         :reference-kind="fieldEditor(field).referenceKind!"
         :choices="referenceChoices?.[fieldEditor(field).referenceKind ?? '']"
-        :allow-unset="!field.required"
+        :allow-unset="field.valueSchema.optional"
         @change="selectValue(field.path.join('.'), $event)"
       />
       <EaSelect
@@ -598,11 +598,13 @@ defineExpose({ apply });
         size="sm"
         :model-value="inputs[field.path.join('.')]"
         :options="[
-          ...(!field.required ? [{ value: '', label: t('actionGraphEditor.unset') }] : []),
+          ...(field.valueSchema.optional
+            ? [{ value: '', label: t('actionGraphEditor.unset') }]
+            : []),
           ...(fieldEditor(field).control === 'boolean' ? [true, false] : (field.options ?? [])).map(
             option => ({
               value: JSON.stringify(option),
-              label: optionName(option, field.type),
+              label: optionName(option, field.optionLabels),
             }),
           ),
         ]"

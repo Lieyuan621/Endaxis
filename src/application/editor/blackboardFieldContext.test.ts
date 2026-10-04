@@ -119,10 +119,16 @@ it('unbound data nodes and external Buff reads explicitly retain unknown owner c
 });
 
 it('uses exact action contract slots and rejects similarly named unrelated fields', () => {
-  expect(blackboardRequestForField('readBuffBlackboard', ['parameters', 'desiredKey'])).toEqual(
-    numberRead,
-  );
-  expect(blackboardRequestForField('readBuffBlackboard', ['parameters', 'outputKey'])).toEqual({
+  expect(
+    blackboardRequestForField('readBuffBlackboard', ['parameters', 'desiredKey'], {
+      blackboardOrigin: 'contract',
+    }),
+  ).toEqual(numberRead);
+  expect(
+    blackboardRequestForField('readBuffBlackboard', ['parameters', 'outputKey'], {
+      blackboardOrigin: 'contract',
+    }),
+  ).toEqual({
     mode: 'write',
     valueType: 'number',
   });
@@ -130,13 +136,13 @@ it('uses exact action contract slots and rejects similarly named unrelated field
     blackboardRequestForField('storeSourceAttributeValue', ['parameters', 'attribute', 'key']),
   ).toBeUndefined();
   expect(blackboardRequestForField('customAction', ['parameters', 'outputKey'])).toBeUndefined();
-  expect(blackboardRequestForField('blackboard', ['key'], ['custom.ts:1:1'])).toBeUndefined();
+  expect(blackboardRequestForField('blackboard', ['key'], {})).toBeUndefined();
+  expect(blackboardRequestForField('blackboard', ['key'])).toBeUndefined();
   expect(
-    blackboardRequestForField(
-      'blackboard',
-      ['key'],
-      ['packages/game-data-contract/src/primitives.ts:1:1'],
-    ),
+    blackboardRequestForField('blackboard', ['key'], { blackboardOrigin: 'globalBuff' }),
+  ).toBeUndefined();
+  expect(
+    blackboardRequestForField('blackboard', ['key'], { blackboardOrigin: 'contract' }),
   ).toEqual(numberRead);
 });
 

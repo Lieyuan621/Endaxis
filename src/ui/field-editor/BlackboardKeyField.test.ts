@@ -1,4 +1,5 @@
-import { createRenderer, h, nextTick, shallowRef, ssrContextKey, type ComponentOptions } from 'vue';
+import { mountSetup } from '../../test/componentSetup';
+import { h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { createSSRApp } from 'vue';
 import { expect, it } from 'vitest';
@@ -31,43 +32,10 @@ const context: BlackboardFieldContext = {
     },
   ],
 };
-async function mount(initial: Record<string, unknown>, navigate?: BlackboardNavigator) {
-  const props = shallowRef(initial);
-  let state: any;
-  const renderer = createRenderer<object, object>({
-    insert() {},
-    remove() {},
-    patchProp() {},
-    setText() {},
-    setElementText() {},
-    createElement: () => ({}),
-    createText: () => ({}),
-    createComment: () => ({}),
-    parentNode: () => null,
-    nextSibling: () => null,
+function mount(initial: Record<string, unknown>, navigate?: BlackboardNavigator) {
+  return mountSetup(BlackboardKeyField, initial, app => {
+    if (navigate) app.provide(blackboardNavigationKey, navigate);
   });
-  const component = BlackboardKeyField as ComponentOptions;
-  const stub = {
-    ...component,
-    setup(p: any, ctx: any) {
-      state = component.setup!(p, ctx);
-      return state;
-    },
-    render: () => null,
-  };
-  const app = renderer.createApp({ render: () => h(stub, props.value) });
-  app.use(i18n).provide(ssrContextKey, { modules: new Set() });
-  if (navigate) app.provide(blackboardNavigationKey, navigate);
-  app.mount({});
-  await nextTick();
-  return {
-    state,
-    async update(next: Record<string, unknown>) {
-      props.value = { ...props.value, ...next };
-      await nextTick();
-    },
-    stop: () => app.unmount(),
-  };
 }
 
 it('accepts only compatible known choices and reports invalid raw text to transaction owners', async () => {

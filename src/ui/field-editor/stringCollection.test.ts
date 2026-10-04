@@ -19,6 +19,22 @@ it('uses all generated tag collections including aggregate heal variants without
   expect(
     stringCollectionDescriptor({ kind: 'array', element: { kind: 'string' } }),
   ).toBeUndefined();
+  const tags = actionNodeSchemas.heal.fields.find(field => field.path.at(-1) === 'tags')!;
+  expect(
+    stringCollectionDescriptor({
+      ...tags,
+      valueSchema: {
+        kind: 'array',
+        element: {
+          kind: 'union',
+          variants: [
+            { kind: 'string', semantics: { aliases: ['GameplayTag'] } },
+            { kind: 'number' },
+          ],
+        },
+      },
+    }),
+  ).toBeUndefined();
   expect(
     stringCollectionDescriptor(
       { kind: 'array', element: { kind: 'object', fields: {} } },
@@ -75,16 +91,23 @@ it('only admits the formally declared native-ID list and enforces its exact stri
     f => f.path.at(-1) === 'globalBuffIds',
   )!;
   expect(
-    stringCollectionDescriptor({ ...field, source: ['custom/actions.ts:738:5'] }),
+    stringCollectionDescriptor({
+      ...field,
+      valueSchema: { ...field.valueSchema, nativeId: undefined },
+    }),
   ).toBeUndefined();
-  expect(stringCollectionDescriptor({ ...field, source: undefined })).toBeUndefined();
+  expect(stringCollectionDescriptor(field, 'buffIds')).toBeUndefined();
   expect(
     stringCollectionDescriptor({ ...field, path: ['other', 'globalBuffIds'] }),
   ).toBeUndefined();
   expect(
     stringCollectionDescriptor({
       ...field,
-      semantics: { type: 'readonly number[]', arrayElement: { type: 'number' } },
+      valueSchema: {
+        kind: 'array',
+        element: { kind: 'number' },
+        nativeId: field.valueSchema.nativeId,
+      },
     }),
   ).toBeUndefined();
   expect(
@@ -94,10 +117,10 @@ it('only admits the formally declared native-ID list and enforces its exact stri
   expect(validStringCollection(exact, [], 'nativeId', undefined, {})).toBe(true);
   for (const value of [[], [''], ['ok', ''], [1], undefined, 'id'])
     expect(validStringCollection(value, value, 'nativeId')).toBe(false);
-  expect(
-    validReferenceDraft(field.valueSchema!, exact, undefined, undefined, 'globalBuffIds'),
-  ).toBe(true);
-  expect(validReferenceDraft(field.valueSchema!, [''], undefined, undefined, 'globalBuffIds')).toBe(
+  expect(validReferenceDraft(field.valueSchema, exact, undefined, undefined, 'globalBuffIds')).toBe(
+    true,
+  );
+  expect(validReferenceDraft(field.valueSchema, [''], undefined, undefined, 'globalBuffIds')).toBe(
     false,
   );
 });

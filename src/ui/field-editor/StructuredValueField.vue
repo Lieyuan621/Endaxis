@@ -8,17 +8,17 @@ import {
   globalBuffDraftContext,
 } from '../../application/editor/globalBuffFieldContext';
 import { blackboardFieldContextKey } from './blackboardFieldContext';
-import { computed, nextTick, provide, ref, shallowRef, watch } from 'vue';
+import { computed, provide, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { EaButton } from '@/design-system';
 import type { DefinitionFieldSchema } from '../definition-editor/fieldSchema';
 import type { ReferenceChoices } from '../definition-editor/fieldInputConfig';
 import DefinitionField from '../definition-editor/DefinitionField.vue';
-import { writeNodeField } from '../action-graph/nodeFieldValues';
 import { useBlackboardFieldContext } from './blackboardFieldContext';
 import { graphOperandSchemas } from './graphOperandContainerSchema';
 import { structuredFieldContextKey } from './structuredFieldContext';
-import { sameStructuredValue, validateStructuredValue } from './structuredValue';
+import { validateStructuredValue } from './structuredValue';
+import { useStructuredDraft } from './useStructuredDraft';
 
 const props = defineProps<{
   schema: DefinitionFieldSchema;
@@ -81,67 +81,22 @@ provide(
     graphBoundaries: graphSequenceBoundaries(props.schema, props.kind, props.path),
   })),
 );
-const editing = ref(false);
-const draft = shallowRef<unknown>();
-const error = ref('');
-const awaitingAcceptance = ref(false);
-let session = 0;
-function reset() {
-  session++;
-  editing.value = false;
-  draft.value = undefined;
-  error.value = '';
-  awaitingAcceptance.value = false;
-}
-function begin() {
-  if (!props.editable || editing.value) return;
-  session++;
-  draft.value = props.value;
-  editing.value = true;
-  error.value = '';
-}
-function discard() {
-  reset();
-  emit('discard');
-}
-function change(path: readonly (string | number)[], value: unknown) {
-  if (!props.editable || !editing.value || awaitingAcceptance.value) return;
-  if (error.value === 'structuredValue.rejected') emit('discard');
-  error.value = '';
-  draft.value = writeNodeField(draft.value, path.map(String), value);
-}
-async function stage() {
-  if (!props.editable || !editing.value || awaitingAcceptance.value) return;
-  try {
-    validateStructuredValue(props.schema, props.value, draft.value, {
-      actionValue: props.actionValue,
-      choices: props.referenceChoices,
-      blackboard: blackboard.value,
-      globalBuff: globalBuff.value,
-      graph: props.graph,
-      kind: props.kind,
-      path: props.path,
-    });
-  } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : String(cause);
-    return;
-  }
-  if (sameStructuredValue(props.value, draft.value)) {
-    reset();
-    return;
-  }
-  const applying = session;
-  const next = draft.value;
-  awaitingAcceptance.value = true;
-  emit('change', next);
-  await nextTick();
-  if (!editing.value || applying !== session) return;
-  if (sameStructuredValue(props.value, next)) reset();
-  else {
-    awaitingAcceptance.value = false;
-    error.value = 'structuredValue.rejected';
-  }
-}
+const { editing, draft, error, awaitingAcceptance, session, reset, begin, discard, change, stage } =
+  useStructuredDraft(props, {
+    validate(next) {
+      validateStructuredValue(props.schema, props.value, next, {
+        actionValue: props.actionValue,
+        choices: props.referenceChoices,
+        blackboard: blackboard.value,
+        globalBuff: globalBuff.value,
+        graph: props.graph,
+        kind: props.kind,
+        path: props.path,
+      });
+    },
+    change: next => emit('change', next),
+    discard: () => emit('discard'),
+  });
 watch(() => [props.value, props.editable, props.schema, props.kind, props.path], reset);
 </script>
 

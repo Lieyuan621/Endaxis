@@ -6,16 +6,16 @@ import { actionNodeSchemas, dataNodeSchemas } from '../action-graph/actionNodeSc
 import { definitionSchemas } from '../definition-editor/definitionSchemas.generated';
 import { fieldSchemaForValue } from '../definition-editor/definitionFieldRuntime';
 
-const source = ['packages/game-data-contract/src/actions.ts:620:5'];
+const reference = { referenceKind: 'buff' as const };
 function node(control: NodeFieldSchema['control'], name = 'buffId'): NodeFieldSchema {
   return {
     path: [name],
-    label: name,
     description: '',
-    type: 'string',
-    required: true,
     control,
-    source,
+    valueSchema: {
+      kind: control === 'string' ? 'string' : 'opaque',
+      ...(['buffId', 'skillId'].includes(name) ? reference : {}),
+    },
   };
 }
 
@@ -60,28 +60,17 @@ describe('shared field editor dispatch', () => {
         edit: 'field',
       });
     }
-    for (const origin of [
-      'custom/actions.ts:620:5',
-      'packages/other/src/actions.ts:620:5',
-      'packages/game-data-contract/src/primitives.ts:620:5',
-    ]) {
-      expect(
-        resolveFieldEditor({ kind: 'string', source: [origin] }, { name: 'buffId' }).control,
-      ).toBe('string');
-    }
   });
 
   it('keeps equipment SkillData provenance as text rather than an operator picker', () => {
-    expect(
-      resolveFieldEditor(
-        { kind: 'string', source: ['packages/game-data-contract/src/equipment.ts:144:3'] },
-        { name: 'skillId' },
-      ),
-    ).toMatchObject({ control: 'string', semantic: 'plain' });
+    expect(resolveFieldEditor({ kind: 'string' }, { name: 'skillId' })).toMatchObject({
+      control: 'string',
+      semantic: 'plain',
+    });
   });
 
   it('dispatches contract references identically across surfaces without needing candidates', () => {
-    const definition = resolveFieldEditor({ kind: 'string', source }, { name: 'buffId' });
+    const definition = resolveFieldEditor({ kind: 'string', ...reference }, { name: 'buffId' });
     expect(definition).toEqual(resolveFieldEditor(node('string')));
     expect(definition).toMatchObject({
       control: 'reference',
@@ -90,7 +79,7 @@ describe('shared field editor dispatch', () => {
       edit: 'field',
     });
     expect(
-      resolveFieldEditor({ kind: 'string', source }, { name: 'buffId', editable: false }),
+      resolveFieldEditor({ kind: 'string', ...reference }, { name: 'buffId', editable: false }),
     ).toMatchObject({
       control: 'reference',
       view: 'reference',
@@ -132,7 +121,7 @@ describe('shared field editor dispatch', () => {
       { kind: 'record', value: variants[0]! },
       { kind: 'union', variants },
     ] as const) {
-      const parent = resolveFieldEditor({ ...schema, source }, { name: 'buffId' });
+      const parent = resolveFieldEditor({ ...schema, ...reference }, { name: 'buffId' });
       expect(parent).toMatchObject({
         control: schema.kind === 'array' ? 'stringCollection' : schema.kind,
         referenceKind: 'buff',
@@ -145,7 +134,7 @@ describe('shared field editor dispatch', () => {
         resolveFieldEditor(variants[1]!, { referenceKind: parent.referenceKind }).control,
       ).toBe('object');
     }
-    expect(resolveFieldEditor({ kind: 'string', source }, { name: 'blackboardKey' }).control).toBe(
+    expect(resolveFieldEditor({ kind: 'string' }, { name: 'blackboardKey' }).control).toBe(
       'string',
     );
     expect(resolveFieldEditor(node('string', 'outputKey')).referenceKind).toBeUndefined();
@@ -158,7 +147,7 @@ describe('shared field editor dispatch', () => {
         {
           kind: 'array',
           element: { kind: 'string' },
-          source: ['packages/game-data-contract/src/skills.ts:231:7'],
+          referenceKind: 'skill',
         },
         { name: 'skillKeys' },
       ),
@@ -174,8 +163,10 @@ describe('shared field editor dispatch', () => {
       ['BuildCondition', 'buildCondition'],
       ['GameplayTag', 'gameplayTag'],
     ] as const) {
-      const semantics = { type: alias, aliases: [alias] };
-      expect(resolveFieldEditor({ ...node('json'), semantics })).toMatchObject({
+      const semantics = { aliases: [alias] };
+      expect(
+        resolveFieldEditor({ ...node('json'), valueSchema: { kind: 'opaque', semantics } }),
+      ).toMatchObject({
         control: alias === 'ActionStringOperand' ? 'stringOperand' : 'json',
         semantic,
         ...(alias === 'ActionStringOperand' ? {} : { fallback: 'structured-editor-pending' }),
@@ -200,7 +191,7 @@ describe('shared field editor dispatch', () => {
     expect(
       resolveFieldEditor({
         ...node('levelValues'),
-        semantics: { type: 'LevelValues', aliases: ['LevelValues'] },
+        valueSchema: { kind: 'number', semantics: { aliases: ['LevelValues'] } },
       }),
     ).toMatchObject({ control: 'levelValues', semantic: 'levelValues', edit: 'field' });
     expect(
@@ -208,8 +199,7 @@ describe('shared field editor dispatch', () => {
         kind: 'array',
         element: { kind: 'number' },
         semantics: {
-          type: 'ActionValueOperand[]',
-          arrayElement: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+          arrayElement: { aliases: ['ActionValueOperand'] },
         },
       }).semantic,
     ).toBe('plain');
@@ -220,8 +210,7 @@ describe('shared field editor dispatch', () => {
       resolveFieldEditor({
         kind: 'opaque',
         semantics: {
-          type: '[string, number]',
-          tuple: { elements: [], minLength: 2, maxLength: 2 },
+          tuple: { elements: [], minLength: 2 },
         },
       }),
     ).toMatchObject({
@@ -264,13 +253,16 @@ it('dispatches both generated combat-condition lists without granting container 
       expect(
         resolveFieldEditor({
           ...field,
-          semantics: { ...field.semantics!, arrayElement: { type: alias, aliases: [alias] } },
+          valueSchema: {
+            ...field.valueSchema,
+            semantics: { ...field.valueSchema.semantics!, arrayElement: { aliases: [alias] } },
+          },
         }).control,
       ).toBe('json');
     expect(
       resolveFieldEditor({
         ...field,
-        semantics: { type: 'readonly number[]', arrayElement: { type: 'number' } },
+        valueSchema: { ...field.valueSchema, semantics: { arrayElement: {} } },
       }).control,
     ).toBe('json');
   }
@@ -279,8 +271,7 @@ it('dispatches both generated combat-condition lists without granting container 
       kind: 'array',
       element: { kind: 'condition' },
       semantics: {
-        type: 'readonly CombatCondition[]',
-        arrayElement: { type: 'CombatCondition', aliases: ['CombatCondition'] },
+        arrayElement: { aliases: ['CombatCondition'] },
       },
     }).control,
   ).toBe('array');

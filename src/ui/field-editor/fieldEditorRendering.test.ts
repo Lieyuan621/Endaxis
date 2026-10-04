@@ -118,20 +118,15 @@ describe('shared reference rendering', () => {
       fields: [
         {
           path: ['skillKey'],
-          label: '',
           description: '',
-          type: 'string',
-          required: true,
           control: 'string',
-          source: ['packages/game-data-contract/src/actions.ts:1:1'],
+          valueSchema: { kind: 'string', referenceKind: 'skill' },
         },
         {
           path: ['text'],
-          label: '',
           description: '',
-          type: 'string',
-          required: true,
           control: 'string',
+          valueSchema: { kind: 'string' },
         },
       ],
     });
@@ -171,7 +166,7 @@ it('renders source, owner and read-only navigation without exposing a duplicate 
 });
 
 it('renders string literal/read branches through the same control in node and definition surfaces', async () => {
-  const semantics = { type: 'ActionStringOperand', aliases: ['ActionStringOperand'] as const };
+  const semantics = { aliases: ['ActionStringOperand'] as const };
   const schema: DefinitionFieldSchema = {
     kind: 'union',
     variants: [
@@ -297,7 +292,7 @@ it('retains visible labels and description help for definition tag and collectio
       {
         kind: 'string',
         description: 'Tag description',
-        semantics: { type: 'GameplayTag', aliases: ['GameplayTag'] },
+        semantics: { aliases: ['GameplayTag'] },
       },
       'Custom/Tag',
     ],
@@ -305,7 +300,7 @@ it('retains visible labels and description help for definition tag and collectio
       {
         kind: 'array',
         description: 'Tag description',
-        element: { kind: 'string', semantics: { type: 'GameplayTag', aliases: ['GameplayTag'] } },
+        element: { kind: 'string', semantics: { aliases: ['GameplayTag'] } },
       },
       ['Custom/Tag'],
     ],
@@ -331,7 +326,7 @@ it('retains visible labels and help for level values and nested blackboard write
     schema: {
       kind: 'union',
       variants: [{ kind: 'number' }, { kind: 'array', element: { kind: 'number' } }],
-      semantics: { type: 'LevelValues', aliases: ['LevelValues'] },
+      semantics: { aliases: ['LevelValues'] },
       description: 'Level value description',
     },
   });
@@ -350,7 +345,7 @@ it('retains visible labels and help for level values and nested blackboard write
         indexBlackboardKey: {
           kind: 'string',
           description: 'Counter description',
-          source: ['packages/game-data-contract/src/actions.ts:1:1'],
+          blackboardOrigin: 'contract',
         },
       },
     },
@@ -441,7 +436,7 @@ it('offers typed creation for recursive array and record ref elements without re
     name: 'value',
     schema: {
       kind: 'object',
-      semantics: { type: 'ActionValueOperand', aliases: ['ActionValueOperand'] },
+      semantics: { aliases: ['ActionValueOperand'] },
       fields: { kind: { kind: 'enum', options: ['valueNode'] }, nodeId: { kind: 'string' } },
     },
     value: { kind: 'valueNode', nodeId: 'shared' },

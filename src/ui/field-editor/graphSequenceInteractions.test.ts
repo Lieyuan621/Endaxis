@@ -1,18 +1,7 @@
-import {
-  createRenderer,
-  defineComponent,
-  h,
-  nextTick,
-  reactive,
-  shallowRef,
-  ssrContextKey,
-} from 'vue';
+import { all, click, event, node, renderer, text } from '../../test/componentRender';
+import { compileComponentTemplates } from '../../test/componentTemplates';
+import { h, nextTick, reactive, shallowRef, ssrContextKey } from 'vue';
 import { beforeAll, expect, it, vi } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import * as Vue from 'vue';
-import { compileScript, compileTemplate, parse } from '@vue/compiler-sfc';
-import ts from 'typescript';
 import DefinitionField from '../definition-editor/DefinitionField.vue';
 import DefinitionValueCreator from '../definition-editor/DefinitionValueCreator.vue';
 import StructuredValueField from './StructuredValueField.vue';
@@ -33,240 +22,35 @@ import { createResourceEditorView } from '../editor/resourceEditorView';
 import { useResourceGraphEditor } from '../action-graph/useResourceGraphEditor';
 import { useSkillGraphEditor } from '../action-graph/useSkillGraphEditor';
 import { perlica } from '../../data/operators/perlica.generated';
-// Keep production field components, templates, watchers and events mounted. Only visual
-// primitives are replaced with their public event interfaces; this is not a browser test.
 vi.mock('@/design-system', async importOriginal => {
   const original = await importOriginal<Record<string, unknown>>();
-  const input = defineComponent({
-    props: ['modelValue', 'disabled', 'type'],
-    emits: ['input', 'change', 'update:modelValue'],
-    setup:
-      (props, { attrs, emit }) =>
-      () =>
-        h('input', {
-          ...attrs,
-          type: props.type,
-          disabled: props.disabled,
-          value: props.modelValue,
-          onInput: (value: string) => {
-            emit('input', value);
-            emit('update:modelValue', value);
-          },
-          onChange: (value: string) => emit('change', value),
-        }),
-  });
+  const { createFieldPrimitives } = await import('../../test/fieldPrimitives');
   return {
     ...original,
-    EaInput: input,
-    EaNumberInput: input,
-    EaButton: defineComponent({
-      props: ['disabled'],
-      emits: ['click'],
-      setup:
-        (props, { attrs, emit, slots }) =>
-        () =>
-          h(
-            'button',
-            {
-              ...attrs,
-              disabled: props.disabled,
-              onClick: () => emit('click'),
-            },
-            slots.default?.(),
-          ),
-    }),
-    EaSelect: defineComponent({
-      props: ['modelValue', 'disabled', 'options'],
-      emits: ['change'],
-      setup:
-        (props, { attrs, emit }) =>
-        () =>
-          h('select', {
-            ...attrs,
-            disabled: props.disabled,
-            value: props.modelValue,
-            options: props.options,
-            onChange: (value: unknown) => emit('change', value),
-          }),
-    }),
-    EaCheckbox: defineComponent({
-      props: ['modelValue', 'disabled'],
-      emits: ['change'],
-      setup:
-        (props, { attrs, emit, slots }) =>
-        () =>
-          h('label', {}, [
-            h('input', {
-              ...attrs,
-              type: 'checkbox',
-              disabled: props.disabled,
-              checked: props.modelValue,
-              onChange: (value: boolean) => emit('change', value),
-            }),
-            slots.default?.(),
-          ]),
-    }),
-    EaTooltip: defineComponent({
-      setup:
-        (_, { slots }) =>
-        () =>
-          slots.default?.(),
-    }),
+    ...createFieldPrimitives(),
   };
 });
 
-// Node-mode Vite imports SSR-only SFCs. Compile their unchanged production templates
-// for this renderer, keeping the imported production setup functions and object identities.
 beforeAll(() => {
   i18n.global.locale.value = 'en';
-  for (const [component, path] of [
-    [DefinitionField, '../definition-editor/DefinitionField.vue'],
-    [DefinitionValueCreator, '../definition-editor/DefinitionValueCreator.vue'],
-    [StructuredValueField, './StructuredValueField.vue'],
-    [GraphRowBoundaryField, './GraphRowBoundaryField.vue'],
-    [BlackboardMappingValueField, './BlackboardMappingValueField.vue'],
-    [BlackboardKeyField, './BlackboardKeyField.vue'],
-    [EditorHelp, '../editor/EditorHelp.vue'],
-    [ActionGraphCanvas, '../action-graph/ActionGraphCanvas.vue'],
-    [GraphDataInputs, '../action-graph/GraphDataInputs.vue'],
-    [GraphNodeHeader, '../action-graph/GraphNodeHeader.vue'],
-    [TypedDataInput, '../action-graph/TypedDataInput.vue'],
-  ] as const) {
-    const filename = fileURLToPath(new URL(path, import.meta.url));
-    const { descriptor } = parse(readFileSync(filename, 'utf8'), { filename });
-    const script = compileScript(descriptor, { id: path });
-    const result = compileTemplate({
-      source: descriptor.template!.content,
-      filename,
-      id: path,
-      compilerOptions: { bindingMetadata: script.bindings, expressionPlugins: ['typescript'] },
-    });
-    expect(result.errors).toEqual([]);
-    const code = ts
-      .transpileModule(result.code, {
-        compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext },
-      })
-      .outputText.replace(
-        /import \{([^}]+)\} from ["']vue["'];?/g,
-        (_match, bindings: string) => `const {${bindings.replace(/ as /g, ': ')}} = Vue;`,
-      )
-      .replace('export function render', 'return function render');
-    component.render = new Function('Vue', code)(Vue);
-  }
+  compileComponentTemplates(
+    [
+      [DefinitionField, '../definition-editor/DefinitionField.vue'],
+      [DefinitionValueCreator, '../definition-editor/DefinitionValueCreator.vue'],
+      [StructuredValueField, './StructuredValueField.vue'],
+      [GraphRowBoundaryField, './GraphRowBoundaryField.vue'],
+      [BlackboardMappingValueField, './BlackboardMappingValueField.vue'],
+      [BlackboardKeyField, './BlackboardKeyField.vue'],
+      [EditorHelp, '../editor/EditorHelp.vue'],
+      [ActionGraphCanvas, '../action-graph/ActionGraphCanvas.vue'],
+      [GraphDataInputs, '../action-graph/GraphDataInputs.vue'],
+      [GraphNodeHeader, '../action-graph/GraphNodeHeader.vue'],
+      [TypedDataInput, '../action-graph/TypedDataInput.vue'],
+    ],
+    import.meta.url,
+  );
 });
 
-type Node = {
-  type: string;
-  props: Record<string, any>;
-  text: string;
-  children: Node[];
-  parent: Node | null;
-  readonly dataset: Record<string, string>;
-  clientWidth: number;
-  clientHeight: number;
-  getBoundingClientRect(): {
-    left: number;
-    top: number;
-    right: number;
-    bottom: number;
-    width: number;
-    height: number;
-  };
-  contains(child: Node): boolean;
-  focus(): void;
-  setPointerCapture(): void;
-  hasPointerCapture(): boolean;
-  releasePointerCapture(): void;
-  querySelector(): null;
-  querySelectorAll(): never[];
-  closest(selector: string): Node | null;
-};
-const node = (type: string, text = ''): Node => ({
-  type,
-  text,
-  props: {},
-  children: [],
-  parent: null,
-  get dataset() {
-    return { graphPin: this.props['data-graph-pin'] };
-  },
-  clientWidth: 10000,
-  clientHeight: 10000,
-  getBoundingClientRect: () => ({
-    left: 0,
-    top: 0,
-    right: 10000,
-    bottom: 10000,
-    width: 10000,
-    height: 10000,
-  }),
-  contains(child) {
-    return all(Vue.toRaw(this)).includes(Vue.toRaw(child));
-  },
-  focus() {},
-  setPointerCapture() {},
-  hasPointerCapture: () => false,
-  releasePointerCapture() {},
-  querySelector: () => null,
-  querySelectorAll: () => [],
-  closest(selector) {
-    return selector === '[data-graph-pin]' && this.props['data-graph-pin'] ? this : null;
-  },
-});
-function detach(child: Node) {
-  if (child.parent) child.parent.children.splice(child.parent.children.indexOf(child), 1);
-  child.parent = null;
-}
-const renderer = createRenderer<Node, Node>({
-  insert(child, parent, anchor) {
-    detach(child);
-    const index = anchor ? parent.children.indexOf(anchor) : -1;
-    parent.children.splice(index < 0 ? parent.children.length : index, 0, child);
-    child.parent = parent;
-  },
-  remove: detach,
-  patchProp: (element, key, _old, value) => {
-    element.props[key] = value;
-  },
-  setText: (element, text) => {
-    element.text = text;
-  },
-  setElementText: (element, text) => {
-    element.text = text;
-    element.children = [];
-  },
-  createElement: type => node(type),
-  createText: text => node('text', text),
-  createComment: text => node('comment', text),
-  parentNode: element => element.parent,
-  nextSibling: element =>
-    element.parent?.children[element.parent.children.indexOf(element) + 1] ?? null,
-});
-function all(root: Node): Node[] {
-  return [root, ...root.children.flatMap(all)];
-}
-function text(root: Node): string {
-  return root.text + root.children.map(text).join('');
-}
-function event(extra: Record<string, unknown> = {}) {
-  return {
-    preventDefault() {},
-    stopPropagation() {},
-    button: 0,
-    detail: 0,
-    pointerId: 1,
-    clientX: 1,
-    clientY: 1,
-    altKey: false,
-    ...extra,
-  };
-}
-async function click(root: Node, label: string) {
-  const target = all(root).find(n => n.type === 'button' && text(n).trim() === label);
-  expect(target, label).toBeDefined();
-  target!.props.onClick(event());
-  await nextTick();
-}
 it('switch rendered row Creator selects an operand, reports invalid draft, repairs, creates, cancels and stages', async () => {
   const field = actionNodeSchemas.switch.fields.find(f => f.path.join('.') === 'options')!;
   const value = shallowRef<unknown[]>([]),

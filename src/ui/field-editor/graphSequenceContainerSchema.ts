@@ -1,3 +1,4 @@
+import { sameFieldDeclaration } from '../../core/editor/fieldSemantics.ts';
 import { actionNodeSchemas } from '../action-graph/actionNodeSchemas.generated.ts';
 import {
   resolveDefinitionSchema,
@@ -32,7 +33,7 @@ export function graphSequenceBoundaries(
   const formal = actionNodeSchemas[kind].fields.find(
     field => field.path.join('.') === path.join('.'),
   );
-  if (!formal?.source?.some(source => schema.source?.includes(source))) return;
+  if (!sameFieldDeclaration(formal?.valueSchema, schema)) return;
   const array = resolveDefinitionSchema(schema, references);
   if (array.kind !== 'array') return;
   const row = resolveDefinitionSchema(array.element, references);

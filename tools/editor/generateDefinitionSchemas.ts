@@ -2,9 +2,10 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isSchemaGeneratorMain } from './schemaSourceLocation.ts';
 import * as prettier from 'prettier';
 import ts from 'typescript';
-import { renderSharedSchemaObjects } from './renderSharedSchemaObjects.ts';
+import { renderSharedSchemaValues } from './renderSharedSchemaValues.ts';
 import { describeDefinitionType } from './describeDefinitionType.ts';
 export { describeDefinitionType } from './describeDefinitionType.ts';
 
@@ -75,18 +76,18 @@ export async function generateDefinitionSchemas(check = false): Promise<void> {
       }),
     ]),
   );
-  const rendered = renderSharedSchemaObjects(catalog, 'definitionSchemaPart');
+  const rendered = renderSharedSchemaValues([catalog]);
   const prettierConfig = await prettier.resolveConfig(output);
   const source = await prettier.format(
-    `/** 由 tools/editor/generateDefinitionSchemas.ts 从正式契约生成，请勿手改。 */\nimport type { DefinitionSchemaCatalog } from './fieldSchema';\n${rendered.declarations}\nexport const definitionSchemas = ${rendered.expression} as const satisfies DefinitionSchemaCatalog;\n`,
+    `/** 由 tools/editor/generateDefinitionSchemas.ts 从正式契约生成，请勿手改。 */\nimport type { DefinitionSchemaCatalog } from './fieldSchema';\n${rendered.declarations}\nexport const definitionSchemas = ${rendered.expressions[0]} as const satisfies DefinitionSchemaCatalog;\n`,
     { ...prettierConfig, filepath: output },
   );
   if (check) {
-    if ((await readFile(output, 'utf8')) !== source)
+    if ((await readFile(output, 'utf8')).replaceAll('\r\n', '\n') !== source)
       throw new Error('definition field schemas are stale; run generate:definition-fields');
   } else await writeFile(output, source);
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
+if (isSchemaGeneratorMain(import.meta.url)) {
   await generateDefinitionSchemas(process.argv.includes('--check'));
 }

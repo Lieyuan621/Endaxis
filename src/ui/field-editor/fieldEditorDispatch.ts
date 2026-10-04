@@ -14,8 +14,8 @@ import type {
   DefinitionFieldSchema,
   DefinitionSchemaReferences,
 } from '../definition-editor/fieldSchema';
-import { referenceKindForDeclaration } from '../definition-editor/fieldInputConfig';
-import type { FieldFallbackReason, FieldSemanticAlias, FieldSemantics } from './fieldSemantics';
+import { hasSemanticAlias } from '../../core/editor/fieldSemantics.ts';
+import type { FieldFallbackReason, FieldSemanticAlias } from './fieldSemantics';
 
 export interface FieldEditorContext {
   readonly nodeKind?: string;
@@ -66,11 +66,6 @@ export interface FieldEditorResolution {
   readonly readonly: boolean;
 }
 
-/** Union alternatives describe this value; container elements describe other values. */
-function aliasesOf(semantics: FieldSemantics | undefined): readonly FieldSemanticAlias[] {
-  return [...(semantics?.aliases ?? []), ...(semantics?.unionVariants ?? []).flatMap(aliasesOf)];
-}
-
 /** Shared type dispatch only: no catalog reads, current-value guesses, or write side effects.
  * P1 preserves each surface's existing controls while exposing semantic intent and gaps.
  * Candidates and reference validity belong to the application's resolver, never this function.
@@ -83,13 +78,12 @@ export function resolveFieldEditor(
     context.references ??
     ('kind' in input ? input.references : input.valueSchema?.references) ??
     EMPTY_SCHEMA_REFERENCES;
-  const schema = 'kind' in input ? resolveDefinitionSchema(input, references) : input;
-  const node = 'control' in schema;
-  const baseControl = node ? schema.control : schema.kind;
-  const name = context.name ?? (node ? schema.path.at(-1) : undefined) ?? '';
-  const referenceKind = context.referenceKind ?? referenceKindForDeclaration(name, schema.source);
-  const aliases = aliasesOf(schema.semantics);
-  const has = (alias: FieldSemanticAlias) => aliases.includes(alias);
+  const node = 'control' in input;
+  const schema = resolveDefinitionSchema(node ? input.valueSchema : input, references);
+  const baseControl = node ? input.control : schema.kind;
+  const name = context.name ?? (node ? input.path.at(-1) : undefined) ?? '';
+  const referenceKind = context.referenceKind ?? schema.referenceKind;
+  const has = (alias: FieldSemanticAlias) => hasSemanticAlias(schema.semantics, alias);
   const tuple = Boolean(schema.semantics?.tuple);
   const boundary =
     ['graph', 'sequence', 'resource'].includes(baseControl) ||
@@ -97,9 +91,9 @@ export function resolveFieldEditor(
   const curve =
     !boundary &&
     (baseControl === 'timeScaleCurve' ||
-      (node && baseControl === 'json' && schema.valueSchema?.kind === 'timeScaleCurve'));
-  const collection = stringCollectionDescriptor(schema, name, referenceKind);
-  const conditionList = isConditionListField(schema);
+      (node && baseControl === 'json' && schema.kind === 'timeScaleCurve'));
+  const collection = stringCollectionDescriptor(input, name, referenceKind);
+  const conditionList = isConditionListField(input);
   const semantic: FieldEditorResolution['semantic'] = context.protectedIdentity
     ? 'identity'
     : collection?.kind === 'nativeId'
@@ -127,18 +121,16 @@ export function resolveFieldEditor(
                           : referenceKind
                             ? 'reference'
                             : 'plain';
-  const mapping = resolveBlackboardMapping(schema, name);
+  const mapping = resolveBlackboardMapping(input, name);
   const structured =
     node &&
     baseControl === 'json' &&
-    schema.valueSchema &&
     supportsStructuredValue(
-      schema.valueSchema,
-      name,
+      schema,
       references,
-      graphOperandSchemas(schema.valueSchema, context.nodeKind, schema.path, references),
-      graphSequenceBoundaries(schema.valueSchema, context.nodeKind, schema.path, references),
-      spawnDefinitionResources(schema.valueSchema, context.nodeKind, schema.path),
+      graphOperandSchemas(schema, context.nodeKind, input.path, references),
+      graphSequenceBoundaries(schema, context.nodeKind, input.path, references),
+      spawnDefinitionResources(schema, context.nodeKind, input.path),
     );
   const inlineCondition = !node && schema.inlineCondition && semantic === 'combatCondition';
   const inlineOperand = !node && schema.inlineCondition && semantic === 'valueOperand';
@@ -174,7 +166,7 @@ export function resolveFieldEditor(
                             ? 'structuredValue'
                             : semantic === 'levelValues' &&
                                 !node &&
-                                supportsStructuredValue(schema, name, references)
+                                supportsStructuredValue(schema, references)
                               ? 'levelValues'
                               : baseControl;
   const container =
@@ -189,9 +181,9 @@ export function resolveFieldEditor(
   const readonly =
     context.editable === false ||
     Boolean(context.protectedIdentity) ||
-    (!node && isReadonlyDefinitionSlot(name, schema.source)) ||
+    (!node && isReadonlyDefinitionSlot(schema)) ||
     intrinsicallyReadonly;
-  const fallback = [
+  const specialized = [
     'inlineCondition',
     'inlineOperand',
     'graphOperand',
@@ -203,7 +195,8 @@ export function resolveFieldEditor(
     'stringCollection',
     'gameplayTag',
     'structuredValue',
-  ].includes(control)
+  ].includes(control);
+  const fallback = specialized
     ? undefined
     : contextlessOperand
       ? 'structured-editor-pending'
@@ -237,19 +230,7 @@ export function resolveFieldEditor(
       ? 'none'
       : control === 'structuredValue'
         ? 'recursive'
-        : [
-              'inlineCondition',
-              'inlineOperand',
-              'graphOperand',
-              'skillSettingValues',
-              'timeScaleCurve',
-              'stringOperand',
-              'blackboardMapping',
-              'conditionList',
-              'stringCollection',
-              'gameplayTag',
-              'structuredValue',
-            ].includes(control)
+        : specialized
           ? 'field'
           : container
             ? 'recursive'

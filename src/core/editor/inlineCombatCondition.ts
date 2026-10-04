@@ -1,6 +1,6 @@
 import { selectDefinitionSchema } from './selectDefinitionSchema.ts';
 import type { DefinitionFieldSchema, DefinitionSchemaReferences } from './fieldSchema.ts';
-import type { FieldSemantics } from './fieldSemantics.ts';
+import { hasSemanticAlias } from './fieldSemantics.ts';
 import {
   assertFiniteFieldValue,
   createFieldTraversalWork,
@@ -10,13 +10,8 @@ import {
 import { validateCombatCondition } from '../game-data/validation/combatConditions.ts';
 import type { SkillDefinitionValidationIssue } from '../game-data/validation/definitionValues.ts';
 
-export function schemaHasAlias(schema: DefinitionFieldSchema, alias: string): boolean {
-  const has = (value: FieldSemantics | undefined): boolean =>
-    !!value?.aliases?.some(candidate => candidate === alias) || !!value?.unionVariants?.some(has);
-  return has(schema.semantics);
-}
 export function isInlineCombatCondition(schema: DefinitionFieldSchema): boolean {
-  return !!schema.inlineCondition && schemaHasAlias(schema, 'CombatCondition');
+  return !!schema.inlineCondition && hasSemanticAlias(schema.semantics, 'CombatCondition');
 }
 /** Reuse the standalone validator; this boundary never binds graph or macro inputs. */
 export function assertInlineCombatCondition(
@@ -36,8 +31,8 @@ export function assertInlineCombatCondition(
     declared = resolveDefinitionSchema(declared, references);
     if (current === undefined && declared.optional) return;
     if (
-      (schemaHasAlias(declared, 'ActionValueOperand') ||
-        schemaHasAlias(declared, 'ActionStringOperand')) &&
+      (hasSemanticAlias(declared.semantics, 'ActionValueOperand') ||
+        hasSemanticAlias(declared.semantics, 'ActionStringOperand')) &&
       current &&
       typeof current === 'object' &&
       'kind' in current &&

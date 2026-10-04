@@ -121,21 +121,25 @@ function initialValue(field: NodeFieldSchema): unknown {
   if (field.control === 'select') return field.options?.[0] ?? unavailable;
   if (field.control === 'operand') return { kind: 'constant', value: 0 };
   if (field.control === 'sequence') return { $sequence: null };
-  if (field.type.split(' | ').includes('LevelValues')) return 0;
-  if (field.type === 'CombatCondition') return { kind: 'constant', value: false };
-  if (field.type === 'readonly CombatCondition[]')
+  if (field.control === 'levelValues') return 0;
+  if (field.valueSchema.semantics?.aliases?.includes('CombatCondition'))
+    return { kind: 'constant', value: false };
+  if (
+    field.valueSchema.kind === 'array' &&
+    field.valueSchema.semantics?.arrayElement?.aliases?.includes('CombatCondition')
+  )
     return [
       { kind: 'constant', value: false },
       { kind: 'constant', value: false },
     ];
-  if (/^readonly .+\[\]$/.test(field.type)) return [];
+  if (field.valueSchema.kind === 'array') return [];
   // 不凭空填写技能、Buff、黑板变量等必需身份，也不猜复杂对象的默认值。
   return unavailable;
 }
 function instantiate(base: unknown, fields: readonly NodeFieldSchema[]): unknown {
   let value = base;
   for (const field of fields) {
-    if (!field.required) continue;
+    if (field.valueSchema.optional) continue;
     const initial = initialValue(field);
     if (initial === unavailable) return undefined;
     value = writeNodeField(value, field.path, initial);
@@ -144,12 +148,12 @@ function instantiate(base: unknown, fields: readonly NodeFieldSchema[]): unknown
 }
 export function listNodeCreations(): readonly NodeCreation[] {
   const entries: NodeCreation[] = [];
-  for (const schema of Object.values(actionNodeSchemas)) {
-    const action = instantiate({ kind: schema.kind, parameters: {} }, schema.fields);
+  for (const [kind, schema] of Object.entries(actionNodeSchemas)) {
+    const action = instantiate({ kind, parameters: {} }, schema.fields);
     if (action)
       entries.push({
-        key: `action:${schema.kind}`,
-        kind: schema.kind,
+        key: `action:${kind}`,
+        kind,
         category: 'action',
         action: action as ActionGraphStep,
       });

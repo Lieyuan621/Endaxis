@@ -119,7 +119,6 @@ export interface DataInput {
 }
 /** Minimal structural schema accepted by core; generated UI schemas supply these aliases. */
 export interface DataInputSemantics {
-  readonly type?: string;
   readonly aliases?: readonly string[];
   readonly unionVariants?: readonly DataInputSemantics[];
   readonly arrayElement?: DataInputSemantics;
@@ -319,12 +318,10 @@ export function listDataInputs(
           ? (semantics.tuple?.elements[Number(key)]?.semantics ?? semantics.arrayElement)
           : undefined);
       if (!child) {
-        // Object properties inside a generated container are not modeled yet. Keep
-        // their existing operands, but never scan through a declared scalar slot.
+        // Only an explicit incomplete-schema boundary permits shape discovery.
+        // Object properties are described by valueSchema, never by type display text.
         return (
-          semantics.type?.trimStart().startsWith('{') === true ||
-          field.fallback?.reason === 'depth-limit' ||
-          field.fallback?.reason === 'recursive-type'
+          field.fallback?.reason === 'depth-limit' || field.fallback?.reason === 'recursive-type'
         );
       }
       semantics = child;

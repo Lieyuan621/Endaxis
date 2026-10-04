@@ -1,3 +1,4 @@
+import { sameFieldDeclaration } from '../../core/editor/fieldSemantics.ts';
 import { actionNodeSchemas } from '../action-graph/actionNodeSchemas.generated.ts';
 import type {
   DefinitionFieldSchema,
@@ -30,7 +31,7 @@ export function graphOperandSchemas(
   const formal = actionNodeSchemas[kind as keyof typeof actionNodeSchemas]?.fields.find(
     value => value.path.join('.') === path.join('.'),
   );
-  if (!formal?.source?.some(source => schema.source?.includes(source))) return;
+  if (!sameFieldDeclaration(formal?.valueSchema, schema)) return;
   let value = resolveDefinitionSchema(schema, references);
   if (global) {
     if (value.kind !== 'object') return;
@@ -78,6 +79,6 @@ export function isSkillSettingValuesSchema(schema: DefinitionFieldSchema): boole
   return (
     schema.kind === 'array' &&
     schema.element.kind === 'number' &&
-    !!formal?.source?.some(source => schema.source?.includes(source))
+    sameFieldDeclaration(formal, schema)
   );
 }

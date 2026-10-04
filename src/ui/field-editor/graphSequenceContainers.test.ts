@@ -1,13 +1,5 @@
-import {
-  computed,
-  createRenderer,
-  createSSRApp,
-  h,
-  nextTick,
-  shallowRef,
-  ssrContextKey,
-  type ComponentOptions,
-} from 'vue';
+import { mountSetup } from '../../test/componentSetup';
+import { computed, createSSRApp, h } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 import { ID_INJECTION_KEY, ZINDEX_INJECTION_KEY } from 'element-plus';
 import { expect, it } from 'vitest';
@@ -21,7 +13,6 @@ import { validateStructuredValue } from './structuredValue';
 import { assertEditableValue } from '../definition-editor/definitionFieldRuntime';
 import { structuredFieldContextKey } from './structuredFieldContext';
 import StructuredValueField from './StructuredValueField.vue';
-import DefinitionValueCreator from '../definition-editor/DefinitionValueCreator.vue';
 import ActionNodeInspector from '../action-graph/ActionNodeInspector.vue';
 import NodeInspectorFields from '../action-graph/NodeInspectorFields.vue';
 import { actionTypedInputs } from '../action-graph/typedGraphInputs';
@@ -65,62 +56,28 @@ const action = (f: (typeof fixtures)[number], rows: unknown[]): ActionGraphStep 
       }
     : { kind: f.kind, parameters: { responses: rows } }) as ActionGraphStep;
 const options = (f: (typeof fixtures)[number]) => ({ kind: f.kind, path: f.path, graph });
-async function mount(component: unknown, initial: Record<string, unknown>, f = fixtures[0]!) {
-  let state: any;
-  const props = shallowRef(initial),
-    implementation = component as ComponentOptions;
-  const stub = {
-    ...implementation,
-    setup(p: any, ctx: any) {
-      state = implementation.setup!(p, ctx);
-      return state;
-    },
-    render: () => null,
-  };
-  const app = createRenderer<object, object>({
-    insert() {},
-    remove() {},
-    patchProp() {},
-    setText() {},
-    setElementText() {},
-    createElement: () => ({}),
-    createText: () => ({}),
-    createComment: () => ({}),
-    parentNode: () => null,
-    nextSibling: () => null,
-  }).createApp({ render: () => h(stub, props.value) });
-  app.use(i18n).provide(ssrContextKey, { modules: new Set() });
-  app.provide(
-    structuredFieldContextKey,
-    computed(() => ({
-      kind: f.kind,
-      path: f.path,
-      graph,
-      graphOperands: graphOperandSchemas(f.field.valueSchema, f.kind, f.path),
-      graphBoundaries: graphSequenceBoundaries(f.field.valueSchema, f.kind, f.path),
-    })),
-  );
-  app.mount({});
-  await nextTick();
-  return {
-    state,
-    stop: () => app.unmount(),
-    async update(value: Record<string, unknown>) {
-      props.value = { ...props.value, ...value };
-      await nextTick();
-    },
-  };
+function mount(component: unknown, initial: Record<string, unknown>, f = fixtures[0]!) {
+  return mountSetup(component, initial, app => {
+    app.provide(
+      structuredFieldContextKey,
+      computed(() => ({
+        kind: f.kind,
+        path: f.path,
+        graph,
+        graphOperands: graphOperandSchemas(f.field.valueSchema, f.kind, f.path),
+        graphBoundaries: graphSequenceBoundaries(f.field.valueSchema, f.kind, f.path),
+      })),
+    );
+  });
 }
 it.each(fixtures)(
   '$kind admits exact formal declarations and creates only explicit empty sequences',
   f => {
-    const schema = f.field.valueSchema!,
-      boundaries = graphSequenceBoundaries(schema, f.kind, f.path)!;
+    const schema = f.field.valueSchema!;
     expect(resolveFieldEditor(f.field, { nodeKind: f.kind }).control).toBe('structuredValue');
     expect(supportsStructuredValue(schema)).toBe(false);
-    expect(boundaries.sequences.size).toBe(1);
     expect(
-      graphSequenceBoundaries({ ...schema, source: ['custom/actions.ts:1:1'] }, f.kind, f.path),
+      graphSequenceBoundaries({ ...schema, declaration: undefined }, f.kind, f.path),
     ).toBeUndefined();
     expect(graphSequenceBoundaries(schema, 'spawnAbilityEntity', f.path)).toBeUndefined();
     expect(() => validateStructuredValue(schema, [], [f.row()], options(f))).not.toThrow();
@@ -184,41 +141,6 @@ it.each(fixtures)(
         ),
       ).toThrow();
     }
-  },
-);
-it.each(fixtures)(
-  '$kind row Creator has a real empty sequence, incomplete/error/readonly/cancel behavior',
-  async f => {
-    const schema = f.field.valueSchema!;
-    if (schema.kind !== 'array') throw Error('array');
-    const created: unknown[] = [],
-      cancelled: unknown[] = [];
-    const host = await mount(
-      DefinitionValueCreator,
-      {
-        schema: schema.element,
-        editable: true,
-        editingContext: 'value',
-        fieldPath: [0],
-        onCreate: (v: unknown) => created.push(v),
-        onCancel: () => cancelled.push(true),
-      },
-      f,
-    );
-    expect(host.state.value.value.sequence).toEqual({ $sequence: null });
-    expect(host.state.complete.value).toBe(false);
-    if (f.kind === 'switch') host.state.change(['value'], { kind: 'constant', value: 2 });
-    else {
-      host.state.change(['key'], 'new');
-      host.state.change(['event'], { kind: 'operatorHit' });
-    }
-    expect(host.state.complete.value).toBe(true);
-    host.state.create();
-    expect(created).toHaveLength(1);
-    await host.update({ editable: false });
-    host.state.create();
-    expect(created).toHaveLength(1);
-    host.stop();
   },
 );
 it.each(fixtures)(

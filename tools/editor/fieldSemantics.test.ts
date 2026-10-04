@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { resolve } from 'node:path';
+import { join, resolve, sep } from 'node:path';
+import { mkdtempSync, rmSync, symlinkSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { spawnSync } from 'node:child_process';
+import { schemaSourceLocation } from './schemaSourceLocation.ts';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import { resolveDefinitionSchema } from '../../src/core/editor/resolveDefinitionSchema.ts';
@@ -104,7 +108,7 @@ assert.equal(definition.kind, 'object');
 if (definition.kind !== 'object') throw new Error('fixture must describe an object');
 const fields = definition.fields;
 const nodes = Object.fromEntries(
-  describeNodeFields(fixture, checker).map(field => [field.label, field]),
+  describeNodeFields(fixture, checker).map(field => [field.path.at(-1), field]),
 );
 
 test('both generators retain erased, imported and indirect aliases in optional and container slots', () => {
@@ -130,18 +134,12 @@ test('both generators retain erased, imported and indirect aliases in optional a
     'graph',
     'condition',
   ]) {
-    assert.deepEqual(fields[name]!.semantics, nodes[name]!.semantics, name);
-    assert.deepEqual(fields[name]!.source, nodes[name]!.source, name);
-    assert.ok(
-      fields[name]!.source?.every(source =>
-        source.startsWith('tools/editor/fieldSemantics.fixture.ts:'),
-      ),
-      name,
-    );
+    assert.deepEqual(fields[name]!.semantics, nodes[name]!.valueSchema.semantics, name);
+    assert.equal(Object.hasOwn(fields[name]!, 'source'), false, name);
+    assert.equal(Object.hasOwn(nodes[name]!.valueSchema, 'source'), false, name);
   }
   assert.deepEqual(fields.tag!.semantics?.aliases, ['GameplayTag']);
   assert.equal(fields.tag!.optional, true);
-  assert.equal(fields.tag!.semantics?.optional, true);
   assert.deepEqual(fields.tags!.semantics?.arrayElement?.aliases, ['GameplayTag']);
   for (const name of ['mapped', 'generic', 'indexed']) {
     const field = fields[name]!;
@@ -153,7 +151,8 @@ test('both generators retain erased, imported and indirect aliases in optional a
       `${name} must retain its value alias`,
     );
     assert.deepEqual(field.semantics?.recordValue?.aliases, ['GameplayTag']);
-    assert.deepEqual(field.source, field.value.source);
+    assert.equal(Object.hasOwn(field, 'source'), false);
+    assert.equal(Object.hasOwn(field.value, 'source'), false);
   }
   for (const [name, alias] of [
     ['operand', 'ActionValueOperand'],
@@ -169,19 +168,21 @@ test('both generators retain erased, imported and indirect aliases in optional a
     'formal operands stay atomic instead of duplicating the contract',
   );
   assert.equal(
-    nodes.operands!.semantics?.aliases,
+    nodes.operands!.valueSchema.semantics?.aliases,
     undefined,
     'a container cannot become an operand input',
   );
-  assert.deepEqual(nodes.operands!.semantics?.arrayElement?.aliases, ['ActionValueOperand']);
+  assert.deepEqual(nodes.operands!.valueSchema.semantics?.arrayElement?.aliases, [
+    'ActionValueOperand',
+  ]);
 });
 
 test('union alternatives retain their own identity without promoting plain strings or mixed inputs', () => {
   assert.equal(fields.choice!.kind, 'union');
   assert.equal(fields.choice!.semantics?.aliases, undefined);
   assert.deepEqual(
-    fields.choice!.semantics?.unionVariants?.find(variant => variant.type === 'string')?.aliases,
-    ['GameplayTag'],
+    fields.choice!.semantics?.unionVariants?.map(variant => variant.aliases),
+    [['GameplayTag'], undefined],
   );
   assert.equal(fields.mixed!.semantics?.aliases, undefined);
   assert.deepEqual(
@@ -200,38 +201,40 @@ test('union alternatives retain their own identity without promoting plain strin
     'same-name aliases outside the formal contract are not domain evidence',
   );
   const aggregate = describeNodeFields(typeOf('Aggregated'), checker)[0]!;
-  assert.equal(aggregate.required, false);
-  assert.equal(
-    aggregate.source?.length,
-    3,
-    'union fields keep prohibited as well as editable declaration identities',
-  );
+  assert.equal(aggregate.valueSchema.optional, true);
+  assert.equal(Object.hasOwn(aggregate.valueSchema, 'source'), false);
+  assert.equal(aggregate.valueSchema.kind, 'union');
+  if (aggregate.valueSchema.kind !== 'union') throw new Error('expected heterogeneous union');
   assert.ok(
-    aggregate.semantics?.unionVariants?.some(variant => variant.aliases?.includes('GameplayTag')),
+    aggregate.valueSchema.variants.some(variant =>
+      variant.semantics?.aliases?.includes('GameplayTag'),
+    ),
   );
+  assert.equal(aggregate.valueSchema.semantics?.aliases, undefined);
 });
 
 test('tuples preserve per-slot shapes while variable and optional lengths remain explicitly unsupported', () => {
   assert.equal(fields.tuple!.kind, 'opaque');
   assert.equal(fields.tuple!.fallback?.reason, 'tuple-editor-pending');
   assert.equal(nodes.tuple!.control, 'json');
-  assert.equal(nodes.tuple!.fallback?.reason, 'tuple-editor-pending');
+  assert.equal(nodes.tuple!.valueSchema.kind, 'opaque');
+  assert.equal(nodes.tuple!.valueSchema.fallback?.reason, 'tuple-editor-pending');
+  assert.equal(Object.hasOwn(nodes.tuple!, 'fallback'), false);
   const tuple = fields.tuple!.semantics?.tuple!;
   assert.equal(tuple.minLength, 2);
-  assert.equal(tuple.maxLength, 3);
+  assert.equal(tuple.elements.length, 3);
   assert.deepEqual(
     tuple.elements.map(element => element.label),
     ['tag', 'count', 'label'],
   );
   assert.deepEqual(tuple.elements[0]!.semantics.aliases, ['GameplayTag']);
-  assert.equal(tuple.elements[1]!.semantics.type, 'number');
+  assert.deepEqual(tuple.elements[1]!.semantics, {});
   assert.equal(tuple.elements[2]!.optional, true);
   assert.deepEqual(tuple.elements[2]!.semantics.aliases, ['ActionStringOperand']);
   assert.equal(fields.rest!.semantics?.tuple?.minLength, 1);
-  assert.equal(fields.rest!.semantics?.tuple?.maxLength, undefined);
   assert.equal(fields.rest!.semantics?.tuple?.elements[1]!.rest, true);
   for (const name of ['namedRest', 'unnamedRest', 'aliasRest', 'genericRest']) {
-    assert.deepEqual(fields[name]!.semantics, nodes[name]!.semantics, name);
+    assert.deepEqual(fields[name]!.semantics, nodes[name]!.valueSchema.semantics, name);
     const tail = fields[name]!.semantics?.tuple?.elements[1]!;
     assert.equal(tail.rest, true, name);
     assert.deepEqual(tail.semantics.aliases, ['GameplayTag'], name);
@@ -264,18 +267,19 @@ test('recursive containers use finite references, deep values stay typed, and re
   }
 });
 
-test('generated value schemas compose every declaration, preserving distinct semantics and equivalent provenance', () => {
+test('generated value schemas compose every declaration, preserving distinct semantics without diagnostic provenance', () => {
   const value = describeNodeFields(typeOf('Equivalent'), checker).find(
-    field => field.label === 'value',
+    field => field.path.at(-1) === 'value',
   )!;
   assert.equal(value.valueSchema?.kind, 'object');
   if (value.valueSchema?.kind !== 'object')
     throw new Error('equivalent value shape must be usable');
-  assert.equal(value.valueSchema.source?.length, 2);
-  assert.equal(value.valueSchema.fields.x?.source?.length, 2);
+  assert.equal(Object.hasOwn(value.valueSchema, 'source'), false);
+  assert.equal(Object.hasOwn(value.valueSchema.fields.x!, 'source'), false);
   assert.equal(
-    describeNodeFields(typeOf('DifferentRequired'), checker).find(field => field.label === 'value')!
-      .valueSchema?.kind,
+    describeNodeFields(typeOf('DifferentRequired'), checker).find(
+      field => field.path.at(-1) === 'value',
+    )!.valueSchema?.kind,
     'union',
     'different nested required slots cannot be weakened into one object',
   );
@@ -287,7 +291,7 @@ test('generated value schemas compose every declaration, preserving distinct sem
   );
   const aggregate = describeNodeFields(typeOf('Aggregated'), checker)[0]!.valueSchema!;
   assert.equal(aggregate.optional, true);
-  assert.equal(aggregate.source?.length, 3);
+  assert.equal(Object.hasOwn(aggregate, 'source'), false);
   assert.equal(aggregate.kind, 'union');
 });
 test('field-root resources remain boundaries and fixed tuple/literal declarations keep exact values', () => {
@@ -355,4 +359,62 @@ test('recursive generics preserve source aliases and instantiated checker identi
     result,
   );
   assert.equal(JSON.stringify(mutual).includes('recursive-type'), false);
+});
+
+test('recursive identities and genuine aliases survive checkout paths, symlinks and CRLF', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'schema-paths-'));
+  const linkedRoot = join(directory, 'repo');
+  symlinkSync(root, linkedRoot, 'junction');
+  const fixture = `import type { GameplayTag } from '../../packages/game-data-contract/src/gameplayTags.ts';
+import type { TimeScaleCurveDefinition } from '../../packages/game-data-contract/src/conditions.ts';
+type Link<T> = { value: T; next?: Link<T>; children: readonly Link<T>[] };
+export interface Portable { tags: Link<GameplayTag>; ordinary: Link<string>; curve?: TimeScaleCurveDefinition; next?: Portable; }
+`;
+  function generate(sourceRoot: string, text: string) {
+    const path = resolve(sourceRoot, 'tools/editor/portable.fixture.ts');
+    const fixtureHost = ts.createCompilerHost(options);
+    const read = fixtureHost.getSourceFile.bind(fixtureHost);
+    fixtureHost.getSourceFile = (name, version, onError, fresh) =>
+      resolve(name) === path
+        ? ts.createSourceFile(path, text, options.target!, true)
+        : read(name, version, onError, fresh);
+    const fixtureProgram = ts.createProgram([path], options, fixtureHost);
+    const fixtureChecker = fixtureProgram.getTypeChecker();
+    const module = fixtureChecker.getSymbolAtLocation(fixtureProgram.getSourceFile(path)!)!;
+    const symbol = fixtureChecker
+      .getExportsOfModule(module)
+      .find(value => value.name === 'Portable')!;
+    assert.equal(
+      schemaSourceLocation(sourceRoot).filePath(ts.getDefaultLibFilePath(options)),
+      'node_modules/typescript/lib/lib.es2023.full.d.ts',
+    );
+    return describeDefinitionType(
+      fixtureChecker.getDeclaredTypeOfSymbol(symbol),
+      fixtureChecker,
+      undefined,
+      sourceRoot,
+    );
+  }
+  try {
+    const invocation = spawnSync(
+      process.execPath,
+      [
+        '--experimental-strip-types',
+        resolve(linkedRoot, 'tools/editor/generateActionNodeSchema.ts'),
+        '--invalid',
+      ],
+      { encoding: 'utf8' },
+    );
+    assert.equal(invocation.status, 1, 'symlink entry must execute argument validation');
+    assert.match(invocation.stderr, /Usage: generateActionNodeSchema/);
+    const expected = generate(resolve(root), fixture);
+    assert.ok(Object.keys(expected.references ?? {}).length, 'fixture must exercise recursive IDs');
+    for (const sourceRoot of [root + sep, linkedRoot]) {
+      for (const newline of ['\n', '\r\n']) {
+        assert.deepEqual(generate(sourceRoot, fixture.replaceAll('\n', newline)), expected);
+      }
+    }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
 });

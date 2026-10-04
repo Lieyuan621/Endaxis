@@ -1,7 +1,7 @@
 /** 两个生成器共用的纯类型描述；不创建或隐式读取生产 TypeScript Program。 */
 import ts from 'typescript';
 import { createHash } from 'node:crypto';
-import { referenceKindForDeclaration } from '../../src/ui/definition-editor/fieldInputConfig.ts';
+import { schemaSourceLocation } from './schemaSourceLocation.ts';
 import type { FieldSemantics } from '../../src/ui/field-editor/fieldSemantics.ts';
 import type { DefinitionFieldSchema } from '../../src/ui/definition-editor/fieldSchema.ts';
 import { createFieldSemanticExtractor, type FieldTypeContext } from './fieldSemantics.ts';
@@ -32,6 +32,7 @@ export function describeDefinitionType(
   options: { readonly definitionRoot?: boolean } = {},
 ): DefinitionFieldSchema {
   const extractor = createFieldSemanticExtractor(typeChecker, sourceRoot);
+  const sources = schemaSourceLocation(sourceRoot);
   const references: Record<string, DefinitionFieldSchema> = {};
   const interned = new Map<
     ts.Type,
@@ -86,7 +87,6 @@ export function describeDefinitionType(
 
   function describe(
     input: FieldTypeContext,
-    seen: ReadonlySet<ts.Type>,
     depth: number,
     inheritedCondition?: InlineConditionScope,
   ): DefinitionFieldSchema {
@@ -125,11 +125,7 @@ export function describeDefinitionType(
     // collapsing. Declaration origins and root ownership remain part of the context identity.
     const identity = JSON.stringify({
       type: typeChecker.typeToString(type, undefined, ts.TypeFormatFlags.NoTruncation),
-      declarations: (type.aliasSymbol ?? type.getSymbol())?.declarations?.map(node => [
-        node.getSourceFile().fileName.replaceAll(sourceRoot, ''),
-        node.pos,
-        node.end,
-      ]),
+      declarations: (type.aliasSymbol ?? type.getSymbol())?.declarations?.map(sources.location),
       source: input.source,
       origins: extractor.identity(input),
       semantics: metadata.semantics,
@@ -183,9 +179,8 @@ export function describeDefinitionType(
                   {
                     kind: 'enum' as const,
                     options: literals.map(literalValue),
-                    source: input.source,
+                    ...metadata,
                     semantics: {
-                      type: literals.map(part => typeChecker.typeToString(part)).join(' | '),
                       unionVariants: literals.map(part =>
                         extractor.semantics(extractor.branch(input, part)),
                       ),
@@ -193,9 +188,7 @@ export function describeDefinitionType(
                   },
                 ]
               : []),
-            ...others.map(part =>
-              describe(extractor.branch(input, part), seen, depth, conditionScope),
-            ),
+            ...others.map(part => describe(extractor.branch(input, part), depth, conditionScope)),
           ],
         });
       }
@@ -230,7 +223,6 @@ export function describeDefinitionType(
       )
         return field({ kind: 'opaque', fallback: fallback('owned-resource-boundary') });
 
-      const nested = new Set(seen).add(current);
       if (typeChecker.isTupleType(current)) {
         const tuple = current as ts.TupleTypeReference;
         if (
@@ -242,7 +234,7 @@ export function describeDefinitionType(
         return field({
           kind: 'tuple',
           elements: elements.map((element, index) =>
-            describe(extractor.element(input, element, index), nested, depth, conditionScope),
+            describe(extractor.element(input, element, index), depth, conditionScope),
           ),
           minLength: tuple.target.minLength,
         });
@@ -252,7 +244,7 @@ export function describeDefinitionType(
         return field({
           kind: 'array',
           element: element
-            ? describe(extractor.element(input, element), nested, depth, conditionScope)
+            ? describe(extractor.element(input, element), depth, conditionScope)
             : {
                 kind: 'opaque',
                 ...metadata,
@@ -264,7 +256,7 @@ export function describeDefinitionType(
       if (index)
         return field({
           kind: 'record',
-          value: describe(extractor.recordValue(input, index), nested, depth + 1, conditionScope),
+          value: describe(extractor.recordValue(input, index), depth + 1, conditionScope),
         });
 
       const fields: Record<string, DefinitionFieldSchema> = {};
@@ -278,7 +270,7 @@ export function describeDefinitionType(
             part => (part.flags & (ts.TypeFlags.Undefined | ts.TypeFlags.Never)) === 0,
           )
             ? { kind: 'graph' as const, ...extractor.metadata(childContext) }
-            : describe(childContext, nested, depth + 1, conditionScope);
+            : describe(childContext, depth + 1, conditionScope);
         const description = ts
           .displayPartsToString(property.getDocumentationComment(typeChecker))
           .replaceAll('\r\n', '\n')
@@ -304,58 +296,50 @@ export function describeDefinitionType(
   }
   const schema = describe(
     extractor.context(type, symbol ?? type.aliasSymbol ?? type.getSymbol()),
-    new Set(),
     0,
   );
   return Object.keys(references).length ? { ...schema, references } : schema;
 }
 
 /** Merge equivalent declaration shapes without discarding any branch's metadata. */
-function composeShapes(
-  values: readonly DefinitionFieldSchema[],
-  name?: string,
-): DefinitionFieldSchema {
+function composeShapes(values: readonly DefinitionFieldSchema[]): DefinitionFieldSchema {
   if (!values.length) throw new Error('no present field variants');
   if (values.length === 1) return values[0]!;
-  const semanticKey = (value: FieldSemantics | undefined): unknown =>
-    value
-      ? {
-          aliases: value.aliases,
-          arrayElement: value.arrayElement && semanticKey(value.arrayElement),
-          recordValue: value.recordValue && semanticKey(value.recordValue),
-          unionVariants: value.unionVariants?.map(semanticKey),
-        }
-      : {};
-  const shapeKey = (value: DefinitionFieldSchema, fieldName?: string, nested = false): unknown => ({
+  const shapeKey = (value: DefinitionFieldSchema, nested = false): unknown => ({
     ...(nested ? { optional: value.optional === true } : {}),
     kind: value.kind,
     ...(value.kind === 'ref' ? { ref: value.ref } : {}),
-    role: referenceKindForDeclaration(fieldName ?? '', value.source),
-    semantics: semanticKey(value.semantics),
+    declaration: value.declaration,
+    referenceKind: value.referenceKind,
+    readonlyDeclaration: value.readonlyDeclaration,
+    deferredCondition: value.deferredCondition,
+    nativeId: value.nativeId,
+    blackboardOrigin: value.blackboardOrigin,
+    semantics: value.semantics ?? {},
     fallback: value.fallback,
     inlineCondition: value.inlineCondition,
     ...(value.kind === 'enum' ? { options: value.options } : {}),
     ...(value.kind === 'object'
       ? {
           fields: Object.fromEntries(
-            Object.entries(value.fields).map(([key, child]) => [key, shapeKey(child, key, true)]),
+            Object.entries(value.fields).map(([key, child]) => [key, shapeKey(child, true)]),
           ),
         }
       : {}),
-    ...(value.kind === 'array' ? { element: shapeKey(value.element, fieldName, true) } : {}),
-    ...(value.kind === 'record' ? { value: shapeKey(value.value, fieldName, true) } : {}),
+    ...(value.kind === 'array' ? { element: shapeKey(value.element, true) } : {}),
+    ...(value.kind === 'record' ? { value: shapeKey(value.value, true) } : {}),
     ...(value.kind === 'tuple'
       ? {
-          elements: value.elements.map(child => shapeKey(child, undefined, true)),
+          elements: value.elements.map(child => shapeKey(child, true)),
           minLength: value.minLength,
         }
       : {}),
     ...(value.kind === 'union'
-      ? { variants: value.variants.map(child => shapeKey(child, fieldName, true)) }
+      ? { variants: value.variants.map(child => shapeKey(child, true)) }
       : {}),
   });
   const key = (value: DefinitionFieldSchema) =>
-    JSON.stringify({ shape: shapeKey(value, name), references: value.references });
+    JSON.stringify({ shape: shapeKey(value), references: value.references });
   const groups = new Map<string, DefinitionFieldSchema[]>();
   for (const value of values) {
     const group = groups.get(key(value)) ?? [];
@@ -366,12 +350,6 @@ function composeShapes(
     const first = group[0]!;
     if (group.length === 1) return first;
     const metadata = {
-      source: [...new Set(group.flatMap(value => value.source ?? []))],
-      semantics: {
-        ...first.semantics,
-        type: [...new Set(group.flatMap(value => value.semantics?.type ?? []))].join(' | '),
-        unionVariants: group.flatMap(value => (value.semantics ? [value.semantics] : [])),
-      },
       ...(group.some(value => value.optional) ? { optional: true } : {}),
     };
     if (first.kind === 'object')
@@ -385,7 +363,6 @@ function composeShapes(
               group.map(value =>
                 value.kind === 'object' ? value.fields[name]! : first.fields[name]!,
               ),
-              name,
             ),
           ]),
         ),
@@ -396,7 +373,6 @@ function composeShapes(
         ...metadata,
         element: composeShapes(
           group.map(value => (value.kind === 'array' ? value.element : first.element)),
-          name,
         ),
       };
     if (first.kind === 'record')
@@ -405,7 +381,6 @@ function composeShapes(
         ...metadata,
         value: composeShapes(
           group.map(value => (value.kind === 'record' ? value.value : first.value)),
-          name,
         ),
       };
     if (first.kind === 'tuple')
@@ -425,7 +400,6 @@ function composeShapes(
         variants: first.variants.map((child, index) =>
           composeShapes(
             group.map(value => (value.kind === 'union' ? value.variants[index]! : child)),
-            name,
           ),
         ),
       };
@@ -438,7 +412,6 @@ function composeShapes(
  * maps to alias each other. Bodies remain JSON-shaped, and references never carry maps. */
 export function composeDefinitionSchemas(
   values: readonly DefinitionFieldSchema[],
-  name?: string,
 ): DefinitionFieldSchema {
   const references: Record<string, DefinitionFieldSchema> = {};
   const normalized = values.map(value => {
@@ -475,6 +448,6 @@ export function composeDefinitionSchemas(
       references[`${prefix}_${key}`] = rename(body);
     return rename(value);
   });
-  const shape = composeShapes(normalized, name);
+  const shape = composeShapes(normalized);
   return Object.keys(references).length ? { ...shape, references } : shape;
 }

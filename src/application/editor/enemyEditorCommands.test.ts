@@ -5,10 +5,6 @@ import {
   createDefinitionEnemyDocument,
   createCustomEnemyDocument,
   replaceEnemyEditableValues,
-  setScenarioEnemy,
-  updateEnemyBasicField,
-  updateEnemyResistance,
-  updateEnemyStaggerField,
 } from './enemyEditorCommands';
 
 describe('enemyEditorCommands', () => {
@@ -42,36 +38,33 @@ describe('enemyEditorCommands', () => {
     );
   });
 
-  it('每类用户覆盖都记录明确的接管字段', () => {
-    const definition = gameDataRepository.getEnemy('eny-0125-fdcentur')!;
-    const initial = setScenarioEnemy(
-      createEmptyScenario('scenario:enemy', '敌人场景'),
-      createDefinitionEnemyDocument(definition, 90, 30),
-    );
-
-    const updatedHp = updateEnemyBasicField(initial, 'hp', 1000);
-    const updatedResistance = updateEnemyResistance(updatedHp, 'heat', 0.2);
-    const updatedStagger = updateEnemyStaggerField(updatedResistance, 'maximum', 500);
-
-    expect(updatedStagger.enemy.edited).toEqual(['hp', 'resistances', 'stagger.maximum']);
-    expect(updatedStagger.enemy.editable.hp).toBe(1000);
-    expect(updatedStagger.enemy.editable.resistances.heat).toBe(0.2);
-    expect(updatedStagger.enemy.editable.stagger.maximum).toBe(500);
-    expect(initial.enemy.edited).toEqual([]);
-  });
-
-  it('属性弹窗的一次确认按实际差异记录覆盖', () => {
+  it('整值确认保留已有接管字段，按实际差异记录新覆盖并隔离草稿', () => {
     const scenario = createEmptyScenario('scenario:enemy', '敌人场景');
+    scenario.enemy.edited = ['defense', 'hp'];
+    const before = structuredClone(scenario);
     const values = structuredClone(scenario.enemy.editable);
-    values.defense = 200;
-    values.stagger.brokenDurationFrames = 450;
+    values.hp = 1000;
+    values.resistances.heat = 0.2;
+    values.stagger.maximum = 500;
+    values.stagger.knotThresholds = [0.25, 0.75];
 
     const updated = replaceEnemyEditableValues(scenario, values);
 
-    expect(updated.enemy.edited).toEqual(['defense', 'stagger.brokenDurationFrames']);
-    expect(updated.enemy.editable.defense).toBe(200);
-    expect(updated.enemy.editable.stagger.brokenDurationFrames).toBe(450);
-    expect(replaceEnemyEditableValues(updated, updated.enemy.editable)).toBe(updated);
+    expect(updated.enemy.edited).toEqual([
+      'defense',
+      'hp',
+      'resistances',
+      'stagger.maximum',
+      'stagger.knotThresholds',
+    ]);
+    expect(updated.enemy.editable).toEqual(values);
+    expect(scenario).toEqual(before);
+    expect(replaceEnemyEditableValues(updated, structuredClone(values))).toBe(updated);
+
+    values.resistances.heat = 0.9;
+    values.stagger.knotThresholds.push(1);
+    expect(updated.enemy.editable.resistances.heat).toBe(0.2);
+    expect(updated.enemy.editable.stagger.knotThresholds).toEqual([0.25, 0.75]);
   });
 
   it('创建自定义敌人时不伪装成预制体覆盖', () => {

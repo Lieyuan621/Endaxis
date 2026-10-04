@@ -1,13 +1,5 @@
-import {
-  computed,
-  createRenderer,
-  createSSRApp,
-  h,
-  nextTick,
-  shallowRef,
-  ssrContextKey,
-  type ComponentOptions,
-} from 'vue';
+import { mountSetup } from '../../test/componentSetup';
+import { computed, createSSRApp, h, nextTick, shallowRef } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 import { ID_INJECTION_KEY, ZINDEX_INJECTION_KEY } from 'element-plus';
 import { expect, it } from 'vitest';
@@ -44,46 +36,15 @@ async function mount(
   initial: Record<string, unknown>,
   initialCatalog: TimeScaleCurveCatalog = catalog,
 ) {
-  const props = shallowRef(initial);
-  const choices = shallowRef(initialCatalog);
-  let state: any;
-  const implementation = component as ComponentOptions;
-  const stub = {
-    ...implementation,
-    setup(p: any, context: any) {
-      state = implementation.setup!(p, context);
-      return state;
-    },
-    render: () => null,
-  };
-  const app = createRenderer<object, object>({
-    insert() {},
-    remove() {},
-    patchProp() {},
-    setText() {},
-    setElementText() {},
-    createElement: () => ({}),
-    createText: () => ({}),
-    createComment: () => ({}),
-    parentNode: () => null,
-    nextSibling: () => null,
-  }).createApp({ render: () => h(stub, props.value) });
-  app
-    .use(i18n)
-    .provide(ssrContextKey, { modules: new Set() })
-    .provide(
+  const choices = shallowRef<TimeScaleCurveCatalog>(initialCatalog);
+  const mounted = await mountSetup(component, initial, app => {
+    app.provide(
       timeScaleCurveCatalogKey,
       computed(() => choices.value),
     );
-  app.mount({});
-  await nextTick();
+  });
   return {
-    state,
-    stop: () => app.unmount(),
-    async update(next: Record<string, unknown>) {
-      props.value = { ...props.value, ...next };
-      await nextTick();
-    },
+    ...mounted,
     async catalog(next: TimeScaleCurveCatalog) {
       choices.value = next;
       await nextTick();

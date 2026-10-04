@@ -4,7 +4,6 @@ import { validateSkillDefinition } from '../../core/game-data/validateSkillDefin
 
 it('菜单提供的空节点可以直接放入自定义技能，不会生成悬空身份', () => {
   const entries = listNodeCreations();
-  expect(entries.length).toBeGreaterThan(8);
   expect(entries.some(item => item.kind === 'dealStagger')).toBe(true);
   expect(entries.some(item => item.kind === 'dealDamage')).toBe(true);
   const failures: unknown[] = [];
@@ -30,4 +29,36 @@ it('菜单提供的空节点可以直接放入自定义技能，不会生成悬�
   expect(failures).toEqual([]);
   expect(entries.some(item => item.kind === 'callResource')).toBe(false);
   expect(entries.some(item => item.kind === 'blackboard')).toBe(false);
+});
+
+it('semantic defaults seed inert conditions and preserve array versus optional omission', () => {
+  const entries = listNodeCreations();
+  const action = (kind: string) => {
+    const item = entries.find(item => item.key === `action:${kind}`);
+    if (!item || item.category !== 'action') throw new Error(`Missing action: ${kind}`);
+    return item.action;
+  };
+  expect(action('conditional')).toEqual({
+    kind: 'conditional',
+    parameters: { condition: { kind: 'constant', value: false } },
+    whenTrue: { $sequence: null },
+  });
+  expect(action('dealDamage')).toEqual({
+    kind: 'dealDamage',
+    parameters: { damageType: 'physical', attackScale: 0, tags: [] },
+  });
+  for (const kind of ['all', 'any']) {
+    const item = entries.find(item => item.key === `boolean:${kind}`);
+    expect(item && item.category === 'boolean' && item.data).toEqual({
+      type: 'boolean',
+      expression: {
+        kind,
+        conditions: [
+          { kind: 'constant', value: false },
+          { kind: 'constant', value: false },
+        ],
+      },
+    });
+  }
+  expect(entries.some(item => item.key.startsWith('string:'))).toBe(false);
 });

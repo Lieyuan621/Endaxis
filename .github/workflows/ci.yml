@@ -47,12 +47,14 @@ jobs:
         run: npm run type-check:game-data-production
       - name: Check tool types
         run: npm run type-check:tools
-      - name: Check generated editor schemas
-        run: |
-          npm run check:editor-nodes
-          npm run check:definition-fields
-          npm run check:field-capabilities
-          npm run test:editor-schema
+      - name: Check generated action node schemas
+        run: npm run check:editor-nodes
+      - name: Check generated definition schemas
+        run: npm run check:definition-fields
+      - name: Check field capabilities
+        run: npm run check:field-capabilities
+      - name: Test editor schemas
+        run: npm run test:editor-schema
       - name: Test application
         run: npm test -- --maxWorkers=1
       - name: Test compiler

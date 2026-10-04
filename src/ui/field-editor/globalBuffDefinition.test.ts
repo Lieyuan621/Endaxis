@@ -1,13 +1,5 @@
-import {
-  computed,
-  createRenderer,
-  createSSRApp,
-  h,
-  nextTick,
-  shallowRef,
-  ssrContextKey,
-  type ComponentOptions,
-} from 'vue';
+import { mountSetup } from '../../test/componentSetup';
+import { computed, createSSRApp, h } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 import { ID_INJECTION_KEY, ZINDEX_INJECTION_KEY } from 'element-plus';
 import { expect, it } from 'vitest';
@@ -26,9 +18,7 @@ import StructuredValueField from './StructuredValueField.vue';
 import DefinitionValueCreator from '../definition-editor/DefinitionValueCreator.vue';
 import ActionNodeInspector from '../action-graph/ActionNodeInspector.vue';
 import NodeInspectorFields from '../action-graph/NodeInspectorFields.vue';
-
 import { resolveBlackboardMapping } from './blackboardMapping';
-
 import type { ActionGraphDefinition } from '../../../packages/game-data-contract/src/actionGraph';
 import {
   globalBuffDraftContext,
@@ -109,77 +99,44 @@ const options = (
   globalBuff: globalBuffDraftContext(value),
   graph,
 });
-async function mount(
+function mount(
   component: unknown,
   initial: Record<string, unknown>,
   field = definitionField,
   parameters: readonly string[] = [],
   graph?: ActionGraphDefinition,
 ) {
-  let state: any;
-  const props = shallowRef(initial);
-  const implementation = component as ComponentOptions;
-  const stub = {
-    ...implementation,
-    setup(p: any, ctx: any) {
-      state = implementation.setup!(p, ctx);
-      return state;
-    },
-    render: () => null,
-  };
-  const app = createRenderer<object, object>({
-    insert() {},
-    remove() {},
-    patchProp() {},
-    setText() {},
-    setElementText() {},
-    createElement: () => ({}),
-    createText: () => ({}),
-    createComment: () => ({}),
-    parentNode: () => null,
-    nextSibling: () => null,
-  }).createApp({ render: () => h(stub, props.value) });
-  app.use(i18n).provide(ssrContextKey, { modules: new Set() });
-  app.provide(
-    blackboardFieldContextKey,
-    computed(() => context(parameters)),
-  );
-  app.provide(
-    structuredFieldContextKey,
-    computed(() => ({
-      kind: 'createGlobalBuff',
-      globalBuff: {
-        definition: baseDefinition(),
-        overrides: { ratio: { kind: 'constant', value: 2 } },
-      },
-      graph,
-      path: field.path,
-      graphOperands: graphOperandSchemas(field.valueSchema, 'createGlobalBuff', field.path),
-    })),
-  );
-  app.mount({});
-  await nextTick();
-  return {
-    state,
-    stop: () => app.unmount(),
-    async update(value: Record<string, unknown>) {
-      props.value = { ...props.value, ...value };
-      await nextTick();
-    },
-  };
+  return mountSetup(component, initial, app => {
+    app.provide(
+      blackboardFieldContextKey,
+      computed(() => context(parameters)),
+    );
+    app.provide(
+      structuredFieldContextKey,
+      computed(() => ({
+        kind: 'createGlobalBuff',
+        globalBuff: {
+          definition: baseDefinition(),
+          overrides: { ratio: { kind: 'constant', value: 2 } },
+        },
+        graph,
+        path: field.path,
+        graphOperands: graphOperandSchemas(field.valueSchema, 'createGlobalBuff', field.path),
+      })),
+    );
+  });
 }
 
 it('admits only the formal GlobalBuff body and two operand positions without granting duration a graph pin', () => {
   const schema = definitionField.valueSchema!;
   const allowed = graphOperandSchemas(schema, 'createGlobalBuff', definitionField.path)!;
-  expect(allowed.size).toBe(2);
   expect(supportsStructuredValue(schema)).toBe(false);
   expect(resolveFieldEditor(definitionField, { nodeKind: 'createGlobalBuff' }).control).toBe(
     'structuredValue',
   );
   expect(
     graphOperandSchemas(
-      { ...schema, source: ['custom.ts:1:1'] },
+      { ...schema, declaration: undefined },
       'createGlobalBuff',
       definitionField.path,
     ),

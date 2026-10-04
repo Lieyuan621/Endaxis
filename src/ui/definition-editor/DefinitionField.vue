@@ -23,7 +23,7 @@ import {
   blackboardContextForField,
   skillSettingItemBlackboardContext,
 } from '../../application/editor/blackboardFieldContext';
-import { schemaHasAlias } from '../../core/editor/inlineCombatCondition';
+import { hasSemanticAlias } from '../../core/editor/fieldSemantics.ts';
 import TimeScaleCurveField from '../field-editor/TimeScaleCurveField.vue';
 import StringCollectionField from '../field-editor/StringCollectionField.vue';
 import GameplayTagField from '../field-editor/GameplayTagField.vue';
@@ -146,19 +146,9 @@ const inlineSchema = computed(
 );
 const deferredConditionMessage = computed(() => {
   if (props.schema?.optional || props.schema?.kind !== 'condition') return '';
-  if (
-    props.name === 'availability' &&
-    props.schema.source?.some(source =>
-      /^packages\/game-data-contract\/src\/skills\.ts:/.test(source),
-    )
-  )
+  if (props.name === 'availability' && props.schema.deferredCondition === 'availability')
     return t('inlineCondition.availabilityDeferred');
-  if (
-    props.name === 'condition' &&
-    props.schema.source?.some(source =>
-      /^packages\/game-data-contract\/src\/actions\.ts:/.test(source),
-    )
-  )
+  if (props.name === 'condition' && props.schema.deferredCondition === 'legacyHandler')
     return t('inlineCondition.legacyHandlerDeferred');
   return '';
 });
@@ -261,11 +251,7 @@ const inlineKey = computed(() => {
     typeof parent.kind !== 'string'
   )
     return undefined;
-  const request = blackboardRequestForField(
-    parent.kind,
-    [props.path.at(-1)!],
-    props.schema?.source,
-  );
+  const request = blackboardRequestForField(parent.kind, [props.path.at(-1)!], props.schema);
   return (
     request && {
       request,
@@ -311,11 +297,7 @@ const keyRequest = computed(() => {
   if (inlineKey.value) return inlineKey.value.request;
   if (!structuredContext) return;
   const path = [...structuredContext.value.path, ...props.path];
-  const request = blackboardRequestForField(
-    structuredContext.value.kind,
-    path,
-    props.schema?.source,
-  );
+  const request = blackboardRequestForField(structuredContext.value.kind, path, props.schema);
   if (request && structuredContext.value.kind === 'spawnAbilityEntity') {
     const parent = fieldValueAt(structuredContext.value.spawnDefinition, path.slice(2, -1));
     return {
@@ -335,7 +317,7 @@ const protectedIdentity = computed(
   () =>
     props.editingContext !== 'value' &&
     (isProtectedDefinitionIdentity(props.name, props.path.length === 1) ||
-      isReadonlyDefinitionSlot(props.name, props.schema?.source)),
+      isReadonlyDefinitionSlot(props.schema)),
 );
 const shape = computed(() => resolution.value.shape);
 const union = computed(() =>
@@ -751,7 +733,9 @@ function switchVariant(chosen: EaSelectValue | EaSelectValue[]): void {
     <BlackboardMappingValueField
       v-else-if="editor.control === 'inlineOperand' && inlineDraft"
       :value="value"
-      :mode="schemaHasAlias(editorSchema, 'LevelValues') ? 'levelsOrOperand' : 'operand'"
+      :mode="
+        hasSemanticAlias(editorSchema.semantics, 'LevelValues') ? 'levelsOrOperand' : 'operand'
+      "
       :label="label"
       :readonly="readonlyField"
       :allows-parameters="false"

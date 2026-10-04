@@ -1,7 +1,7 @@
 import { actionNodeSchemas } from '../action-graph/actionNodeSchemas.generated.ts';
 import type { NodeFieldSchema } from '../action-graph/nodeSchema';
 import type { DefinitionFieldSchema } from '../definition-editor/fieldSchema';
-import type { FieldSemantics } from './fieldSemantics';
+import { hasSemanticAlias, sameFieldDeclaration } from '../../core/editor/fieldSemantics.ts';
 
 export type BlackboardMappingValue = 'levels' | 'operand' | 'levelsOrOperand' | 'string' | 'copy';
 export type BlackboardMappingDestination =
@@ -20,10 +20,7 @@ export interface BlackboardMappingDescriptor {
   readonly allowsParameters?: boolean;
 }
 
-/** Only these exact contract declarations have mapping semantics. Deriving source locations
- * from the generated schemas makes moving a declaration safe, without treating every field
- * called initialValues/blackboardAssignments (or a container's child) as a mapping.
- */
+/** 仅正式声明具有映射角色；同名字段、错误宿主路径和容器子槽不能获得映射能力。 */
 const declarations = [
   ['withActionBlackboardScope', 'initialValues', 'levels', 'childAction'],
   ['withActionBlackboardScope', 'entityInitialValues', 'levels', 'childEntity'],
@@ -37,18 +34,11 @@ const declarations = [
   ['callMacro', 'arguments', 'operand', 'macroArguments'],
 ] as const;
 
-function hasAlias(semantics: FieldSemantics | undefined, alias: string): boolean {
-  return Boolean(
-    semantics?.aliases?.some(value => value === alias) ||
-    semantics?.unionVariants?.some(value => hasAlias(value, alias)),
-  );
-}
-
-function matchesValue(semantics: FieldSemantics | undefined, value: BlackboardMappingValue) {
-  if (!semantics) return false;
-  if (value === 'string' || value === 'copy') return semantics.type === 'string';
-  const levels = hasAlias(semantics, 'LevelValues');
-  const operand = hasAlias(semantics, 'ActionValueOperand');
+function matchesValue(schema: DefinitionFieldSchema, value: BlackboardMappingValue) {
+  if (value === 'string' || value === 'copy') return schema.kind === 'string';
+  const semantics = schema.semantics;
+  const levels = hasSemanticAlias(semantics, 'LevelValues');
+  const operand = hasSemanticAlias(semantics, 'ActionValueOperand');
   return value === 'levels'
     ? levels && !operand
     : value === 'operand'
@@ -62,8 +52,8 @@ export function resolveBlackboardMapping(
 ): BlackboardMappingDescriptor | undefined {
   const node = 'control' in schema;
   const fieldName = name ?? (node ? schema.path.at(-1) : undefined);
-  if (!schema.semantics?.recordValue || !schema.source?.length) return undefined;
-  if (!node && schema.kind !== 'record') return undefined;
+  const shape = node ? schema.valueSchema : schema;
+  if (shape.kind !== 'record' || !shape.declaration) return undefined;
   // Exit Buff assignments have a distinct declaration and operand-only numeric values.
   if (
     !node &&
@@ -77,17 +67,10 @@ export function resolveBlackboardMapping(
         ? root.element.fields[String(fieldName)]
         : undefined;
     const value = fieldName === 'blackboardAssignments' ? 'operand' : 'string';
-    if (
-      formal?.source?.some(source => schema.source?.includes(source)) &&
-      matchesValue(schema.semantics.recordValue, value)
-    )
+    if (sameFieldDeclaration(formal, shape) && matchesValue(shape.value, value))
       return { value, destination: 'exitBuff' };
   }
-  if (
-    !node &&
-    fieldName === 'blackboardAssignments' &&
-    matchesValue(schema.semantics.recordValue, 'operand')
-  ) {
+  if (!node && fieldName === 'blackboardAssignments' && matchesValue(shape.value, 'operand')) {
     const root = actionNodeSchemas.createGlobalBuff.fields.find(
       field => field.path.at(-1) === 'definition',
     )?.valueSchema;
@@ -96,17 +79,17 @@ export function resolveBlackboardMapping(
       children?.kind === 'array' && children.element.kind === 'object'
         ? children.element.fields.blackboardAssignments
         : undefined;
-    if (formal?.source?.some(source => schema.source?.includes(source)))
+    if (sameFieldDeclaration(formal, shape))
       return { value: 'operand', destination: 'globalBuffChild' };
   }
   for (const [kind, field, value, destination] of declarations) {
-    if (fieldName !== field || !matchesValue(schema.semantics.recordValue, value)) continue;
+    if (fieldName !== field || !matchesValue(shape.value, value)) continue;
     const path = kind === 'callMacro' ? [field] : ['parameters', field];
     if (node && schema.path.join('.') !== path.join('.')) continue;
     const original = actionNodeSchemas[kind].fields.find(
       candidate => candidate.path.join('.') === path.join('.'),
     );
-    if (original?.source?.some(source => schema.source?.includes(source)))
+    if (sameFieldDeclaration(original?.valueSchema, shape))
       return { value, destination, ...(kind === 'callMacro' ? { allowsParameters: false } : {}) };
   }
   return undefined;

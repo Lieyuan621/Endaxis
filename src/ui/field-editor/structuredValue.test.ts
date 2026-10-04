@@ -121,7 +121,7 @@ it('preserves stale reference occurrences once, rechecks added references, and e
     element: {
       kind: 'object',
       fields: {
-        buffId: { kind: 'string', source: ['packages/game-data-contract/src/actions.ts:1:1'] },
+        buffId: { kind: 'string', referenceKind: 'buff' },
       },
     },
   };

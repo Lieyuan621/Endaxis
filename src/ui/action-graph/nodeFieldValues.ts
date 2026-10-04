@@ -56,20 +56,24 @@ export function formatNodeField(value: unknown, field: NodeFieldSchema): string 
   return field.control === 'string' ? String(value) : JSON.stringify(value, null, 2);
 }
 
-export function parseNodeField(text: string, field: NodeFieldSchema): unknown {
-  if (text === '' && !field.required) return undefined;
+export function parseNodeField(
+  text: string,
+  field: NodeFieldSchema,
+  label = field.path.at(-1) ?? 'value',
+): unknown {
+  if (text === '' && field.valueSchema.optional) return undefined;
   if (field.control === 'string') return text;
   const value: unknown = JSON.parse(text);
   if (field.control === 'number' && (typeof value !== 'number' || !Number.isFinite(value)))
-    throw new Error(`${field.label} 必须是有限数值`);
+    throw new Error(`${label} 必须是有限数值`);
   if (field.control === 'boolean' && typeof value !== 'boolean')
-    throw new Error(`${field.label} 必须为 true 或 false`);
+    throw new Error(`${label} 必须为 true 或 false`);
   if (field.control === 'select' && !field.options?.includes(value as string | number | boolean))
-    throw new Error(`${field.label} 不在允许的选项中`);
+    throw new Error(`${label} 不在允许的选项中`);
   if (
     field.control === 'multiselect' &&
     (!Array.isArray(value) || value.some(item => !field.options?.includes(item)))
   )
-    throw new Error(`${field.label} 必须从允许的选项中选择`);
+    throw new Error(`${label} 必须从允许的选项中选择`);
   return value;
 }

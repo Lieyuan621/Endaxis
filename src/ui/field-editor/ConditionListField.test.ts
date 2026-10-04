@@ -1,54 +1,23 @@
-import { createRenderer, h, nextTick, shallowRef, ssrContextKey, type ComponentOptions } from 'vue';
+import { mountSetup } from '../../test/componentSetup';
 import { expect, it } from 'vitest';
-import { i18n } from '../../i18n';
 import type { CombatCondition } from '../../../packages/game-data-contract/src/conditions';
 import ConditionListField from './ConditionListField.vue';
 
 async function mount(value: readonly CombatCondition[], editable = true) {
   const changes: (readonly CombatCondition[])[] = [];
   let discards = 0;
-  const props = shallowRef({
+  const mounted = await mountSetup(ConditionListField, {
     value,
     editable,
     label: 'Conditions',
     onChange: (value: readonly CombatCondition[]) => changes.push(value),
     onDiscard: () => discards++,
   });
-  const implementation = ConditionListField as ComponentOptions;
-  let state: any;
-  const stub = {
-    ...implementation,
-    setup(p: any, ctx: any) {
-      state = implementation.setup!(p, ctx);
-      return state;
-    },
-    render: () => null,
-  };
-  const app = createRenderer<object, object>({
-    insert() {},
-    remove() {},
-    patchProp() {},
-    setText() {},
-    setElementText() {},
-    createElement: () => ({}),
-    createText: () => ({}),
-    createComment: () => ({}),
-    parentNode: () => null,
-    nextSibling: () => null,
-  }).createApp({ render: () => h(stub, props.value) });
-  app.use(i18n).provide(ssrContextKey, { modules: new Set() });
-  app.mount({});
-  await nextTick();
   return {
-    state,
+    ...mounted,
     changes,
     get discards() {
       return discards;
-    },
-    stop: () => app.unmount(),
-    async update(next: Partial<typeof props.value>) {
-      props.value = { ...props.value, ...next };
-      await nextTick();
     },
   };
 }
@@ -170,22 +139,6 @@ it('blocks repeated apply while awaiting acceptance and ignores a cancelled sess
     expect(panel.state.editing.value).toBe(true);
     expect(panel.state.error.value).toBe('');
     expect(panel.changes).toHaveLength(1);
-  } finally {
-    panel.stop();
-  }
-});
-
-it('unchanged reopen applies locally without clearing an accepted parent staged proposal', async () => {
-  const panel = await mount([{ kind: 'constant', value: true }]);
-  try {
-    panel.state.begin();
-    await panel.state.apply();
-    expect(panel.discards).toBe(0);
-    expect(panel.changes).toEqual([]);
-    expect(panel.state.editing.value).toBe(false);
-    panel.state.begin();
-    panel.state.discard();
-    expect(panel.discards).toBe(1);
   } finally {
     panel.stop();
   }

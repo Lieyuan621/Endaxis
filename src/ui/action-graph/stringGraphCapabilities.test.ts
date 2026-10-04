@@ -12,7 +12,7 @@ it('keeps schema string pin eligibility aligned with the runtime consumption all
   const slots: string[] = [];
   for (const [kind, schema] of Object.entries(actionNodeSchemas)) {
     for (const field of schema.fields.filter(
-      field => dataInputType(field.semantics) === 'string',
+      field => dataInputType(field.valueSchema.semantics) === 'string',
     )) {
       slots.push(`action/${kind}/${field.path.join('.')}`);
       const value = writeNodeField({ kind }, field.path, { kind: 'stringNode', nodeId: 'read' });
@@ -25,7 +25,7 @@ it('keeps schema string pin eligibility aligned with the runtime consumption all
     if (!name.startsWith('boolean:')) continue;
     const kind = name.split(':')[1]!;
     for (const field of schema.fields.filter(
-      field => dataInputType(field.semantics) === 'string',
+      field => dataInputType(field.valueSchema.semantics) === 'string',
     )) {
       slots.push(`data/${name}/${field.path.join('.')}`);
       const value = writeNodeField({ kind }, field.path, { kind: 'stringNode', nodeId: 'read' });

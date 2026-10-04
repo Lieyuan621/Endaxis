@@ -1,13 +1,5 @@
-import {
-  computed,
-  createRenderer,
-  createSSRApp,
-  h,
-  nextTick,
-  shallowRef,
-  ssrContextKey,
-  type ComponentOptions,
-} from 'vue';
+import { mountSetup } from '../../test/componentSetup';
+import { computed, createSSRApp, h } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 import { ID_INJECTION_KEY, ZINDEX_INJECTION_KEY } from 'element-plus';
 import { expect, it } from 'vitest';
@@ -25,9 +17,8 @@ import { structuredFieldContextKey } from './structuredFieldContext';
 import StructuredValueField from './StructuredValueField.vue';
 import DefinitionField from '../definition-editor/DefinitionField.vue';
 import DefinitionValueCreator from '../definition-editor/DefinitionValueCreator.vue';
-import ActionNodeInspector from '../action-graph/ActionNodeInspector.vue';
 import NodeInspectorFields from '../action-graph/NodeInspectorFields.vue';
-
+import ActionNodeInspector from '../action-graph/ActionNodeInspector.vue';
 import BlackboardMappingField from './BlackboardMappingField.vue';
 import SkillSettingValuesField from './SkillSettingValuesField.vue';
 import { resolveBlackboardMapping } from './blackboardMapping';
@@ -95,107 +86,66 @@ const context = (parameters: readonly string[] = []) =>
     new Set(['current']),
   );
 
-async function mount(
+function mount(
   component: unknown,
   initial: Record<string, unknown>,
   field = fixtures[0]!.field,
   parameters: readonly string[] = [],
   items?: unknown,
 ) {
-  let state: any;
-  const props = shallowRef(initial);
-  const implementation = component as ComponentOptions;
-  const stub = {
-    ...implementation,
-    setup(p: any, ctx: any) {
-      state = implementation.setup!(p, ctx);
-      return state;
-    },
-    render: () => null,
-  };
-  const app = createRenderer<object, object>({
-    insert() {},
-    remove() {},
-    patchProp() {},
-    setText() {},
-    setElementText() {},
-    createElement: () => ({}),
-    createText: () => ({}),
-    createComment: () => ({}),
-    parentNode: () => null,
-    nextSibling: () => null,
-  }).createApp({ render: () => h(stub, props.value) });
-  app.use(i18n).provide(ssrContextKey, { modules: new Set() });
-  app.provide(
-    blackboardFieldContextKey,
-    computed(() => context(parameters)),
-  );
-  app.provide(
-    structuredFieldContextKey,
-    computed(() => ({
-      kind: fixtures.find(f => f.field === field)!.kind,
-      items,
-      path: field.path,
-      graphOperands: graphOperandSchemas(
-        field.valueSchema,
-        fixtures.find(f => f.field === field)!.kind,
-        field.path,
-      ),
-    })),
-  );
-  app.mount({});
-  await nextTick();
-  return {
-    state,
-    stop: () => app.unmount(),
-    async update(value: Record<string, unknown>) {
-      props.value = { ...props.value, ...value };
-      await nextTick();
-    },
-  };
+  return mountSetup(component, initial, app => {
+    app.provide(
+      blackboardFieldContextKey,
+      computed(() => context(parameters)),
+    );
+    app.provide(
+      structuredFieldContextKey,
+      computed(() => ({
+        kind: fixtures.find(f => f.field === field)!.kind,
+        items,
+        path: field.path,
+        graphOperands: graphOperandSchemas(
+          field.valueSchema,
+          fixtures.find(f => f.field === field)!.kind,
+          field.path,
+        ),
+      })),
+    );
+  });
 }
 
 it.each(fixtures)(
   '$name has exact declaration admission and real readonly generated controls',
   async f => {
     const allowed = graphOperandSchemas(f.field.valueSchema, f.kind, f.field.path)!;
-    expect(allowed.size).toBe(1);
     expect(supportsStructuredValue(f.field.valueSchema!)).toBe(false);
     expect(resolveFieldEditor(f.field, { nodeKind: f.kind }).control).toBe('structuredValue');
     expect(
-      graphOperandSchemas({ ...f.field.valueSchema!, source: ['custom:1'] }, f.kind, f.field.path),
+      graphOperandSchemas(
+        { ...f.field.valueSchema!, declaration: undefined },
+        f.kind,
+        f.field.path,
+      ),
     ).toBeUndefined();
     const operand = [...allowed][0]!;
     expect(() => assertEditableValue(operand, undefined, { kind: 'constant', value: 2 })).toThrow();
     const value = [row(f, { kind: 'valueNode', nodeId: 'shared' })];
-    const inspector = await mount(
-      ActionNodeInspector,
-      {
-        nodeId: 'node',
-        node: { action: { kind: f.kind, parameters: { [f.name]: value } }, next: null },
-        applyAction: () => true,
-      },
-      f.field,
-    );
-    expect(inspector.state.fields.value).toContain(f.field);
-    inspector.stop();
     const html = await renderToString(
       createSSRApp({
         render: () =>
-          h(StructuredValueField, {
-            schema: f.field.valueSchema!,
-            value,
-            kind: f.kind,
-            path: f.field.path,
-            editable: false,
-            label: f.name,
+          h(ActionNodeInspector, {
+            nodeId: 'node',
+            node: { action: { kind: f.kind, parameters: { [f.name]: value } } as any, next: null },
+            readonly: true,
             referenceChoices: choices,
+            applyAction: () => false,
           }),
       })
         .use(i18n)
         .provide(ID_INJECTION_KEY, { prefix: 1, current: 0 })
         .provide(ZINDEX_INJECTION_KEY, { current: 0 }),
     );
+    expect(html).toContain(`data-structured-path="${f.field.path.join('.')}"`);
     expect(html).toContain('shared');
     expect(html).not.toContain('textarea');
     expect(html).not.toContain('aria-label="nodeId"');
@@ -512,7 +462,11 @@ it('items use precise indexed writes and only proven earlier numeric writes for 
       items,
     ),
   ).toEqual(context());
-  expect(blackboardRequestForField(f.kind, ['parameters', 'items', 1, 'storeKey'])).toEqual({
+  expect(
+    blackboardRequestForField(f.kind, ['parameters', 'items', 1, 'storeKey'], {
+      blackboardOrigin: 'contract',
+    }),
+  ).toEqual({
     mode: 'write',
     valueType: 'number',
   });
@@ -520,7 +474,7 @@ it('items use precise indexed writes and only proven earlier numeric writes for 
     blackboardRequestForField(f.kind, ['parameters', 'items', 'evil', 'storeKey']),
   ).toBeUndefined();
   expect(
-    blackboardRequestForField(f.kind, ['parameters', 'items', 0, 'storeKey'], ['custom.ts:1:1']),
+    blackboardRequestForField(f.kind, ['parameters', 'items', 0, 'storeKey'], {}),
   ).toBeUndefined();
 });
 

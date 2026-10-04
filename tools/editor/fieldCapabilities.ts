@@ -20,7 +20,7 @@ import type {
   DefinitionFieldSchema,
   DefinitionSchemaCatalog,
 } from '../../src/ui/definition-editor/fieldSchema.ts';
-import type { DataNodeSchema, NodeFieldSchema } from '../../src/ui/action-graph/nodeSchema.ts';
+import type { NodeSchema, NodeFieldSchema } from '../../src/ui/action-graph/nodeSchema.ts';
 
 export interface FieldCapability {
   readonly key: string;
@@ -28,7 +28,6 @@ export interface FieldCapability {
   readonly root: string;
   readonly path: string;
   readonly control: string;
-  readonly source: readonly string[];
   readonly aliases: readonly string[];
   readonly semantics?: FieldSemantics;
   readonly view: 'value' | 'structure' | 'navigation' | 'readonly' | 'context-dependent';
@@ -64,15 +63,14 @@ function valueAliases(semantics: FieldSemantics | undefined): string[] {
 /** 分母是生成 schema 的展开位置；联合和容器槽分别列出，不读取私有数据或当前值。 */
 export function collectFieldCapabilities(
   definitions: DefinitionSchemaCatalog,
-  actions: Readonly<Record<string, DataNodeSchema>>,
-  data: Readonly<Record<string, DataNodeSchema>>,
+  actions: Readonly<Record<string, NodeSchema>>,
+  data: Readonly<Record<string, NodeSchema>>,
 ): FieldCapability[] {
   const rows: FieldCapability[] = [];
   function definition(
     schema: DefinitionFieldSchema,
     root: string,
     path: readonly string[],
-    source: readonly string[] = [],
     inheritedRestriction?: FieldCapability['restriction'],
     references: DefinitionSchemaReferences = schema.references ?? EMPTY_SCHEMA_REFERENCES,
     pendingReferences = new Set<string>(),
@@ -81,7 +79,6 @@ export function collectFieldCapabilities(
     const reference = schema.kind === 'ref' ? schema.ref : undefined;
     if (reference) pendingReferences.add(reference);
     schema = resolveDefinitionSchema(schema, references);
-    const origin = schema.source ?? source;
     const aliases = valueAliases(schema.semantics);
     const boundary =
       schema.kind === 'graph' ||
@@ -94,7 +91,7 @@ export function collectFieldCapabilities(
       !inline && isProtectedDefinitionIdentity(valuePath.at(-1) ?? '', valuePath.length === 1);
     const restriction =
       inheritedRestriction ??
-      (isReadonlyDefinitionSlot(valuePath.at(-1) ?? '', schema.source)
+      (isReadonlyDefinitionSlot(schema)
         ? 'host-readonly'
         : protectedIdentity
           ? 'identity-readonly'
@@ -112,7 +109,6 @@ export function collectFieldCapabilities(
             ? 'inlineOperand'
             : schema.kind,
       ...(reference ? { schemaReference: reference } : {}),
-      source: origin,
       aliases,
       semantics: schema.semantics,
       view:
@@ -144,7 +140,6 @@ export function collectFieldCapabilities(
           child,
           root,
           [...path, name],
-          origin,
           restriction,
           references,
           pendingReferences,
@@ -155,7 +150,6 @@ export function collectFieldCapabilities(
         schema.element,
         root,
         [...path, '[]'],
-        origin,
         restriction,
         references,
         pendingReferences,
@@ -166,7 +160,6 @@ export function collectFieldCapabilities(
         schema.value,
         root,
         [...path, '{}'],
-        origin,
         restriction,
         references,
         pendingReferences,
@@ -178,7 +171,6 @@ export function collectFieldCapabilities(
           child,
           root,
           [...path, `[${index}]`],
-          origin,
           restriction,
           references,
           pendingReferences,
@@ -191,7 +183,6 @@ export function collectFieldCapabilities(
           child,
           root,
           [...path, `<${index}>`],
-          origin,
           restriction,
           references,
           pendingReferences,
@@ -204,13 +195,13 @@ export function collectFieldCapabilities(
     const references = schema.references ?? EMPTY_SCHEMA_REFERENCES;
     const pending = new Set<string>();
     const visited = new Set<string>();
-    definition(schema, root, [], [], undefined, references, pending);
+    definition(schema, root, [], undefined, references, pending);
     for (const id of pending) {
       if (visited.has(id)) continue;
       visited.add(id);
       const body = references[id];
       if (!body) throw new Error(`missing schema reference '${id}'`);
-      definition(body, root, [`<ref:${id}>`], [], undefined, references, pending);
+      definition(body, root, [`<ref:${id}>`], undefined, references, pending);
     }
   }
   for (const [surface, catalog] of [
@@ -220,7 +211,7 @@ export function collectFieldCapabilities(
     for (const [root, schema] of Object.entries(catalog))
       for (const field of schema.fields) {
         if (field.valueSchema) auditDefinitionSchema(field.valueSchema);
-        const aliases = valueAliases(field.semantics);
+        const aliases = valueAliases(field.valueSchema.semantics);
         // DataNodeInspector 已有的两个作用域选择入口，不计为普通文本分派。
         const contextualChoice =
           surface === 'data' && root === 'number:blackboard' && field.path.join('.') === 'key'
@@ -261,7 +252,6 @@ export function collectFieldCapabilities(
           field.valueSchema &&
           supportsStructuredValue(
             field.valueSchema,
-            field.path.at(-1),
             field.valueSchema.references,
             surface === 'action'
               ? graphOperandSchemas(field.valueSchema, root, field.path)
@@ -275,19 +265,19 @@ export function collectFieldCapabilities(
           );
         const actualControl = availableControl ?? (structured ? 'structuredValue' : undefined);
         const complex = !actualControl && (field.control === 'json' || expressionInput);
-        const fallback = actualControl
-          ? undefined
-          : (field.fallback?.reason ??
-            (expressionInput ? 'unassigned-input-editor-pending' : undefined));
+        const fallback =
+          actualControl || ['sequence', 'resource'].includes(field.control)
+            ? undefined
+            : (field.valueSchema.fallback?.reason ??
+              (expressionInput ? 'unassigned-input-editor-pending' : undefined));
         rows.push({
           key: [surface, root, ...field.path].join('/'),
           surface,
           root,
           path: field.path.join('.'),
           control: actualControl ?? field.control,
-          source: field.source ?? [],
           aliases,
-          semantics: field.semantics,
+          semantics: field.valueSchema.semantics,
           ...(contextualChoice ? { contextualChoice } : {}),
           view: ['resource', 'sequence'].includes(field.control)
             ? 'navigation'
@@ -313,10 +303,15 @@ export function collectFieldCapabilities(
 
 function nodeConnection(field: NodeFieldSchema): FieldCapability['connection'] {
   if (field.control === 'sequence') return 'execution';
-  if (field.control === 'operand' || valueAliases(field.semantics).includes('ActionValueOperand'))
+  if (
+    field.control === 'operand' ||
+    valueAliases(field.valueSchema.semantics).includes('ActionValueOperand')
+  )
     return 'number-context';
-  if (valueAliases(field.semantics).includes('CombatCondition')) return 'condition-context';
-  if (valueAliases(field.semantics).includes('ActionStringOperand')) return 'string-context';
+  if (valueAliases(field.valueSchema.semantics).includes('CombatCondition'))
+    return 'condition-context';
+  if (valueAliases(field.valueSchema.semantics).includes('ActionStringOperand'))
+    return 'string-context';
   return 'none';
 }
 
@@ -343,7 +338,6 @@ export function checkFieldCapabilityCoverage(
   for (const row of rows) {
     if (seen.has(row.key)) failures.push(`duplicate schema position: ${row.key}`);
     seen.add(row.key);
-    if (row.path && !row.source.length) failures.push(`missing source declaration: ${row.key}`);
     if (['json', 'opaque', 'condition'].includes(row.control) && !row.fallback)
       failures.push(`unexplained fallback: ${row.key}`);
     const exception = expected.get(row.key);
@@ -386,10 +380,7 @@ export function summarizeFieldCapabilities(rows: readonly FieldCapability[]) {
       'control',
     ),
     stringSchemaPositions: strings.length,
-    stringSchemaSourceDeclarations: new Set(strings.flatMap(row => row.source)).size,
     stringTextOrLegacyReferencePositions: textStrings.length,
-    stringTextOrLegacyReferenceSourceDeclarations: new Set(textStrings.flatMap(row => row.source))
-      .size,
     fallbackReasons: count(
       rows.filter(row => row.fallback),
       'fallback',

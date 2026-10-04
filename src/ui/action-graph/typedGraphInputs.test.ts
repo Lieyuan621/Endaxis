@@ -1,6 +1,7 @@
 import { expect, it } from 'vitest';
 import { actionTypedInputs, dataTypedInputs } from './typedGraphInputs';
 import { listDataInputs } from '../../core/action-graph/actionGraphDataNodes';
+import { composeDefinitionSchemas } from '../../../tools/editor/describeDefinitionType';
 
 it('projects optional and mixed numeric operands from their schema without inventing a value', () => {
   const action = { kind: 'dealStagger' as const, parameters: { value: [1, 2] } };
@@ -9,6 +10,25 @@ it('projects optional and mixed numeric operands from their schema without inven
     { path: ['parameters', 'valueMultiplier'], type: 'number', source: null, value: undefined },
   ]);
   expect(action).toEqual({ kind: 'dealStagger', parameters: { value: [1, 2] } });
+});
+it('selects an aggregate operand branch without granting a pin to its ordinary sibling', () => {
+  const valueSchema = composeDefinitionSchemas([
+    {
+      kind: 'object',
+      fields: {
+        kind: { kind: 'enum', options: ['constant'] },
+        value: { kind: 'number' },
+      },
+      semantics: { aliases: ['ActionValueOperand'] },
+    },
+    { kind: 'string' },
+  ]);
+  const fields = [{ path: ['value'], valueSchema }];
+  expect(listDataInputs({ value: 'plain' }, fields)).toEqual([]);
+  const expression = { kind: 'constant', value: 3 };
+  expect(listDataInputs({ value: expression }, fields)).toEqual([
+    { path: ['value'], type: 'number', source: null, value: expression },
+  ]);
 });
 it('projects boolean conditions and existing record values but never ordinary string pins or phantom keys', () => {
   expect(
@@ -85,16 +105,16 @@ it('explicit non-connectable declarations suppress expression-shaped lookalikes'
         strings: { destination: lookalike },
       },
       [
-        { path: ['number'], semantics: { type: 'number' } },
+        { path: ['number'], semantics: {} },
         { path: ['string'], semantics: { aliases: ['ActionStringOperand'] } },
         { path: ['build'], semantics: { aliases: ['BuildCondition'] } },
-        { path: ['copies'], semantics: { recordValue: { type: 'string' } } },
-        { path: ['strings'], semantics: { recordValue: { type: 'string' } } },
+        { path: ['copies'], semantics: { recordValue: {} } },
+        { path: ['strings'], semantics: { recordValue: {} } },
       ],
     ),
   ).toEqual([{ path: ['string'], type: 'string', source: null, value: lookalike }]);
 });
-it('preserves existing operands inside unmodeled container objects and explicit depth boundaries', () => {
+it('uses structural container objects and preserves operands only at explicit depth boundaries', () => {
   const expression = { kind: 'constant', value: 3 };
   const result = listDataInputs(
     {
@@ -104,7 +124,16 @@ it('preserves existing operands inside unmodeled container objects and explicit 
       deep: { value: expression },
     },
     [
-      { path: ['items'], semantics: { arrayElement: { type: '{ value: ActionValueOperand }' } } },
+      {
+        path: ['items'],
+        valueSchema: {
+          kind: 'array',
+          element: {
+            kind: 'object',
+            fields: { value: { kind: 'opaque', semantics: { aliases: ['ActionValueOperand'] } } },
+          },
+        },
+      },
       { path: ['record'], semantics: { recordValue: { aliases: ['ActionValueOperand'] } } },
       { path: ['deep'], fallback: { reason: 'depth-limit' } },
     ],
@@ -181,7 +210,7 @@ it('uses full value schemas for nested object operands and keeps non-pin declara
         valueSchema: {
           kind: 'condition',
           optional: true,
-          semantics: { type: 'CombatCondition', aliases: ['CombatCondition'] },
+          semantics: { aliases: ['CombatCondition'] },
           fallback: { reason: 'condition-editor-pending' },
         },
       },

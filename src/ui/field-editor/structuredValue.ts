@@ -173,7 +173,7 @@ export function validateStructuredValue(
         throw new Error('actionGraphEditor.invalid');
       return;
     }
-    let request = blackboardRequestForField(options.kind, path, declared.source);
+    let request = blackboardRequestForField(options.kind, path, declared);
     if (request && options.kind === 'spawnAbilityEntity') {
       const parent = fieldValueAt(next, path.slice(options.path?.length ?? 0, -1));
       request = {

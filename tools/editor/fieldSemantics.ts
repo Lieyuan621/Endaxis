@@ -1,5 +1,8 @@
+import { createFieldDeclarationExtractor } from './fieldDeclaration.ts';
+import type { FieldDeclarationMetadata } from '../../src/core/editor/fieldSemantics.ts';
 /** 从声明节点补回 TypeChecker 展开的 alias；不把普通 string 识别为领域类型。 */
-import { relative, resolve } from 'node:path';
+import { resolve } from 'node:path';
+import { physicalPath, schemaSourceLocation } from './schemaSourceLocation.ts';
 import ts from 'typescript';
 import type {
   FieldSemanticAlias,
@@ -27,9 +30,12 @@ export interface FieldTypeContext {
   readonly type: ts.Type;
   readonly origins: readonly TypeOrigin[];
   readonly source: readonly string[];
+  readonly declarationMetadata: FieldDeclarationMetadata;
 }
 
 export function createFieldSemanticExtractor(checker: ts.TypeChecker, root: string) {
+  const sources = schemaSourceLocation(root);
+  const declarationMetadata = createFieldDeclarationExtractor(root);
   function symbolAt(node: ts.Node): ts.Symbol | undefined {
     const symbol = checker.getSymbolAtLocation(node);
     return symbol && symbol.flags & ts.SymbolFlags.Alias
@@ -40,10 +46,12 @@ export function createFieldSemanticExtractor(checker: ts.TypeChecker, root: stri
   function semanticAlias(symbol: ts.Symbol | undefined): FieldSemanticAlias | undefined {
     if (!symbol || !Object.hasOwn(semanticDeclarations, symbol.name)) return undefined;
     const name = symbol.name as FieldSemanticAlias;
-    const file = resolve(root, 'packages/game-data-contract/src', semanticDeclarations[name]);
+    const file = physicalPath(
+      resolve(root, 'packages/game-data-contract/src', semanticDeclarations[name]),
+    );
     if (
       !symbol.declarations?.some(
-        declaration => resolve(declaration.getSourceFile().fileName) === file,
+        declaration => physicalPath(declaration.getSourceFile().fileName) === file,
       )
     )
       return undefined;
@@ -54,7 +62,7 @@ export function createFieldSemanticExtractor(checker: ts.TypeChecker, root: stri
     return (symbol?.declarations ?? []).map(declaration => {
       const file = declaration.getSourceFile();
       const position = file.getLineAndCharacterOfPosition(declaration.getStart(file));
-      return `${relative(root, file.fileName).replaceAll('\\', '/')}:${position.line + 1}:${position.character + 1}`;
+      return `${sources.filePath(file.fileName)}:${position.line + 1}:${position.character + 1}`;
     });
   }
 
@@ -74,7 +82,12 @@ export function createFieldSemanticExtractor(checker: ts.TypeChecker, root: stri
         origins.push({ node: declaration.type });
     }
     const source = sourceOf(symbol);
-    return { type, origins, source: source.length ? source : inheritedSource };
+    return {
+      type,
+      origins,
+      source: source.length ? source : inheritedSource,
+      declarationMetadata: declarationMetadata(symbol),
+    };
   }
 
   function property(input: FieldTypeContext, type: ts.Type, symbol: ts.Symbol): FieldTypeContext {
@@ -116,8 +129,8 @@ export function createFieldSemanticExtractor(checker: ts.TypeChecker, root: stri
       !!symbol &&
       ['Array', 'ReadonlyArray', 'Record', 'Readonly'].includes(symbol.name) &&
       !!symbol.declarations?.some(declaration =>
-        /\/typescript\/lib\/lib\.[^/]+\.d\.ts$/.test(
-          declaration.getSourceFile().fileName.replaceAll('\\', '/'),
+        /^node_modules\/typescript\/lib\/lib\.[^/]+\.d\.ts$/.test(
+          sources.filePath(declaration.getSourceFile().fileName),
         ),
       )
     );
@@ -154,10 +167,14 @@ export function createFieldSemanticExtractor(checker: ts.TypeChecker, root: stri
     return target ? expand(target, new Set(visited).add(symbol)) : [origin];
   }
 
-  function aliasesIn(origin: TypeOrigin, visited = new Set<ts.Symbol>()): FieldSemanticAlias[] {
+  function aliasesIn<T extends string>(
+    origin: TypeOrigin,
+    identify: (symbol: ts.Symbol | undefined) => T | undefined,
+    visited = new Set<ts.Symbol>(),
+  ): T[] {
     const { node, substitutions } = origin;
     if (ts.isParenthesizedTypeNode(node))
-      return aliasesIn({ node: node.type, substitutions }, visited);
+      return aliasesIn({ node: node.type, substitutions }, identify, visited);
     if (ts.isUnionTypeNode(node)) {
       const present = node.types.filter(
         part =>
@@ -166,21 +183,23 @@ export function createFieldSemanticExtractor(checker: ts.TypeChecker, root: stri
             (ts.TypeFlags.Undefined | ts.TypeFlags.Never)
           ),
       );
-      return present.length === 1 ? aliasesIn({ node: present[0]!, substitutions }, visited) : [];
+      return present.length === 1
+        ? aliasesIn({ node: present[0]!, substitutions }, identify, visited)
+        : [];
     }
     if (ts.isImportTypeNode(node) && node.qualifier) {
-      const known = semanticAlias(symbolAt(node.qualifier));
+      const known = identify(symbolAt(node.qualifier));
       return known ? [known] : [];
     }
     if (!ts.isTypeReferenceNode(node)) return [];
     const symbol = symbolAt(node.typeName);
     const replacement = symbol && substitutions?.get(symbol);
-    if (replacement) return aliasesIn(replacement, visited);
-    const known = semanticAlias(symbol);
+    if (replacement) return aliasesIn(replacement, identify, visited);
+    const known = identify(symbol);
     if (known) return [known];
     if (!symbol || visited.has(symbol) || isBuiltinContainer(symbol)) return [];
     const target = aliasTarget(origin, symbol);
-    return target ? aliasesIn(target, new Set(visited).add(symbol)) : [];
+    return target ? aliasesIn(target, identify, new Set(visited).add(symbol)) : [];
   }
 
   function aliases(input: FieldTypeContext): FieldSemanticAlias[] {
@@ -189,9 +208,30 @@ export function createFieldSemanticExtractor(checker: ts.TypeChecker, root: stri
     return [
       ...new Set([
         ...(known ? [known] : []),
-        ...input.origins.flatMap(origin => aliasesIn(origin)),
+        ...input.origins.flatMap(origin => aliasesIn(origin, semanticAlias)),
       ]),
     ];
+  }
+
+  /** A sparse consumer hint may need a formal alias without persisting its name in semantics.
+   * Reuse origin/substitution tracking: indexed aliases can disappear from checker types. */
+  function isContractAlias(input: FieldTypeContext, name: string, module: string): boolean {
+    const file = physicalPath(resolve(root, 'packages/game-data-contract/src', module));
+    const identify = (symbol: ts.Symbol | undefined): string | undefined =>
+      symbol?.name === name &&
+      symbol.declarations?.some(
+        declaration =>
+          (ts.isTypeAliasDeclaration(declaration) || ts.isInterfaceDeclaration(declaration)) &&
+          ts.isSourceFile(declaration.parent) &&
+          physicalPath(declaration.getSourceFile().fileName) === file,
+      )
+        ? name
+        : undefined;
+    const present = checker.getNonNullableType(input.type);
+    return Boolean(
+      identify(present.aliasSymbol ?? present.getSymbol()) ||
+      input.origins.some(origin => aliasesIn(origin, identify).includes(name)),
+    );
   }
 
   function unionOrigins(input: FieldTypeContext): TypeOrigin[] {
@@ -226,7 +266,7 @@ export function createFieldSemanticExtractor(checker: ts.TypeChecker, root: stri
   function branch(input: FieldTypeContext, type: ts.Type): FieldTypeContext {
     // 只按实际类型匹配，不用可赋值性把普通 string 分支当成 tag。
     const origins = unionOrigins(input).filter(origin => originType(origin) === type);
-    return { type, origins, source: input.source };
+    return { ...input, type, origins };
   }
 
   function element(input: FieldTypeContext, type: ts.Type, index?: number): FieldTypeContext {
@@ -242,16 +282,14 @@ export function createFieldSemanticExtractor(checker: ts.TypeChecker, root: stri
         if (child && (ts.isOptionalTypeNode(child) || ts.isRestTypeNode(child))) child = child.type;
         // checker 的 rest 参数已经是元素类型；声明仍是数组或数组 alias，需要再取一层。
         if (rest && child)
-          return element(
-            { type, origins: [{ node: child, substitutions }], source: input.source },
-            type,
-          ).origins;
+          return element({ ...input, type, origins: [{ node: child, substitutions }] }, type)
+            .origins;
       } else if (ts.isArrayTypeNode(node)) child = node.elementType;
       else if (ts.isTypeReferenceNode(node) && isBuiltinContainer(symbolAt(node.typeName)))
         child = node.typeArguments?.[0];
       return child ? [{ node: child, substitutions }] : [];
     });
-    return { type, origins, source: input.source };
+    return { ...input, type, origins };
   }
 
   function recordValue(input: FieldTypeContext, type: ts.Type): FieldTypeContext {
@@ -281,7 +319,7 @@ export function createFieldSemanticExtractor(checker: ts.TypeChecker, root: stri
         }
       }
     }
-    return { type, origins, source: input.source };
+    return { ...input, type, origins };
   }
 
   function declaredUnionOrigins(origin: TypeOrigin, visited = new Set<ts.Symbol>()): TypeOrigin[] {
@@ -304,12 +342,8 @@ export function createFieldSemanticExtractor(checker: ts.TypeChecker, root: stri
   ): FieldSemantics {
     const { type } = input;
     const names = aliases(input);
-    const optional =
-      type.isUnion() && type.types.some(part => !!(part.flags & ts.TypeFlags.Undefined));
     const result: FieldSemantics = {
-      type: checker.typeToString(type),
       ...(names.length ? { aliases: names } : {}),
-      ...(optional ? { optional: true } : {}),
     };
     // 已知领域 alias 的内部结构由正式契约负责；不重复铺开完整条件/操作数树。
     if (depth >= 4 || seen.has(type) || names.length) return result;
@@ -322,7 +356,7 @@ export function createFieldSemanticExtractor(checker: ts.TypeChecker, root: stri
       // 保留显式联合中的领域分支，避免 checker 展开 ActionValueOperand 后丢失身份。
       const declared = input.origins
         .flatMap(origin => declaredUnionOrigins(origin))
-        .map(origin => ({ type: originType(origin), origins: [origin], source: input.source }))
+        .map(origin => ({ ...input, type: originType(origin), origins: [origin] }))
         .filter(part => !(part.type.flags & (ts.TypeFlags.Undefined | ts.TypeFlags.Never)));
       if (
         declared.length > 1 &&
@@ -352,7 +386,6 @@ export function createFieldSemanticExtractor(checker: ts.TypeChecker, root: stri
             };
           }),
           minLength: tuple.target.minLength,
-          ...(tuple.target.hasRestElement ? {} : { maxLength: types.length }),
         },
       };
     }
@@ -365,9 +398,10 @@ export function createFieldSemanticExtractor(checker: ts.TypeChecker, root: stri
   }
 
   function metadata(input: FieldTypeContext): FieldSemanticMetadata {
+    const value = semantics(input);
     return {
-      semantics: semantics(input),
-      ...(input.source.length ? { source: input.source } : {}),
+      ...(Object.keys(value).length ? { semantics: value } : {}),
+      ...input.declarationMetadata,
     };
   }
 
@@ -392,9 +426,7 @@ export function createFieldSemanticExtractor(checker: ts.TypeChecker, root: stri
       }
       collect(origin.node);
       return {
-        file: relative(root, origin.node.getSourceFile().fileName).replaceAll('\\', '/'),
-        position: origin.node.pos,
-        end: origin.node.end,
+        ...sources.location(origin.node),
         substitutions: [...used].map(symbol => [
           sourceOf(symbol),
           originKey(origin.substitutions!.get(symbol)!, next),
@@ -405,6 +437,7 @@ export function createFieldSemanticExtractor(checker: ts.TypeChecker, root: stri
   }
   return {
     context,
+    isContractAlias,
     property,
     aliases,
     branch,

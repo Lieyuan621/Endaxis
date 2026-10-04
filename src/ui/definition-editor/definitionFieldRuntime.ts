@@ -1,3 +1,4 @@
+import { hasSemanticAlias } from '../../core/editor/fieldSemantics.ts';
 import {
   isEmptyGraphSequence,
   type GraphContainerBoundaries,
@@ -5,7 +6,6 @@ import {
 import {
   assertInlineCombatCondition,
   isInlineCombatCondition,
-  schemaHasAlias,
 } from '../../core/editor/inlineCombatCondition.ts';
 import { selectDefinitionSchema } from '../../core/editor/selectDefinitionSchema.ts';
 import {
@@ -219,7 +219,10 @@ export function assertEditableDefinitionField(
     const declaredScope = resolveDefinitionSchema(schema, references);
     if (context === 'definition' && isInlineCombatCondition(declaredScope))
       throw new Error('inline conditions must be changed atomically');
-    if (schemaHasAlias(declaredScope, 'ActionValueOperand') && !declaredScope.inlineCondition)
+    if (
+      hasSemanticAlias(declaredScope.semantics, 'ActionValueOperand') &&
+      !declaredScope.inlineCondition
+    )
       throw new Error('numeric operands require their graph input controls');
     if (isGraphInputReference(value))
       throw new Error('graph input references require their graph connection controls');
@@ -231,7 +234,7 @@ export function assertEditableDefinitionField(
         throw new Error(`definition identity '${key}' is read-only`);
       if (
         context === 'definition' &&
-        isReadonlyDefinitionSlot(key, schema.fields[key]!.source) &&
+        isReadonlyDefinitionSlot(schema.fields[key]!) &&
         !Object.is(fieldValueAt(root, path), next)
       )
         throw new Error('this field cannot be changed in a field control');
@@ -326,7 +329,7 @@ function assertValue(
     inlineValidated = true;
     context = 'value';
   }
-  if (schemaHasAlias(schema, 'ActionValueOperand')) {
+  if (hasSemanticAlias(schema.semantics, 'ActionValueOperand')) {
     if (!schema.inlineCondition && !graphOperands?.has(schema))
       throw new Error('numeric operands require their graph input controls');
     if (
@@ -533,7 +536,7 @@ function assertValue(
         if (
           shape.kind === 'object' &&
           context === 'definition' &&
-          isReadonlyDefinitionSlot(key, shape.fields[key]!.source) &&
+          isReadonlyDefinitionSlot(shape.fields[key]!) &&
           !Object.is(before[key], entry)
         )
           throw new Error('this field cannot be changed in a field control');

@@ -21,7 +21,9 @@ it('枚举列表保留空选择与未设置的区别，并拒绝未知选项', (
   const field = actionNodeSchemas.dealDamage.fields.find(field => field.path.at(-1) === 'tags')!;
   expect(parseNodeField('[]', field)).toEqual([]);
   expect(() => parseNodeField('', field)).toThrow();
-  expect(parseNodeField('', { ...field, required: false })).toBeUndefined();
+  expect(
+    parseNodeField('', { ...field, valueSchema: { ...field.valueSchema, optional: true } }),
+  ).toBeUndefined();
   expect(parseNodeField('["plungingAttack"]', field)).toEqual(['plungingAttack']);
   expect(() => parseNodeField('["unknown"]', field)).toThrow();
   expect(() => parseNodeField('"plungingAttack"', field)).toThrow();
@@ -70,4 +72,19 @@ it('识别藏在实体模板和回调数组中的独立图，不把普通控制�
     containsActionGraph({ childSkills: [{ actionGraph: { main: { nodes: {} }, macros: {} } }] }),
   ).toBe(true);
   expect(containsActionGraph({ body: { $sequence: 'a' } })).toBe(false);
+});
+
+it('error labels come from the path or the caller, never copied schema text', () => {
+  const field = {
+    path: ['parameters', 'amount'],
+    description: '',
+    control: 'number' as const,
+    valueSchema: { kind: 'number' as const },
+  };
+  expect(() => parseNodeField('true', field)).toThrow('amount 必须是有限数值');
+  expect(() => parseNodeField('true', field, 'Amount')).toThrow('Amount 必须是有限数值');
+  expect(() => parseNodeField('', field)).toThrow();
+  expect(
+    parseNodeField('', { ...field, valueSchema: { ...field.valueSchema, optional: true } }),
+  ).toBeUndefined();
 });

@@ -1,6 +1,5 @@
-import { createRenderer, h, nextTick, shallowRef, ssrContextKey, type ComponentOptions } from 'vue';
+import { mountSetup } from '../../test/componentSetup';
 import { expect, it } from 'vitest';
-import { i18n } from '../../i18n';
 import { referenceCatalog } from './referenceTestFixtures';
 import type { ReferenceChoices } from '../definition-editor/fieldInputConfig';
 import type { StringCollectionKind } from './stringCollectionSchema';
@@ -14,7 +13,7 @@ async function mount(
 ) {
   const changes: (readonly string[] | undefined)[] = [];
   let discards = 0;
-  const props = shallowRef({
+  const mounted = await mountSetup(StringCollectionField, {
     value,
     editable,
     label: 'Values',
@@ -24,41 +23,11 @@ async function mount(
     onChange: (value: readonly string[] | undefined) => changes.push(value),
     onDiscard: () => discards++,
   });
-  const implementation = StringCollectionField as ComponentOptions;
-  let state: any;
-  const stub = {
-    ...implementation,
-    setup(p: any, ctx: any) {
-      state = implementation.setup!(p, ctx);
-      return state;
-    },
-    render: () => null,
-  };
-  const app = createRenderer<object, object>({
-    insert() {},
-    remove() {},
-    patchProp() {},
-    setText() {},
-    setElementText() {},
-    createElement: () => ({}),
-    createText: () => ({}),
-    createComment: () => ({}),
-    parentNode: () => null,
-    nextSibling: () => null,
-  }).createApp({ render: () => h(stub, props.value) });
-  app.use(i18n).provide(ssrContextKey, { modules: new Set() });
-  app.mount({});
-  await nextTick();
   return {
-    state,
+    ...mounted,
     changes,
     get discards() {
       return discards;
-    },
-    stop: () => app.unmount(),
-    async update(next: Partial<typeof props.value>) {
-      props.value = { ...props.value, ...next };
-      await nextTick();
     },
   };
 }

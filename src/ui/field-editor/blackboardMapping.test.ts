@@ -34,23 +34,36 @@ describe('blackboard mapping declaration metadata', () => {
   it('rejects coincidental names, nested leaves and different declarations', () => {
     const original = field('applyBuff', 'copiedBlackboardAssignments');
     expect(
-      resolveBlackboardMapping({ ...original, source: ['custom/actions.ts:1:1'] }),
+      resolveBlackboardMapping({
+        ...original,
+        valueSchema: { ...original.valueSchema, declaration: undefined },
+      }),
     ).toBeUndefined();
     expect(
       resolveBlackboardMapping({
         ...original,
-        source: ['packages/game-data-contract/src/actions.ts:1:1'],
+        valueSchema: {
+          ...original.valueSchema,
+          declaration: 'CombatStepParameters.applyBuff.stringBlackboardAssignments',
+        },
       }),
     ).toBeUndefined();
     expect(
       resolveBlackboardMapping({ ...original, path: ['nested', ...original.path] }),
     ).toBeUndefined();
     expect(
-      resolveBlackboardMapping({ ...original, semantics: { type: 'string' } }),
+      resolveBlackboardMapping({
+        ...original,
+        valueSchema: { kind: 'string', declaration: original.valueSchema.declaration },
+      }),
     ).toBeUndefined();
     expect(
       resolveBlackboardMapping(
-        { kind: 'string', source: original.source, semantics: original.semantics },
+        {
+          kind: 'string',
+          declaration: original.valueSchema.declaration,
+          semantics: original.valueSchema.semantics,
+        },
         'copiedBlackboardAssignments',
       ),
     ).toBeUndefined();
@@ -63,8 +76,8 @@ describe('blackboard mapping declaration metadata', () => {
         {
           kind: 'record',
           value: { kind: 'string' },
-          source: original.source,
-          semantics: original.semantics,
+          declaration: original.valueSchema.declaration,
+          semantics: original.valueSchema.semantics,
         },
         'copiedBlackboardAssignments',
       ),

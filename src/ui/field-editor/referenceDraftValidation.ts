@@ -1,5 +1,5 @@
 import { validMappingValue, validMappingSources } from './blackboardMapping';
-import { schemaHasAlias } from '../../core/editor/inlineCombatCondition';
+import { hasSemanticAlias } from '../../core/editor/fieldSemantics.ts';
 import { unknownBlackboardContext } from '../../application/editor/blackboardFieldContext';
 import { timeScaleCurveDefinitions } from '../../data/combat/timeDilationConfig';
 import { assertTimeScaleCurveSelection, type TimeScaleCurveCatalog } from './timeScaleCurveValue';
@@ -47,7 +47,7 @@ function checkReferenceDraft(
   }
   const editor = resolveFieldEditor(schema, { referenceKind, name, references });
   if (editor.control === 'inlineOperand') {
-    const mode = schemaHasAlias(schema, 'LevelValues') ? 'levelsOrOperand' : 'operand';
+    const mode = hasSemanticAlias(schema.semantics, 'LevelValues') ? 'levelsOrOperand' : 'operand';
     return (
       validMappingValue(value, mode) &&
       validMappingSources(

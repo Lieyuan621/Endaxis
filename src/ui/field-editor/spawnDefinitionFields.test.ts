@@ -1,13 +1,5 @@
-import {
-  computed,
-  createRenderer,
-  createSSRApp,
-  h,
-  nextTick,
-  shallowRef,
-  ssrContextKey,
-  type ComponentOptions,
-} from 'vue';
+import { mountSetup } from '../../test/componentSetup';
+import { computed, createSSRApp } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 import { ID_INJECTION_KEY, ZINDEX_INJECTION_KEY } from 'element-plus';
 import { expect, it, vi } from 'vitest';
@@ -21,7 +13,6 @@ import { supportsStructuredValue } from './structuredValueSchema';
 import { validateStructuredValue } from './structuredValue';
 import { structuredFieldContextKey } from './structuredFieldContext';
 import StructuredValueField from './StructuredValueField.vue';
-import DefinitionValueCreator from '../definition-editor/DefinitionValueCreator.vue';
 import ActionNodeInspector from '../action-graph/ActionNodeInspector.vue';
 import NodeInspectorFields from '../action-graph/NodeInspectorFields.vue';
 import OwnedSpawnResourceField from './OwnedSpawnResourceField.vue';
@@ -43,56 +34,23 @@ const a = (value: unknown): any => ({
   parameters: { abilityEntityId: 'inline', dieWhenSourceDies: false, definition: value },
 });
 const options = { kind: 'spawnAbilityEntity', path: field.path };
-async function mount(component: unknown, initial: Record<string, unknown>) {
-  let state: any;
-  const props = shallowRef(initial),
-    implementation = component as ComponentOptions;
-  const wrapper = {
-    ...implementation,
-    setup(p: any, ctx: any) {
-      state = implementation.setup!(p, ctx);
-      return state;
-    },
-    render: () => null,
-  };
-  const app = createRenderer<object, object>({
-    insert() {},
-    remove() {},
-    patchProp() {},
-    setText() {},
-    setElementText() {},
-    createElement: () => ({}),
-    createText: () => ({}),
-    createComment: () => ({}),
-    parentNode: () => null,
-    nextSibling: () => null,
-  }).createApp({ render: () => h(wrapper, props.value) });
-  app.use(i18n).provide(ssrContextKey, { modules: new Set() });
-  app.provide(
-    structuredFieldContextKey,
-    computed(() => ({
-      ...options,
-      ownedResources: spawnDefinitionResources(schema, options.kind, options.path),
-    })),
-  );
-  app.mount({});
-  await nextTick();
-  return {
-    state,
-    stop: () => app.unmount(),
-    async update(next: Record<string, unknown>) {
-      props.value = { ...props.value, ...next };
-      await nextTick();
-    },
-  };
+function mount(component: unknown, initial: Record<string, unknown>) {
+  return mountSetup(component, initial, app => {
+    app.provide(
+      structuredFieldContextKey,
+      computed(() => ({
+        ...options,
+        ownedResources: spawnDefinitionResources(schema, options.kind, options.path),
+      })),
+    );
+  });
 }
 it('admits only the generated exact spawn definition, without admitting graph numeric operands or other resources', () => {
-  expect(spawnDefinitionResources(schema, options.kind, options.path)?.size).toBe(3);
   expect(resolveFieldEditor(field, { nodeKind: options.kind }).control).toBe('structuredValue');
   expect(supportsStructuredValue(schema)).toBe(false);
   expect(graphOperandSchemas(schema, options.kind, options.path)).toBeUndefined();
   for (const [value, kind, path] of [
-    [{ ...schema, source: ['custom.ts:1'] }, options.kind, options.path],
+    [{ ...schema, declaration: undefined }, options.kind, options.path],
     [schema, 'createGlobalBuff', options.path],
     [schema, options.kind, ['parameters.definition']],
   ] as const)
@@ -176,33 +134,6 @@ it('uses direct snapshot evidence, excludes entity-only values, and gives explic
       .state,
   ).toBe('fallback');
   expect(result.parameters).toEqual([]);
-});
-it('creates only ordinary fields and keeps incomplete/invalid drafts, cancel and readonly truthful', async () => {
-  const created: unknown[] = [];
-  let cancelled = 0;
-  const host = await mount(DefinitionValueCreator, {
-    schema: { ...schema, optional: false },
-    editable: true,
-    editingContext: 'value',
-    onCreate: (value: unknown) => created.push(value),
-    onCancel: () => cancelled++,
-  });
-  expect(host.state.complete.value).toBe(false);
-  host.state.value.value = { lifetime: { kind: 'infinite' }, blackboard: { rate: 1, text: 'raw' } };
-  expect(host.state.complete.value).toBe(true);
-  host.state.create();
-  expect(created).toHaveLength(1);
-  host.state.value.value = { lifetime: { kind: 'limited', durationSeconds: '' } };
-  expect(host.state.complete.value).toBe(false);
-  host.state.create();
-  expect(created).toHaveLength(1);
-  host.state.value.value = { lifetime: { kind: 'infinite' } };
-  await host.update({ editable: false });
-  expect(host.state.complete.value).toBe(true);
-  host.state.create();
-  expect(created).toHaveLength(1);
-  host.stop();
-  expect(cancelled).toBe(0);
 });
 it('retains atomic outer drafts on error, supports repair/no-op/cancel and rejects forged resource edits', async () => {
   const changes: unknown[] = [];

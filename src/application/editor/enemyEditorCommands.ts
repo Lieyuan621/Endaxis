@@ -7,15 +7,8 @@ import type {
   EnemyDocument,
   EnemyEditableField,
   EnemyEditableValues,
-  EnemyStaggerEditableValues,
   ScenarioDocument,
 } from '../../core/project/schema';
-
-export type EnemyBasicEditableField = keyof Pick<
-  EnemyEditableValues,
-  'hp' | 'defense' | 'superArmor' | 'finisherMultiplier'
->;
-export type EnemyStaggerEditableField = keyof EnemyStaggerEditableValues;
 
 function addEditedField(
   edited: readonly EnemyEditableField[],
@@ -144,69 +137,6 @@ export function replaceEnemyEditableValues(
       edited: changedFields.reduce<EnemyEditableField[]>(addEditedField, [
         ...scenario.enemy.edited,
       ]),
-    },
-  };
-}
-
-export function updateEnemyBasicField<K extends EnemyBasicEditableField>(
-  scenario: ScenarioDocument,
-  field: K,
-  value: EnemyEditableValues[K],
-): ScenarioDocument {
-  if (scenario.enemy.editable[field] === value) return scenario;
-  return {
-    ...scenario,
-    enemy: {
-      ...scenario.enemy,
-      editable: { ...scenario.enemy.editable, [field]: value },
-      edited: addEditedField(scenario.enemy.edited, field),
-    },
-  };
-}
-
-export function updateEnemyResistance(
-  scenario: ScenarioDocument,
-  damageType: string,
-  value: number,
-): ScenarioDocument {
-  if (scenario.enemy.editable.resistances[damageType] === value) return scenario;
-  return {
-    ...scenario,
-    enemy: {
-      ...scenario.enemy,
-      editable: {
-        ...scenario.enemy.editable,
-        resistances: { ...scenario.enemy.editable.resistances, [damageType]: value },
-      },
-      edited: addEditedField(scenario.enemy.edited, 'resistances'),
-    },
-  };
-}
-
-export function updateEnemyStaggerField<K extends EnemyStaggerEditableField>(
-  scenario: ScenarioDocument,
-  field: K,
-  value: EnemyStaggerEditableValues[K],
-): ScenarioDocument {
-  const current = scenario.enemy.editable.stagger[field];
-  const unchanged =
-    field === 'knotThresholds' && Array.isArray(current) && Array.isArray(value)
-      ? current.length === value.length && current.every((item, index) => item === value[index])
-      : current === value;
-  if (unchanged) return scenario;
-  const editedField = `stagger.${field}` as const;
-  return {
-    ...scenario,
-    enemy: {
-      ...scenario.enemy,
-      editable: {
-        ...scenario.enemy.editable,
-        stagger: {
-          ...scenario.enemy.editable.stagger,
-          [field]: Array.isArray(value) ? [...value] : value,
-        },
-      },
-      edited: addEditedField(scenario.enemy.edited, editedField),
     },
   };
 }

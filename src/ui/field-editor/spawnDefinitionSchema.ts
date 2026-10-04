@@ -1,3 +1,4 @@
+import { sameFieldDeclaration } from '../../core/editor/fieldSemantics.ts';
 import { actionNodeSchemas } from '../action-graph/actionNodeSchemas.generated.ts';
 import type { DefinitionFieldSchema } from '../definition-editor/fieldSchema.ts';
 
@@ -21,13 +22,12 @@ export function spawnDefinitionResources(
   const formal = actionNodeSchemas.spawnAbilityEntity.fields.find(
     field => field.path.at(-1) === 'definition',
   )?.valueSchema;
-  if (formal?.kind !== 'object' || !formal.source?.some(source => schema.source?.includes(source)))
-    return;
+  if (formal?.kind !== 'object' || !sameFieldDeclaration(formal, schema)) return;
   const result = new Map<DefinitionFieldSchema, SpawnResourceSlot>();
   for (const key of SPAWN_RESOURCE_SLOTS) {
     const field = schema.fields[key];
     const original = formal.fields[key];
-    if (!field || !original?.source?.some(source => field.source?.includes(source))) return;
+    if (!field || !sameFieldDeclaration(original, field)) return;
     const leaf =
       field.kind === 'array' ? field.element : field.kind === 'record' ? field.value : field;
     if (leaf.kind !== 'opaque' || leaf.fallback?.reason !== 'owned-resource-boundary') return;

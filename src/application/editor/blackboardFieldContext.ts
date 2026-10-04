@@ -1,3 +1,4 @@
+import type { FieldDeclarationMetadata } from '../../core/editor/fieldSemantics.ts';
 /** Static evidence for blackboard fields. A known graph scope is not a closed runtime key set. */
 import type { analyzeGraphBlackboard, BlackboardVariable } from './graphBlackboard';
 
@@ -269,11 +270,11 @@ export function blackboardContextForField(
 export function blackboardRequestForField(
   kind: string | undefined,
   path: readonly (string | number)[],
-  source?: readonly string[],
+  declaration?: FieldDeclarationMetadata,
 ): BlackboardKeyRequest | undefined {
   if (
     kind === 'spawnAbilityEntity' &&
-    source?.some(item => /^packages\/game-data-contract\/src\/skills\.ts:/.test(item)) &&
+    declaration?.blackboardOrigin === 'abilityEntity' &&
     ((path.length === 5 &&
       path[0] === 'parameters' &&
       path[1] === 'definition' &&
@@ -290,16 +291,10 @@ export function blackboardRequestForField(
   if (
     kind === 'createGlobalBuff' &&
     path.join('.') === 'parameters.definition.durationSeconds.blackboardKey' &&
-    source?.some(item => /^packages\/game-data-contract\/src\/buffs\.ts:/.test(item))
+    declaration?.blackboardOrigin === 'globalBuff'
   )
     return { mode: 'read', valueType: 'number' };
-  if (
-    source &&
-    !source.some(item =>
-      /^packages\/game-data-contract\/src\/(actions|conditions|primitives)\.ts:/.test(item),
-    )
-  )
-    return undefined;
+  if (declaration?.blackboardOrigin !== 'contract') return undefined;
   const slot = path.join('.');
   if (
     kind === 'readSkillSettingData' &&
