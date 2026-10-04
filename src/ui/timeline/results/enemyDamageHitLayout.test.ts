@@ -2,6 +2,58 @@ import { expect, it } from 'vitest';
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
 import type { BuffTimelineSegment } from '../../../core/projection/buffTimelineViz';
 import { layoutEnemyDamageHits } from './enemyDamageHitLayout';
+import { projectBuffDamageDisplayOwners } from '../../../core/projection/enemyEffectViz';
+
+it('places hidden child damage under its nearest live creation ancestor without changing receipts', () => {
+  const birth = (instanceId: number, parent: number): CombatReceiptEntry => ({
+    sequence: instanceId,
+    frame: 0,
+    time: 0,
+    event: 'BuffApplied',
+    targetId: 'enemy',
+    subject: { kind: 'buff', ownerId: 'enemy', instanceId },
+    producedBy: { kind: 'buff', ownerId: 'enemy', instanceId: parent },
+    data: { buffId: 'status', instanceId },
+  });
+  const damage: CombatReceiptEntry = {
+    ...hit(10, 3),
+    producedBy: { kind: 'buff', ownerId: 'enemy', instanceId: 3 },
+    data: {
+      ...hit(10, 3).data,
+      castId: 'cast',
+      hitId: 'hit',
+      stepKey: 'step',
+      skillType: 'battleSkill',
+    },
+  };
+  const entries = [birth(1, 99), birth(2, 1), birth(3, 2), damage];
+  const parent = buff(1, 0, 20);
+  const owners = projectBuffDamageDisplayOwners(entries, [parent]);
+  expect(owners[10]).toBe(parent);
+  const positions = layoutEnemyDamageHits(entries, [parent], [], new Set(), [parent], owners);
+  expect(positions).toHaveLength(1);
+  expect(positions[0]!.standalone).toBe(false);
+  expect(positions[0]!.group[0]).toBe(damage);
+  // 组件只接收伤害子集，点击详情使用完整回执；两者必须落在同一个入口。
+  expect(layoutEnemyDamageHits([damage], [parent], [], new Set(), [parent], owners)).toEqual(
+    positions,
+  );
+  const nearer = buff(2, 0, 20);
+  expect(projectBuffDamageDisplayOwners(entries, [parent, nearer])[10]).toBe(nearer);
+  expect(projectBuffDamageDisplayOwners(entries, [buff(1, 0, 9)])[10]).toBeUndefined();
+  expect(
+    projectBuffDamageDisplayOwners(entries, [{ ...parent, targetId: 'other' }])[10],
+  ).toBeUndefined();
+  expect(projectBuffDamageDisplayOwners(entries, [parent, buff(3, 0, 20)])[10]).toBeUndefined();
+  const unrelated: CombatReceiptEntry = {
+    ...entries[2]!,
+    producedBy: undefined,
+    runtimeSource: { kind: 'enemy' },
+  };
+  expect(
+    projectBuffDamageDisplayOwners([...entries.slice(0, 2), unrelated, damage], [parent])[10],
+  ).toBeUndefined();
+});
 
 const buff = (instanceId: number, startFrame: number, endFrame: number): BuffTimelineSegment => ({
   buffId: 'status',

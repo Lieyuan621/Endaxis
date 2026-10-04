@@ -475,7 +475,6 @@
       "playerActionRoutes": "Action routes",
       "playerActionModes": "Action modes",
       "skillAliases": "Skill aliases",
-      "buffDisplayNameKeys": "Buff display names",
       "comboSkillConditions": "Combo conditions",
       "comboSkillPriority": "Combo priority",
       "entityBlackboardInitializers": "Entity variable initializers",
@@ -4518,6 +4517,8 @@
       "suppressedHint": "This candidate remains recorded but contributes no active stacks or effects during this window."
     },
     "hitDetail": {
+      "previousHit": "Previous damage instance",
+      "nextHit": "Next damage instance",
       "frame": "Frame",
       "damage": "Damage",
       "actualDamage": "Actual damage",
@@ -4976,14 +4977,17 @@
       "oldenStare": "Olden Stare",
       "perfectTiming": "Perfect Timing",
       "razorClawmark": "Razor Clawmark",
+      "windform": "Windform",
+      "imprisonment": "Imprisonment",
+      "slow": "Slow",
+      "barrageArray": "Barrage Array",
+      "firefangVesperwings": "Firefang Vesperwings",
       "sunderblades": "Sunderblades",
       "electrification": "Electrification",
       "ultEnergyGain": "Ultimate Energy Gain",
       "spRecovery": "SP Recovery",
       "spReturn": "SP Return",
-      "firefangVesperwings": "Firefang Vesperwings",
       "pursuit": "Pursuit",
-      "imprisonment": "Imprisonment",
       "natureCryoSusceptibility": "Cryo and Nature Susceptibility",
       "gloompurgerArray": "Gloompurger Array",
       "clusterStrike": "Cluster Strike",
@@ -5388,6 +5392,19 @@
     "originium_arts_power": "Arts Intensity",
     "ult_charge_eff": "Ultimate Gain Eff.",
     "link_cd_reduction": "Combo CD reduction"
+  },
+  "buffEffects": {
+    "attacker": "{type} damage dealt",
+    "defender": "{type} damage taken",
+    "arts": "Arts",
+    "conditional": "Only when additional conditions are met",
+    "types": {
+      "physical": "Physical",
+      "heat": "Heat",
+      "electric": "Electric",
+      "cryo": "Cryo",
+      "nature": "Nature"
+    }
   },
   "hitDetail": {
     "damageZones": {

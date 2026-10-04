@@ -3,7 +3,10 @@ import {
   projectBuffIconTimelineMetadata,
   type BuffTimelineSegment,
 } from '../../../core/projection/buffTimelineViz';
-import type { EnemyEffectMarker } from '../../../core/projection/enemyEffectViz';
+import {
+  projectBuffDamageDisplayOwners,
+  type EnemyEffectMarker,
+} from '../../../core/projection/enemyEffectViz';
 import { groupEnemyBurstDamageHits } from './enemyBurstDamageGroups';
 import { findBuffDamageSegment, groupEnemyBuffDamageHits } from './enemyBuffDamageHits';
 import { layoutEnemyStatusRows } from './enemyStatusRows';
@@ -18,16 +21,34 @@ export function layoutEnemyDamageHits(
     entries,
     entries.reduce((maximum, entry) => Math.max(maximum, entry.frame), 0),
   ),
+  displayOwners = projectBuffDamageDisplayOwners(entries, damageBuffs),
+  entities: readonly { startFrame: number; endFrame: number }[] = [],
 ) {
-  const rows = layoutEnemyStatusRows(buffs, markers, attachmentIds);
+  const rows = layoutEnemyStatusRows(buffs, markers, attachmentIds, entities);
   const candidates = [
     ...groupEnemyBurstDamageHits(entries).map(group => ({
       group,
       row: rows.attachmentRow,
       standalone: false,
     })),
-    ...groupEnemyBuffDamageHits(entries, damageBuffs).map(group => {
-      const segment = findBuffDamageSegment(group[0]!, buffs);
+    ...groupEnemyBuffDamageHits(entries, damageBuffs, displayOwners).map(group => {
+      const entry = group[0]!;
+      const owner = displayOwners[entry.sequence];
+      const segment =
+        findBuffDamageSegment(entry, buffs) ??
+        (owner &&
+          findBuffDamageSegment(
+            {
+              ...entry,
+              data: {
+                ...entry.data,
+                buffId: owner.buffId,
+                buffOwnerId: owner.targetId,
+                buffInstanceId: owner.instanceId,
+              },
+            },
+            buffs,
+          ));
       const row = segment === undefined ? undefined : rows.lanes.get(segment);
       // 没有可见持续条的伤害仍有独立入口，不受 Buff 图标和头顶栏开关影响。
       return { group, row: row ?? rows.rowCount, standalone: row === undefined };

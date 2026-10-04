@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { ElIcon } from 'element-plus';
-import { EaCheckbox, EaDialog, EaDialogActions, EaTooltip } from '../../../design-system/index';
+import {
+  EaButton,
+  EaCheckbox,
+  EaDialog,
+  EaDialogActions,
+  EaTooltip,
+} from '../../../design-system/index';
 import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
 import CombatObjectOriginGraph from './CombatObjectOriginGraph.vue';
 import { CombatObjectOrigins } from '../../../core/projection/combatObjectOrigins';
@@ -24,6 +30,7 @@ import {
 import type { OperatorPanelContributionReceipt } from '../../../core/compiler/resolveOperatorPanel';
 import { POISE_BREAK_BUFF_ID } from '../../../core/combat/buffs/poiseBreakBuffRuntime';
 
+const damageIndex = ref(0);
 const props = defineProps<{
   visible: boolean;
   randomMode: 'expected' | 'sampled';
@@ -52,6 +59,8 @@ const props = defineProps<{
   damageTypeLabel: (value: string) => string;
   skillTypeLabel: (value: string) => string;
   labels: {
+    previousHit: string;
+    nextHit: string;
     dialogTitle: string;
     context: string;
     result: string;
@@ -186,6 +195,7 @@ const openSkillMultiplierDetails = ref<ReadonlySet<number>>(new Set());
 watch(
   () => props.entries,
   () => {
+    damageIndex.value = 0;
     openAttackDetails.value = new Set();
     openCriticalDetails.value = new Set();
     openSkillMultiplierDetails.value = new Set();
@@ -1103,6 +1113,7 @@ const canForceCritical = computed(() =>
 );
 
 function onClose(): void {
+  damageIndex.value = 0;
   openAttackDetails.value = new Set();
   openCriticalDetails.value = new Set();
   openSkillMultiplierDetails.value = new Set();
@@ -1122,12 +1133,30 @@ function onClose(): void {
       @close="onClose"
     >
       <slot name="status" />
-      <div
-        v-if="damageDetails.length > 0"
-        class="hit-detail-content"
-        :class="{ 'is-multiple': damageDetails.length > 1 }"
-      >
-        <template v-for="detail in damageDetails" :key="detail.key">
+      <div v-if="damageDetails.length > 1" class="hit-detail-pager">
+        <EaButton
+          size="sm"
+          icon-only
+          :aria-label="labels.previousHit"
+          :disabled="damageIndex === 0"
+          @click="damageIndex--"
+          >‹</EaButton
+        >
+        <span>{{ damageIndex + 1 }} / {{ damageDetails.length }}</span>
+        <EaButton
+          size="sm"
+          icon-only
+          :aria-label="labels.nextHit"
+          :disabled="damageIndex >= damageDetails.length - 1"
+          @click="damageIndex++"
+          >›</EaButton
+        >
+      </div>
+      <div v-if="damageDetails.length > 0" class="hit-detail-content">
+        <template
+          v-for="detail in damageDetails.slice(damageIndex, damageIndex + 1)"
+          :key="detail.key"
+        >
           <template v-if="detail.contextRows.length > 0">
             <div class="section-label">{{ labels.context }}</div>
             <table class="stat-table">
@@ -1491,10 +1520,14 @@ function onClose(): void {
   color: var(--ea-fg, #f0f0f0);
   font-size: 13px;
 }
-.hit-detail-content.is-multiple {
-  max-height: calc(80dvh - 120px);
-  overflow-y: auto;
-  overscroll-behavior: contain;
+.hit-detail-pager {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 18px;
+  color: var(--ea-fg-muted);
+  font-size: 12px;
 }
 .section-label {
   margin: 12px 0 6px;

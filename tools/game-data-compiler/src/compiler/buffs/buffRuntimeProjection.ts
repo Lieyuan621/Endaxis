@@ -1,4 +1,5 @@
 import { projectGameplayTags } from '../combatProjectionCommon.ts';
+import { buffPresentationNames } from '../../../config/buffPresentationNames.ts';
 import {
   createActionGraphBuilder,
   type ActionGraphBuilder,
@@ -767,8 +768,17 @@ export function compileBuffRuntimeDefinitionSource(
           timeClock: source.graph.onlyUseSelfTimeDilation ? ('self' as const) : ('global' as const),
         }
       : {}),
-    ...(source.presentation.hasIcon || source.presentation.spritePath !== ''
-      ? { presentation: compilePresentation(source.presentation) }
+    ...(source.presentation.hasIcon ||
+    source.presentation.spritePath !== '' ||
+    buffPresentationNames[source.graph.buffId]
+      ? {
+          presentation: {
+            ...compilePresentation(source.presentation),
+            ...(buffPresentationNames[source.graph.buffId]
+              ? { nameKey: buffPresentationNames[source.graph.buffId] }
+              : {}),
+          },
+        }
       : {}),
     applyTags: projectGameplayTags(
       source.applyTagIds,

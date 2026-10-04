@@ -7698,6 +7698,7 @@ const rossiBuff9: SkillBuffDefinition = {
     iconStyleInSquad: 'LifeTime',
     abnormalColorType: 'Physical',
     orderPriority: { useDirectoryValue: false, value: 0, category: 'KeywordDebuff' },
+    nameKey: 'effects.name.razorClawmark',
   },
   applyTags: [],
   extendTags: [],
@@ -8225,7 +8226,6 @@ const rossiBuff25: SkillBuffDefinition = {
 export const rossi: OperatorDefinition = {
   slug: 'rossi',
   gameId: 'ROSSI',
-  buffDisplayNameKeys: { buff_chr_0028_wulfa_normal_bleed: 'effects.name.razorClawmark' },
   rarity: 6,
   weaponType: 'sword',
   element: 'physical',

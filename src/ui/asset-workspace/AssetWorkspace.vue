@@ -220,13 +220,13 @@ function resourceLabel(resource: WorkspaceDefinitionResource): string {
   const value = fieldValueAt(definition, resource.path) as Record<string, unknown>;
   if (typeof value?.displayName === 'string') return value.displayName;
   if (resource.kind === 'buff') {
-    const names = 'buffDisplayNameKeys' in definition ? definition.buffDisplayNameKeys : undefined;
+    const presentation = value?.presentation as { nameKey?: string } | undefined;
     return resolveBuffDisplayName(
       resource.identity,
       { t, te },
       undefined,
       undefined,
-      new Map(Object.entries(names ?? {})),
+      new Map(presentation?.nameKey ? [[resource.identity, presentation.nameKey]] : []),
     );
   }
   if (resource.kind === 'skill' && draft.value.edit.kind === 'operator') {

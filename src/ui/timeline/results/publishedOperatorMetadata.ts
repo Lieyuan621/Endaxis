@@ -50,9 +50,11 @@ export function capturePublishedOperatorMetadata(
         passiveKeys: (passiveSkills ?? []).map(skill => skill.key),
       })),
       skillKeys: skills.map(skill => skill.key),
-      ...(definition.buffDisplayNameKeys === undefined
-        ? {}
-        : { buffDisplayNameKeys: { ...definition.buffDisplayNameKeys } }),
+      buffDisplayNameKeys: Object.fromEntries(
+        Object.entries(definition.buffDefinitions ?? {}).flatMap(([id, buff]) =>
+          buff.presentation?.nameKey ? [[id, buff.presentation.nameKey]] : [],
+        ),
+      ),
       skillIcons: Object.fromEntries(
         bindings.map(({ group, skill }) => [
           skill.key,

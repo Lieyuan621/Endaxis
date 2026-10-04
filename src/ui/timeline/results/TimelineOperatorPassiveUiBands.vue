@@ -18,11 +18,22 @@ const props = defineProps<{
 
   prepExpanded: boolean;
   operatorName: string;
+  hits?: readonly {
+    castId: string;
+    hitId: string;
+    frame: number;
+    entityInstanceId: number;
+    title: string;
+    triggered: boolean;
+    linkBuffed: boolean;
+    stackIndex: number;
+  }[];
 }>();
 const { t } = useI18n({ useScope: 'global' });
 
 const emit = defineEmits<{
   'open-detail': [segment: PositionedOperatorPassiveUiTimelineSegment, title: string];
+  'hit-click': [hit: NonNullable<typeof props.hits>[number]];
 }>();
 
 const ICON_HEIGHT = 16;
@@ -85,7 +96,7 @@ const items = computed(() =>
           ? `${segment.operatorId}:numeric:${segment.startFrame}:${segment.value}`
           : segment.kind === 'buffProgress'
             ? `${segment.operatorId}:${segment.buffId}:${segment.instanceId}:${segment.startFrame}`
-            : `${segment.operatorId}:${segment.kind}:${segment.startFrame}`,
+            : `${segment.operatorId}:${segment.kind}:${segment.kind === 'abilityEntityCount' ? `${segment.abilityEntityId}:${segment.entities.map(entity => entity.instanceId).join(',')}` : ''}:${segment.startFrame}`,
       title,
       name: segmentName(segment),
       left,
@@ -95,6 +106,36 @@ const items = computed(() =>
     };
   }),
 );
+const hitItems = computed(() => {
+  const counts = new Map<string, number>();
+  return (props.hits ?? []).flatMap(hit => {
+    const segment = props.segments.find(
+      segment =>
+        segment.kind === 'abilityEntityCount' &&
+        segment.startFrame <= hit.frame &&
+        segment.endFrame >= hit.frame &&
+        segment.entities.some(entity => entity.instanceId === hit.entityInstanceId),
+    );
+    const key = `${segment?.lane}:${hit.frame}`;
+    const index = counts.get(key) ?? 0;
+    if (segment) counts.set(key, index + 1);
+    return segment
+      ? [
+          {
+            ...hit,
+            left: frameToTimelinePx(
+              hit.frame,
+              props.prepFrames,
+              props.pxPerFrame,
+              props.prepExpanded,
+              props.prepEndFrame,
+            ),
+            top: timelineUpperBuffTop(segment.lane) + 18 + index * 7,
+          },
+        ]
+      : [];
+  });
+});
 </script>
 
 <template>
@@ -104,6 +145,16 @@ const items = computed(() =>
     :style="{ '--buff-action-top': `${actionTop}px` }"
     aria-label="Operator passive UI timeline"
   >
+    <span
+      v-for="hit in hitItems"
+      :key="`${hit.castId}:${hit.hitId}:${hit.frame}`"
+      class="entity-hit"
+      :style="{ left: `${hit.left}px`, top: `${hit.top}px` }"
+      :title="hit.title"
+      @pointerdown.stop
+      @mousedown.stop.prevent="emit('hit-click', hit)"
+      ><span class="entity-hit-diamond"
+    /></span>
     <TimelineStatusSegment
       v-for="item in items"
       :key="item.key"
@@ -160,6 +211,35 @@ const items = computed(() =>
 </template>
 
 <style scoped>
+.entity-hit {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  padding: 3px;
+  box-sizing: border-box;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  pointer-events: auto;
+  z-index: 20;
+}
+.entity-hit-diamond {
+  display: block;
+  width: 6px;
+  height: 6px;
+  background: #fff;
+  border: 1px solid #666;
+  box-sizing: border-box;
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .entity-hit:hover .entity-hit-diamond {
+    background: var(--ea-gold);
+    border-color: #fff;
+    box-shadow: 0 0 4px color-mix(in srgb, var(--ea-gold) 80%, transparent);
+    transform: rotate(45deg) scale(1.3);
+  }
+}
 .timeline-operator-passive-ui-bands {
   position: absolute;
   inset: 0;

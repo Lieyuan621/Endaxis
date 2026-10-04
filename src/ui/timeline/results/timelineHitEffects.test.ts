@@ -69,6 +69,14 @@ it('keeps target-owned Buff receipts out of skill markers while retaining delega
     data: { ...buff.data, hitId: 'sword', stepKey: 'sword', buffOwnerId: 'ability-entity:2' },
   };
   const entries = [buffApplied, direct, buff, delegated];
+  const entityHit = { ...direct, producedBy: { kind: 'abilityEntity' as const, instanceId: 7 } };
+  expect(projectTimelineHitOccurrences([entityHit]).get('cast')?.[0]?.entityInstanceId).toBe(7);
+  // 派生 Buff 即使归属实体，也不是该实体直接执行的伤害。
+  expect(
+    projectTimelineHitOccurrences([
+      { ...entityHit, producedBy: { kind: 'buff', ownerId: 'ability-entity:7', instanceId: 1 } },
+    ]).get('cast')?.[0]?.entityInstanceId,
+  ).toBeUndefined();
   // 没有可见 Buff 段时也由敌人伤害入口展示，不能重复挂回技能块。
   expect(
     projectTimelineHitOccurrences([direct, buff, delegated])

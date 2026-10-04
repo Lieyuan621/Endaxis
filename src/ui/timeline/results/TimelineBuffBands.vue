@@ -7,7 +7,7 @@ import { resolveDurationBarColor } from './durationBarColor';
 import { useI18n } from 'vue-i18n';
 import type { PositionedDisplayBuffTimelineSegment } from '../../../core/projection/buffTimelineViz';
 import { resolveBuffDisplayName } from './buffDisplayName';
-import { resolveSimpleBuffModifierDisplayName } from './buffDisplayName';
+import { resolveBuffEffectSummary } from './buffDisplayName';
 import type { BuffDetailTarget } from './buffDetail';
 import TimelineStatusSegment from './TimelineStatusSegment.vue';
 import { getIconAssetPath } from '../../gameAssetPaths';
@@ -64,24 +64,13 @@ const items = computed(() =>
       props.prepEndFrame,
     );
     const sourceName = props.sourceName?.(segment);
-    const modifierSummary = resolveSimpleBuffModifierDisplayName(
-      {
-        attribute: segment.simpleModifierAttribute,
-        slot: segment.simpleModifierSlot,
-        value: segment.simpleModifierValue,
-      },
-      { t, te },
-    );
+    const modifierSummary = resolveBuffEffectSummary(segment, { t, te });
     const title =
       props.displayName?.(segment) ??
       resolveBuffDisplayName(
         segment.buffId,
         { t, te },
-        {
-          attribute: segment.simpleModifierAttribute,
-          slot: segment.simpleModifierSlot,
-          value: segment.simpleModifierValue,
-        },
+        undefined,
         sourceName,
         props.operatorBuffNameKeys,
       );
@@ -89,6 +78,7 @@ const items = computed(() =>
     return {
       ...segment,
       title,
+      tooltip: modifierSummary ? `${title}\n${modifierSummary}` : title,
       color: resolveDurationBarColor(durationBarColor.value, 'track', segment),
       key: `${segment.targetId}:${segment.buffId}:${segment.instanceId}:${segment.startFrame}:${segment.startSequence ?? ''}`,
       left,
@@ -119,14 +109,7 @@ const items = computed(() =>
         ...(modifierSummary === undefined ? {} : { modifierSummary }),
         instances: segment.windows.map(member => {
           const memberSourceName = props.sourceName?.(member);
-          const memberModifierSummary = resolveSimpleBuffModifierDisplayName(
-            {
-              attribute: member.simpleModifierAttribute,
-              slot: member.simpleModifierSlot,
-              value: member.simpleModifierValue,
-            },
-            { t, te },
-          );
+          const memberModifierSummary = resolveBuffEffectSummary(member, { t, te });
           return {
             ...(memberSourceName === undefined ? {} : { sourceName: memberSourceName }),
             startFrame: member.startFrame,
@@ -167,7 +150,7 @@ const items = computed(() =>
       :left="item.left"
       :top="item.top"
       :width="item.width"
-      :title="item.title"
+      :title="item.tooltip"
       :duration-color="item.color"
       :count="item.layers"
       interactive

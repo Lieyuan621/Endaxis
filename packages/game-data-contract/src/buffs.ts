@@ -355,6 +355,8 @@ export type BuffTimeClock = 'default' | 'global' | 'self';
 
 /** Buff 实例在头像、状态栏和技能按钮上的显示规则。 */
 export interface CombatBuffPresentation {
+  /** 此 Buff 的显示名称翻译键；仅供界面使用。 */
+  readonly nameKey?: string;
   /** 游戏资源中的图标 ID。 */
   readonly iconId?: string;
   /** 已导出图标的资源路径。 */

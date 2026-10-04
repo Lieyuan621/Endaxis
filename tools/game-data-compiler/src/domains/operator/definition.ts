@@ -1,3 +1,4 @@
+import { abilityEntityPresentations } from '../../../config/abilityEntityPresentations.ts';
 import type {
   ComboSkillConditionDefinition,
   ComboSkillPriority,
@@ -750,7 +751,15 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
       nativeSkillType,
     });
   }
-  const abilityEntityDefinitions = hydrate(compiledAbilityEntityDefinitions);
+  const abilityEntityDefinitions = Object.fromEntries(
+    Object.entries(hydrate(compiledAbilityEntityDefinitions)).map(([id, definition]) => [
+      id,
+      {
+        ...definition,
+        ...(abilityEntityPresentations[id] ? { presentation: abilityEntityPresentations[id] } : {}),
+      },
+    ]),
+  );
   const assignedRuntimeReplacementSkillKeys = new Set<string>();
   const skillGroups = skillLibrary.skillGroups.map(group => {
     // 展示组由配置直接声明；原生换槽目标也可以是独立组的基础技能。
@@ -946,11 +955,6 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
     buffDefinitions: privateBuffs,
     abilityEntityDefinitions,
   };
-  for (const id of Object.keys(operator.buffDisplayNameKeys ?? {})) {
-    if (privateBuffs[id] === undefined) {
-      throw new Error(`operator '${operator.slug}' names unknown private Buff '${id}'`);
-    }
-  }
   return {
     operator,
     commonBuffDefinitions: commonBuffs,

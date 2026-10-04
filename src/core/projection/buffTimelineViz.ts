@@ -5,6 +5,8 @@
 import type { CombatReceiptEntry, CombatReceiptValue } from '../combat/receipt/combatReceipt';
 
 export interface BuffTimelineSegment {
+  readonly attributeEffects?: readonly import('../combat/receipt/combatReceipt').BuffAttributeEffect[];
+  readonly damageEffects?: readonly import('../combat/receipt/combatReceipt').BuffDamageEffect[];
   readonly sourceId?: string;
   readonly sourceActionId?: string;
   readonly targetId: string;
@@ -216,6 +218,8 @@ export function mergeOverlappingBuffTimelineSegments(
         const endSequences = boundarySequences(componentSegments, endFrame);
         result.push({
           ...presentation,
+          attributeEffects: members.flatMap(member => member.attributeEffects ?? []),
+          damageEffects: members.flatMap(member => member.damageEffects ?? []),
           ...(modifier ?? {}),
           ...(members.every(member => member.displayCount !== undefined)
             ? { displayCount: layers }
@@ -491,7 +495,74 @@ export function projectBuffTimelineViz(
   entries: readonly CombatReceiptEntry[],
   endFrame: number,
 ): readonly BuffTimelineSegment[] {
-  return projectBuffSegments(entries, endFrame, isVisibleBuff);
+  const visible = projectBuffSegments(entries, endFrame, isVisibleBuff);
+  const parents = new Map<string, string>();
+  const hidden = new Set<string>();
+  for (const entry of entries) {
+    if (entry.event !== 'BuffApplied' || !entry.data || !entry.targetId) continue;
+    const instanceId = optionalNumber(entry.data, 'instanceId');
+    if (instanceId === undefined) continue;
+    const key = buffOwnerInstanceKey(entry.targetId, instanceId);
+    if (!isVisibleBuff(entry.data)) hidden.add(key);
+    if (entry.producedBy?.kind === 'buff')
+      parents.set(key, buffOwnerInstanceKey(entry.producedBy.ownerId, entry.producedBy.instanceId));
+  }
+  const needed = new Set(
+    visible.flatMap(segment => {
+      const parent = parents.get(buffOwnerInstanceKey(segment.targetId, segment.instanceId));
+      return parent &&
+        hidden.has(parent) &&
+        !segment.attributeEffects?.length &&
+        !segment.damageEffects?.length
+        ? [parent]
+        : [];
+    }),
+  );
+  if (!needed.size) return visible;
+  const parentWindows = new Map<string, BuffTimelineSegment[]>();
+  for (const segment of projectBuffSegments(entries, endFrame, () => true)) {
+    const key = buffOwnerInstanceKey(segment.targetId, segment.instanceId);
+    if (!needed.has(key)) continue;
+    const windows = parentWindows.get(key) ?? [];
+    windows.push(segment);
+    parentWindows.set(key, windows);
+  }
+  // 展示层经验规则，不是原生保证：无自身修正的图标借用未实际显示图标的直接产生者的修正。
+  // 是否显示取决于显示位置开关，不以是否配置图标资源判断。
+  // producedBy 只证明创建关系，不保证图标代表父效果；因此仅追一层，不按同帧/同来源猜测。
+  // 按父实例的历史窗口取值，禁用或结束后不借用；不改变战斗属性，也不把子层数再次相乘。
+  return visible.flatMap(segment => {
+    if (segment.attributeEffects?.length || segment.damageEffects?.length || !segment.enabled)
+      return [segment];
+    const parent = parents.get(buffOwnerInstanceKey(segment.targetId, segment.instanceId));
+    const windows = parent && hidden.has(parent) ? parentWindows.get(parent) : undefined;
+    if (!windows?.length || segment.startFrame === segment.endFrame) return [segment];
+    const boundaries = [
+      ...new Set([
+        segment.startFrame,
+        segment.endFrame,
+        ...windows.flatMap(window =>
+          [window.startFrame, window.endFrame].filter(
+            frame => frame > segment.startFrame && frame < segment.endFrame,
+          ),
+        ),
+      ]),
+    ].sort((a, b) => a - b);
+    return boundaries.slice(0, -1).map((startFrame, index) => {
+      const parentWindow = windows
+        .filter(window => window.startFrame <= startFrame && window.endFrame > startFrame)
+        .at(-1);
+      return {
+        ...segment,
+        startFrame,
+        endFrame: boundaries[index + 1]!,
+        attributeEffects: parentWindow?.enabled
+          ? parentWindow.attributeEffects
+          : segment.attributeEffects,
+        damageEffects: parentWindow?.enabled ? parentWindow.damageEffects : segment.damageEffects,
+      };
+    });
+  });
 }
 
 /** 伤害图标和物理异常仍需内部 Buff 身份，即使它不在轴上显示。 */
@@ -607,7 +678,13 @@ function projectBuffSegments(
         if (
           active.simpleModifierAttribute === fact?.simpleModifierAttribute &&
           active.simpleModifierSlot === fact?.simpleModifierSlot &&
-          active.simpleModifierValue === fact?.simpleModifierValue
+          active.simpleModifierValue === fact?.simpleModifierValue &&
+          (!isOwnOrPresentation ||
+            JSON.stringify(active.attributeEffects ?? []) ===
+              JSON.stringify(entry.buffAttributeEffects ?? [])) &&
+          (!isOwnOrPresentation ||
+            JSON.stringify(active.damageEffects ?? []) ===
+              JSON.stringify(entry.buffDamageEffects ?? []))
         )
           continue;
         closed.push({
@@ -627,6 +704,12 @@ function projectBuffSegments(
         } = active;
         open.set(activeKey, {
           ...unchanged,
+          attributeEffects: isOwnOrPresentation
+            ? (entry.buffAttributeEffects ?? [])
+            : active.attributeEffects,
+          damageEffects: isOwnOrPresentation
+            ? (entry.buffDamageEffects ?? [])
+            : active.damageEffects,
           ...(fact ?? {}),
           startFrame: entry.frame,
           startSequence: entry.sequence,
@@ -697,6 +780,10 @@ function projectBuffSegments(
       });
     }
     open.set(key, {
+      ...(entry.buffAttributeEffects === undefined
+        ? {}
+        : { attributeEffects: entry.buffAttributeEffects }),
+      ...(entry.buffDamageEffects === undefined ? {} : { damageEffects: entry.buffDamageEffects }),
       ...(entry.sourceId === undefined ? {} : { sourceId: entry.sourceId }),
       ...(optionalString(data, 'sourceActionId') === undefined
         ? {}

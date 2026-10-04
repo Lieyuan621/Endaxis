@@ -8,6 +8,24 @@ import type { AppliedDamageModifier, CombatObjectRef } from '../state/foundation
 export type { CombatObjectRef } from '../state/foundationState';
 export type CombatReceiptValue = boolean | number | string | null;
 
+/** Buff 在该时点已经解析的属性槽修正，不包含条件伤害规则或来源链。 */
+export interface BuffAttributeEffect {
+  readonly attribute: string;
+  readonly slot: string;
+  readonly value: number;
+}
+
+/** 已解析数值的伤害规则；condition 是适用条件，不表示任意一次命中已经满足它。 */
+export interface BuffDamageEffect {
+  readonly side: 'attacker' | 'defender';
+  readonly zone: string;
+  readonly addition: number;
+  readonly damageTypes?: readonly string[];
+  readonly conditional: boolean;
+  readonly multiplier?: number;
+  readonly attributeEffect?: BuffAttributeEffect;
+}
+
 /** 一条带帧、事实类型和结构化数据的运行时回执。 */
 export interface CombatReceiptEntry {
   readonly sequence: number;
@@ -26,6 +44,8 @@ export interface CombatReceiptEntry {
   /** 本次命中冻结的技能倍率运算链，不属于可重算的 UI 投影。 */
   readonly skillMultiplierCalculation?: import('../state/foundationState').ActionValueCalculation;
   readonly appliedDamageModifiers?: readonly AppliedDamageModifier[];
+  readonly buffAttributeEffects?: readonly BuffAttributeEffect[];
+  readonly buffDamageEffects?: readonly BuffDamageEffect[];
 }
 
 /** 运行时追加事实的最小端口，投影层只读取其最终结果。 */
@@ -67,9 +87,11 @@ export class CombatReceiptCollector implements CombatReceiptSink {
       Object.keys(entry.data!).length !== 1 ||
       entry.subject !== undefined ||
       entry.producedBy !== undefined ||
+      entry.buffDamageEffects !== undefined ||
       entry.runtimeSource !== undefined ||
       entry.skillMultiplierCalculation !== undefined ||
-      entry.appliedDamageModifiers !== undefined
+      entry.appliedDamageModifiers !== undefined ||
+      entry.buffAttributeEffects !== undefined
     ) {
       if (append) this.history.append(entry);
       this.#passiveUiValues.delete(targetId);

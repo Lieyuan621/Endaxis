@@ -51,6 +51,82 @@ import {
 import { CombatBuffContainer, type CombatBuff } from '../buffs/combatBuffs';
 import { POISE_BREAK_BUFF_ID, PoiseBreakBuffRuntime } from '../buffs/poiseBreakBuffRuntime';
 import type { DamageModifierExternalCondition } from '../damage/damageModifiers';
+import { resolveBuffModifierNumber } from '../buffs/buffModifierNumberSource';
+
+function damageEffects(
+  buff: CombatBuff<string>,
+): import('../receipt/combatReceipt').BuffDamageEffect[] {
+  return buff.damageModifiers.flatMap(modifier => {
+    const condition = modifier.definition.condition;
+    if (condition?.kind === 'eventDamageTypesMatch' && condition.damageTypes.length === 0) return [];
+    const applicability = {
+      ...(condition?.kind === 'eventDamageTypesMatch'
+        ? { damageTypes: [...condition.damageTypes] }
+        : {}),
+      conditional:
+        modifier.conditionProgram !== undefined ||
+        (condition !== undefined && condition.kind !== 'eventDamageTypesMatch'),
+    };
+    return modifier.definition.processors.flatMap(
+      (processor): import('../receipt/combatReceipt').BuffDamageEffect[] => {
+        if (processor.kind === 'multiplyValue')
+          return [
+            {
+              ...applicability,
+              conditional: true,
+              side: modifier.definition.enabledSide,
+              zone: 'product',
+              addition: 0,
+              multiplier: processor.scale,
+            },
+          ];
+        if (processor.kind === 'instantAttribute') {
+          const effects =
+            'slot' in processor.values
+              ? [
+                  {
+                    attribute: processor.attribute,
+                    slot: processor.values.slot,
+                    value: resolveBuffModifierNumber(
+                      modifier.numberSource,
+                      processor.values.value,
+                      'damage',
+                    ),
+                  },
+                ]
+              : Object.entries(processor.values)
+                  .filter(
+                    ([slot, value]) =>
+                      value !==
+                      (slot === 'finalMultiplier' || slot === 'baseFinalMultiplier' ? 1 : 0),
+                  )
+                  .map(([slot, value]) => ({ attribute: processor.attribute, slot, value }));
+          return effects.map(attributeEffect => ({
+            ...applicability,
+            side: processor.targetSide,
+            zone: 'normal',
+            addition: 0,
+            attributeEffect,
+          }));
+        }
+        const addition = resolveBuffModifierNumber(
+          modifier.numberSource,
+          processor.addition,
+          'damage',
+        );
+        if (!Number.isFinite(addition) || addition === 0) return [];
+        return [
+          {
+            side: processor.side,
+            zone: processor.zone,
+            addition,
+            ...applicability,
+          },
+        ];
+      },
+    );
+  });
+}
 import type { HealthDamageEventPayload } from '../damage/healthDamage';
 import type { PlayerDamageNonRandomRuntimeSnapshot } from '../damage/playerActiveDamageInput';
 import type { DamageModifierSide } from '../damage/playerDamageContext';
@@ -119,6 +195,17 @@ import type { FrameRuntime } from './combatSimulation';
 type DamageStep = ResolvedCombatStepForKind<'dealDamage' | 'dealFixedDamage'>;
 
 const MULTIPLICATIVE_ATTRIBUTE_SLOTS = new Set(['finalMultiplier', 'baseFinalMultiplier']);
+
+function attributeEffects(modifiers: CombatBuff<string>['attributeModifiers']) {
+  return modifiers.flatMap(modifier =>
+    Object.entries(modifier.values)
+      .filter(
+        ([slot, value]) =>
+          Math.abs(value - (MULTIPLICATIVE_ATTRIBUTE_SLOTS.has(slot) ? 1 : 0)) > 0.0000001,
+      )
+      .map(([slot, value]) => ({ attribute: modifier.attribute, slot, value })),
+  );
+}
 
 /**
  * 只有“一项属性修正、一个非单位槽位”才可自动摘要。
@@ -1813,23 +1900,35 @@ export class StandardPlayerDamageEnvironment {
     });
   }
 
-  /** 值刷新不等于重施加；只记录变化后的单属性事实，避免静态刷新产生重复回执。 */
+  // 仅用于避免重复展示回执；恢复后首次刷新可重新记录，不参与战斗状态或计算。
+  readonly #buffDamageEffectSignatures = new WeakMap<CombatBuff<string>, string>();
+
+  /** 值刷新不等于重施加；只记录变化后的修正事实，避免静态刷新产生重复回执。 */
   #recordBuffModifierChanged(
     buff: CombatBuff<string>,
     previous: CombatBuff<string>['attributeModifiers'],
   ): void {
     const before = simpleAttributeModifierFact(previous);
     const after = simpleAttributeModifierFact(buff.attributeModifiers);
+    const effects = attributeEffects(buff.attributeModifiers);
+    const damage = damageEffects(buff);
+    const damageSignature = JSON.stringify(damage);
+    const previousDamage = this.#buffDamageEffectSignatures.get(buff) ?? '[]';
+    this.#buffDamageEffectSignatures.set(buff, damageSignature);
     if (
       before?.simpleModifierAttribute === after?.simpleModifierAttribute &&
       before?.simpleModifierSlot === after?.simpleModifierSlot &&
-      before?.simpleModifierValue === after?.simpleModifierValue
+      before?.simpleModifierValue === after?.simpleModifierValue &&
+      JSON.stringify(attributeEffects(previous)) === JSON.stringify(effects) &&
+      previousDamage === damageSignature
     )
       return;
     this.#requireReceipt().record({
       frame: this.#requireClock().frame,
       time: this.#requireClock().time,
       event: 'BuffModifierChanged',
+      buffAttributeEffects: effects,
+      buffDamageEffects: damage,
       sourceId: buff.sourceId,
       targetId: buff.owner.ownerId,
       data: {
@@ -1870,10 +1969,13 @@ export class StandardPlayerDamageEnvironment {
           : undefined;
       const displayCount =
         level !== undefined && Number.isSafeInteger(level) && level > 0 ? level : undefined;
+      this.#buffDamageEffectSignatures.set(buff, JSON.stringify(damageEffects(buff)));
       receipt.record({
         frame: clock.frame,
         time: clock.time,
         event: eventName,
+        buffAttributeEffects: attributeEffects(buff.attributeModifiers),
+        buffDamageEffects: damageEffects(buff),
         ...(eventName === 'BuffApplied' && event.producedBy !== undefined
           ? { producedBy: event.producedBy }
           : {}),

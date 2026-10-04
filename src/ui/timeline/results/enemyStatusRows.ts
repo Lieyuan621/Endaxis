@@ -19,12 +19,17 @@ export function isEnemyTimelineBuffVisible(buff: BuffTimelineSegment): boolean {
  * 分区顺序：物理异常与破防、附着、法术异常、普通状态。
  * 未识别的状态保留在普通区，不能按图标或名称猜测。
  */
-export function layoutEnemyStatusRows<T extends BuffTimelineSegment>(
+export function layoutEnemyStatusRows<
+  T extends BuffTimelineSegment,
+  E extends { startFrame: number; endFrame: number },
+>(
   buffs: readonly T[],
   markers: readonly EnemyEffectMarker[],
   attachmentIds: ReadonlySet<string>,
+  entities: readonly E[] = [],
 ) {
   const lanes = new Map<T, number>();
+  const entityLanes = new Map<E, number>();
   const groups: T[][] = [[], [], [], []];
   for (const buff of buffs) {
     const group = attachmentIds.has(buff.buffId)
@@ -43,6 +48,25 @@ export function layoutEnemyStatusRows<T extends BuffTimelineSegment>(
     if (group === 1) attachmentRow = offset;
     if (group === 2) anomalyRow = offset;
     const ends: number[] = [];
+    if (group === 3) {
+      const items = [
+        ...groups[group]!.map(buff => ({
+          start: buff.startFrame,
+          end: buff.durationEndFrame ?? buff.endFrame,
+          buff,
+        })),
+        ...entities.map(entity => ({ start: entity.startFrame, end: entity.endFrame, entity })),
+      ].sort((a, b) => a.start - b.start);
+      for (const item of items) {
+        let lane = ends.findIndex(end => end <= item.start);
+        if (lane < 0) lane = ends.length;
+        ends[lane] = item.end;
+        if ('buff' in item) lanes.set(item.buff, offset + lane);
+        else entityLanes.set(item.entity, offset + lane);
+      }
+      offset += ends.length;
+      continue;
+    }
     for (const buff of groups[group]!.sort((a, b) => a.startFrame - b.startFrame)) {
       // 物理异常与破防共用一行；单一附着槽也固定在同一行。
       let lane = group <= 1 ? 0 : ends.findIndex(end => end <= buff.startFrame);
@@ -89,5 +113,13 @@ export function layoutEnemyStatusRows<T extends BuffTimelineSegment>(
       if (buff !== representative) hiddenIcons.add(buff);
     }
   }
-  return { lanes, iconSlots, hiddenIcons, markerPositions, attachmentRow, rowCount: offset };
+  return {
+    lanes,
+    entityLanes,
+    iconSlots,
+    hiddenIcons,
+    markerPositions,
+    attachmentRow,
+    rowCount: offset,
+  };
 }

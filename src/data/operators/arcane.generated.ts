@@ -4512,6 +4512,7 @@ const arcaneBuff10: SkillBuffDefinition = {
     iconStyleInSquad: 'Default',
     abnormalColorType: 'Physical',
     orderPriority: { useDirectoryValue: false, value: 0, category: 'AttentionDebuff' },
+    nameKey: 'effects.name.imprisonment',
   },
   applyTags: ['Skill/Character/chr_0032_lizhiyan/combo_seal'],
   extendTags: [],

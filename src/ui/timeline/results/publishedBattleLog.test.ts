@@ -33,7 +33,12 @@ it('captures definition metadata once, while localization uses the captured iden
   const definition = {
     ...perlica,
     displayName: 'captured custom name',
-    buffDisplayNameKeys: { 'buff:owned': 'effects.name.razorClawmark' },
+    buffDefinitions: {
+      'buff:owned': {
+        stackingType: 'stack' as const,
+        presentation: { nameKey: 'effects.name.razorClawmark' },
+      },
+    },
     talents: perlica.talents.map(talent => ({ ...talent })),
   };
   const index = { getOperator: vi.fn(() => definition) };
@@ -53,7 +58,7 @@ it('captures definition metadata once, while localization uses the captured iden
   );
   const reads = index.getOperator.mock.calls.length;
   definition.displayName = 'edited name';
-  definition.buffDisplayNameKeys['buff:owned'] = 'effects.name.edited';
+  definition.buffDefinitions['buff:owned'].presentation.nameKey = 'effects.name.edited';
   definition.talents[0]!.levels = 99;
   expect(operators.get(perlica.slug)!.talents[0]).toEqual(originalTalent);
   expect(Object.keys(operators.get(perlica.slug)!)).not.toContain('skills');

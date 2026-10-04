@@ -259,7 +259,7 @@ onBeforeUnmount(() => clearTimeout(tooltipTimer));
   box-shadow: var(--ea-floating-shadow);
   font-size: var(--ea-control-font-size-sm);
   line-height: 1.4;
-  white-space: normal;
+  white-space: pre-line;
   pointer-events: none;
 }
 </style>

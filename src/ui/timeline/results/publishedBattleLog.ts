@@ -18,6 +18,7 @@ export interface PublishedBattleLogLabels {
   skill: (cast: TimelineSkillCastViewModel, track: TimelineTrackViewModel) => string;
   operator: (name: PublishedOperatorName) => string;
   color?: (cast: TimelineSkillCastViewModel, track: TimelineTrackViewModel) => string;
+  buffNameKeys?: () => ReadonlyMap<string, string>;
 }
 
 /** 捕获不随编辑漂移的事实；显示时允许使用当前语言，无需重跑模拟或刷新日志。 */
@@ -42,9 +43,10 @@ export function capturePublishedBattleLog(
   return {
     history: published.run.receiptHistory,
     buffDisplayNameKeys: new Map(
-      [...operators.values()].flatMap(operator =>
-        Object.entries(operator.buffDisplayNameKeys ?? {}),
-      ),
+      labels.buffNameKeys?.() ??
+        [...operators.values()].flatMap(operator =>
+          Object.entries(operator.buffDisplayNameKeys ?? {}),
+        ),
     ),
     resolveCastOwners: () =>
       tracks.flatMap(({ track, name }) =>

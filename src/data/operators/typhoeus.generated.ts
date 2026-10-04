@@ -12457,6 +12457,11 @@ export const typhoeus: OperatorDefinition = {
           { startFrame: 0, endFrame: 180, sequence: { $sequence: 'applyBuff_4' } },
         ],
       },
+      presentation: {
+        icon: '/operators/typhoeus/combo.webp',
+        nameKey: 'effects.name.barrageArray',
+        placement: 'enemy',
+      },
     },
     abilityentity_chr_0034_typhoea_ultimateskill_arrowrain: {
       bornTags: [

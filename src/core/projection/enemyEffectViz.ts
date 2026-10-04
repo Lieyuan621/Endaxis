@@ -5,6 +5,7 @@
  * `ElementalInflictionApplied` / `ElementalReactionApplied` 是战斗语义事实，不是第二份 UI 状态。
  */
 import type { CombatReceiptEntry, CombatReceiptValue } from '../combat/receipt/combatReceipt';
+import { CombatObjectOrigins } from './combatObjectOrigins';
 import {
   findBuffTimelineSegmentForDamage,
   projectBuffIconTimelineMetadata,
@@ -27,9 +28,11 @@ export function isBuffDamageReceipt(entry: CombatReceiptEntry): boolean {
 export function isSkillFollowupBuffDamageReceipt(
   entry: CombatReceiptEntry,
   visibleBuffSegments: readonly BuffTimelineSegment[],
+  displayOwners: Readonly<Record<number, BuffTimelineSegment>> = {},
 ): boolean {
   if (
     !isBuffDamageReceipt(entry) ||
+    displayOwners[entry.sequence] !== undefined ||
     entry.targetId !== entry.data?.buffOwnerId ||
     (entry.producedBy?.kind !== 'buff' && entry.producedBy?.kind !== 'globalBuff')
   ) {
@@ -62,12 +65,58 @@ export interface EnemyEffectMarker {
 }
 
 export interface EnemyEffectViz {
+  /** 隐藏伤害执行者对应的可见祖先；仅为展示寻址，不改写伤害来源。 */
+  readonly damageDisplayOwners?: Readonly<Record<number, BuffTimelineSegment>>;
   readonly markers: readonly EnemyEffectMarker[];
   /** 实际伤害回执本身提供身份与详情，不按时间匹配爆发图标。 */
   readonly damageHits?: readonly CombatReceiptEntry[];
   /** 伤害来源的展示元数据；即便头顶状态栏隐藏，仍可用于瞬时伤害图标。 */
   readonly damageBuffs?: readonly BuffTimelineSegment[];
   readonly attachmentConversions?: readonly AttachmentConversion[];
+}
+
+export function projectBuffDamageDisplayOwners(
+  entries: readonly CombatReceiptEntry[],
+  segments: readonly BuffTimelineSegment[],
+): Readonly<Record<number, BuffTimelineSegment>> {
+  const owners: Record<number, BuffTimelineSegment> = {};
+  let origins: CombatObjectOrigins | undefined;
+  for (const entry of entries) {
+    if (
+      !isBuffDamageReceipt(entry) ||
+      entry.targetId !== entry.data?.buffOwnerId ||
+      findBuffTimelineSegmentForDamage(entry, segments)
+    )
+      continue;
+    origins ??= new CombatObjectOrigins(entries);
+    // 仅沿创建关系查找；增益提供者、触发事件和运行来源都不是展示父级。
+    const result = origins.findAncestor(
+      origins.get({ kind: 'receipt', sequence: entry.sequence }),
+      node => {
+        if (node.ref.kind !== 'buff' || node.ref.ownerId !== entry.targetId) return false;
+        const buffId = node.fact?.data?.buffId;
+        if (typeof buffId !== 'string') return false;
+        const segment = findBuffTimelineSegmentForDamage(
+          {
+            ...entry,
+            data: {
+              ...entry.data,
+              buffId,
+              buffOwnerId: node.ref.ownerId,
+              buffInstanceId: node.ref.instanceId,
+            },
+          },
+          segments,
+        );
+        if (segment) owners[entry.sequence] = segment;
+        return segment !== undefined;
+      },
+      // Start 可先产生伤害再写入出生回执；时间归属由状态段检查，不截断同帧出生关系。
+      { relations: ['producedBy'], throughSequence: Infinity },
+    );
+    if (result.status !== 'found') delete owners[entry.sequence];
+  }
+  return owners;
 }
 
 export interface AttachmentConversion {
@@ -137,11 +186,12 @@ export function projectEnemyEffectViz(
   const damageHits: CombatReceiptEntry[] = [];
   const attachmentConversions: AttachmentConversion[] = [];
   const buffSegments = projectBuffIconTimelineMetadata(entries, endFrame);
+  const damageDisplayOwners = projectBuffDamageDisplayOwners(entries, buffSegments);
   for (const entry of entries) {
     const enemyBuffDamage =
       isBuffDamageReceipt(entry) &&
       entry.targetId === entry.data?.buffOwnerId &&
-      !isSkillFollowupBuffDamageReceipt(entry, buffSegments);
+      !isSkillFollowupBuffDamageReceipt(entry, buffSegments, damageDisplayOwners);
     if (
       (entry.event === 'DamageApplied' && typeof entry.data?.spellBurstType === 'string') ||
       enemyBuffDamage
@@ -190,6 +240,7 @@ export function projectEnemyEffectViz(
   }
   return {
     markers,
+    ...(Object.keys(damageDisplayOwners).length ? { damageDisplayOwners } : {}),
     ...(damageHits.length ? { damageHits } : {}),
     ...(damageHits.length && buffSegments.length ? { damageBuffs: buffSegments } : {}),
     ...(attachmentConversions.length ? { attachmentConversions } : {}),

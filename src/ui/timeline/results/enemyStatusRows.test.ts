@@ -19,6 +19,17 @@ function buff(buffId: string, extras: Partial<BuffTimelineSegment> = {}): BuffTi
 }
 
 describe('enemy status presentation rows', () => {
+  it('shares ordinary status lanes with entities and reuses ended intervals', () => {
+    const before = buff('before', { endFrame: 10 });
+    const after = buff('after', { startFrame: 20, endFrame: 30 });
+    const entity = { startFrame: 10, endFrame: 20 };
+    const overlapping = { startFrame: 15, endFrame: 25 };
+    const result = layoutEnemyStatusRows([before, after], [], attachmentIds, [entity, overlapping]);
+    expect(result.entityLanes.get(entity)).toBe(result.lanes.get(before));
+    expect(result.lanes.get(after)).toBe(result.lanes.get(before));
+    expect(result.entityLanes.get(overlapping)).not.toBe(result.entityLanes.get(entity));
+    expect(result.rowCount).toBe(5);
+  });
   it('uses explicit native head-bar routing, not a shared icon or buff name, to hide internal effects', () => {
     const hidden = buff('internal', {
       iconId: 'shared',

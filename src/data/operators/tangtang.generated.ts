@@ -5690,6 +5690,11 @@ export const tangtang: OperatorDefinition = {
           ],
         },
       },
+      presentation: {
+        icon: '/operators/tangtang/talent 2.webp',
+        nameKey: 'effects.name.waterspouts',
+        placement: 'enemy',
+      },
     },
     abilityentity_chr_0027_tangtang_normal_skill_03_02: {
       bornTags: [
@@ -6025,6 +6030,11 @@ export const tangtang: OperatorDefinition = {
             { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_5' } },
           ],
         },
+      },
+      presentation: {
+        icon: '/operators/tangtang/talent 2.webp',
+        nameKey: 'effects.name.waterspouts',
+        placement: 'enemy',
       },
     },
     abilityentity_chr_0027_tangtang_normal_skill_03: {
@@ -6362,6 +6372,11 @@ export const tangtang: OperatorDefinition = {
           ],
         },
       },
+      presentation: {
+        icon: '/operators/tangtang/talent 2.webp',
+        nameKey: 'effects.name.waterspouts',
+        placement: 'enemy',
+      },
     },
     abilityentity_chr_0027_tangtang_normal_skill_02_02: {
       bornTags: [
@@ -6698,6 +6713,11 @@ export const tangtang: OperatorDefinition = {
           ],
         },
       },
+      presentation: {
+        icon: '/operators/tangtang/talent 2.webp',
+        nameKey: 'effects.name.waterspouts',
+        placement: 'enemy',
+      },
     },
     abilityentity_chr_0027_tangtang_normal_skill_02: {
       bornTags: [
@@ -7033,6 +7053,11 @@ export const tangtang: OperatorDefinition = {
           ],
         },
       },
+      presentation: {
+        icon: '/operators/tangtang/talent 2.webp',
+        nameKey: 'effects.name.waterspouts',
+        placement: 'enemy',
+      },
     },
     abilityentity_chr_0027_tangtang_normal_skill: {
       bornTags: [
@@ -7323,6 +7348,11 @@ export const tangtang: OperatorDefinition = {
             { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_5' } },
           ],
         },
+      },
+      presentation: {
+        icon: '/operators/tangtang/talent 2.webp',
+        nameKey: 'effects.name.waterspouts',
+        placement: 'enemy',
       },
     },
   },

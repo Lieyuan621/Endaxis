@@ -137,6 +137,30 @@ export class CombatReceiptHistory {
         ? {}
         : { runtimeSource: Object.freeze({ ...entry.runtimeSource }) }),
       ...(entry.data === undefined ? {} : { data: Object.freeze({ ...entry.data }) }),
+      ...(entry.buffDamageEffects === undefined
+        ? {}
+        : {
+            buffDamageEffects: Object.freeze(
+              entry.buffDamageEffects.map(effect =>
+                Object.freeze({
+                  ...effect,
+                  ...(effect.attributeEffect === undefined
+                    ? {}
+                    : { attributeEffect: Object.freeze({ ...effect.attributeEffect }) }),
+                  ...(effect.damageTypes === undefined
+                    ? {}
+                    : { damageTypes: Object.freeze([...effect.damageTypes]) }),
+                }),
+              ),
+            ),
+          }),
+      ...(entry.buffAttributeEffects === undefined
+        ? {}
+        : {
+            buffAttributeEffects: Object.freeze(
+              entry.buffAttributeEffects.map(effect => Object.freeze({ ...effect })),
+            ),
+          }),
       ...(entry.skillMultiplierCalculation === undefined
         ? {}
         : { skillMultiplierCalculation: freezeValueCalculation(entry.skillMultiplierCalculation) }),

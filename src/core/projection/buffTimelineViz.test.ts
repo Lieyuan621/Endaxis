@@ -37,6 +37,57 @@ function applied(
   };
 }
 
+it('仅无自身加成的图标借用无图标直接父实例的历史加成', () => {
+  const effect = { attribute: 'natureEnhancedDamageIncrease', slot: 'baseAddition', value: 0.2 };
+  const parent = applied(0, 0, 'operator', 1, 1, false);
+  const child = applied(1, 0, 'operator', 2, 1);
+  const entries: CombatReceiptEntry[] = [
+    { ...parent, data: { ...parent.data, iconPath: '' }, buffAttributeEffects: [effect] },
+    {
+      ...child,
+      producedBy: { kind: 'buff', ownerId: 'operator', instanceId: 1 },
+      buffAttributeEffects: [],
+    },
+    {
+      ...parent,
+      sequence: 2,
+      frame: 10,
+      event: 'BuffModifierChanged',
+      buffAttributeEffects: [{ ...effect, value: 0.3 }],
+    },
+    finished(3, 20, 'operator', 1),
+  ];
+  expect(
+    projectBuffTimelineViz(entries, 30)
+      .filter(segment => segment.instanceId === 2)
+      .map(segment => [segment.startFrame, segment.endFrame, segment.attributeEffects?.[0]?.value]),
+  ).toEqual([
+    [0, 10, 0.2],
+    [10, 20, 0.3],
+    [20, 30, undefined],
+  ]);
+  for (const ownEffects of [[], [{ ...effect, value: 0.4 }]]) {
+    const visibleParent = { ...entries[0]!, data: { ...parent.data, visible: true } };
+    const result = projectBuffTimelineViz(
+      [visibleParent, { ...entries[1]!, buffAttributeEffects: ownEffects }],
+      30,
+    );
+    expect(result.find(segment => segment.instanceId === 2)?.attributeEffects).toEqual(ownEffects);
+  }
+  const damage = {
+    side: 'defender' as const,
+    zone: 'normal',
+    addition: 0.168,
+    damageTypes: ['heat', 'electric', 'cryo', 'nature'],
+    conditional: false,
+  };
+  const projected = projectBuffTimelineViz(
+    [{ ...parent, buffDamageEffects: [damage] }, entries[1]!],
+    30,
+  );
+  expect(projected.find(segment => segment.instanceId === 2)?.damageEffects).toEqual([damage]);
+});
+
 function finished(
   sequence: number,
   frame: number,

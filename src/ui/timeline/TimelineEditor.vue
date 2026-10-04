@@ -391,7 +391,7 @@ import { projectPublishedHitDetail } from './results/publishedHitDetail';
 import { layoutEnemyDamageHits } from './results/enemyDamageHitLayout';
 import { useSimulationReceiptSelection } from './results/useSimulationReceiptSelection';
 import {
-  collectOperatorBuffDisplayNameKeys,
+  collectBuffDisplayNameKeys,
   type BuffDisplayName,
   resolveBuffDisplayName,
 } from './results/buffDisplayName';
@@ -1289,7 +1289,14 @@ function globalEffectDisplayName(id: string): string | null {
 const operatorBuffDisplayNameKeys = computed(() => {
   operatorDefinitionRevision.value;
   const names = new Map<string, BuffDisplayName>(
-    collectOperatorBuffDisplayNameKeys(editorGameDataRepository.getOperators()),
+    collectBuffDisplayNameKeys([
+      editorGameDataRepository.getCommonBuffDefinitions?.() ?? {},
+      ...[
+        ...editorGameDataRepository.getOperators(),
+        ...editorGameDataRepository.getWeapons(),
+        ...editorGameDataRepository.getGearSets(),
+      ].map(owner => owner.buffDefinitions ?? {}),
+    ]),
   );
   // 全局效果的 Buff 以效果 ID 编译；显示名沿用效果名。
   for (const reference of scenario.value.globalConfig.effects ?? []) {
@@ -1840,6 +1847,12 @@ const {
   () => editorGameDataRepository.getWeapons(),
   {
     skill: timelineCastLabel,
+    buffNameKeys: () =>
+      new Map(
+        [...operatorBuffDisplayNameKeys.value].flatMap(([id, name]) =>
+          typeof name === 'string' ? [[id, name] as const] : [],
+        ),
+      ),
     operator: name =>
       name.displayName ??
       (name.assetSlug === null
@@ -3014,15 +3027,40 @@ const combatHudInitialSkillSlots = computed(() =>
   }),
 );
 
-const combatHudOperatorPassiveUis = computed(() =>
+const operatorStatusTimelineSources = computed(() =>
   viewModel.value.tracks.flatMap(track => {
     if (track.operatorInstanceId === null || track.operatorSlug === null) return [];
-    const definition = editorGameDataRepository.getOperator(track.operatorSlug)?.passiveUi;
-    return definition === undefined ? [] : [{ operatorId: track.operatorInstanceId, definition }];
+    const operator = editorGameDataRepository.getOperator(track.operatorSlug);
+    const definition = operator?.passiveUi;
+    return [
+      ...(definition === undefined ? [] : [{ operatorId: track.operatorInstanceId, definition }]),
+      ...Object.entries(operator?.abilityEntityDefinitions ?? {}).flatMap(
+        ([abilityEntityId, entity]) =>
+          entity.presentation
+            ? [
+                {
+                  operatorId: track.operatorInstanceId!,
+                  definition: {
+                    kind: 'abilityEntityCount' as const,
+                    abilityEntityId,
+                    ...entity.presentation,
+                  },
+                },
+              ]
+            : [],
+      ),
+    ];
   }),
 );
 
 /** 专属 UI 不只采样光标快照；非零状态还要保留完整生命周期供轨道展示。 */
+const combatHudOperatorPassiveUis = computed(() =>
+  viewModel.value.tracks.flatMap(track => {
+    if (track.operatorInstanceId === null || track.operatorSlug === null) return [];
+    const definition = editorGameDataRepository.getOperator(track.operatorSlug)?.passiveUi;
+    return definition ? [{ operatorId: track.operatorInstanceId, definition }] : [];
+  }),
+);
 const operatorPassiveUiTimelineSegments = computed(() => {
   const current = simulationRun.value;
   return current === null
@@ -3030,7 +3068,7 @@ const operatorPassiveUiTimelineSegments = computed(() => {
     : projectOperatorPassiveUiTimelineViz(
         publishedReceiptEntries.value,
         current.frame,
-        combatHudOperatorPassiveUis.value,
+        operatorStatusTimelineSources.value,
       );
 });
 
@@ -3196,6 +3234,7 @@ const positionedBuffsByTarget = computed(() => {
 const positionedOperatorPassiveUisByTarget = computed(() => {
   const grouped = new Map<string, OperatorPassiveUiTimelineSegment[]>();
   for (const segment of operatorPassiveUiTimelineSegments.value) {
+    if (segment.kind === 'abilityEntityCount' && segment.placement === 'enemy') continue;
     const list = grouped.get(segment.operatorId) ?? [];
     list.push(segment);
     grouped.set(segment.operatorId, list);
@@ -3456,17 +3495,19 @@ function castHitMarkers(trackIndex: TrackIndex, castId: string): TimelineHitMark
   if (castModel === undefined || cast === undefined) return [];
   const publishedStartFrame = skillCastActualStartFrames.value.get(castId) ?? castModel.startFrame;
   if (simulationRun.value !== null) {
-    return (hitOccurrences.value.get(castId) ?? []).map(hit => ({
-      stepKey: hit.stepKey,
-      hitId: hit.hitId,
-      executionFrame: hit.frame,
-      leftPx: timelineFramePx(hit.frame) - timelineFramePx(publishedStartFrame),
-      triggered: hit.triggered,
-      stackIndex: hit.stackIndex,
-      linkBuffed: hit.linkBuffed,
-      forcedCritical: cast.simulationInputs?.criticalOverrides?.[hit.stepKey] === true,
-      title: hitMarkerTitle(hit.label),
-    }));
+    return (hitOccurrences.value.get(castId) ?? [])
+      .filter(hit => !entityStatusHitKeys.value.has(JSON.stringify([castId, hit.hitId, hit.frame])))
+      .map(hit => ({
+        stepKey: hit.stepKey,
+        hitId: hit.hitId,
+        executionFrame: hit.frame,
+        leftPx: timelineFramePx(hit.frame) - timelineFramePx(publishedStartFrame),
+        triggered: hit.triggered,
+        stackIndex: hit.stackIndex,
+        linkBuffed: hit.linkBuffed,
+        forcedCritical: cast.simulationInputs?.criticalOverrides?.[hit.stepKey] === true,
+        title: hitMarkerTitle(hit.label),
+      }));
   }
   return castModel.hitMarkers
     .filter(marker =>
@@ -3482,6 +3523,36 @@ function castHitMarkers(trackIndex: TrackIndex, castId: string): TimelineHitMark
       forcedCritical: cast.simulationInputs?.criticalOverrides?.[marker.stepKey] === true,
     }));
 }
+
+/** 仅把直接由带状态展示的能力实体产生的命中移到对应状态；不向上追溯衍生 Buff。 */
+const entityStatusHits = computed(() =>
+  [...hitOccurrences.value].flatMap(([castId, hits]) =>
+    hits.flatMap(hit => {
+      if (hit.entityInstanceId === undefined) return [];
+      const segment = operatorPassiveUiTimelineSegments.value.find(
+        segment =>
+          segment.kind === 'abilityEntityCount' &&
+          segment.startFrame <= hit.frame &&
+          segment.endFrame >= hit.frame &&
+          segment.entities.some(entity => entity.instanceId === hit.entityInstanceId),
+      );
+      return segment
+        ? [
+            {
+              ...hit,
+              castId,
+              entityInstanceId: hit.entityInstanceId,
+              title: hitMarkerTitle(hit.label),
+            },
+          ]
+        : [];
+    }),
+  ),
+);
+const entityStatusHitKeys = computed(
+  () =>
+    new Set(entityStatusHits.value.map(hit => JSON.stringify([hit.castId, hit.hitId, hit.frame]))),
+);
 
 const hitDetailTarget = ref<{
   trackIndex: TrackIndex;
@@ -3502,12 +3573,18 @@ const enemyDamageDetailEntries = computed(() => {
       buffSegmentsForTarget('enemy'),
       enemyEffectViz.value.markers,
       attachmentBuffIds,
+      enemyEffectViz.value.damageBuffs,
+      enemyEffectViz.value.damageDisplayOwners,
+      operatorPassiveUiTimelineSegments.value.filter(
+        segment => segment.kind === 'abilityEntityCount' && segment.placement === 'enemy',
+      ),
     ).find(position =>
       position.group.some(entry => entry.sequence === enemyDamageDetailSequence.value),
     )?.group ?? []
   );
 });
 function enemyDamageSourceDescription(entry: CombatReceiptEntry) {
+  const displayOwner = enemyEffectViz.value.damageDisplayOwners?.[entry.sequence];
   if (
     entry.data?.reactionDamageKind !== undefined ||
     typeof entry.data?.spellBurstType === 'string'
@@ -3515,7 +3592,7 @@ function enemyDamageSourceDescription(entry: CombatReceiptEntry) {
     return typeof entry.data?.spellBurstType === 'string'
       ? t(`timeline.skillEditing.spellBurstTypes.${entry.data.spellBurstType}`)
       : resolveBuffDisplayName(
-          String(entry.data?.buffId ?? ''),
+          String(displayOwner?.buffId ?? entry.data?.buffId ?? ''),
           { t, te },
           undefined,
           undefined,
@@ -3534,7 +3611,7 @@ function enemyDamageSourceDescription(entry: CombatReceiptEntry) {
     typeof entry.data?.spellBurstType === 'string'
       ? t('battleLog.receiptTypes.SpellBurstApplied')
       : resolveBuffDisplayName(
-          String(entry.data?.buffId ?? ''),
+          String(displayOwner?.buffId ?? entry.data?.buffId ?? ''),
           { t, te },
           undefined,
           undefined,
@@ -6931,6 +7008,16 @@ function setMobileGuideFrame(frame: number | null): void {
                   "
                   :operator-name="operatorName(track.operatorSlug)"
                   @open-detail="openOperatorPassiveUiDetail"
+                  :hits="entityStatusHits"
+                  @hit-click="
+                    hit =>
+                      (hitDetailTarget = {
+                        trackIndex: track.trackIndex,
+                        castId: hit.castId,
+                        hitId: hit.hitId,
+                        executionFrame: hit.frame,
+                      })
+                  "
                 />
                 <TimelineBuffBands
                   v-if="timelineViewLayers.lowerBuffs && isOperatorEffectsVisible(track.trackIndex)"
@@ -7333,6 +7420,28 @@ function setMobileGuideFrame(frame: number | null): void {
                 :duration-frames="scenario.battle.durationFrames"
                 v-if="combatHudSnapshot !== null"
                 :viz="enemyEffectViz"
+                :entity-segments="
+                  operatorPassiveUiTimelineSegments.filter(
+                    segment =>
+                      segment.kind === 'abilityEntityCount' && segment.placement === 'enemy',
+                  )
+                "
+                :entity-hits="entityStatusHits"
+                @open-entity-detail="openOperatorPassiveUiDetail"
+                @open-entity-hit="
+                  hit => {
+                    const trackIndex = scenario.tracks.findIndex(track =>
+                      track?.skillCasts.some(cast => cast.id === hit.castId),
+                    );
+                    if (trackIndex >= 0)
+                      hitDetailTarget = {
+                        trackIndex: trackIndex as TrackIndex,
+                        castId: hit.castId,
+                        hitId: hit.hitId,
+                        executionFrame: hit.frame,
+                      };
+                  }
+                "
                 :attachment-buff-ids="attachmentBuffIds"
                 :buffs="buffSegmentsForTarget('enemy')"
                 :source-name="buffSourceName"
@@ -7916,6 +8025,8 @@ function setMobileGuideFrame(frame: number | null): void {
     :skill-type-label="skillTypeLabel"
     :labels="{
       dialogTitle: t('hitDetail.title'),
+      previousHit: t('timeline.hitDetail.previousHit'),
+      nextHit: t('timeline.hitDetail.nextHit'),
       context: t('hitDetail.context'),
       result: t('hitDetail.result'),
       base: t('hitDetail.base'),

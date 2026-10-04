@@ -147,6 +147,12 @@ const schema_f5e87a023be7 = {
 } as const;
 const schema_453b6f59ce2c = { arrayElement: schema_2907d52a9d37 } as const;
 const schema_1235728272b5 = [{ kind: 'number' }, schema_82e7efa7b3e1] as const;
+const schema_09fb5d26cbd4 = {
+  kind: 'enum',
+  options: ['enemy', 'operator'],
+  semantics: schema_4107b248d073,
+  optional: true,
+} as const;
 const schema_9ca14269e3d0 = {
   kind: 'union',
   variants: [{ kind: 'string' }, { kind: 'number' }],
@@ -2795,7 +2801,12 @@ const schema_aa5b4a2aa103 = {
     value: schema_9f18a2e3e968,
   },
 } as const;
-const schema_7622c8ab71ae = {
+const schema_84f4eaf6ec0e = {
+  nameKey: {
+    kind: 'string',
+    optional: true,
+    description: '此 Buff 的显示名称翻译键；仅供界面使用。',
+  },
   iconId: { kind: 'string', optional: true, description: '游戏资源中的图标 ID。' },
   iconPath: { kind: 'string', optional: true, description: '已导出图标的资源路径。' },
   visible: { kind: 'boolean', optional: true, description: '是否允许界面显示这个 Buff。' },
@@ -2878,9 +2889,9 @@ const schema_7622c8ab71ae = {
     description: '多个 Buff 图标同时出现时的排序设置。',
   },
 } as const;
-const schema_0907a88302c1 = {
+const schema_66813ff77e4f = {
   kind: 'object',
-  fields: schema_7622c8ab71ae,
+  fields: schema_84f4eaf6ec0e,
   optional: true,
   description: 'Buff 自身的图标、颜色、排序位置和进度条等显示设置。\n不参与战斗计算的显示信息。',
 } as const;
@@ -2929,23 +2940,6 @@ const schema_3a275265dc5b = {
       description: '与 Buff 黑板值比较的值。',
     },
   },
-} as const;
-const schema_93f1a1767010 = {
-  kind: 'array',
-  element: {
-    kind: 'object',
-    fields: {
-      buffId: { kind: 'string', referenceKind: 'buff', description: '子 Buff ID。' },
-      presentation: {
-        kind: 'object',
-        fields: schema_7622c8ab71ae,
-        description: '子 Buff 的显示规则。',
-      },
-    },
-  },
-  semantics: { arrayElement: {} },
-  optional: true,
-  description: '跟随本体同时出现和消失的额外显示图标；它们没有独立战斗效果和生命周期。',
 } as const;
 const schema_a2f7c7d1976f = {
   kind: 'array',
@@ -3045,7 +3039,34 @@ const schema_a2f7c7d1976f = {
   semantics: schema_140af2d9bf58,
   description: '条件成立时按顺序执行的伤害处理器。',
 } as const;
-const schema_d6c552bfbef9 = {
+const schema_33ac911479b6 = {
+  kind: 'array',
+  element: {
+    kind: 'object',
+    fields: {
+      buffId: { kind: 'string', referenceKind: 'buff', description: '子 Buff ID。' },
+      presentation: {
+        kind: 'object',
+        fields: schema_84f4eaf6ec0e,
+        description: '子 Buff 的显示规则。',
+      },
+    },
+  },
+  semantics: { arrayElement: {} },
+  optional: true,
+  description: '跟随本体同时出现和消失的额外显示图标；它们没有独立战斗效果和生命周期。',
+} as const;
+const schema_7aa69941b391 = {
+  presentation: {
+    kind: 'object',
+    fields: {
+      icon: { kind: 'string' },
+      nameKey: { kind: 'string' },
+      placement: schema_09fb5d26cbd4,
+    },
+    optional: true,
+    description: '实体存在期间的干员状态图标；直接由该实体造成的伤害显示在状态下方。',
+  },
   bornTags: {
     kind: 'array',
     element: schema_d09e9bd69613,
@@ -5690,16 +5711,9 @@ export const definitionSchemas = {
         optional: true,
         description: '干员级附属对象；编辑器后续可在干员层级创建和修改，技能不得复制其完整定义。',
       },
-      buffDisplayNameKeys: {
-        kind: 'record',
-        value: { kind: 'string' },
-        semantics: { recordValue: {} },
-        optional: true,
-        description: '此干员附属 Buff 的名称翻译键；仅用于展示，不进入战斗回执。',
-      },
       abilityEntityDefinitions: {
         kind: 'record',
-        value: { kind: 'object', fields: schema_d6c552bfbef9 },
+        value: { kind: 'object', fields: schema_7aa69941b391 },
         semantics: { recordValue: {} },
         optional: true,
         description: '干员级能力实体蓝图；子技能按引用它的技能等级编译。',
@@ -5812,6 +5826,7 @@ export const definitionSchemas = {
           {
             kind: 'object',
             fields: {
+              placement: schema_09fb5d26cbd4,
               kind: { kind: 'enum', options: ['abilityEntityCount'] },
               abilityEntityId: { kind: 'string', referenceKind: 'abilityEntity' },
               icon: { kind: 'string', description: '图标资源路径。' },
@@ -6302,8 +6317,8 @@ export const definitionSchemas = {
         fields: {
           blackboard: schema_392f51ba723b,
           affixSkillCastIdentity: schema_ceffc9c43558,
-          presentation: schema_0907a88302c1,
-          childPresentations: schema_93f1a1767010,
+          presentation: schema_66813ff77e4f,
+          childPresentations: schema_33ac911479b6,
           timeClock: schema_dfe7358daaf2,
           applyTags: schema_8b88c642c1c1,
           extendTags: schema_863b2cb8a77f,
@@ -6356,8 +6371,8 @@ export const definitionSchemas = {
         fields: {
           blackboard: schema_392f51ba723b,
           affixSkillCastIdentity: schema_ceffc9c43558,
-          presentation: schema_0907a88302c1,
-          childPresentations: schema_93f1a1767010,
+          presentation: schema_66813ff77e4f,
+          childPresentations: schema_33ac911479b6,
           timeClock: schema_dfe7358daaf2,
           applyTags: schema_8b88c642c1c1,
           extendTags: schema_863b2cb8a77f,
@@ -6845,7 +6860,7 @@ export const definitionSchemas = {
       },
     },
   },
-  abilityEntity: { kind: 'object', fields: schema_d6c552bfbef9 },
+  abilityEntity: { kind: 'object', fields: schema_7aa69941b391 },
   abilityEntityChildSkill: {
     kind: 'object',
     fields: {

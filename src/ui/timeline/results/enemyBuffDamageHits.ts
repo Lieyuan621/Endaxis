@@ -15,13 +15,14 @@ export function groupEnemyBuffDamageHits(
     entries,
     entries.reduce((maximum, entry) => Math.max(maximum, entry.frame), 0),
   ),
+  displayOwners: Readonly<Record<number, BuffTimelineSegment>> = {},
 ) {
   const groups = new Map<string, CombatReceiptEntry[]>();
   for (const entry of entries) {
     if (
       !isBuffDamageReceipt(entry) ||
       entry.targetId !== entry.data!.buffOwnerId ||
-      isSkillFollowupBuffDamageReceipt(entry, visibleBuffSegments) ||
+      isSkillFollowupBuffDamageReceipt(entry, visibleBuffSegments, displayOwners) ||
       typeof entry.data?.spellBurstType === 'string'
     )
       continue;

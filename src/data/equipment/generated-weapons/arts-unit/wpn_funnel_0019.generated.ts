@@ -229,6 +229,7 @@ const definition = {
         iconStyleInSquad: 'Default',
         abnormalColorType: 'Physical',
         orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
+        nameKey: 'effects.name.windform',
       },
       applyTags: [],
       extendTags: [],

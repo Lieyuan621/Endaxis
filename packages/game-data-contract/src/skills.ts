@@ -99,6 +99,12 @@ export type AbilityEntityDefinitionNumber =
 
 /** 可由干员级定义表复用的完整逻辑能力实体蓝图。 */
 export interface AbilityEntityDefinition {
+  /** 实体存在期间的干员状态图标；直接由该实体造成的伤害显示在状态下方。 */
+  readonly presentation?: {
+    readonly icon: string;
+    readonly nameKey: string;
+    readonly placement?: 'operator' | 'enemy';
+  };
   /** AbilityEntityTemplateData.bornTags；实体创建时立即成为其 AbilitySystem 自身标签。 */
   readonly bornTags?: readonly import('./gameplayTags.ts').GameplayTag[];
   /** AbilitySystemData.entityBlackboard 的模板初值；生成动作的显式赋值可覆盖同名键。 */

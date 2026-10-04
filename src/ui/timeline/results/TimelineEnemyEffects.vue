@@ -1,5 +1,16 @@
 <script setup lang="ts">
 import type { BuffDisplayName } from './buffDisplayName';
+import {
+  type OperatorPassiveUiTimelineSegment,
+  type PositionedOperatorPassiveUiTimelineSegment,
+} from '../../../core/projection/operatorPassiveUiTimelineViz';
+type EntityHit = {
+  castId: string;
+  hitId: string;
+  frame: number;
+  entityInstanceId: number;
+  title: string;
+};
 /**
  * 敌人效果面板（对齐旧版 ResourceMonitor 的敌人状态区样式）：
  * 可见 Buff = 原生图标框 + 层数角标 + 45 度条纹时长条；爆发/反应消费 = 图标标记。
@@ -16,7 +27,7 @@ import type { EnemyCombatHudSnapshot as EnemyCombatHudSnapshotModel } from '../.
 import EnemyCombatHudSnapshot from './EnemyCombatHudSnapshot.vue';
 import { resolveBuffDisplayName } from './buffDisplayName';
 import { commonBuffPresentationNameKeys } from '../../../data/buffs/generated/commonBuffPresentationNames.generated';
-import { resolveSimpleBuffModifierDisplayName } from './buffDisplayName';
+import { resolveBuffEffectSummary } from './buffDisplayName';
 import type { BuffDetailTarget } from './buffDetail';
 import {
   DEFAULT_GAME_ICON_PATH,
@@ -42,6 +53,8 @@ const { t, te } = useI18n();
 
 const props = defineProps<{
   viz: EnemyEffectViz;
+  entitySegments?: readonly OperatorPassiveUiTimelineSegment[];
+  entityHits?: readonly EntityHit[];
   buffs: readonly PositionedDisplayBuffTimelineSegment[];
   attachmentBuffIds?: ReadonlySet<string>;
   timelineWidth: number;
@@ -86,6 +99,8 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{
   'open-damage-detail': [sequence: number];
+  'open-entity-detail': [segment: PositionedOperatorPassiveUiTimelineSegment, title: string];
+  'open-entity-hit': [hit: EntityHit];
   'open-buff-detail': [target: BuffDetailTarget];
 }>();
 
@@ -102,7 +117,10 @@ onMounted(() => {
 });
 onBeforeUnmount(() => resizeObserver?.disconnect());
 const iconSize = computed(() =>
-  enemyStatusRowSize(height.value - SECTION_TOPBAR_HEIGHT, statusRows.value.rowCount),
+  enemyStatusRowSize(
+    height.value - SECTION_TOPBAR_HEIGHT,
+    Math.max(statusRows.value.rowCount, ...entitySegments.value.map(segment => segment.lane + 1)),
+  ),
 );
 const rowPitch = computed(() => iconSize.value + 4);
 const durationBarColor = useDurationBarColor();
@@ -148,8 +166,43 @@ const width = computed(() => Math.max(1, props.trackHeaderWidth + props.timeline
 
 /** 爆发/反应标记：小图标框，hover 显示说明。 */
 const statusRows = computed(() =>
-  layoutEnemyStatusRows(props.buffs, props.viz.markers, props.attachmentBuffIds ?? new Set()),
+  layoutEnemyStatusRows(
+    props.buffs,
+    props.viz.markers,
+    props.attachmentBuffIds ?? new Set(),
+    props.entitySegments,
+  ),
 );
+// 独立的能力实体仍保留实体身份，仅借用敌人状态区的布局与缩放。
+const entitySegments = computed(() =>
+  (props.entitySegments ?? [])
+    .filter(segment => segment.kind === 'abilityEntityCount')
+    .map(segment => ({ ...segment, lane: statusRows.value.entityLanes.get(segment)! })),
+);
+const entityDamageHits = computed(() => {
+  const counts = new Map<string, number>();
+  return (props.entityHits ?? []).flatMap(hit => {
+    const segment = entitySegments.value.find(
+      segment =>
+        segment.startFrame <= hit.frame &&
+        segment.endFrame >= hit.frame &&
+        segment.entities.some(entity => entity.instanceId === hit.entityInstanceId),
+    );
+    if (!segment) return [];
+    const key = `${segment.lane}:${hit.frame}`;
+    const index = counts.get(key) ?? 0;
+    counts.set(key, index + 1);
+    return [
+      {
+        ...hit,
+        top: SECTION_TOPBAR_HEIGHT + segment.lane * rowPitch.value + iconSize.value - 3 + index * 7,
+      },
+    ];
+  });
+});
+function entityTop(lane: number) {
+  return SECTION_TOPBAR_HEIGHT + lane * rowPitch.value;
+}
 const markers = computed(() =>
   props.viz.markers.map((marker, index) => {
     const attachment =
@@ -198,6 +251,8 @@ const damageHits = computed(() =>
     props.viz.markers,
     props.attachmentBuffIds ?? new Set(),
     props.viz.damageBuffs,
+    props.viz.damageDisplayOwners,
+    props.entitySegments,
   ).map(({ group, row, standalone }) => {
     const entry = group[0]!;
     const buff = findBuffDamageSegment(entry, props.viz.damageBuffs ?? []);
@@ -209,7 +264,6 @@ const damageHits = computed(() =>
           getIconAssetPath(buff?.iconId) ??
           DEFAULT_GAME_ICON_PATH)
         : undefined,
-      critical: group.some(damage => damage.data?.isCritical === true),
       x: pointX(entry.frame),
       top:
         SECTION_TOPBAR_HEIGHT +
@@ -239,24 +293,13 @@ const buffs = computed(() =>
     const right = pointX(buff.durationEndFrame ?? buff.endFrame);
     const hideIcon = statusRows.value.hiddenIcons.has(buff);
     const sourceName = props.sourceName?.(buff);
-    const modifierSummary = resolveSimpleBuffModifierDisplayName(
-      {
-        attribute: buff.simpleModifierAttribute,
-        slot: buff.simpleModifierSlot,
-        value: buff.simpleModifierValue,
-      },
-      { t, te },
-    );
+    const modifierSummary = resolveBuffEffectSummary(buff, { t, te });
     const baseTitle =
       props.displayName?.(buff) ??
       resolveBuffDisplayName(
         buff.buffId,
         { t, te },
-        {
-          attribute: buff.simpleModifierAttribute,
-          slot: buff.simpleModifierSlot,
-          value: buff.simpleModifierValue,
-        },
+        undefined,
         sourceName,
         props.operatorBuffNameKeys,
       );
@@ -288,6 +331,7 @@ const buffs = computed(() =>
       barWidthPx: Math.max(0, right - start - iconSize.value - 2),
       color: resolveDurationBarColor(durationBarColor.value, 'enemy', buff),
       title,
+      tooltip: modifierSummary ? `${title}\n${modifierSummary}` : title,
       detail: {
         title,
         buffId: buff.buffId,
@@ -309,14 +353,7 @@ const buffs = computed(() =>
         ...(modifierSummary === undefined ? {} : { modifierSummary }),
         instances: buff.windows.map(member => {
           const memberSourceName = props.sourceName?.(member);
-          const memberModifierSummary = resolveSimpleBuffModifierDisplayName(
-            {
-              attribute: member.simpleModifierAttribute,
-              slot: member.simpleModifierSlot,
-              value: member.simpleModifierValue,
-            },
-            { t, te },
-          );
+          const memberModifierSummary = resolveBuffEffectSummary(member, { t, te });
           return {
             buffId: member.buffId,
             title:
@@ -324,11 +361,7 @@ const buffs = computed(() =>
               resolveBuffDisplayName(
                 member.buffId,
                 { t, te },
-                {
-                  attribute: member.simpleModifierAttribute,
-                  slot: member.simpleModifierSlot,
-                  value: member.simpleModifierValue,
-                },
+                undefined,
                 memberSourceName,
                 props.operatorBuffNameKeys,
               ),
@@ -391,7 +424,7 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
           :key="buff.buffId"
           type="button"
           class="anomaly-icon-box last-hit-buff"
-          :title="buff.title"
+          :title="buff.tooltip"
           @click.stop="emit('open-buff-detail', buff.detail)"
         >
           <img v-if="buff.icon" :src="buff.icon" class="anomaly-icon" alt="" />
@@ -409,7 +442,6 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
         v-for="hit in damageHits"
         :key="`damage:${hit.sequence}`"
         class="enemy-damage-hit"
-        :class="{ 'is-critical': hit.critical }"
         :style="{ left: `${hit.x}px`, top: `${hit.top}px` }"
         :title="hit.title"
         :aria-label="`${hit.title}`"
@@ -436,11 +468,52 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
         <span v-if="marker.badge !== undefined" class="anomaly-stacks">{{ marker.badge }}</span>
       </span>
       <div
+        v-for="segment in entitySegments"
+        :key="`${segment.operatorId}:${segment.abilityEntityId}:${segment.startFrame}:${segment.entities.map(entity => entity.instanceId).join(',')}`"
+        class="attachment-item"
+        :style="{ left: `${pointX(segment.startFrame)}px`, top: `${entityTop(segment.lane)}px` }"
+        :title="t(segment.nameKey)"
+      >
+        <span
+          class="anomaly-icon-box is-clickable"
+          role="button"
+          tabindex="0"
+          @click.stop="emit('open-entity-detail', segment, t(segment.nameKey))"
+          @keydown.enter.stop.prevent="emit('open-entity-detail', segment, t(segment.nameKey))"
+          @keydown.space.stop.prevent="emit('open-entity-detail', segment, t(segment.nameKey))"
+        >
+          <img :src="segment.icon" class="anomaly-icon" alt="" />
+          <span v-if="segment.entities.length > 1" class="anomaly-stacks">{{
+            segment.entities.length
+          }}</span>
+        </span>
+        <span
+          class="anomaly-duration-bar generic-buff-bar"
+          :style="{
+            backgroundColor: resolveDurationBarColor(durationBarColor, 'enemy', {
+              buffId: segment.abilityEntityId,
+            }),
+            width: `${Math.max(0, pointX(segment.endFrame) - pointX(segment.startFrame) - iconSize - 2)}px`,
+          }"
+          ><span class="striped-bg"
+        /></span>
+      </div>
+      <button
+        v-for="hit in entityDamageHits"
+        :key="`${hit.castId}:${hit.hitId}:${hit.frame}`"
+        class="enemy-damage-hit"
+        :style="{ left: `${pointX(hit.frame)}px`, top: `${hit.top}px` }"
+        :title="hit.title"
+        @click.stop="emit('open-entity-hit', hit)"
+      >
+        <span class="enemy-damage-diamond" />
+      </button>
+      <div
         v-for="buff in buffs"
         :key="buff.key"
         class="attachment-item"
         :style="{ left: `${buff.left}px`, top: `${buff.top}px` }"
-        :title="buff.title"
+        :title="buff.tooltip"
       >
         <span
           v-if="!buff.hideIcon"
@@ -546,11 +619,6 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
   object-fit: contain;
   background: var(--ea-workbench-panel);
   border: 1px solid var(--ea-border, #666);
-}
-.enemy-damage-hit.is-critical .enemy-damage-diamond {
-  background: #ff6b6b;
-  border-color: #ffd166;
-  box-shadow: 0 0 8px rgba(255, 209, 102, 0.9);
 }
 .enemy-damage-hit:focus-visible {
   outline: none;

@@ -492,7 +492,6 @@
       "playerActionRoutes": "操作路由",
       "playerActionModes": "操作模式",
       "skillAliases": "技能别名",
-      "buffDisplayNameKeys": "状态显示名称",
       "comboSkillConditions": "连携条件",
       "comboSkillPriority": "连携优先规则",
       "entityBlackboardInitializers": "实体变量初值",
@@ -4535,6 +4534,8 @@
       "suppressedHint": "此候选仍保留记录，但在该窗口内不提供有效层数或效果。"
     },
     "hitDetail": {
+      "previousHit": "上一笔伤害",
+      "nextHit": "下一笔伤害",
       "frame": "帧",
       "damage": "伤害",
       "actualDamage": "实际伤害",
@@ -4993,14 +4994,17 @@
       "oldenStare": "古老图形",
       "perfectTiming": "精准衔接",
       "razorClawmark": "爪印斫痕",
+      "windform": "身形如风",
+      "imprisonment": "囹圄",
+      "slow": "缓速",
+      "barrageArray": "箭阵",
+      "firefangVesperwings": "衔火血翼",
       "sunderblades": "青霆剑",
       "electrification": "导电",
       "ultEnergyGain": "终结技充能",
       "spRecovery": "技力回复",
       "spReturn": "技力返还",
-      "firefangVesperwings": "衔火血翼",
       "pursuit": "追猎",
-      "imprisonment": "囹圄",
       "natureCryoSusceptibility": "寒冷和自然脆弱",
       "gloompurgerArray": "破晦阵",
       "clusterStrike": "集束打击",
@@ -5405,6 +5409,19 @@
     "originium_arts_power": "源石技艺强度",
     "ult_charge_eff": "终结技充能效率",
     "link_cd_reduction": "连携冷却缩减"
+  },
+  "buffEffects": {
+    "attacker": "造成的{type}伤害",
+    "defender": "受到的{type}伤害",
+    "arts": "法术",
+    "conditional": "仅在附加条件满足时生效",
+    "types": {
+      "physical": "物理",
+      "heat": "灼热",
+      "electric": "电磁",
+      "cryo": "寒冷",
+      "nature": "自然"
+    }
   },
   "hitDetail": {
     "damageZones": {

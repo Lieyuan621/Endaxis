@@ -20,6 +20,7 @@ import { CombatObjectOrigins } from '../../../core/projection/combatObjectOrigin
 import {
   isBuffDamageReceipt,
   isSkillFollowupBuffDamageReceipt,
+  projectBuffDamageDisplayOwners,
 } from '../../../core/projection/enemyEffectViz';
 
 /** 一个命中点上发生的伤害（保持日志顺序）。 */
@@ -71,11 +72,12 @@ function excludeStandaloneEffectDamage(
 ): readonly CombatReceiptEntry[] {
   const endFrame = entries.reduce((maximum, entry) => Math.max(maximum, entry.frame), 0);
   const segments = projectBuffIconTimelineMetadata(entries, endFrame);
+  const displayOwners = projectBuffDamageDisplayOwners(entries, segments);
   return entries.filter(
     entry =>
       (!isBuffDamageReceipt(entry) ||
         entry.targetId !== entry.data?.buffOwnerId ||
-        isSkillFollowupBuffDamageReceipt(entry, segments)) &&
+        isSkillFollowupBuffDamageReceipt(entry, segments, displayOwners)) &&
       findBuffTimelineSegmentForDamage(entry, segments) === undefined &&
       !(entry.event === 'DamageApplied' && typeof entry.data?.spellBurstType === 'string'),
   );
@@ -98,6 +100,7 @@ export function projectTimelineHitOccurrences(
       stackIndex: number;
       linkBuffed: boolean;
       label: TimelineHitEffectLabel;
+      entityInstanceId?: number;
     }[]
   >();
   for (const hit of receipts.damages) {
@@ -115,6 +118,13 @@ export function projectTimelineHitOccurrences(
         ).status === 'found',
     );
     list.push({
+      ...(entriesBySequence.get(hit.sequence)?.producedBy?.kind === 'abilityEntity'
+        ? {
+            entityInstanceId: (
+              entriesBySequence.get(hit.sequence)!.producedBy as { instanceId: number }
+            ).instanceId,
+          }
+        : {}),
       triggered,
       stackIndex: 0,
       hitId: hit.hitId,

@@ -3291,6 +3291,20 @@ describe('StandardPlayerDamageEnvironment', () => {
     expect(buff.enhanceCount).toBe(1);
     const segments = projectBuffTimelineViz(receipt.entries, 10);
     expect(
+      [0, 1, 2].map(
+        frame =>
+          segments.filter(segment => segment.startFrame <= frame && segment.endFrame > frame).at(-1)
+            ?.attributeEffects,
+      ),
+    ).toEqual([
+      [{ attribute: 'Atk', slot: 'baseMultiplier', value: 0.1 }],
+      [
+        { attribute: 'Atk', slot: 'baseMultiplier', value: 0.1 },
+        { attribute: 'Atk', slot: 'baseMultiplier', value: 0.1 },
+      ],
+      [{ attribute: 'Atk', slot: 'baseMultiplier', value: 0.1 }],
+    ]);
+    expect(
       [0, 1, 2].map(frame => {
         const indicator = projectCombatStatusIndicators(segments, frame)[0]!;
         return [indicator.layers, indicator.simpleModifierValue];

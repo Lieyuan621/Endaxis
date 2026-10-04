@@ -210,9 +210,9 @@ function endReasonText(instance: BuffDetailInstance): string {
             <dt>{{ labels.source }}</dt>
             <dd>{{ activeInstance.sourceName }}</dd>
           </template>
-          <template v-if="activeInstance.modifierSummary">
+          <template v-if="activeInstance.enabled && activeInstance.modifierSummary">
             <dt>{{ labels.effect }}</dt>
-            <dd>{{ activeInstance.modifierSummary }}</dd>
+            <dd style="white-space: pre-line">{{ activeInstance.modifierSummary }}</dd>
           </template>
           <dt>{{ t('timeline.buffDetail.enhanceCount') }}</dt>
           <dd>{{ activeInstance.enhanceCount }}</dd>

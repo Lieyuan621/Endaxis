@@ -1171,9 +1171,6 @@
     },
     {
       "slug": "rossi",
-      "buffDisplayNameKeys": {
-        "buff_chr_0028_wulfa_normal_bleed": "effects.name.razorClawmark"
-      },
       "runtimeReplacementSkillKeys": ["chr_0028_wulfa_combo_3_skill"],
       "exportName": "rossiGeneratedSource",
       "gameId": "ROSSI",

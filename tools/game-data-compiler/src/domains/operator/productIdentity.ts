@@ -6,7 +6,6 @@ export interface OperatorProductIdentitySource {
   readonly gameId: string;
   readonly exportName: string;
   readonly characterId: string;
-  readonly buffDisplayNameKeys?: Readonly<Record<string, string>>;
 }
 
 export function parseOperatorProductIdentitySource(
@@ -30,22 +29,10 @@ export function parseOperatorProductIdentitySource(
   if (!/^chr_[a-z0-9_]+$/.test(characterId)) {
     throw new Error(`${sourcePath}.charId: expected a native character identity`);
   }
-  const buffDisplayNameKeys =
-    row.buffDisplayNameKeys === undefined
-      ? undefined
-      : Object.fromEntries(
-          Object.entries(
-            requireRecord(row.buffDisplayNameKeys, `${sourcePath}.buffDisplayNameKeys`),
-          ).map(([id, key]) => [
-            requireNonEmptyString(id, `${sourcePath}.buffDisplayNameKeys.id`),
-            requireNonEmptyString(key, `${sourcePath}.buffDisplayNameKeys.${id}`),
-          ]),
-        );
   return {
     slug,
     gameId,
     exportName,
     characterId,
-    ...(buffDisplayNameKeys === undefined ? {} : { buffDisplayNameKeys }),
   };
 }
