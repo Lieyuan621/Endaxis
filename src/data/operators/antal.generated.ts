@@ -2886,6 +2886,7 @@ const antalBuff4: SkillBuffDefinition = {
     iconStyleInSquad: 'Default',
     abnormalColorType: 'Physical',
     orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
+    nameKey: 'effects.name.focus',
   },
   applyTags: [],
   extendTags: [],

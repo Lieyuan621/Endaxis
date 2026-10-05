@@ -10,6 +10,16 @@ const waterspoutPresentation = {
 export const abilityEntityPresentations: Readonly<
   Record<string, NonNullable<AbilityEntityDefinition['presentation']>>
 > = {
+  abilityentity_chr_0012_avywen_combo_skill_lance: {
+    icon: '/operators/avywenna/combo.webp',
+    nameKey: 'effects.name.thunderlance',
+    placement: 'operator',
+  },
+  abilityentity_chr_0012_avywen_ultimate_skill_lance: {
+    icon: '/operators/avywenna/ultimate.webp',
+    nameKey: 'effects.name.thunderlanceEx',
+    placement: 'operator',
+  },
   abilityentity_chr_0027_tangtang_normal_skill: waterspoutPresentation,
   abilityentity_chr_0027_tangtang_normal_skill_02: waterspoutPresentation,
   abilityentity_chr_0027_tangtang_normal_skill_02_02: waterspoutPresentation,

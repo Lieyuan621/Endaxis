@@ -2742,6 +2742,11 @@ export const avywenna: OperatorDefinition = {
           macros: {},
         },
       },
+      presentation: {
+        icon: '/operators/avywenna/combo.webp',
+        nameKey: 'effects.name.thunderlance',
+        placement: 'operator',
+      },
     },
     abilityentity_chr_0012_avywen_ultimate_skill_lance: {
       bornTags: [
@@ -2845,6 +2850,11 @@ export const avywenna: OperatorDefinition = {
           },
           macros: {},
         },
+      },
+      presentation: {
+        icon: '/operators/avywenna/ultimate.webp',
+        nameKey: 'effects.name.thunderlanceEx',
+        placement: 'operator',
       },
     },
   },

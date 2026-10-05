@@ -1,5 +1,8 @@
 import { projectGameplayTags } from '../combatProjectionCommon.ts';
-import { buffPresentationNames } from '../../../config/buffPresentationNames.ts';
+import {
+  buffPresentationNames,
+  buffPresentationIcons,
+} from '../../../config/buffPresentationNames.ts';
 import {
   createActionGraphBuilder,
   type ActionGraphBuilder,
@@ -770,10 +773,18 @@ export function compileBuffRuntimeDefinitionSource(
       : {}),
     ...(source.presentation.hasIcon ||
     source.presentation.spritePath !== '' ||
-    buffPresentationNames[source.graph.buffId]
+    buffPresentationNames[source.graph.buffId] ||
+    buffPresentationIcons[source.graph.buffId]
       ? {
           presentation: {
             ...compilePresentation(source.presentation),
+            ...(buffPresentationIcons[source.graph.buffId]
+              ? {
+                  iconPath: buffPresentationIcons[source.graph.buffId],
+                  visible: true,
+                  showInSquadIcon: true,
+                }
+              : {}),
             ...(buffPresentationNames[source.graph.buffId]
               ? { nameKey: buffPresentationNames[source.graph.buffId] }
               : {}),

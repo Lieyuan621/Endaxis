@@ -1243,6 +1243,21 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         valueSchema: {
           kind: 'object',
           fields: {
+            presentation: {
+              kind: 'object',
+              fields: {
+                icon: { kind: 'string' },
+                nameKey: { kind: 'string' },
+                placement: {
+                  kind: 'enum',
+                  options: ['enemy', 'operator'],
+                  semantics: schema_4107b248d073,
+                  optional: true,
+                },
+              },
+              optional: true,
+              description: '实体存在期间的干员状态图标；直接由该实体造成的伤害显示在状态下方。',
+            },
             bornTags: {
               kind: 'array',
               element: schema_d09e9bd69613,

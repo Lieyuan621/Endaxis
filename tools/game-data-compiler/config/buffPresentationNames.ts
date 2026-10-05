@@ -1,5 +1,8 @@
 /** 产品展示命名；发布到各 Buff 的 presentation，不归属干员或技能。 */
 export const buffPresentationNames: Readonly<Record<string, string>> = {
+  buff_chr_0023_antal_tageffect: 'effects.name.focus',
+  buff_chr_0018_dapan_talent_1_preparation: 'effects.name.prepIngredients',
+  buff_common_affixes_combo_trigger: 'effects.name.link',
   buff_chr_0032_lizhiyan_combo_skill_seal2: 'effects.name.imprisonment',
   buff_common_affixes_slow_default_child: 'effects.name.slow',
   buff_chr_0028_wulfa_normal_bleed: 'effects.name.razorClawmark',
@@ -7,4 +10,9 @@ export const buffPresentationNames: Readonly<Record<string, string>> = {
   buff_common_originum_frozen: 'effects.name.originiumCrystals',
   buff_chr_0033_camille_normal_skill_bat_duration_icon: 'effects.name.firefangVesperwings',
   buff_chr_0033_camille_normal_skill_weak: 'effects.name.firefangVesperwings',
+};
+
+/** 原生无图标的效果在时间轴上的补充展示，不改变 Buff 行为。 */
+export const buffPresentationIcons: Readonly<Record<string, string>> = {
+  buff_common_affixes_combo_trigger: '/icons/icon_term_ba_combo.webp',
 };

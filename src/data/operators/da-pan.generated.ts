@@ -2785,6 +2785,7 @@ const daPanBuff4: SkillBuffDefinition = {
     iconStyleInSquad: 'Default',
     abnormalColorType: 'Physical',
     orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
+    nameKey: 'effects.name.prepIngredients',
   },
   applyTags: [],
   extendTags: [],

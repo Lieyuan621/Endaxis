@@ -79,6 +79,12 @@ const commonBuff1: SkillBuffDefinition = {
     { event: 'beforeCastSkill', priority: 0, sequence: { $sequence: 'conditional_5' } },
   ],
   actionGraph: commonBuff1ActionGraph,
+  presentation: {
+    nameKey: 'effects.name.link',
+    iconPath: '/icons/icon_term_ba_combo.webp',
+    visible: true,
+    showInSquadIcon: true,
+  },
 };
 
 const commonBuff2ActionGraph = {
