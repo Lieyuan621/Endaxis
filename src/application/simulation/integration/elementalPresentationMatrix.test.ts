@@ -59,8 +59,23 @@ it.each([
         entry.data?.instanceId === output.instanceId,
     );
     expect(ends).toHaveLength(1);
-    expect(output.endFrame).toBe(ends[0]!.frame);
-    expect(output.endFrame - output.startFrame).toBe(59);
+    // 修正数值更新会切开显示段，但同一 Buff 实例只在标签移除时结束一次。
+    const lifetimeSegments = segments
+      .filter(
+        s =>
+          s.targetId === output.targetId &&
+          s.buffId === output.buffId &&
+          s.instanceId === output.instanceId,
+      )
+      .sort((a, b) => a.startFrame - b.startFrame);
+    expect(lifetimeSegments[0]!.startFrame).toBe(output.startFrame);
+    for (let i = 1; i < lifetimeSegments.length; i++) {
+      expect(lifetimeSegments[i - 1]!.endFrame).toBe(lifetimeSegments[i]!.startFrame);
+      expect(lifetimeSegments[i - 1]!.endReason).toBe('modifierChanged');
+    }
+    expect(lifetimeSegments.at(-1)!.endFrame).toBe(ends[0]!.frame);
+    expect(lifetimeSegments.at(-1)!.endReason).toBe('early');
+    expect(ends[0]!.frame - output.startFrame).toBe(59);
   },
 );
 // 控制输入时刻的测试干员；Buff、反应配方、SkillSetting、运行时与投影全部使用正式实现。

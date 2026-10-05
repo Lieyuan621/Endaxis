@@ -7,7 +7,11 @@ import { BuffDefinitionOperationTarget } from './buffDefinitionOperationTarget';
 import { CombatClock } from '../time/combatClock';
 import { CombatVitals } from '../resources/combatVitals';
 import { CombatVitalsRuntime } from '../resources/combatVitalsRuntime';
-import { POISE_BREAK_BUFF_ID, PoiseBreakBuffRuntime } from './poiseBreakBuffRuntime';
+import {
+  POISE_BREAK_BUFF_ID,
+  FINISHER_ELIGIBILITY_BUFF_ID,
+  PoiseBreakBuffRuntime,
+} from './poiseBreakBuffRuntime';
 
 it('恢复清理列表只解析当前容器的实例，不结束旧分支或同 ID 的其他实例', () => {
   const createTarget = () =>
@@ -15,19 +19,27 @@ it('恢复清理列表只解析当前容器的实例，不结束旧分支或同 
       new CombatBuffContainer<string>('enemy', new CombatAttributeSet<string>()),
       {
         get: () => undefined,
-        compile: () => ({ id: POISE_BREAK_BUFF_ID, stackingType: 'unlimited' }),
+        compile: entry => ({ id: entry.id, stackingType: 'unlimited' }),
       },
     );
   const definition = { stackingType: 'unlimited' as const };
+  const eligibilityDefinition = { stackingType: 'unlimited' as const };
   const oldTarget = createTarget();
   const oldRuntime = new PoiseBreakBuffRuntime(oldTarget);
   oldRuntime.begin('source', definition);
+  oldRuntime.begin('source', eligibilityDefinition, FINISHER_ELIGIBILITY_BUFF_ID);
   const oldBuff = oldTarget.container.buffs[0]!;
   const saved = structuredClone(oldRuntime.runtimeState);
   const target = createTarget();
   const restoredBuff = target.applyScoped({
     buffId: POISE_BREAK_BUFF_ID,
     definition,
+    sourceId: 'source',
+    blackboardValues: {},
+  })!;
+  const restoredEligibility = target.applyScoped({
+    buffId: FINISHER_ELIGIBILITY_BUFF_ID,
+    definition: eligibilityDefinition,
     sourceId: 'source',
     blackboardValues: {},
   })!;
@@ -39,11 +51,15 @@ it('恢复清理列表只解析当前容器的实例，不结束旧分支或同 
   })!;
   expect(restoredBuff.instanceId).toBe(oldBuff.instanceId);
   const restored = new PoiseBreakBuffRuntime(target, saved);
+  restored.consumeFinisher();
+  expect(restoredEligibility.isFinished).toBe(true);
+  expect(restoredBuff.isFinished).toBe(false);
+  expect(oldTarget.container.buffs[1]!.isFinished).toBe(false);
   restored.recover();
   expect(restoredBuff.isFinished).toBe(true);
   expect(oldBuff.isFinished).toBe(false);
   expect(independent.isFinished).toBe(false);
-  expect(oldRuntime.runtimeState.size).toBe(1);
+  expect(oldRuntime.runtimeState.size).toBe(2);
   expect(restored.runtimeState.size).toBe(0);
 });
 

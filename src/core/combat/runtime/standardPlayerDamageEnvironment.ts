@@ -49,7 +49,11 @@ import {
   type CombatBuffDefinitionsDocument,
 } from '../buffs/combatBuffDefinitions';
 import { CombatBuffContainer, type CombatBuff } from '../buffs/combatBuffs';
-import { POISE_BREAK_BUFF_ID, PoiseBreakBuffRuntime } from '../buffs/poiseBreakBuffRuntime';
+import {
+  POISE_BREAK_BUFF_ID,
+  FINISHER_ELIGIBILITY_BUFF_ID,
+  PoiseBreakBuffRuntime,
+} from '../buffs/poiseBreakBuffRuntime';
 import type { DamageModifierExternalCondition } from '../damage/damageModifiers';
 import { resolveBuffModifierNumber } from '../buffs/buffModifierNumberSource';
 
@@ -58,7 +62,8 @@ function damageEffects(
 ): import('../receipt/combatReceipt').BuffDamageEffect[] {
   return buff.damageModifiers.flatMap(modifier => {
     const condition = modifier.definition.condition;
-    if (condition?.kind === 'eventDamageTypesMatch' && condition.damageTypes.length === 0) return [];
+    if (condition?.kind === 'eventDamageTypesMatch' && condition.damageTypes.length === 0)
+      return [];
     const applicability = {
       ...(condition?.kind === 'eventDamageTypesMatch'
         ? { damageTypes: [...condition.damageTypes] }
@@ -403,7 +408,10 @@ export class StandardPlayerDamageEnvironment {
   readonly #enemyVitals: CombatVitals;
   #enemyVitalsRuntime: CombatVitalsRuntime | null = null;
   readonly #poiseBreakBuffs: PoiseBreakBuffRuntime;
-  readonly #poiseBreakDefinitions = new Map<string, ResolvedSkillBuffDefinition>();
+  readonly #poiseBreakDefinitions = new Map<
+    string,
+    Readonly<Record<string, ResolvedSkillBuffDefinition>>
+  >();
   #enemyIdentity: CombatOperationExecutorContext['enemy'] | null = null;
   #resources: CombatResources | null = null;
   #boundByAssembly = false;
@@ -869,9 +877,8 @@ export class StandardPlayerDamageEnvironment {
       this.#resolveAbilitySystemSourceId = context.resolveAbilitySystemSourceId;
     }
     this.#bindBattleRuntime(context);
-    const poiseBreakDefinition = context.buffDefinitions?.[POISE_BREAK_BUFF_ID];
-    if (poiseBreakDefinition !== undefined)
-      this.#poiseBreakDefinitions.set(operatorId, poiseBreakDefinition);
+    if (context.buffDefinitions?.[POISE_BREAK_BUFF_ID] !== undefined)
+      this.#poiseBreakDefinitions.set(operatorId, context.buffDefinitions);
     if (context.panel !== undefined) {
       this.#operatorPanels.set(operatorId, context.panel);
       this.#ensureOperatorVitals(operatorId, context.panel);
@@ -937,8 +944,8 @@ export class StandardPlayerDamageEnvironment {
       absorbHealthDamage: (damageType, value) => this.#enemyBuffs.absorbDamage(damageType, value),
       emitPoiseSourceEvent: (event, modifier) => this.#emit(operatorId, event, modifier),
       emitPoiseTargetEvent: (event, modifier) => this.#emit('enemy', event, modifier),
-      beforePoiseZero: modifier =>
-        this.#poiseBreakBuffs.begin(modifier.sourceId, poiseBreakDefinition),
+      beforePoiseZero: modifier => this.#beginPoiseBreak(modifier.sourceId),
+      consumeFinisherEligibility: () => this.#poiseBreakBuffs.consumeFinisher(),
       // 配装元素链仍需独立闭环，不能因 HP 伤害可用而自动开放。
       delegate: 'program' in context ? this.#createReactionExecutor(context) : strictTerminal,
     });
@@ -1687,13 +1694,20 @@ export class StandardPlayerDamageEnvironment {
       absorbHealthDamage: (type, value) => this.#enemyBuffs.absorbDamage(type, value),
       emitPoiseSourceEvent: (event, payload) => this.#emit(sourceId, event, payload),
       emitPoiseTargetEvent: (event, payload) => this.#emit('enemy', event, payload),
-      beforePoiseZero: payload =>
-        this.#poiseBreakBuffs.begin(
-          payload.sourceId,
-          this.#poiseBreakDefinitions.get(payload.sourceId),
-        ),
+      beforePoiseZero: payload => this.#beginPoiseBreak(payload.sourceId),
+      consumeFinisherEligibility: () => this.#poiseBreakBuffs.consumeFinisher(),
       delegate: strictTerminal,
     };
+  }
+
+  #beginPoiseBreak(sourceId: string): void {
+    const definitions = this.#poiseBreakDefinitions.get(sourceId);
+    this.#poiseBreakBuffs.begin(sourceId, definitions?.[POISE_BREAK_BUFF_ID]);
+    this.#poiseBreakBuffs.begin(
+      sourceId,
+      definitions?.[FINISHER_ELIGIBILITY_BUFF_ID],
+      FINISHER_ELIGIBILITY_BUFF_ID,
+    );
   }
 
   /** 执行法术异常等 Buff 生命周期中的原生 DamageAction。 */

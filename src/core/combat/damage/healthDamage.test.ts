@@ -183,6 +183,7 @@ describe('executeHealthDamage', () => {
 
   it('runs shield absorption after before events and exposes the reduced value afterwards', () => {
     const values: number[] = [];
+    let eligible = true;
     const target = new CombatVitals({
       health: 100,
       maxHealth: 100,
@@ -198,17 +199,23 @@ describe('executeHealthDamage', () => {
       sourceId: 'operator',
       targetId: 'enemy',
       damageType: 'heat',
-      tags: [],
+      tags: ['powerAttack'],
+      consumeFinisherEligibility: () => {
+        eligible = false;
+      },
       result: createDamageResult(80),
       target,
       clock: new CombatClock(),
       receipt: { record: entry => values.push(Number(entry.data?.value)) },
       emitSourceEvent: (event, payload) => {
+        expect(eligible).toBe(false);
         if (event === 'beforeOutputDamage' || event === 'outputDamage') {
           values.push(payload.result.value);
         }
       },
-      emitTargetEvent: () => undefined,
+      emitTargetEvent: () => {
+        expect(eligible).toBe(false);
+      },
       absorbDamage: (_damageType, value) => value - 50,
     });
 

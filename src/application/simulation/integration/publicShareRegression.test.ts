@@ -34,12 +34,13 @@ it('runs the public low-star action sequence with native definitions without rew
   expect(JSON.stringify(scenario)).toBe(before);
   expect(run.receiptEntries.some(entry => entry.event === 'DamageApplied')).toBe(true);
   const segments = projectBuffTimelineViz(run.receiptEntries, run.frame);
-  const hits = projectEnemyEffectViz(run.receiptEntries, run.frame).damageHits ?? [];
+  const viz = projectEnemyEffectViz(run.receiptEntries, run.frame);
+  const hits = viz.damageHits ?? [];
   expect(hits.length).toBeGreaterThan(0);
   const positionedHits = layoutEnemyDamageHits(
     run.receiptEntries,
     segments,
-    projectEnemyEffectViz(run.receiptEntries, run.frame).markers,
+    viz.markers,
     new Set(),
   );
   const positionedSequences = new Set(
@@ -47,13 +48,24 @@ it('runs the public low-star action sequence with native definitions without rew
   );
   for (const hit of hits) {
     expect(positionedSequences.has(hit.sequence), JSON.stringify(hit)).toBe(true);
-    if (findBuffDamageSegment(hit, segments) === undefined)
+    // 隐藏子 Buff 的伤害可以挂到可见父 Buff；只有二者都没有时才独立显示。
+    const displayOwner = viz.damageDisplayOwners?.[hit.sequence];
+    if (findBuffDamageSegment(hit, segments) === undefined && displayOwner === undefined)
       expect(
         positionedHits.some(
           position =>
             position.standalone && position.group.some(entry => entry.sequence === hit.sequence),
         ),
       ).toBe(true);
+    if (displayOwner !== undefined) {
+      expect(
+        positionedHits.some(
+          position =>
+            !position.standalone && position.group.some(entry => entry.sequence === hit.sequence),
+        ),
+        JSON.stringify(hit),
+      ).toBe(true);
+    }
   }
   expect(segments.some(segment => segment.buffId === 'buff_common_cryst_fire_triggered')).toBe(
     true,

@@ -1214,13 +1214,13 @@ describe('AbilitySystemRuntime', () => {
     });
   });
 
-  it('does not reject finisher or plunging attack through the grounded A1 default mapping', () => {
+  it('selects finisher before normal mappings only while eligible; leaves aerial selection separate', () => {
     const ability = new AbilitySystemRuntime({
       skills: [
         new FixtureRuntime('attack1', [], 'basicAttack'),
-        new FixtureRuntime('finisher', [], 'finisher'),
         new FixtureRuntime('plungingAttack', [], 'plungingAttack'),
       ],
+      skillDefinitions: [{ skillId: 'finisher', nativeSkillType: 'breakingAttack' }],
       playerActionRoutes: {
         basicAttack: {
           kind: 'basicAttack',
@@ -1241,8 +1241,16 @@ describe('AbilitySystemRuntime', () => {
     });
 
     expect(ability.resolvePlayerInputSkill('finisher', 'basicAttack')).toEqual({
-      status: 'notApplicable',
-      reason: 'special basic-attack selection state is outside simulation scope',
+      status: 'mismatched',
+      actualSkillKey: 'attack1',
+    });
+    expect(ability.resolvePlayerInputSkill('attack1', 'basicAttack', true)).toEqual({
+      status: 'mismatched',
+      actualSkillKey: 'finisher',
+    });
+    expect(ability.resolvePlayerInputSkill('finisher', 'basicAttack', true)).toEqual({
+      status: 'matched',
+      actualSkillKey: 'finisher',
     });
     expect(ability.resolvePlayerInputSkill('plungingAttack', 'basicAttack')).toEqual({
       status: 'notApplicable',

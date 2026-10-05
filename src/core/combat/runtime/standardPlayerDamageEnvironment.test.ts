@@ -637,7 +637,7 @@ import {
 import { BuffDefinitionOperationTarget } from '../buffs/buffDefinitionOperationTarget';
 import { BuffOperationExecutor } from '../buffs/buffOperationExecutor';
 import type { CombatBuffDefinitionsDocument } from '../buffs/combatBuffDefinitions';
-import { POISE_BREAK_BUFF_ID } from '../buffs/poiseBreakBuffRuntime';
+import { POISE_BREAK_BUFF_ID, FINISHER_ELIGIBILITY_BUFF_ID } from '../buffs/poiseBreakBuffRuntime';
 import { CombatSemanticEventRuntime } from '../events/combatSemanticEventRuntime';
 import { EventContextConditionExecutor } from '../events/eventContextConditionExecutor';
 import { ELEMENTAL_INFLICTION_EVENTS } from '../infliction/elementalInflictionOperationExecutor';
@@ -2653,6 +2653,10 @@ describe('StandardPlayerDamageEnvironment', () => {
     const context = {
       ...createContext(),
       buffDefinitions: {
+        [FINISHER_ELIGIBILITY_BUFF_ID]: {
+          stackingType: 'unlimited' as const,
+          applyTags: ['Status/CanBeBreakingAttacked'],
+        },
         [POISE_BREAK_BUFF_ID]: {
           stackingType: 'unlimited' as const,
           blackboard: { dmg_up: 0.37 },
@@ -2699,6 +2703,14 @@ describe('StandardPlayerDamageEnvironment', () => {
       return receipt.entries.filter(e => e.event === 'DamageApplied').at(-1)!.data!.value as number;
     };
     const during = damage();
+    expect(buffs.matchesEntityTags(['Status/CanBeBreakingAttacked'], 'hasAny')).toBe(true);
+    executor.execute({
+      ...damageStep,
+      parameters: { ...damageStep.parameters, tags: ['normalAttack', 'powerAttack'] },
+    });
+    expect(buffs.matchesEntityTags(['Status/CanBeBreakingAttacked'], 'hasAny')).toBe(false);
+    expect(buffs.getCountByIds([POISE_BREAK_BUFF_ID])).toBe(1);
+    expect(environment.enemyVitals.poise).toBe(0);
 
     const vitalsRuntime = environment.enemyVitalsRuntime;
     expect(vitalsRuntime).not.toBeNull();

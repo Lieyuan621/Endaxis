@@ -124,6 +124,59 @@ it('梨诺战技接连携保留演唱，转入终结技时结束演唱且导电�
   expect(entries.filter(e => e.event === 'ComboWindowOpened' && e.frame >= 300)).toEqual([]);
 });
 
+it('真实失衡资格优先选出处决，命中消费后仍失衡但可以普攻', async () => {
+  const scenario = createEmptyScenario('finisher-selection', 'finisher');
+  scenario.enemy.editable.stagger.maximum = 1;
+  scenario.enemy.editable.stagger.brokenDurationFrames = 1200;
+  scenario.tracks[0] = {
+    id: 'perlica',
+    operator: {
+      operatorSlug: 'perlica',
+      level: 90,
+      promoted: true,
+      potential: 0,
+      trustLevel: 4,
+      skillLevels: { basicAttack: 12, battleSkill: 12, comboSkill: 12, ultimate: 12 },
+      talentStates: {},
+    },
+    weapon: null,
+    gears: { armor: null, gloves: null, accessory1: null, accessory2: null },
+    initialState: { ultimateEnergy: 0 },
+    skillCasts: [
+      ['battle', 'battleSkill', 'chr_0004_pelica_normal_skill', 0],
+      ['wrong-basic', 'basicAttack', 'chr_0004_pelica_attack1', 120],
+      ['finisher', 'finisher', 'chr_0004_pelica_power_attack', 240],
+      ['basic-after', 'basicAttack', 'chr_0004_pelica_attack1', 420],
+      ['wrong-finisher', 'finisher', 'chr_0004_pelica_power_attack', 540],
+    ].map(([id, skillGroupKey, skillKey, startFrame]) => ({
+      id: String(id),
+      source: {
+        kind: 'operatorSkill' as const,
+        skillGroupKey: String(skillGroupKey),
+        skillKey: String(skillKey),
+      },
+      placement: { startFrame: Number(startFrame) },
+    })),
+  };
+  const result = await createEditorSimulationService().simulate(scenario, 650);
+  expect(
+    result.receiptEntries
+      .filter(e => e.event === 'SkillInputResolvedToDifferentSkill')
+      .map(e => [e.data?.castId, e.data?.actualSkillId]),
+  ).toEqual([
+    ['wrong-basic', 'chr_0004_pelica_power_attack'],
+    ['wrong-finisher', 'chr_0004_pelica_attack1'],
+  ]);
+  expect(
+    result.receiptEntries.filter(
+      e =>
+        e.event === 'BuffFinished' &&
+        e.data?.buffId === 'buff_common_poise_can_be_breaking_attacked',
+    ),
+  ).toHaveLength(1);
+  expect(result.receiptEntries.some(e => e.event === 'PoiseRecovered')).toBe(false);
+});
+
 function findSkill(operator: OperatorDefinition, key: string) {
   const skill = operator.skillGroups
     .flatMap(group => (Array.isArray(group.skills) ? group.skills : [group.skills]))

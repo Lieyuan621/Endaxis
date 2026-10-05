@@ -658,6 +658,7 @@ export class AbilitySystemRuntime implements FrameRuntime {
   resolvePlayerInputSkill(
     expectedSkillKey: string,
     action?: PlayerSkillInput,
+    finisherAvailable = false,
   ):
     | { readonly status: 'matched'; readonly actualSkillKey: string }
     | { readonly status: 'mismatched'; readonly actualSkillKey: string }
@@ -700,14 +701,24 @@ export class AbilitySystemRuntime implements FrameRuntime {
       const expectedSkillType = this.#skills.find(
         skill => skill.skillId === expectedSkillKey,
       )?.skillType;
-      if (expectedSkillType === 'finisher' || expectedSkillType === 'plungingAttack') {
-        // 处决和下落攻击与普通攻击共用输入，但先由敌人处决状态或角色腾空状态选出。
-        // Next 尚未建模这两项状态，因此时间轴显式放置的特殊攻击不能再被地面普攻、
-        // 当前技能或模式的 Attack 命令映射反证为另一技能。
+      if (expectedSkillType === 'plungingAttack') {
+        // 下落攻击的腾空选择不在单敌人模型内；处决则必须走目标资格检查。
         return {
           status: 'notApplicable',
           reason: 'special basic-attack selection state is outside simulation scope',
         };
+      }
+      if (finisherAvailable) {
+        // 原生 GetNextAttackId 在 ComboController 之前选择当前 BreakingAttack 列表首项。
+        // 读取完整目录，不能要求该技能已经放到轴上，也不依赖展示技能组。
+        const actualSkillKey = [...this.runtimeState.nativeSkillTypeBySkillId].find(
+          ([key, type]) => type === 'breakingAttack' && route.skillKeys.includes(key),
+        )?.[0];
+        if (actualSkillKey !== undefined) {
+          return actualSkillKey === expectedSkillKey
+            ? { status: 'matched', actualSkillKey }
+            : { status: 'mismatched', actualSkillKey };
+        }
       }
       const buffMapped = this.#resolveBuffBasicAttackMapping(expectedSkillKey);
       if (buffMapped !== null) return buffMapped;

@@ -3769,6 +3769,22 @@ const commonBuff59ActionGraph = {
 const commonBuff59: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
+  maxStackCount: 1,
+  applyTags: ['Status/CanBeBreakingAttacked'],
+  extendTags: [],
+  blackboard: {},
+  attributeModifiers: [],
+  actionGraph: commonBuff59ActionGraph,
+};
+
+const commonBuff60ActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const commonBuff60: SkillBuffDefinition = {
+  stackingType: 'unlimited',
+  priority: 0,
   maxStackCount: 0,
   applyTags: [
     'Status/DisableDash',
@@ -3780,10 +3796,10 @@ const commonBuff59: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
-  actionGraph: commonBuff59ActionGraph,
+  actionGraph: commonBuff60ActionGraph,
 };
 
-const commonBuff60ActionGraph = {
+const commonBuff61ActionGraph = {
   main: {
     nodes: {
       modifyActionValue_1: {
@@ -3865,7 +3881,7 @@ const commonBuff60ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff60: SkillBuffDefinition = {
+const commonBuff61: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 1,
@@ -3882,10 +3898,10 @@ const commonBuff60: SkillBuffDefinition = {
   },
   attributeModifiers: [],
   lifecycleSequences: { start: { $sequence: 'conditional_5' } },
-  actionGraph: commonBuff60ActionGraph,
+  actionGraph: commonBuff61ActionGraph,
 };
 
-const commonBuff61ActionGraph = {
+const commonBuff62ActionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -3950,7 +3966,7 @@ const commonBuff61ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff61: SkillBuffDefinition = {
+const commonBuff62: SkillBuffDefinition = {
   stackingType: 'stack',
   stackingKey: 'pulse_triggered',
   priority: 0,
@@ -4042,10 +4058,10 @@ const commonBuff61: SkillBuffDefinition = {
     },
   ],
   lifecycleSequences: { start: { $sequence: 'readSkillSettingData_4' } },
-  actionGraph: commonBuff61ActionGraph,
+  actionGraph: commonBuff62ActionGraph,
 };
 
-const commonBuff62ActionGraph = {
+const commonBuff63ActionGraph = {
   main: {
     nodes: {
       triggerSpellBurst_1: {
@@ -4114,7 +4130,7 @@ const commonBuff62ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff62: SkillBuffDefinition = {
+const commonBuff63: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 0,
@@ -4127,15 +4143,15 @@ const commonBuff62: SkillBuffDefinition = {
   blackboard: { atk_scale: 0, duration: 20 },
   attributeModifiers: [],
   lifecycleSequences: { trigger: { $sequence: 'withActionBlackboardScope_5' } },
-  actionGraph: commonBuff62ActionGraph,
+  actionGraph: commonBuff63ActionGraph,
 };
 
-const commonBuff63ActionGraph = {
+const commonBuff64ActionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff63: SkillBuffDefinition = {
+const commonBuff64: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 0,
@@ -4147,10 +4163,10 @@ const commonBuff63: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
-  actionGraph: commonBuff63ActionGraph,
+  actionGraph: commonBuff64ActionGraph,
 };
 
-const commonBuff64ActionGraph = {
+const commonBuff65ActionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -4285,7 +4301,7 @@ const commonBuff64ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff64: SkillBuffDefinition = {
+const commonBuff65: SkillBuffDefinition = {
   stackingType: 'stack',
   stackingKey: 'physical',
   priority: 0,
@@ -4321,10 +4337,10 @@ const commonBuff64: SkillBuffDefinition = {
   blackboard: { atk_scale: 0, duration: 3, poise: 10 },
   attributeModifiers: [],
   lifecycleSequences: { start: { $sequence: 'withActionBlackboardScope_9' } },
-  actionGraph: commonBuff64ActionGraph,
+  actionGraph: commonBuff65ActionGraph,
 };
 
-const commonBuff65ActionGraph = {
+const commonBuff66ActionGraph = {
   main: {
     nodes: {
       dealDamage_1: {
@@ -4587,7 +4603,7 @@ const commonBuff65ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff65: SkillBuffDefinition = {
+const commonBuff66: SkillBuffDefinition = {
   stackingType: 'stack',
   stackingKey: 'physical',
   priority: 0,
@@ -4623,10 +4639,10 @@ const commonBuff65: SkillBuffDefinition = {
   blackboard: { atk_scale: 1, count: 0, dmg_multiplier: 1, duration: 3, ignore_hit_effect: 0 },
   attributeModifiers: [],
   lifecycleSequences: { start: { $sequence: 'withActionBlackboardScope_18' } },
-  actionGraph: commonBuff65ActionGraph,
+  actionGraph: commonBuff66ActionGraph,
 };
 
-const commonBuff66ActionGraph = {
+const commonBuff67ActionGraph = {
   main: {
     nodes: {
       refreshCurrentBuffAttributeModifiers_1: {
@@ -4902,7 +4918,7 @@ const commonBuff66ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff66: SkillBuffDefinition = {
+const commonBuff67: SkillBuffDefinition = {
   stackingType: 'stack',
   stackingKey: 'fracture',
   priority: 0,
@@ -4952,10 +4968,10 @@ const commonBuff66: SkillBuffDefinition = {
     },
   ],
   lifecycleSequences: { start: { $sequence: 'withActionBlackboardScope_20' } },
-  actionGraph: commonBuff66ActionGraph,
+  actionGraph: commonBuff67ActionGraph,
 };
 
-const commonBuff67ActionGraph = {
+const commonBuff68ActionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -5002,7 +5018,7 @@ const commonBuff67ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff67: SkillBuffDefinition = {
+const commonBuff68: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 1,
@@ -5015,10 +5031,10 @@ const commonBuff67: SkillBuffDefinition = {
   blackboard: { count: 0, duration: 15 },
   attributeModifiers: [],
   lifecycleSequences: { start: { $sequence: 'readBuffStackCount_3' } },
-  actionGraph: commonBuff67ActionGraph,
+  actionGraph: commonBuff68ActionGraph,
 };
 
-const commonBuff68ActionGraph = {
+const commonBuff69ActionGraph = {
   main: {
     nodes: {
       startTimeDilation_1: {
@@ -5187,7 +5203,7 @@ const commonBuff68ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff68: SkillBuffDefinition = {
+const commonBuff69: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -5200,10 +5216,10 @@ const commonBuff68: SkillBuffDefinition = {
   blackboard: { atk_scale: 0, count: 0 },
   attributeModifiers: [],
   lifecycleSequences: { start: { $sequence: 'readBuffBlackboard_10' } },
-  actionGraph: commonBuff68ActionGraph,
+  actionGraph: commonBuff69ActionGraph,
 };
 
-const commonBuff69ActionGraph = {
+const commonBuff70ActionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -5338,7 +5354,7 @@ const commonBuff69ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff69: SkillBuffDefinition = {
+const commonBuff70: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -5351,10 +5367,10 @@ const commonBuff69: SkillBuffDefinition = {
   blackboard: { atk_scale: 0, duration: 3, poise: 10 },
   attributeModifiers: [],
   lifecycleSequences: { start: { $sequence: 'withActionBlackboardScope_9' } },
-  actionGraph: commonBuff69ActionGraph,
+  actionGraph: commonBuff70ActionGraph,
 };
 
-const commonBuff70ActionGraph = {
+const commonBuff71ActionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -5452,7 +5468,7 @@ const commonBuff70ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff70: SkillBuffDefinition = {
+const commonBuff71: SkillBuffDefinition = {
   stackingType: 'enhanceAndRefresh',
   priority: 100,
   maxStackCount: 4,
@@ -5488,15 +5504,15 @@ const commonBuff70: SkillBuffDefinition = {
     finish: { $sequence: 'applyBuff_3' },
     afterEnhance: { $sequence: 'withActionBlackboardScope_9' },
   },
-  actionGraph: commonBuff70ActionGraph,
+  actionGraph: commonBuff71ActionGraph,
 };
 
-const commonBuff71ActionGraph = {
+const commonBuff72ActionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff71: SkillBuffDefinition = {
+const commonBuff72: SkillBuffDefinition = {
   stackingType: 'refresh',
   priority: 100,
   maxStackCount: 1,
@@ -5505,7 +5521,7 @@ const commonBuff71: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 1 },
   attributeModifiers: [],
-  actionGraph: commonBuff71ActionGraph,
+  actionGraph: commonBuff72ActionGraph,
 };
 export const commonBuffDefinitions: OperatorBuffDefinitions = Object.freeze({
   buff_common_affixes_combo_trigger: commonBuff1,
@@ -5566,17 +5582,18 @@ export const commonBuffDefinitions: OperatorBuffDefinitions = Object.freeze({
   buff_common_obtain_ultimate_sp: commonBuff56,
   buff_common_originum_frozen: commonBuff57,
   buff_common_poise_break_damage_taken_scale: commonBuff58,
-  buff_common_power_attack_disable_cast_skill: commonBuff59,
-  buff_common_pulse_pulse_conduct_triggered: commonBuff60,
-  buff_common_pulse_pulse_conduct_triggered_do: commonBuff61,
-  buff_common_pulse_pulse_triggered: commonBuff62,
-  buff_common_pulse_triggered_fx: commonBuff63,
-  buff_physical_airborne: commonBuff64,
-  buff_physical_crushed: commonBuff65,
-  buff_physical_do_fracture: commonBuff66,
-  buff_physical_fracture: commonBuff67,
-  buff_physical_handle_cryst_break: commonBuff68,
-  buff_physical_knockdown: commonBuff69,
-  buff_physical_no_guard: commonBuff70,
-  buff_physical_no_guard_fake: commonBuff71,
+  buff_common_poise_can_be_breaking_attacked: commonBuff59,
+  buff_common_power_attack_disable_cast_skill: commonBuff60,
+  buff_common_pulse_pulse_conduct_triggered: commonBuff61,
+  buff_common_pulse_pulse_conduct_triggered_do: commonBuff62,
+  buff_common_pulse_pulse_triggered: commonBuff63,
+  buff_common_pulse_triggered_fx: commonBuff64,
+  buff_physical_airborne: commonBuff65,
+  buff_physical_crushed: commonBuff66,
+  buff_physical_do_fracture: commonBuff67,
+  buff_physical_fracture: commonBuff68,
+  buff_physical_handle_cryst_break: commonBuff69,
+  buff_physical_knockdown: commonBuff70,
+  buff_physical_no_guard: commonBuff71,
+  buff_physical_no_guard_fake: commonBuff72,
 });

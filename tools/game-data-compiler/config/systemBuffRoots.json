@@ -4,6 +4,7 @@
   "buff_common_cryst_cryst_triggered",
   "buff_common_natural_natural_triggered",
   "buff_common_poise_break_damage_taken_scale",
+  "buff_common_poise_can_be_breaking_attacked",
   {
     "buffId": "buff_common_dash",
     "owner": "caster",

@@ -159,6 +159,7 @@ export interface PlayerDamageOperationDependencies {
   readonly emitHealthSourceEvent: Parameters<typeof executeHealthDamage>[0]['emitSourceEvent'];
   readonly emitHealthTargetEvent: Parameters<typeof executeHealthDamage>[0]['emitTargetEvent'];
   readonly absorbHealthDamage?: Parameters<typeof executeHealthDamage>[0]['absorbDamage'];
+  readonly consumeFinisherEligibility?: () => void;
   readonly emitPoiseSourceEvent: (event: PoiseDamageEvent, modifier: PoiseDamageModifier) => void;
   readonly emitPoiseTargetEvent: (event: PoiseDamageEvent, modifier: PoiseDamageModifier) => void;
   readonly beforePoiseZero?: (modifier: PoiseDamageModifier) => void;
@@ -524,6 +525,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
           ? undefined
           : deriveHitId(this.dependencies.castId, step.key));
       executeHealthDamage({
+        consumeFinisherEligibility: this.dependencies.consumeFinisherEligibility,
         ...(multiplierCalculation === undefined
           ? {}
           : { skillMultiplierCalculation: multiplierCalculation }),

@@ -2598,7 +2598,7 @@ export class CombatRuntimeAssembly {
       );
     }
     const ability = this.#requireAbilitySystem(input.operatorId);
-    const resolution = ability.resolvePlayerInputSkill(input.skillId, input.action);
+    const resolution = this.#resolvePlayerInputSkill(input);
     return (
       resolution.status === 'matched' &&
       ability.evaluatePlayerInputInterruption(input.skillId).status === 'allowed'
@@ -2779,6 +2779,10 @@ export class CombatRuntimeAssembly {
     return this.#requireAbilitySystem(input.operatorId).resolvePlayerInputSkill(
       input.skillId,
       input.action,
+      this.#enemyBuffRuntime.matchesEntityTags(['Status/CanBeBreakingAttacked'], 'hasAny') &&
+        !this.#operatorBuffs
+          .get(input.operatorId)
+          ?.matchesEntityTags(['Status/DisableBreakingAttack'], 'hasAny'),
     );
   }
 

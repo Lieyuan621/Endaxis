@@ -128,6 +128,8 @@ export interface HealthDamageReceiptDetail {
 
 /** 在正确事件边界写入一次生命伤害所需的状态和端口。 */
 export interface ExecuteHealthDamageInput {
+  /** 原生 HP/Minus 的 PowerAttack 清理先于 BeforeTakeDamage。 */
+  readonly consumeFinisherEligibility?: () => void;
   readonly producedBy?: import('../receipt/combatReceipt').CombatObjectRef;
   readonly executingSkillId?: HealthDamageEventPayload['executingSkillId'];
   readonly skillCastInfo?: CombatSkillCastInfo | null;
@@ -167,6 +169,7 @@ export interface ExecuteHealthDamageInput {
 
 /** 在已还原的公式后边界应用解析完成的玩家主动伤害。 */
 export function executeHealthDamage(input: ExecuteHealthDamageInput): HealthDamageResult {
+  if (input.tags.includes('powerAttack')) input.consumeFinisherEligibility?.();
   const spellBurstType = spellBurstTypeFromDamageTags(input.tags);
   const beforePayload: HealthDamageEventPayload = {
     sourceId: input.sourceId,
