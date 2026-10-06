@@ -76,6 +76,14 @@ it.each([
     expect(lifetimeSegments.at(-1)!.endFrame).toBe(ends[0]!.frame);
     expect(lifetimeSegments.at(-1)!.endReason).toBe('early');
     expect(ends[0]!.frame - output.startFrame).toBe(59);
+    if (reaction === 'corrosion') {
+      const displayed = mergeOverlappingBuffTimelineSegments(segments).filter(
+        segment => segment.buffId === output.buffId && segment.instanceId === output.instanceId,
+      );
+      expect(displayed).toHaveLength(1);
+      expect(displayed[0]!.endFrame).toBe(ends[0]!.frame);
+      expect(displayed[0]!.windows).toHaveLength(1);
+    }
   },
 );
 // 控制输入时刻的测试干员；Buff、反应配方、SkillSetting、运行时与投影全部使用正式实现。

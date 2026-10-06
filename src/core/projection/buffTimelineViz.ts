@@ -4,6 +4,16 @@
  */
 import type { CombatReceiptEntry, CombatReceiptValue } from '../combat/receipt/combatReceipt';
 
+/** 腐蚀展示包括三种附着转化的 wrapper，以及内部减抗状态。 */
+export function isCorrosionTimelineBuff(buffId: string | undefined): boolean {
+  return (
+    buffId === 'buff_common_natural_natural_corrupt_do' ||
+    buffId === 'buff_common_natural_cryst_triggered_wrapper' ||
+    buffId === 'buff_common_natural_fire_triggered_wrapper' ||
+    buffId === 'buff_common_natural_pulse_triggered_wrapper'
+  );
+}
+
 export interface BuffTimelineSegment {
   readonly attributeEffects?: readonly import('../combat/receipt/combatReceipt').BuffAttributeEffect[];
   readonly damageEffects?: readonly import('../combat/receipt/combatReceipt').BuffDamageEffect[];
@@ -237,7 +247,28 @@ export function mergeOverlappingBuffTimelineSegments(
       }
     }
   }
-  return result.sort(
+  // 腐蚀的逐秒减抗用连续过程展示，不把每次数值更新变成独立状态或详情页。
+  // 仅合并相同生效实例、层数和启用状态的数值切段；原始回执保持不变。
+  const displayed = groupBuffTimelineRuns(result).flatMap(run => {
+    if (!isCorrosionTimelineBuff(run[0]!.buffId) || run.length === 1) return run;
+    const first = run[0]!;
+    const last = run.at(-1)!;
+    const mergeWindow = (window: BuffTimelineSegment): BuffTimelineSegment => ({
+      ...window,
+      endFrame: last.endFrame,
+      endSequence: last.endSequence,
+      endReason: last.endReason,
+      durationEndFrame: last.durationEndFrame ?? last.endFrame,
+    });
+    return [
+      {
+        ...mergeWindow(first),
+        members: run.flatMap(segment => segment.members),
+        windows: first.windows.map(mergeWindow),
+      },
+    ];
+  });
+  return displayed.sort(
     (left, right) => left.startFrame - right.startFrame || left.instanceId - right.instanceId,
   );
 }
@@ -875,15 +906,53 @@ function copyOptionalBoolean(
   return value === undefined ? {} : { [key]: value };
 }
 
-/** 复刻旧版的紧凑排布：同一行不重叠即可复用，避免无意义地撑高轨道。 */
+/** 数值历史保持独立，只把同一组生效实例的连续数值段作为整体占位。 */
+export function groupBuffTimelineRuns<T extends BuffTimelineSegment>(
+  segments: readonly T[],
+): readonly T[][] {
+  const runs: T[][] = [];
+  const lastByIdentity = new Map<string, T[]>();
+  for (const segment of [...segments].sort((a, b) => a.startFrame - b.startFrame)) {
+    const members =
+      'members' in segment ? (segment as T & DisplayBuffTimelineSegment).members : [segment];
+    const signature = JSON.stringify([
+      segment.targetId,
+      segment.buffId,
+      segment.layers,
+      members
+        .map(m => [m.instanceId, m.layers, m.enhanceCount, m.enabled])
+        .sort((a, b) => Number(a[0]) - Number(b[0])),
+    ]);
+    const previous = lastByIdentity.get(signature);
+    const tail = previous?.at(-1);
+    const changes = members.filter(member => member.startFrame === segment.startFrame);
+    if (
+      tail &&
+      tail.endFrame === segment.startFrame &&
+      changes.length > 0 &&
+      changes.every(m => m.startReason === 'modifierChanged')
+    )
+      previous!.push(segment);
+    else {
+      const run = [segment];
+      runs.push(run);
+      lastByIdentity.set(signature, run);
+    }
+  }
+  return runs;
+}
+
+/** 按整段连续寿命占位，数值区间不能各自抢占更靠上的空行。 */
 export function layoutBuffTimelineSegments<T extends BuffTimelineSegment>(
   segments: readonly T[],
 ): readonly (T & PositionedBuffTimelineSegment)[] {
   const laneEnds: number[] = [];
-  return segments.map(segment => {
-    let lane = laneEnds.findIndex(endFrame => endFrame <= segment.startFrame);
+  const positioned = new Map<T, T & PositionedBuffTimelineSegment>();
+  for (const run of groupBuffTimelineRuns(segments)) {
+    let lane = laneEnds.findIndex(endFrame => endFrame <= run[0]!.startFrame);
     if (lane < 0) lane = laneEnds.length;
-    laneEnds[lane] = segment.endFrame;
-    return { ...segment, lane };
-  });
+    laneEnds[lane] = run.at(-1)!.endFrame;
+    run.forEach(segment => positioned.set(segment, { ...segment, lane }));
+  }
+  return segments.map(segment => positioned.get(segment)!);
 }

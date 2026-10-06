@@ -1,5 +1,6 @@
 import { commonBuffPresentationNameKeys } from '../../../data/buffs/generated/commonBuffPresentationNames.generated';
 import { compoundStatusFactories } from '../../../data/buffs/compoundStatusFactories';
+import { isCorrosionTimelineBuff } from '../../../core/projection/buffTimelineViz';
 import type {
   BuffAttributeEffect,
   BuffDamageEffect,
@@ -140,6 +141,7 @@ export interface SimpleBuffModifierDisplayFact {
 /** 只展示已解析的属性事实；候选未启用时不把配置值当成生效加成。 */
 export function resolveBuffEffectSummary(
   segment: {
+    readonly buffId?: string;
     readonly enabled: boolean;
     readonly attributeEffects?: readonly import('../../../core/combat/receipt/combatReceipt').BuffAttributeEffect[];
     readonly damageEffects?: readonly import('../../../core/combat/receipt/combatReceipt').BuffDamageEffect[];
@@ -147,7 +149,25 @@ export function resolveBuffEffectSummary(
   i18n: BuffDisplayI18n,
 ): string | undefined {
   if (!segment.enabled) return undefined;
+  if (isCorrosionTimelineBuff(segment.buffId)) return i18n.t('buffEffects.corrosionOverTime');
   const attributes = aggregateAttributeEffects(segment.attributeEffects ?? []);
+  const resistances = [
+    'PhysicalResistance',
+    'FireResistance',
+    'PulseResistance',
+    'CrystResistance',
+    'NaturalResistance',
+  ];
+  const resistanceTypes = ['physical', 'heat', 'electric', 'cryo', 'nature'];
+  const resistanceEffects = resistances.map(attribute =>
+    attributes.find(effect => effect.attribute === attribute && effect.slot === 'baseAddition'),
+  );
+  const allResistance = resistanceEffects.every(
+    effect =>
+      effect !== undefined &&
+      Number.isFinite(effect.value) &&
+      Math.abs(effect.value - resistanceEffects[0]!.value) < 1e-10,
+  );
   const artsGroups = [
     { suffix: 'DamageIncrease', nameKey: 'effects.name.dmgBonus:arts' },
     { suffix: 'EnhancedDamageIncrease', nameKey: 'effects.name.ampBonus:arts' },
@@ -167,6 +187,15 @@ export function resolveBuffEffectSummary(
       ),
     );
   const lines = attributes.flatMap(effect => {
+    const resistanceIndex = resistances.indexOf(effect.attribute);
+    if (resistanceIndex >= 0 && effect.slot === 'baseAddition' && Number.isFinite(effect.value)) {
+      if (allResistance && effect !== resistanceEffects[0]) return [];
+      // 原生抗性已用百分点计量，不能像增伤比例那样再乘 100。
+      const name = allResistance
+        ? i18n.t('buffEffects.allResistance')
+        : `${i18n.t(`buffEffects.types.${resistanceTypes[resistanceIndex]}`)}${i18n.t('buffEffects.resistance')}`;
+      return [`${name}${formatSigned(effect.value)}%`];
+    }
     const group = artsGroups.find(group => group.effects.includes(effect));
     if (group) {
       return effect === group.effects[0]

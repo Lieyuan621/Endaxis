@@ -2441,8 +2441,8 @@
     "defender": "Defender",
     "directContribution": "Direct contribution to this hit: {value}",
     "contributionParts": {
-      "self": "Own damage",
-      "external": "Contribution to others"
+      "self": "Damage",
+      "external": "Buff"
     },
     "buffChanges": "Producers and modifier sources",
     "buffEvent": "Instance record",
@@ -5457,6 +5457,9 @@
     "link_cd_reduction": "Combo CD reduction"
   },
   "buffEffects": {
+    "allResistance": "All resistance",
+    "corrosionOverTime": "All resistances decrease over time",
+    "resistance": " resistance",
     "attacker": "{type} damage dealt",
     "defender": "{type} damage taken",
     "arts": "Arts",

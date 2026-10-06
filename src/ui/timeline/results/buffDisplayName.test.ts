@@ -22,6 +22,24 @@ const i18n = {
 };
 
 describe('Buff display name', () => {
+  it('腐蚀五种等值抗性合并，原生百分点不再乘以 100', () => {
+    const translate = { te: () => true, t: () => '全抗性' };
+    expect(
+      resolveBuffEffectSummary(
+        {
+          enabled: true,
+          attributeEffects: [
+            'PhysicalResistance',
+            'FireResistance',
+            'PulseResistance',
+            'CrystResistance',
+            'NaturalResistance',
+          ].map(attribute => ({ attribute, slot: 'baseAddition', value: -4.44 })),
+        },
+        translate,
+      ),
+    ).toBe('全抗性-4.44%');
+  });
   it('同槽加值求和，独立乘法相乘，四种法术加成只有聚合后等值才合并', () => {
     const messages: Record<string, string> = {
       'effects.name.artsIntensity': '源石技艺强度',

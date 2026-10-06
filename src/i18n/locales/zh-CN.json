@@ -2458,8 +2458,8 @@
     "defender": "受击方",
     "directContribution": "本次直接伤害贡献：{value}",
     "contributionParts": {
-      "self": "自身伤害",
-      "external": "对他人的增益贡献"
+      "self": "伤害",
+      "external": "增益"
     },
     "buffChanges": "产生与增益来源",
     "buffEvent": "实例记录",
@@ -5474,6 +5474,9 @@
     "link_cd_reduction": "连携冷却缩减"
   },
   "buffEffects": {
+    "allResistance": "全抗性",
+    "corrosionOverTime": "全抗性随时间降低",
+    "resistance": "抗性",
     "attacker": "造成的{type}伤害",
     "defender": "受到的{type}伤害",
     "arts": "法术",

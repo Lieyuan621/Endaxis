@@ -1,4 +1,5 @@
 import type { BuffTimelineSegment } from '../../../core/projection/buffTimelineViz';
+import { groupBuffTimelineRuns } from '../../../core/projection/buffTimelineViz';
 import type { EnemyEffectMarker } from '../../../core/projection/enemyEffectViz';
 import { isPhysicalStatusRowBuff } from './physicalStatusDisplay';
 
@@ -30,8 +31,17 @@ export function layoutEnemyStatusRows<
 ) {
   const lanes = new Map<T, number>();
   const entityLanes = new Map<E, number>();
+  const runs = groupBuffTimelineRuns(buffs);
+  const runByFirst = new Map(runs.map(run => [run[0]!, run]));
+  const runEnd = (buff: T) =>
+    Math.max(...runByFirst.get(buff)!.map(member => member.durationEndFrame ?? member.endFrame));
+  const assignLane = (buff: T, lane: number) => {
+    runByFirst.get(buff)!.forEach(member => {
+      lanes.set(member, lane);
+    });
+  };
   const groups: T[][] = [[], [], [], []];
-  for (const buff of buffs) {
+  for (const buff of runByFirst.keys()) {
     const group = attachmentIds.has(buff.buffId)
       ? 1
       : isPhysicalStatusRowBuff(buff)
@@ -52,7 +62,7 @@ export function layoutEnemyStatusRows<
       const items = [
         ...groups[group]!.map(buff => ({
           start: buff.startFrame,
-          end: buff.durationEndFrame ?? buff.endFrame,
+          end: runEnd(buff),
           buff,
         })),
         ...entities.map(entity => ({ start: entity.startFrame, end: entity.endFrame, entity })),
@@ -61,7 +71,7 @@ export function layoutEnemyStatusRows<
         let lane = ends.findIndex(end => end <= item.start);
         if (lane < 0) lane = ends.length;
         ends[lane] = item.end;
-        if ('buff' in item) lanes.set(item.buff, offset + lane);
+        if ('buff' in item) assignLane(item.buff, offset + lane);
         else entityLanes.set(item.entity, offset + lane);
       }
       offset += ends.length;
@@ -71,8 +81,8 @@ export function layoutEnemyStatusRows<
       // 物理异常与破防共用一行；单一附着槽也固定在同一行。
       let lane = group <= 1 ? 0 : ends.findIndex(end => end <= buff.startFrame);
       if (lane < 0) lane = ends.length;
-      ends[lane] = buff.durationEndFrame ?? buff.endFrame;
-      lanes.set(buff, offset + lane);
+      ends[lane] = runEnd(buff);
+      assignLane(buff, offset + lane);
     }
     // 空物理、附着、异常区也保留一行，与旧版分区顺序一致。
     offset += Math.max(group < 3 ? 1 : 0, ends.length);

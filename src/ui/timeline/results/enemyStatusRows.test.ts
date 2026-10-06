@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { BuffTimelineSegment } from '../../../core/projection/buffTimelineViz';
+import {
+  layoutBuffTimelineSegments,
+  mergeOverlappingBuffTimelineSegments,
+} from '../../../core/projection/buffTimelineViz';
 import { isEnemyTimelineBuffVisible, layoutEnemyStatusRows } from './enemyStatusRows';
 
 const attachmentIds = new Set(['electric', 'heat']);
@@ -19,6 +23,43 @@ function buff(buffId: string, extras: Partial<BuffTimelineSegment> = {}): BuffTi
 }
 
 describe('enemy status presentation rows', () => {
+  it('腐蚀数值变化合并展示段和详情，但不合并后续的新实例', () => {
+    const id = 'buff_common_natural_natural_corrupt_do';
+    const segments = mergeOverlappingBuffTimelineSegments([
+      buff(id, { endFrame: 20, startReason: 'applied', endReason: 'modifierChanged' }),
+      buff(id, {
+        startFrame: 20,
+        endFrame: 40,
+        startReason: 'modifierChanged',
+        endReason: 'finished',
+      }),
+      buff(id, { instanceId: 2, startFrame: 40, endFrame: 60, startReason: 'applied' }),
+    ]);
+    expect(segments.map(segment => [segment.startFrame, segment.endFrame])).toEqual([
+      [0, 40],
+      [40, 60],
+    ]);
+    expect(segments[0]!.windows).toHaveLength(1);
+    expect(segments[0]!.windows[0]!.endFrame).toBe(40);
+  });
+  it('数值后续段与首段整体占位，不跳入中途空出的较低行，每段保留图标', () => {
+    const blocker = buff('other', { endFrame: 15 });
+    const first = buff('changing', { startFrame: 5, endFrame: 20, startReason: 'applied' });
+    const next = buff('changing', { startFrame: 20, endFrame: 40, startReason: 'modifierChanged' });
+    const newcomer = buff('new', { startFrame: 21, endFrame: 30 });
+    const input = [blocker, first, next, newcomer];
+    const rows = layoutEnemyStatusRows(input, [], attachmentIds);
+    expect(rows.lanes.get(next)).toBe(rows.lanes.get(first));
+    expect(rows.lanes.get(newcomer)).not.toBe(rows.lanes.get(first));
+    expect(rows.hiddenIcons.has(first)).toBe(false);
+    expect(rows.hiddenIcons.has(next)).toBe(false);
+    const operatorRows = layoutBuffTimelineSegments(input);
+    expect(operatorRows.map(segment => segment.lane)).toEqual([0, 1, 1, 0]);
+    const stacked = { ...next, layers: 2, enhanceCount: 2, startReason: 'stackChanged' as const };
+    expect(
+      layoutEnemyStatusRows([first, stacked], [], attachmentIds).hiddenIcons.has(stacked),
+    ).toBe(false);
+  });
   it('shares ordinary status lanes with entities and reuses ended intervals', () => {
     const before = buff('before', { endFrame: 10 });
     const after = buff('after', { startFrame: 20, endFrame: 30 });
