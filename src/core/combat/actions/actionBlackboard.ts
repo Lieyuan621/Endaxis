@@ -18,6 +18,21 @@ import {
 /** 技能 direct 层与共享 entity 层的现有对象绑定。 */
 export class ActionBlackboard {
   #state: ActionBlackboardState;
+  #observeRead: ((key: string, value: ActionBlackboardValue | undefined) => void) | undefined;
+
+  /** 诊断只观察真实读取；作用于本对象和当前同步调用，退出后恢复，不进入保存状态。 */
+  observeReads<T>(
+    observer: (key: string, value: ActionBlackboardValue | undefined) => void,
+    execute: () => T,
+  ): T {
+    const previous = this.#observeRead;
+    this.#observeRead = observer;
+    try {
+      return execute();
+    } finally {
+      this.#observeRead = previous;
+    }
+  }
   /** 仅供未迁移的宿主接线使用；正式执行器直接接收步进数据，不持有此对象。 */
   get runtimeState(): ActionBlackboardState {
     return this.#state;
@@ -97,14 +112,18 @@ export class ActionBlackboard {
   }
   getString(key: string): string | undefined {
     const value = readActionBlackboard(this.#state, key);
+    this.#observeRead?.(key, value);
     return typeof value === 'string' ? value : undefined;
   }
   getNumber(key: string): number | undefined {
     const value = readActionBlackboard(this.#state, key);
+    this.#observeRead?.(key, value);
     return typeof value === 'number' ? value : undefined;
   }
   getValue(key: string): ActionBlackboardValue | undefined {
-    return readActionBlackboard(this.#state, key);
+    const value = readActionBlackboard(this.#state, key);
+    this.#observeRead?.(key, value);
+    return value;
   }
   assignDynamic(key: string, value: number): boolean {
     return assignDynamicBlackboard(this.#state, key, value);

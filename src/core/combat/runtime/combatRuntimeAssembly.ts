@@ -450,6 +450,7 @@ export function getCombatRuntimeInputRules(
 }
 
 export interface CombatRuntimeEnvironmentOptions extends CombatRuntimeInputRules {
+  readonly executionTrace?: import('../actions/actionExecutionTrace').ActionExecutionTrace;
   /** 同一切面树共享的能力实体子技能程序目录；普通新战斗省略时创建一份。 */
   readonly abilityEntityChildSkillPrograms?: AbilityEntityChildSkillPrograms;
   /** 同一切面树共享的编译动作槽目录；恢复分支必须沿用原目录。 */
@@ -646,8 +647,10 @@ function withTerminalPreparation(
   chain: CombatOperationExecutor,
   terminal: CombatOperationExecutor,
   operationHost?: CombatOperationExecutor['operationHost'],
+  executionTrace?: CombatOperationExecutor['executionTrace'],
 ): CombatOperationExecutor {
   return {
+    ...(executionTrace === undefined ? {} : { executionTrace }),
     ...(operationHost === undefined ? {} : { operationHost }),
     prepare: (step, context) => terminal.prepare?.(step, context),
     execute: (step, context) => chain.execute(step, context),
@@ -4281,7 +4284,18 @@ export class CombatRuntimeAssembly {
       },
       { state: operationHost.state.resources, programs: operationHost.programs },
     );
-    return withTerminalPreparation(operationChain, terminalDelegate, operationHost);
+    return withTerminalPreparation(
+      operationChain,
+      terminalDelegate,
+      operationHost,
+      this.#options.executionTrace === undefined
+        ? undefined
+        : {
+            recorder: this.#options.executionTrace,
+            frame: () => this.clock.frame,
+            receiptCount: () => this.receipt.history.length,
+          },
+    );
   }
 
   #createEquipmentEventOperationChain(
@@ -4611,7 +4625,18 @@ export class CombatRuntimeAssembly {
       },
       { state: operationHost.state.resources, programs: operationHost.programs },
     );
-    const reactiveOperations = withTerminalPreparation(operationChain, terminal, operationHost);
+    const reactiveOperations = withTerminalPreparation(
+      operationChain,
+      terminal,
+      operationHost,
+      this.#options.executionTrace === undefined
+        ? undefined
+        : {
+            recorder: this.#options.executionTrace,
+            frame: () => this.clock.frame,
+            receiptCount: () => this.receipt.history.length,
+          },
+    );
     const bindingKey = `${operatorId}\u0000${sourceActionId}`;
     if (!this.#reactiveOperationBindings.has(bindingKey)) {
       this.#reactiveOperationBindings.set(bindingKey, () =>

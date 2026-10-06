@@ -7,6 +7,73 @@ import { projectBuffTimelineViz } from '../../../core/projection/buffTimelineViz
 import { projectEnemyEffectViz } from '../../../core/projection/enemyEffectViz';
 import { findBuffDamageSegment } from '../../../ui/timeline/results/enemyBuffDamageHits';
 import { layoutEnemyDamageHits } from '../../../ui/timeline/results/enemyDamageHitLayout';
+import { ActionExecutionTrace } from '../../../core/combat/actions/actionExecutionTrace';
+import { indexExecutionTrace, directTraceReceipts } from '../executionTraceNavigation';
+import { getCompiledGraphLocation } from '../../../core/compiler/compileActionGraph';
+
+it('伊冯重击的同步连携检查可进入，但不插入本图步进且不重复计入伤害回执', () => {
+  const { scenario } = createLowStarShareRegressionScenario();
+  const track = scenario.tracks[0]!;
+  track.operator!.operatorSlug = 'yvonne';
+  const group = gameDataRepository
+    .getOperator('yvonne')!
+    .skillGroups.find(g => g.key === 'basicAttack')!;
+  const skill = (Array.isArray(group.skills) ? group.skills : [group.skills]).at(-1)!;
+  track.skillCasts = [
+    {
+      id: 'trace-heavy',
+      source: { kind: 'operatorSkill', skillGroupKey: group.key, skillKey: skill.key },
+      placement: { startFrame: 0 },
+    },
+  ];
+  for (const other of scenario.tracks.slice(1)) if (other) other.skillCasts = [];
+  scenario.battle.durationFrames = 90;
+  const service = new ScenarioSimulationService({
+    index: gameDataRepository,
+    spellInflictionSettings: skillSettings,
+    resources: {
+      sharedSpGain: { baseGainEfficiency: 1 },
+      spRecoveryPauseDuration: 1.5,
+      ultimateEnergySystemUnlocked: true,
+      normalSkillUltimateEnergy: { selfGainPerSp: 0.065, otherGainPerSp: 0.065 },
+    },
+  });
+  const trace = new ActionExecutionTrace('trace-heavy');
+  const result = service.diagnoseExecution(scenario, trace);
+  const index = indexExecutionTrace(
+    trace.records,
+    r => getCompiledGraphLocation(r.program, r.nodeId)?.resource === skill.actionGraph,
+  );
+  const steps = index.root.records.filter(r => r.phase === 'execute');
+  const damageIndex = steps.findIndex(
+    r => getCompiledGraphLocation(r.program, r.nodeId)?.nodeId === 'dealDamage_6',
+  );
+  const damage = steps[damageIndex]!;
+  expect(
+    getCompiledGraphLocation(steps[damageIndex + 1]!.program, steps[damageIndex + 1]!.nodeId)
+      ?.nodeId,
+  ).toBe('conditional_5');
+  const calls = index.children.get(damage.sequence)!;
+  expect(calls.length).toBeGreaterThan(0);
+  expect(calls.every(call => call.parent === index.root && call.caller === damage)).toBe(true);
+  const condition = calls.flatMap(call => call.records).find(record => record.callOutcome)!;
+  expect(condition.callOutcome?.purpose).toBe('comboCandidate');
+  // 同程序、同事件及同局部 invocation，仍必须按真实调用身份区分。
+  const copied = [
+    { ...damage, sequence: 0, parent: undefined },
+    { ...condition, sequence: 1, parent: 0 },
+    { ...condition, sequence: 2, parent: 0, callId: condition.callId! + 100 },
+    { ...condition, sequence: 3, parent: 0, executionHostId: condition.executionHostId! + 100 },
+  ];
+  expect(indexExecutionTrace(copied).children.get(0)).toHaveLength(3);
+  expect(
+    calls.some(call => call.records.some(r => r.observations.some(o => o.kind === 'condition'))),
+  ).toBe(true);
+  const direct = trace.records.flatMap(r =>
+    directTraceReceipts(r, trace.records, result.receiptEntries),
+  );
+  expect(new Set(direct.map(r => r.sequence)).size).toBe(direct.length);
+});
 
 it('does not quantize through legacy millisecond-rounded display times', () => {
   const { quantization } = createLowStarShareRegressionScenario();
@@ -21,7 +88,7 @@ it('runs the public low-star action sequence with native definitions without rew
   const { scenario, quantization } = createLowStarShareRegressionScenario();
   expect(quantization.every(row => Math.abs(row.errorSeconds) <= 1 / 60 + 1e-12)).toBe(true);
   const before = JSON.stringify(scenario);
-  const run = await new ScenarioSimulationService({
+  const service = new ScenarioSimulationService({
     index: gameDataRepository,
     spellInflictionSettings: skillSettings,
     resources: {
@@ -30,7 +97,13 @@ it('runs the public low-star action sequence with native definitions without rew
       ultimateEnergySystemUnlocked: true,
       normalSkillUltimateEnergy: { selfGainPerSp: 0.065, otherGainPerSp: 0.065 },
     },
-  }).simulate(scenario, scenario.battle.durationFrames);
+  });
+  const run = await service.simulate(scenario, scenario.battle.durationFrames);
+  const trace = new ActionExecutionTrace(scenario.tracks[0]!.skillCasts[0]!.id);
+  const diagnosed = service.diagnoseExecution(scenario, trace);
+  expect(diagnosed.receiptEntries).toEqual(run.receiptEntries);
+  expect(trace.records.some(record => record.phase === 'execute')).toBe(true);
+  expect(trace.records.some(record => record.receiptEnd > record.receiptStart)).toBe(true);
   expect(JSON.stringify(scenario)).toBe(before);
   expect(run.receiptEntries.some(entry => entry.event === 'DamageApplied')).toBe(true);
   const segments = projectBuffTimelineViz(run.receiptEntries, run.frame);

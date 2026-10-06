@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { operationName } from './operationNames';
+import { ActionExecutionTrace } from '../../core/combat/actions/actionExecutionTrace';
 import { projectDodgeMarkerDiagnostics } from '../../core/projection/dodgeMarkerDiagnostics';
 import { projectDodgeMarkerEffects } from '../../core/projection/dodgeMarkerEffects';
 import {
@@ -442,6 +443,42 @@ const GearSelectionDialog = defineLazyDialog(() => import('./library/GearSelecti
 const SkillGraphEditorDialog = defineLazyDialog(
   () => import('../action-graph/SkillGraphEditorDialog.vue'),
 );
+const ExecutionTraceDialog = defineLazyDialog(
+  () => import('../action-graph/ExecutionTraceDialog.vue'),
+);
+const executionTraceRequest = shallowRef<{
+  label: string;
+  definition: SkillDefinition;
+  presentation?: import('../../core/project/graphPresentation').SkillGraphPresentation;
+  run: () => {
+    trace: ActionExecutionTrace;
+    result?: import('../../application/simulation/runStandardPlayerDamageScenarioSimulation').StandardPlayerDamageScenarioResult;
+    error?: string;
+  };
+} | null>(null);
+function openExecutionTrace() {
+  const selected = selectedCastModel.value;
+  if (!selected?.currentDefinition) return;
+  const source = structuredClone(toRaw(scenario.value));
+  const service = createEditorSimulationService(editorGameDataRepository);
+  executionTraceRequest.value = {
+    label: selected.label,
+    definition:
+      source.tracks[selected.trackIndex]!.skillCasts.find(cast => cast.id === selected.cast.id)
+        ?.customDefinition ?? toRaw(selected.currentDefinition),
+    presentation: selected.cast.presentation?.graph,
+    run: () => {
+      const trace = new ActionExecutionTrace(selected.cast.id);
+      try {
+        const result = service.diagnoseExecution(source, trace);
+        return { trace, result };
+      } catch (error) {
+        return { trace, error: error instanceof Error ? error.message : String(error) };
+      }
+    },
+  };
+  contextMenuTarget.value = null;
+}
 const AssetWorkspace = defineLazyDialog(() => import('../asset-workspace/AssetWorkspace.vue'));
 const GearLoadoutBuildDialog = defineLazyDialog(
   () => import('./library/GearLoadoutBuildDialog.vue'),
@@ -7645,6 +7682,7 @@ function setMobileGuideFrame(frame: number | null): void {
         :grouped="selectedCastId !== null && groupedSkillCastIds.has(selectedCastId)"
         @dissolve-group="dissolveSelectedSkillCastGroups"
         @edit-graph="openSkillGraphEditor"
+        @execution-trace="openExecutionTrace"
         @set-random-seed="setSelectedCastRandomSeed"
         @roll-random-seed="rollSelectedCastRandomSeed"
         @set-start-frame="setSelectedCastStartFrame"
@@ -7937,6 +7975,15 @@ function setMobileGuideFrame(frame: number | null): void {
     @select="selectGear"
     @clear="clearGear"
     @change-refine-tier="changeGearRefineTier"
+  />
+  <ExecutionTraceDialog
+    :definition="executionTraceRequest!.definition"
+    :presentation="executionTraceRequest!.presentation"
+    :reference-choices="skillGraphReferenceChoices"
+    v-if="executionTraceRequest"
+    :label="executionTraceRequest.label"
+    :run="executionTraceRequest.run"
+    @close="executionTraceRequest = null"
   />
   <SkillGraphEditorDialog
     v-if="skillGraphEditorTarget !== null"

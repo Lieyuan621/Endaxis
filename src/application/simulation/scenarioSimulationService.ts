@@ -443,6 +443,17 @@ export class ScenarioSimulationService {
   }
 
   /** 执行一次标准玩家伤害模拟，并在同一份回执上完成全部投影。 */
+  diagnoseExecution(
+    scenario: ScenarioDocument,
+    trace: import('../../core/combat/actions/actionExecutionTrace').ActionExecutionTrace,
+  ) {
+    // 诊断始终完整重跑，不读取或覆盖交互模拟的缓存与切面。
+    return runStandardPlayerDamageScenarioSimulation({
+      ...this.#createStandardSimulationInput(scenario, scenario.battle.durationFrames),
+      executionTrace: trace,
+    });
+  }
+
   async simulate(
     scenario: ScenarioDocument,
     endFrame: number,

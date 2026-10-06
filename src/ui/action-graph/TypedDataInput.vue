@@ -110,11 +110,12 @@ const preview = computed(() => {
     <template v-else>
       <EaButton
         v-if="input.source !== null"
+        class="typed-data-input__source-button"
         size="sm"
-        :title="t('graphDataInput.source', { id: input.source })"
+        :title="sourceLabel ?? input.source"
         @click="emit('locate', input.source)"
       >
-        {{ sourceLabel ?? input.source }} ↗
+        <span class="typed-data-input__source">{{ sourceLabel ?? input.source }}</span> ↗
       </EaButton>
       <span v-else class="typed-data-input__preview">{{ preview }}</span>
       <EaButton
@@ -144,6 +145,12 @@ const preview = computed(() => {
   min-width: 65px;
 }
 .typed-data-input__preview {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.typed-data-input__source {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

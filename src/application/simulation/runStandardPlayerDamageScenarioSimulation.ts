@@ -57,6 +57,7 @@ import { BuffProgressRecorder } from '../../core/combat/buffs/buffProgressRecord
 type DamageStep = ResolvedCombatStepForKind<'dealDamage' | 'dealFixedDamage'>;
 
 export interface RunStandardPlayerDamageScenarioInput {
+  readonly executionTrace?: import('../../core/combat/actions/actionExecutionTrace').ActionExecutionTrace;
   readonly scenario: ScenarioDocument;
   readonly options: Omit<CompileScenarioRuntimeAssemblyOptions, 'environment'>;
   readonly endFrame: number;
@@ -216,6 +217,7 @@ export function prepareStandardPlayerDamageScenarioRuntime(
   });
   const executable: CombatRuntimeAssemblyOptions = {
     ...compiled,
+    ...(input.executionTrace === undefined ? {} : { executionTrace: input.executionTrace }),
     ...(input.continuationPlanCastIds === undefined
       ? {}
       : {

@@ -16,7 +16,12 @@ import * as dagre from '@dagrejs/dagre';
 import { EaButton, EaInput } from '@/design-system';
 import type { ActionGraphDefinition } from '../../../packages/game-data-contract/src/actionGraph';
 import type { GraphEntryGroup } from '../../application/editor/actionGraphEditing';
-import { actionNodeTitle, dataNodeTitle, compactDataSymbol } from './nodePresentation';
+import {
+  actionNodeTitle,
+  dataNodeTitle,
+  dataNodeSourceLabel,
+  compactDataSymbol,
+} from './nodePresentation';
 import { listGraphPorts } from '../../application/editor/actionGraphEditing';
 import type { GraphPresentation } from '../../core/project/graphPresentation';
 import { type DataInput, dataNodeHasEffects } from '../../core/action-graph/actionGraphDataNodes';
@@ -37,6 +42,7 @@ const props = defineProps<{
   selectedDataId?: string | null;
   presentation?: GraphPresentation;
   selectedId: string | null;
+  executionNodeId?: string | null;
   entryGroups: readonly GraphEntryGroup[];
   selectedEntryId: string | null;
   beforeInteraction: () => boolean;
@@ -92,7 +98,13 @@ const emit = defineEmits<{
   selectConnection: [nodeId: string | null, entryId: string | null, targetId: string];
 }>();
 
-const NODE_WIDTH = 266;
+const NODE_WIDTH = 320;
+const variableTextMeasure = document.createElement('canvas').getContext('2d');
+function blackboardNodeWidth(key: string): number {
+  if (variableTextMeasure) variableTextMeasure.font = '12px monospace';
+  const textWidth = variableTextMeasure?.measureText(key).width ?? key.length * 8;
+  return Math.max(100, Math.min(420, Math.ceil(textWidth) + 40));
+}
 const ENTRY_WIDTH = 390;
 const HEADER_HEIGHT = 58;
 const VARIABLE_HEIGHT = 36;
@@ -265,7 +277,10 @@ const dataMetadata = computed(() =>
       id,
       graph: { value: toRaw(props.graph), scope: props.graphScope },
       layoutId: layoutId(dataLayoutIds, 'data', id),
-      width: NODE_WIDTH,
+      width:
+        stringRead !== undefined || numeric?.kind === 'blackboard'
+          ? blackboardNodeWidth(stringRead ?? (numeric?.kind === 'blackboard' ? numeric.key : ''))
+          : NODE_WIDTH,
       height,
       inputTop,
       symbol,
@@ -361,7 +376,7 @@ const dataCurves = computed(() =>
     return {
       ...edge,
       path: curve(
-        from.x + NODE_WIDTH,
+        from.x + dataMetadataById.value.get(edge.source)!.width,
         from.y + dataMetadataById.value.get(edge.source)!.outputY,
         to.x,
         to.y + edge.y,
@@ -633,7 +648,7 @@ const pendingCurve = computed(() => {
         inputs.findIndex(p => JSON.stringify(p.path) === JSON.stringify(pending.path)) +
         (pending.owner === 'action' ? 1 : 0);
     }
-    const x = position.x + (pending.kind === 'data-output' ? NODE_WIDTH : 0);
+    const x = position.x + (pending.kind === 'data-output' ? metadata.width : 0);
     const y =
       position.y +
       (pending.kind === 'data-output' && 'outputY' in metadata
@@ -717,7 +732,7 @@ function focusData(id: string): void {
   if (!node) return;
   view.positioned = true;
   camera.zoom = Math.max(0.75, camera.zoom);
-  camera.x = viewportSize.width / 2 - (node.x + NODE_WIDTH / 2) * camera.zoom;
+  camera.x = viewportSize.width / 2 - (node.x + node.width / 2) * camera.zoom;
   camera.y = viewportSize.height / 2 - (node.y + node.height / 2) * camera.zoom;
 }
 
@@ -1691,7 +1706,9 @@ defineExpose({
           startItemDrag($event, node.layoutId);
         "
       >
-        <span v-if="node.variable" class="variable-name">{{ node.variableName }}</span>
+        <span v-if="node.variable" class="variable-name" :title="node.variableName">{{
+          node.variableName
+        }}</span>
         <span v-else-if="node.symbol" class="operation-symbol" :aria-label="node.title">{{
           node.symbol
         }}</span>
@@ -1732,6 +1749,11 @@ defineExpose({
             class="data-input-row__control"
             :input="input"
             :reset-key="graph.dataNodes?.[node.id]?.expression"
+            :source-label="
+              input.source === null
+                ? undefined
+                : dataNodeSourceLabel(graph.dataNodes?.[input.source], input.source)
+            "
             :label="`${node.title} ${input.path.join('.')}`"
             :readonly="readonly"
             @constant="emit('constantData', 'data', node.id, input.path, $event, input.graph)"
@@ -1744,6 +1766,7 @@ defineExpose({
           />
         </div>
       </article>
+      <slot name="world-overlay" :nodes="layoutModels" />
       <article
         v-for="group in visibleEntries"
         :key="group.layoutId"
@@ -1840,6 +1863,7 @@ defineExpose({
         class="graph-node"
         :class="{
           selected: node.id === selectedId,
+          'execution-current': node.id === executionNodeId,
           'entry-target': node.id === selectedEntryTarget,
           branch: node.isBranch,
           call: node.isCall,
@@ -1924,6 +1948,11 @@ defineExpose({
             class="data-input-row__control"
             :input="input"
             :reset-key="graph.nodes[node.id]?.action"
+            :source-label="
+              input.source === null
+                ? undefined
+                : dataNodeSourceLabel(graph.dataNodes?.[input.source], input.source)
+            "
             :label="`${node.title} ${input.path.join('.')}`"
             :readonly="readonly"
             @constant="emit('constantData', 'action', node.id, input.path, $event, input.graph)"
@@ -2035,6 +2064,7 @@ defineExpose({
   background: var(--graph-variable-bg);
 }
 .variable-name {
+  font-family: monospace;
   display: block;
   padding: 0 22px 0 14px;
   line-height: 34px;
@@ -2128,15 +2158,26 @@ defineExpose({
 .action-data-input {
   right: 115px;
 }
-.data-input-row span {
+.data-input-row > span:not(.data-input-row__control) {
+  max-width: 64px;
+  flex-shrink: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   pointer-events: none;
 }
 .data-input-row__control {
-  width: 60px;
-  min-width: 40px;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.data-input-row__control :deep(.ea-button) {
+  padding: 2px 4px;
+  font-size: 10px;
+  min-width: 0;
+}
+.data-input-row__control :deep(.typed-data-input__source-button) {
+  flex: 0 1 auto;
+  min-width: 0;
 }
 .action-graph-canvas {
   /* 图形语义色独立于主题，表面与文字随工作台主题切换。 */
@@ -2408,6 +2449,10 @@ defineExpose({
   background: var(--graph-node-bg);
   box-shadow: 0 4px 12px var(--ea-shadow);
   cursor: default;
+}
+.graph-node.execution-current {
+  outline: 3px solid #f4d74c;
+  outline-offset: 3px;
 }
 .graph-node.selected {
   border-color: var(--graph-highlight);

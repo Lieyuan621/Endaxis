@@ -57,6 +57,7 @@ const emit = defineEmits<{
   updateConnection: [connectionId: string, patch: InspectorConnectionPatch];
   dissolveGroup: [];
   editGraph: [];
+  executionTrace: [];
 }>();
 
 const { t } = useI18n({ useScope: 'global' });
@@ -232,6 +233,13 @@ function commitRandomSeed(value: number | undefined): void {
             :disabled="inputReadOnly || currentDefinition === null"
             @click="$emit('editGraph')"
             >{{ t('actionGraphEditor.open') }}</EaButton
+          >
+          <EaButton
+            class="attribute-grid__wide"
+            size="sm"
+            :disabled="currentDefinition === null"
+            @click="$emit('executionTrace')"
+            >{{ t('executionTrace.title') }}</EaButton
           >
         </div>
       </section>

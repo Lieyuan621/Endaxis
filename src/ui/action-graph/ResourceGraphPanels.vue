@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ReferenceChoices } from '../definition-editor/fieldInputConfig';
+import type { GraphEntryGroup } from '../../application/editor/actionGraphEditing';
 import { provide, type UnwrapNestedRefs } from 'vue';
 import { blackboardNavigationKey } from '../field-editor/blackboardFieldContext';
 import { useI18n } from 'vue-i18n';
@@ -24,6 +25,8 @@ const props = defineProps<{
   label: string;
   identity?: string;
   canvasView?: GraphCanvasView;
+  executionNodeId?: string | null;
+  executionEntries?: readonly GraphEntryGroup[];
 }>();
 const { t } = useI18n();
 provide(blackboardNavigationKey, target => {
@@ -34,6 +37,7 @@ provide(blackboardNavigationKey, target => {
   <ActionGraphCanvas
     v-if="area === 'canvas'"
     :view="canvasView"
+    :execution-node-id="executionNodeId"
     :ref="value => (resourceGraphEditor.canvas = value as InstanceType<typeof ActionGraphCanvas>)"
     :key="`${resourceKey}:${resourceGraphEditor.graphKey}`"
     :graph="resourceGraphEditor.graph"
@@ -43,7 +47,7 @@ provide(blackboardNavigationKey, target => {
     :selected-id="resourceGraphEditor.selectedId"
     :selected-data-id="resourceGraphEditor.selectedDataId"
     :selected-entry-id="resourceGraphEditor.selectedEntryId"
-    :entry-groups="resourceGraphEditor.entryGroups"
+    :entry-groups="executionEntries ?? resourceGraphEditor.entryGroups"
     :presentation="resourceGraphEditor.graphPresentation"
     :before-interaction="resourceGraphEditor.canLeaveFields"
     @create-node="resourceGraphEditor.createNode"
@@ -68,7 +72,9 @@ provide(blackboardNavigationKey, target => {
     @drop-variable="resourceGraphEditor.dropVariable"
     @connect="resourceGraphEditor.connect"
     @connect-entry="resourceGraphEditor.connectEntry"
-  />
+  >
+    <template #world-overlay="overlay"><slot name="world-overlay" v-bind="overlay" /></template>
+  </ActionGraphCanvas>
   <fieldset v-else class="ap-graph-inspector">
     <DataNodeInspector
       :reference-choices="referenceChoices"

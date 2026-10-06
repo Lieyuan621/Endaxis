@@ -14,6 +14,7 @@ import { ActionBlackboardOperationExecutor } from './actionBlackboardOperationEx
 import { CombatOperationPrograms } from './combatOperationPrograms';
 import { RuntimeTargetContext } from '../abilities/runtimeTargetContext';
 import { createNativeEventFixture } from '../events/nativeEventTestFixture';
+import { ActionExecutionTrace } from './actionExecutionTrace';
 
 const graph: ActionGraphDefinition = {
   nodes: {
@@ -55,6 +56,57 @@ function fixture(execute?: CombatOperationExecutor['execute']) {
 }
 
 describe('直接图执行', () => {
+  it('诊断记录不重放动作，区分共享图调用，并在异常后恢复观察作用域', () => {
+    const program = createActionGraphCompilation(graph, 1).compileAll();
+    const trace = new ActionExecutionTrace('cast');
+    let executions = 0;
+    const operations: CombatOperationExecutor = {
+      executionTrace: { recorder: trace, frame: () => 12, receiptCount: () => executions },
+      execute: (_step, context) => {
+        context!.blackboard.getNumber('value');
+        executions++;
+        return true;
+      },
+      evaluate: () => true,
+    };
+    const board = new ActionBlackboard({ value: 3 });
+    const runtime = new CombatActionSequenceRuntime(operations, {
+      blackboard: board,
+      executionActionId: 'cast',
+    });
+    runtime.createGraphSequence(program, 'first', 'first-call').executeInstant({});
+    runtime.createGraphSequence(program, 'first', 'second-call').executeInstant({});
+    const executed = trace.records.filter(r => r.phase === 'execute');
+    expect(executions).toBe(4);
+    expect(executed.map(r => r.invocation)).toEqual([
+      'first-call',
+      'first-call',
+      'second-call',
+      'second-call',
+    ]);
+    expect(executed.every(r => r.receiptEnd - r.receiptStart === 1)).toBe(true);
+    expect(executed[0]!.observations).toEqual([{ kind: 'blackboard', input: 'value', result: 3 }]);
+    board.getNumber('value');
+    expect(executed[0]!.observations).toHaveLength(1);
+    const broken = new CombatActionSequenceRuntime(
+      {
+        ...operations,
+        execute: () => {
+          throw new Error('stop');
+        },
+      },
+      { blackboard: board, executionActionId: 'cast' },
+    );
+    expect(() => broken.createGraphSequence(program, 'first', 'broken').tryExecute({})).toThrow(
+      'stop',
+    );
+    expect(trace.records.at(-1)?.failed).toBe(true);
+    const count = trace.records.length;
+    new CombatActionSequenceRuntime(operations, { blackboard: board, executionActionId: 'other' })
+      .createGraphSequence(program, 'first', 'other')
+      .executeInstant({});
+    expect(trace.records).toHaveLength(count);
+  });
   it('外部资源使用自己的同名节点，执行和恢复均不借用调用方图', () => {
     const child: ActionGraphResourceDefinition = {
       main: {

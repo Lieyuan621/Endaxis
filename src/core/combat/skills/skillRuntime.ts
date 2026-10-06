@@ -194,6 +194,11 @@ export interface CombatOperationContext {
 }
 
 export interface CombatOperationExecutor {
+  readonly executionTrace?: {
+    readonly recorder: import('../actions/actionExecutionTrace').ActionExecutionTrace;
+    readonly frame: () => number;
+    readonly receiptCount: () => number;
+  };
   /** 当前执行链使用的动作数据和固定槽目录；回调子技能据此共享同一宿主。 */
   readonly operationHost?: {
     readonly state: CombatOperationHostState;

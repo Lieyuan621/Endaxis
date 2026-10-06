@@ -432,7 +432,30 @@ export class CombatActionSequenceRuntime {
   }
 
   #graphHost(operationContext: CombatOperationContext): ActionGraphExecutionHost {
+    const trace = this.operations.executionTrace;
     return {
+      ...(trace === undefined
+        ? {}
+        : {
+            trace: <T>(
+              program: CompiledActionGraph,
+              nodeId: string,
+              invocation: string,
+              phase: import('./actionExecutionTrace').ExecutionTracePhase,
+              execute: () => T,
+            ) =>
+              trace.recorder.run(
+                operationContext,
+                trace.frame(),
+                program,
+                nodeId,
+                invocation,
+                phase,
+                trace.receiptCount,
+                execute,
+                this,
+              ),
+          }),
       listener: (responses, state, create) =>
         new CombatActionEventListener(
           responses,
@@ -450,10 +473,15 @@ export class CombatActionSequenceRuntime {
       canExecute: () => operationContext.canExecuteAction?.() !== false,
       evaluate: condition => {
         const passed = this.operations.evaluate(condition, operationContext);
+        trace?.recorder.observe('condition', condition, passed);
         this.hooks.conditionEvaluated?.(condition, passed);
         return passed;
       },
-      value: operand => resolveActionValueOperand(operand, operationContext.blackboard),
+      value: operand => {
+        const value = resolveActionValueOperand(operand, operationContext.blackboard);
+        trace?.recorder.observe('value', operand, value);
+        return value;
+      },
       once: (key, execute) => executeActionOnce(this.#scopeState, key, execute),
       scope: (parameters, saved) => {
         const blackboard =

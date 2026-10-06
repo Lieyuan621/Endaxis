@@ -56,6 +56,13 @@ import {
 } from './repeatedActionExecution';
 
 export interface ActionGraphExecutionHost {
+  readonly trace?: <T>(
+    program: CompiledActionGraph,
+    nodeId: string,
+    invocation: string,
+    phase: import('./actionExecutionTrace').ExecutionTracePhase,
+    execute: () => T,
+  ) => T;
   listener(
     responses: ActionGraphStepForKind<'listenForCombatEvents'>['parameters']['responses'],
     state: CombatEventListenerState<ActionGraphExecutionState>,
@@ -133,6 +140,7 @@ function wrapMacroHost(
     return copy as T;
   };
   return {
+    ...(host.trace === undefined ? {} : { trace: host.trace }),
     listener: (responses, state, create) =>
       host.listener(substitute(responses), state, (reference, index, inner, saved) =>
         create(reference, index, wrapMacroHost(inner, args), saved),
@@ -641,6 +649,27 @@ export class ActionGraphExecution extends CombatStep {
         reset: context => operation.reset(context),
         tick: (delta, context) => operation.tick(delta, context),
         end: context => operation.end(context),
+      };
+    }
+    if (this.host.trace) {
+      const original = binding;
+      const trace = this.host.trace;
+      binding = {
+        ...original,
+        execute: context =>
+          trace(this.program, id, this.runtimeState.invocation, 'execute', () =>
+            original.execute(context),
+          ),
+        tick: (delta, context) =>
+          trace(this.program, id, this.runtimeState.invocation, 'tick', () =>
+            original.tick(delta, context),
+          ),
+        reset: context =>
+          trace(this.program, id, this.runtimeState.invocation, 'reset', () =>
+            original.reset(context),
+          ),
+        end: context =>
+          trace(this.program, id, this.runtimeState.invocation, 'end', () => original.end(context)),
       };
     }
     if (!saved)

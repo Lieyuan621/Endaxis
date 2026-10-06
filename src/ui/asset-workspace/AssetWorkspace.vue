@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { editorPanelWidth } from '../action-graph/editorPanelGeometry';
 import { ownedActionResourceNavigationKey } from '../field-editor/ownedResourceNavigation';
 import { ownedActionResourceLink } from './ownedActionResourceNavigation';
 import { computed, provide, markRaw, onBeforeUnmount, reactive, ref, toRaw, type Raw } from 'vue';
@@ -179,13 +180,10 @@ function resizePanel(side: 'left' | 'right', event: PointerEvent) {
     const width = workspaceElement.value?.clientWidth ?? 1200;
     const other =
       side === 'left' ? (target.rightOpen ? target.right : 0) : target.leftOpen ? target.left : 0;
-    target[side] = Math.max(
-      160,
-      Math.min(
-        360,
-        width - other - 360,
-        startWidth + (next.clientX - startX) * (side === 'left' ? 1 : -1),
-      ),
+    target[side] = editorPanelWidth(
+      startWidth + (next.clientX - startX) * (side === 'left' ? 1 : -1),
+      width,
+      other,
     );
   };
   const end = () => {

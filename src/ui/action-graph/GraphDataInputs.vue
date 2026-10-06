@@ -6,7 +6,7 @@ const { t } = useI18n();
 import { EaSelect } from '@/design-system';
 import type { ActionGraphDefinition } from '../../../packages/game-data-contract/src/actionGraph';
 import { actionTypedInputs, dataTypedInputs } from './typedGraphInputs';
-import { dataNodeTitle } from './nodePresentation';
+import { dataNodeSourceLabel } from './nodePresentation';
 import { fieldName } from './editorNodeText';
 import TypedDataInput from './TypedDataInput.vue';
 const props = defineProps<{
@@ -50,7 +50,7 @@ const inputs = computed(() => {
 });
 function sourceLabel(id: string) {
   const node = props.graph.dataNodes?.[id];
-  return node ? `${dataNodeTitle(node)} · ${id}` : t('graphDataInput.missingSource', { id });
+  return node ? dataNodeSourceLabel(node, id) : t('graphDataInput.missingSource', { id });
 }
 </script>
 <template>

@@ -17,6 +17,7 @@ const props = defineProps<{
   area: 'tools' | 'canvas' | 'inspector' | 'timeline';
   toolTab?: string;
   canvasView?: GraphCanvasView;
+  executionNodeId?: string | null;
   resourceKey?: string;
   editor: UnwrapNestedRefs<ReturnType<typeof useSkillGraphEditor>>;
 }>();
@@ -184,6 +185,7 @@ provide(blackboardNavigationKey, target => {
     ref="canvas"
     :key="`${resourceKey ?? ''}:${graphKey}`"
     :view="canvasView"
+    :execution-node-id="executionNodeId"
     :graph="graph"
     :graph-scope="editor.interactionScope"
     :selected-id="selectedId"

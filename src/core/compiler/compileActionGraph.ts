@@ -74,6 +74,23 @@ export interface CompiledActionGraph {
 // 切面只恢复到原编译程序；身份必须与程序绑定，不能把整个定义序列化进每个调用状态。
 let nextCompiledProgramIdentity = 1;
 
+/** 诊断定位共享编译来源；不复制到执行状态或序列化的结果中。 */
+const compiledGraphDefinitions = new WeakMap<
+  CompiledActionGraph,
+  ActionGraphDefinition | ActionGraphResourceDefinition
+>();
+export function getCompiledGraphLocation(program: CompiledActionGraph, nodeId: string) {
+  const definition = compiledGraphDefinitions.get(program);
+  if (!definition) return undefined;
+  if (!('main' in definition)) return { graph: definition, nodeId, scope: '' };
+  // 与 bindResourceGraphs 的内部身份编码一致，显示仍保留原始小图和数据节点。
+  const [macro, id] = JSON.parse(nodeId) as [string | null, string];
+  const graph = macro === null ? definition.main : definition.macros[macro]?.graph;
+  return graph === undefined
+    ? undefined
+    : { graph, nodeId: id, scope: macro ?? '', resource: definition, macroId: macro };
+}
+
 export interface ActionGraphCompilation {
   readonly program: CompiledActionGraph;
   compileEntry(entry: ActionGraphReference, callSite: string): CompiledGraphEntry;
@@ -184,6 +201,7 @@ export function createActionGraphCompilation(
     operationBindings: new Map(),
     abilityEntityDefinitions: entities,
   };
+  compiledGraphDefinitions.set(program, definition);
   const bindNode = (nodeId: string | null, path: string): CompiledGraphEntry => {
     if (nodeId !== null && !Object.hasOwn(graph.nodes, nodeId))
       throw new Error(`${path}: missing action graph node: ${nodeId}`);

@@ -10,6 +10,18 @@ export function dataNodeKind(node: ActionGraphDataNode): string {
 export function dataNodeTitle(node: ActionGraphDataNode): string {
   return nodeName(dataNodeKind(node));
 }
+/** 仅黑板读取显示实际键；其他数据来源显示内部节点 ID，连线引用不变。 */
+export function dataNodeSourceLabel(node: ActionGraphDataNode | undefined, id: string): string {
+  if (!node) return id;
+  if (node.type === 'number' && node.expression.kind === 'blackboard') return node.expression.key;
+  if (
+    node.type === 'string' &&
+    typeof node.expression === 'object' &&
+    'blackboardKey' in node.expression
+  )
+    return node.expression.blackboardKey;
+  return id;
+}
 export function actionNodeTitle(kind: ActionGraphStep['kind']): string {
   return nodeName(kind);
 }

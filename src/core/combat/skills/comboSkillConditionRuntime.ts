@@ -143,21 +143,27 @@ export class ComboSkillConditionRuntime {
         event,
         ...(eventSkillCastInfo === undefined ? {} : { eventSkillCastInfo }),
       });
-      let passed: boolean;
-      try {
-        passed = runtime.createSequence(options.sequence).executeInstant({});
-      } finally {
-        if (triggerTarget !== null) targets.remove('trigger');
-        runtime.reset();
-      }
-      if (passed) {
-        options.onPending({
-          event,
-          inputTarget,
-          triggerTarget,
-          assignPairs: captureBlackboard ? Object.freeze(blackboard.snapshot()) : null,
-        });
-      }
+      const executeAndConsume = () => {
+        let passed: boolean;
+        try {
+          passed = runtime.createSequence(options.sequence).executeInstant({});
+        } finally {
+          if (triggerTarget !== null) targets.remove('trigger');
+          runtime.reset();
+        }
+        if (passed) {
+          options.onPending({
+            event,
+            inputTarget,
+            triggerTarget,
+            assignPairs: captureBlackboard ? Object.freeze(blackboard.snapshot()) : null,
+          });
+        }
+        return passed;
+      };
+      const trace = options.operations.executionTrace;
+      if (trace) trace.recorder.observeCall('comboCandidate', executeAndConsume);
+      else executeAndConsume();
     }
   }
 }

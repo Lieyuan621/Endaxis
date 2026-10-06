@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import type { ReferenceChoices } from '../definition-editor/fieldInputConfig';
 /** 技能块单独编辑时的宿主；图操作和各面板与资产工作区共用。 */
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, watch, toRaw, shallowRef, onBeforeUnmount } from 'vue';
+import { editorPanelWidth } from './editorPanelGeometry';
+import type { ActionGraphDefinition } from '../../../packages/game-data-contract/src/actionGraph';
 import { EaButton, EaDialog } from '@/design-system';
 import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills';
 import type { SkillGraphPresentation } from '../../core/project/graphPresentation';
@@ -15,12 +17,16 @@ import {
 import { useSkillGraphEditor } from './useSkillGraphEditor';
 import SkillGraphPanels from './SkillGraphPanels.vue';
 import { createResourceEditorView } from '../editor/resourceEditorView';
+import { createGraphCanvasView } from './graphCanvasView';
 
 const props = defineProps<{
   referenceChoices?: ReferenceChoices;
   definition: SkillDefinition;
   custom: boolean;
   allowCustomize?: boolean;
+  readOnly?: boolean;
+  alternateGraph?: boolean;
+  executionView?: boolean;
   label: string;
   presentation?: SkillGraphPresentation;
   saveDefinition: (
@@ -29,7 +35,10 @@ const props = defineProps<{
     createCustom: boolean,
   ) => void | Promise<void>;
 }>();
-const emit = defineEmits<{ close: [] }>();
+const emit = defineEmits<{
+  close: [];
+  nodeSelected: [graph: ActionGraphDefinition, id: string | null];
+}>();
 useInteractionBarrier(useInteractionSession(), () => true);
 const session = new DefinitionDraftSession(
   {
@@ -46,7 +55,7 @@ const current = computed(() => {
 });
 const editable = computed(() => {
   void revision.value;
-  return session.editable;
+  return !props.readOnly && session.editable;
 });
 const canUndo = computed(() => {
   void revision.value;
@@ -86,6 +95,113 @@ const editor = reactive(
     },
   }),
 );
+if (props.executionView) editor.closeTimeline();
+const navigationOpen = ref(true);
+const inspectorOpen = ref(true);
+const panelsElement = ref<HTMLElement>();
+const panelWidths = reactive({ left: 214, right: 270 });
+const resizingSide = ref<'left' | 'right' | null>(null);
+let stopPanelResize: (() => void) | undefined;
+function setPanelWidth(side: 'left' | 'right', width: number) {
+  const other =
+    side === 'left'
+      ? inspectorOpen.value
+        ? panelWidths.right
+        : 0
+      : navigationOpen.value
+        ? panelWidths.left
+        : 0;
+  panelWidths[side] = editorPanelWidth(width, panelsElement.value?.clientWidth ?? 1200, other);
+}
+function resizePanel(side: 'left' | 'right', event: PointerEvent) {
+  if (event.button !== 0) return;
+  event.preventDefault();
+  stopPanelResize?.();
+  const start = event.clientX,
+    width = panelWidths[side],
+    pointerId = event.pointerId;
+  resizingSide.value = side;
+  const move = (next: PointerEvent) => {
+    if (next.pointerId === pointerId)
+      setPanelWidth(side, width + (next.clientX - start) * (side === 'left' ? 1 : -1));
+  };
+  const end = () => {
+    window.removeEventListener('pointermove', move);
+    window.removeEventListener('pointerup', end);
+    window.removeEventListener('pointercancel', end);
+    window.removeEventListener('blur', end);
+    resizingSide.value = null;
+    stopPanelResize = undefined;
+  };
+  window.addEventListener('pointermove', move);
+  window.addEventListener('pointerup', end);
+  window.addEventListener('pointercancel', end);
+  window.addEventListener('blur', end);
+  stopPanelResize = end;
+}
+onBeforeUnmount(() => stopPanelResize?.());
+watch(
+  () => [editor.graphKey, editor.selectedId] as const,
+  () => {
+    const graph =
+      editor.address.kind === 'main'
+        ? props.definition.actionGraph.main
+        : props.definition.actionGraph.macros[editor.address.macroId]?.graph;
+    if (graph) emit('nodeSelected', graph, editor.selectedId);
+  },
+);
+const cameras = new Map<string, ReturnType<typeof createGraphCanvasView>>();
+const canvasView = computed(() => {
+  if (!cameras.has(editor.graphKey))
+    cameras.set(editor.graphKey, reactive(createGraphCanvasView()));
+  return cameras.get(editor.graphKey)!;
+});
+function showGraphNode(graph: ActionGraphDefinition, nodeId: string) {
+  const root = props.definition.actionGraph;
+  if (toRaw(graph) === toRaw(root.main)) {
+    if (editor.address.kind !== 'main') editor.changeGraph({ kind: 'main' });
+  } else {
+    const macroId = Object.keys(root.macros).find(
+      id => toRaw(root.macros[id]!.graph) === toRaw(graph),
+    );
+    if (macroId === undefined) return false;
+    if (editor.address.kind !== 'macro' || editor.address.macroId !== macroId)
+      editor.changeGraph({ kind: 'macro', macroId });
+  }
+  if (!Object.hasOwn(editor.graph.nodes, nodeId)) return false;
+  editor.selectNode(nodeId);
+  return true;
+}
+async function locateGraphNode(graph: ActionGraphDefinition, nodeId: string) {
+  if (!showGraphNode(graph, nodeId)) return false;
+  await editor.focusNode(nodeId);
+  return true;
+}
+const executionTarget = shallowRef<{ graph: ActionGraphDefinition; nodeId: string }>();
+const executionNodeId = computed(() => {
+  const root = props.definition.actionGraph;
+  const graph =
+    editor.address.kind === 'main' ? root.main : root.macros[editor.address.macroId]?.graph;
+  return toRaw(graph) === toRaw(executionTarget.value?.graph)
+    ? executionTarget.value?.nodeId
+    : undefined;
+});
+function highlightGraphNode(graph?: ActionGraphDefinition, nodeId?: string) {
+  executionTarget.value = graph && nodeId ? { graph, nodeId } : undefined;
+  const root = props.definition.actionGraph;
+  const visible =
+    editor.address.kind === 'main' ? root.main : root.macros[editor.address.macroId]?.graph;
+  // 步进只改变选择；跨图导航和画布平移由显式定位操作负责。
+  if (
+    graph &&
+    toRaw(visible) === toRaw(graph) &&
+    nodeId &&
+    Object.hasOwn(editor.graph.nodes, nodeId)
+  )
+    editor.selectNode(nodeId);
+  else view.selection = null;
+}
+defineExpose({ locateGraphNode, highlightGraphNode, showGraphNode });
 function customize() {
   if (props.allowCustomize === false) return;
   session.customize();
@@ -124,11 +240,27 @@ async function save() {
         @keydown="editor.onKeydown"
       >
         <header class="editor-toolbar">
-          <strong>技能图 · {{ label }}</strong>
-          <span>{{ editable ? '自定义图 · 仅修改当前技能块' : '库图 · 只读' }}</span>
+          <strong>{{ executionView ? '执行回放' : '技能图' }} · {{ label }}</strong>
+          <span v-if="!executionView">{{
+            editable ? '自定义图 · 仅修改当前技能块' : '库图 · 只读'
+          }}</span>
           <div class="spacer" />
+          <template v-if="executionView">
+            <EaButton
+              size="sm"
+              :aria-pressed="navigationOpen"
+              @click="navigationOpen = !navigationOpen"
+              >调用与历史</EaButton
+            >
+            <EaButton
+              size="sm"
+              :aria-pressed="inspectorOpen"
+              @click="inspectorOpen = !inspectorOpen"
+              >执行详情</EaButton
+            >
+          </template>
           <EaButton
-            v-if="editor.address.kind === 'main'"
+            v-if="editor.address.kind === 'main' && !alternateGraph"
             size="sm"
             :disabled="editor.blocked"
             @click="editor.timelineOpen ? editor.closeTimeline() : editor.openTimeline()"
@@ -152,7 +284,9 @@ async function save() {
             @click="editor.redo"
             >重做</EaButton
           >
-          <EaButton size="sm" :disabled="saving" @click="emit('close')">取消</EaButton>
+          <EaButton size="sm" :disabled="saving" @click="emit('close')">{{
+            executionView ? '关闭' : '取消'
+          }}</EaButton>
           <EaButton
             v-if="editable"
             size="sm"
@@ -162,19 +296,77 @@ async function save() {
             >保存</EaButton
           >
         </header>
+        <slot name="toolbar" />
         <div
+          ref="panelsElement"
           class="editor-panels"
+          :style="{
+            gridTemplateColumns: `${navigationOpen ? `${panelWidths.left}px 1px ` : ''}minmax(0, 1fr)${inspectorOpen ? ` 1px ${panelWidths.right}px` : ''}`,
+          }"
           :inert="editor.timelineGesture || Boolean(editor.resizeGesture) || saving"
         >
-          <SkillGraphPanels area="tools" :editor="editor" />
-          <SkillGraphPanels area="canvas" :editor="editor" />
-          <SkillGraphPanels
-            area="inspector"
-            :editor="editor"
-            :reference-choices="referenceChoices"
+          <div v-show="navigationOpen" class="editor-navigation">
+            <slot name="navigation">
+              <SkillGraphPanels area="tools" :editor="editor" />
+            </slot>
+          </div>
+          <div
+            v-show="navigationOpen"
+            class="panel-splitter ea-resize-handle ea-resize-handle--vertical"
+            :class="{ 'is-active': resizingSide === 'left' }"
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="调整左侧面板宽度"
+            :aria-valuenow="panelWidths.left"
+            :aria-valuemin="160"
+            :aria-valuemax="360"
+            tabindex="0"
+            @pointerdown.stop="resizePanel('left', $event)"
+            @keydown.left.stop.prevent="setPanelWidth('left', panelWidths.left - 10)"
+            @keydown.right.stop.prevent="setPanelWidth('left', panelWidths.left + 10)"
           />
+          <div v-show="!alternateGraph" style="display: contents">
+            <SkillGraphPanels
+              area="canvas"
+              :editor="editor"
+              :canvas-view="canvasView"
+              :execution-node-id="executionNodeId"
+            />
+          </div>
+          <slot v-if="alternateGraph" name="alternate-graph" />
+          <div
+            v-show="inspectorOpen"
+            class="panel-splitter ea-resize-handle ea-resize-handle--vertical"
+            :class="{ 'is-active': resizingSide === 'right' }"
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="调整右侧面板宽度"
+            :aria-valuenow="panelWidths.right"
+            :aria-valuemin="160"
+            :aria-valuemax="360"
+            tabindex="0"
+            @pointerdown.stop="resizePanel('right', $event)"
+            @keydown.left.stop.prevent="setPanelWidth('right', panelWidths.right + 10)"
+            @keydown.right.stop.prevent="setPanelWidth('right', panelWidths.right - 10)"
+          />
+          <div v-show="inspectorOpen" class="editor-inspector">
+            <slot name="inspector-before" />
+            <details :open="!executionView">
+              <summary v-if="executionView" class="definition-heading">节点定义</summary>
+              <slot v-if="alternateGraph" name="alternate-inspector" />
+              <SkillGraphPanels
+                v-else
+                area="inspector"
+                :editor="editor"
+                :reference-choices="referenceChoices"
+              />
+            </details>
+          </div>
         </div>
-        <SkillGraphPanels area="timeline" :editor="editor" />
+        <div v-show="!alternateGraph" style="display: contents">
+          <SkillGraphPanels area="timeline" :editor="editor" />
+        </div>
+        <slot name="footer" />
         <pre v-if="editor.error" role="alert">{{ editor.error }}</pre>
       </div>
     </EaDialog>
@@ -205,10 +397,28 @@ async function save() {
 .spacer {
   flex: 1;
 }
+.editor-inspector {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+.editor-navigation {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+.definition-heading {
+  padding: 12px;
+  cursor: pointer;
+  border-top: 1px solid var(--ea-border);
+}
 .editor-panels {
   flex: 1;
   min-height: 0;
   display: grid;
   grid-template-columns: 214px minmax(0, 1fr) 270px;
+}
+.panel-splitter {
+  z-index: 3;
 }
 </style>
