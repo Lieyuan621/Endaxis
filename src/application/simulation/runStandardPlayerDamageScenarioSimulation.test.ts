@@ -2399,7 +2399,12 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       }),
     );
     expect(markerFinished!.frame).toBeGreaterThan(markerCreated!.frame);
-    expect(auraBuffs.map(entry => entry.targetId).sort()).toEqual(['enemy', 'track:perlica']);
+    // excludeOwner 排除光环的能力实体宿主，不排除其来源干员汤汤。
+    expect(auraBuffs.map(entry => [entry.targetId, entry.data?.buffId]).sort()).toEqual([
+      ['enemy', 'buff_chr_0027_tangtang_ultskill_debuff'],
+      ['track:perlica', 'buff_chr_0027_tangtang_ultskill_buff'],
+      ['track:tangtang', 'buff_chr_0027_tangtang_ultskill_buff'],
+    ]);
 
     expect(triggered.receiptEntries).toContainEqual(
       expect.objectContaining({
