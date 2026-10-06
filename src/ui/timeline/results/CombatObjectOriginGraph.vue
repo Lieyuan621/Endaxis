@@ -23,6 +23,7 @@ const props = defineProps<{
   sequence: number;
   root?: import('../../../core/combat/receipt/combatReceipt').CombatObjectRef;
   operatorLabel?: (operatorId: string) => string;
+  objectName?: import('./combatObjectNames').CombatObjectOwnName;
   objectIcon?: import('./combatObjectIcons').CombatObjectIconResolver;
   actionPresentation?: (
     ownerId: string,
@@ -189,6 +190,12 @@ function wheel(event: WheelEvent) {
   );
 }
 function description(node: CombatObjectNode): string {
+  // 能力实体名称不能替代定义身份；节点正文及右侧详情保留完整定义 ID。
+  if (node.ref.kind === 'abilityEntity' && typeof node.fact?.data?.abilityEntityId === 'string')
+    return node.fact.data.abilityEntityId;
+  // 来源图的每个节点只标自己的名称，不继承祖先名称来冒充本节点。
+  const own = props.objectName?.(node);
+  if (own) return own;
   if (node.ref.kind === 'action') {
     const presentation = props.actionPresentation?.(node.ref.ownerId, node.ref.actionId);
     if (presentation) return presentation.name;
@@ -222,6 +229,10 @@ function description(node: CombatObjectNode): string {
 }
 
 function nodeKind(node: CombatObjectNode): string {
+  if (node.ref.kind === 'abilityEntity') {
+    const name = props.objectName?.(node);
+    return [t('objectOrigins.kinds.abilityEntity'), name].filter(Boolean).join(' · ');
+  }
   if (
     node.fact &&
     ['BuffApplied', 'BuffStackChanged'].includes(node.fact.event) &&

@@ -401,12 +401,15 @@ import BattleLogPanel from './results/BattleLogPanel.vue';
 import { usePublishedSimulationDisplay } from './results/usePublishedSimulationDisplay';
 import {
   resolvePublishedBuffSource,
-  nearestNamedBuffOrigin,
-  nearestNamedObjectOrigin,
   capturePublishedEquipmentSources,
   resolvePublishedEquipmentTrait,
 } from './results/publishedBuffSource';
 import { createCombatObjectIconResolver } from './results/combatObjectIcons';
+import {
+  createCombatObjectNameResolver,
+  type CombatObjectOwnName,
+} from './results/combatObjectNames';
+import { runtimeTargetFromEntityId } from '../../core/game-data/logicalAbilityEntity';
 import { CombatObjectOrigins } from '../../core/projection/combatObjectOrigins';
 import { isEnemyTimelineBuffVisible, layoutEnemyStatusRows } from './results/enemyStatusRows';
 import {
@@ -3641,78 +3644,15 @@ const enemyDamageDetailEntries = computed(() => {
   );
 });
 function damageSourceDescription(entry: CombatReceiptEntry) {
-  // 显示锚点只负责布局，绝不能成为伤害来源。名称沿真实 producedBy 关系查询。
-  const producer = entry.producedBy;
-  const entityName =
-    producer?.kind === 'abilityEntity'
-      ? nearestNamedObjectOrigin(buffNameOrigins.value, producer, node => {
-          if (node.ref.kind === 'action')
-            return buffSourceName({
-              sourceId: node.ref.ownerId,
-              sourceActionId: node.ref.actionId,
-            });
-          if (node.ref.kind === 'buff' && typeof node.fact?.data?.buffId === 'string') {
-            const name = resolveBuffDisplayName(
-              node.fact.data.buffId,
-              { t, te },
-              undefined,
-              undefined,
-              operatorBuffDisplayNameKeys.value,
-            );
-            return name === node.fact.data.buffId ? undefined : name;
-          }
-          if (
-            node.ref.kind !== 'abilityEntity' ||
-            typeof node.fact?.data?.abilityEntityId !== 'string'
-          )
-            return undefined;
-          const key = publishedEntityNameKeys.value.get(node.fact.data.abilityEntityId);
-          return key === undefined ? undefined : t(key);
-        })
-      : undefined;
-  const producerFact =
-    producer === undefined ? undefined : buffNameOrigins.value.get(producer).fact;
-  const displayBuffId = String(
-    producer?.kind === 'buff' ? (producerFact?.data?.buffId ?? entry.data?.buffId ?? '') : '',
-  );
-  const displayName =
-    buffDisplayName({
-      buffId: displayBuffId,
-      ...(producer?.kind === 'buff' ? { targetId: producer.ownerId } : {}),
-      ...(producer?.kind === 'buff' ? { instanceId: producer.instanceId } : {}),
-    }) ??
-    resolveBuffDisplayName(
-      displayBuffId,
-      { t, te },
-      undefined,
-      undefined,
-      operatorBuffDisplayNameKeys.value,
-    );
-  if (
-    entry.data?.reactionDamageKind !== undefined ||
-    typeof entry.data?.spellBurstType === 'string'
-  ) {
-    return typeof entry.data?.spellBurstType === 'string'
-      ? t(`timeline.skillEditing.spellBurstTypes.${entry.data.spellBurstType}`)
-      : displayName;
-  }
-  const sourceActionId =
-    typeof entry.data?.sourceActionId === 'string' ? entry.data.sourceActionId : undefined;
+  const name = publishedObjectNames.value.sourceName({ kind: 'receipt', sequence: entry.sequence });
+  if (typeof entry.data?.spellBurstType === 'string')
+    return t(`timeline.skillEditing.spellBurstTypes.${entry.data.spellBurstType}`);
+  if (entry.data?.reactionDamageKind !== undefined) return name;
   const track = publishedSimulation.value?.scenario.tracks.find(
     track => track?.id === entry.sourceId,
   );
-  const operatorSlug = track?.operator?.operatorSlug;
-  return [
-    operatorSlug ? publishedOperatorName(operatorSlug) : entry.sourceId,
-    entityName ||
-      displayName ||
-      buffSourceName({
-        sourceActionId: producer?.kind === 'action' ? producer.actionId : sourceActionId,
-        sourceId: producer?.kind === 'action' ? producer.ownerId : entry.sourceId,
-      }),
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  const slug = track?.operator?.operatorSlug;
+  return [slug ? publishedOperatorName(slug) : entry.sourceId, name].filter(Boolean).join(' · ');
 }
 const hitDetail = computed(() => {
   const entry = selectedHitDetailEntry.value;
@@ -3967,45 +3907,53 @@ function contingencyContractBuffName(segment: BuffPresentationSource): string | 
     : localizedContingencyContractTagName(presentation.tag, locale.value);
 }
 
-function buffDisplayName(segment: BuffPresentationSource): string | undefined {
-  const explicitBuffName = (id: string) => {
-    const name = resolveBuffDisplayName(
-      id,
-      { t, te },
-      undefined,
-      undefined,
-      operatorBuffDisplayNameKeys.value,
+function explicitBuffName(id: string): string | undefined {
+  const name = resolveBuffDisplayName(
+    id,
+    { t, te },
+    undefined,
+    undefined,
+    operatorBuffDisplayNameKeys.value,
+  );
+  return name === id ? undefined : name;
+}
+
+const objectOwnName: CombatObjectOwnName = node => {
+  if (node.ref.kind === 'buff' && typeof node.fact?.data?.buffId === 'string')
+    return explicitBuffName(node.fact.data.buffId);
+  if (node.ref.kind === 'abilityEntity' && typeof node.fact?.data?.abilityEntityId === 'string') {
+    const key = publishedEntityNameKeys.value.get(node.fact.data.abilityEntityId);
+    return key === undefined ? undefined : t(key);
+  }
+  if (node.ref.kind === 'action')
+    return buffSourceName({ sourceId: node.ref.ownerId, sourceActionId: node.ref.actionId });
+  if (node.ref.kind === 'operator') {
+    const operatorId = node.ref.operatorId;
+    const track = publishedSimulation.value?.scenario.tracks.find(
+      track => track?.id === operatorId,
     );
-    return name === id ? undefined : name;
-  };
+    return track?.operator ? publishedOperatorName(track.operator.operatorSlug) : undefined;
+  }
+  return undefined;
+};
+const publishedObjectNames = computed(() =>
+  createCombatObjectNameResolver(buffNameOrigins.value, objectOwnName),
+);
+
+function publishedEntityDisplayName(id: string): string {
+  return publishedObjectNames.value.display(runtimeTargetFromEntityId(id)) ?? id;
+}
+
+function buffDisplayName(segment: BuffPresentationSource): string | undefined {
   const own = segment.buffId === undefined ? undefined : explicitBuffName(segment.buffId);
   if (own !== undefined) return own;
   if (segment.targetId !== undefined && segment.instanceId !== undefined) {
-    const inherited = nearestNamedBuffOrigin(
-      buffNameOrigins.value,
-      {
-        targetId: segment.targetId,
-        instanceId: segment.instanceId,
-      },
-      node => {
-        if (node.ref.kind === 'buff' && typeof node.fact?.data?.buffId === 'string')
-          return explicitBuffName(node.fact.data.buffId);
-        if (
-          node.ref.kind === 'abilityEntity' &&
-          typeof node.fact?.data?.abilityEntityId === 'string'
-        ) {
-          const key = publishedEntityNameKeys.value.get(node.fact.data.abilityEntityId);
-          return key === undefined ? undefined : t(key);
-        }
-        if (node.ref.kind === 'action')
-          return buffSourceName({
-            sourceId: node.ref.ownerId,
-            sourceActionId: node.ref.actionId,
-          });
-        return undefined;
-      },
-    );
-    if (inherited !== undefined) return inherited;
+    const name = publishedObjectNames.value.display({
+      kind: 'buff',
+      ownerId: segment.targetId,
+      instanceId: segment.instanceId,
+    });
+    if (name !== undefined) return name;
   }
   return contingencyContractBuffName(segment);
 }
@@ -4023,6 +3971,14 @@ function buffIcon(segment: BuffPresentationSource): string | undefined {
 }
 
 function buffSourceName(segment: BuffPresentationSource): string | undefined {
+  if (segment.targetId !== undefined && segment.instanceId !== undefined) {
+    const name = publishedObjectNames.value.sourceName({
+      kind: 'buff',
+      ownerId: segment.targetId,
+      instanceId: segment.instanceId,
+    });
+    if (name !== undefined) return name;
+  }
   const contractTagName = contingencyContractBuffName(segment);
   if (contractTagName !== undefined) {
     return formatContingencyContractBuffSourceName(
@@ -7773,8 +7729,9 @@ function setMobileGuideFrame(frame: number | null): void {
         "
         :dodge-effects="selectedDodgeEffects"
         :receipt-entries="publishedReceiptEntries"
-        :operator-label="publishedOperatorInstanceName"
+        :operator-label="publishedEntityDisplayName"
         :object-icon="publishedObjectIcon"
+        :object-name="objectOwnName"
         :action-presentation="publishedActionPresentation"
         :buff-label="
           buffId =>
@@ -8178,8 +8135,9 @@ function setMobileGuideFrame(frame: number | null): void {
   />
   <TimelineHitDetailDialog
     :object-icon="publishedObjectIcon"
+    :object-name="objectOwnName"
     :action-presentation="publishedActionPresentation"
-    :operator-label="publishedOperatorInstanceName"
+    :operator-label="publishedEntityDisplayName"
     :receipt-entries="publishedReceiptEntries"
     :damage-zone-label="zone => t(`hitDetail.damageZones.${zone}`)"
     v-if="hitDetailTarget !== null || enemyDamageDetailSequence !== null"
@@ -8189,7 +8147,12 @@ function setMobileGuideFrame(frame: number | null): void {
       item =>
         item.buffId === undefined
           ? item.sourceId
-          : (buffSourceName(item) ??
+          : (buffDisplayName({
+              ...item,
+              targetId: item.buff?.ownerId,
+              instanceId: item.buff?.instanceId,
+            }) ??
+            buffSourceName(item) ??
             resolveBuffDisplayName(
               item.buffId,
               { t, te },
@@ -8301,8 +8264,9 @@ function setMobileGuideFrame(frame: number | null): void {
   />
   <TimelineBuffDetailDialog
     :receipt-entries="publishedReceiptEntries"
-    :operator-label="publishedOperatorInstanceName"
+    :operator-label="publishedEntityDisplayName"
     :object-icon="publishedObjectIcon"
+    :object-name="objectOwnName"
     :action-presentation="publishedActionPresentation"
     v-if="buffDetailTarget !== null"
     :visible="buffDetailTarget !== null"
@@ -8324,8 +8288,9 @@ function setMobileGuideFrame(frame: number | null): void {
   />
   <TimelineOperatorPassiveUiDetailDialog
     :receipt-entries="publishedReceiptEntries"
-    :operator-label="publishedOperatorInstanceName"
+    :operator-label="publishedEntityDisplayName"
     :object-icon="publishedObjectIcon"
+    :object-name="objectOwnName"
     :action-presentation="publishedActionPresentation"
     v-if="passiveUiDetailSegment !== null"
     :visible="passiveUiDetailSegment !== null"

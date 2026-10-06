@@ -34,6 +34,7 @@ const props = defineProps<{
   receiptEntries?: readonly CombatReceiptEntry[];
   operatorLabel?: (operatorId: string) => string;
   objectIcon?: import('../results/combatObjectIcons').CombatObjectIconResolver;
+  objectName?: import('../results/combatObjectNames').CombatObjectOwnName;
   actionPresentation?: (
     ownerId: string,
     actionId: string,
@@ -228,6 +229,7 @@ function effectDetail(entry: CombatReceiptEntry): string {
               <span v-if="effectDetail(effect)">{{ effectDetail(effect) }}</span>
             </div>
             <CombatObjectOriginGraph
+              :object-name="objectName"
               v-if="receiptEntries?.length"
               :sequence="effect.sequence"
               :receipt-entries="receiptEntries"

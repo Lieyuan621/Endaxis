@@ -47,6 +47,7 @@ const props = defineProps<{
   entries: readonly CombatReceiptEntry[];
   receiptEntries?: readonly CombatReceiptEntry[];
   operatorLabel?: (operatorId: string) => string;
+  objectName?: import('./combatObjectNames').CombatObjectOwnName;
   objectIcon?: import('./combatObjectIcons').CombatObjectIconResolver;
   actionPresentation?: (
     ownerId: string,
@@ -1489,6 +1490,7 @@ function onClose(): void {
             </tbody>
           </table>
           <CombatObjectOriginGraph
+            :object-name="objectName"
             kind="damage"
             :action-presentation="actionPresentation"
             :object-icon="objectIcon"

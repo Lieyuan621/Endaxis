@@ -1,6 +1,4 @@
 import { expect, it } from 'vitest';
-import { CombatReceiptCollector } from '../../../core/combat/receipt/combatReceipt';
-import { CombatObjectOrigins } from '../../../core/projection/combatObjectOrigins';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import type { PublishedOperatorMetadata } from './publishedOperatorMetadata';
 import { capturePublishedOperatorMetadata } from './publishedOperatorMetadata';
@@ -8,67 +6,8 @@ import { arcane } from '../../../data/operators/arcane.generated';
 import {
   capturePublishedEquipmentSources,
   resolvePublishedBuffSource,
-  nearestNamedBuffOrigin,
-  nearestNamedObjectOrigin,
   resolvePublishedEquipmentTrait,
 } from './publishedBuffSource';
-
-it('已命名水龙卷优先使用自身名称，未命名对象才继承祖先名称', () => {
-  const receipts = new CombatReceiptCollector();
-  const parent = { kind: 'abilityEntity' as const, instanceId: 1 };
-  const child = { kind: 'abilityEntity' as const, instanceId: 2 };
-  receipts.record({ frame: 0, time: 0, event: 'AbilityEntitySpawned', subject: parent });
-  receipts.record({
-    frame: 1,
-    time: 1 / 30,
-    event: 'AbilityEntitySpawned',
-    subject: child,
-    producedBy: parent,
-  });
-  const origins = new CombatObjectOrigins(receipts.entries);
-  expect(
-    nearestNamedObjectOrigin(origins, child, node =>
-      node.ref.kind === 'abilityEntity'
-        ? node.ref.instanceId === 2
-          ? '水龙卷'
-          : '古老图形'
-        : undefined,
-    ),
-  ).toBe('水龙卷');
-  expect(
-    nearestNamedObjectOrigin(origins, child, node =>
-      node.ref.kind === 'abilityEntity' && node.ref.instanceId === 1 ? '古老图形' : undefined,
-    ),
-  ).toBe('古老图形');
-});
-
-it('未命名子 Buff 沿产生关系继承最近名称，不借用运行时来源或更远的技能名', () => {
-  const receipts = new CombatReceiptCollector();
-  const entity = { kind: 'abilityEntity' as const, instanceId: 1 };
-  const parent = { kind: 'buff' as const, ownerId: 'operator', instanceId: 1 };
-  const child = { kind: 'buff' as const, ownerId: 'operator', instanceId: 2 };
-  receipts.record({ frame: 0, time: 0, event: 'AbilityEntitySpawned', subject: entity });
-  receipts.record({ frame: 0, time: 0, event: 'BuffCreated', subject: parent, producedBy: entity });
-  receipts.record({ frame: 0, time: 0, event: 'BuffCreated', subject: child, producedBy: parent });
-  const origins = new CombatObjectOrigins(receipts.entries);
-  expect(
-    nearestNamedBuffOrigin(origins, { targetId: 'operator', instanceId: 2 }, node =>
-      node.ref.kind === 'abilityEntity' ? '古老图形' : undefined,
-    ),
-  ).toBe('古老图形');
-  expect(
-    nearestNamedBuffOrigin(origins, { targetId: 'operator', instanceId: 2 }, node =>
-      node.ref.kind === 'buff' && node.ref.instanceId === 1
-        ? '父状态'
-        : node.ref.kind === 'abilityEntity'
-          ? '古老图形'
-          : undefined,
-    ),
-  ).toBe('父状态');
-  expect(
-    nearestNamedBuffOrigin(origins, { targetId: 'other', instanceId: 2 }, () => undefined),
-  ).toBeUndefined();
-});
 
 it('从冻结词条定位事件处理器，重复处理器键不强选词条', () => {
   const weapon = {

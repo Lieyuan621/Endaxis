@@ -20,6 +20,7 @@ const props = defineProps<{
   fps: number;
   receiptEntries?: readonly CombatReceiptEntry[];
   operatorLabel?: (operatorId: string) => string;
+  objectName?: import('./combatObjectNames').CombatObjectOwnName;
   objectIcon?: import('./combatObjectIcons').CombatObjectIconResolver;
   actionPresentation?: (
     ownerId: string,
@@ -244,6 +245,7 @@ function endReasonText(instance: BuffDetailInstance): string {
           {{ t('timeline.buffDetail.suppressedHint') }}
         </p>
         <CombatObjectOriginGraph
+          :object-name="objectName"
           v-if="originRoot && originSequence !== undefined && receiptEntries?.length"
           :key="`${originRoot.ownerId}:${originRoot.instanceId}:${originSequence}`"
           :origins="origins"

@@ -1254,6 +1254,11 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
                   semantics: schema_4107b248d073,
                   optional: true,
                 },
+                damageDisplayBuffId: {
+                  kind: 'string',
+                  optional: true,
+                  description: '用本实体施加的 Buff 承载直接伤害展示，不另画实体状态条。',
+                },
               },
               optional: true,
               description: '实体存在期间的干员状态图标；直接由该实体造成的伤害显示在状态下方。',

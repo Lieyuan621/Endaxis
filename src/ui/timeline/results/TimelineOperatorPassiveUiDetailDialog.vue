@@ -16,6 +16,7 @@ const props = defineProps<{
   fps: number;
   receiptEntries?: readonly CombatReceiptEntry[];
   operatorLabel?: (operatorId: string) => string;
+  objectName?: import('./combatObjectNames').CombatObjectOwnName;
   objectIcon?: import('./combatObjectIcons').CombatObjectIconResolver;
   actionPresentation?: (
     ownerId: string,
@@ -155,6 +156,7 @@ function seconds(frames: number): string {
           <div v-for="entity in segment.entities" :key="entity.instanceId">
             <span>{{ t(segment.nameKey) }} #{{ entity.instanceId }}</span>
             <CombatObjectOriginGraph
+              :object-name="objectName"
               :root="entity"
               :sequence="sourceSequence"
               :receipt-entries="receiptEntries"
