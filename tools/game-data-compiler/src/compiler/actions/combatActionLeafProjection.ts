@@ -636,6 +636,21 @@ export function compileActionNode(
     if (aura.kind !== 'globalPartyAura') {
       throw new Error(`${node.sourcePath}: Aura reference slice cannot enter runtime projection`);
     }
+    // 原生排除当前动作 Owner；能力实体不是队员，不能沿 Source 排除其来源干员。
+    const ownerTarget =
+      context.actionOwnerTarget === 'buffOwner'
+        ? context.fixedBuffOwnerTarget
+        : context.actionOwnerTarget;
+    const auraTarget: 'party' | 'partyExceptCaster' | 'enemy' =
+      aura.target !== 'partyExceptOwner'
+        ? aura.target
+        : ownerTarget === 'caster'
+          ? 'partyExceptCaster'
+          : ownerTarget === 'currentAbilityEntity' || ownerTarget === 'enemy'
+            ? 'party'
+            : (() => {
+                throw new Error(`${node.sourcePath}: Aura exclusion requires a known action owner`);
+              })();
     const auraBuffSource =
       aura.buffSource === 'ActionOwner'
         ? context.actionOwnerTarget === 'currentAbilityEntity'
@@ -685,7 +700,7 @@ export function compileActionNode(
       return [
         {
           buffId: entry.buffId,
-          target: aura.target,
+          target: auraTarget,
           ...(auraBuffSource === undefined ? {} : { source: auraBuffSource }),
           inheritSourceSkillCastInfo: true,
           ...(Object.keys(assignments).length === 0 ? {} : { blackboardAssignments: assignments }),
@@ -715,7 +730,7 @@ export function compileActionNode(
             {
               kind: 'finishBuffsById' as const,
               parameters: {
-                target: aura.target,
+                target: auraTarget,
                 buffIds: aura.enterCleanupBuffIds!,
                 reason: 'other' as const,
               },
@@ -738,7 +753,7 @@ export function compileActionNode(
           kind: 'applyBuff' as const,
           parameters: {
             buffId: entry.buffId,
-            target: aura.target,
+            target: auraTarget,
             ...(auraBuffSource === undefined ? {} : { source: auraBuffSource }),
             finishByAction: true,
             ...(index === 0 && ownerCleanupIds.length > 0

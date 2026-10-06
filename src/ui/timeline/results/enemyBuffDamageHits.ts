@@ -20,8 +20,8 @@ export function groupEnemyBuffDamageHits(
   const groups = new Map<string, CombatReceiptEntry[]>();
   for (const entry of entries) {
     if (
-      !isBuffDamageReceipt(entry) ||
-      entry.targetId !== entry.data!.buffOwnerId ||
+      ((!isBuffDamageReceipt(entry) || entry.targetId !== entry.data!.buffOwnerId) &&
+        displayOwners[entry.sequence] === undefined) ||
       isSkillFollowupBuffDamageReceipt(entry, visibleBuffSegments, displayOwners) ||
       typeof entry.data?.spellBurstType === 'string'
     )
@@ -29,9 +29,9 @@ export function groupEnemyBuffDamageHits(
     const key = JSON.stringify([
       entry.targetId,
       entry.frame,
-      entry.data!.buffOwnerId,
-      entry.data!.buffId,
-      entry.data!.buffInstanceId,
+      displayOwners[entry.sequence]?.targetId ?? entry.data?.buffOwnerId,
+      displayOwners[entry.sequence]?.buffId ?? entry.data?.buffId,
+      displayOwners[entry.sequence]?.instanceId ?? entry.data?.buffInstanceId,
     ]);
     const group = groups.get(key) ?? [];
     group.push(entry);

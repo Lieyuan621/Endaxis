@@ -135,6 +135,21 @@ it('uses icon metadata to retain hidden Buff damage even when the input contains
   ]);
 });
 
+it('locates an entity hit in a merged display window without changing its producer or Buff fields', () => {
+  const owner = buff(1, 0, 8);
+  const merged = { ...buff(2, 0, 20), windows: [owner, buff(2, 8, 20)] };
+  const damage: CombatReceiptEntry = {
+    ...hit(4, 99),
+    producedBy: { kind: 'abilityEntity', instanceId: 7 },
+    data: { value: 10, castId: 'cast', stepKey: 'damage' },
+  };
+  const positions = layoutEnemyDamageHits([damage], [merged], [], new Set(), [owner], { 4: owner });
+  expect(positions[0]?.standalone).toBe(false);
+  expect(positions[0]?.group[0]).toBe(damage);
+  expect(damage.data).not.toHaveProperty('buffId');
+  expect(damage.producedBy).toEqual({ kind: 'abilityEntity', instanceId: 7 });
+});
+
 it('shares a burst and an explicitly visible attachment hit without counting a receipt twice', () => {
   const a = hit(1, 1);
   const burst = { ...hit(2, 1), data: { ...hit(2, 1).data, spellBurstType: 'Fire' } };

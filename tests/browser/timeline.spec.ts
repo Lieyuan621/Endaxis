@@ -1,5 +1,29 @@
 import { test, expect, box, openPerlica, startPlacement, placeBasicGroup } from './helpers';
 
+test('方案各自保留会话内滚动和缩放，新方案使用默认视图', async ({ page }) => {
+  await page.goto('/timeline');
+  await page.getByRole('button', { name: 'SCALE +', exact: true }).click();
+  const zoom = await page.locator('.zoom-value').innerText();
+  const viewport = page.locator('.timeline-scroll');
+  await viewport.evaluate(el => {
+    el.scrollLeft = 600;
+  });
+  await expect.poll(() => viewport.evaluate(el => el.scrollLeft)).toBe(600);
+  await page.locator('.ts-add-btn').click();
+  await expect(page.locator('.zoom-value')).toHaveText('100%');
+  await expect.poll(() => viewport.evaluate(el => el.scrollLeft)).toBe(0);
+  await page.locator('.ts-tab-item').first().click();
+  await expect(page.locator('.zoom-value')).toHaveText(zoom);
+  await expect.poll(() => viewport.evaluate(el => el.scrollLeft)).toBe(600);
+  await page.locator('.ts-tab-item').last().click();
+  await expect(page.locator('.zoom-value')).toHaveText('100%');
+  await expect.poll(() => viewport.evaluate(el => el.scrollLeft)).toBe(0);
+  await page.reload();
+  await page.locator('.ts-tab-item').first().click();
+  await expect(page.locator('.zoom-value')).toHaveText('100%');
+  await expect.poll(() => viewport.evaluate(el => el.scrollLeft)).toBe(0);
+});
+
 test('技能、闪避和切人共用选区，整体移动、右键删除和撤销', async ({ page }) => {
   await openPerlica(page);
   await placeBasicGroup(page);

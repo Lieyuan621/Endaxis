@@ -43,7 +43,7 @@ export interface GlobalPartyAuraActionSource {
   readonly kind: 'globalPartyAura';
   readonly debugName: string;
   readonly fixedWhenStart: boolean;
-  readonly target: 'party' | 'partyExceptCaster' | 'enemy';
+  readonly target: 'party' | 'partyExceptOwner' | 'enemy';
   readonly buffSource: 'ActionOwner' | 'ActionSource';
   readonly inheritSourceSkillCastInfo: boolean;
   readonly buffs: readonly GlobalPartyAuraBuffInputSource[];
@@ -222,7 +222,7 @@ export function parseGlobalPartyAuraActionSource(
     kind: 'globalPartyAura',
     debugName: requireString(action.auraDebugName, `${path}.auraDebugName`),
     fixedWhenStart,
-    target: target === 'party' && excludeOwner ? 'partyExceptCaster' : target,
+    target: target === 'party' && excludeOwner ? 'partyExceptOwner' : target,
     buffSource,
     inheritSourceSkillCastInfo,
     buffs,
@@ -308,7 +308,7 @@ export function parseDirectRangedAuraActionSource<TLeaf>(
       kind: 'globalPartyAura',
       debugName: requireString(action.auraDebugName, `${path}.auraDebugName`),
       fixedWhenStart,
-      target: target === 'enemy' ? 'enemy' : excludeOwner ? 'partyExceptCaster' : 'party',
+      target: target === 'enemy' ? 'enemy' : excludeOwner ? 'partyExceptOwner' : 'party',
       buffSource,
       inheritSourceSkillCastInfo,
       buffs,

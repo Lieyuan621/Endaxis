@@ -1,5 +1,40 @@
 import type { ScenarioDocument } from '../../../core/project/schema';
+import type { CombatObjectRef } from '../../../core/combat/receipt/combatReceipt';
 import type { PublishedOperatorMetadata } from './publishedOperatorMetadata';
+import type {
+  CombatObjectOrigins,
+  CombatObjectNode,
+} from '../../../core/projection/combatObjectOrigins';
+
+/** 只沿产生关系找最近的明确名称；不把持有者、受益者或修正提供者当作命名来源。 */
+export function nearestNamedBuffOrigin(
+  origins: CombatObjectOrigins,
+  buff: { targetId: string; instanceId: number },
+  name: (node: CombatObjectNode) => string | undefined,
+): string | undefined {
+  return nearestNamedObjectOrigin(
+    origins,
+    { kind: 'buff', ownerId: buff.targetId, instanceId: buff.instanceId },
+    name,
+  );
+}
+
+/** 名称优先取对象自身；findAncestor 只查询祖先，不能直接代替这个规则。 */
+export function nearestNamedObjectOrigin(
+  origins: CombatObjectOrigins,
+  ref: CombatObjectRef,
+  name: (node: CombatObjectNode) => string | undefined,
+): string | undefined {
+  const start = origins.get(ref);
+  const own = name(start);
+  if (own !== undefined && own.trim() !== '') return own;
+  let result: string | undefined;
+  origins.findAncestor(start, node => {
+    result = name(node);
+    return result !== undefined && result.trim() !== '';
+  });
+  return result;
+}
 
 export interface PublishedEquipmentIdentity {
   readonly slug: string;

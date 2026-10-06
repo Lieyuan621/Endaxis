@@ -1,7 +1,10 @@
 import { expect, it } from 'vitest';
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
 import type { BuffTimelineSegment } from '../../../core/projection/buffTimelineViz';
-import { projectEnemyEffectViz } from '../../../core/projection/enemyEffectViz';
+import {
+  projectEnemyEffectViz,
+  projectBuffDamageDisplayOwners,
+} from '../../../core/projection/enemyEffectViz';
 import {
   findBuffDamageSegment,
   groupEnemyBuffDamageHits,
@@ -37,6 +40,44 @@ const applied: CombatReceiptEntry = {
   targetId: 'enemy',
   data: { buffId: 'status', instanceId: 2, layers: 1, enabled: true, visible: true },
 };
+
+it('实体伤害按实例归到承载 Buff，结束后的伤害仍归属原段', () => {
+  const entity = { kind: 'abilityEntity' as const, instanceId: 7 };
+  const damage: CombatReceiptEntry = {
+    ...hit(2),
+    frame: 20,
+    producedBy: entity,
+    data: { value: 10 },
+  };
+  const entries: CombatReceiptEntry[] = [
+    {
+      sequence: 0,
+      frame: 0,
+      time: 0,
+      event: 'AbilityEntitySpawned',
+      subject: entity,
+      data: { abilityEntityId: 'entity' },
+    },
+    {
+      ...applied,
+      sequence: 1,
+      event: 'BuffCreated',
+      subject: { kind: 'buff', ownerId: 'enemy', instanceId: 2 },
+      producedBy: entity,
+    },
+    damage,
+    { ...damage, sequence: 3, producedBy: { kind: 'abilityEntity', instanceId: 8 } },
+  ];
+  const owners = projectBuffDamageDisplayOwners(
+    entries,
+    [segment],
+    new Map([['entity', 'status']]),
+  );
+  expect(owners[2]).toBe(segment);
+  expect(owners[3]).toBeUndefined();
+  expect(segment.endFrame).toBe(10);
+  expect(groupEnemyBuffDamageHits(entries, [segment], owners)).toEqual([[damage]]);
+});
 
 it('retains actual damage only and opens each receipt without counting the audit twice', () => {
   const a = hit(),

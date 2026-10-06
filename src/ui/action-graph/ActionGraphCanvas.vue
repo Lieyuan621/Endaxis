@@ -99,7 +99,11 @@ const emit = defineEmits<{
 }>();
 
 const NODE_WIDTH = 320;
-const variableTextMeasure = document.createElement('canvas').getContext('2d');
+// 非 DOM 渲染器使用下方的估算宽度；文字测量不是构造技能图的前提。
+const variableTextMeasure =
+  typeof document !== 'undefined' && typeof document.createElement === 'function'
+    ? document.createElement('canvas').getContext('2d')
+    : null;
 function blackboardNodeWidth(key: string): number {
   if (variableTextMeasure) variableTextMeasure.font = '12px monospace';
   const textWidth = variableTextMeasure?.measureText(key).width ?? key.length * 8;

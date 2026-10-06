@@ -78,9 +78,39 @@ export interface EnemyEffectViz {
 export function projectBuffDamageDisplayOwners(
   entries: readonly CombatReceiptEntry[],
   segments: readonly BuffTimelineSegment[],
+  entityBuffs: ReadonlyMap<string, string> = new Map(),
 ): Readonly<Record<number, BuffTimelineSegment>> {
   const owners: Record<number, BuffTimelineSegment> = {};
   let origins: CombatObjectOrigins | undefined;
+  if (entityBuffs.size) {
+    origins = new CombatObjectOrigins(entries);
+    const entitySegments = new Map<number, BuffTimelineSegment[]>();
+    for (const segment of segments) {
+      const buff = origins.get({
+        kind: 'buff',
+        ownerId: segment.targetId,
+        instanceId: segment.instanceId,
+      });
+      const producer = buff.fact?.producedBy;
+      if (producer?.kind !== 'abilityEntity') continue;
+      const id = origins.get(producer).fact?.data?.abilityEntityId;
+      if (typeof id !== 'string' || entityBuffs.get(id) !== segment.buffId) continue;
+      const values = entitySegments.get(producer.instanceId) ?? [];
+      values.push(segment);
+      entitySegments.set(producer.instanceId, values);
+    }
+    for (const entry of entries) {
+      if (entry.event !== 'DamageApplied' || entry.producedBy?.kind !== 'abilityEntity') continue;
+      // 按创建实例归属；状态已结束后的巨浪仍挂在最后一段，不延长状态寿命。
+      const candidates = entitySegments
+        .get(entry.producedBy.instanceId)
+        ?.filter(
+          segment => segment.targetId === entry.targetId && segment.startFrame <= entry.frame,
+        );
+      const segment = candidates?.sort((a, b) => b.startFrame - a.startFrame)[0];
+      if (segment) owners[entry.sequence] = segment;
+    }
+  }
   for (const entry of entries) {
     if (
       !isBuffDamageReceipt(entry) ||
@@ -178,6 +208,7 @@ function requireBoolean(
 export function projectEnemyEffectViz(
   entries: readonly CombatReceiptEntry[],
   endFrame: number,
+  entityBuffs: ReadonlyMap<string, string> = new Map(),
 ): EnemyEffectViz {
   if (!Number.isInteger(endFrame) || endFrame < 0) {
     throw new RangeError('endFrame must be a non-negative integer');
@@ -186,7 +217,7 @@ export function projectEnemyEffectViz(
   const damageHits: CombatReceiptEntry[] = [];
   const attachmentConversions: AttachmentConversion[] = [];
   const buffSegments = projectBuffIconTimelineMetadata(entries, endFrame);
-  const damageDisplayOwners = projectBuffDamageDisplayOwners(entries, buffSegments);
+  const damageDisplayOwners = projectBuffDamageDisplayOwners(entries, buffSegments, entityBuffs);
   for (const entry of entries) {
     const enemyBuffDamage =
       isBuffDamageReceipt(entry) &&
@@ -194,7 +225,8 @@ export function projectEnemyEffectViz(
       !isSkillFollowupBuffDamageReceipt(entry, buffSegments, damageDisplayOwners);
     if (
       (entry.event === 'DamageApplied' && typeof entry.data?.spellBurstType === 'string') ||
-      enemyBuffDamage
+      enemyBuffDamage ||
+      damageDisplayOwners[entry.sequence] !== undefined
     ) {
       damageHits.push(entry);
       if (typeof entry.data?.spellBurstType === 'string') {

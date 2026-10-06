@@ -4817,12 +4817,12 @@ export const tangtang: OperatorDefinition = {
                   kind: 'applyBuff',
                   parameters: {
                     buffId: 'buff_chr_0027_tangtang_comboskill_waterbuff',
-                    target: 'partyExceptCaster',
+                    target: 'party',
                     finishByAction: true,
                     onActionEndBuffs: [
                       {
                         buffId: 'buff_chr_0027_tangtang_comboskill_waterbuff_outaura',
-                        target: 'partyExceptCaster',
+                        target: 'party',
                         inheritSourceSkillCastInfo: true,
                         blackboardAssignments: {
                           duration_talent1buff: { kind: 'valueNode', nodeId: 'data_10' },
@@ -4842,7 +4842,7 @@ export const tangtang: OperatorDefinition = {
                 action: {
                   kind: 'finishBuffsById',
                   parameters: {
-                    target: 'partyExceptCaster',
+                    target: 'party',
                     buffIds: ['buff_chr_0027_tangtang_comboskill_waterbuff_outaura'],
                     reason: 'other',
                   },
@@ -5165,7 +5165,7 @@ export const tangtang: OperatorDefinition = {
                   kind: 'applyBuff',
                   parameters: {
                     buffId: 'buff_chr_0027_tangtang_ultskill_buff',
-                    target: 'partyExceptCaster',
+                    target: 'party',
                     source: 'currentAbilityEntity',
                     finishByAction: true,
                     iconDurationSource: {
@@ -5353,6 +5353,12 @@ export const tangtang: OperatorDefinition = {
           },
           macros: {},
         },
+      },
+      presentation: {
+        icon: '/operators/tangtang/ultimate.webp',
+        nameKey: 'effects.name.oldenStare',
+        placement: 'enemy',
+        damageDisplayBuffId: 'buff_chr_0027_tangtang_ultskill_debuff',
       },
     },
     abilityentity_chr_0027_tangtang_normal_skill_03_03: {

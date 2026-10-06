@@ -401,10 +401,13 @@ import BattleLogPanel from './results/BattleLogPanel.vue';
 import { usePublishedSimulationDisplay } from './results/usePublishedSimulationDisplay';
 import {
   resolvePublishedBuffSource,
+  nearestNamedBuffOrigin,
+  nearestNamedObjectOrigin,
   capturePublishedEquipmentSources,
   resolvePublishedEquipmentTrait,
 } from './results/publishedBuffSource';
 import { createCombatObjectIconResolver } from './results/combatObjectIcons';
+import { CombatObjectOrigins } from '../../core/projection/combatObjectOrigins';
 import { isEnemyTimelineBuffVisible, layoutEnemyStatusRows } from './results/enemyStatusRows';
 import {
   isPhysicalStatusRowBuff,
@@ -3007,7 +3010,15 @@ const enemyEffectViz = computed(() => {
   }
   // 拖动草稿会立即把模拟标脏，但上一份成功回执仍是比空白更稳定的视觉占位；
   // 新模拟完成后 simulationRun 会整体替换，效果条随之原子更新，避免来回闪烁。
-  return projectEnemyEffectViz(publishedReceiptEntries.value, current.frame);
+  return projectEnemyEffectViz(
+    publishedReceiptEntries.value,
+    current.frame,
+    new Map(
+      [...publishedOperators.value.values()].flatMap(operator =>
+        Object.entries(operator.abilityEntityDamageBuffs ?? {}),
+      ),
+    ),
+  );
 });
 
 const poiseBrokenSegments = computed(() => {
@@ -3073,7 +3084,7 @@ const operatorStatusTimelineSources = computed(() =>
       ...(definition === undefined ? [] : [{ operatorId: track.operatorInstanceId, definition }]),
       ...Object.entries(operator?.abilityEntityDefinitions ?? {}).flatMap(
         ([abilityEntityId, entity]) =>
-          entity.presentation
+          entity.presentation && !entity.presentation.damageDisplayBuffId
             ? [
                 {
                   operatorId: track.operatorInstanceId!,
@@ -3588,7 +3599,16 @@ const entityStatusHits = computed(() =>
 );
 const entityStatusHitKeys = computed(
   () =>
-    new Set(entityStatusHits.value.map(hit => JSON.stringify([hit.castId, hit.hitId, hit.frame]))),
+    new Set([
+      ...entityStatusHits.value.map(hit => JSON.stringify([hit.castId, hit.hitId, hit.frame])),
+      ...(enemyEffectViz.value.damageHits ?? [])
+        .filter(
+          entry =>
+            entry.producedBy?.kind === 'abilityEntity' &&
+            enemyEffectViz.value.damageDisplayOwners?.[entry.sequence],
+        )
+        .map(entry => JSON.stringify([entry.data?.castId, entry.data?.hitId, entry.frame])),
+    ]),
 );
 
 const hitDetailTarget = ref<{
@@ -3620,21 +3640,61 @@ const enemyDamageDetailEntries = computed(() => {
     )?.group ?? []
   );
 });
-function enemyDamageSourceDescription(entry: CombatReceiptEntry) {
-  const displayOwner = enemyEffectViz.value.damageDisplayOwners?.[entry.sequence];
+function damageSourceDescription(entry: CombatReceiptEntry) {
+  // 显示锚点只负责布局，绝不能成为伤害来源。名称沿真实 producedBy 关系查询。
+  const producer = entry.producedBy;
+  const entityName =
+    producer?.kind === 'abilityEntity'
+      ? nearestNamedObjectOrigin(buffNameOrigins.value, producer, node => {
+          if (node.ref.kind === 'action')
+            return buffSourceName({
+              sourceId: node.ref.ownerId,
+              sourceActionId: node.ref.actionId,
+            });
+          if (node.ref.kind === 'buff' && typeof node.fact?.data?.buffId === 'string') {
+            const name = resolveBuffDisplayName(
+              node.fact.data.buffId,
+              { t, te },
+              undefined,
+              undefined,
+              operatorBuffDisplayNameKeys.value,
+            );
+            return name === node.fact.data.buffId ? undefined : name;
+          }
+          if (
+            node.ref.kind !== 'abilityEntity' ||
+            typeof node.fact?.data?.abilityEntityId !== 'string'
+          )
+            return undefined;
+          const key = publishedEntityNameKeys.value.get(node.fact.data.abilityEntityId);
+          return key === undefined ? undefined : t(key);
+        })
+      : undefined;
+  const producerFact =
+    producer === undefined ? undefined : buffNameOrigins.value.get(producer).fact;
+  const displayBuffId = String(
+    producer?.kind === 'buff' ? (producerFact?.data?.buffId ?? entry.data?.buffId ?? '') : '',
+  );
+  const displayName =
+    buffDisplayName({
+      buffId: displayBuffId,
+      ...(producer?.kind === 'buff' ? { targetId: producer.ownerId } : {}),
+      ...(producer?.kind === 'buff' ? { instanceId: producer.instanceId } : {}),
+    }) ??
+    resolveBuffDisplayName(
+      displayBuffId,
+      { t, te },
+      undefined,
+      undefined,
+      operatorBuffDisplayNameKeys.value,
+    );
   if (
     entry.data?.reactionDamageKind !== undefined ||
     typeof entry.data?.spellBurstType === 'string'
   ) {
     return typeof entry.data?.spellBurstType === 'string'
       ? t(`timeline.skillEditing.spellBurstTypes.${entry.data.spellBurstType}`)
-      : resolveBuffDisplayName(
-          String(displayOwner?.buffId ?? entry.data?.buffId ?? ''),
-          { t, te },
-          undefined,
-          undefined,
-          operatorBuffDisplayNameKeys.value,
-        );
+      : displayName;
   }
   const sourceActionId =
     typeof entry.data?.sourceActionId === 'string' ? entry.data.sourceActionId : undefined;
@@ -3644,47 +3704,41 @@ function enemyDamageSourceDescription(entry: CombatReceiptEntry) {
   const operatorSlug = track?.operator?.operatorSlug;
   return [
     operatorSlug ? publishedOperatorName(operatorSlug) : entry.sourceId,
-    buffSourceName({ sourceActionId, sourceId: entry.sourceId }),
-    typeof entry.data?.spellBurstType === 'string'
-      ? t('battleLog.receiptTypes.SpellBurstApplied')
-      : resolveBuffDisplayName(
-          String(displayOwner?.buffId ?? entry.data?.buffId ?? ''),
-          { t, te },
-          undefined,
-          undefined,
-          operatorBuffDisplayNameKeys.value,
-        ),
+    entityName ||
+      displayName ||
+      buffSourceName({
+        sourceActionId: producer?.kind === 'action' ? producer.actionId : sourceActionId,
+        sourceId: producer?.kind === 'action' ? producer.ownerId : entry.sourceId,
+      }),
   ]
     .filter(Boolean)
     .join(' · ');
 }
 const hitDetail = computed(() => {
-  const target = hitDetailTarget.value;
-  if (target === null) return null;
-  const track = scenario.value.tracks[target.trackIndex];
-  const cast = track?.skillCasts.find(candidate => candidate.id === target.castId);
-  if (track === null || cast === undefined || track.operator === null) return null;
-  const castModel = viewModel.value.tracks[target.trackIndex]?.skillCasts.find(
-    candidate => candidate.id === target.castId,
-  );
-  const marker =
-    castModel?.hitMarkers.find(candidate => candidate.hitId === target.hitId) ??
-    hitOccurrences.value
-      .get(target.castId)
-      ?.find(
-        candidate => candidate.hitId === target.hitId && candidate.frame === target.executionFrame,
-      ) ??
-    null;
-  if (marker === null) return null;
-  return { cast, marker };
+  const entry = selectedHitDetailEntry.value;
+  if (entry?.data?.canCritical === false) return null;
+  const castId = entry?.data?.castId;
+  const stepKey = entry?.data?.stepKey;
+  if (typeof castId !== 'string' || typeof stepKey !== 'string') return null;
+  for (const [index, track] of scenario.value.tracks.entries()) {
+    const cast = track?.skillCasts.find(candidate => candidate.id === castId);
+    if (cast) return { cast, stepKey, trackIndex: index as TrackIndex };
+  }
+  return null;
 });
 const hitDetailEntries = computed(() =>
   hitDetailTarget.value !== null
     ? (publishedHitDetail.value?.entries ?? [])
     : enemyDamageDetailEntries.value,
 );
+const selectedHitDetailSequence = ref<number>();
+const selectedHitDetailEntry = computed(
+  () =>
+    hitDetailEntries.value.find(entry => entry.sequence === selectedHitDetailSequence.value) ??
+    hitDetailEntries.value[0],
+);
 const reactionCriticalKeys = computed(() =>
-  hitDetailEntries.value.flatMap(entry =>
+  (selectedHitDetailEntry.value ? [selectedHitDetailEntry.value] : []).flatMap(entry =>
     typeof entry.data?.reactionCriticalKey === 'string' && entry.data.canCritical !== false
       ? [entry.data.reactionCriticalKey]
       : [],
@@ -3695,7 +3749,15 @@ const hitDetailResultForceCritical = computed(() =>
     ? reactionCriticalKeys.value.every(
         key => publishedSimulation.value?.scenario.battle.reactionCriticalOverrides?.[key] === true,
       )
-    : (publishedHitDetail.value?.forcedCritical ?? false),
+    : (publishedSimulation.value?.scenario.tracks.some(track =>
+        track?.skillCasts.some(
+          cast =>
+            cast.id === selectedHitDetailEntry.value?.data?.castId &&
+            cast.simulationInputs?.criticalOverrides?.[
+              String(selectedHitDetailEntry.value?.data?.stepKey)
+            ] === true,
+        ),
+      ) ?? false),
 );
 const hitDetailForceCritical = computed(() => {
   if (reactionCriticalKeys.value.length > 0)
@@ -3703,7 +3765,7 @@ const hitDetailForceCritical = computed(() => {
       key => scenario.value.battle.reactionCriticalOverrides?.[key] === true,
     );
   const detail = hitDetail.value;
-  return detail?.cast.simulationInputs?.criticalOverrides?.[detail.marker.stepKey] === true;
+  return detail?.cast.simulationInputs?.criticalOverrides?.[detail.stepKey] === true;
 });
 function hitDetailContributionSourceLabel(
   entry: Pick<OperatorPanelContributionReceipt, 'source'>,
@@ -3738,17 +3800,10 @@ function toggleHitDetailForceCritical(forced: boolean): void {
     if (changed) void simulateNow();
     return;
   }
-  const target = hitDetailTarget.value;
   const detail = hitDetail.value;
-  if (target === null || detail === null) return;
+  if (detail === null) return;
   const changed = commitScenario('setSkillCastForcedCritical', current =>
-    setSkillCastForcedCritical(
-      current,
-      target.trackIndex,
-      target.castId,
-      detail.marker.stepKey,
-      forced,
-    ),
+    setSkillCastForcedCritical(current, detail.trackIndex, detail.cast.id, detail.stepKey, forced),
   );
   if (changed) void simulateNow();
 }
@@ -3887,7 +3942,20 @@ function skillName(groupKey: string, slug: string | null): string {
 type BuffPresentationSource = {
   readonly sourceId?: string;
   readonly sourceActionId?: string;
+  readonly targetId?: string;
+  readonly instanceId?: number;
+  readonly buffId?: string;
 };
+
+const buffNameOrigins = computed(() => new CombatObjectOrigins(publishedReceiptEntries.value));
+const publishedEntityNameKeys = computed(
+  () =>
+    new Map(
+      [...publishedOperators.value.values()].flatMap(operator =>
+        Object.entries(operator.abilityEntityNameKeys ?? {}),
+      ),
+    ),
+);
 
 function contingencyContractBuffName(segment: BuffPresentationSource): string | undefined {
   const presentation = resolveContingencyContractBuffPresentation(
@@ -3900,6 +3968,45 @@ function contingencyContractBuffName(segment: BuffPresentationSource): string | 
 }
 
 function buffDisplayName(segment: BuffPresentationSource): string | undefined {
+  const explicitBuffName = (id: string) => {
+    const name = resolveBuffDisplayName(
+      id,
+      { t, te },
+      undefined,
+      undefined,
+      operatorBuffDisplayNameKeys.value,
+    );
+    return name === id ? undefined : name;
+  };
+  const own = segment.buffId === undefined ? undefined : explicitBuffName(segment.buffId);
+  if (own !== undefined) return own;
+  if (segment.targetId !== undefined && segment.instanceId !== undefined) {
+    const inherited = nearestNamedBuffOrigin(
+      buffNameOrigins.value,
+      {
+        targetId: segment.targetId,
+        instanceId: segment.instanceId,
+      },
+      node => {
+        if (node.ref.kind === 'buff' && typeof node.fact?.data?.buffId === 'string')
+          return explicitBuffName(node.fact.data.buffId);
+        if (
+          node.ref.kind === 'abilityEntity' &&
+          typeof node.fact?.data?.abilityEntityId === 'string'
+        ) {
+          const key = publishedEntityNameKeys.value.get(node.fact.data.abilityEntityId);
+          return key === undefined ? undefined : t(key);
+        }
+        if (node.ref.kind === 'action')
+          return buffSourceName({
+            sourceId: node.ref.ownerId,
+            sourceActionId: node.ref.actionId,
+          });
+        return undefined;
+      },
+    );
+    if (inherited !== undefined) return inherited;
+  }
   return contingencyContractBuffName(segment);
 }
 
@@ -5455,12 +5562,43 @@ function openInheritedSource(): void {
     selectScenario(source);
 }
 
+// 视图属于当前编辑会话，不进入方案文档、撤销历史或浏览器存档。
+const scenarioViewports = new Map<
+  string,
+  { zoom: number; scrollLeft: number; scrollTop: number }
+>();
+let restoringScenarioViewport = false;
 watch(
   [() => scenario.value.id, () => scenario.value.inheritance?.frame, timelineScroll],
-  () => {
-    void nextTick(locateInheritanceBoundary);
+  async ([id, boundary, viewport], previous, onCleanup) => {
+    const [previousId, previousBoundary, previousViewport] = previous;
+    // pre 阶段读取旧 DOM，避免新方案较短而导致浏览器先裁掉旧滚动位置。
+    if (previousId && previousViewport && !restoringScenarioViewport) {
+      scenarioViewports.set(previousId, {
+        zoom: timelineZoomPercent.value,
+        scrollLeft: previousViewport.scrollLeft,
+        scrollTop: previousViewport.scrollTop,
+      });
+    }
+    const saved = scenarioViewports.get(id);
+    const boundaryChanged = id === previousId && boundary !== previousBoundary;
+    restoringScenarioViewport = true;
+    let cancelled = false;
+    onCleanup(() => {
+      cancelled = true;
+    });
+    setTimelineZoomPercent(saved?.zoom ?? 100);
+    await nextTick();
+    if (cancelled) return;
+    if (viewport) {
+      viewport.scrollLeft = saved?.scrollLeft ?? 0;
+      viewport.scrollTop = saved?.scrollTop ?? 0;
+      if (!saved || boundaryChanged) locateInheritanceBoundary();
+      updateTimelineViewportMetrics();
+    }
+    restoringScenarioViewport = false;
   },
-  { immediate: true, flush: 'post' },
+  { immediate: true, flush: 'pre' },
 );
 
 function addScenario(): void {
@@ -8061,7 +8199,7 @@ function setMobileGuideFrame(frame: number | null): void {
             ) ??
             item.buffId)
     "
-    :source-description="hitDetailTarget === null ? enemyDamageSourceDescription : undefined"
+    :source-description="damageSourceDescription"
     :visible="hitDetailTarget !== null || enemyDamageDetailSequence !== null"
     :allow-force-critical="hitDetail !== null || reactionCriticalKeys.length > 0"
     :force-critical="hitDetailForceCritical"
@@ -8159,6 +8297,7 @@ function setMobileGuideFrame(frame: number | null): void {
       enemyDamageDetailSequence = null;
     "
     @toggle-force-critical="toggleHitDetailForceCritical"
+    @select-entry="selectedHitDetailSequence = $event"
   />
   <TimelineBuffDetailDialog
     :receipt-entries="publishedReceiptEntries"

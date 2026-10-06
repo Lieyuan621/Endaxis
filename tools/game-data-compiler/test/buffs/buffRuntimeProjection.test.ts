@@ -1508,7 +1508,7 @@ describe('公共 Buff 运行时投影', () => {
                   kind: 'globalPartyAura',
                   debugName: 'ability-entity-owner',
                   fixedWhenStart: false,
-                  target: 'partyExceptCaster',
+                  target: 'partyExceptOwner',
                   buffSource: 'ActionOwner',
                   inheritSourceSkillCastInfo: true,
                   buffs: [entry],
@@ -1535,6 +1535,7 @@ describe('公共 Buff 运行时投影', () => {
       kind: 'applyBuff',
       parameters: {
         source: 'currentAbilityEntity',
+        target: 'party',
         iconDurationSource: {
           kind: 'actionOwnerTimedMarker',
           markerId: 'ultimate-window',

@@ -34,22 +34,25 @@ export function layoutEnemyDamageHits(
     ...groupEnemyBuffDamageHits(entries, damageBuffs, displayOwners).map(group => {
       const entry = group[0]!;
       const owner = displayOwners[entry.sequence];
-      const segment =
-        findBuffDamageSegment(entry, buffs) ??
-        (owner &&
-          findBuffDamageSegment(
-            {
-              ...entry,
-              data: {
-                ...entry.data,
-                buffId: owner.buffId,
-                buffOwnerId: owner.targetId,
-                buffInstanceId: owner.instanceId,
-              },
-            },
-            buffs,
-          ));
-      const row = segment === undefined ? undefined : rows.lanes.get(segment);
+      // 锚点是展示段的身份，不伪造回执中的 buffId / buffInstanceId 来寻找轨道。
+      const containsOwner = (buff: BuffTimelineSegment): boolean =>
+        owner !== undefined &&
+        buff.targetId === owner.targetId &&
+        buff.instanceId === owner.instanceId &&
+        buff.buffId === owner.buffId &&
+        buff.startFrame <= owner.startFrame &&
+        buff.endFrame >= owner.endFrame;
+      const displaySegment =
+        owner === undefined
+          ? findBuffDamageSegment(entry, buffs)
+          : buffs.find(
+              buff =>
+                containsOwner(buff) ||
+                ('windows' in buff &&
+                  Array.isArray(buff.windows) &&
+                  (buff.windows as readonly BuffTimelineSegment[]).some(containsOwner)),
+            );
+      const row = displaySegment === undefined ? undefined : rows.lanes.get(displaySegment);
       // 没有可见持续条的伤害仍有独立入口，不受 Buff 图标和头顶栏开关影响。
       return { group, row: row ?? rows.rowCount, standalone: row === undefined };
     }),

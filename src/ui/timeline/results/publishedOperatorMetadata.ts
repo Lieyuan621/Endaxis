@@ -14,6 +14,8 @@ export interface PublishedOperatorMetadata {
   readonly skillKeys: readonly string[];
   /** 发布时捕获的角色专属 Buff 名称键，避免旧日志跟随后续定义编辑漂移。 */
   readonly buffDisplayNameKeys?: Readonly<Record<string, string>>;
+  readonly abilityEntityNameKeys?: Readonly<Record<string, string>>;
+  readonly abilityEntityDamageBuffs?: Readonly<Record<string, string>>;
   readonly skillIcons?: Readonly<Record<string, string>>;
   /** 单个技能自己的等级来源，用作缺少独立本地化标题时的显示回退。 */
   readonly skillLevelSources?: Readonly<Record<string, string>>;
@@ -50,6 +52,18 @@ export function capturePublishedOperatorMetadata(
         passiveKeys: (passiveSkills ?? []).map(skill => skill.key),
       })),
       skillKeys: skills.map(skill => skill.key),
+      abilityEntityDamageBuffs: Object.fromEntries(
+        Object.entries(definition.abilityEntityDefinitions ?? {}).flatMap(([id, entity]) =>
+          entity.presentation?.damageDisplayBuffId
+            ? [[id, entity.presentation.damageDisplayBuffId]]
+            : [],
+        ),
+      ),
+      abilityEntityNameKeys: Object.fromEntries(
+        Object.entries(definition.abilityEntityDefinitions ?? {}).flatMap(([id, entity]) =>
+          entity.presentation?.nameKey ? [[id, entity.presentation.nameKey]] : [],
+        ),
+      ),
       buffDisplayNameKeys: Object.fromEntries(
         Object.entries(definition.buffDefinitions ?? {}).flatMap(([id, buff]) =>
           buff.presentation?.nameKey ? [[id, buff.presentation.nameKey]] : [],

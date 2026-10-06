@@ -538,6 +538,7 @@ defineExpose({ apply });
       >
         <NodeLevelValues
           :text="levelText(field)"
+          :readonly="readonly"
           :required="!field.valueSchema.optional"
           :label="fieldName(field.path, kind)"
           @change="

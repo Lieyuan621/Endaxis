@@ -104,6 +104,8 @@ export interface AbilityEntityDefinition {
     readonly icon: string;
     readonly nameKey: string;
     readonly placement?: 'operator' | 'enemy';
+    /** 用本实体施加的 Buff 承载直接伤害展示，不另画实体状态条。 */
+    readonly damageDisplayBuffId?: string;
   };
   /** AbilityEntityTemplateData.bornTags；实体创建时立即成为其 AbilitySystem 自身标签。 */
   readonly bornTags?: readonly import('./gameplayTags.ts').GameplayTag[];

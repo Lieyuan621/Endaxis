@@ -26,6 +26,12 @@ export const abilityEntityPresentations: Readonly<
   abilityentity_chr_0027_tangtang_normal_skill_03: waterspoutPresentation,
   abilityentity_chr_0027_tangtang_normal_skill_03_02: waterspoutPresentation,
   abilityentity_chr_0027_tangtang_normal_skill_03_03: waterspoutPresentation,
+  abilityentity_chr_0027_tangtang_ultskill: {
+    icon: '/operators/tangtang/ultimate.webp',
+    nameKey: 'effects.name.oldenStare',
+    placement: 'enemy',
+    damageDisplayBuffId: 'buff_chr_0027_tangtang_ultskill_debuff',
+  },
   abilityentity_chr_0034_typhoea_combo_presistdamage: {
     icon: '/operators/typhoeus/combo.webp',
     nameKey: 'effects.name.barrageArray',

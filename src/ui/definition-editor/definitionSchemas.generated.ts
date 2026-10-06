@@ -3056,13 +3056,130 @@ const schema_33ac911479b6 = {
   optional: true,
   description: '跟随本体同时出现和消失的额外显示图标；它们没有独立战斗效果和生命周期。',
 } as const;
-const schema_7aa69941b391 = {
+const schema_72ecafe1082d = {
+  kind: 'array',
+  element: {
+    kind: 'object',
+    fields: {
+      infinityValue: { kind: 'boolean', description: '是否使用不会耗尽的无限护盾值。' },
+      value: {
+        kind: 'union',
+        variants: [
+          { kind: 'number' },
+          {
+            kind: 'object',
+            fields: {
+              blackboardKey: {
+                kind: 'string',
+                blackboardOrigin: 'globalBuff',
+                description: '读取持续秒数的 Buff 黑板键。',
+              },
+            },
+          },
+          {
+            kind: 'object',
+            fields: {
+              attributeSource: {
+                kind: 'enum',
+                options: ['buffOwner', 'buffSource'],
+                semantics: schema_4107b248d073,
+                optional: true,
+                description: '读取 Buff 持有者还是 Buff 来源；省略时使用运行时默认对象。',
+              },
+              attribute: { kind: 'string', description: '要读取的原生属性名称。' },
+              multiplier: {
+                kind: 'union',
+                variants: schema_040e2b54cd31,
+                semantics: schema_4107b248d073,
+                description: '属性值的乘数。',
+              },
+              addition: {
+                kind: 'union',
+                variants: schema_040e2b54cd31,
+                semantics: schema_4107b248d073,
+                description: '乘算后再加入的固定值。',
+              },
+            },
+          },
+        ],
+        semantics: { unionVariants: [schema_4107b248d073, {}] },
+        description: '固定护盾值、黑板数值或按属性计算的护盾值。',
+      },
+      damageAbsorptions: {
+        kind: 'array',
+        element: {
+          kind: 'object',
+          fields: {
+            damageType: {
+              kind: 'enum',
+              options: schema_51a143c4b9a7,
+              semantics: schema_6951f167ae16,
+              description: '适用的伤害类型。',
+            },
+            ratio: {
+              kind: 'union',
+              variants: schema_040e2b54cd31,
+              semantics: schema_4107b248d073,
+              description: '本次伤害由护盾吸收的比例。',
+            },
+            scale: {
+              kind: 'union',
+              variants: schema_040e2b54cd31,
+              semantics: schema_4107b248d073,
+              description: '吸收伤害时消耗护盾值的倍率。',
+            },
+          },
+        },
+        semantics: { arrayElement: {} },
+        description: '针对不同伤害类型的吸收规则。',
+      },
+      absorbCount: {
+        kind: 'union',
+        variants: [
+          { kind: 'number' },
+          {
+            kind: 'object',
+            fields: {
+              blackboardKey: { kind: 'string', description: '读取触发次数的 Buff 黑板键。' },
+            },
+          },
+        ],
+        semantics: schema_4107b248d073,
+        description: '护盾最多可以吸收的命中次数。',
+      },
+      absorbAllDamageWhenConsumed: {
+        kind: 'boolean',
+        description: '最后一次消耗护盾时是否仍吸收整次伤害。',
+      },
+      removeBuffWhenConsumed: { kind: 'boolean', description: '护盾耗尽时是否结束所属 Buff。' },
+      priority: {
+        kind: 'enum',
+        options: ['normal', 'prioritizeConsume'],
+        semantics: schema_4107b248d073,
+        description: '与其他护盾竞争时的消耗优先级。',
+      },
+      replaceHitEffect: {
+        kind: 'boolean',
+        description: '只保留原生表现选择位；后端不解释 EffectActionCfg。',
+      },
+    },
+  },
+  semantics: { arrayElement: {} },
+  optional: true,
+  description: 'Buff 启用时创建的护盾；护盾的数值、吸收范围、次数和销毁行为由条目配置。',
+} as const;
+const schema_d8c018e8d611 = {
   presentation: {
     kind: 'object',
     fields: {
       icon: { kind: 'string' },
       nameKey: { kind: 'string' },
       placement: schema_09fb5d26cbd4,
+      damageDisplayBuffId: {
+        kind: 'string',
+        optional: true,
+        description: '用本实体施加的 Buff 承载直接伤害展示，不另画实体状态条。',
+      },
     },
     optional: true,
     description: '实体存在期间的干员状态图标；直接由该实体造成的伤害显示在状态下方。',
@@ -3176,118 +3293,6 @@ const schema_7aa69941b391 = {
     optional: true,
     description: '能力实体启用期间安装的被动技能。',
   },
-} as const;
-const schema_72ecafe1082d = {
-  kind: 'array',
-  element: {
-    kind: 'object',
-    fields: {
-      infinityValue: { kind: 'boolean', description: '是否使用不会耗尽的无限护盾值。' },
-      value: {
-        kind: 'union',
-        variants: [
-          { kind: 'number' },
-          {
-            kind: 'object',
-            fields: {
-              blackboardKey: {
-                kind: 'string',
-                blackboardOrigin: 'globalBuff',
-                description: '读取持续秒数的 Buff 黑板键。',
-              },
-            },
-          },
-          {
-            kind: 'object',
-            fields: {
-              attributeSource: {
-                kind: 'enum',
-                options: ['buffOwner', 'buffSource'],
-                semantics: schema_4107b248d073,
-                optional: true,
-                description: '读取 Buff 持有者还是 Buff 来源；省略时使用运行时默认对象。',
-              },
-              attribute: { kind: 'string', description: '要读取的原生属性名称。' },
-              multiplier: {
-                kind: 'union',
-                variants: schema_040e2b54cd31,
-                semantics: schema_4107b248d073,
-                description: '属性值的乘数。',
-              },
-              addition: {
-                kind: 'union',
-                variants: schema_040e2b54cd31,
-                semantics: schema_4107b248d073,
-                description: '乘算后再加入的固定值。',
-              },
-            },
-          },
-        ],
-        semantics: { unionVariants: [schema_4107b248d073, {}] },
-        description: '固定护盾值、黑板数值或按属性计算的护盾值。',
-      },
-      damageAbsorptions: {
-        kind: 'array',
-        element: {
-          kind: 'object',
-          fields: {
-            damageType: {
-              kind: 'enum',
-              options: schema_51a143c4b9a7,
-              semantics: schema_6951f167ae16,
-              description: '适用的伤害类型。',
-            },
-            ratio: {
-              kind: 'union',
-              variants: schema_040e2b54cd31,
-              semantics: schema_4107b248d073,
-              description: '本次伤害由护盾吸收的比例。',
-            },
-            scale: {
-              kind: 'union',
-              variants: schema_040e2b54cd31,
-              semantics: schema_4107b248d073,
-              description: '吸收伤害时消耗护盾值的倍率。',
-            },
-          },
-        },
-        semantics: { arrayElement: {} },
-        description: '针对不同伤害类型的吸收规则。',
-      },
-      absorbCount: {
-        kind: 'union',
-        variants: [
-          { kind: 'number' },
-          {
-            kind: 'object',
-            fields: {
-              blackboardKey: { kind: 'string', description: '读取触发次数的 Buff 黑板键。' },
-            },
-          },
-        ],
-        semantics: schema_4107b248d073,
-        description: '护盾最多可以吸收的命中次数。',
-      },
-      absorbAllDamageWhenConsumed: {
-        kind: 'boolean',
-        description: '最后一次消耗护盾时是否仍吸收整次伤害。',
-      },
-      removeBuffWhenConsumed: { kind: 'boolean', description: '护盾耗尽时是否结束所属 Buff。' },
-      priority: {
-        kind: 'enum',
-        options: ['normal', 'prioritizeConsume'],
-        semantics: schema_4107b248d073,
-        description: '与其他护盾竞争时的消耗优先级。',
-      },
-      replaceHitEffect: {
-        kind: 'boolean',
-        description: '只保留原生表现选择位；后端不解释 EffectActionCfg。',
-      },
-    },
-  },
-  semantics: { arrayElement: {} },
-  optional: true,
-  description: 'Buff 启用时创建的护盾；护盾的数值、吸收范围、次数和销毁行为由条目配置。',
 } as const;
 const schema_bc54829e4166 = {
   kind: 'array',
@@ -5713,7 +5718,7 @@ export const definitionSchemas = {
       },
       abilityEntityDefinitions: {
         kind: 'record',
-        value: { kind: 'object', fields: schema_7aa69941b391 },
+        value: { kind: 'object', fields: schema_d8c018e8d611 },
         semantics: { recordValue: {} },
         optional: true,
         description: '干员级能力实体蓝图；子技能按引用它的技能等级编译。',
@@ -6860,7 +6865,7 @@ export const definitionSchemas = {
       },
     },
   },
-  abilityEntity: { kind: 'object', fields: schema_7aa69941b391 },
+  abilityEntity: { kind: 'object', fields: schema_d8c018e8d611 },
   abilityEntityChildSkill: {
     kind: 'object',
     fields: {

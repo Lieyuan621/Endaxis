@@ -125,7 +125,16 @@ const props = defineProps<{
   };
 }>();
 
-const emit = defineEmits<{ close: []; toggleForceCritical: [forced: boolean] }>();
+const emit = defineEmits<{
+  close: [];
+  toggleForceCritical: [forced: boolean];
+  selectEntry: [sequence: number | undefined];
+}>();
+watch(
+  () => props.entries.filter(entry => entry.event === 'DamageApplied')[damageIndex.value]?.sequence,
+  sequence => emit('selectEntry', sequence),
+  { immediate: true },
+);
 const origins = computed(() => new CombatObjectOrigins(props.receiptEntries ?? props.entries));
 
 interface DetailRow {
