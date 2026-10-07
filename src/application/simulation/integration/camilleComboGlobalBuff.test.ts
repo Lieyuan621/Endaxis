@@ -81,6 +81,40 @@ function expectedDamageForCast(
     .reduce((total, entry) => total + Number(entry.data?.expectedDamage ?? 0), 0);
 }
 
+it('卡缪终结技后的追猎造成伤害但不消耗技力', async () => {
+  const scenario = createScenario(0);
+  const track = scenario.tracks[0]!;
+  track.initialState.ultimateEnergy = 130;
+  track.skillCasts = [
+    {
+      id: 'camille:ultimate',
+      source: {
+        kind: 'operatorSkill',
+        skillGroupKey: 'ultimate',
+        skillKey: 'chr_0033_camille_ultimate_skill',
+      },
+      placement: { startFrame: 1 },
+    },
+    {
+      id: 'camille:hunt',
+      source: {
+        kind: 'operatorSkill',
+        skillGroupKey: 'replacementBattleSkill',
+        skillKey: 'chr_0033_camille_normal_skill_2',
+      },
+      placement: { startFrame: 200 },
+    },
+  ];
+  scenario.tracks[1]!.skillCasts = [];
+  const run = await createEditorSimulationService().simulate(scenario, 480);
+  expect(expectedDamageForCast(run.receiptEntries, 'camille:hunt')).toBeGreaterThan(0);
+  expect(
+    run.receiptEntries.filter(
+      entry => entry.event === 'SpChanged' && Number(entry.data?.actualValue) < 0,
+    ),
+  ).toEqual([]);
+});
+
 it('卡米拉天赋连携创建一层公共增益并由下一次洛茜战技按30%消费', async () => {
   const service = createEditorSimulationService();
   const [withoutTalent, withTalent] = await Promise.all([

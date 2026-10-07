@@ -127,7 +127,7 @@ export interface OperatorDefinitionAssemblyInput {
 
     readonly costs: NonNullable<SkillDefinition['costs']>;
     readonly costFrame: number;
-    readonly cooldownFrames: number;
+    readonly cooldownFrames: SkillDefinition['cooldownFrames'];
   }[];
   /** 原生 BlackboardDouble.GetValue 已取证的精确缺键 0 回退；不允许广泛默认。 */
   readonly nativeMissingBlackboardZeroKeys?: ReadonlyMap<string, ReadonlySet<string>>;
@@ -687,12 +687,13 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
     if (wrapper === undefined || target === undefined) {
       throw new Error(`routed skill '${routed.key}' has an unknown wrapper or target`);
     }
+    const { cooldownFrames: _targetCooldown, ...executionDefinition } = target;
     runtimeDefinitions.set(routed.key, {
-      ...target,
+      ...executionDefinition,
       key: routed.key,
       costs: routed.costs,
       costFrame: routed.costFrame,
-      cooldownFrames: routed.cooldownFrames,
+      ...(routed.cooldownFrames === undefined ? {} : { cooldownFrames: routed.cooldownFrames }),
     });
   }
   const activeSkillTypeByKey = new Map(

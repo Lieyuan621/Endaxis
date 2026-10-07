@@ -65,28 +65,21 @@ function fixture(overrides: Record<string, unknown> = {}) {
     },
   ];
   const groups = [{ key: 'comboGroup', skillKeys: ['combo'] }];
-  const source = {
-    'wrapper.json': {
-      castData: { startCdFrame: 3, cooldownTime: 2, costData: { costType: 'Atb', costValue: 100 } },
-    },
-  };
   return {
     wrapper,
     groups,
-    source,
     run: (definition = wrapper) =>
       planRoutedSkills(
         { routedSkillKeys: ['wrapper'] },
         entries,
         [{ definition }, skills[1]!],
-        source,
         'fixture',
       ),
   };
 }
 
 describe('路由技能配置推导', () => {
-  it('只配置目标关联，从目标定义和包装动作推导其余信息', () => {
+  it('入口费用和冷却使用等级编译结果，允许补丁清零并保留逐级数值', () => {
     expect(fixture().run()).toEqual([
       {
         key: 'wrapper',
@@ -94,11 +87,19 @@ describe('路由技能配置推导', () => {
         skillType: 'comboSkill',
         levelSource: 'comboSkill',
 
-        costs: [{ resource: 'sp', value: 100 }],
+        costs: [],
         costFrame: 3,
-        cooldownFrames: 60,
+        cooldownFrames: undefined,
       },
     ]);
+    const paid = fixture();
+    expect(
+      paid.run({
+        ...paid.wrapper,
+        costs: [{ resource: 'sp', value: [40, 0] }],
+        cooldownFrames: [90, 30],
+      })[0],
+    ).toMatchObject({ costs: [{ resource: 'sp', value: [40, 0] }], cooldownFrames: [90, 30] });
   });
 
   it('保留旧显式配置的结果，并拒绝与原始动作不一致的提示', () => {
@@ -127,10 +128,7 @@ describe('路由技能配置推导', () => {
     }
   });
 
-  it('推导不放宽包装形状或原生资源限制', () => {
-    const unsupported = fixture();
-    unsupported.source['wrapper.json'].castData.costData.costType = 'Unknown';
-    expect(unsupported.run).toThrow('cost/cooldown is unsupported');
+  it('推导不放宽包装形状', () => {
     const invalid = fixture();
     expect(() =>
       invalid.run({

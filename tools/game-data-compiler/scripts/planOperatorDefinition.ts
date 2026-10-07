@@ -19,7 +19,6 @@ import {
   requireExactFields,
   requireNonEmptyString,
   requireNonNegativeInteger,
-  requireNumber,
   requireRecord,
 } from '../src/source/primitives.ts';
 import {
@@ -210,7 +209,7 @@ export function planOperatorDefinition(
       },
     };
   });
-  const routedSkills = planRoutedSkills(row, entries, activeSkills, skills, args.slug);
+  const routedSkills = planRoutedSkills(row, entries, activeSkills, args.slug);
   const timeDilationPriorities = args.sources.timeDilationPriorities(args.timeDilationCatalog);
   const gameplayTagRegistry = new GameplayTagRegistry(
     args.sources.gameplayTags(args.gameplayTagCatalog),
@@ -864,7 +863,6 @@ export function planRoutedSkills(
   row: Record<string, unknown>,
   entries: readonly OperatorActiveSkillEntrySource[],
   activeSkills: readonly Pick<PlannedOperatorActiveSkillRuntime, 'definition'>[],
-  skillDataBySourceFile: Readonly<Record<string, unknown>>,
   slug: string,
 ) {
   const routedKeys = optionalStrings(row.routedSkillKeys, `${slug}.routedSkillKeys`) ?? [];
@@ -954,36 +952,16 @@ export function planRoutedSkills(
     ) {
       throw new Error(`${path}: SwitchToAddBuff wrapper does not match routed-skill evidence`);
     }
-    const source = requireRecord(skillDataBySourceFile[entry.sourceFile], entry.sourceFile);
-    const cast = requireRecord(source.castData, `${entry.sourceFile}.castData`);
-    const cost = requireRecord(cast.costData, `${entry.sourceFile}.castData.costData`);
-    const cooldownSeconds = requireNumber(
-      cast.cooldownTime,
-      `${entry.sourceFile}.castData.cooldownTime`,
-    );
-    const costValue = requireNumber(
-      cost.costValue,
-      `${entry.sourceFile}.castData.costData.costValue`,
-    );
-    const cooldownFrames = cooldownSeconds * 30;
-    if (
-      cast.startCdFrame !== wrapper.costFrame ||
-      cost.costType !== 'Atb' ||
-      costValue <= 0 ||
-      cooldownSeconds <= 0 ||
-      !Number.isInteger(cooldownFrames)
-    ) {
-      throw new Error(`${path}: routed wrapper CastData cost/cooldown is unsupported`);
-    }
     return {
       key,
       targetSkillKey,
       skillType: targetEntry.skillType,
       levelSource: targetEntry.levelSource,
 
-      costs: [{ resource: 'sp' as const, value: costValue }],
+      // 旁路仍支付入口技能的费用；使用已应用等级补丁的结果，零值不能回退到原始 CastData。
+      costs: wrapper.costs ?? [],
       costFrame: wrapper.costFrame,
-      cooldownFrames,
+      cooldownFrames: wrapper.cooldownFrames,
     };
   });
 }

@@ -31,10 +31,10 @@ describe('camille generated operator', () => {
       skillLevel: 7,
       skillId: 'chr_0033_camille_normal_skill_2',
       executionSkillId: 'chr_0033_camille_combo_skill_2',
-      cooldownFrames: 90,
-      costs: [{ resource: 'sp', value: 40 }],
+      costs: [],
       initialBlackboard: { atk_scale_2_4: 2.28 },
     });
+    expect(program?.cooldownFrames).toBeUndefined();
   });
 
   it('applies combo-skill behavior upgrades to the routed execution body', () => {

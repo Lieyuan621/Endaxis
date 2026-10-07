@@ -31,7 +31,7 @@ describe('enemy status presentation rows', () => {
         startFrame: 20,
         endFrame: 40,
         startReason: 'modifierChanged',
-        endReason: 'finished',
+        endReason: 'lifetime',
       }),
       buff(id, { instanceId: 2, startFrame: 40, endFrame: 60, startReason: 'applied' }),
     ]);
