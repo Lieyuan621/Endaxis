@@ -5526,10 +5526,7 @@
     "cannotCritical": "不可暴击",
     "attack": "攻击",
     "multiplier": "技能倍率",
-    "skillSettingSource": "技能表第 {column} 列",
-    "multiplierInternalValue": "技能内部数值",
-    "multiplierStep": "计算步骤 {step}",
-    "multiplierResult": "最终倍率",
+    "multiplierAddition": "倍率加算",
     "multiplierKeys": {
       "atk_scale": "基础倍率",
       "atk_scale_enhence": "强化倍率",

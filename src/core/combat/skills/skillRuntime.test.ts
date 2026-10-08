@@ -204,6 +204,33 @@ function createBattleSkillRuntime(
 }
 
 describe('SkillRuntime', () => {
+  it('只给技能初始倍率附加来源记录，施放数值保持不变', () => {
+    const program: CompiledSkillExecutionProgram = {
+      operatorId: 'operator',
+      skillId: 'chr_0032_lizhiyan_combo_skill',
+      skillLevel: 12,
+      initialBlackboard: { atk_scale_laser2: 2.6 },
+      costs: [],
+      naturalDurationFrames: 1,
+      timelineActions: [],
+    };
+    const skill = new SkillRuntime(program, {
+      clock: new CombatClock(),
+      receipt: new CombatReceiptCollector(),
+      resources: null,
+      operations: { execute: () => true, evaluate: () => true },
+      allocateSkillCastId: () => 1,
+    });
+    expect(skill.tryStart()).toBe(true);
+    expect(skill.runtimeState.blackboard.values.get('atk_scale_laser2')).toBe(2.6);
+    expect(skill.runtimeState.blackboard.valueCalculations?.get('atk_scale_laser2')).toMatchObject({
+      result: 2.6,
+      sourceKind: 'skillBlackboard',
+      sourceSkillId: program.skillId,
+      sourceSkillLevel: 12,
+      sourceKey: 'atk_scale_laser2',
+    });
+  });
   it('正式技能宿主执行图区间，施法中恢复保留身份、输入标记和自然结束时序', () => {
     const graph = createActionGraphCompilation(
       {

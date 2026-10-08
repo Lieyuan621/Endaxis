@@ -18,7 +18,7 @@ import {
   type SkillCooldownSnapshot,
   type SkillRuntimeState,
 } from '../state/abilityState';
-import type { BuffReference } from '../state/foundationState';
+import type { ActionValueCalculation, BuffReference } from '../state/foundationState';
 import { type SkillCastStartPreparation } from '../state/foundationState';
 import { applySkillCastStartPreparation } from './skillCastStartPreparation';
 import {
@@ -281,6 +281,7 @@ export class SkillRuntime {
   readonly #context: CombatExecutionContext = {};
   readonly #blackboard: ActionBlackboard;
   readonly #initialBlackboard: ReturnType<ActionBlackboard['snapshot']>;
+  readonly #initialBlackboardCalculations: Readonly<Record<string, ActionValueCalculation>>;
   readonly #execution: ReturnType<typeof createSkillExecutionState>;
   readonly #targetContext: RuntimeTargetContext;
   readonly #operationContext: CombatOperationContext;
@@ -330,10 +331,45 @@ export class SkillRuntime {
         ? dependencies.actionBlackboard
         : ActionBlackboard.bindRuntimeState(restored.state.blackboard)) ??
       new ActionBlackboard(undefined, dependencies.entityBlackboard);
+    const suppliedBlackboard = restored === undefined ? this.#blackboard.snapshot() : {};
     this.#initialBlackboard = restored?.state.initialBlackboard ?? {
       ...program.initialBlackboard,
-      ...this.#blackboard.snapshot(),
+      ...suppliedBlackboard,
     };
+    this.#initialBlackboardCalculations =
+      restored?.state.initialBlackboardCalculations ??
+      Object.fromEntries(
+        Object.entries(this.#initialBlackboard).flatMap(([key, value]) => {
+          if (typeof value !== 'number') return [];
+          const inherited = Object.hasOwn(suppliedBlackboard, key)
+            ? this.#blackboard.getValueCalculation(key)
+            : undefined;
+          if (inherited !== undefined && inherited.result === value) return [[key, inherited]];
+          if (
+            Object.hasOwn(suppliedBlackboard, key) ||
+            !Object.hasOwn(program.initialBlackboard, key) ||
+            program.initialBlackboard[key] !== value
+          )
+            return [];
+          return [
+            [
+              key,
+              {
+                operation: 'assign',
+                left: 0,
+                right: value,
+                result: value,
+                sourceKind: 'skillBlackboard',
+                sourceSkillId: program.skillId,
+                ...(program.skillLevel === undefined
+                  ? {}
+                  : { sourceSkillLevel: program.skillLevel }),
+                sourceKey: key,
+              } satisfies ActionValueCalculation,
+            ],
+          ];
+        }),
+      );
     if (
       dependencies.resources !== null &&
       this.#hostIdentity.actionOwnerAbilityEntity !== undefined
@@ -439,6 +475,7 @@ export class SkillRuntime {
       execution: this.#execution,
       blackboard: this.#blackboard.runtimeState,
       initialBlackboard: this.#initialBlackboard,
+      initialBlackboardCalculations: this.#initialBlackboardCalculations,
       cooldown: this.#cooldown.runtimeState,
       scopes: this.#sequenceRuntime.scopeState,
       damageSnapshots: this.#operationContext.damageCalculationSnapshots!.runtimeState,
@@ -719,7 +756,11 @@ export class SkillRuntime {
     ) {
       return false;
     }
-    this.#blackboard.restore(this.#initialBlackboard);
+    this.#blackboard.restore(
+      this.#initialBlackboard,
+      undefined,
+      this.#initialBlackboardCalculations,
+    );
     this.#blackboard.assign(this.#execution.preparedStartBlackboard);
     this.#targetContext.clear();
     this.#sequenceRuntime.reset();
@@ -792,7 +833,11 @@ export class SkillRuntime {
     this.runtimeState.markedCanDash = false;
     this.runtimeState.markedCanInterrupt = false;
     this.#timeline = this.#createTimeline();
-    this.#blackboard.restore(this.#initialBlackboard);
+    this.#blackboard.restore(
+      this.#initialBlackboard,
+      undefined,
+      this.#initialBlackboardCalculations,
+    );
     this.#targetContext.clear();
     this.#blackboard.assign(this.#execution.preparedStartBlackboard);
     this.#execution.preparedStartBlackboard = {};

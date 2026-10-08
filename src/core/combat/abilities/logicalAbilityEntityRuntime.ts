@@ -16,7 +16,7 @@ import { ActionBlackboard, type ActionBlackboardValue } from '../actions/actionB
 import type { BuffApplicationHandle } from '../buffs/combatBuffs';
 import type { FrameRuntime } from '../runtime/combatSimulation';
 import { createTimedMarkerState, type TimedMarkerSnapshot } from '../state/environmentState';
-import type { CombatSkillCastInfo } from '../state/foundationState';
+import type { ActionValueCalculation, CombatSkillCastInfo } from '../state/foundationState';
 import type {
   LogicalAbilityEntityDirectoryState,
   LogicalAbilityEntityState,
@@ -50,6 +50,7 @@ export interface LogicalAbilityEntitySpawnRequest {
   readonly overrideDurationSeconds?: number;
   readonly dieWhenSourceDies?: boolean;
   readonly blackboardAssignments?: Readonly<Record<string, ActionBlackboardValue>>;
+  readonly blackboardValueCalculations?: Readonly<Record<string, ActionValueCalculation>>;
   readonly sourceSkillCastId?: number;
   /** 由操作解释链创建；目录只负责用实体局部时间推进和对称结束。 */
   readonly createChildRuntime?: (
@@ -269,6 +270,8 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
       ...request.definition.blackboard,
       ...request.blackboardAssignments,
     });
+    if (request.blackboardValueCalculations !== undefined)
+      blackboard.assign(undefined, undefined, request.blackboardValueCalculations);
     let instance!: LogicalAbilityEntityInstance;
     const timedMarkers = createTimedMarkerState();
     instance = {

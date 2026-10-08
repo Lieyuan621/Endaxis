@@ -194,6 +194,13 @@ export function limitValueCalculation(
     result: calculation.result,
     ...(calculation.sourceKind === undefined ? {} : { sourceKind: calculation.sourceKind }),
     ...(calculation.sourceColumn === undefined ? {} : { sourceColumn: calculation.sourceColumn }),
+    ...(calculation.sourceSkillId === undefined
+      ? {}
+      : { sourceSkillId: calculation.sourceSkillId }),
+    ...(calculation.sourceSkillLevel === undefined
+      ? {}
+      : { sourceSkillLevel: calculation.sourceSkillLevel }),
+    ...(calculation.sourceKey === undefined ? {} : { sourceKey: calculation.sourceKey }),
     ...(calculation.leftKey === undefined ? {} : { leftKey: calculation.leftKey }),
     ...(calculation.rightKey === undefined ? {} : { rightKey: calculation.rightKey }),
     ...(depth <= 1 || calculation.leftCalculation === undefined

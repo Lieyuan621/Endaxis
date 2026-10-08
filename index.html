@@ -45,6 +45,14 @@
         background: #f0f0f0;
       }
 
+      /* Keep the boot view's dimensions stable before the app's global CSS arrives. */
+      .boot-loader,
+      .boot-loader *,
+      .boot-loader *::before,
+      .boot-loader *::after {
+        box-sizing: border-box;
+      }
+
       .boot-loader {
         position: fixed;
         inset: 0;

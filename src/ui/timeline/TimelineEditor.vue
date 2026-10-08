@@ -8201,12 +8201,11 @@ function setMobileGuideFrame(frame: number | null): void {
       attributeLabel: (attribute: string) => t(`stats.${attribute}`),
       fromSource: (name: string) => t('statDetail.fromSource', { name }),
       skillMultiplier: t('hitDetail.multiplier'),
-      skillSettingSource: (column: number) => t('hitDetail.skillSettingSource', { column }),
       skillMultiplierKeyLabel: (key: string) => {
         const labelKey = `hitDetail.multiplierKeys.${key}`;
         return te(labelKey) ? t(labelKey) : undefined;
       },
-      skillMultiplierInternalValue: t('hitDetail.multiplierInternalValue'),
+      multiplierAddition: t('hitDetail.multiplierAddition'),
       buffStackSourceLabel: (kind: 'id' | 'tag', key: string) => {
         const id =
           kind === 'id'
@@ -8224,8 +8223,6 @@ function setMobileGuideFrame(frame: number | null): void {
         );
         return name === id ? undefined : name;
       },
-      skillMultiplierStep: (step: number) => t('hitDetail.multiplierStep', { step }),
-      skillMultiplierResult: t('hitDetail.multiplierResult'),
       baseDamage: t('hitDetail.baseDamage'),
       damageBonus: t('hitDetail.dmgBonus'),
       criticalExpectation: t('hitDetail.critMult'),

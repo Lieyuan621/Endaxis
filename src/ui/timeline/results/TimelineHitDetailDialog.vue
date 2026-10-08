@@ -89,12 +89,9 @@ const props = defineProps<{
     attributeLabel: (attribute: string) => string;
     fromSource: (name: string) => string;
     skillMultiplier: string;
-    skillSettingSource: (column: number) => string;
     skillMultiplierKeyLabel: (key: string) => string | undefined;
     buffStackSourceLabel?: (kind: 'id' | 'tag', key: string) => string | undefined;
-    skillMultiplierInternalValue: string;
-    skillMultiplierStep: (step: number) => string;
-    skillMultiplierResult: string;
+    multiplierAddition: string;
     baseDamage: string;
     damageBonus: string;
     criticalExpectation: string;
@@ -502,106 +499,115 @@ function isNeutralFactor(value: number): boolean {
   return Number.isFinite(value) && Math.abs(value - 1) < 0.000001;
 }
 
-function isUnchangedMultiply(calculation: ActionValueCalculation): boolean {
-  return (
-    calculation.operation === 'multiply' &&
-    calculation.rightCalculation?.sourceKind !== 'buffIdStackCount' &&
-    calculation.rightCalculation?.sourceKind !== 'buffTagStackCount' &&
-    isNeutralFactor(calculation.right) &&
-    Math.abs(calculation.result - calculation.left) <
-      0.000001 * Math.max(1, Math.abs(calculation.left))
-  );
-}
+type MultiplierTerm =
+  | { readonly kind: 'base'; readonly value: number }
+  | {
+      readonly kind: 'addition' | 'factor';
+      readonly value: number;
+      readonly label: string;
+      readonly detail?: string;
+    }
+  | { readonly kind: 'hitShare'; readonly value: number };
 
-/** 基础倍率叠加层数加成；普通命中与末段命中共用同一条加算来源。 */
-function stackBonusMultiplierRows(calculation: ActionValueCalculation): DetailRow[] | undefined {
-  const hasFinalRate =
-    calculation.operation === 'multiply' && calculation.rightKey === 'final_rate';
-  const added = hasFinalRate ? calculation.leftCalculation : calculation;
-  const stackBonus = added?.rightCalculation;
-  if (
-    added?.operation !== 'add' ||
-    added.leftKey !== 'atk_scale' ||
-    added.rightKey !== 'atk_up_final' ||
-    stackBonus?.operation !== 'multiply' ||
-    stackBonus.leftKey !== 'atk_up_per_conduct' ||
-    stackBonus.rightKey !== 'conductCnt'
-  )
-    return undefined;
-  return [
-    { label: props.labels.baseMultiplier, value: pct(added.left) },
-    {
-      label: multiplierKeyLabel(added.rightKey, props.labels.fixedMultiplier),
-      detail: `${props.labels.stacksDetail(stackBonus.right)} × ${pct(stackBonus.left)}`,
-      value: `${added.right >= 0 ? '+' : ''}${pct(added.right)}`,
-    },
-    ...(hasFinalRate
-      ? [
-          {
-            label: multiplierKeyLabel(calculation.rightKey, props.labels.fixedMultiplier),
-            value: mult(calculation.right),
-          },
-        ]
-      : []),
-  ];
-}
-
-/** 可识别的基础倍率乘法统一显示基础值与来源项，未知来源保留为额外倍率。 */
-function baseAndFactorMultiplierRows(calculation: ActionValueCalculation): DetailRow[] | undefined {
-  if (
-    calculation.operation !== 'multiply' ||
-    !/^atk_scale(?:_|$)/.test(calculation.leftKey ?? '') ||
-    calculation.leftCalculation !== undefined ||
-    calculation.rightCalculation !== undefined ||
-    !Number.isFinite(calculation.right)
-  )
-    return undefined;
-  const isAnonymousHitShare =
-    calculation.rightKey === undefined && calculation.right >= 0 && calculation.right <= 1;
-  return [
-    { label: props.labels.baseMultiplier, value: pct(calculation.left) },
-    ...(isUnchangedMultiply(calculation)
-      ? []
-      : isAnonymousHitShare
-        ? [{ label: props.labels.hitFraction, value: pct(calculation.right) }]
-        : [
-            {
-              label: multiplierKeyLabel(calculation.rightKey, props.labels.fixedMultiplier),
-              value: mult(calculation.right),
-            },
-          ]),
-  ];
-}
-
-/** 技能表原值及其后续乘数使用统一的「基础倍率 + 生效来源」布局。 */
-function skillSettingMultiplierRows(calculation: ActionValueCalculation): DetailRow[] | undefined {
+/** 各种倍率计算路径先转成同一套展示项；仅保留解释算式所需的明细。 */
+function multiplierTerms(
+  calculation: ActionValueCalculation,
+  sourceKey: string | undefined,
+): MultiplierTerm[] | undefined {
+  if (calculation.sourceKind === 'skillBlackboard') {
+    return [{ kind: 'base', value: calculation.result }];
+  }
   if (calculation.sourceKind === 'skillSetting' && calculation.operation === 'multiply') {
     return [
-      { label: props.labels.baseMultiplier, value: pct(calculation.left) },
-      ...(isUnchangedMultiply(calculation)
+      { kind: 'base', value: calculation.left },
+      ...(isNeutralFactor(calculation.right)
         ? []
-        : [{ label: props.labels.artsIntensity, value: mult(calculation.right) }]),
+        : [
+            {
+              kind: 'factor' as const,
+              label: props.labels.artsIntensity,
+              value: calculation.right,
+            },
+          ]),
     ];
   }
-  if (calculation.operation !== 'multiply' || calculation.leftCalculation === undefined)
-    return undefined;
-  const sources = skillSettingMultiplierRows(calculation.leftCalculation);
-  if (sources === undefined) return undefined;
-  if (isUnchangedMultiply(calculation)) return sources;
-  // 只折叠单纯的乘 1 来源；复杂的右侧计算仍交给完整公式展示。
-  const factorCalculation = calculation.rightCalculation;
   if (
-    factorCalculation !== undefined &&
-    (!isUnchangedMultiply(factorCalculation) ||
-      factorCalculation.leftCalculation !== undefined ||
-      factorCalculation.rightCalculation !== undefined)
+    calculation.sourceKind === 'buffIdStackCount' ||
+    calculation.sourceKind === 'buffTagStackCount'
   )
     return undefined;
+  if (calculation.operation === 'assign') {
+    return calculation.rightCalculation === undefined
+      ? [{ kind: 'base', value: calculation.result }]
+      : multiplierTerms(calculation.rightCalculation, calculation.rightKey ?? sourceKey);
+  }
+  if (
+    calculation.operation !== 'add' &&
+    calculation.operation !== 'multiply' &&
+    calculation.operation !== 'divide'
+  )
+    return undefined;
+  const terms =
+    calculation.leftCalculation === undefined
+      ? ([{ kind: 'base', value: calculation.left }] satisfies MultiplierTerm[])
+      : multiplierTerms(calculation.leftCalculation, calculation.leftKey ?? sourceKey);
+  if (terms === undefined) return undefined;
+  if (calculation.operation === 'add') {
+    if (Math.abs(calculation.right) < 0.000001) return terms;
+    const bonus = calculation.rightCalculation;
+    const stackDetail =
+      bonus?.operation === 'multiply' && /(?:cnt|count|num|layers?)$/i.test(bonus.rightKey ?? '')
+        ? `${props.labels.stacksDetail(bonus.right)} × ${pct(bonus.left)}`
+        : undefined;
+    return [
+      ...terms,
+      {
+        kind: 'addition',
+        label: multiplierKeyLabel(calculation.rightKey, props.labels.multiplierAddition),
+        value: calculation.right,
+        ...(stackDetail === undefined ? {} : { detail: stackDetail }),
+      },
+    ];
+  }
+  const factor = calculation.operation === 'divide' ? 1 / calculation.right : calculation.right;
+  if (!Number.isFinite(factor)) return undefined;
+  if (isNeutralFactor(factor)) return terms;
+  const stack = calculation.rightCalculation;
+  const stackKind =
+    stack?.sourceKind === 'buffIdStackCount'
+      ? 'id'
+      : stack?.sourceKind === 'buffTagStackCount'
+        ? 'tag'
+        : undefined;
+  const stackName =
+    stackKind === undefined || stack?.rightKey === undefined
+      ? undefined
+      : props.labels.buffStackSourceLabel?.(stackKind, stack.rightKey);
+  if (stackName !== undefined)
+    return [
+      ...terms,
+      {
+        kind: 'factor',
+        label: stackName,
+        detail: props.labels.stacksDetail(calculation.right),
+        value: factor,
+      },
+    ];
+  if (
+    calculation.operation === 'multiply' &&
+    calculation.rightKey === undefined &&
+    calculation.rightCalculation === undefined &&
+    /^atk_scale(?:_|$)/.test(calculation.leftKey ?? sourceKey ?? '') &&
+    factor >= 0 &&
+    factor <= 1
+  )
+    return [...terms, { kind: 'hitShare', value: factor }];
   return [
-    ...sources,
+    ...terms,
     {
+      kind: 'factor',
       label: multiplierKeyLabel(calculation.rightKey, props.labels.fixedMultiplier),
-      value: mult(calculation.right),
+      value: factor,
     },
   ];
 }
@@ -610,81 +616,42 @@ function skillMultiplierCalculationRows(
   calculation: ActionValueCalculation,
   sourceKey: string | undefined,
 ): DetailRow[] {
-  while (isUnchangedMultiply(calculation) && calculation.leftCalculation !== undefined)
-    calculation = calculation.leftCalculation;
-  const stackDescription = (node: ActionValueCalculation | undefined): string | undefined => {
-    if (node?.operation !== 'assign' || node.rightKey === undefined) return undefined;
-    const kind =
-      node.sourceKind === 'buffIdStackCount'
-        ? 'id'
-        : node.sourceKind === 'buffTagStackCount'
-          ? 'tag'
-          : undefined;
-    const name =
-      kind === undefined ? undefined : props.labels.buffStackSourceLabel?.(kind, node.rightKey);
-    return name === undefined ? undefined : `${name} ${props.labels.stacksDetail(node.result)}`;
-  };
-  const leftStacks = stackDescription(calculation.leftCalculation);
-  const rightStacks = stackDescription(calculation.rightCalculation);
+  const terms = multiplierTerms(calculation, sourceKey);
+  if (terms === undefined || terms.length === 0) return [];
+  const displayedResult = terms.reduce(
+    (value, term) =>
+      term.kind === 'base'
+        ? term.value
+        : term.kind === 'addition'
+          ? value + term.value
+          : value * term.value,
+    0,
+  );
   if (
-    calculation.operation === 'multiply' &&
-    ((leftStacks !== undefined && calculation.rightCalculation === undefined) ||
-      (rightStacks !== undefined && calculation.leftCalculation === undefined))
-  ) {
-    return [
-      {
-        label: `${props.labels.skillMultiplierResult}: ${leftStacks ?? rightStacks} × ${pct(leftStacks === undefined ? calculation.left : calculation.right)}`,
-        value: pct(calculation.result),
-      },
-    ];
-  }
-  const semanticRows =
-    stackBonusMultiplierRows(calculation) ??
-    baseAndFactorMultiplierRows(calculation) ??
-    skillSettingMultiplierRows(calculation);
-  if (semanticRows !== undefined) return semanticRows;
-  const rows: DetailRow[] = [];
-  const operand = (value: number, key: string | undefined, percent: boolean) => {
-    const formatted =
-      key === 'conductCnt' ? props.labels.stacksDetail(value) : percent ? pct(value) : mult(value);
-    return key === undefined
-      ? formatted
-      : `${multiplierKeyLabel(key, props.labels.skillMultiplierInternalValue)} (${formatted})`;
-  };
-  const visit = (node: ActionValueCalculation, key: string | undefined, isRoot: boolean): void => {
-    if (node.sourceKind === 'buffIdStackCount' || node.sourceKind === 'buffTagStackCount') return;
-    if (isUnchangedMultiply(node)) {
-      if (node.sourceKind === 'skillSetting')
-        rows.push({ label: props.labels.baseMultiplier, value: pct(node.left) });
-      else if (node.leftCalculation !== undefined)
-        visit(node.leftCalculation, node.leftKey, isRoot);
-      else if (/^atk_scale(?:_|$)/.test(node.leftKey ?? ''))
-        rows.push({ label: props.labels.baseMultiplier, value: pct(node.left) });
-      return;
-    }
-    if (node.leftCalculation !== undefined) visit(node.leftCalculation, node.leftKey, false);
-    if (node.rightCalculation !== undefined) visit(node.rightCalculation, node.rightKey, false);
-    const left = operand(node.left, node.leftKey, true);
-    const right = operand(node.right, node.rightKey, node.operation === 'add');
-    const operator =
-      node.operation === 'add'
-        ? '+'
-        : node.operation === 'multiply'
-          ? '×'
-          : node.operation === 'divide'
-            ? '÷'
-            : node.operation;
-    const expression =
-      node.operation === 'floor' || node.operation === 'ceil' || node.operation === 'roundToInt'
-        ? `${node.operation}(${operand(node.right, node.rightKey, true)})`
-        : `${left} ${operator} ${right}`;
-    rows.push({
-      label: `${node.sourceKind === 'skillSetting' && node.sourceColumn !== undefined ? props.labels.skillSettingSource(node.sourceColumn) : isRoot ? props.labels.skillMultiplierResult : multiplierKeyLabel(key ?? sourceKey, props.labels.skillMultiplierStep(rows.length + 1))}: ${expression}`,
-      value: pct(node.result),
-    });
-  };
-  visit(calculation, sourceKey, true);
-  return rows;
+    !Number.isFinite(displayedResult) ||
+    Math.abs(displayedResult - calculation.result) >
+      0.0001 * Math.max(1, Math.abs(calculation.result))
+  )
+    return [];
+  // 只有基础倍率时，主行已给出结果；不额外显示无计算步骤的展开区。
+  if (terms.length === 1 && terms[0]?.kind === 'base') return [];
+  return terms.map(term =>
+    term.kind === 'base'
+      ? {
+          label: props.labels.baseMultiplier,
+          value: pct(term.value),
+        }
+      : term.kind === 'hitShare'
+        ? { label: props.labels.hitFraction, value: pct(term.value) }
+        : {
+            label: term.label,
+            ...(term.detail === undefined ? {} : { detail: term.detail }),
+            value:
+              term.kind === 'addition'
+                ? `${term.value >= 0 ? '+' : ''}${pct(term.value)}`
+                : mult(term.value),
+          },
+  );
 }
 
 const damageDetails = computed<readonly DamageDetail[]>(() =>
@@ -737,27 +704,13 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
     ];
     const skillMultiplierSourceKey =
       typeof data.skillMultiplierSourceKey === 'string' ? data.skillMultiplierSourceKey : undefined;
-    const skillMultiplierSources: DetailRow[] = [
-      ...(skillMultiplierSourceKey === undefined || entry.skillMultiplierCalculation !== undefined
-        ? []
-        : [
-            {
-              label: props.labels.fromSource(
-                multiplierKeyLabel(
-                  skillMultiplierSourceKey,
-                  props.labels.skillMultiplierInternalValue,
-                ),
-              ),
-              value: '',
-            },
-          ]),
-      ...(entry.skillMultiplierCalculation === undefined
+    const skillMultiplierSources: DetailRow[] =
+      entry.skillMultiplierCalculation === undefined
         ? []
         : skillMultiplierCalculationRows(
             entry.skillMultiplierCalculation,
             skillMultiplierSourceKey,
-          )),
-    ];
+          );
     const multiplierRows: DetailRow[] = [];
     const modifiers = origins.value
       .directModifiers(origins.value.get({ kind: 'receipt', sequence: entry.sequence }))

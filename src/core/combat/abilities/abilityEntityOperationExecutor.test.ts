@@ -955,6 +955,25 @@ describe('AbilityEntityOperationExecutor', () => {
       createCallbackSkillHost,
       resolveOperations: () => rootOperations,
     });
+    const sourceBlackboard = new ActionBlackboard({ inheritedParent: 11, inherited: 5 });
+    sourceBlackboard.setValueCalculation('inheritedParent', {
+      operation: 'assign',
+      left: 0,
+      right: 11,
+      result: 11,
+      sourceKind: 'skillBlackboard',
+      sourceSkillId: 'source-skill',
+      sourceKey: 'inheritedParent',
+    });
+    sourceBlackboard.setValueCalculation('inherited', {
+      operation: 'assign',
+      left: 0,
+      right: 5,
+      result: 5,
+      sourceKind: 'skillBlackboard',
+      sourceSkillId: 'source-skill',
+      sourceKey: 'inherited',
+    });
 
     executor.execute(
       {
@@ -994,17 +1013,31 @@ describe('AbilityEntityOperationExecutor', () => {
 
           dieWhenSourceDies: false,
           inheritActionBlackboard: true,
-          blackboardAssignments: { inherited: { kind: 'constant', value: 7 } },
+          blackboardAssignments: {
+            inherited: { kind: 'constant', value: 7 },
+            copied: numberInput({ kind: 'blackboard', key: 'inheritedParent' }),
+          },
         },
       },
-      { blackboard: new ActionBlackboard({ inheritedParent: 11 }) },
+      { blackboard: sourceBlackboard },
     );
 
     const owner = [...entities.runtimeState.instances.values()][0]!;
     const childState = owner.childSkills[0]!;
     expect(childState.host.skill.execution.state).toBe('casting');
     expect(childState.host.skill.blackboard.entity).toBe(owner.blackboard);
+    const childBlackboard = ActionBlackboard.bindRuntimeState(childState.host.skill.blackboard);
+    expect(childBlackboard.getValueCalculation('inheritedParent')).toMatchObject({
+      sourceKind: 'skillBlackboard',
+      sourceSkillId: 'source-skill',
+    });
+    expect(childBlackboard.getValueCalculation('inherited')).toBeUndefined();
+    expect(childBlackboard.getValueCalculation('copied')).toMatchObject({
+      sourceKind: 'skillBlackboard',
+      sourceSkillId: 'source-skill',
+    });
     const saved = structuredClone(owner);
+    expect(saved.blackboard.valueCalculations?.get('inheritedParent')?.result).toBe(11);
 
     advance(entities);
     advance(entities);

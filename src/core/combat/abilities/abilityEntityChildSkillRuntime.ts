@@ -77,6 +77,13 @@ export class AbilityEntityChildSkillRuntime implements LogicalAbilityEntityChild
             dependencies.entityBlackboard,
           )
         : ActionBlackboard.bindRuntimeState(saved.skill.blackboard);
+    if (saved === undefined) {
+      for (const [key, value] of Object.entries(dependencies.entityBlackboard.snapshot())) {
+        const calculation = dependencies.entityBlackboard.getValueCalculation(key);
+        if (typeof value === 'number' && calculation?.result === value)
+          blackboard.setValueCalculation(key, calculation);
+      }
+    }
     this.skillId = program.skillId;
     this.#host = dependencies.createCallbackSkillHost(
       program,

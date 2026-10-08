@@ -148,6 +148,7 @@ export function createCallbackSkillHostFactory(dependencies: {
       {
         operatorId: dependencies.definitionOperatorId,
         skillId: program.skillId,
+        ...(program.skillLevel === undefined ? {} : { skillLevel: program.skillLevel }),
         nativeSkillType: program.nativeSkillType,
         naturalDurationFrames: program.naturalDurationFrames,
         initialBlackboard: program.initialBlackboard,

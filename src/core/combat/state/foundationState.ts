@@ -121,8 +121,13 @@ export interface ActionValueCalculation {
   readonly right: number;
   readonly result: number;
   /** 层数读取以 assign 保存当时的值，rightKey 是查询的 Buff ID 或标签，不是黑板键。 */
-  readonly sourceKind?: 'skillSetting' | 'buffIdStackCount' | 'buffTagStackCount';
+  readonly sourceKind?:
+    'skillSetting' | 'skillBlackboard' | 'buffIdStackCount' | 'buffTagStackCount';
   readonly sourceColumn?: number;
+  /** 技能初始黑板数值的定义身份；只用于解释，不参与公式。 */
+  readonly sourceSkillId?: string;
+  readonly sourceSkillLevel?: number;
+  readonly sourceKey?: string;
   readonly leftKey?: string;
   readonly rightKey?: string;
   readonly leftCalculation?: ActionValueCalculation;

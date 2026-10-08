@@ -307,6 +307,10 @@ export interface SkillRuntimeState<Execution = ActionSequenceState> {
   readonly execution: SkillExecutionState;
   readonly blackboard: ActionBlackboardState;
   readonly initialBlackboard: Readonly<Record<string, ActionBlackboardValue>>;
+  /** 重置技能黑板时一同恢复的来源记录，不参与数值结算。 */
+  readonly initialBlackboardCalculations?: Readonly<
+    Record<string, import('./foundationState').ActionValueCalculation>
+  >;
   readonly cooldown: SkillCooldownState;
   readonly scopes: ActionScopeState;
   readonly damageSnapshots: DamageCalculationSnapshotState;

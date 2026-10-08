@@ -227,6 +227,7 @@ export function createProgramDefinitionCompiler(
     );
     return {
       skillId: childSkill.skillId,
+      skillLevel,
       nativeSkillType: childSkill.nativeSkillType,
       naturalDurationFrames: childSkill.naturalDurationFrames,
       castResource: {

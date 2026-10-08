@@ -77,6 +77,32 @@ function dependencies(
 const baseProgram = program;
 
 describe('AbilityEntityChildSkillRuntime restore', () => {
+  it('子技能复制实体倍率时保留来源，但不改变倍率', () => {
+    const entity = new ActionBlackboard({ atk_scale_laser2: 2.6 });
+    entity.setValueCalculation('atk_scale_laser2', {
+      operation: 'assign',
+      left: 0,
+      right: 2.6,
+      result: 2.6,
+      sourceKind: 'skillBlackboard',
+      sourceSkillId: 'chr_0032_lizhiyan_combo_skill',
+      sourceSkillLevel: 12,
+      sourceKey: 'atk_scale_laser2',
+    });
+    const child = new AbilityEntityChildSkillRuntime(
+      program,
+      dependencies(entity, () => true),
+    );
+    child.start();
+    expect(child.runtimeState.host.skill.blackboard.values.get('atk_scale_laser2')).toBe(2.6);
+    expect(
+      child.runtimeState.host.skill.blackboard.valueCalculations?.get('atk_scale_laser2'),
+    ).toMatchObject({
+      sourceKind: 'skillBlackboard',
+      sourceSkillId: 'chr_0032_lizhiyan_combo_skill',
+      sourceKey: 'atk_scale_laser2',
+    });
+  });
   it('从保存进度继续时间轴，不重放开始动作并保留实体黑板共享关系', () => {
     const graph = childSkillGraph;
     const currentProgram: CompiledAbilityEntityChildSkillProgram = {

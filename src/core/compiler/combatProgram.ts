@@ -110,6 +110,7 @@ export interface CompiledSkillActionProgram {
 /** 按引用等级编译的实体技能，包括施放设置与动作程序。 */
 export interface CompiledAbilityEntityChildSkillProgram extends CompiledSkillActionProgram {
   readonly skillId: string;
+  readonly skillLevel?: number;
   readonly nativeSkillType: import('../game-data/operatorDefinition').NativeSkillType;
   readonly naturalDurationFrames: number;
   readonly castResource: {
@@ -583,6 +584,7 @@ export interface CompiledSkillStatModifiers {
 export interface CompiledSkillExecutionProgram extends CompiledSkillActionProgram {
   readonly operatorId: string;
   readonly skillId: string;
+  readonly skillLevel?: number;
   /** 路由包装器的行为养成补丁按真实执行体身份匹配；费用和冷却仍使用槽位身份。 */
 
   readonly executionSkillId?: string;

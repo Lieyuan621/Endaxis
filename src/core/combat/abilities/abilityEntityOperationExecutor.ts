@@ -1,4 +1,7 @@
-import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
+import {
+  valueInputBlackboardKey,
+  type CompiledCondition,
+} from '../../compiler/compiledGraphData.ts';
 
 import type {
   CompiledAbilityEntityChildSkillProgram,
@@ -26,6 +29,7 @@ import {
   createCombatOperationHostState,
   type CombatOperationHostState,
 } from '../state/actionState';
+import type { ActionValueCalculation } from '../state/foundationState';
 
 type RuntimeOperation = ResolvedCombatOperationStep;
 
@@ -314,11 +318,29 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
       ]),
     );
     const stringAssignments = parameters.stringBlackboardAssignments ?? {};
+    const inheritedValues = parameters.inheritActionBlackboard ? context.blackboard.snapshot() : {};
     const assignments = {
-      ...(parameters.inheritActionBlackboard ? context.blackboard.snapshot() : {}),
+      ...inheritedValues,
       ...explicitAssignments,
       ...stringAssignments,
     };
+    const valueCalculations: Record<string, ActionValueCalculation> = {};
+    for (const [key, value] of Object.entries(inheritedValues)) {
+      if (Object.hasOwn(explicitAssignments, key) || Object.hasOwn(stringAssignments, key))
+        continue;
+      const calculation = context.blackboard.getValueCalculation(key);
+      if (typeof value === 'number' && calculation?.result === value)
+        valueCalculations[key] = calculation;
+    }
+    for (const [key, operand] of Object.entries(parameters.blackboardAssignments ?? {})) {
+      if (Object.hasOwn(stringAssignments, key)) continue;
+      const sourceKey = valueInputBlackboardKey(operand);
+      const value = explicitAssignments[key];
+      const calculation =
+        sourceKey === undefined ? undefined : context.blackboard.getValueCalculation(sourceKey);
+      if (typeof value === 'number' && calculation?.result === value)
+        valueCalculations[key] = calculation;
+    }
     const resolveDefinitionNumber = (
       value: number | { readonly blackboardKey: string; readonly fallback: number },
     ): number => {
@@ -405,6 +427,9 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
           }),
       dieWhenSourceDies: parameters.dieWhenSourceDies,
       ...(Object.keys(assignments).length === 0 ? {} : { blackboardAssignments: assignments }),
+      ...(Object.keys(valueCalculations).length === 0
+        ? {}
+        : { blackboardValueCalculations: valueCalculations }),
       ...(childSkill === undefined
         ? {}
         : {

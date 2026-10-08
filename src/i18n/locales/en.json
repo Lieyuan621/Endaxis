@@ -5509,10 +5509,7 @@
     "cannotCritical": "Cannot Crit",
     "attack": "Attack",
     "multiplier": "Skill Multiplier",
-    "skillSettingSource": "Skill data column {column}",
-    "multiplierInternalValue": "Skill internal value",
-    "multiplierStep": "Calculation step {step}",
-    "multiplierResult": "Final multiplier",
+    "multiplierAddition": "Multiplier bonus",
     "multiplierKeys": {
       "atk_scale": "Base multiplier",
       "atk_scale_enhence": "Enhancement multiplier",
