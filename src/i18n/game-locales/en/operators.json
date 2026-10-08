@@ -1425,7 +1425,7 @@
       },
       {
         "name": "When the Banner Flutters",
-        "description": "Talent <@ba.key>The Living Banner</> improved: Amount of SP recovery needed to gain <@ba.key>Fervent Morale</> is reduced to <@ba.vup>60</>. Max <@ba.key>Fervent Morale</> stacks on self <@ba.vup>+2.0</>."
+        "description": "Talent <@ba.key>The Living Banner</> improved: Amount of SP recovery needed to gain <@ba.key>Fervent Morale</> is reduced to <@ba.vup>60</>. Max <@ba.key>Fervent Morale</> stacks on self <@ba.vup>+2</>."
       },
       {
         "name": "Shield of Talos-II",
@@ -1529,17 +1529,17 @@
       },
       {
         "name": "Vigilant Fury",
-        "description": "Combo skill improved: Casting the combo creates a <#ba.shield>shield</> with <@ba.vup>15%</> Max HP and a duration of 10.0s. While the shield is active, Mi Fu becomes harder to interrupt.\nThis effect can only trigger once every 60.0s."
+        "description": "Combo skill improved: Casting the combo creates a <#ba.shield>shield</> with <@ba.vup>15%</> Max HP and a duration of 10s. While the shield is active, Mi Fu becomes harder to interrupt.\nThis effect can only trigger once every 60s."
       },
       {
         "name": "Vigilant Fury",
-        "description": "Combo skill improved: Casting the combo creates a <#ba.shield>shield</> with <@ba.vup>30%</> Max HP and a duration of 10.0s. While the shield is active, Mi Fu becomes harder to interrupt.\nThis effect can only trigger once every 60.0s."
+        "description": "Combo skill improved: Casting the combo creates a <#ba.shield>shield</> with <@ba.vup>30%</> Max HP and a duration of 10s. While the shield is active, Mi Fu becomes harder to interrupt.\nThis effect can only trigger once every 60s."
       }
     ],
     "potentials": [
       {
         "name": "Restless Watch",
-        "description": "Combo skill <@ba.key>Fists of No Regrets</> improved: Length of cooldown <@ba.vup>-2.0</>s. <#ba.physicalvul>Physical Susceptibility</> effect applied by the skill is further increased by <@ba.vup>+5%</> and has <@ba.vup>+4</>s duration."
+        "description": "Combo skill <@ba.key>Fists of No Regrets</> improved: Length of cooldown <@ba.vup>-2</>s. <#ba.physicalvul>Physical Susceptibility</> effect applied by the skill is further increased by <@ba.vup>+5%</> and has <@ba.vup>+4</>s duration."
       },
       {
         "name": "Kinesthesia of Harmony",
@@ -1547,7 +1547,7 @@
       },
       {
         "name": "Complete Warmup",
-        "description": "Talent <@ba.key>Vigilant Fury</> improved: <#ba.shield>Shield</> duration <@ba.vup>+5.0</>s. <#ba.shield>Shield</> trigger cooldown <@ba.vup>-15.0</>s. Each time the shield is triggered, Mi Fu gains ATK <@ba.vup>+6%</> for 20.0s."
+        "description": "Talent <@ba.key>Vigilant Fury</> improved: <#ba.shield>Shield</> duration <@ba.vup>+5</>s. <#ba.shield>Shield</> trigger cooldown <@ba.vup>-15</>s. Each time the shield is triggered, Mi Fu gains ATK <@ba.vup>+6%</> for 20s."
       },
       {
         "name": "Qi Thrice-Refined",
@@ -1555,7 +1555,7 @@
       },
       {
         "name": "Pugilist of the Stockade",
-        "description": "Battle skill improved: DMG Multipliers of the moves <@ba.key>Cloudtrapper</>, <@ba.key>Trail and Mangle</>, and <@ba.key>World Splitter</> are increased to <@ba.vup>1.1</> times the original. Ultimate <@ba.key>Pile of No Mercy</> improved: Stagger Dealt <@ba.vup>+5.0</>.\n<@ba.info>The Battle Skill DMG Multiplier buff can stack with the talent Stern Crackdown.</>"
+        "description": "Battle skill improved: DMG Multipliers of the moves <@ba.key>Cloudtrapper</>, <@ba.key>Trail and Mangle</>, and <@ba.key>World Splitter</> are increased to <@ba.vup>1.1</> times the original. Ultimate <@ba.key>Pile of No Mercy</> improved: Stagger Dealt <@ba.vup>+5</>.\n<@ba.info>The Battle Skill DMG Multiplier buff can stack with the talent Stern Crackdown.</>"
       }
     ],
     "combatSkills": {
@@ -1671,11 +1671,11 @@
     "talents": [
       {
         "name": "Hunter of Transgression",
-        "description": "Combo skill <@ba.key>Heartstake Thorn</> improved: When hitting an enemy with <@ba.key>hovering</><@ba.key> Firefang Vesperwings</>, Camille restores <@ba.heal>[30 + Intellect × 0.15]</> HP to himself and grants a <#ba.combo>Link</> buff for 15.0s. When casting <@ba.key>Hunter Pursuit</>, this effect can be triggered even when hitting a target with no <@ba.key>hovering</> Vesperwings."
+        "description": "Combo skill <@ba.key>Heartstake Thorn</> improved: When hitting an enemy with <@ba.key>hovering</><@ba.key> Firefang Vesperwings</>, Camille restores <@ba.heal>[30 + Intellect × 0.15]</> HP to himself and grants a <#ba.combo>Link</> buff for 15s. When casting <@ba.key>Hunter Pursuit</>, this effect can be triggered even when hitting a target with no <@ba.key>hovering</> Vesperwings."
       },
       {
         "name": "Hunter of Transgression",
-        "description": "Combo skill <@ba.key>Heartstake Thorn</> improved: When hitting an enemy with <@ba.key>hovering</><@ba.key> Firefang Vesperwings</>, Camille restores <@ba.heal>[60 + Intellect × 0.3]</> HP to himself and grants a <#ba.combo>Link</> buff for 15.0s. When casting <@ba.key>Hunter Pursuit</>, this effect can be triggered even when hitting a target with no <@ba.key>hovering</> Vesperwings."
+        "description": "Combo skill <@ba.key>Heartstake Thorn</> improved: When hitting an enemy with <@ba.key>hovering</><@ba.key> Firefang Vesperwings</>, Camille restores <@ba.heal>[60 + Intellect × 0.3]</> HP to himself and grants a <#ba.combo>Link</> buff for 15s. When casting <@ba.key>Hunter Pursuit</>, this effect can be triggered even when hitting a target with no <@ba.key>hovering</> Vesperwings."
       },
       {
         "name": "Bloodfount Revival",

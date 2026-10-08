@@ -25,7 +25,7 @@
   },
   "ba.burning": {
     "name": "法术异常 - 燃烧",
-    "description": "<@ba.burning>燃烧</>状态下，敌人持续受到<@ba.fire>灼热伤害</>。\n<@ba.burning>燃烧</> = 其他<#ba.spellinflict>法术附着</>（<image=\"/icons/icon_term_ba_pulseinflict.webp\">/<image=\"/icons/icon_term_ba_crystinflict.webp\">/<image=\"/icons/icon_term_ba_naturalinflict.webp\">）+ <@ba.fireinflict>灼热附着</>",
+    "description": "<@ba.burning>燃烧</>状态下，敌人持续受到<@ba.fire>灼热伤害</>。\n<@ba.burning>燃烧</> = 其他<#ba.spellinflict>法术附着</>（<image=\"/icons/icon_energy_fusion_pulse.webp\">/<image=\"/icons/icon_energy_fusion_cryst.webp\">/<image=\"/icons/icon_infliction_nature.webp\">）+ <@ba.fireinflict>灼热附着</>",
     "styleId": "ba.fire",
     "iconPath": "/icons/icon_term_ba_burning.webp"
   },
@@ -43,7 +43,7 @@
   },
   "ba.conduct": {
     "name": "法术异常 - 导电",
-    "description": "<@ba.conduct>导电</>状态下，敌人受到的<#ba.spelldmg>法术伤害</>提高。\n<@ba.conduct>导电</> = 其他<#ba.spellinflict>法术附着</>（<image=\"/icons/icon_term_ba_fireinflict.webp\">/<image=\"/icons/icon_term_ba_crystinflict.webp\">/<image=\"/icons/icon_term_ba_naturalinflict.webp\">）+ <@ba.pulseinflict>电磁附着</>",
+    "description": "<@ba.conduct>导电</>状态下，敌人受到的<#ba.spelldmg>法术伤害</>提高。\n<@ba.conduct>导电</> = 其他<#ba.spellinflict>法术附着</>（<image=\"/icons/icon_energy_fusion_fire.webp\">/<image=\"/icons/icon_energy_fusion_cryst.webp\">/<image=\"/icons/icon_infliction_nature.webp\">）+ <@ba.pulseinflict>电磁附着</>",
     "styleId": "ba.pulse",
     "iconPath": "/icons/icon_term_ba_conduct.webp"
   },
@@ -61,7 +61,7 @@
   },
   "ba.corrupt": {
     "name": "法术异常 - 腐蚀",
-    "description": "<@ba.corrupt>腐蚀</>状态下，敌人的所有抗性逐渐下降。\n<@ba.corrupt>腐蚀</> = 其他<#ba.spellinflict>法术附着</>（<image=\"/icons/icon_term_ba_fireinflict.webp\">/<image=\"/icons/icon_term_ba_pulseinflict.webp\">/<image=\"/icons/icon_term_ba_crystinflict.webp\">）+ <@ba.naturalinflict>自然附着</>",
+    "description": "<@ba.corrupt>腐蚀</>状态下，敌人的所有抗性逐渐下降。\n<@ba.corrupt>腐蚀</> = 其他<#ba.spellinflict>法术附着</>（<image=\"/icons/icon_energy_fusion_fire.webp\">/<image=\"/icons/icon_energy_fusion_pulse.webp\">/<image=\"/icons/icon_energy_fusion_cryst.webp\">）+ <@ba.naturalinflict>自然附着</>",
     "styleId": "ba.natur",
     "iconPath": "/icons/icon_term_ba_corrupt.webp"
   },
@@ -97,7 +97,7 @@
   },
   "ba.crystinflict": {
     "name": "法术附着 - 寒冷",
-    "description": "<@ba.crystinflict>寒冷附着</>是一种<#ba.spellinflict>法术附着</>。\n<@ba.crystinflict>寒冷附着</>最多叠加4层，叠加时会触发<#ba.crystburst>寒冷爆发</>。\n其他<#ba.spellinflict>法术附着</>（<image=\"/icons/icon_term_ba_fireinflict.webp\">/<image=\"/icons/icon_term_ba_pulseinflict.webp\">/<image=\"/icons/icon_term_ba_naturalinflict.webp\">）+ <@ba.crystinflict>寒冷附着</> = <#ba.frozen>冻结</>",
+    "description": "<@ba.crystinflict>寒冷附着</>是一种<#ba.spellinflict>法术附着</>。\n<@ba.crystinflict>寒冷附着</>最多叠加4层，叠加时会触发<#ba.crystburst>寒冷爆发</>。\n其他<#ba.spellinflict>法术附着</>（<image=\"/icons/icon_energy_fusion_fire.webp\">/<image=\"/icons/icon_energy_fusion_pulse.webp\">/<image=\"/icons/icon_infliction_nature.webp\">）+ <@ba.crystinflict>寒冷附着</> = <#ba.frozen>冻结</>",
     "styleId": "ba.cryst",
     "iconPath": "/icons/icon_term_ba_crystinflict.webp"
   },
@@ -145,7 +145,7 @@
   },
   "ba.fireinflict": {
     "name": "法术附着 - 灼热",
-    "description": "<@ba.fireinflict>灼热附着</>是一种<#ba.spellinflict>法术附着</>。\n<@ba.fireinflict>灼热附着</>最多叠加4层，叠加时会触发<#ba.fireburst>灼热爆发</>。\n其他<#ba.spellinflict>法术附着</>（<image=\"/icons/icon_term_ba_pulseinflict.webp\">/<image=\"/icons/icon_term_ba_crystinflict.webp\">/<image=\"/icons/icon_term_ba_naturalinflict.webp\">）+ <@ba.fireinflict>灼热附着</> = <#ba.burning>燃烧</>",
+    "description": "<@ba.fireinflict>灼热附着</>是一种<#ba.spellinflict>法术附着</>。\n<@ba.fireinflict>灼热附着</>最多叠加4层，叠加时会触发<#ba.fireburst>灼热爆发</>。\n其他<#ba.spellinflict>法术附着</>（<image=\"/icons/icon_energy_fusion_pulse.webp\">/<image=\"/icons/icon_energy_fusion_cryst.webp\">/<image=\"/icons/icon_infliction_nature.webp\">）+ <@ba.fireinflict>灼热附着</> = <#ba.burning>燃烧</>",
     "styleId": "ba.fire",
     "iconPath": "/icons/icon_term_ba_fireinflict.webp"
   },
@@ -169,7 +169,7 @@
   },
   "ba.frozen": {
     "name": "法术异常 - 冻结",
-    "description": "<@ba.frozen>冻结</>状态下，敌人无法行动，此时若受到<#ba.noguard>破防</>或<#ba.physicalstatus>物理异常</>，会触发<#ba.crystbreak>碎冰</>。\n<@ba.frozen>冻结</> = 其他<#ba.spellinflict>法术附着</>（<image=\"/icons/icon_term_ba_fireinflict.webp\">/<image=\"/icons/icon_term_ba_pulseinflict.webp\">/<image=\"/icons/icon_term_ba_naturalinflict.webp\">）+ <@ba.crystinflict>寒冷附着</>",
+    "description": "<@ba.frozen>冻结</>状态下，敌人无法行动，此时若受到<#ba.noguard>破防</>或<#ba.physicalstatus>物理异常</>，会触发<#ba.crystbreak>碎冰</>。\n<@ba.frozen>冻结</> = 其他<#ba.spellinflict>法术附着</>（<image=\"/icons/icon_energy_fusion_fire.webp\">/<image=\"/icons/icon_energy_fusion_pulse.webp\">/<image=\"/icons/icon_infliction_nature.webp\">）+ <@ba.crystinflict>寒冷附着</>",
     "styleId": "ba.cryst",
     "iconPath": "/icons/icon_term_ba_frozen.webp"
   },
@@ -211,7 +211,7 @@
   },
   "ba.naturalinflict": {
     "name": "法术附着 - 自然",
-    "description": "<@ba.naturalinflict>自然附着</>是一种<#ba.spellinflict>法术附着</>。\n<@ba.naturalinflict>自然附着</>最多叠加4层，叠加时会触发<#ba.naturalburst>自然爆发</>。\n其他<#ba.spellinflict>法术附着</>（<image=\"/icons/icon_term_ba_fireinflict.webp\">/<image=\"/icons/icon_term_ba_pulseinflict.webp\">/<image=\"/icons/icon_term_ba_crystinflict.webp\">）+ <@ba.naturalinflict>自然附着</> = <#ba.corrupt>腐蚀</>",
+    "description": "<@ba.naturalinflict>自然附着</>是一种<#ba.spellinflict>法术附着</>。\n<@ba.naturalinflict>自然附着</>最多叠加4层，叠加时会触发<#ba.naturalburst>自然爆发</>。\n其他<#ba.spellinflict>法术附着</>（<image=\"/icons/icon_energy_fusion_fire.webp\">/<image=\"/icons/icon_energy_fusion_pulse.webp\">/<image=\"/icons/icon_energy_fusion_cryst.webp\">）+ <@ba.naturalinflict>自然附着</> = <#ba.corrupt>腐蚀</>",
     "styleId": "ba.natur",
     "iconPath": "/icons/icon_term_ba_naturalinflict.webp"
   },
@@ -277,7 +277,7 @@
   },
   "ba.pulseinflict": {
     "name": "法术附着 - 电磁",
-    "description": "<@ba.pulseinflict>电磁附着</>是一种<#ba.spellinflict>法术附着</>。\n<@ba.pulseinflict>电磁附着</>最多叠加4层，叠加时会触发<#ba.pulseburst>电磁爆发</>。\n其他<#ba.spellinflict>法术附着</>（<image=\"/icons/icon_term_ba_fireinflict.webp\">/<image=\"/icons/icon_term_ba_crystinflict.webp\">/<image=\"/icons/icon_term_ba_naturalinflict.webp\">）+ <@ba.pulseinflict>电磁附着</> = <#ba.conduct>导电</>",
+    "description": "<@ba.pulseinflict>电磁附着</>是一种<#ba.spellinflict>法术附着</>。\n<@ba.pulseinflict>电磁附着</>最多叠加4层，叠加时会触发<#ba.pulseburst>电磁爆发</>。\n其他<#ba.spellinflict>法术附着</>（<image=\"/icons/icon_energy_fusion_fire.webp\">/<image=\"/icons/icon_energy_fusion_cryst.webp\">/<image=\"/icons/icon_infliction_nature.webp\">）+ <@ba.pulseinflict>电磁附着</> = <#ba.conduct>导电</>",
     "styleId": "ba.pulse",
     "iconPath": "/icons/icon_term_ba_pulseinflict.webp"
   },

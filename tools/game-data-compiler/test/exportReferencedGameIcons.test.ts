@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import sharp from 'sharp';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { AkedbSnapshot } from '../scripts/gameDataProviders.ts';
 import {
   addEquipmentConfiguredReferences,
   addOperatorImpliedReferences,
@@ -32,6 +33,55 @@ const reference = {
 };
 
 describe('全量图片隔离导出', () => {
+  it('平铺图标从 AKEDB 选取稳定的同名资源，缺失不回退 VFS', async () => {
+    const args = await isolatedArguments(['--source-mode', 'hybrid']);
+    const assetPath = 'assets/beyond/dynamicassets/gameplay/ui/sprites/bufficon/example.png';
+    const png = await sharp({ create: { width: 1, height: 1, channels: 4, background: '#ff0000' } })
+      .png()
+      .toBuffer();
+    const asset = vi.fn(async () => ({
+      content: png,
+      provider: 'akedb',
+      source: assetPath,
+      version: 'fixture',
+    }));
+    const snapshot = {
+      assets: {
+        images: new Map([
+          [
+            'assets/beyond/dynamicassets/gameplay/ui/sprites/termicon/example.png',
+            { version: 'fixture' },
+          ],
+          [assetPath, { version: 'fixture' }],
+        ]),
+      },
+      asset,
+    } as unknown as AkedbSnapshot;
+    const fetch = vi.fn();
+    vi.stubGlobal('fetch', fetch);
+    const native = {
+      ...reference,
+      publicPath: '/icons/example.webp',
+      sourceNames: ['example.png'],
+    };
+    await expect(exportReference(native, args, snapshot)).resolves.toMatchObject({
+      provider: 'akedb',
+      sourcePath: assetPath,
+    });
+    expect(asset).toHaveBeenCalledWith('images', assetPath);
+    expect(
+      (await sharp(await fs.readFile(path.join(args.outputRoot, 'icons/example.webp'))).metadata())
+        .format,
+    ).toBe('webp');
+    await expect(
+      exportReference(
+        { ...native, publicPath: '/icons/missing.webp', sourceNames: ['missing.png'] },
+        args,
+        snapshot,
+      ),
+    ).rejects.toThrow('unavailable in AKEDB');
+    expect(fetch).not.toHaveBeenCalled();
+  });
   it('武器、装备和套装图标都读取各自配置，未引用资源不进入导出', async () => {
     const { outputRoot } = await isolatedArguments();
     const config = path.join(outputRoot, 'equipmentAssets.json');

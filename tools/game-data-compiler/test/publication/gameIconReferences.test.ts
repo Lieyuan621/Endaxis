@@ -10,11 +10,13 @@ describe('game icon reference closure', () => {
         const equipment = '/equipment/foo.webp';
         const contract = '/contingency_contract/1/icon_activity_contract_tag_111_2.webp';
         const unrelated = '/screenshots/example.webp';
+        const native = ${JSON.stringify('<image="/icons/new_icon.webp">')};
       `),
     ).toEqual([
       '/contingency_contract/1/icon_activity_contract_tag_111_2.webp',
       '/enemies/eny_0127_bigents.webp',
       '/equipment/foo.webp',
+      '/icons/new_icon.webp',
     ]);
   });
 });

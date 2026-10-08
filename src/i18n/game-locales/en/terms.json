@@ -25,7 +25,7 @@
   },
   "ba.burning": {
     "name": "Arts Reaction: Combustion",
-    "description": "An enemy with <@ba.burning>Combustion</> takes <@ba.fire>Heat DMG</> over time.\n<@ba.burning>Combustion</> = A <#ba.spellinflict>non-Heat Infliction</> (<image=\"/icons/icon_term_ba_pulseinflict.webp\">/<image=\"/icons/icon_term_ba_crystinflict.webp\">/<image=\"/icons/icon_term_ba_naturalinflict.webp\">) + <@ba.fireinflict>Heat Infliction</>",
+    "description": "An enemy with <@ba.burning>Combustion</> takes <@ba.fire>Heat DMG</> over time.\n<@ba.burning>Combustion</> = A <#ba.spellinflict>non-Heat Infliction</> (<image=\"/icons/icon_energy_fusion_pulse.webp\">/<image=\"/icons/icon_energy_fusion_cryst.webp\">/<image=\"/icons/icon_infliction_nature.webp\">) + <@ba.fireinflict>Heat Infliction</>",
     "styleId": "ba.fire",
     "iconPath": "/icons/icon_term_ba_burning.webp"
   },
@@ -43,7 +43,7 @@
   },
   "ba.conduct": {
     "name": "Arts Reaction: Electrification",
-    "description": "An enemy with <@ba.conduct>Electrification</> takes more <#ba.spelldmg>Arts DMG</>.\n<@ba.conduct>Electrification</> = A <#ba.spellinflict>non-Electric Infliction</> (<image=\"/icons/icon_term_ba_fireinflict.webp\">/<image=\"/icons/icon_term_ba_crystinflict.webp\">/<image=\"/icons/icon_term_ba_naturalinflict.webp\">) + <@ba.pulseinflict>Electric Infliction</>",
+    "description": "An enemy with <@ba.conduct>Electrification</> takes more <#ba.spelldmg>Arts DMG</>.\n<@ba.conduct>Electrification</> = A <#ba.spellinflict>non-Electric Infliction</> (<image=\"/icons/icon_energy_fusion_fire.webp\">/<image=\"/icons/icon_energy_fusion_cryst.webp\">/<image=\"/icons/icon_infliction_nature.webp\">) + <@ba.pulseinflict>Electric Infliction</>",
     "styleId": "ba.pulse",
     "iconPath": "/icons/icon_term_ba_conduct.webp"
   },
@@ -61,7 +61,7 @@
   },
   "ba.corrupt": {
     "name": "Arts Reaction: Corrosion",
-    "description": "An enemy with <@ba.corrupt>Corrosion</> gradually loses resistance against all elements. \n<@ba.corrupt>Corrosion</> = A <#ba.spellinflict>non-Nature Infliction</> (<image=\"/icons/icon_term_ba_fireinflict.webp\">/<image=\"/icons/icon_term_ba_pulseinflict.webp\">/<image=\"/icons/icon_term_ba_crystinflict.webp\">) + <@ba.naturalinflict>Nature Infliction</>",
+    "description": "An enemy with <@ba.corrupt>Corrosion</> gradually loses resistance against all elements. \n<@ba.corrupt>Corrosion</> = A <#ba.spellinflict>non-Nature Infliction</> (<image=\"/icons/icon_energy_fusion_fire.webp\">/<image=\"/icons/icon_energy_fusion_pulse.webp\">/<image=\"/icons/icon_energy_fusion_cryst.webp\">) + <@ba.naturalinflict>Nature Infliction</>",
     "styleId": "ba.natur",
     "iconPath": "/icons/icon_term_ba_corrupt.webp"
   },
@@ -97,7 +97,7 @@
   },
   "ba.crystinflict": {
     "name": "Arts Infliction: Cryo",
-    "description": "<@ba.crystinflict>Cryo Infliction</> is a type of <#ba.spellinflict>Arts Infliction</>. \nUp to 4 stacks of <@ba.crystinflict>Cryo Infliction</> can be applied and stacking triggers <#ba.crystburst>Cryo Burst</>. \nA <#ba.spellinflict>non-Cryo Infliction</> (<image=\"/icons/icon_term_ba_fireinflict.webp\">/<image=\"/icons/icon_term_ba_pulseinflict.webp\">/<image=\"/icons/icon_term_ba_naturalinflict.webp\">) + <@ba.crystinflict>Cryo Infliction</> = <#ba.frozen>Solidification</>",
+    "description": "<@ba.crystinflict>Cryo Infliction</> is a type of <#ba.spellinflict>Arts Infliction</>. \nUp to 4 stacks of <@ba.crystinflict>Cryo Infliction</> can be applied and stacking triggers <#ba.crystburst>Cryo Burst</>. \nA <#ba.spellinflict>non-Cryo Infliction</> (<image=\"/icons/icon_energy_fusion_fire.webp\">/<image=\"/icons/icon_energy_fusion_pulse.webp\">/<image=\"/icons/icon_infliction_nature.webp\">) + <@ba.crystinflict>Cryo Infliction</> = <#ba.frozen>Solidification</>",
     "styleId": "ba.cryst",
     "iconPath": "/icons/icon_term_ba_crystinflict.webp"
   },
@@ -145,7 +145,7 @@
   },
   "ba.fireinflict": {
     "name": "Arts Infliction: Heat",
-    "description": "<@ba.fireinflict>Heat Infliction</> is a type of <#ba.spellinflict>Arts Infliction</>. \nUp to 4 stacks of <@ba.fireinflict>Heat Infliction</> can be applied and stacking triggers <#ba.fireburst>Heat Burst</>. \nA <#ba.spellinflict>non-Heat Infliction</> (<image=\"/icons/icon_term_ba_pulseinflict.webp\">/<image=\"/icons/icon_term_ba_crystinflict.webp\">/<image=\"/icons/icon_term_ba_naturalinflict.webp\">) + <@ba.fireinflict>Heat Infliction</> = <#ba.burning>Combustion</>",
+    "description": "<@ba.fireinflict>Heat Infliction</> is a type of <#ba.spellinflict>Arts Infliction</>. \nUp to 4 stacks of <@ba.fireinflict>Heat Infliction</> can be applied and stacking triggers <#ba.fireburst>Heat Burst</>. \nA <#ba.spellinflict>non-Heat Infliction</> (<image=\"/icons/icon_energy_fusion_pulse.webp\">/<image=\"/icons/icon_energy_fusion_cryst.webp\">/<image=\"/icons/icon_infliction_nature.webp\">) + <@ba.fireinflict>Heat Infliction</> = <#ba.burning>Combustion</>",
     "styleId": "ba.fire",
     "iconPath": "/icons/icon_term_ba_fireinflict.webp"
   },
@@ -169,7 +169,7 @@
   },
   "ba.frozen": {
     "name": "Arts Reaction: Solidification",
-    "description": "An enemy with <@ba.frozen>Solidification</> cannot move, and applying <#ba.noguard>Vulnerability</> or a <#ba.physicalstatus>Physical Status</> to the enemy triggers the <#ba.crystbreak>Shatter</> effect. \n<@ba.frozen>Solidification</> = A <#ba.spellinflict>non-Cryo Infliction</> (<image=\"/icons/icon_term_ba_fireinflict.webp\">/<image=\"/icons/icon_term_ba_pulseinflict.webp\">/<image=\"/icons/icon_term_ba_naturalinflict.webp\">) + <@ba.crystinflict>Cryo Infliction</>",
+    "description": "An enemy with <@ba.frozen>Solidification</> cannot move, and applying <#ba.noguard>Vulnerability</> or a <#ba.physicalstatus>Physical Status</> to the enemy triggers the <#ba.crystbreak>Shatter</> effect. \n<@ba.frozen>Solidification</> = A <#ba.spellinflict>non-Cryo Infliction</> (<image=\"/icons/icon_energy_fusion_fire.webp\">/<image=\"/icons/icon_energy_fusion_pulse.webp\">/<image=\"/icons/icon_infliction_nature.webp\">) + <@ba.crystinflict>Cryo Infliction</>",
     "styleId": "ba.cryst",
     "iconPath": "/icons/icon_term_ba_frozen.webp"
   },
@@ -211,7 +211,7 @@
   },
   "ba.naturalinflict": {
     "name": "Arts Infliction: Nature",
-    "description": "<@ba.naturalinflict>Nature Infliction</> is a type of <#ba.spellinflict>Arts Infliction</>. \nUp to 4 stacks of <@ba.naturalinflict>Nature Infliction</> can be applied and stacking triggers <#ba.naturalburst>Nature Burst</>. \nA <#ba.spellinflict>non-Nature Infliction</> (<image=\"/icons/icon_term_ba_fireinflict.webp\">/<image=\"/icons/icon_term_ba_pulseinflict.webp\">/<image=\"/icons/icon_term_ba_crystinflict.webp\">) + <@ba.naturalinflict>Nature Infliction</> = <#ba.corrupt>Corrosion</>",
+    "description": "<@ba.naturalinflict>Nature Infliction</> is a type of <#ba.spellinflict>Arts Infliction</>. \nUp to 4 stacks of <@ba.naturalinflict>Nature Infliction</> can be applied and stacking triggers <#ba.naturalburst>Nature Burst</>. \nA <#ba.spellinflict>non-Nature Infliction</> (<image=\"/icons/icon_energy_fusion_fire.webp\">/<image=\"/icons/icon_energy_fusion_pulse.webp\">/<image=\"/icons/icon_energy_fusion_cryst.webp\">) + <@ba.naturalinflict>Nature Infliction</> = <#ba.corrupt>Corrosion</>",
     "styleId": "ba.natur",
     "iconPath": "/icons/icon_term_ba_naturalinflict.webp"
   },
@@ -277,7 +277,7 @@
   },
   "ba.pulseinflict": {
     "name": "Arts Infliction: Electric",
-    "description": "<@ba.pulseinflict>Electric Infliction</> is a type of <#ba.spellinflict>Arts Infliction</>. \nUp to 4 stacks of <@ba.pulseinflict>Electric Infliction</> can be applied and stacking triggers <#ba.pulseburst>Electric Burst</>. \nA <#ba.spellinflict>non-Electric Infliction</> (<image=\"/icons/icon_term_ba_fireinflict.webp\">/<image=\"/icons/icon_term_ba_crystinflict.webp\">/<image=\"/icons/icon_term_ba_naturalinflict.webp\">) + <@ba.pulseinflict>Electric Infliction</> = <#ba.conduct>Electrification</>",
+    "description": "<@ba.pulseinflict>Electric Infliction</> is a type of <#ba.spellinflict>Arts Infliction</>. \nUp to 4 stacks of <@ba.pulseinflict>Electric Infliction</> can be applied and stacking triggers <#ba.pulseburst>Electric Burst</>. \nA <#ba.spellinflict>non-Electric Infliction</> (<image=\"/icons/icon_energy_fusion_fire.webp\">/<image=\"/icons/icon_energy_fusion_cryst.webp\">/<image=\"/icons/icon_infliction_nature.webp\">) + <@ba.pulseinflict>Electric Infliction</> = <#ba.conduct>Electrification</>",
     "styleId": "ba.pulse",
     "iconPath": "/icons/icon_term_ba_pulseinflict.webp"
   },

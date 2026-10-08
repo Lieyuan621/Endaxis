@@ -3,37 +3,37 @@
     "name": "Basic Armor",
     "slotType": "Armor",
     "setName": "",
-    "defense": 8.0
+    "defense": 8
   },
   "item_equip_t0_parts_tundra01_body_02": {
     "name": "Basic PPE",
     "slotType": "Armor",
     "setName": "",
-    "defense": 8.0
+    "defense": 8
   },
   "item_equip_t0_parts_tundra01_hand_01": {
     "name": "Basic Gauntlets",
     "slotType": "Gloves",
     "setName": "",
-    "defense": 6.0
+    "defense": 6
   },
   "item_equip_t0_parts_tundra01_hand_02": {
     "name": "Basic Gloves",
     "slotType": "Gloves",
     "setName": "",
-    "defense": 6.0
+    "defense": 6
   },
   "item_equip_t1_parts_tundra01_body_01": {
     "name": "Miner Armor",
     "slotType": "Armor",
     "setName": "",
-    "defense": 16.0
+    "defense": 16
   },
   "item_equip_t1_parts_tundra01_body_02": {
     "name": "Miner Overalls",
     "slotType": "Armor",
     "setName": "",
-    "defense": 16.0
+    "defense": 16
   },
   "item_equip_t1_parts_tundra01_body_03": {
     "name": "Prototype Heavy Armor",
@@ -63,19 +63,19 @@
     "name": "Emergency Comm",
     "slotType": "Accessory",
     "setName": "",
-    "defense": 6.0
+    "defense": 6
   },
   "item_equip_t1_parts_tundra01_edc_02": {
     "name": "Emergency Compression Core",
     "slotType": "Accessory",
     "setName": "",
-    "defense": 6.0
+    "defense": 6
   },
   "item_equip_t1_parts_tundra01_hand_01": {
     "name": "Miner Gauntlets",
     "slotType": "Gloves",
     "setName": "",
-    "defense": 12.0
+    "defense": 12
   },
   "item_equip_t1_parts_tundra01_hand_02": {
     "name": "Miner Wrists",
@@ -87,7 +87,7 @@
     "name": "Miner Gloves",
     "slotType": "Gloves",
     "setName": "",
-    "defense": 12.0
+    "defense": 12
   },
   "item_equip_t1_parts_tundra01_hand_04": {
     "name": "Miner Fists",
@@ -285,1266 +285,1266 @@
     "name": "Miner Armor T1",
     "slotType": "Armor",
     "setName": "",
-    "defense": 40.0
+    "defense": 40
   },
   "item_equip_t3_parts_tundra01_body_02": {
     "name": "Miner Overalls T1",
     "slotType": "Armor",
     "setName": "",
-    "defense": 40.0
+    "defense": 40
   },
   "item_equip_t3_parts_tundra01_edc_01": {
     "name": "Miner Turbine T1",
     "slotType": "Accessory",
     "setName": "",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_parts_tundra01_edc_02": {
     "name": "Miner Drive Wheel T1",
     "slotType": "Accessory",
     "setName": "",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_parts_tundra01_edc_03": {
     "name": "Miner Compression Core T1",
     "slotType": "Accessory",
     "setName": "",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_parts_tundra01_edc_04": {
     "name": "Miner Comm T1",
     "slotType": "Accessory",
     "setName": "",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_parts_tundra01_hand_01": {
     "name": "Miner Gloves T2",
     "slotType": "Gloves",
     "setName": "",
-    "defense": 30.0
+    "defense": 30
   },
   "item_equip_t3_parts_tundra01_hand_02": {
     "name": "Miner Fists T1",
     "slotType": "Gloves",
     "setName": "",
-    "defense": 30.0
+    "defense": 30
   },
   "item_equip_t3_suit_agi01_body_01": {
     "name": "Roving MSGR Jacket T1",
     "slotType": "Armor",
     "setName": "Roving MSGR",
-    "defense": 40.0
+    "defense": 40
   },
   "item_equip_t3_suit_agi01_edc_01": {
     "name": "Roving MSGR Flashlight T1",
     "slotType": "Accessory",
     "setName": "Roving MSGR",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_agi01_edc_02": {
     "name": "Roving MSGR Flashlight T2",
     "slotType": "Accessory",
     "setName": "Roving MSGR",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_agi01_edc_03": {
     "name": "Roving MSGR Gyro T1",
     "slotType": "Accessory",
     "setName": "Roving MSGR",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_agi01_hand_01": {
     "name": "Roving MSGR Fists T1",
     "slotType": "Gloves",
     "setName": "Roving MSGR",
-    "defense": 30.0
+    "defense": 30
   },
   "item_equip_t3_suit_atk01_body_01": {
     "name": "Aburrey Heavy Armor",
     "slotType": "Armor",
     "setName": "Aburrey's Legacy",
-    "defense": 40.0
+    "defense": 40
   },
   "item_equip_t3_suit_atk01_body_02": {
     "name": "Aburrey Heavy Armor T1",
     "slotType": "Armor",
     "setName": "Aburrey's Legacy",
-    "defense": 40.0
+    "defense": 40
   },
   "item_equip_t3_suit_atk01_body_03": {
     "name": "Aburrey Light Armor",
     "slotType": "Armor",
     "setName": "Aburrey's Legacy",
-    "defense": 40.0
+    "defense": 40
   },
   "item_equip_t3_suit_atk01_body_04": {
     "name": "Aburrey Light Armor T1",
     "slotType": "Armor",
     "setName": "Aburrey's Legacy",
-    "defense": 40.0
+    "defense": 40
   },
   "item_equip_t3_suit_atk01_edc_01": {
     "name": "Aburrey UV Lamp",
     "slotType": "Accessory",
     "setName": "Aburrey's Legacy",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_atk01_edc_02": {
     "name": "Aburrey Auditory Chip",
     "slotType": "Accessory",
     "setName": "Aburrey's Legacy",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_atk01_edc_03": {
     "name": "Aburrey Auditory Chip T1",
     "slotType": "Accessory",
     "setName": "Aburrey's Legacy",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_atk01_edc_04": {
     "name": "Aburrey Flashlight",
     "slotType": "Accessory",
     "setName": "Aburrey's Legacy",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_atk01_edc_05": {
     "name": "Aburrey Sensor Chip",
     "slotType": "Accessory",
     "setName": "Aburrey's Legacy",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_atk01_edc_06": {
     "name": "Aburrey Sensor Chip T1",
     "slotType": "Accessory",
     "setName": "Aburrey's Legacy",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_atk01_hand_01": {
     "name": "Aburrey Gauntlets",
     "slotType": "Gloves",
     "setName": "Aburrey's Legacy",
-    "defense": 30.0
+    "defense": 30
   },
   "item_equip_t3_suit_str01_body_01": {
     "name": "Armored MSGR Jacket T1",
     "slotType": "Armor",
     "setName": "Armored MSGR",
-    "defense": 40.0
+    "defense": 40
   },
   "item_equip_t3_suit_str01_edc_01": {
     "name": "Armored MSGR Gyro T1",
     "slotType": "Accessory",
     "setName": "Armored MSGR",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_str01_edc_02": {
     "name": "Armored MSGR Flashlight T1",
     "slotType": "Accessory",
     "setName": "Armored MSGR",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_str01_hand_01": {
     "name": "Armored MSGR Gloves T1",
     "slotType": "Gloves",
     "setName": "Armored MSGR",
-    "defense": 30.0
+    "defense": 30
   },
   "item_equip_t3_suit_str01_hand_02": {
     "name": "Armored MSGR Gloves T2",
     "slotType": "Gloves",
     "setName": "Armored MSGR",
-    "defense": 30.0
+    "defense": 30
   },
   "item_equip_t3_suit_usp01_body_01": {
     "name": "Catastrophe Heavy Armor",
     "slotType": "Armor",
     "setName": "Catastrophe",
-    "defense": 40.0
+    "defense": 40
   },
   "item_equip_t3_suit_usp01_body_02": {
     "name": "Catastrophe Heavy Armor T1",
     "slotType": "Armor",
     "setName": "Catastrophe",
-    "defense": 40.0
+    "defense": 40
   },
   "item_equip_t3_suit_usp01_edc_01": {
     "name": "Catastrophe Gauze Cartridge",
     "slotType": "Accessory",
     "setName": "Catastrophe",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_usp01_edc_02": {
     "name": "Catastrophe Gauze Cartridge T1",
     "slotType": "Accessory",
     "setName": "Catastrophe",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_usp01_edc_03": {
     "name": "Catastrophe Filter",
     "slotType": "Accessory",
     "setName": "Catastrophe",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_usp01_hand_01": {
     "name": "Catastrophe Gloves",
     "slotType": "Gloves",
     "setName": "Catastrophe",
-    "defense": 30.0
+    "defense": 30
   },
   "item_equip_t3_suit_will01_body_01": {
     "name": "Mordvolt Resistant Vest T1",
     "slotType": "Armor",
     "setName": "Mordvolt Resistant",
-    "defense": 40.0
+    "defense": 40
   },
   "item_equip_t3_suit_will01_edc_01": {
     "name": "Mordvolt Resistant Battery T1",
     "slotType": "Accessory",
     "setName": "Mordvolt Resistant",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_will01_edc_02": {
     "name": "Mordvolt Resistant Wrench T1",
     "slotType": "Accessory",
     "setName": "Mordvolt Resistant",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_will01_hand_01": {
     "name": "Mordvolt Resistant Gloves T1",
     "slotType": "Gloves",
     "setName": "Mordvolt Resistant",
-    "defense": 30.0
+    "defense": 30
   },
   "item_equip_t3_suit_wisd01_body_01": {
     "name": "Mordvolt Insulation Vest T1",
     "slotType": "Armor",
     "setName": "Mordvolt Insulation",
-    "defense": 40.0
+    "defense": 40
   },
   "item_equip_t3_suit_wisd01_body_02": {
     "name": "Mordvolt Insulation Vest T2",
     "slotType": "Armor",
     "setName": "Mordvolt Insulation",
-    "defense": 40.0
+    "defense": 40
   },
   "item_equip_t3_suit_wisd01_edc_01": {
     "name": "Mordvolt Insulation Wrench T2",
     "slotType": "Accessory",
     "setName": "Mordvolt Insulation",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_wisd01_edc_02": {
     "name": "Mordvolt Insulation Battery T1",
     "slotType": "Accessory",
     "setName": "Mordvolt Insulation",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_wisd01_hand_01": {
     "name": "Mordvolt Insulation Gloves T1",
     "slotType": "Gloves",
     "setName": "Mordvolt Insulation",
-    "defense": 30.0
+    "defense": 30
   },
   "item_equip_t4_parts_wuling00_body_01": {
     "name": "AIC Fieldwork Armor",
     "slotType": "Armor",
     "setName": "AIC Fieldwork",
-    "defense": 48.0
+    "defense": 48
   },
   "item_equip_t4_parts_wuling00_body_02": {
     "name": "AIC Fieldwork Plate",
     "slotType": "Armor",
     "setName": "AIC Fieldwork",
-    "defense": 48.0
+    "defense": 48
   },
   "item_equip_t4_parts_wuling00_body_03": {
     "name": "AIC Fieldwork Vest",
     "slotType": "Armor",
     "setName": "AIC Fieldwork",
-    "defense": 48.0
+    "defense": 48
   },
   "item_equip_t4_parts_wuling00_body_04": {
     "name": "AIC Fieldwork Assault Armor",
     "slotType": "Armor",
     "setName": "AIC Fieldwork",
-    "defense": 48.0
+    "defense": 48
   },
   "item_equip_t4_parts_wuling00_body_05": {
     "name": "AIC Fieldwork Medic Armor",
     "slotType": "Armor",
     "setName": "AIC Fieldwork",
-    "defense": 48.0
+    "defense": 48
   },
   "item_equip_t4_parts_wuling00_edc_01": {
     "name": "AIC Fieldwork Machete",
     "slotType": "Accessory",
     "setName": "AIC Fieldwork",
-    "defense": 18.0
+    "defense": 18
   },
   "item_equip_t4_parts_wuling00_edc_02": {
     "name": "AIC Fieldwork Ember",
     "slotType": "Accessory",
     "setName": "AIC Fieldwork",
-    "defense": 18.0
+    "defense": 18
   },
   "item_equip_t4_parts_wuling00_edc_03": {
     "name": "AIC Fieldwork Flashlight",
     "slotType": "Accessory",
     "setName": "AIC Fieldwork",
-    "defense": 18.0
+    "defense": 18
   },
   "item_equip_t4_parts_wuling00_edc_04": {
     "name": "AIC Fieldwork Assault Push Knife",
     "slotType": "Accessory",
     "setName": "AIC Fieldwork",
-    "defense": 18.0
+    "defense": 18
   },
   "item_equip_t4_parts_wuling00_edc_05": {
     "name": "AIC Fieldwork Power Bank",
     "slotType": "Accessory",
     "setName": "AIC Fieldwork",
-    "defense": 18.0
+    "defense": 18
   },
   "item_equip_t4_parts_wuling00_hand_01": {
     "name": "AIC Fieldwork Gloves",
     "slotType": "Gloves",
     "setName": "AIC Fieldwork",
-    "defense": 36.0
+    "defense": 36
   },
   "item_equip_t4_parts_wuling00_hand_02": {
     "name": "AIC Fieldwork Hands",
     "slotType": "Gloves",
     "setName": "AIC Fieldwork",
-    "defense": 36.0
+    "defense": 36
   },
   "item_equip_t4_parts_wuling00_hand_03": {
     "name": "AIC Fieldwork Wraps",
     "slotType": "Gloves",
     "setName": "AIC Fieldwork",
-    "defense": 36.0
+    "defense": 36
   },
   "item_equip_t4_parts_wuling00_hand_04": {
     "name": "AIC Fieldwork Assault Gloves",
     "slotType": "Gloves",
     "setName": "AIC Fieldwork",
-    "defense": 36.0
+    "defense": 36
   },
   "item_equip_t4_parts_wuling00_hand_05": {
     "name": "AIC Fieldwork Medic Gloves",
     "slotType": "Gloves",
     "setName": "AIC Fieldwork",
-    "defense": 36.0
+    "defense": 36
   },
   "item_equip_t4_parts_wuling01_body_01": {
     "name": "Redeemer Plates",
     "slotType": "Armor",
     "setName": "",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_parts_wuling01_body_02": {
     "name": "Redeemer Armor",
     "slotType": "Armor",
     "setName": "",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_parts_wuling01_edc_01": {
     "name": "Redeemer Tag",
     "slotType": "Accessory",
     "setName": "",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_parts_wuling01_edc_02": {
     "name": "Redeemer Tag T1",
     "slotType": "Accessory",
     "setName": "",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_parts_wuling01_edc_03": {
     "name": "Redeemer Seal",
     "slotType": "Accessory",
     "setName": "",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_parts_wuling01_edc_04": {
     "name": "Redeemer Seal T1",
     "slotType": "Accessory",
     "setName": "",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_parts_wuling01_hand_01": {
     "name": "Redeemer Gloves",
     "slotType": "Gloves",
     "setName": "",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_parts_wuling01_hand_02": {
     "name": "Redeemer Hands",
     "slotType": "Gloves",
     "setName": "",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_parts_wuling02_body_01": {
     "name": "Rift Trekker Heavy Armor",
     "slotType": "Armor",
     "setName": "",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_parts_wuling02_body_02": {
     "name": "Rift Trekker Light Armor",
     "slotType": "Armor",
     "setName": "",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_parts_wuling02_edc_01": {
     "name": "Rift Trekker Armor Slab",
     "slotType": "Accessory",
     "setName": "",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_parts_wuling02_hand_01": {
     "name": "Rift Trekker Gloves",
     "slotType": "Gloves",
     "setName": "",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_parts_wuling02_hand_02": {
     "name": "Rift Trekker Hands",
     "slotType": "Gloves",
     "setName": "",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_atb01_body_01": {
     "name": "Frontiers Armor",
     "slotType": "Armor",
     "setName": "Frontiers",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_atb01_body_02": {
     "name": "Frontiers Armor T1",
     "slotType": "Armor",
     "setName": "Frontiers",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_atb01_body_03": {
     "name": "Frontiers Armor T2",
     "slotType": "Armor",
     "setName": "Frontiers",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_atb01_body_04": {
     "name": "Frontiers Armor T3",
     "slotType": "Armor",
     "setName": "Frontiers",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_atb01_body_05": {
     "name": "Frontiers Protection Suit",
     "slotType": "Armor",
     "setName": "Frontiers",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_atb01_edc_01": {
     "name": "Frontiers Comm",
     "slotType": "Accessory",
     "setName": "Frontiers",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_atb01_edc_02": {
     "name": "Frontiers Comm T1",
     "slotType": "Accessory",
     "setName": "Frontiers",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_atb01_edc_03": {
     "name": "Frontiers Analyzer",
     "slotType": "Accessory",
     "setName": "Frontiers",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_atb01_edc_04": {
     "name": "Frontiers Extra O2 Tube",
     "slotType": "Accessory",
     "setName": "Frontiers",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_atb01_edc_05": {
     "name": "Frontiers O2 Tube",
     "slotType": "Accessory",
     "setName": "Frontiers",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_atb01_edc_06": {
     "name": "Frontiers Extra O2 Tube T1",
     "slotType": "Accessory",
     "setName": "Frontiers",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_atb01_hand_01": {
     "name": "Frontiers Blight RES Gloves",
     "slotType": "Gloves",
     "setName": "Frontiers",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_atb01_hand_02": {
     "name": "Frontiers Fiber Gloves",
     "slotType": "Gloves",
     "setName": "Frontiers",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_atb01_hand_03": {
     "name": "Frontiers Fiber Gloves T1",
     "slotType": "Gloves",
     "setName": "Frontiers",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_atk02_body_01": {
     "name": "Type 50 Yinglung Heavy Armor",
     "slotType": "Armor",
     "setName": "Type 50 Yinglung",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_atk02_body_02": {
     "name": "Type 50 Yinglung Heavy Armor T1",
     "slotType": "Armor",
     "setName": "Type 50 Yinglung",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_atk02_body_03": {
     "name": "Type 50 Yinglung Heavy Armor T2",
     "slotType": "Armor",
     "setName": "Type 50 Yinglung",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_atk02_body_04": {
     "name": "Type 50 Yinglung Light Armor",
     "slotType": "Armor",
     "setName": "Type 50 Yinglung",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_atk02_edc_01": {
     "name": "Type 50 Yinglung Radar",
     "slotType": "Accessory",
     "setName": "Type 50 Yinglung",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_atk02_edc_02": {
     "name": "Type 50 Yinglung Radar T1",
     "slotType": "Accessory",
     "setName": "Type 50 Yinglung",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_atk02_edc_03": {
     "name": "Type 50 Yinglung Radar T2",
     "slotType": "Accessory",
     "setName": "Type 50 Yinglung",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_atk02_edc_04": {
     "name": "Type 50 Yinglung Knife",
     "slotType": "Accessory",
     "setName": "Type 50 Yinglung",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_atk02_edc_05": {
     "name": "Type 50 Yinglung Knife T1",
     "slotType": "Accessory",
     "setName": "Type 50 Yinglung",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_atk02_hand_01": {
     "name": "Type 50 Yinglung Gloves",
     "slotType": "Gloves",
     "setName": "Type 50 Yinglung",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_atk02_hand_02": {
     "name": "Type 50 Yinglung Gloves T1",
     "slotType": "Gloves",
     "setName": "Type 50 Yinglung",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_attri01_body_01": {
     "name": "Bonekrusha Heavy Armor",
     "slotType": "Armor",
     "setName": "Bonekrusha",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_attri01_body_02": {
     "name": "Bonekrusha Heavy Armor T1",
     "slotType": "Armor",
     "setName": "Bonekrusha",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_attri01_body_03": {
     "name": "Bonekrusha Poncho",
     "slotType": "Armor",
     "setName": "Bonekrusha",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_attri01_body_04": {
     "name": "Bonekrusha Poncho T1",
     "slotType": "Armor",
     "setName": "Bonekrusha",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_attri01_body_05": {
     "name": "Bonekrusha Heavy Armor T2",
     "slotType": "Armor",
     "setName": "Bonekrusha",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_attri01_edc_02": {
     "name": "Bonekrusha Figurine T2",
     "slotType": "Accessory",
     "setName": "Bonekrusha",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_attri01_edc_03": {
     "name": "Bonekrusha Figurine",
     "slotType": "Accessory",
     "setName": "Bonekrusha",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_attri01_edc_04": {
     "name": "Bonekrusha Mask",
     "slotType": "Accessory",
     "setName": "Bonekrusha",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_attri01_edc_05": {
     "name": "Bonekrusha Mask T1",
     "slotType": "Accessory",
     "setName": "Bonekrusha",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_attri01_edc_06": {
     "name": "Bonekrusha Figurine T1",
     "slotType": "Accessory",
     "setName": "Bonekrusha",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_attri01_edc_07": {
     "name": "Bonekrusha Mask T2",
     "slotType": "Accessory",
     "setName": "Bonekrusha",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_attri01_hand_01": {
     "name": "Bonekrusha Wristband",
     "slotType": "Gloves",
     "setName": "Bonekrusha",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_attri01_hand_02": {
     "name": "Bonekrusha Wristband T1",
     "slotType": "Gloves",
     "setName": "Bonekrusha",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_attri01_hand_03": {
     "name": "Bonekrusha Gloves",
     "slotType": "Gloves",
     "setName": "Bonekrusha",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_burst01_body_01": {
     "name": "Tide Fall Light Armor",
     "slotType": "Armor",
     "setName": "Tide Surge",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_burst01_body_02": {
     "name": "Tide Fall Light Armor T1",
     "slotType": "Armor",
     "setName": "Tide Surge",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_burst01_body_03": {
     "name": "Wave Swell Heavy Armor",
     "slotType": "Armor",
     "setName": "Tide Surge",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_burst01_edc_01": {
     "name": "Hanging River O2 Tube",
     "slotType": "Accessory",
     "setName": "Tide Surge",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_burst01_edc_02": {
     "name": "Turbid Cutting Torch",
     "slotType": "Accessory",
     "setName": "Tide Surge",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_burst01_edc_03": {
     "name": "Turbid Cutting Torch T1",
     "slotType": "Accessory",
     "setName": "Tide Surge",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_burst01_hand_01": {
     "name": "Tide Surge Gauntlets",
     "slotType": "Gloves",
     "setName": "Tide Surge",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_burst01_hand_02": {
     "name": "Deepsink Gloves",
     "slotType": "Gloves",
     "setName": "Tide Surge",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_combo_cd01_body_01": {
     "name": "Qingbo Heavy Armor",
     "slotType": "Armor",
     "setName": "Qingbo",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_combo_cd01_body_02": {
     "name": "Qingbo Light Armor",
     "slotType": "Armor",
     "setName": "Qingbo",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_combo_cd01_edc_01": {
     "name": "Qingbo Positioning Kit",
     "slotType": "Accessory",
     "setName": "Qingbo",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_combo_cd01_edc_02": {
     "name": "Qingbo Bamboo Cutter",
     "slotType": "Accessory",
     "setName": "Qingbo",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_combo_cd01_edc_03": {
     "name": "Qingbo Cask",
     "slotType": "Accessory",
     "setName": "Qingbo",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_combo_cd01_edc_04": {
     "name": "Qingbo Positioning Kit T1",
     "slotType": "Accessory",
     "setName": "Qingbo",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_combo_cd01_hand_01": {
     "name": "Qingbo Gauntlets",
     "slotType": "Gloves",
     "setName": "Qingbo",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_combo_cd01_hand_02": {
     "name": "Qingbo Gloves",
     "slotType": "Gloves",
     "setName": "Qingbo",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_criti01_body_01": {
     "name": "MI Security Armor",
     "slotType": "Armor",
     "setName": "MI Security",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_criti01_body_02": {
     "name": "MI Security Overalls",
     "slotType": "Armor",
     "setName": "MI Security",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_criti01_body_03": {
     "name": "MI Security Overalls T1",
     "slotType": "Armor",
     "setName": "MI Security",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_criti01_body_04": {
     "name": "MI Security Overalls T2",
     "slotType": "Armor",
     "setName": "MI Security",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_criti01_body_06": {
     "name": "MI Security Armor T1",
     "slotType": "Armor",
     "setName": "MI Security",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_criti01_edc_01": {
     "name": "MI Security Armband",
     "slotType": "Accessory",
     "setName": "MI Security",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_criti01_edc_02": {
     "name": "MI Security Scope",
     "slotType": "Accessory",
     "setName": "MI Security",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_criti01_edc_03": {
     "name": "MI Security Toolkit",
     "slotType": "Accessory",
     "setName": "MI Security",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_criti01_edc_04": {
     "name": "MI Security Push Knife",
     "slotType": "Accessory",
     "setName": "MI Security",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_criti01_edc_05": {
     "name": "MI Security Push Knife T1",
     "slotType": "Accessory",
     "setName": "MI Security",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_criti01_edc_06": {
     "name": "MI Security Scope T1",
     "slotType": "Accessory",
     "setName": "MI Security",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_criti01_hand_01": {
     "name": "MI Security Gloves",
     "slotType": "Gloves",
     "setName": "MI Security",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_criti01_hand_02": {
     "name": "MI Security Hands PPE",
     "slotType": "Gloves",
     "setName": "MI Security",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_criti01_hand_03": {
     "name": "MI Security Hands PPE T1",
     "slotType": "Gloves",
     "setName": "MI Security",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_criti01_hand_04": {
     "name": "MI Security Gloves T1",
     "slotType": "Gloves",
     "setName": "MI Security",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_crush_fracture_body_01": {
     "name": "Grizzled Edge Armor",
     "slotType": "Armor",
     "setName": "Grizzled Edge",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_crush_fracture_body_02": {
     "name": "Grizzled Edge Armor T1",
     "slotType": "Armor",
     "setName": "Grizzled Edge",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_crush_fracture_edc_01": {
     "name": "Grizzled Edge Push Knife",
     "slotType": "Accessory",
     "setName": "Grizzled Edge",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_crush_fracture_edc_02": {
     "name": "Grizzled Edge Push Knife T1",
     "slotType": "Accessory",
     "setName": "Grizzled Edge",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_crush_fracture_hand_01": {
     "name": "Grizzled Edge Gauntlets",
     "slotType": "Gloves",
     "setName": "Grizzled Edge",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_crush_fracture_hand_02": {
     "name": "Grizzled Edge Gauntlets T1",
     "slotType": "Gloves",
     "setName": "Grizzled Edge",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_expend_spell01_body_02": {
     "name": "Xiranflow Light Armor",
     "slotType": "Armor",
     "setName": "Xiranflow",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_expend_spell01_edc_02": {
     "name": "Xiranflow Baton",
     "slotType": "Accessory",
     "setName": "Xiranflow",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_expend_spell01_hand_02": {
     "name": "Xiranflow Gloves",
     "slotType": "Gloves",
     "setName": "Xiranflow",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_fire_natr01_body_01": {
     "name": "Hot Work Exoskeleton",
     "slotType": "Armor",
     "setName": "Hot Work",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_fire_natr01_body_02": {
     "name": "Hot Work Exo-Rig",
     "slotType": "Armor",
     "setName": "Hot Work",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_fire_natr01_edc_01": {
     "name": "Hot Work Power Bank",
     "slotType": "Accessory",
     "setName": "Hot Work",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_fire_natr01_edc_02": {
     "name": "Hot Work Pyrometer",
     "slotType": "Accessory",
     "setName": "Hot Work",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_fire_natr01_edc_03": {
     "name": "Hot Work Power Cartridge",
     "slotType": "Accessory",
     "setName": "Hot Work",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_fire_natr01_edc_04": {
     "name": "Hot Work Insulation Slab",
     "slotType": "Accessory",
     "setName": "Hot Work",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_fire_natr01_hand_01": {
     "name": "Hot Work Gloves",
     "slotType": "Gloves",
     "setName": "Hot Work",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_fire_natr01_hand_02": {
     "name": "Hot Work Gauntlets",
     "slotType": "Gloves",
     "setName": "Hot Work",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_fire_natr01_hand_03": {
     "name": "Hot Work Gauntlets T1",
     "slotType": "Gloves",
     "setName": "Hot Work",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_fire_natr01_hand_04": {
     "name": "Hot Work Hands PPE",
     "slotType": "Gloves",
     "setName": "Hot Work",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_heal01_body_01": {
     "name": "LYNX Heavy Armor",
     "slotType": "Armor",
     "setName": "LYNX",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_heal01_body_02": {
     "name": "LYNX Cuirass",
     "slotType": "Armor",
     "setName": "LYNX",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_heal01_body_03": {
     "name": "LYNX Cuirass T1",
     "slotType": "Armor",
     "setName": "LYNX",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_heal01_edc_01": {
     "name": "LYNX Connector",
     "slotType": "Accessory",
     "setName": "LYNX",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_heal01_edc_02": {
     "name": "LYNX Connector T2",
     "slotType": "Accessory",
     "setName": "LYNX",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_heal01_edc_03": {
     "name": "LYNX Slab",
     "slotType": "Accessory",
     "setName": "LYNX",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_heal01_edc_04": {
     "name": "LYNX Aegis Injector",
     "slotType": "Accessory",
     "setName": "LYNX",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_heal01_edc_05": {
     "name": "LYNX Connector T1",
     "slotType": "Accessory",
     "setName": "LYNX",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_heal01_hand_01": {
     "name": "LYNX Gloves",
     "slotType": "Gloves",
     "setName": "LYNX",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_heal01_hand_02": {
     "name": "LYNX Gauntlets",
     "slotType": "Gloves",
     "setName": "LYNX",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_heal01_hand_03": {
     "name": "LYNX Gauntlets T1",
     "slotType": "Gloves",
     "setName": "LYNX",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_phy01_body_01": {
     "name": "Swordmancer Light Armor",
     "slotType": "Armor",
     "setName": "Swordmancer",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_phy01_body_02": {
     "name": "Swordmancer Heavy Armor",
     "slotType": "Armor",
     "setName": "Swordmancer",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_phy01_body_03": {
     "name": "Swordmancer Heavy Armor T1",
     "slotType": "Armor",
     "setName": "Swordmancer",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_phy01_body_04": {
     "name": "Swordmancer Fiber Armor",
     "slotType": "Armor",
     "setName": "Swordmancer",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_phy01_edc_01": {
     "name": "Swordmancer NAV Beacon",
     "slotType": "Accessory",
     "setName": "Swordmancer",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_phy01_edc_02": {
     "name": "Swordmancer Micro Filter",
     "slotType": "Accessory",
     "setName": "Swordmancer",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_phy01_edc_03": {
     "name": "Swordmancer Flint",
     "slotType": "Accessory",
     "setName": "Swordmancer",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_phy01_edc_04": {
     "name": "Swordmancer Dagger",
     "slotType": "Accessory",
     "setName": "Swordmancer",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_phy01_hand_01": {
     "name": "Swordmancer TAC Gloves",
     "slotType": "Gloves",
     "setName": "Swordmancer",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_phy01_hand_02": {
     "name": "Swordmancer TAC Gauntlets",
     "slotType": "Gloves",
     "setName": "Swordmancer",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_phy01_hand_03": {
     "name": "Swordmancer TAC Gauntlets T1",
     "slotType": "Gloves",
     "setName": "Swordmancer",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_poise01_body_01": {
     "name": "Æthertech Plating",
     "slotType": "Armor",
     "setName": "Æthertech",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_poise01_edc_01": {
     "name": "Æthertech Analysis Band",
     "slotType": "Accessory",
     "setName": "Æthertech",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_poise01_edc_02": {
     "name": "Æthertech Stabilizer",
     "slotType": "Accessory",
     "setName": "Æthertech",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_poise01_edc_03": {
     "name": "Æthertech Stabilizer T1",
     "slotType": "Accessory",
     "setName": "Æthertech",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_poise01_edc_04": {
     "name": "Æthertech Watch",
     "slotType": "Accessory",
     "setName": "Æthertech",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_poise01_hand_01": {
     "name": "Æthertech Gloves",
     "slotType": "Gloves",
     "setName": "Æthertech",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_poise01_hand_02": {
     "name": "Æthertech Light Gloves",
     "slotType": "Gloves",
     "setName": "Æthertech",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_pulse_cryst01_body_01": {
     "name": "Pulser Labs Disruptor Suit",
     "slotType": "Armor",
     "setName": "Pulser Labs",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_pulse_cryst01_edc_01": {
     "name": "Pulser Labs Probe",
     "slotType": "Accessory",
     "setName": "Pulser Labs",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_pulse_cryst01_edc_02": {
     "name": "Pulser Labs Calibrator",
     "slotType": "Accessory",
     "setName": "Pulser Labs",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_pulse_cryst01_edc_03": {
     "name": "Pulser Labs Invasion Core",
     "slotType": "Accessory",
     "setName": "Pulser Labs",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_pulse_cryst01_hand_01": {
     "name": "Pulser Labs Gloves",
     "slotType": "Gloves",
     "setName": "Pulser Labs",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_spellburst_body_01": {
     "name": "Deep Rampart Armor",
     "slotType": "Armor",
     "setName": "Deep Rampart",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_spellburst_edc_01": {
     "name": "Deep Rampart Comms",
     "slotType": "Accessory",
     "setName": "Deep Rampart",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_spellburst_hand_01": {
     "name": "Deep Rampart Gauntlets",
     "slotType": "Gloves",
     "setName": "Deep Rampart",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_usp02_body_01": {
     "name": "Eternal Xiranite Armor",
     "slotType": "Armor",
     "setName": "Eternal Xiranite",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_usp02_body_03": {
     "name": "Eternal Xiranite Light Armor",
     "slotType": "Armor",
     "setName": "Eternal Xiranite",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_usp02_body_04": {
     "name": "Eternal Xiranite Light Armor T1",
     "slotType": "Armor",
     "setName": "Eternal Xiranite",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_usp02_edc_01": {
     "name": "Eternal Xiranite Power Core",
     "slotType": "Accessory",
     "setName": "Eternal Xiranite",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_usp02_edc_02": {
     "name": "Eternal Xiranite Power Core T1",
     "slotType": "Accessory",
     "setName": "Eternal Xiranite",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_usp02_edc_03": {
     "name": "Eternal Xiranite Auxiliary Arm",
     "slotType": "Accessory",
     "setName": "Eternal Xiranite",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_usp02_edc_04": {
     "name": "Eternal Xiranite Bracing Slab",
     "slotType": "Accessory",
     "setName": "Eternal Xiranite",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_usp02_edc_05": {
     "name": "Eternal Xiranite Bracing Slab T1",
     "slotType": "Accessory",
     "setName": "Eternal Xiranite",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_usp02_edc_06": {
     "name": "Eternal Xiranite Heavy Slab",
     "slotType": "Accessory",
     "setName": "Eternal Xiranite",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_usp02_hand_01": {
     "name": "Eternal Xiranite Gloves",
     "slotType": "Gloves",
     "setName": "Eternal Xiranite",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_usp02_hand_02": {
     "name": "Eternal Xiranite Gloves T1",
     "slotType": "Gloves",
     "setName": "Eternal Xiranite",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_usp02_hand_03": {
     "name": "Eternal Xiranite Wraps",
     "slotType": "Gloves",
     "setName": "Eternal Xiranite",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_usp02_hand_04": {
     "name": "Eternal Xiranite Hands",
     "slotType": "Gloves",
     "setName": "Eternal Xiranite",
-    "defense": 42.0
+    "defense": 42
   }
 }

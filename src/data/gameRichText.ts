@@ -47,7 +47,10 @@ const RICH_TEXT_STYLES: Record<string, ResolvedRichTextStyle> = {
   'ba.key': { color: '#33c2ff', icon: null },
   'ba.knockdown': { color: '#e2c099', icon: '/icons/icon_term_ba_knockdown.webp' },
   'ba.natur': { color: '#b4d945', icon: null },
-  'ba.naturalinflict': { color: '#b4d945', icon: '/icons/icon_term_ba_naturalinflict.webp' },
+  'ba.naturalinflict': {
+    color: '#b4d945',
+    icon: '/icons/icon_term_ba_naturalinflict.webp',
+  },
   'ba.noguard': { color: '#e2c099', icon: '/icons/icon_term_ba_noguard.webp' },
   'ba.pd': { color: '#e2c099', icon: null },
   'ba.phy': { color: '#e2c099', icon: null },

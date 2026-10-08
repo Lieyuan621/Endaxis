@@ -19,7 +19,7 @@ const mocks = vi.hoisted(() => ({
   operatorSimulation: vi.fn(),
   equipmentSimulation: vi.fn(),
   publish: vi.fn(),
-  execFile: vi.fn(),
+  locales: vi.fn(),
 }));
 
 vi.mock('../scripts/generateCombatDefinitionCandidates.ts', () => ({
@@ -132,9 +132,8 @@ vi.mock('../scripts/auditCandidateEquipment.ts', () => ({
 vi.mock('../src/compiler/publication/gameDataCandidatePublisher.ts', () => ({
   publishGameDataCandidate: mocks.publish,
 }));
-vi.mock('node:child_process', async importOriginal => ({
-  ...(await importOriginal<typeof import('node:child_process')>()),
-  execFile: mocks.execFile,
+vi.mock('../src/compiler/publication/gameLocaleCandidate.ts', () => ({
+  generateGameLocaleCandidate: mocks.locales,
 }));
 
 import { parseRebuildArguments, rebuildGameData } from '../scripts/rebuildGameData.ts';
@@ -212,23 +211,12 @@ beforeEach(() => {
   mocks.operatorSimulation.mockResolvedValue({});
   mocks.equipmentSimulation.mockResolvedValue({});
   mocks.publish.mockResolvedValue({});
-  // 只模拟 Python 的文件输出，让 rebuild 自己检查语言文件集合、两轮内容和语言间身份数。
-  mocks.execFile.mockImplementation(
-    (
-      executable: string,
-      args: string[],
-      _options: unknown,
-      callback: (error: Error | null, stdout?: string, stderr?: string) => void,
-    ) => {
-      expect(executable).toBe('python');
-      const output = args[args.indexOf('--output') + 1]!;
-      void (async () => {
-        for (const locale of ['zh', 'en'])
-          for (const file of localeFiles)
-            await json(path.join(output, locale, `${file}.json`), { fixture: 'text' });
-      })().then(() => callback(null, '', ''), callback);
-    },
-  );
+  // 只替换领域输出；文件集合、两轮内容与语言间身份数由真实 rebuild 校验。
+  mocks.locales.mockImplementation(async ({ output }: { output: string }) => {
+    for (const locale of ['zh', 'en'])
+      for (const file of localeFiles)
+        await json(path.join(output, locale, `${file}.json`), { fixture: 'text' });
+  });
   vi.stubGlobal(
     'fetch',
     vi.fn(async (input: URL) => {

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { parseGameRichText } from './gameRichText';
+import { parseGameRichText, resolveRichTextImage } from './gameRichText';
 
 describe('game rich text', () => {
   test('parses style and term tags without dropping plain text', () => {
@@ -17,5 +17,9 @@ describe('game rich text', () => {
     expect(parseGameRichText('<image="/icons/icon_energy_fusion_fire.webp">')).toEqual([
       { type: 'image', path: '/icons/icon_energy_fusion_fire.webp' },
     ]);
+    expect(resolveRichTextImage('/icons/icon_energy_fusion_fire.webp')).toBe(
+      '/icons/icon_energy_fusion_fire.webp',
+    );
+    expect(resolveRichTextImage('/images/../private.webp')).toBeNull();
   });
 });

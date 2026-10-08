@@ -3,37 +3,37 @@
     "name": "简易护甲",
     "slotType": "护甲",
     "setName": "",
-    "defense": 8.0
+    "defense": 8
   },
   "item_equip_t0_parts_tundra01_body_02": {
     "name": "简易护服",
     "slotType": "护甲",
     "setName": "",
-    "defense": 8.0
+    "defense": 8
   },
   "item_equip_t0_parts_tundra01_hand_01": {
     "name": "简易手甲",
     "slotType": "护手",
     "setName": "",
-    "defense": 6.0
+    "defense": 6
   },
   "item_equip_t0_parts_tundra01_hand_02": {
     "name": "简易护手",
     "slotType": "护手",
     "setName": "",
-    "defense": 6.0
+    "defense": 6
   },
   "item_equip_t1_parts_tundra01_body_01": {
     "name": "矿场护甲",
     "slotType": "护甲",
     "setName": "",
-    "defense": 16.0
+    "defense": 16
   },
   "item_equip_t1_parts_tundra01_body_02": {
     "name": "矿场防护服",
     "slotType": "护甲",
     "setName": "",
-    "defense": 16.0
+    "defense": 16
   },
   "item_equip_t1_parts_tundra01_body_03": {
     "name": "测试型重甲",
@@ -63,19 +63,19 @@
     "name": "应急联络仪",
     "slotType": "配件",
     "setName": "",
-    "defense": 6.0
+    "defense": 6
   },
   "item_equip_t1_parts_tundra01_edc_02": {
     "name": "应急压缩核",
     "slotType": "配件",
     "setName": "",
-    "defense": 6.0
+    "defense": 6
   },
   "item_equip_t1_parts_tundra01_hand_01": {
     "name": "矿场手甲",
     "slotType": "护手",
     "setName": "",
-    "defense": 12.0
+    "defense": 12
   },
   "item_equip_t1_parts_tundra01_hand_02": {
     "name": "矿场护腕",
@@ -87,7 +87,7 @@
     "name": "矿场手套",
     "slotType": "护手",
     "setName": "",
-    "defense": 12.0
+    "defense": 12
   },
   "item_equip_t1_parts_tundra01_hand_04": {
     "name": "矿场护手",
@@ -285,1266 +285,1266 @@
     "name": "矿场护甲·壹型",
     "slotType": "护甲",
     "setName": "",
-    "defense": 40.0
+    "defense": 40
   },
   "item_equip_t3_parts_tundra01_body_02": {
     "name": "矿场防护服·壹型",
     "slotType": "护甲",
     "setName": "",
-    "defense": 40.0
+    "defense": 40
   },
   "item_equip_t3_parts_tundra01_edc_01": {
     "name": "矿场增压轮·壹型",
     "slotType": "配件",
     "setName": "",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_parts_tundra01_edc_02": {
     "name": "矿场传动轮·壹型",
     "slotType": "配件",
     "setName": "",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_parts_tundra01_edc_03": {
     "name": "矿场压缩核·壹型",
     "slotType": "配件",
     "setName": "",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_parts_tundra01_edc_04": {
     "name": "矿场联络仪·壹型",
     "slotType": "配件",
     "setName": "",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_parts_tundra01_hand_01": {
     "name": "矿场手套·贰型",
     "slotType": "护手",
     "setName": "",
-    "defense": 30.0
+    "defense": 30
   },
   "item_equip_t3_parts_tundra01_hand_02": {
     "name": "矿场护手·壹型",
     "slotType": "护手",
     "setName": "",
-    "defense": 30.0
+    "defense": 30
   },
   "item_equip_t3_suit_agi01_body_01": {
     "name": "巡行信使夹克·壹型",
     "slotType": "护甲",
     "setName": "巡行信使",
-    "defense": 40.0
+    "defense": 40
   },
   "item_equip_t3_suit_agi01_edc_01": {
     "name": "巡行信使手电·壹型",
     "slotType": "配件",
     "setName": "巡行信使",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_agi01_edc_02": {
     "name": "巡行信使手电·贰型",
     "slotType": "配件",
     "setName": "巡行信使",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_agi01_edc_03": {
     "name": "巡行信使陀螺·壹型",
     "slotType": "配件",
     "setName": "巡行信使",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_agi01_hand_01": {
     "name": "巡行信使手套·壹型",
     "slotType": "护手",
     "setName": "巡行信使",
-    "defense": 30.0
+    "defense": 30
   },
   "item_equip_t3_suit_atk01_body_01": {
     "name": "阿伯莉重甲",
     "slotType": "护甲",
     "setName": "阿伯莉遗声",
-    "defense": 40.0
+    "defense": 40
   },
   "item_equip_t3_suit_atk01_body_02": {
     "name": "阿伯莉重甲·壹型",
     "slotType": "护甲",
     "setName": "阿伯莉遗声",
-    "defense": 40.0
+    "defense": 40
   },
   "item_equip_t3_suit_atk01_body_03": {
     "name": "阿伯莉轻甲",
     "slotType": "护甲",
     "setName": "阿伯莉遗声",
-    "defense": 40.0
+    "defense": 40
   },
   "item_equip_t3_suit_atk01_body_04": {
     "name": "阿伯莉轻甲·壹型",
     "slotType": "护甲",
     "setName": "阿伯莉遗声",
-    "defense": 40.0
+    "defense": 40
   },
   "item_equip_t3_suit_atk01_edc_01": {
     "name": "阿伯莉紫光灯",
     "slotType": "配件",
     "setName": "阿伯莉遗声",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_atk01_edc_02": {
     "name": "阿伯莉侦听芯片",
     "slotType": "配件",
     "setName": "阿伯莉遗声",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_atk01_edc_03": {
     "name": "阿伯莉侦听芯片·壹型",
     "slotType": "配件",
     "setName": "阿伯莉遗声",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_atk01_edc_04": {
     "name": "阿伯莉照明器",
     "slotType": "配件",
     "setName": "阿伯莉遗声",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_atk01_edc_05": {
     "name": "阿伯莉传感芯片",
     "slotType": "配件",
     "setName": "阿伯莉遗声",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_atk01_edc_06": {
     "name": "阿伯莉传感芯片·壹型",
     "slotType": "配件",
     "setName": "阿伯莉遗声",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_atk01_hand_01": {
     "name": "阿伯莉手甲",
     "slotType": "护手",
     "setName": "阿伯莉遗声",
-    "defense": 30.0
+    "defense": 30
   },
   "item_equip_t3_suit_str01_body_01": {
     "name": "重装信使夹克·壹型",
     "slotType": "护甲",
     "setName": "重装信使",
-    "defense": 40.0
+    "defense": 40
   },
   "item_equip_t3_suit_str01_edc_01": {
     "name": "重装信使陀螺·壹型",
     "slotType": "配件",
     "setName": "重装信使",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_str01_edc_02": {
     "name": "重装信使手电·壹型",
     "slotType": "配件",
     "setName": "重装信使",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_str01_hand_01": {
     "name": "重装信使手套·壹型",
     "slotType": "护手",
     "setName": "重装信使",
-    "defense": 30.0
+    "defense": 30
   },
   "item_equip_t3_suit_str01_hand_02": {
     "name": "重装信使手套·贰型",
     "slotType": "护手",
     "setName": "重装信使",
-    "defense": 30.0
+    "defense": 30
   },
   "item_equip_t3_suit_usp01_body_01": {
     "name": "天灾防护重甲",
     "slotType": "护甲",
     "setName": "天灾防护",
-    "defense": 40.0
+    "defense": 40
   },
   "item_equip_t3_suit_usp01_body_02": {
     "name": "天灾防护重甲·壹型",
     "slotType": "护甲",
     "setName": "天灾防护",
-    "defense": 40.0
+    "defense": 40
   },
   "item_equip_t3_suit_usp01_edc_01": {
     "name": "天灾防护净芯",
     "slotType": "配件",
     "setName": "天灾防护",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_usp01_edc_02": {
     "name": "天灾防护净芯·壹型",
     "slotType": "配件",
     "setName": "天灾防护",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_usp01_edc_03": {
     "name": "天灾防护滤芯",
     "slotType": "配件",
     "setName": "天灾防护",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_usp01_hand_01": {
     "name": "天灾防护手套",
     "slotType": "护手",
     "setName": "天灾防护",
-    "defense": 30.0
+    "defense": 30
   },
   "item_equip_t3_suit_will01_body_01": {
     "name": "蚀电防护背心·壹型",
     "slotType": "护甲",
     "setName": "蚀电防护",
-    "defense": 40.0
+    "defense": 40
   },
   "item_equip_t3_suit_will01_edc_01": {
     "name": "蚀电防护电池·壹型",
     "slotType": "配件",
     "setName": "蚀电防护",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_will01_edc_02": {
     "name": "蚀电防护扳手·壹型",
     "slotType": "配件",
     "setName": "蚀电防护",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_will01_hand_01": {
     "name": "蚀电防护手套·壹型",
     "slotType": "护手",
     "setName": "蚀电防护",
-    "defense": 30.0
+    "defense": 30
   },
   "item_equip_t3_suit_wisd01_body_01": {
     "name": "蚀电屏蔽背心·壹型",
     "slotType": "护甲",
     "setName": "蚀电屏蔽",
-    "defense": 40.0
+    "defense": 40
   },
   "item_equip_t3_suit_wisd01_body_02": {
     "name": "蚀电屏蔽背心·贰型",
     "slotType": "护甲",
     "setName": "蚀电屏蔽",
-    "defense": 40.0
+    "defense": 40
   },
   "item_equip_t3_suit_wisd01_edc_01": {
     "name": "蚀电屏蔽扳手·贰型",
     "slotType": "配件",
     "setName": "蚀电屏蔽",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_wisd01_edc_02": {
     "name": "蚀电屏蔽电池·壹型",
     "slotType": "配件",
     "setName": "蚀电屏蔽",
-    "defense": 15.0
+    "defense": 15
   },
   "item_equip_t3_suit_wisd01_hand_01": {
     "name": "蚀电屏蔽手套·壹型",
     "slotType": "护手",
     "setName": "蚀电屏蔽",
-    "defense": 30.0
+    "defense": 30
   },
   "item_equip_t4_parts_wuling00_body_01": {
     "name": "集成实训护甲",
     "slotType": "护甲",
     "setName": "集成实训",
-    "defense": 48.0
+    "defense": 48
   },
   "item_equip_t4_parts_wuling00_body_02": {
     "name": "集成实训钢甲",
     "slotType": "护甲",
     "setName": "集成实训",
-    "defense": 48.0
+    "defense": 48
   },
   "item_equip_t4_parts_wuling00_body_03": {
     "name": "集成实训胸甲",
     "slotType": "护甲",
     "setName": "集成实训",
-    "defense": 48.0
+    "defense": 48
   },
   "item_equip_t4_parts_wuling00_body_04": {
     "name": "集成实训突袭护甲",
     "slotType": "护甲",
     "setName": "集成实训",
-    "defense": 48.0
+    "defense": 48
   },
   "item_equip_t4_parts_wuling00_body_05": {
     "name": "集成实训医疗护甲",
     "slotType": "护甲",
     "setName": "集成实训",
-    "defense": 48.0
+    "defense": 48
   },
   "item_equip_t4_parts_wuling00_edc_01": {
     "name": "集成实训排障刀",
     "slotType": "配件",
     "setName": "集成实训",
-    "defense": 18.0
+    "defense": 18
   },
   "item_equip_t4_parts_wuling00_edc_02": {
     "name": "集成实训火种石",
     "slotType": "配件",
     "setName": "集成实训",
-    "defense": 18.0
+    "defense": 18
   },
   "item_equip_t4_parts_wuling00_edc_03": {
     "name": "集成实训照明器",
     "slotType": "配件",
     "setName": "集成实训",
-    "defense": 18.0
+    "defense": 18
   },
   "item_equip_t4_parts_wuling00_edc_04": {
     "name": "集成实训突袭刺刃",
     "slotType": "配件",
     "setName": "集成实训",
-    "defense": 18.0
+    "defense": 18
   },
   "item_equip_t4_parts_wuling00_edc_05": {
     "name": "集成实训供能栓",
     "slotType": "配件",
     "setName": "集成实训",
-    "defense": 18.0
+    "defense": 18
   },
   "item_equip_t4_parts_wuling00_hand_01": {
     "name": "集成实训手套",
     "slotType": "护手",
     "setName": "集成实训",
-    "defense": 36.0
+    "defense": 36
   },
   "item_equip_t4_parts_wuling00_hand_02": {
     "name": "集成实训护手",
     "slotType": "护手",
     "setName": "集成实训",
-    "defense": 36.0
+    "defense": 36
   },
   "item_equip_t4_parts_wuling00_hand_03": {
     "name": "集成实训缠带",
     "slotType": "护手",
     "setName": "集成实训",
-    "defense": 36.0
+    "defense": 36
   },
   "item_equip_t4_parts_wuling00_hand_04": {
     "name": "集成实训突袭护手",
     "slotType": "护手",
     "setName": "集成实训",
-    "defense": 36.0
+    "defense": 36
   },
   "item_equip_t4_parts_wuling00_hand_05": {
     "name": "集成实训医疗护手",
     "slotType": "护手",
     "setName": "集成实训",
-    "defense": 36.0
+    "defense": 36
   },
   "item_equip_t4_parts_wuling01_body_01": {
     "name": "纾难重甲",
     "slotType": "护甲",
     "setName": "",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_parts_wuling01_body_02": {
     "name": "纾难护甲",
     "slotType": "护甲",
     "setName": "",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_parts_wuling01_edc_01": {
     "name": "纾难识别牌",
     "slotType": "配件",
     "setName": "",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_parts_wuling01_edc_02": {
     "name": "纾难识别牌·壹型",
     "slotType": "配件",
     "setName": "",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_parts_wuling01_edc_03": {
     "name": "纾难印章",
     "slotType": "配件",
     "setName": "",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_parts_wuling01_edc_04": {
     "name": "纾难印章·壹型",
     "slotType": "配件",
     "setName": "",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_parts_wuling01_hand_01": {
     "name": "纾难护手",
     "slotType": "护手",
     "setName": "",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_parts_wuling01_hand_02": {
     "name": "纾难手套",
     "slotType": "护手",
     "setName": "",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_parts_wuling02_body_01": {
     "name": "涉渊重甲",
     "slotType": "护甲",
     "setName": "",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_parts_wuling02_body_02": {
     "name": "涉渊轻甲",
     "slotType": "护甲",
     "setName": "",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_parts_wuling02_edc_01": {
     "name": "涉渊护甲板",
     "slotType": "配件",
     "setName": "",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_parts_wuling02_hand_01": {
     "name": "涉渊护手",
     "slotType": "护手",
     "setName": "",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_parts_wuling02_hand_02": {
     "name": "涉渊手套",
     "slotType": "护手",
     "setName": "",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_atb01_body_01": {
     "name": "拓荒护甲",
     "slotType": "护甲",
     "setName": "拓荒",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_atb01_body_02": {
     "name": "拓荒护甲·壹型",
     "slotType": "护甲",
     "setName": "拓荒",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_atb01_body_03": {
     "name": "拓荒护甲·贰型",
     "slotType": "护甲",
     "setName": "拓荒",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_atb01_body_04": {
     "name": "拓荒护甲·叁型",
     "slotType": "护甲",
     "setName": "拓荒",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_atb01_body_05": {
     "name": "拓荒护服",
     "slotType": "护甲",
     "setName": "拓荒",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_atb01_edc_01": {
     "name": "拓荒通信器",
     "slotType": "配件",
     "setName": "拓荒",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_atb01_edc_02": {
     "name": "拓荒通信器·壹型",
     "slotType": "配件",
     "setName": "拓荒",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_atb01_edc_03": {
     "name": "拓荒分析仪",
     "slotType": "配件",
     "setName": "拓荒",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_atb01_edc_04": {
     "name": "拓荒增量供氧栓",
     "slotType": "配件",
     "setName": "拓荒",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_atb01_edc_05": {
     "name": "拓荒供氧栓",
     "slotType": "配件",
     "setName": "拓荒",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_atb01_edc_06": {
     "name": "拓荒增量供氧栓·壹型",
     "slotType": "配件",
     "setName": "拓荒",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_atb01_hand_01": {
     "name": "拓荒耐蚀手套",
     "slotType": "护手",
     "setName": "拓荒",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_atb01_hand_02": {
     "name": "拓荒纤维手套",
     "slotType": "护手",
     "setName": "拓荒",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_atb01_hand_03": {
     "name": "拓荒纤维手套·壹型",
     "slotType": "护手",
     "setName": "拓荒",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_atk02_body_01": {
     "name": "50式应龙重甲",
     "slotType": "护甲",
     "setName": "50式应龙",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_atk02_body_02": {
     "name": "50式应龙重甲·壹型",
     "slotType": "护甲",
     "setName": "50式应龙",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_atk02_body_03": {
     "name": "50式应龙重甲·贰型",
     "slotType": "护甲",
     "setName": "50式应龙",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_atk02_body_04": {
     "name": "50式应龙轻甲",
     "slotType": "护甲",
     "setName": "50式应龙",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_atk02_edc_01": {
     "name": "50式应龙雷达",
     "slotType": "配件",
     "setName": "50式应龙",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_atk02_edc_02": {
     "name": "50式应龙雷达·壹型",
     "slotType": "配件",
     "setName": "50式应龙",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_atk02_edc_03": {
     "name": "50式应龙雷达·贰型",
     "slotType": "配件",
     "setName": "50式应龙",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_atk02_edc_04": {
     "name": "50式应龙短刃",
     "slotType": "配件",
     "setName": "50式应龙",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_atk02_edc_05": {
     "name": "50式应龙短刃·壹型",
     "slotType": "配件",
     "setName": "50式应龙",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_atk02_hand_01": {
     "name": "50式应龙护手",
     "slotType": "护手",
     "setName": "50式应龙",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_atk02_hand_02": {
     "name": "50式应龙护手·壹型",
     "slotType": "护手",
     "setName": "50式应龙",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_attri01_body_01": {
     "name": "碾骨重护甲",
     "slotType": "护甲",
     "setName": "碾骨",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_attri01_body_02": {
     "name": "碾骨重护甲·壹型",
     "slotType": "护甲",
     "setName": "碾骨",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_attri01_body_03": {
     "name": "碾骨披巾",
     "slotType": "护甲",
     "setName": "碾骨",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_attri01_body_04": {
     "name": "碾骨披巾·壹型",
     "slotType": "护甲",
     "setName": "碾骨",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_attri01_body_05": {
     "name": "碾骨重护甲·贰型",
     "slotType": "护甲",
     "setName": "碾骨",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_attri01_edc_02": {
     "name": "碾骨小雕像·贰型",
     "slotType": "配件",
     "setName": "碾骨",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_attri01_edc_03": {
     "name": "碾骨小雕像",
     "slotType": "配件",
     "setName": "碾骨",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_attri01_edc_04": {
     "name": "碾骨面具",
     "slotType": "配件",
     "setName": "碾骨",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_attri01_edc_05": {
     "name": "碾骨面具·壹型",
     "slotType": "配件",
     "setName": "碾骨",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_attri01_edc_06": {
     "name": "碾骨小雕像·壹型",
     "slotType": "配件",
     "setName": "碾骨",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_attri01_edc_07": {
     "name": "碾骨面具·贰型",
     "slotType": "配件",
     "setName": "碾骨",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_attri01_hand_01": {
     "name": "碾骨腕带",
     "slotType": "护手",
     "setName": "碾骨",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_attri01_hand_02": {
     "name": "碾骨腕带·壹型",
     "slotType": "护手",
     "setName": "碾骨",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_attri01_hand_03": {
     "name": "碾骨手套",
     "slotType": "护手",
     "setName": "碾骨",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_burst01_body_01": {
     "name": "落潮轻甲",
     "slotType": "护甲",
     "setName": "潮涌",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_burst01_body_02": {
     "name": "落潮轻甲·壹型",
     "slotType": "护甲",
     "setName": "潮涌",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_burst01_body_03": {
     "name": "涌浪重装甲",
     "slotType": "护甲",
     "setName": "潮涌",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_burst01_edc_01": {
     "name": "悬河供氧栓",
     "slotType": "配件",
     "setName": "潮涌",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_burst01_edc_02": {
     "name": "浊流切割炬",
     "slotType": "配件",
     "setName": "潮涌",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_burst01_edc_03": {
     "name": "浊流切割炬·壹型",
     "slotType": "配件",
     "setName": "潮涌",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_burst01_hand_01": {
     "name": "潮涌手甲",
     "slotType": "护手",
     "setName": "潮涌",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_burst01_hand_02": {
     "name": "沉水手套",
     "slotType": "护手",
     "setName": "潮涌",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_combo_cd01_body_01": {
     "name": "清波重甲",
     "slotType": "护甲",
     "setName": "清波",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_combo_cd01_body_02": {
     "name": "清波轻甲",
     "slotType": "护甲",
     "setName": "清波",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_combo_cd01_edc_01": {
     "name": "清波定位仪",
     "slotType": "配件",
     "setName": "清波",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_combo_cd01_edc_02": {
     "name": "清波竹刃",
     "slotType": "配件",
     "setName": "清波",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_combo_cd01_edc_03": {
     "name": "清波水罐",
     "slotType": "配件",
     "setName": "清波",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_combo_cd01_edc_04": {
     "name": "清波定位仪·壹型",
     "slotType": "配件",
     "setName": "清波",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_combo_cd01_hand_01": {
     "name": "清波手甲",
     "slotType": "护手",
     "setName": "清波",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_combo_cd01_hand_02": {
     "name": "清波护手",
     "slotType": "护手",
     "setName": "清波",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_criti01_body_01": {
     "name": "M.I.警用护甲",
     "slotType": "护甲",
     "setName": "M.I.警用",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_criti01_body_02": {
     "name": "M.I.警用罩衣",
     "slotType": "护甲",
     "setName": "M.I.警用",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_criti01_body_03": {
     "name": "M.I.警用罩衣·壹型",
     "slotType": "护甲",
     "setName": "M.I.警用",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_criti01_body_04": {
     "name": "M.I.警用罩衣·贰型",
     "slotType": "护甲",
     "setName": "M.I.警用",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_criti01_body_06": {
     "name": "M.I.警用护甲·壹型",
     "slotType": "护甲",
     "setName": "M.I.警用",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_criti01_edc_01": {
     "name": "M.I.警用臂环",
     "slotType": "配件",
     "setName": "M.I.警用",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_criti01_edc_02": {
     "name": "M.I.警用瞄具",
     "slotType": "配件",
     "setName": "M.I.警用",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_criti01_edc_03": {
     "name": "M.I.警用工具组",
     "slotType": "配件",
     "setName": "M.I.警用",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_criti01_edc_04": {
     "name": "M.I.警用刺刃",
     "slotType": "配件",
     "setName": "M.I.警用",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_criti01_edc_05": {
     "name": "M.I.警用刺刃·壹型",
     "slotType": "配件",
     "setName": "M.I.警用",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_criti01_edc_06": {
     "name": "M.I.警用瞄具·壹型",
     "slotType": "配件",
     "setName": "M.I.警用",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_criti01_hand_01": {
     "name": "M.I.警用手套",
     "slotType": "护手",
     "setName": "M.I.警用",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_criti01_hand_02": {
     "name": "M.I.警用手环",
     "slotType": "护手",
     "setName": "M.I.警用",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_criti01_hand_03": {
     "name": "M.I.警用手环·壹型",
     "slotType": "护手",
     "setName": "M.I.警用",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_criti01_hand_04": {
     "name": "M.I.警用手套·壹型",
     "slotType": "护手",
     "setName": "M.I.警用",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_crush_fracture_body_01": {
     "name": "旧锋装甲",
     "slotType": "护甲",
     "setName": "旧锋",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_crush_fracture_body_02": {
     "name": "旧锋装甲·壹型",
     "slotType": "护甲",
     "setName": "旧锋",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_crush_fracture_edc_01": {
     "name": "旧锋刺刃",
     "slotType": "配件",
     "setName": "旧锋",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_crush_fracture_edc_02": {
     "name": "旧锋刺刃·壹型",
     "slotType": "配件",
     "setName": "旧锋",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_crush_fracture_hand_01": {
     "name": "旧锋手甲",
     "slotType": "护手",
     "setName": "旧锋",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_crush_fracture_hand_02": {
     "name": "旧锋手甲·壹型",
     "slotType": "护手",
     "setName": "旧锋",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_expend_spell01_body_02": {
     "name": "壤流轻甲",
     "slotType": "护甲",
     "setName": "壤流",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_expend_spell01_edc_02": {
     "name": "壤流短棍",
     "slotType": "配件",
     "setName": "壤流",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_expend_spell01_hand_02": {
     "name": "壤流护手",
     "slotType": "护手",
     "setName": "壤流",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_fire_natr01_body_01": {
     "name": "动火用外骨骼",
     "slotType": "护甲",
     "setName": "动火用",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_fire_natr01_body_02": {
     "name": "动火用辅助骨骼",
     "slotType": "护甲",
     "setName": "动火用",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_fire_natr01_edc_01": {
     "name": "动火用储能匣",
     "slotType": "配件",
     "setName": "动火用",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_fire_natr01_edc_02": {
     "name": "动火用测温镜",
     "slotType": "配件",
     "setName": "动火用",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_fire_natr01_edc_03": {
     "name": "动火用电力匣",
     "slotType": "配件",
     "setName": "动火用",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_fire_natr01_edc_04": {
     "name": "动火用隔温板",
     "slotType": "配件",
     "setName": "动火用",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_fire_natr01_hand_01": {
     "name": "动火用手套",
     "slotType": "护手",
     "setName": "动火用",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_fire_natr01_hand_02": {
     "name": "动火用手甲",
     "slotType": "护手",
     "setName": "动火用",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_fire_natr01_hand_03": {
     "name": "动火用手甲·壹型",
     "slotType": "护手",
     "setName": "动火用",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_fire_natr01_hand_04": {
     "name": "动火用护手",
     "slotType": "护手",
     "setName": "动火用",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_heal01_body_01": {
     "name": "生物辅助重甲",
     "slotType": "护甲",
     "setName": "生物辅助",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_heal01_body_02": {
     "name": "生物辅助胸甲",
     "slotType": "护甲",
     "setName": "生物辅助",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_heal01_body_03": {
     "name": "生物辅助胸甲·壹型",
     "slotType": "护甲",
     "setName": "生物辅助",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_heal01_edc_01": {
     "name": "生物辅助接驳器",
     "slotType": "配件",
     "setName": "生物辅助",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_heal01_edc_02": {
     "name": "生物辅助接驳器·贰型",
     "slotType": "配件",
     "setName": "生物辅助",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_heal01_edc_03": {
     "name": "生物辅助护板",
     "slotType": "配件",
     "setName": "生物辅助",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_heal01_edc_04": {
     "name": "生物辅助护盾针",
     "slotType": "配件",
     "setName": "生物辅助",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_heal01_edc_05": {
     "name": "生物辅助接驳器·壹型",
     "slotType": "配件",
     "setName": "生物辅助",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_heal01_hand_01": {
     "name": "生物辅助臂甲",
     "slotType": "护手",
     "setName": "生物辅助",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_heal01_hand_02": {
     "name": "生物辅助手甲",
     "slotType": "护手",
     "setName": "生物辅助",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_heal01_hand_03": {
     "name": "生物辅助手甲·壹型",
     "slotType": "护手",
     "setName": "生物辅助",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_phy01_body_01": {
     "name": "点剑轻装甲",
     "slotType": "护甲",
     "setName": "点剑",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_phy01_body_02": {
     "name": "点剑重装甲",
     "slotType": "护甲",
     "setName": "点剑",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_phy01_body_03": {
     "name": "点剑重装甲·壹型",
     "slotType": "护甲",
     "setName": "点剑",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_phy01_body_04": {
     "name": "点剑纤维护甲",
     "slotType": "护甲",
     "setName": "点剑",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_phy01_edc_01": {
     "name": "点剑定位信标",
     "slotType": "配件",
     "setName": "点剑",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_phy01_edc_02": {
     "name": "点剑微型滤芯",
     "slotType": "配件",
     "setName": "点剑",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_phy01_edc_03": {
     "name": "点剑火石",
     "slotType": "配件",
     "setName": "点剑",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_phy01_edc_04": {
     "name": "点剑短刃",
     "slotType": "配件",
     "setName": "点剑",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_phy01_hand_01": {
     "name": "点剑战术手套",
     "slotType": "护手",
     "setName": "点剑",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_phy01_hand_02": {
     "name": "点剑战术手甲",
     "slotType": "护手",
     "setName": "点剑",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_phy01_hand_03": {
     "name": "点剑战术手甲·壹型",
     "slotType": "护手",
     "setName": "点剑",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_poise01_body_01": {
     "name": "轻超域护板",
     "slotType": "护甲",
     "setName": "轻超域",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_poise01_edc_01": {
     "name": "轻超域分析环",
     "slotType": "配件",
     "setName": "轻超域",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_poise01_edc_02": {
     "name": "轻超域稳定盘",
     "slotType": "配件",
     "setName": "轻超域",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_poise01_edc_03": {
     "name": "轻超域稳定盘·壹型",
     "slotType": "配件",
     "setName": "轻超域",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_poise01_edc_04": {
     "name": "轻超域腕表",
     "slotType": "配件",
     "setName": "轻超域",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_poise01_hand_01": {
     "name": "轻超域护手",
     "slotType": "护手",
     "setName": "轻超域",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_poise01_hand_02": {
     "name": "轻超域轻护手",
     "slotType": "护手",
     "setName": "轻超域",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_pulse_cryst01_body_01": {
     "name": "脉冲式干扰服",
     "slotType": "护甲",
     "setName": "脉冲式",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_pulse_cryst01_edc_01": {
     "name": "脉冲式探针",
     "slotType": "配件",
     "setName": "脉冲式",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_pulse_cryst01_edc_02": {
     "name": "脉冲式校准器",
     "slotType": "配件",
     "setName": "脉冲式",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_pulse_cryst01_edc_03": {
     "name": "脉冲式侵入核",
     "slotType": "配件",
     "setName": "脉冲式",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_pulse_cryst01_hand_01": {
     "name": "脉冲式手套",
     "slotType": "护手",
     "setName": "脉冲式",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_spellburst_body_01": {
     "name": "险关装甲",
     "slotType": "护甲",
     "setName": "险关",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_spellburst_edc_01": {
     "name": "险关通信器",
     "slotType": "配件",
     "setName": "险关",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_spellburst_hand_01": {
     "name": "险关手甲",
     "slotType": "护手",
     "setName": "险关",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_usp02_body_01": {
     "name": "长息装甲",
     "slotType": "护甲",
     "setName": "长息",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_usp02_body_03": {
     "name": "长息轻护甲",
     "slotType": "护甲",
     "setName": "长息",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_usp02_body_04": {
     "name": "长息轻护甲·壹型",
     "slotType": "护甲",
     "setName": "长息",
-    "defense": 56.0
+    "defense": 56
   },
   "item_equip_t4_suit_usp02_edc_01": {
     "name": "长息蓄电核",
     "slotType": "配件",
     "setName": "长息",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_usp02_edc_02": {
     "name": "长息蓄电核·壹型",
     "slotType": "配件",
     "setName": "长息",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_usp02_edc_03": {
     "name": "长息辅助臂",
     "slotType": "配件",
     "setName": "长息",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_usp02_edc_04": {
     "name": "长息加固板",
     "slotType": "配件",
     "setName": "长息",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_usp02_edc_05": {
     "name": "长息加固板·壹型",
     "slotType": "配件",
     "setName": "长息",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_usp02_edc_06": {
     "name": "长息重护板",
     "slotType": "配件",
     "setName": "长息",
-    "defense": 21.0
+    "defense": 21
   },
   "item_equip_t4_suit_usp02_hand_01": {
     "name": "长息护手",
     "slotType": "护手",
     "setName": "长息",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_usp02_hand_02": {
     "name": "长息护手·壹型",
     "slotType": "护手",
     "setName": "长息",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_usp02_hand_03": {
     "name": "长息裹手",
     "slotType": "护手",
     "setName": "长息",
-    "defense": 42.0
+    "defense": 42
   },
   "item_equip_t4_suit_usp02_hand_04": {
     "name": "长息手套",
     "slotType": "护手",
     "setName": "长息",
-    "defense": 42.0
+    "defense": 42
   }
 }

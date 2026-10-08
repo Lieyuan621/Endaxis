@@ -10,6 +10,8 @@ const GAME_PUBLIC_PREFIXES = [
 
 /** 只提取可静态证明的 WebP 字面量；动态拼接必须由上层另行登记。 */
 export function readGameIconReferences(source: string): readonly string[] {
+  // JSON 文本中的 <image="..."> 引号会被转义，仍是必须导出的静态引用。
+  source = source.replaceAll('\\"', '"');
   const references = new Set<string>();
   for (const prefix of GAME_PUBLIC_PREFIXES) {
     const expression = new RegExp(

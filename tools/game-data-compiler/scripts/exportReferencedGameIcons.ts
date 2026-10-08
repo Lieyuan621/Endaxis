@@ -1,4 +1,3 @@
-import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { access, copyFile, mkdir, readFile, readdir, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -15,8 +14,6 @@ type Candidate = {
   readonly rawUrl: string;
 };
 
-type RichTextSourceManifest = Readonly<Record<string, readonly string[]>>;
-
 type IconReference = {
   readonly publicPath: string;
   readonly sourceNames: readonly string[];
@@ -29,7 +26,6 @@ const PROJECT_ROOT = path.resolve(import.meta.dirname, '../../..');
 const PUBLIC_ROOT = path.join(PROJECT_ROOT, 'public');
 const SOURCE_ROOT = path.join(PROJECT_ROOT, 'src');
 const TMP_ROOT = path.join(PROJECT_ROOT, 'tmp', 'referenced-game-icons');
-const RICH_TEXT_SOURCE_MANIFEST = path.join(TMP_ROOT, 'rich-text-icon-sources.json');
 const REPORT_PATH = path.join(TMP_ROOT, 'audit.json');
 const TEXT_EXTENSIONS = new Set(['.css', '.html', '.js', '.json', '.scss', '.ts', '.tsx', '.vue']);
 const PUBLIC_ICON_SOURCE_ALIASES = new Map<
@@ -132,7 +128,6 @@ export type ExportGameIconsArguments = {
   readonly cdn: string;
   readonly overwrite: boolean;
   readonly dryRun: boolean;
-  readonly refreshRichText: boolean;
   readonly prune: boolean;
   readonly vfsBaseUrl: string;
   readonly gameDataSourceRoot: string;
@@ -148,7 +143,6 @@ export function parseArguments(argv: readonly string[]): ExportGameIconsArgument
   let cdn = DEFAULT_CDN;
   let overwrite = false;
   let dryRun = false;
-  let refreshRichText = false;
   let prune = false;
   let vfsBaseUrl = 'http://127.0.0.1:8765';
   let gameDataSourceRoot = path.join(PROJECT_ROOT, 'tmp', 'game-data-sources');
@@ -162,8 +156,6 @@ export function parseArguments(argv: readonly string[]): ExportGameIconsArgument
         throw new Error('--workers requires a positive integer');
     } else if (argument === '--overwrite') overwrite = true;
     else if (argument === '--dry-run') dryRun = true;
-    else if (argument === '--refresh-rich-text') refreshRichText = true;
-    else if (argument === '--skip-rich-text-refresh') refreshRichText = false;
     else if (argument === '--prune') prune = true;
     else if (argument === '--vfs-base-url')
       vfsBaseUrl = requireArgumentValue(argv, ++index, argument);
@@ -186,7 +178,6 @@ export function parseArguments(argv: readonly string[]): ExportGameIconsArgument
     cdn,
     overwrite,
     dryRun,
-    refreshRichText,
     prune,
     vfsBaseUrl,
     gameDataSourceRoot,
@@ -255,32 +246,6 @@ async function collectLiteralReferences(
     }),
   );
   return references;
-}
-
-async function runRichTextExporter(refreshRichText: boolean): Promise<void> {
-  await mkdir(TMP_ROOT, { recursive: true });
-  const script = path.join(import.meta.dirname, 'exportGameLocales.py');
-  await new Promise<void>((resolve, reject) => {
-    const child = spawn(
-      process.platform === 'win32' ? 'python' : 'python3',
-      [
-        script,
-        '--icon-source-manifest',
-        RICH_TEXT_SOURCE_MANIFEST,
-        ...(refreshRichText ? [] : ['--icon-source-manifest-only']),
-      ],
-      { cwd: PROJECT_ROOT, stdio: 'inherit' },
-    );
-    child.once('error', reject);
-    child.once('exit', code =>
-      code === 0 ? resolve() : reject(new Error(`rich text locale exporter exited with ${code}`)),
-    );
-  });
-}
-
-async function readRichTextSourceManifest(): Promise<RichTextSourceManifest> {
-  if (!(await exists(RICH_TEXT_SOURCE_MANIFEST))) return {};
-  return JSON.parse(await readFile(RICH_TEXT_SOURCE_MANIFEST, 'utf8')) as RichTextSourceManifest;
 }
 
 async function findTableDirectory(sourceRoot: string): Promise<string> {
@@ -437,7 +402,6 @@ export async function addEquipmentConfiguredReferences(
 
 function sourcePlanForReference(
   publicPath: string,
-  richTextSources: RichTextSourceManifest,
   configuredOverrides: ReadonlyMap<
     string,
     { sourceNames: string[]; preferredPathSegments: string[] }
@@ -450,13 +414,6 @@ function sourcePlanForReference(
     return {
       sourceNames: [alias.sourceName],
       preferredPathSegments: [alias.preferredPathSegment],
-    };
-  }
-  const richText = richTextSources[publicPath];
-  if (richText?.length) {
-    return {
-      sourceNames: richText.map(source => `${path.posix.basename(source)}.png`),
-      preferredPathSegments: richText.map(source => `/${source}.png`),
     };
   }
   const stem = path.posix.basename(publicPath, '.webp');
@@ -503,12 +460,11 @@ async function buildReferenceClosure(
       throw new Error(`conflicting product icon source: ${publicPath}`);
     configuredOverrides.set(publicPath, source);
   }
-  const richTextSources = await readRichTextSourceManifest();
   return [...references]
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([publicPath, owners]) => ({
       publicPath,
-      ...sourcePlanForReference(publicPath, richTextSources, configuredOverrides),
+      ...sourcePlanForReference(publicPath, configuredOverrides),
       referencedBy: [...owners].sort(),
     }));
 }
@@ -540,8 +496,13 @@ function selectCandidate(reference: IconReference, candidates: readonly Candidat
       candidate.path.toLowerCase().includes(segment.toLowerCase()),
     );
     if (matching.length === 1) return matching[0]!;
+    if (matching.length > 1 && reference.publicPath.startsWith('/icons/'))
+      return matching.sort((a, b) => a.path.localeCompare(b.path, 'en'))[0]!;
   }
   if (candidates.length === 1) return candidates[0]!;
+  // icons 按文件名共享；同名资源优先采用既有目录偏好，再按完整路径稳定选择。
+  if (reference.publicPath.startsWith('/icons/'))
+    return [...candidates].sort((a, b) => a.path.localeCompare(b.path, 'en'))[0]!;
   throw new Error(
     `${reference.publicPath}: ambiguous Unity assets:\n${candidates.map(candidate => `  ${candidate.path}`).join('\n')}`,
   );
@@ -607,6 +568,8 @@ export async function exportReference(
       fallbackReason = 'akedb-http-404';
     }
   }
+  if (cdn && reference.publicPath.startsWith('/icons/'))
+    throw new Error(`${reference.publicPath}: image unavailable in AKEDB`);
   const selected = selectCandidate(
     reference,
     await queryCandidates(arguments_.vfsBaseUrl, reference.sourceNames),
@@ -678,10 +641,11 @@ export async function exportReferencedGameIcons(arguments_: ExportGameIconsArgum
   readonly auditOutput: string;
 }> {
   await mkdir(TMP_ROOT, { recursive: true });
-  await runRichTextExporter(arguments_.refreshRichText);
   const references = await buildReferenceClosure(arguments_);
   const snapshot =
-    arguments_.sourceMode === 'hybrid' ? await AkedbSnapshot.load(arguments_.cdn) : undefined;
+    arguments_.sourceMode === 'hybrid'
+      ? await AkedbSnapshot.load(arguments_.cdn)
+      : undefined;
   const results: Array<Awaited<ReturnType<typeof exportReference>>> = [];
   const failures: Array<{ publicPath: string; error: string }> = [];
   // 复用来源下载的有界调度；各图校验独立，账本按资源路径排序而不是按请求完成顺序。

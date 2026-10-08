@@ -1,7 +1,5 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
 import { pathToFileURL } from 'node:url';
 import {
   downloadGameDataSources,
@@ -40,9 +38,12 @@ import { auditCandidateEnemyDefinitions } from './auditCandidateEnemyDefinitions
 import { exportReferencedGameIcons } from './exportReferencedGameIcons.ts';
 import { publishGameDataCandidate } from '../src/compiler/publication/gameDataCandidatePublisher.ts';
 import { OPERATOR_DEFINITION_OUTPUTS } from './operatorDefinitionOutputs.ts';
+import {
+  generateGameLocaleCandidate,
+  type GameLocaleCandidateInput,
+} from '../src/compiler/publication/gameLocaleCandidate.ts';
 
 const PROJECT_ROOT = path.resolve(import.meta.dirname, '../../..');
-const runFile = promisify(execFile);
 const GAME_LOCALE_FILES = ['zh', 'en'].flatMap(locale =>
   [
     'operators',
@@ -716,9 +717,9 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
               uiLocaleRoot: path.join(root, 'src/i18n/locales'),
               output,
             };
-            const generated = await exportCandidateGameLocales(root, input);
+            const generated = await exportCandidateGameLocales(input);
             const before = await readDirectoryTextFiles(output);
-            await exportCandidateGameLocales(root, input);
+            await exportCandidateGameLocales(input);
             const after = await readDirectoryTextFiles(output);
             if (!sameTextFiles(before, after))
               throw new Error('locale candidate output changed on identical second generation');
@@ -740,7 +741,6 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
               cdn: args.cdn,
               overwrite: false,
               dryRun: false,
-              refreshRichText: false,
               prune: false,
               vfsBaseUrl: args.vfsBase.replace(/\/api\/endaxis-data\/?$/, ''),
               gameDataSourceRoot: sourceRoot,
@@ -1094,43 +1094,12 @@ async function compareCandidateFileSet(
   return { baselinePresent: added.length !== files.length, added, changed, removed: [] };
 }
 
-interface CandidateLocaleInput {
-  readonly tableRoot: string;
-  readonly operatorManifest: string;
-  readonly weaponDefinitionRoot: string;
-  readonly gearDefinitionRoot: string;
-  readonly gearSetDefinitionRoot: string;
-  readonly uiLocaleRoot: string;
-  readonly output: string;
-}
-
 /**
  * 本地化必须消费本次候选定义的稳定身份，不能从正式本地化或旧生成目录反推。
- * Python 仍是既有文本清洗实现；统一入口负责固定全部输入并复验完整输出契约。
+ * 统一入口固定全部输入并复验完整输出契约。
  */
-async function exportCandidateGameLocales(projectRoot: string, input: CandidateLocaleInput) {
-  const script = path.join(projectRoot, 'tools/game-data-compiler/scripts/exportGameLocales.py');
-  await runFile(
-    'python',
-    [
-      script,
-      '--table-root',
-      input.tableRoot,
-      '--operator-manifest',
-      input.operatorManifest,
-      '--weapon-definition-root',
-      input.weaponDefinitionRoot,
-      '--gear-definition-root',
-      input.gearDefinitionRoot,
-      '--gear-set-definition-root',
-      input.gearSetDefinitionRoot,
-      '--ui-locale-root',
-      input.uiLocaleRoot,
-      '--output',
-      input.output,
-    ],
-    { cwd: projectRoot, maxBuffer: 16 * 1024 * 1024 },
-  );
+async function exportCandidateGameLocales(input: GameLocaleCandidateInput) {
+  await generateGameLocaleCandidate(input);
   const expectedFiles = [
     'consumables.json',
     'contingency-contracts.json',
