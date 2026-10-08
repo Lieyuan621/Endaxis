@@ -37,6 +37,8 @@ export function projectSkillCooldownTimelineViz(
   }
 
   const open = new Map<string, SkillCooldownTimelineSegment>();
+  // 清零不抹去展示归属。后续动作重新设置同一技能的冷却，仍挂回最近一次施放。
+  const lastCastIds = new Map<string, string>();
   const closed: SkillCooldownTimelineSegment[] = [];
 
   for (const entry of entries) {
@@ -56,6 +58,7 @@ export function projectSkillCooldownTimelineViz(
     if (entry.event === 'SkillCooldownReserved') {
       const castId = stringData(entry.data, 'castId');
       if (castId === undefined) continue;
+      lastCastIds.set(key, castId);
       const previous = open.get(key);
       if (previous !== undefined) {
         closed.push({ ...previous, endFrame: entry.frame, completed: false });
@@ -71,7 +74,26 @@ export function projectSkillCooldownTimelineViz(
       continue;
     }
 
-    if (entry.event === 'SkillCooldownAdjusted' && entry.data?.ready !== true) continue;
+    if (entry.event === 'SkillCooldownAdjusted' && entry.data?.ready !== true) {
+      const castId = lastCastIds.get(key);
+      if (
+        !open.has(key) &&
+        castId !== undefined &&
+        entry.data?.ready === false &&
+        typeof entry.data.remainingFrames === 'number' &&
+        entry.data.remainingFrames > 0
+      ) {
+        open.set(key, {
+          operatorId,
+          skillId,
+          castId,
+          startFrame: entry.frame,
+          endFrame,
+          completed: false,
+        });
+      }
+      continue;
+    }
 
     const active = open.get(key);
     if (active === undefined) continue;

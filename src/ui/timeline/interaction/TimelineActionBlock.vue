@@ -218,7 +218,8 @@ function cooldownBarStyle(index: number): Record<string, string> {
   if (bar === undefined) return {};
   return {
     left: `${bar.offsetFrames * props.pxPerFrame}px`,
-    top: `${56 + ((props.operationType === 'ultimate' ? 1 : 0) + index) * 8}px`,
+    // 同一技能块的冷却区间先后发生，清零后重新计时仍使用同一行。
+    top: `${56 + (props.operationType === 'ultimate' ? 1 : 0) * 8}px`,
     width: `${Math.max(1, bar.durationFrames * props.pxPerFrame)}px`,
   };
 }
@@ -226,10 +227,7 @@ function cooldownBarStyle(index: number): Record<string, string> {
 function enhancementBarStyle(index: number): Record<string, string> {
   const bar = props.enhancementBars?.[index];
   if (bar === undefined) return {};
-  const firstRow =
-    props.operationType === 'ultimate'
-      ? Math.max(2, 1 + (props.cooldownBars?.length ?? 0))
-      : (props.cooldownBars?.length ?? 0);
+  const firstRow = props.operationType === 'ultimate' ? 2 : props.cooldownBars?.length ? 1 : 0;
   return {
     left: `${bar.offsetFrames * props.pxPerFrame}px`,
     top: `${56 + (firstRow + index) * 8}px`,

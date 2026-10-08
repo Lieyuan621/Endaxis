@@ -446,13 +446,19 @@ describe('compileScenarioTimeline', () => {
               routedReplacementSkills: [
                 {
                   skill: routed,
-                  // 路由包装元数据即便滞后，也不能覆盖单个技能自己的战斗类型与等级来源。
-
                   executionSkillKey: 'comboSkill',
                 },
               ],
             }
-          : group,
+          : group.key === 'comboSkill'
+            ? {
+                ...group,
+                replacementSkills: [
+                  ...(group.replacementSkills ?? []),
+                  { ...routed, key: 'comboSkill' },
+                ],
+              }
+            : group,
       ),
     };
 
@@ -970,6 +976,46 @@ it('binds graph timeline casts and custom overrides without losing cast or input
   for (const binding of programs)
     for (const action of binding.program.timelineActions)
       expect('steps' in action.sequence).toBe(false);
+});
+
+it('keeps a routed cast custom graph and blackboard instead of substituting the official body', () => {
+  const track = place(createScenario(), 'battleSkill', 30).tracks[0]!;
+  const wrapper = { ...requireSingleSkill('battleSkill'), key: 'routed-battle' };
+  const operator: OperatorDefinition = {
+    ...perlica,
+    skillGroups: perlica.skillGroups.map(group =>
+      group.key === 'battleSkill'
+        ? {
+            ...group,
+            routedReplacementSkills: [
+              { skill: wrapper, executionSkillKey: requireSingleSkill('comboSkill').key },
+            ],
+          }
+        : group,
+    ),
+  };
+  const cast = {
+    ...track.skillCasts[0]!,
+    source: { kind: 'operatorSkill' as const, skillGroupKey: 'battleSkill', skillKey: wrapper.key },
+    customDefinition: {
+      ...wrapper,
+      blackboard: { custom_marker: 42 },
+      scheduledSequences: [],
+      actionGraph: { main: { nodes: {} }, macros: {} },
+    },
+  };
+  const [binding] = compileOperatorSkillCastPrograms(
+    track.id,
+    [cast],
+    track.operator!,
+    operator,
+    undefined,
+    undefined,
+    new ActionGraphDefinitionRepository(),
+  );
+  expect(binding!.program.initialBlackboard.custom_marker).toBe(42);
+  expect(binding!.program.timelineActions).toEqual([]);
+  expect(binding!.program.executionSkillId).toBe(requireSingleSkill('comboSkill').key);
 });
 
 it('keeps common ability entity child programs in their own graph across ID collisions', () => {

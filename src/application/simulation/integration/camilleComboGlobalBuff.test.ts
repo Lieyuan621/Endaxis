@@ -2,6 +2,14 @@ import { expect, it } from 'vitest';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import type { ScenarioDocument } from '../../../core/project/schema';
 import { createEditorSimulationService } from '../testSupport/editorSimulationService';
+import { ActionExecutionTrace } from '../../../core/combat/actions/actionExecutionTrace';
+import { getCompiledGraphLocation } from '../../../core/compiler/compileActionGraph';
+import { gameDataRepository } from '../../../data/gameDataRepository';
+import {
+  resolveEffectiveSkillDefinition,
+  resolveSkillExecutionDefinition,
+} from '../../../core/compiler/resolveSkillDefinition';
+import { indexExecutionTrace } from '../executionTraceNavigation';
 
 function createScenario(camilleTalentLevel: number): ScenarioDocument {
   const scenario = createEmptyScenario('camille-combo-global-buff', '卡米拉连携增伤');
@@ -108,6 +116,18 @@ it('卡缪终结技后的追猎造成伤害但不消耗技力', async () => {
   scenario.tracks[1]!.skillCasts = [];
   const run = await createEditorSimulationService().simulate(scenario, 480);
   expect(expectedDamageForCast(run.receiptEntries, 'camille:hunt')).toBeGreaterThan(0);
+  const trace = new ActionExecutionTrace('camille:hunt');
+  createEditorSimulationService().diagnoseExecution(scenario, trace);
+  const operator = gameDataRepository.getOperator('camille')!;
+  const resolved = resolveEffectiveSkillDefinition(track.skillCasts[1]!, operator);
+  const skill = resolveSkillExecutionDefinition(resolved, operator);
+  expect(skill.key).toBe('chr_0033_camille_combo_skill_2');
+  const index = indexExecutionTrace(
+    trace.records,
+    record =>
+      getCompiledGraphLocation(record.program, record.nodeId)?.resource === skill.actionGraph,
+  );
+  expect(index.root.records.some(record => record.phase === 'execute')).toBe(true);
   expect(
     run.receiptEntries.filter(
       entry => entry.event === 'SpChanged' && Number(entry.data?.actualValue) < 0,

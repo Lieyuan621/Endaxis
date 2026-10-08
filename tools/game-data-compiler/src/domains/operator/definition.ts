@@ -641,6 +641,7 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
             : null;
     if (source !== null) registerRootBuffSource(application.buffId, source);
   }
+  let skillSlotReplacements: ReadonlyMap<string, readonly SkillBuffSlotReplacement[]> = new Map();
   const buffClosure = compileStandardStumpBuffClosure(
     roots,
     input.loadBuff,
@@ -650,7 +651,42 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
       catalog: entityCatalog,
       gameplayTagRegistry: input.gameplayTagRegistry,
     },
-    input.createBuffProjectionExtensions,
+    (sources, visualOnlyIds) => {
+      const extensions = input.createBuffProjectionExtensions?.(sources, visualOnlyIds) ?? {};
+      // 同一次分类决定由动作图还是 Buff 生命周期持有，避免两处判断漂移或静默漏执行。
+      const slotActionOwners = new Map<string, 'graph' | 'buffLifecycle'>();
+      skillSlotReplacements = compileOperatorBuffSkillSlotReplacements(
+        sources,
+        input.activeSkills.map(item => item.definition),
+        runtimeReplacementSkillKeys,
+        input.nativePlayerActionRouting?.slotBaseSkillKeys,
+        slotActionOwners,
+      );
+      return {
+        ...extensions,
+        compileSkillSlotReplacement: (action, sourcePath, context) => {
+          // 无限期恢复基础连携槽是结束动作，不是随 Buff 生灭的临时替换。
+          // 必须留在原序列位置，否则后续连携门禁仍会读取二段技能的冷却。
+          if (slotActionOwners.get(sourcePath) === 'graph') {
+            return [
+              {
+                kind: 'changeSkillSlot',
+                parameters: {
+                  skillSlotKey: 'comboSkill',
+                  targetSkillKey: action.targetSkillId,
+                  inheritOriginSkillCooldownProgress: false,
+                  lifetime: 'infinite',
+                },
+              },
+            ];
+          }
+          if (slotActionOwners.get(sourcePath) === 'buffLifecycle') return [];
+          if (extensions.compileSkillSlotReplacement)
+            return extensions.compileSkillSlotReplacement(action, sourcePath, context);
+          throw new Error(`${sourcePath}: skill-slot replacement has no execution owner`);
+        },
+      };
+    },
     rootBuffOwnerTargets,
     programBuffIdentityReads,
     input.gameplayTagRegistry,
@@ -866,12 +902,6 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
   }
   const privateBuffs: Record<string, CompiledBuffDefinitionSource> = {},
     commonBuffs: Record<string, CompiledBuffDefinitionSource> = {};
-  const skillSlotReplacements = compileOperatorBuffSkillSlotReplacements(
-    buffClosure.sources,
-    input.activeSkills.map(item => item.definition),
-    runtimeReplacementSkillKeys,
-    input.nativePlayerActionRouting?.slotBaseSkillKeys,
-  );
   const { sourceCharacterId, ...header } = compileOperatorDefinitionHeaderSource(foundation);
   const entityBlackboard = new Map<string, number | string>(
     [...(input.nativeMissingEntityBlackboardZeroKeys ?? [])].map(key => [key, 0]),
@@ -1286,7 +1316,9 @@ function compileOperatorBuffSkillSlotReplacements(
   sources: ReadonlyMap<string, BuffRuntimeSource>,
   skills: readonly CompiledOperatorActiveSkillRuntimeDefinitionSource[],
   runtimeReplacementSkillKeys: ReadonlySet<string>,
-  baseSkillKeyBySlot?: Readonly<Record<'battleSkill' | 'comboSkill' | 'ultimate', string>>,
+  baseSkillKeyBySlot:
+    Readonly<Record<'battleSkill' | 'comboSkill' | 'ultimate', string>> | undefined,
+  actionOwners: Map<string, 'graph' | 'buffLifecycle'>,
 ): ReadonlyMap<string, readonly SkillBuffSlotReplacement[]> {
   const knownSkillIds = new Set(skills.map(skill => skill.key));
   const result = new Map<string, readonly SkillBuffSlotReplacement[]>();
@@ -1319,8 +1351,8 @@ function compileOperatorBuffSkillSlotReplacements(
             restoredSkillKey !== undefined &&
             restoredSkillKey === baseSkillKeyBySlot?.comboSkill;
           if (isDirectComboRestore) {
-            // 原生在窗口 Buff 结束时把后续连携写回槽位；Endaxis 的现实时间轴由用户
-            // 直接放置后续技能，因此只保留技能身份/冷却逻辑，不驱动自动替换或摆放。
+            // 已作为结束序列中的 changeSkillSlot 编译，不再登记为 Buff 生存期替换。
+            actionOwners.set(node.sourcePath, 'graph');
             continue;
           }
           if (event.event !== 'DuringBuffEnable' || !directNodes.has(node)) {
@@ -1372,6 +1404,7 @@ function compileOperatorBuffSkillSlotReplacements(
             }
             revertedSkillKey = baseSkillKey;
           }
+          actionOwners.set(node.sourcePath, 'buffLifecycle');
           replacements.push({
             skillSlotKey: skillSlotKey,
             targetSkillKey,

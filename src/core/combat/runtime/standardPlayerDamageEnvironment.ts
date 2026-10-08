@@ -1969,6 +1969,9 @@ export class StandardPlayerDamageEnvironment {
           enabled: buff.isEnabled,
           ...(displayCount === undefined ? {} : { displayCount }),
           stackingType: buff.definition.stackingType,
+          ...(typeof buff.definition.maxStackCount === 'number'
+            ? { maxStackCount: buff.definition.maxStackCount }
+            : {}),
           hasFiniteLifetime: buff.remainingDuration !== null,
           sourceActionId: buff.sourceActionId,
           ...(event.skillCastInfo?.originCastId === undefined

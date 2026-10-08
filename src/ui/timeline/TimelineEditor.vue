@@ -205,7 +205,11 @@ import { referenceNavigationKey } from '../field-editor/referenceNavigation';
 import type { ReferenceNavigationTarget } from '../../application/editor/referenceResolver';
 import { operatorReferenceChoices } from '../../application/editor/operatorReferenceChoices';
 import type { ReferenceChoices } from '../definition-editor/fieldInputConfig';
-import { resolveSkillTemplateDefinition } from '../../core/compiler/resolveSkillDefinition';
+import {
+  resolveSkillTemplateDefinition,
+  resolveEffectiveSkillDefinition,
+  resolveSkillExecutionDefinition,
+} from '../../core/compiler/resolveSkillDefinition';
 import type { SkillDefinition, OperationType } from '../../core/game-data/operatorDefinition';
 import {
   getIconAssetPath,
@@ -467,12 +471,22 @@ function openExecutionTrace() {
   if (!selected?.currentDefinition) return;
   const source = structuredClone(toRaw(scenario.value));
   const service = createEditorSimulationService(editorGameDataRepository);
+  const cast = source.tracks[selected.trackIndex]!.skillCasts.find(
+    cast => cast.id === selected.cast.id,
+  )!;
+  const definition = selected.operator
+    ? resolveSkillExecutionDefinition(
+        resolveEffectiveSkillDefinition(cast, toRaw(selected.operator)),
+        toRaw(selected.operator),
+      )
+    : (cast.customDefinition ?? toRaw(selected.currentDefinition));
   executionTraceRequest.value = {
     label: selected.label,
-    definition:
-      source.tracks[selected.trackIndex]!.skillCasts.find(cast => cast.id === selected.cast.id)
-        ?.customDefinition ?? toRaw(selected.currentDefinition),
-    presentation: selected.cast.presentation?.graph,
+    definition,
+    presentation:
+      definition === (cast.customDefinition ?? toRaw(selected.currentDefinition))
+        ? selected.cast.presentation?.graph
+        : undefined,
     run: () => {
       const trace = new ActionExecutionTrace(selected.cast.id);
       try {
@@ -1715,7 +1729,7 @@ const mobileTracks = computed<MobileTrack[]>(() =>
               id: `cooldown-${index}`,
               startFrame: visualStartFrame + bar.offsetFrames,
               endFrame: visualStartFrame + bar.offsetFrames + bar.durationFrames,
-              lane: effectDurationBars.length + index,
+              lane: effectDurationBars.length,
               color: '#ff6fae',
             })),
           ],

@@ -6,6 +6,7 @@ import type { OperatorDefinition, SkillGroupDefinition } from '../game-data/oper
 import type { SkillCastDocument } from '../project/schema';
 import {
   resolveEffectiveSkillDefinition,
+  resolveSkillExecutionDefinition,
   resolveSkillTemplateDefinition,
 } from './resolveSkillDefinition';
 import { listOperatorSkillDefinitionBindings } from '../game-data/operatorSkillDefinitions';
@@ -184,6 +185,9 @@ describe('resolveEffectiveSkillDefinition', () => {
     expect(sameSlot.levelSource).toBe('battleSkill');
     expect(routedSlot.definition).toBe(routed);
     expect(routedSlot.levelSource).toBe('comboSkill');
+    expect(() => resolveSkillExecutionDefinition(routedSlot, withReplacements)).toThrow(
+      "missing execution skill 'comboSkill'",
+    );
   });
 
   it('rejects an internal replacement as a player timeline input', () => {

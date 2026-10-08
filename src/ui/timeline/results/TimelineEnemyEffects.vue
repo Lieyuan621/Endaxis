@@ -27,7 +27,7 @@ import type { EnemyCombatHudSnapshot as EnemyCombatHudSnapshotModel } from '../.
 import EnemyCombatHudSnapshot from './EnemyCombatHudSnapshot.vue';
 import { resolveBuffDisplayName } from './buffDisplayName';
 import { commonBuffPresentationNameKeys } from '../../../data/buffs/generated/commonBuffPresentationNames.generated';
-import { resolveBuffEffectSummary } from './buffDisplayName';
+import { resolveBuffEffectSummary, showBuffLayerBadge } from './buffDisplayName';
 import type { BuffDetailTarget } from './buffDetail';
 import {
   DEFAULT_GAME_ICON_PATH,
@@ -429,7 +429,9 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
         >
           <img v-if="buff.icon" :src="buff.icon" class="anomaly-icon" alt="" />
           <span v-else class="buff-fallback">+</span>
-          <span class="anomaly-stacks">{{ Math.max(1, buff.layers) }}</span>
+          <span v-if="showBuffLayerBadge(buff)" class="anomaly-stacks">{{
+            Math.max(1, buff.layers)
+          }}</span>
         </button>
         <strong v-if="lastHitBuffOverflow > 0" class="last-hit-buff-more">
           +{{ lastHitBuffOverflow }}
@@ -527,7 +529,7 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
         >
           <img v-if="buff.icon" :src="buff.icon" class="anomaly-icon" alt="" />
           <span v-else class="buff-fallback">+</span>
-          <span class="anomaly-stacks">{{ buff.layers }}</span>
+          <span v-if="showBuffLayerBadge(buff)" class="anomaly-stacks">{{ buff.layers }}</span>
         </span>
         <svg
           v-if="buff.isAttachment && buff.barWidthPx > 0"

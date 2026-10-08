@@ -10,10 +10,35 @@ import type {
 } from '../game-data/operatorDefinition';
 
 import type { SkillCastDocument } from '../project/schema';
-import { listSkillGroupDefinitionBindings } from '../game-data/operatorSkillDefinitions';
+import {
+  listSkillGroupDefinitionBindings,
+  listOperatorSkillDefinitionBindings,
+} from '../game-data/operatorSkillDefinitions';
+
+/** 换槽包装技能保留施放身份；动作图来自路由执行体，诊断必须使用同一份定义。 */
+export function resolveSkillExecutionDefinition(
+  resolved: ResolvedSkillDefinition,
+  operator: OperatorDefinition,
+): SkillDefinition {
+  if (resolved.custom) return resolved.definition;
+  const route = resolved.group.routedReplacementSkills?.find(
+    replacement => replacement.skill.key === resolved.definition.key,
+  );
+  if (!route) return resolved.definition;
+  const execution = listOperatorSkillDefinitionBindings(operator).find(
+    binding => binding.skill.key === route.executionSkillKey,
+  )?.skill;
+  if (!execution)
+    throw new Error(
+      `skill '${operator.slug}/${resolved.definition.key}' routes to missing execution skill '${route.executionSkillKey}'`,
+    );
+  return execution;
+}
 
 /** 一次技能释放使用的技能定义及其所属技能组。 */
 export interface ResolvedSkillDefinition {
+  /** 技能块完整覆盖优先于官方路由执行体，不能在后续编译时被换回模板。 */
+  readonly custom?: boolean;
   /** 模拟和显示使用的技能定义。自定义定义优先，否则使用技能模板。 */
   readonly definition: SkillDefinition;
   /** 定义所属的编辑器技能库分组；只能用于展示、放置和兼容旧项目身份。 */
@@ -112,6 +137,7 @@ export function resolveEffectiveSkillDefinition(
     }
     return {
       definition,
+      custom: true,
       group: template.group,
       levelSource: definition.levelSource ?? template.levelSource,
       ...(template.variantKey === undefined ? {} : { variantKey: template.variantKey }),

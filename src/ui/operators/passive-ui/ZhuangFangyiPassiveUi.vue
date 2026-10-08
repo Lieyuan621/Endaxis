@@ -14,9 +14,10 @@ const zhuangPointPositions: readonly (readonly [number, number])[] = [
 ];
 const zhuangPoints = zhuangPointPositions.map(([x, y], index) => ({
   index: index + 1,
-  // Prefab：56×56 画布，点组中心 (-6.5, 4)，每个点 12×12。
-  left: 15.5 + x,
-  top: 18 - y,
+  // 保留原生点阵的相对位置；独立状态图标不沿用 HUD 的 (-6.5, 4) 锚点偏移。
+  // 56×56 画布，每个点 12×12，点阵中心对齐画布中心。
+  left: 22 + x,
+  top: 22 - y,
 }));
 const zhuangPointColor = (index: number) => {
   if (index > props.value) return 'rgb(122 122 122)';
@@ -71,8 +72,8 @@ img {
 .zhuang-frame {
   position: absolute;
   display: block;
-  top: 2px;
-  left: -0.5px;
+  top: 6px;
+  left: 6px;
   width: 44px;
   height: 44px;
   background: rgb(34 34 34);

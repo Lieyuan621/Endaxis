@@ -7,7 +7,7 @@ import { resolveDurationBarColor } from './durationBarColor';
 import { useI18n } from 'vue-i18n';
 import type { PositionedDisplayBuffTimelineSegment } from '../../../core/projection/buffTimelineViz';
 import { resolveBuffDisplayName } from './buffDisplayName';
-import { resolveBuffEffectSummary } from './buffDisplayName';
+import { resolveBuffEffectSummary, showBuffLayerBadge } from './buffDisplayName';
 import type { BuffDetailTarget } from './buffDetail';
 import TimelineStatusSegment from './TimelineStatusSegment.vue';
 import { getIconAssetPath } from '../../gameAssetPaths';
@@ -152,7 +152,7 @@ const items = computed(() =>
       :width="item.width"
       :title="item.tooltip"
       :duration-color="item.color"
-      :count="item.layers"
+      :count="showBuffLayerBadge(item) ? item.layers : undefined"
       interactive
       @activate="emit('open-detail', item.detail)"
     >

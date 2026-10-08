@@ -7483,7 +7483,19 @@ const rossiBuff8ActionGraph = {
         },
         next: null,
       },
-      finishBuffsById_3: {
+      changeSkillSlot_3: {
+        action: {
+          kind: 'changeSkillSlot',
+          parameters: {
+            skillSlotKey: 'comboSkill',
+            targetSkillKey: 'chr_0028_wulfa_combo_2_skill',
+            inheritOriginSkillCooldownProgress: false,
+            lifetime: 'infinite',
+          },
+        },
+        next: 'conditional_2',
+      },
+      finishBuffsById_4: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
@@ -7492,29 +7504,29 @@ const rossiBuff8ActionGraph = {
             reason: 'other',
           },
         },
-        next: 'conditional_2',
+        next: 'changeSkillSlot_3',
       },
-      setCurrentBuffTimePaused_4: {
+      setCurrentBuffTimePaused_5: {
         action: { kind: 'setCurrentBuffTimePaused', parameters: { paused: false } },
         next: null,
       },
-      conditional_5: {
+      conditional_6: {
         action: {
           kind: 'conditional',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-          whenTrue: { $sequence: 'setCurrentBuffTimePaused_4' },
+          whenTrue: { $sequence: 'setCurrentBuffTimePaused_5' },
         },
         next: null,
       },
-      setCurrentBuffTimePaused_6: {
+      setCurrentBuffTimePaused_7: {
         action: { kind: 'setCurrentBuffTimePaused', parameters: { paused: true } },
         next: null,
       },
-      conditional_7: {
+      conditional_8: {
         action: {
           kind: 'conditional',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-          whenTrue: { $sequence: 'setCurrentBuffTimePaused_6' },
+          whenTrue: { $sequence: 'setCurrentBuffTimePaused_7' },
         },
         next: null,
       },
@@ -7558,10 +7570,10 @@ const rossiBuff8: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 6, End_Early: 0, need_set_cd: 1 },
   attributeModifiers: [],
-  lifecycleSequences: { finish: { $sequence: 'finishBuffsById_3' } },
+  lifecycleSequences: { finish: { $sequence: 'finishBuffsById_4' } },
   abilityEventResponses: [
-    { event: 'finishedBuff', priority: 0, sequence: { $sequence: 'conditional_5' } },
-    { event: 'beforeCastSkill', priority: 0, sequence: { $sequence: 'conditional_7' } },
+    { event: 'finishedBuff', priority: 0, sequence: { $sequence: 'conditional_6' } },
+    { event: 'beforeCastSkill', priority: 0, sequence: { $sequence: 'conditional_8' } },
   ],
   actionGraph: rossiBuff8ActionGraph,
 };

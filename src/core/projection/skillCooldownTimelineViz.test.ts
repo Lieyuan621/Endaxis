@@ -6,12 +6,56 @@ function receipt(
   sequence: number,
   frame: number,
   event: string,
-  data: Readonly<Record<string, string | number>>,
+  data: Readonly<Record<string, string | number | boolean>>,
 ): CombatReceiptEntry {
   return { sequence, frame, time: frame / 30, event, sourceId: 'operator', data };
 }
 
 describe('skill cooldown timeline projection', () => {
+  it('reopens adjusted cooldowns on their original cast without bridging the ready window', () => {
+    const entries = [
+      receipt(0, 10, 'SkillCooldownReserved', { skillId: 'combo', castId: 'cast:1' }),
+      receipt(1, 30, 'SkillCooldownAdjusted', {
+        skillId: 'combo',
+        remainingFrames: 0,
+        ready: true,
+      }),
+      receipt(2, 50, 'SkillCooldownAdjusted', {
+        skillId: 'combo',
+        remainingFrames: 100,
+        ready: false,
+      }),
+      receipt(3, 60, 'SkillCooldownAdjusted', {
+        skillId: 'combo',
+        remainingFrames: 80,
+        ready: false,
+      }),
+    ];
+    expect(projectSkillCooldownTimelineViz(entries, 90)).toEqual([
+      {
+        operatorId: 'operator',
+        skillId: 'combo',
+        castId: 'cast:1',
+        startFrame: 10,
+        endFrame: 30,
+        completed: true,
+      },
+      {
+        operatorId: 'operator',
+        skillId: 'combo',
+        castId: 'cast:1',
+        startFrame: 50,
+        endFrame: 90,
+        completed: false,
+      },
+    ]);
+    expect(
+      projectSkillCooldownTimelineViz(
+        [...entries, receipt(4, 140, 'SkillCooldownReady', { skillId: 'combo' })],
+        180,
+      ).at(-1),
+    ).toMatchObject({ startFrame: 50, endFrame: 140, completed: true });
+  });
   it('projects a reserved cooldown onto the cast that started it', () => {
     expect(
       projectSkillCooldownTimelineViz(

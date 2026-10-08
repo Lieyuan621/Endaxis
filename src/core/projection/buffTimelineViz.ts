@@ -15,6 +15,7 @@ export function isCorrosionTimelineBuff(buffId: string | undefined): boolean {
 }
 
 export interface BuffTimelineSegment {
+  readonly maxStackCount?: number;
   readonly attributeEffects?: readonly import('../combat/receipt/combatReceipt').BuffAttributeEffect[];
   readonly damageEffects?: readonly import('../combat/receipt/combatReceipt').BuffDamageEffect[];
   readonly sourceId?: string;
@@ -848,6 +849,9 @@ function projectBuffSegments(
           }),
       enabled: requireBoolean(entry, data, 'enabled'),
       enhanceCount: requireNumber(entry, data, 'layers'),
+      ...(optionalNumber(data, 'maxStackCount') === undefined
+        ? {}
+        : { maxStackCount: optionalNumber(data, 'maxStackCount') }),
       ...(optionalNumber(data, 'displayCount') === undefined
         ? {}
         : { displayCount: optionalNumber(data, 'displayCount') }),

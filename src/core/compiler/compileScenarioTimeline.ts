@@ -23,10 +23,7 @@ import type {
   OperatorDefinition,
   SkillType,
 } from '../game-data/operatorDefinition';
-import {
-  listOperatorSkillDefinitionBindings,
-  listSkillGroupDefinitionBindings,
-} from '../game-data/operatorSkillDefinitions';
+import { listSkillGroupDefinitionBindings } from '../game-data/operatorSkillDefinitions';
 import { resolveUniquePlayerActionForSkill } from '../game-data/resolvePlayerActionRoute';
 import type {
   OperatorInstanceDocument,
@@ -51,6 +48,7 @@ import { resolveOperatorPanel } from './resolveOperatorPanel';
 import type { ResolvedScenarioBuild } from './resolveScenarioBuilds';
 import {
   resolveEffectiveSkillDefinition,
+  resolveSkillExecutionDefinition,
   type ResolvedSkillDefinition,
 } from './resolveSkillDefinition';
 
@@ -207,13 +205,11 @@ function compileCastSkillPrograms(
   );
   // 换入释放用执行体图编译动作程序（节点身份前缀为 executionSkillKey），
   // 包装器只保留释放身份、费用与冷却；二者在生成数据中图内容一致。
-  // 执行体缺失（如自定义干员的滞后元数据）时回退到包装器自身的图。
+  // 技能块完整自定义优先；官方路由缺失执行体则拒绝编译，不能静默换用包装图。
   const executionDefinition =
     routed === undefined || operator === undefined || build === undefined
       ? undefined
-      : listOperatorSkillDefinitionBindings(operator)
-          .map(binding => binding.skill)
-          .find(skill => skill.key === routed.executionSkillKey);
+      : resolveSkillExecutionDefinition(resolved, operator);
   const definitions: SkillCompilationBinding[] = [
     {
       skill: definition,
@@ -237,7 +233,11 @@ function compileCastSkillPrograms(
       skillLevel: definitionLevel,
       skill,
     });
-    if (executionSkillId === undefined || executionDefinition === undefined) {
+    if (
+      executionSkillId === undefined ||
+      executionDefinition === undefined ||
+      executionDefinition === definition
+    ) {
       return {
         castId: cast.id,
         program: {

@@ -8,6 +8,15 @@ import type {
 
 const ARTS_TYPES = ['heat', 'electric', 'cryo', 'nature'] as const;
 
+/** 只隐藏明确的单层上限；自定义显示计数及多个实例聚合出的数量仍保留。 */
+export function showBuffLayerBadge(segment: {
+  readonly maxStackCount?: number;
+  readonly displayCount?: number;
+  readonly layers: number;
+}): boolean {
+  return segment.maxStackCount !== 1 || segment.displayCount !== undefined || segment.layers > 1;
+}
+
 /** 只聚合相同属性与公式槽；独立乘法相乘，其余槽相加，不改变原始回执。 */
 function aggregateAttributeEffects(effects: readonly BuffAttributeEffect[]): BuffAttributeEffect[] {
   const attributes = new Map<string, Map<string, BuffAttributeEffect>>();
