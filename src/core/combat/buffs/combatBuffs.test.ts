@@ -1,3 +1,4 @@
+import { GameplayTagPredefine } from '../tags/gameplayTagPredefine';
 import { chainEntry } from '../../../test/compiledGraphEntry';
 import { CombatActionSequenceRuntime } from '../actions/combatActionSequenceRuntime';
 import { createDamageModifierCondition } from '../damage/damageModifierSequenceRuntime';
@@ -3074,22 +3075,29 @@ describe('CombatBuffContainer', () => {
     expect(buff.enhanceCount).toBe(3);
   });
 
-  it('Buff 添加冷却在接收者上拒绝同 ID 重复添加并按普通时间到期', () => {
-    const container = new CombatBuffContainer('operator', new CombatAttributeSet<string>());
-    const definition = {
-      id: 'arrow-buffer',
-      stackingType: 'unlimited',
-      durationSeconds: 3,
-      addingCooldownSeconds: 0.2,
-    } as const;
+  it.each([undefined, 'shared-cooldown'])(
+    'Buff 添加冷却按叠层键 %s 共享并按普通时间到期',
+    stackingKey => {
+      const container = new CombatBuffContainer('operator', new CombatAttributeSet<string>());
+      const definition = {
+        id: 'arrow-buffer',
+        stackingKey,
+        stackingType: 'unlimited',
+        durationSeconds: 3,
+        addingCooldownSeconds: 0.2,
+      } as const;
 
-    expect(container.add(definition, 'operator')).not.toBeNull();
-    expect(container.add(definition, 'operator')).toBeNull();
-    container.tick(0.19);
-    expect(container.add(definition, 'operator')).toBeNull();
-    container.tick(0.02);
-    expect(container.add(definition, 'operator')).not.toBeNull();
-  });
+      expect(container.add(definition, 'operator')).not.toBeNull();
+      const repeated =
+        stackingKey === undefined ? definition : { ...definition, id: 'other-buffer' };
+      expect(container.add(repeated, 'operator')).toBeNull();
+      expect(container.add(definition, 'operator')).toBeNull();
+      container.tick(0.19);
+      expect(container.add(definition, 'operator')).toBeNull();
+      container.tick(0.02);
+      expect(container.add(definition, 'operator')).not.toBeNull();
+    },
+  );
 
   it('ignoreAddingCooldown 只跳过检查，叠层拒绝后仍保留新冷却标记', () => {
     const container = new CombatBuffContainer('operator', new CombatAttributeSet<string>());
@@ -3145,4 +3153,55 @@ describe('CombatBuffContainer', () => {
     buff.finish('other');
     expect(attributes.get('agility')).toBe(80);
   });
+});
+
+it('标签免疫在添加冷却和前置事件之前拒绝 Buff，显式忽略免疫时仍可施加', () => {
+  const rules = new GameplayTagPredefine({
+    tags: {},
+    queries: {},
+    immunityQueries: [
+      { tag: 'Status/Frozen', query: { tags: ['Immune/Frozen'], queryType: 'hasAny' } },
+    ],
+  });
+  const container = new CombatBuffContainer(
+    'owner',
+    new CombatAttributeSet<string>(),
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    rules,
+  );
+  container.addEntityTags(['Immune/Frozen']);
+  const definition: CombatBuffDefinition<string> = {
+    id: 'frozen',
+    stackingType: 'unique',
+    applyTags: ['Status/Frozen'],
+    addingCooldownSeconds: 1,
+  };
+  let before = 0;
+  expect(container.add(definition, 'source', undefined, undefined, () => before++)).toBeNull();
+  expect(before).toBe(0);
+  expect(container.runtimeState.addingCooldowns.size).toBe(0);
+  expect(
+    container.add(
+      { ...definition, ignoreTagImmune: true },
+      'source',
+      undefined,
+      undefined,
+      () => before++,
+    ),
+  ).not.toBeNull();
+  expect(before).toBe(1);
+  expect(container.hasEntityTag('Status/Frozen')).toBe(true);
 });

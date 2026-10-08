@@ -61,6 +61,7 @@ export const akekuriChr_0019_karin_attack1ActionGraph = {
 export const akekuriChr_0019_karin_attack1: SkillDefinition = {
   actionGraph: akekuriChr_0019_karin_attack1ActionGraph,
   key: 'chr_0019_karin_attack1',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.2, 0.22, 0.24, 0.26, 0.28, 0.3, 0.32, 0.34, 0.36, 0.39, 0.42, 0.45],
@@ -198,6 +199,7 @@ export const akekuriChr_0019_karin_attack2ActionGraph = {
 export const akekuriChr_0019_karin_attack2: SkillDefinition = {
   actionGraph: akekuriChr_0019_karin_attack2ActionGraph,
   key: 'chr_0019_karin_attack2',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.13, 0.14, 0.15, 0.16, 0.18, 0.19, 0.2, 0.21, 0.23, 0.24, 0.26, 0.28],
@@ -302,6 +304,7 @@ export const akekuriChr_0019_karin_attack3ActionGraph = {
 export const akekuriChr_0019_karin_attack3: SkillDefinition = {
   actionGraph: akekuriChr_0019_karin_attack3ActionGraph,
   key: 'chr_0019_karin_attack3',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.33, 0.36, 0.39, 0.42, 0.46, 0.49, 0.52, 0.55, 0.59, 0.63, 0.67, 0.73],
@@ -454,6 +457,7 @@ export const akekuriChr_0019_karin_attack4ActionGraph = {
 export const akekuriChr_0019_karin_attack4: SkillDefinition = {
   actionGraph: akekuriChr_0019_karin_attack4ActionGraph,
   key: 'chr_0019_karin_attack4',
+  element: 'physical',
   blackboard: {
     atb: 19,
     atk_scale: [0.17, 0.18, 0.2, 0.21, 0.23, 0.25, 0.26, 0.28, 0.3, 0.32, 0.34, 0.37],
@@ -605,6 +609,7 @@ export const akekuriChr_0019_karin_power_attackActionGraph = {
 export const akekuriChr_0019_karin_power_attack: SkillDefinition = {
   actionGraph: akekuriChr_0019_karin_power_attackActionGraph,
   key: 'chr_0019_karin_power_attack',
+  element: 'physical',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
   timelineBlockFrames: 61,
   naturalDurationFrames: 137,
@@ -681,6 +686,7 @@ export const akekuriChr_0019_karin_plunging_attack_endActionGraph = {
 export const akekuriChr_0019_karin_plunging_attack_end: SkillDefinition = {
   actionGraph: akekuriChr_0019_karin_plunging_attack_endActionGraph,
   key: 'chr_0019_karin_plunging_attack_end',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
@@ -757,6 +763,7 @@ export const akekuriChr_0019_karin_normal_skillActionGraph = {
 export const akekuriChr_0019_karin_normal_skill: SkillDefinition = {
   actionGraph: akekuriChr_0019_karin_normal_skillActionGraph,
   key: 'chr_0019_karin_normal_skill',
+  element: 'heat',
   blackboard: {
     atk_scale: [1.42, 1.56, 1.71, 1.85, 1.99, 2.13, 2.28, 2.42, 2.56, 2.74, 2.95, 3.2],
     poise: 10,
@@ -1080,6 +1087,7 @@ export const akekuriChr_0019_karin_ultimate_skillActionGraph = {
 export const akekuriChr_0019_karin_ultimate_skill: SkillDefinition = {
   actionGraph: akekuriChr_0019_karin_ultimate_skillActionGraph,
   key: 'chr_0019_karin_ultimate_skill',
+  element: 'heat',
   blackboard: {
     atb_1: [19, 19, 20, 21, 21, 22, 23, 23, 24, 25, 25, 26],
     atb_2: [19, 20, 21, 21, 22, 23, 23, 24, 25, 25, 26, 27],
@@ -1417,6 +1425,7 @@ export const akekuriChr_0019_karin_combo_skillActionGraph = {
 
 export const akekuriChr_0019_karin_combo_skill: SkillDefinition = {
   key: 'chr_0019_karin_combo_skill',
+  element: 'physical',
   blackboard: {
     atb: 7.5,
     atb_up: 1,

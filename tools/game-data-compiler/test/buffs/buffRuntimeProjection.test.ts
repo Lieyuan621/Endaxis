@@ -1674,6 +1674,7 @@ describe('公共 Buff 运行时投影', () => {
     ['OnBuffStart', 'Source', 'ActionSource'],
     ['DuringBuffEnable', 'Owner', 'ActionOwner'],
     ['OnBuffAfterTryEnhanced', 'Target', 'ActionSource'],
+    ['OnBuffBeforeTryEnhanced', 'Target', 'ActionSource'],
   ] as const)('%s 的来源、持有者和默认目标不借用能力事件', (event, targetSource, buffSource) => {
     const source = sourceFixture();
     const sequence = source.graph.abilityEvents[0]!.actions[0]!;
@@ -1722,7 +1723,13 @@ describe('公共 Buff 运行时投影', () => {
       { gameplayTagRegistry: fixtureGameplayTagRegistry },
     );
     const key =
-      event === 'OnBuffStart' ? 'start' : event === 'DuringBuffEnable' ? 'enable' : 'afterEnhance';
+      event === 'OnBuffStart'
+        ? 'start'
+        : event === 'DuringBuffEnable'
+          ? 'enable'
+          : event === 'OnBuffBeforeTryEnhanced'
+            ? 'beforeEnhance'
+            : 'afterEnhance';
     const step = lifecycleSteps(definition, key)[0];
     expect(step).toMatchObject({
       kind: 'applyBuff',

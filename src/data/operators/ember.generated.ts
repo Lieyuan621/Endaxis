@@ -79,6 +79,7 @@ export const emberChr_0009_azrila_attack1ActionGraph = {
 export const emberChr_0009_azrila_attack1: SkillDefinition = {
   actionGraph: emberChr_0009_azrila_attack1ActionGraph,
   key: 'chr_0009_azrila_attack1',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.38, 0.42, 0.46, 0.5, 0.54, 0.57, 0.61, 0.65, 0.69, 0.74, 0.79, 0.86],
@@ -180,6 +181,7 @@ export const emberChr_0009_azrila_attack2ActionGraph = {
 export const emberChr_0009_azrila_attack2: SkillDefinition = {
   actionGraph: emberChr_0009_azrila_attack2ActionGraph,
   key: 'chr_0009_azrila_attack2',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.54, 0.59, 0.64, 0.7, 0.75, 0.8, 0.86, 0.91, 0.96, 1.03, 1.11, 1.2],
@@ -281,6 +283,7 @@ export const emberChr_0009_azrila_attack3ActionGraph = {
 export const emberChr_0009_azrila_attack3: SkillDefinition = {
   actionGraph: emberChr_0009_azrila_attack3ActionGraph,
   key: 'chr_0009_azrila_attack3',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.66, 0.73, 0.8, 0.86, 0.93, 0.99, 1.06, 1.13, 1.19, 1.28, 1.38, 1.49],
@@ -401,6 +404,7 @@ export const emberChr_0009_azrila_attack4ActionGraph = {
 export const emberChr_0009_azrila_attack4: SkillDefinition = {
   actionGraph: emberChr_0009_azrila_attack4ActionGraph,
   key: 'chr_0009_azrila_attack4',
+  element: 'physical',
   blackboard: {
     atb: 28,
     atk_scale: [0.82, 0.9, 0.98, 1.06, 1.14, 1.22, 1.31, 1.39, 1.47, 1.57, 1.69, 1.84],
@@ -542,6 +546,7 @@ export const emberChr_0009_azrila_power_attackActionGraph = {
 export const emberChr_0009_azrila_power_attack: SkillDefinition = {
   actionGraph: emberChr_0009_azrila_power_attackActionGraph,
   key: 'chr_0009_azrila_power_attack',
+  element: 'physical',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
   timelineBlockFrames: 51,
   naturalDurationFrames: 222,
@@ -627,6 +632,7 @@ export const emberChr_0009_azrila_plunging_attack_endActionGraph = {
 export const emberChr_0009_azrila_plunging_attack_end: SkillDefinition = {
   actionGraph: emberChr_0009_azrila_plunging_attack_endActionGraph,
   key: 'chr_0009_azrila_plunging_attack_end',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
@@ -954,6 +960,7 @@ export const emberChr_0009_azrila_normal_skillActionGraph = {
 
 export const emberChr_0009_azrila_normal_skill: SkillDefinition = {
   key: 'chr_0009_azrila_normal_skill',
+  element: 'heat',
   blackboard: {
     atk_scale: [0.32, 0.36, 0.39, 0.42, 0.45, 0.49, 0.52, 0.55, 0.58, 0.62, 0.67, 0.73],
     atk_scale2: [1.41, 1.55, 1.69, 1.83, 1.97, 2.11, 2.26, 2.4, 2.54, 2.71, 2.92, 3.17],
@@ -1136,6 +1143,7 @@ export const emberChr_0009_azrila_ultimate_skillActionGraph = {
 export const emberChr_0009_azrila_ultimate_skill: SkillDefinition = {
   actionGraph: emberChr_0009_azrila_ultimate_skillActionGraph,
   key: 'chr_0009_azrila_ultimate_skill',
+  element: 'heat',
   blackboard: {
     atk_scale: [2.89, 3.18, 3.47, 3.76, 4.04, 4.33, 4.62, 4.91, 5.2, 5.56, 5.99, 6.5],
     duration: 10,
@@ -1457,6 +1465,7 @@ export const emberChr_0009_azrila_combo_skillActionGraph = {
 
 export const emberChr_0009_azrila_combo_skill: SkillDefinition = {
   key: 'chr_0009_azrila_combo_skill',
+  element: 'physical',
   blackboard: {
     atk_scale: [1.02, 1.12, 1.22, 1.33, 1.43, 1.53, 1.63, 1.73, 1.84, 1.96, 2.12, 2.3],
     extracure: 0,

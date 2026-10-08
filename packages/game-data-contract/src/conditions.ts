@@ -457,6 +457,11 @@ export type CombatConditionExpression =
       skillTypes: readonly SkillType[];
     }
   | {
+      /** 检查技能事件中的技能配置属性；无技能事件时读取当前执行技能。 */
+      kind: 'skillDamageTypeIn';
+      damageTypes: readonly DamageElement[];
+    }
+  | {
       /** 精确匹配当前 OnCustomAbilityEvent 的命名载荷。 */
       kind: 'eventCustomAbilityNameMatch';
       /** 要匹配的自定义事件名称。 */
@@ -701,6 +706,7 @@ export const COMBAT_CONDITION_KINDS = [
   'eventProjectilePerfectDodgeCooldownEquals',
   'eventProjectileIgnoreImmuneLevelCompare',
   'eventSkillTypeIn',
+  'skillDamageTypeIn',
   'eventCustomAbilityNameMatch',
   'currentSkillTypeIn',
   'originSkillTypeIn',

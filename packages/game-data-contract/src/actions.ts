@@ -75,6 +75,7 @@ export type HealTargetBinding =
 
 /** 标签结束使用单个已绑定对象；集合与主控选择器不在此动作的目标范围内。 */
 export const BUFF_TAG_FINISH_TARGETS = [
+  'party',
   'caster',
   'enemy',
   'currentAbilityEntity',
@@ -83,8 +84,8 @@ export const BUFF_TAG_FINISH_TARGETS = [
   'buffOwner',
   'buffSource',
   'currentTarget',
-] as const satisfies readonly BuffSingleTarget[];
-/** 按标签结束 Buff 时允许使用的一种单体目标。 */
+] as const satisfies readonly BuffApplicationTarget[];
+/** 按标签结束 Buff 的单体或队伍目标。 */
 export type BuffTagFinishTarget = (typeof BUFF_TAG_FINISH_TARGETS)[number];
 
 /** 一次伤害步骤的完整声明；倍率使用小数，失衡与生命伤害同属该命中。 */
@@ -424,6 +425,26 @@ export interface CombatStepParameters {
     blackboardAssignments?: Readonly<Record<string, ActionValueOperand>>;
     /** 原生 SpawnAbilityEntity 的直接字符串赋值；与数值操作数分开保存。 */
     stringBlackboardAssignments?: Readonly<Record<string, string>>;
+  };
+  /** 向动作持有者发布承术事件；异常生效后还通知全队。 */
+  triggerCharacterInflictionEvent: {
+    event: 'afterTakeSpellInfliction' | 'beforeTakeSpellAbnormal' | 'afterTakeSpellAbnormal';
+    eventSource: BuffApplicationSource;
+    element: InflictionElement;
+  };
+  /** 给干员施加元素附着；异常转化由附着 Buff 的动作图处理。 */
+  limitMovementGait: {
+    readonly min: 'walk' | 'run' | 'sprint';
+    readonly max: 'walk' | 'run' | 'sprint';
+  };
+  applyCharacterInfliction: {
+    element: InflictionElement;
+    source: BuffApplicationSource | 'battle';
+    target: BuffApplicationTarget;
+    count: ActionValueOperand;
+    directToTriggered: boolean;
+    ignoreWeakImmune: boolean;
+    ignoreAddingCooldown: boolean;
   };
   /** 为目标增加一层元素附着并触发相应事件。 */
   applyElementalInfliction: {
@@ -817,6 +838,13 @@ export interface CombatStepParameters {
     buffIds: readonly string[];
     /** 保存剩余秒数的动作黑板键。 */
     outputKey: string;
+  };
+  /** 修改目标上匹配的有限时长 Buff；无限寿命 Buff 不受影响。 */
+  setBuffRemainingDuration: {
+    target: BuffSingleTarget;
+    query: Exclude<CombatStepParameters['readBuffStackCount']['query'], { kind: 'environment' }>;
+    operation: 'assign' | 'add' | 'multiply';
+    value: ActionValueOperand;
   };
   /** 直接修改当前生命周期环境中有限时长 Buff 的剩余秒数。 */
   setCurrentBuffRemainingDuration: {
@@ -1478,6 +1506,9 @@ export const COMBAT_STEP_KINDS = [
   'startCurrentAbilityEntityChildSkill',
   'startCurrentAbilityEntityChildSkillById',
   'spawnAbilityEntity',
+  'triggerCharacterInflictionEvent',
+  'limitMovementGait',
+  'applyCharacterInfliction',
   'applyElementalInfliction',
   'triggerSpellBurst',
   'triggerCustomAbilityEvent',
@@ -1501,6 +1532,7 @@ export const COMBAT_STEP_KINDS = [
   'readEventBuffBlackboard',
   'readCurrentBuffRemainingDuration',
   'readBuffRemainingDuration',
+  'setBuffRemainingDuration',
   'setCurrentBuffRemainingDuration',
   'refreshCurrentBuffAttributeModifiers',
   'skillAffix',

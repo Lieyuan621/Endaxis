@@ -241,6 +241,7 @@ export function analyzeConditionUsage(condition: CombatCondition): DefinitionVal
     case 'eventDamageGameplayTagsMatch':
     case 'eventDamageFeaturesMatch':
     case 'eventDamageTypeIn':
+    case 'skillDamageTypeIn':
     case 'eventSkillTypeIn':
     case 'currentSkillTypeIn':
     case 'originSkillTypeIn':
@@ -433,6 +434,8 @@ export function analyzeStepUsage(
       return effect([step.parameters.amount, step.parameters.coefficient]);
     case 'showComboRingQte':
       return effect([step.parameters.earlyDurationSeconds, step.parameters.activeDurationSeconds]);
+    case 'applyCharacterInfliction':
+      return effect([step.parameters.count]);
     case 'applyBuff': {
       const usage = effect([
         step.parameters.count,

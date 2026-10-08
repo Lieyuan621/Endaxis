@@ -208,6 +208,7 @@ export class CompiledCombatBuffDefinitions<
       durationSeconds: entry.durationSeconds,
       addingCooldownSeconds: entry.addingCooldownSeconds,
       ignoreAddingCooldown: entry.ignoreAddingCooldown,
+      ignoreTagImmune: entry.ignoreTagImmune,
       triggerIntervalSeconds: entry.triggerIntervalSeconds,
       waitFirstTriggerInterval: entry.waitFirstTriggerInterval,
       maxTriggerCount: entry.maxTriggerCount,
@@ -334,6 +335,7 @@ export function parseCombatBuffDefinitionEntry(
     'durationSeconds',
     'addingCooldownSeconds',
     'ignoreAddingCooldown',
+    'ignoreTagImmune',
     'triggerIntervalSeconds',
     'waitFirstTriggerInterval',
     'maxTriggerCount',
@@ -384,6 +386,7 @@ export function parseCombatBuffDefinitionEntry(
     ...parseOptionalScalar(entry, 'durationSeconds', path),
     ...parseOptionalScalar(entry, 'addingCooldownSeconds', path),
     ...parseOptionalBoolean(entry, 'ignoreAddingCooldown', path),
+    ...parseOptionalBoolean(entry, 'ignoreTagImmune', path),
     ...parseOptionalScalar(entry, 'triggerIntervalSeconds', path),
     ...parseOptionalBoolean(entry, 'waitFirstTriggerInterval', path),
     ...parseOptionalTriggerCount(entry, path),
@@ -1348,7 +1351,7 @@ function parseOptionalString(
 
 function parseOptionalBoolean(
   entry: Readonly<Record<string, unknown>>,
-  key: 'waitFirstTriggerInterval' | 'ignoreAddingCooldown',
+  key: 'waitFirstTriggerInterval' | 'ignoreAddingCooldown' | 'ignoreTagImmune',
   path: string,
 ): Partial<Pick<CombatBuffDefinitionEntry, typeof key>> {
   if (entry[key] === undefined) return {};

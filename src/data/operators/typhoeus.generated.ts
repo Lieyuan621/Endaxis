@@ -143,6 +143,7 @@ export const typhoeusChr_0034_typhoea_attack1ActionGraph = {
 
 export const typhoeusChr_0034_typhoea_attack1: SkillDefinition = {
   key: 'chr_0034_typhoea_attack1',
+  element: 'nature',
   blackboard: {
     atb: 0,
     atk_scale: [0.21, 0.23, 0.25, 0.27, 0.29, 0.31, 0.33, 0.35, 0.37, 0.39, 0.43, 0.46],
@@ -291,6 +292,7 @@ export const typhoeusChr_0034_typhoea_attack2ActionGraph = {
 
 export const typhoeusChr_0034_typhoea_attack2: SkillDefinition = {
   key: 'chr_0034_typhoea_attack2',
+  element: 'nature',
   blackboard: {
     atb: 0,
     atk_scale: [0.25, 0.28, 0.3, 0.33, 0.35, 0.38, 0.4, 0.43, 0.45, 0.48, 0.52, 0.56],
@@ -627,6 +629,7 @@ export const typhoeusChr_0034_typhoea_attack3ActionGraph = {
 
 export const typhoeusChr_0034_typhoea_attack3: SkillDefinition = {
   key: 'chr_0034_typhoea_attack3',
+  element: 'nature',
   blackboard: {
     atb: 0,
     atk_scale: [0.38, 0.42, 0.46, 0.49, 0.53, 0.57, 0.61, 0.65, 0.68, 0.73, 0.79, 0.86],
@@ -910,6 +913,7 @@ export const typhoeusChr_0034_typhoea_attack4ActionGraph = {
 
 export const typhoeusChr_0034_typhoea_attack4: SkillDefinition = {
   key: 'chr_0034_typhoea_attack4',
+  element: 'nature',
   blackboard: {
     atb: 0,
     atk_scale: [0.42, 0.46, 0.5, 0.55, 0.59, 0.63, 0.67, 0.71, 0.76, 0.81, 0.87, 0.95],
@@ -1148,6 +1152,7 @@ export const typhoeusChr_0034_typhoea_attack5ActionGraph = {
 
 export const typhoeusChr_0034_typhoea_attack5: SkillDefinition = {
   key: 'chr_0034_typhoea_attack5',
+  element: 'nature',
   blackboard: {
     atb: 21,
     atk_scale: [0.56, 0.61, 0.67, 0.72, 0.78, 0.83, 0.89, 0.94, 1, 1.07, 1.15, 1.25],
@@ -2185,6 +2190,7 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
 
 export const typhoeusChr_0034_typhoea_floating_attack1: SkillDefinition = {
   key: 'chr_0034_typhoea_floating_attack1',
+  element: 'nature',
   blackboard: {
     arrow_num: 0,
     atb: 0,
@@ -3266,6 +3272,7 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
 
 export const typhoeusChr_0034_typhoea_floating_attack2: SkillDefinition = {
   key: 'chr_0034_typhoea_floating_attack2',
+  element: 'nature',
   blackboard: {
     arrow_num: 0,
     atb: 0,
@@ -4244,6 +4251,7 @@ export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
 
 export const typhoeusChr_0034_typhoea_floating_attack3: SkillDefinition = {
   key: 'chr_0034_typhoea_floating_attack3',
+  element: 'nature',
   blackboard: {
     arrow_num: 0,
     atb: 0,
@@ -5282,6 +5290,7 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
 
 export const typhoeusChr_0034_typhoea_floating_attack4: SkillDefinition = {
   key: 'chr_0034_typhoea_floating_attack4',
+  element: 'nature',
   blackboard: {
     atb: 0,
     atk_scale_base: [0.29, 0.32, 0.35, 0.37, 0.4, 0.43, 0.46, 0.49, 0.52, 0.55, 0.6, 0.65],
@@ -6740,6 +6749,7 @@ export const typhoeusChr_0034_typhoea_floating_attack5ActionGraph = {
 
 export const typhoeusChr_0034_typhoea_floating_attack5: SkillDefinition = {
   key: 'chr_0034_typhoea_floating_attack5',
+  element: 'nature',
   blackboard: {
     atb: 23,
     atb_end: 0,
@@ -7032,6 +7042,7 @@ export const typhoeusChr_0034_typhoea_power_attackActionGraph = {
 
 export const typhoeusChr_0034_typhoea_power_attack: SkillDefinition = {
   key: 'chr_0034_typhoea_power_attack',
+  element: 'nature',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
   timelineBlockFrames: 73,
   naturalDurationFrames: 180,
@@ -7118,6 +7129,7 @@ export const typhoeusChr_0034_typhoea_plunging_attack_endActionGraph = {
 export const typhoeusChr_0034_typhoea_plunging_attack_end: SkillDefinition = {
   actionGraph: typhoeusChr_0034_typhoea_plunging_attack_endActionGraph,
   key: 'chr_0034_typhoea_plunging_attack_end',
+  element: 'nature',
   blackboard: { atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8] },
   timelineBlockFrames: 18,
   naturalDurationFrames: 120,
@@ -7662,6 +7674,7 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
 
 export const typhoeusChr_0034_typhoea_normal_skill_floating_start: SkillDefinition = {
   key: 'chr_0034_typhoea_normal_skill_floating_start',
+  element: 'nature',
   blackboard: {
     addition_vertical: 0,
     atb: 10,
@@ -7862,6 +7875,7 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_loopActionGraph = {
 
 export const typhoeusChr_0034_typhoea_normal_skill_floating_loop: SkillDefinition = {
   key: 'chr_0034_typhoea_normal_skill_floating_loop',
+  element: 'nature',
   blackboard: { arrow_num: 0 },
   timelineBlockFrames: 31,
   naturalDurationFrames: 30,
@@ -7961,6 +7975,7 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_endActionGraph = {
 export const typhoeusChr_0034_typhoea_normal_skill_floating_end: SkillDefinition = {
   actionGraph: typhoeusChr_0034_typhoea_normal_skill_floating_endActionGraph,
   key: 'chr_0034_typhoea_normal_skill_floating_end',
+  element: 'nature',
   blackboard: {},
   timelineBlockFrames: 26,
   naturalDurationFrames: 100,
@@ -8340,6 +8355,7 @@ export const typhoeusChr_0034_typhoea_combo_skillActionGraph = {
 
 export const typhoeusChr_0034_typhoea_combo_skill: SkillDefinition = {
   key: 'chr_0034_typhoea_combo_skill',
+  element: 'nature',
   blackboard: {
     arrow_rotate_1: 0,
     arrow_rotate_2: 0,
@@ -8993,6 +9009,7 @@ export const typhoeusChr_0034_typhoea_combo_skillfloatingActionGraph = {
 
 export const typhoeusChr_0034_typhoea_combo_skillfloating: SkillDefinition = {
   key: 'chr_0034_typhoea_combo_skillfloating',
+  element: 'nature',
   blackboard: {
     arrow_num: 0,
     arrow_rotate_1: 0,
@@ -9522,6 +9539,7 @@ export const typhoeusChr_0034_typhoea_ultimate_skillfloatingActionGraph = {
 
 export const typhoeusChr_0034_typhoea_ultimate_skillfloating: SkillDefinition = {
   key: 'chr_0034_typhoea_ultimate_skillfloating',
+  element: 'nature',
   blackboard: {
     arrow_energy_given: 0,
     arrow_num_given: 2,

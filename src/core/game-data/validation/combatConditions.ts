@@ -340,6 +340,7 @@ export function validateCombatCondition(
       requireEnum(record, 'match', TAG_QUERY_TYPES_WITH_EXACT_SET, path, out);
       validateDamageFeatures(record.features, `${path}.features`, out);
       break;
+    case 'skillDamageTypeIn':
     case 'eventDamageTypeIn':
       if (!Array.isArray(record.damageTypes) || record.damageTypes.length === 0) {
         push(out, `${path}.damageTypes`, 'expected a non-empty array');

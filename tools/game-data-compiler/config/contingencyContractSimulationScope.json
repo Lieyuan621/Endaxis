@@ -1,7 +1,8 @@
 {
   "supportedTagIds": [
     100003, 100301, 100302, 100401, 100402, 100501, 100502, 100803, 100901, 100902, 101001, 101101,
-    101102, 102302, 102801, 102802, 102803, 103102, 103203, 103302, 103401
+    101102, 101701, 101801, 101901, 102302, 102401, 102801, 102802, 102803, 103102, 103203, 103302,
+    103401
   ],
   "enemyMaxHealthTagIds": [900101, 900102, 900103],
   "blockedTagReasons": {},
@@ -17,16 +18,12 @@
     "101501": "runs after the unique fixed target has been defeated",
     "101502": "runs after the unique fixed target has been defeated",
     "101603": "depends on the passive enemy applying an infliction to an operator",
-    "101701": "only changes operator freeze and input behavior",
-    "101801": "only changes operator freeze and input behavior",
-    "101901": "only changes operator freeze and input behavior",
     "102001": "wave healing pickups do not exist in the fixed-target scenario",
     "102002": "wave healing pickups do not exist in the fixed-target scenario",
     "102101": "challenge countdown is not a combat result",
     "102102": "challenge countdown is not a combat result",
     "102103": "challenge countdown is not a combat result",
     "102201": "changes stage wave enemy composition rather than the selected fixed target",
-    "102202": "changes stage wave enemy composition rather than the selected fixed target",
-    "102401": "only changes operator freeze and input behavior"
+    "102202": "changes stage wave enemy composition rather than the selected fixed target"
   }
 }

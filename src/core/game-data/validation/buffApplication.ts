@@ -428,6 +428,10 @@ export function validateBuffDefinition(
               response.event !== 'beforeOutputInfliction' &&
               response.event !== 'beforeOutputSpellBurst' &&
               response.event !== 'beforeTakeSpellInfliction' &&
+              response.event !== 'afterTakeSpellInfliction' &&
+              response.event !== 'beforeTakeSpellAbnormal' &&
+              response.event !== 'afterTakeSpellAbnormal' &&
+              response.event !== 'squadTakeSpellAbnormal' &&
               response.event !== 'beforeTakeInfliction' &&
               response.event !== 'takeDamage' &&
               response.event !== 'takeCriticalDamage' &&

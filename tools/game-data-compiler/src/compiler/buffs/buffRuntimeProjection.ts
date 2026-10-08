@@ -1,3 +1,4 @@
+import { isPresentationOnlyActionSequence } from '../skills/skillPresentationTargets.ts';
 import { projectGameplayTags } from '../combatProjectionCommon.ts';
 import {
   buffPresentationNames,
@@ -181,6 +182,7 @@ export function compileBuffRuntimeDefinitionSource(
   const triggerSequences: CompiledBuffSequenceSource[] = [];
   const enhanceChangedSequences: CompiledBuffSequenceSource[] = [];
   const afterEnhanceSequences: CompiledBuffSequenceSource[] = [];
+  const beforeEnhanceSequences: CompiledBuffSequenceSource[] = [];
   const finishSequences: CompiledBuffSequenceSource[] = [];
   const timelineActions = buffShowsTimelineActions(source) ? source.graph.timelineActions : [];
   const allSequences = [
@@ -389,6 +391,15 @@ export function compileBuffRuntimeDefinitionSource(
   }
   const projectionContextOverrides = {
     graph,
+    enabledAnimationEventListenerPresent: allSequences
+      .flatMap(collectNativeActionNodes)
+      .some(
+        node =>
+          node.metadata.enabled &&
+          node.body.kind === 'leaf' &&
+          node.body.value.family === 'animationEventListener' &&
+          !isPresentationOnlyActionSequence(node.body.value.action.actionOnEvent),
+      ),
     gameplayTagRegistry: abilityEntityQueries?.gameplayTagRegistry,
     ...contextOverrides,
     ...(staticEnemyTargetGroupKeys.size === 0 ? {} : { staticEnemyTargetGroupKeys }),
@@ -501,11 +512,13 @@ export function compileBuffRuntimeDefinitionSource(
               ? triggerSequences
               : event.event === 'OnBuffEnhanceChanged'
                 ? enhanceChangedSequences
-                : event.event === 'OnBuffAfterTryEnhanced'
-                  ? afterEnhanceSequences
-                  : event.event === 'OnBuffFinish'
-                    ? finishSequences
-                    : null;
+                : event.event === 'OnBuffBeforeTryEnhanced'
+                  ? beforeEnhanceSequences
+                  : event.event === 'OnBuffAfterTryEnhanced'
+                    ? afterEnhanceSequences
+                    : event.event === 'OnBuffFinish'
+                      ? finishSequences
+                      : null;
     if (target === null) {
       const isTrainingOnlyInterruptedEvent =
         event.event === 'OnBuffFinishedEarlyInterrupted' &&
@@ -524,7 +537,7 @@ export function compileBuffRuntimeDefinitionSource(
     for (const sequence of event.actions) {
       const skillAffixBody =
         event.event === 'DuringBuffEnable' ? splitDirectSkillAffixSequence(sequence) : null;
-      // AfterTryEnhanced 的默认 Target 仍是持有者，Source 由运行时绑定本次叠层者。
+      // 叠层前后回调的默认 Target 是持有者，Source 由运行时绑定本次叠层者。
       // Finish/EnhanceChanged 保留现有事件投影，不能据此一并放宽未核实的来源映射。
       const compiled = compileLinearSequence(
         skillAffixBody ?? sequence,
@@ -533,6 +546,7 @@ export function compileBuffRuntimeDefinitionSource(
           event.event === 'OnBuffEnable' ||
           event.event === 'DuringBuffEnable' ||
           event.event === 'OnBuffFinish' ||
+          event.event === 'OnBuffBeforeTryEnhanced' ||
           event.event === 'OnBuffAfterTryEnhanced'
           ? { ...BUFF_LIFECYCLE_CONTEXT, abilityEntityQueries, ...projectionContextOverrides }
           : { ...BUFF_ACTION_CONTEXT, abilityEntityQueries, ...projectionContextOverrides },
@@ -729,6 +743,7 @@ export function compileBuffRuntimeDefinitionSource(
       ? {}
       : { addingCooldownSeconds: scalarOperand(source.lifecycle.addingCooldown) }),
     ...(source.lifecycle.ignoreAddingCooldown ? { ignoreAddingCooldown: true } : {}),
+    ...(source.lifecycle.ignoreTagImmune ? { ignoreTagImmune: true } : {}),
     ...(source.lifecycle.lifeType === 'Limited' ||
     source.lifecycle.stackingType === 'TimedGrowingEnhance'
       ? { durationSeconds: scalarOperand(source.lifecycle.duration) }
@@ -816,6 +831,7 @@ export function compileBuffRuntimeDefinitionSource(
     triggerSequences.length === 0 &&
     enhanceChangedSequences.length === 0 &&
     afterEnhanceSequences.length === 0 &&
+    beforeEnhanceSequences.length === 0 &&
     finishSequences.length === 0
       ? {}
       : {
@@ -827,6 +843,9 @@ export function compileBuffRuntimeDefinitionSource(
               ? {}
               : { enhanceChanged: mergeSequences(enhanceChangedSequences) }),
             ...(finishSequences.length === 0 ? {} : { finish: mergeSequences(finishSequences) }),
+            ...(beforeEnhanceSequences.length === 0
+              ? {}
+              : { beforeEnhance: mergeSequences(beforeEnhanceSequences) }),
             ...(afterEnhanceSequences.length === 0
               ? {}
               : { afterEnhance: mergeSequences(afterEnhanceSequences) }),
@@ -2888,29 +2907,6 @@ export function collectBuffRuntimeLevelEventActionPaths(
         node.metadata.enabled &&
         node.body.kind === 'leaf' &&
         node.body.value.family === 'levelEvent',
-    )
-    .map(node => node.sourcePath);
-}
-
-/** 严格解析后、仅在固定木桩强制排轴模型中省略的干员自施加异常路径。 */
-export function collectBuffRuntimeCharacterStatusActionPaths(
-  source: BuffRuntimeSource,
-): readonly string[] {
-  const sequences = [
-    ...(buffShowsTimelineActions(source)
-      ? source.graph.timelineActions.map(item => item.sequence)
-      : []),
-    ...source.graph.buffEvents.flatMap(item => item.actions),
-    ...source.graph.abilityEvents.flatMap(item => item.actions),
-    ...source.graph.igniteEvents.flatMap(item => item.actions),
-  ];
-  return sequences
-    .flatMap(sequence => collectNativeActionNodes(sequence))
-    .filter(
-      node =>
-        node.metadata.enabled &&
-        node.body.kind === 'leaf' &&
-        node.body.value.family === 'characterSpellInfliction',
     )
     .map(node => node.sourcePath);
 }

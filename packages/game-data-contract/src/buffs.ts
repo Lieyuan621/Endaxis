@@ -44,6 +44,11 @@ export const BUFF_ABILITY_EVENTS = [
   'beforeOutputInfliction',
   'beforeOutputSpellBurst',
   'beforeTakeSpellInfliction',
+  'afterTakeSpellInfliction',
+  'beforeTakeSpellAbnormal',
+  'afterTakeSpellAbnormal',
+  'squadTakeSpellAbnormal',
+
   'ownerSwitchToCenter',
   'ownerSwitchToGuard',
   'beforeTakeInfliction',
@@ -693,6 +698,8 @@ export type BuffDefinitionProperties = {
   readonly timeClock?: BuffTimeClock;
   /** Buff 的分类标签；启用时同时挂到所属实体，并用于按标签查找、计数和结束 Buff。 */
   readonly applyTags?: readonly GameplayTag[];
+  /** 跳过施加标签对应的免疫检查。 */
+  readonly ignoreTagImmune?: boolean;
   /** Buff 到期但被延长逻辑暂时阻止结束时，临时挂到所属实体的标签。 */
   readonly extendTags?: readonly GameplayTag[];
   /** 再次施加同一叠加组的 Buff 时，决定新建实例、加层、刷新时长或拒绝施加。 */

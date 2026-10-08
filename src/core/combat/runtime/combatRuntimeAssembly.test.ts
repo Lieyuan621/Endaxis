@@ -2068,11 +2068,17 @@ describe('CombatRuntimeAssembly', () => {
 
   it('emits before-cast events for both direct and deferred skill starts', () => {
     const emitAbilityEvent = vi.fn();
-    const first = skill({ skillId: 'first', costs: [], costFrame: undefined });
+    const first = skill({
+      skillId: 'first',
+      element: 'electric',
+      costs: [],
+      costFrame: undefined,
+    });
     const second = skill({
       skillGroupKey: 'ultimate',
       skillId: 'second',
       skillType: 'ultimate',
+      element: 'physical',
       costs: [],
       costFrame: undefined,
     });
@@ -2102,6 +2108,7 @@ describe('CombatRuntimeAssembly', () => {
           sourceId: 'operator',
           targetId: 'operator',
           skillType: 'battleSkill',
+          element: 'electric',
           skillId: 'first',
           skillCastId: 1,
           skillCastInfo: {
@@ -2120,6 +2127,7 @@ describe('CombatRuntimeAssembly', () => {
           sourceId: 'operator',
           targetId: 'operator',
           skillType: 'battleSkill',
+          element: 'electric',
           skillId: 'first',
           skillCastId: 1,
         },
@@ -2131,6 +2139,7 @@ describe('CombatRuntimeAssembly', () => {
           sourceId: 'operator',
           targetId: 'operator',
           skillType: 'ultimate',
+          element: 'physical',
           skillId: 'second',
           skillCastId: 2,
           skillCastInfo: {
@@ -5832,4 +5841,25 @@ describe('CombatRuntimeAssembly', () => {
       'SkillEnded',
     ]);
   });
+});
+
+it('冻结标签立即中断当前技能，移除标签不恢复技能', () => {
+  const container = new CombatBuffContainer<string>('operator', new CombatAttributeSet<string>());
+  const runtime = new BuffDefinitionOperationTarget(container, { get: () => undefined });
+  const assembly = createAssembly({
+    programs: [skill({ timelineBlockFrames: 30, costs: [] })],
+    registerCombatAbilityEvent: nativeEventRuntimeOptions().registerCombatAbilityEvent,
+    createOperatorBuffRuntime: () => runtime,
+    skillAvailabilityTags: new GameplayTagPredefine(GAMEPLAY_TAG_PREDEFINE),
+  });
+  expect(assembly.tryStartSkill('operator', 'skill')).toBe(true);
+  container.addEntityTags(['Status/Immobilized/Frozen']);
+  expect(assembly.receipt.entries.filter(entry => entry.event === 'SkillInterrupted')).toHaveLength(
+    1,
+  );
+  container.removeEntityTags(['Status/Immobilized/Frozen']);
+  assembly.advanceFrame();
+  expect(assembly.receipt.entries.filter(entry => entry.event === 'SkillInterrupted')).toHaveLength(
+    1,
+  );
 });

@@ -330,6 +330,7 @@ export interface StandardPlayerDamageEnvironmentOptions {
    * 普通倒地的装配端口，由调用方提供倒地结束后的处理。
    * 标准伤害模拟到期直接解除倒地，不模拟起身动画阶段。
    */
+  readonly tagPredefine?: GameplayTagPredefine;
   readonly knockDown?: {
     readonly predefine: GameplayTagPredefine;
     readonly onDurationElapsed: (runtime: OrdinaryKnockDownRuntime) => void;
@@ -492,6 +493,7 @@ export class StandardPlayerDamageEnvironment {
         this.#recordBuffStackChanged(buff, previousLayers, sourceId, skillCastInfo, producedBy),
       (buff, previous) => this.#recordBuffModifierChanged(buff, previous),
       buff => this.#recordBuffEnabledChanged(buff),
+      this.options.tagPredefine,
     );
     this.#enemyBuffRuntime = new BuffDefinitionOperationTarget(
       this.#enemyBuffs,
@@ -644,6 +646,7 @@ export class StandardPlayerDamageEnvironment {
             this.#recordBuffStackChanged(buff, previousLayers, sourceId, skillCastInfo, producedBy),
           (buff, previous) => this.#recordBuffModifierChanged(buff, previous),
           buff => this.#recordBuffEnabledChanged(buff),
+          this.options.tagPredefine,
         );
         if (restoredState === undefined) container.addEntityTags(bornTags);
         return new BuffDefinitionOperationTarget(
@@ -1286,6 +1289,7 @@ export class StandardPlayerDamageEnvironment {
           this.#recordBuffStackChanged(buff, previousLayers, sourceId, skillCastInfo, producedBy),
         (buff, previous) => this.#recordBuffModifierChanged(buff, previous),
         buff => this.#recordBuffEnabledChanged(buff),
+        this.options.tagPredefine,
       );
       runtime = new BuffDefinitionOperationTarget(
         container,

@@ -182,10 +182,6 @@ export class BuffDefinitionOperationTarget<Key extends string>
         ? {}
         : { iconDurationSourceTargetId: request.iconDurationSourceTargetId }),
     };
-    // 原生 OnBeforeOutputBuff 在来源 AbilitySystem 上同步发布，且早于目标 Buff 实例创建。
-    this.onBeforeBuffApplied?.(event);
-    // 原生 OnBeforeAddedBuff 随后在接收目标 AbilitySystem 上同步发布，仍早于实例创建。
-    this.onBeforeBuffAdded?.(event);
     try {
       return this.container.add(
         definition,
@@ -213,6 +209,11 @@ export class BuffDefinitionOperationTarget<Key extends string>
           this.onBuffApplied?.(event, buff);
           this.onOutputBuff?.({ ...event, buff });
         },
+        () => {
+          // 通过添加冷却后，先来源侧 BeforeOutput，再接收侧 BeforeAdded。
+          this.onBeforeBuffApplied?.(event);
+          this.onBeforeBuffAdded?.(event);
+        },
       );
     } catch (error) {
       if (!(error instanceof Error)) throw error;
@@ -223,6 +224,20 @@ export class BuffDefinitionOperationTarget<Key extends string>
         { cause: error },
       );
     }
+  }
+
+  setMovementGaitLimit(
+    limit: Parameters<CombatBuffContainer<Key>['setMovementGaitLimit']>[0],
+  ): void {
+    this.container.setMovementGaitLimit(limit);
+  }
+
+  endMovementGaitLimit(): void {
+    this.container.endMovementGaitLimit();
+  }
+
+  configureEntityTagAdded(observer: (tag: GameplayTag) => void): void {
+    this.container.configureEntityTagAdded(observer);
   }
 
   configureBuffConsumedObserver(observer: (event: BuffConsumedEvent) => void): void {
@@ -432,6 +447,32 @@ export class BuffDefinitionOperationTarget<Key extends string>
 
   recycleFinishedBuffs(): void {
     this.container.recycleFinishedBuffs();
+  }
+
+  setRemainingDuration(
+    query: import('../../compiler/combatProgram').ResolvedCombatStepParameters['setBuffRemainingDuration']['query'],
+    operation: 'assign' | 'add' | 'multiply',
+    value: number,
+  ): void {
+    for (const buff of this.container.buffs) {
+      if (buff.isFinished || buff.remainingDuration === null) continue;
+      const matches =
+        query.kind === 'id'
+          ? query.buffIds.includes(buff.definition.id)
+          : this.container.matchesTags(
+              buff.definition.applyTags ?? [],
+              query.buffTags,
+              query.tagQueryType,
+            );
+      if (!matches) continue;
+      const current = buff.remainingDuration;
+      buff.rawSetRemainingDuration(
+        Math.max(
+          0,
+          operation === 'assign' ? value : operation === 'add' ? current + value : current * value,
+        ),
+      );
+    }
   }
 
   getCountByIds(ids: readonly string[], skillCastId?: number): number {

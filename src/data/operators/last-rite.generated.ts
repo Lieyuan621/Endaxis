@@ -88,6 +88,7 @@ export const lastRiteChr_0026_lastrite_attack1ActionGraph = {
 export const lastRiteChr_0026_lastrite_attack1: SkillDefinition = {
   actionGraph: lastRiteChr_0026_lastrite_attack1ActionGraph,
   key: 'chr_0026_lastrite_attack1',
+  element: 'cryo',
   blackboard: {
     atb: 0,
     atk_scale: [0.3, 0.33, 0.36, 0.39, 0.42, 0.45, 0.48, 0.51, 0.54, 0.58, 0.62, 0.68],
@@ -189,6 +190,7 @@ export const lastRiteChr_0026_lastrite_attack2ActionGraph = {
 
 export const lastRiteChr_0026_lastrite_attack2: SkillDefinition = {
   key: 'chr_0026_lastrite_attack2',
+  element: 'cryo',
   blackboard: {
     atb: 0,
     atk_scale: [0.28, 0.3, 0.33, 0.36, 0.39, 0.41, 0.44, 0.47, 0.5, 0.53, 0.57, 0.62],
@@ -370,6 +372,7 @@ export const lastRiteChr_0026_lastrite_attack3ActionGraph = {
 export const lastRiteChr_0026_lastrite_attack3: SkillDefinition = {
   actionGraph: lastRiteChr_0026_lastrite_attack3ActionGraph,
   key: 'chr_0026_lastrite_attack3',
+  element: 'cryo',
   blackboard: {
     atb: 0,
     atk_scale: [0.34, 0.37, 0.41, 0.44, 0.48, 0.51, 0.54, 0.58, 0.61, 0.65, 0.71, 0.77],
@@ -557,6 +560,7 @@ export const lastRiteChr_0026_lastrite_attack4ActionGraph = {
 
 export const lastRiteChr_0026_lastrite_attack4: SkillDefinition = {
   key: 'chr_0026_lastrite_attack4',
+  element: 'cryo',
   blackboard: {
     atb: 30,
     atk_scale: [0.9, 0.99, 1.08, 1.17, 1.26, 1.35, 1.44, 1.53, 1.62, 1.73, 1.87, 2.03],
@@ -674,6 +678,7 @@ export const lastRiteChr_0026_lastrite_power_attackActionGraph = {
 export const lastRiteChr_0026_lastrite_power_attack: SkillDefinition = {
   actionGraph: lastRiteChr_0026_lastrite_power_attackActionGraph,
   key: 'chr_0026_lastrite_power_attack',
+  element: 'cryo',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
   timelineBlockFrames: 59,
   naturalDurationFrames: 176,
@@ -749,6 +754,7 @@ export const lastRiteChr_0026_lastrite_plunging_attack_endActionGraph = {
 export const lastRiteChr_0026_lastrite_plunging_attack_end: SkillDefinition = {
   actionGraph: lastRiteChr_0026_lastrite_plunging_attack_endActionGraph,
   key: 'chr_0026_lastrite_plunging_attack_end',
+  element: 'cryo',
   blackboard: {
     atb: 0,
     atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
@@ -991,6 +997,7 @@ export const lastRiteChr_0026_lastrite_normal_skillActionGraph = {
 export const lastRiteChr_0026_lastrite_normal_skill: SkillDefinition = {
   actionGraph: lastRiteChr_0026_lastrite_normal_skillActionGraph,
   key: 'chr_0026_lastrite_normal_skill',
+  element: 'cryo',
   blackboard: {
     atb: 30,
     atk_scale: [1.42, 1.56, 1.71, 1.85, 1.99, 2.13, 2.28, 2.42, 2.56, 2.74, 2.95, 3.2],
@@ -1279,6 +1286,7 @@ export const lastRiteChr_0026_lastrite_ultimate_skillActionGraph = {
 
 export const lastRiteChr_0026_lastrite_ultimate_skill: SkillDefinition = {
   key: 'chr_0026_lastrite_ultimate_skill',
+  element: 'cryo',
   blackboard: {
     atk_scale: [1.78, 1.96, 2.13, 2.31, 2.49, 2.67, 2.84, 3.02, 3.2, 3.42, 3.69, 4],
     atk_scale2: [3.56, 3.91, 4.27, 4.62, 4.98, 5.33, 5.69, 6.04, 6.4, 6.84, 7.38, 8],
@@ -1630,6 +1638,7 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
 export const lastRiteChr_0026_lastrite_combo_skill: SkillDefinition = {
   actionGraph: lastRiteChr_0026_lastrite_combo_skillActionGraph,
   key: 'chr_0026_lastrite_combo_skill',
+  element: 'cryo',
   blackboard: {
     atb: 0,
     atk_scale: [0.71, 0.78, 0.85, 0.92, 0.99, 1.07, 1.14, 1.21, 1.28, 1.37, 1.47, 1.6],

@@ -4,7 +4,7 @@ import type {
   SkillCostDefinition,
 } from '../../compiler/intermediateDefinitions.ts';
 import type { OperatorActiveSkillTypeSource } from './activeSkills.ts';
-import type { SkillPatchSource } from '../../source/skillPatch.ts';
+import { resolveSkillElement, type SkillPatchSource } from '../../source/skillPatch.ts';
 import { requireNonNegativeInteger, requireRecord } from '../../source/primitives.ts';
 import {
   compileActiveSkillRuntimeProjectionSource,
@@ -23,6 +23,7 @@ export type CompiledOperatorActiveSkillRuntimeDefinitionSource = Readonly<
   Pick<
     SkillDefinition,
     | 'key'
+    | 'element'
     | 'timelineBlockFrames'
     | 'timelineContinuationSkillId'
     | 'timelineBlockFollowUpSkillId'
@@ -80,6 +81,9 @@ export function compileOperatorActiveSkillRuntimeDefinitionSource(input: {
   const definition: CompiledOperatorActiveSkillRuntimeDefinitionSource = {
     actionGraph: runtime.actionGraph,
     key: input.key,
+    ...(input.skillType === 'dodge'
+      ? {}
+      : { element: resolveSkillElement(root.iconBgType, input.patch, input.sourcePath) }),
     blackboard: Object.fromEntries(
       Object.entries(runtime.blackboard).map(([key, values]) => [key, collapse(values)]),
     ),

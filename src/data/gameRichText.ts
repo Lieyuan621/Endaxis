@@ -75,6 +75,7 @@ export function resolveRichTextImage(path: string) {
 }
 
 export function getRichTextStyle(id: string): ResolvedRichTextStyle {
+  if (/^#[\da-f]{6}(?:[\da-f]{2})?$/i.test(id)) return { color: id, icon: null };
   return RICH_TEXT_STYLES[id] ?? { color: null, icon: null };
 }
 
@@ -130,15 +131,18 @@ function parseNodes(
     }
 
     const tagMatch = text.slice(index).match(/^<([@#])([^>]+)>/);
-    if (!tagMatch) {
+    // Unity 颜色标签复用样式节点；仅接受十六进制颜色，不执行文本中的 HTML。
+    const colorMatch = text.slice(index).match(/^<color=(#[\da-f]{6}(?:[\da-f]{2})?)>/i);
+    if (!tagMatch && !colorMatch) {
       textBuffer += text[index];
       index += 1;
       continue;
     }
 
     const tagStart = index;
-    const tagLength = tagMatch[0].length;
-    const closeIndex = findMatchingClose(text, index + tagLength, end);
+    const tagLength = (tagMatch?.[0] ?? colorMatch![0]).length;
+    const closingTag = colorMatch ? '</color>' : '</>';
+    const closeIndex = findMatchingClose(text, index + tagLength, end, closingTag);
     if (closeIndex < 0) {
       textBuffer += text[index];
       index += 1;
@@ -147,11 +151,11 @@ function parseNodes(
 
     pushText();
     nodes.push({
-      type: tagMatch[1] === '@' ? 'style' : 'term',
-      id: tagMatch[2] ?? '',
+      type: colorMatch || tagMatch?.[1] === '@' ? 'style' : 'term',
+      id: colorMatch?.[1] ?? tagMatch?.[2] ?? '',
       children: parseNodes(text, index + tagLength, closeIndex).nodes,
     });
-    index = closeIndex + 3;
+    index = closeIndex + closingTag.length;
 
     if (index <= tagStart) index = tagStart + 1;
   }
@@ -160,17 +164,19 @@ function parseNodes(
   return { nodes, index };
 }
 
-function findMatchingClose(text: string, start: number, end: number) {
+function findMatchingClose(text: string, start: number, end: number, closingTag: string) {
   let depth = 1;
   let index = start;
   while (index < end) {
-    if (text.startsWith('</>', index)) {
+    if (text.slice(index, index + closingTag.length).toLowerCase() === closingTag) {
       depth -= 1;
       if (depth === 0) return index;
-      index += 3;
+      index += closingTag.length;
       continue;
     }
-    if (/^<[@#][^>]+>/.test(text.slice(index))) depth += 1;
+    const openingPattern =
+      closingTag === '</color>' ? /^<color=#[\da-f]{6}(?:[\da-f]{2})?>/i : /^<[@#][^>]+>/;
+    if (openingPattern.test(text.slice(index))) depth += 1;
     index += 1;
   }
   return -1;

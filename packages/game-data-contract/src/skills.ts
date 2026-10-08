@@ -372,10 +372,12 @@ export type SkillDefinition = SkillDefinitionProperties &
     | {
         /** 技能的战斗分类，不由技能库分组推测。 */
         skillType: Exclude<SkillType, 'dodge'>;
+        /** 技能属性，用于技能属性条件检查；省略默认为物理。 */
+        element?: import('./primitives.ts').DamageElement;
         /** 技能使用哪一项养成等级；由原生技能组成员关系确定。 */
         levelSource: SkillLevelSource;
       }
-    | { skillType: 'dodge'; levelSource?: never }
+    | { skillType: 'dodge'; levelSource?: never; element?: never }
   );
 
 /** 编辑器整组放置策略；技能执行与单段放置不读取此元数据。 */

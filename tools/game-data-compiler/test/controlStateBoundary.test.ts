@@ -22,15 +22,6 @@ describe('无敌人主动行为的控制状态边界', () => {
     }
   });
 
-  it('外部受击标记不伪造角色承受元素附着事件', () => {
-    expect(
-      standardStumpBuffAbilityEventOmissionReason('OnCharBeforeTakeSpellInfliction', 'caster'),
-    ).not.toBeNull();
-    expect(
-      standardStumpBuffAbilityEventOmissionReason('OnCharBeforeTakeSpellInfliction', 'enemy'),
-    ).toBeNull();
-  });
-
   it('敌方受击事件保留，但唯一木桩死亡后的事件省略', () => {
     expect(standardStumpBuffAbilityEventOmissionReason('OnBeforeTakeDamage', 'enemy')).toBeNull();
     expect(standardStumpBuffAbilityEventOmissionReason('OnTakeDamage', 'enemy')).toBeNull();

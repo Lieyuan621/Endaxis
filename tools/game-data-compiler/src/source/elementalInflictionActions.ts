@@ -332,3 +332,45 @@ export function parseCharacterSpellInflictionActionSource(
     ),
   };
 }
+
+export function parseCharacterInflictionEventSource(value: unknown, path: string) {
+  const action = requireRecord(value, path);
+  requireExactFields(
+    action,
+    new Set([
+      '$type',
+      'isEnable',
+      'priorityLevel',
+      'priorityOffset',
+      'serverActionIndex',
+      'eventType',
+      'eventSource',
+      'inflictionType',
+    ]),
+    path,
+  );
+  const event = (
+    [
+      ['OnCharAfterTakeSpellInfliction', 'afterTakeSpellInfliction'],
+      ['OnCharBeforeTakeSpellAbnormal', 'beforeTakeSpellAbnormal'],
+      ['OnCharAfterTakeSpellAbnormal', 'afterTakeSpellAbnormal'],
+    ] as const
+  ).find(([name]) => name === action.eventType)?.[1];
+  if (event === undefined)
+    throw new Error(`${path}.eventType: unsupported character infliction event`);
+  const element = (
+    [
+      ['Fire', 'heat'],
+      ['Pulse', 'electric'],
+      ['Cryst', 'cryo'],
+      ['Natural', 'nature'],
+    ] as const
+  ).find(([name]) => name === action.inflictionType)?.[1];
+  if (element === undefined)
+    throw new Error(`${path}.inflictionType: unsupported character infliction element`);
+  return {
+    event,
+    element,
+    source: parseTargetReferenceSource(action.eventSource, `${path}.eventSource`),
+  };
+}

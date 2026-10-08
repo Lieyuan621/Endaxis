@@ -1325,6 +1325,7 @@ export class CombatRuntimeAssembly {
                 ? {}
                 : { skillType: state.skillCastInfo.originSkillType }),
               nativeSkillType: program.nativeSkillType,
+              element: program.element,
               naturalDurationFrames: program.naturalDurationFrames,
               initialBlackboard: program.initialBlackboard,
               timelineActions: program.timelineActions,
@@ -2244,7 +2245,27 @@ export class CombatRuntimeAssembly {
     return ability.tryStartTimelineSkill(expectedSkillId, castId);
   }
 
-  /** 物理异常前置事件按原生顺序同步通知输出方与承受方。 */
+  /** 通知承受附着的干员；异常生效后再倒序通知队伍。 */
+  #publishCharacterInfliction(
+    ownerId: string,
+    sourceId: string,
+    event: import('../../compiler/combatProgram').ResolvedCombatStepParameters['triggerCharacterInflictionEvent']['event'],
+    element: import('../../../../packages/game-data-contract/src/primitives').InflictionElement,
+  ): void {
+    const emit = this.#options.emitAbilityEvent;
+    if (emit === undefined)
+      throw new Error('character infliction event publisher is not configured');
+    emit(ownerId, event, { sourceId: ownerId, targetId: sourceId, element });
+    if (event !== 'afterTakeSpellAbnormal') return;
+    // 原生倒序通知队伍；第二份事件上下文元素为池复位后的默认 Fire。
+    for (const memberId of [...this.#operators.keys()].reverse())
+      emit(memberId, 'squadTakeSpellAbnormal', {
+        sourceId: memberId,
+        targetId: ownerId,
+        element: 'heat',
+      });
+  }
+
   #publishBeforePhysicalInfliction(
     payload: import('../events/combatAbilityEvent').AbilityPhysicalInflictionPayload,
   ): void {
@@ -2412,6 +2433,7 @@ export class CombatRuntimeAssembly {
           sourceId: operatorId,
           targetId: operatorId,
           skillType: program.skillType,
+          element: program.element,
           skillId: program.executionSkillId ?? program.skillId,
           skillCastId,
           skillCastInfo: effectiveInheritedSkillCastInfo ?? {
@@ -4069,6 +4091,18 @@ export class CombatRuntimeAssembly {
       operationHost,
     );
     const buffOperations = new BuffOperationExecutor({
+      triggerCharacterInflictionEvent: (ownerId, sourceId, event, element) =>
+        this.#publishCharacterInfliction(ownerId, sourceId, event, element),
+      isCharacterTarget: id => this.#operators.has(id),
+      beforeCharacterInfliction: (ownerId, sourceId, element) => {
+        if (this.#options.emitAbilityEvent === undefined)
+          throw new Error('character infliction event publisher is not configured');
+        this.#options.emitAbilityEvent(ownerId, 'beforeTakeSpellInfliction', {
+          sourceId: ownerId,
+          targetId: sourceId,
+          element,
+        });
+      },
       sourceId: operatorId,
       definitionOwnerId: definitionOperator.operatorId,
       readProcessingSkillCastId: ownerId =>
@@ -4406,6 +4440,18 @@ export class CombatRuntimeAssembly {
       operationHost,
     );
     const buffOperations = new BuffOperationExecutor({
+      triggerCharacterInflictionEvent: (ownerId, sourceId, event, element) =>
+        this.#publishCharacterInfliction(ownerId, sourceId, event, element),
+      isCharacterTarget: id => this.#operators.has(id),
+      beforeCharacterInfliction: (ownerId, sourceId, element) => {
+        if (this.#options.emitAbilityEvent === undefined)
+          throw new Error('character infliction event publisher is not configured');
+        this.#options.emitAbilityEvent(ownerId, 'beforeTakeSpellInfliction', {
+          sourceId: ownerId,
+          targetId: sourceId,
+          element,
+        });
+      },
       sourceId: operatorId,
       sourceActionId,
       readProcessingSkillCastId: ownerId =>
@@ -5209,6 +5255,23 @@ export class CombatRuntimeAssembly {
     target.configureLifecycleOperations?.(source =>
       this.#createBuffLifecycleOperationChain(source, options),
     );
+    const tags = options.skillAvailabilityTags;
+    if (tags !== undefined) {
+      target.configureEntityTagAdded?.(tag => {
+        // 恢复时先绑定 Buff，再绑定技能系统；执行时取当前宿主。
+        const ability = this.#abilitySystems.get(target.ownerId);
+        if (ability === undefined) return;
+        const immobilized =
+          target.matchesTags?.([tag], [tags.getTag('Immobilized')], 'hasAny') === true;
+        if (immobilized) ability.applyControlTagChange(true, true);
+        const silence = tags.getQuery('InSilence');
+        if (target.matchesTags?.([tag], silence.tags, silence.queryType))
+          ability.applyControlTagChange(true, false);
+        const disarmed = tags.getQuery('InDisarmed');
+        if (target.matchesEntityTags?.(disarmed.tags, disarmed.queryType))
+          ability.applyControlTagChange(false, true);
+      });
+    }
     target.configureBuffConsumedObserver?.(event => {
       this.#recordBuffConsumption('BuffConsumed', event);
       options.emitBuffLifecycleAbilityEvent?.('buffConsumed', {

@@ -61,6 +61,7 @@ export const laevatainChr_0016_laevat_attack1ActionGraph = {
 export const laevatainChr_0016_laevat_attack1: SkillDefinition = {
   actionGraph: laevatainChr_0016_laevat_attack1ActionGraph,
   key: 'chr_0016_laevat_attack1',
+  element: 'heat',
   blackboard: {
     atb: 0,
     atk_scale: [0.16, 0.18, 0.19, 0.21, 0.22, 0.24, 0.26, 0.27, 0.29, 0.31, 0.33, 0.36],
@@ -191,6 +192,7 @@ export const laevatainChr_0016_laevat_attack2ActionGraph = {
 
 export const laevatainChr_0016_laevat_attack2: SkillDefinition = {
   key: 'chr_0016_laevat_attack2',
+  element: 'heat',
   blackboard: {
     atb: 0,
     atk_scale: [0.12, 0.13, 0.14, 0.16, 0.17, 0.18, 0.19, 0.2, 0.22, 0.23, 0.25, 0.27],
@@ -295,6 +297,7 @@ export const laevatainChr_0016_laevat_attack3ActionGraph = {
 export const laevatainChr_0016_laevat_attack3: SkillDefinition = {
   actionGraph: laevatainChr_0016_laevat_attack3ActionGraph,
   key: 'chr_0016_laevat_attack3',
+  element: 'heat',
   blackboard: {
     atb: 0,
     atk_scale: [0.25, 0.28, 0.3, 0.33, 0.35, 0.38, 0.4, 0.43, 0.45, 0.48, 0.52, 0.56],
@@ -472,6 +475,7 @@ export const laevatainChr_0016_laevat_attack4ActionGraph = {
 
 export const laevatainChr_0016_laevat_attack4: SkillDefinition = {
   key: 'chr_0016_laevat_attack4',
+  element: 'heat',
   blackboard: {
     atb: 0,
     atk_scale: [0.13, 0.14, 0.16, 0.17, 0.18, 0.2, 0.21, 0.22, 0.23, 0.25, 0.27, 0.29],
@@ -655,6 +659,7 @@ export const laevatainChr_0016_laevat_attack5ActionGraph = {
 
 export const laevatainChr_0016_laevat_attack5: SkillDefinition = {
   key: 'chr_0016_laevat_attack5',
+  element: 'heat',
   blackboard: {
     atb: 20,
     atk_scale: [0.27, 0.29, 0.32, 0.34, 0.37, 0.4, 0.42, 0.45, 0.48, 0.51, 0.55, 0.6],
@@ -821,6 +826,7 @@ export const laevatainChr_0016_laevat_ult_attack1ActionGraph = {
 
 export const laevatainChr_0016_laevat_ult_attack1: SkillDefinition = {
   key: 'chr_0016_laevat_ult_attack1',
+  element: 'heat',
   blackboard: {
     atb: 0,
     atk_scale: [0.65, 0.71, 0.78, 0.84, 0.91, 0.97, 1.04, 1.1, 1.17, 1.25, 1.34, 1.46],
@@ -1053,6 +1059,7 @@ export const laevatainChr_0016_laevat_ult_attack2ActionGraph = {
 
 export const laevatainChr_0016_laevat_ult_attack2: SkillDefinition = {
   key: 'chr_0016_laevat_ult_attack2',
+  element: 'heat',
   blackboard: {
     atb: 0,
     atk_scale: [0.41, 0.45, 0.49, 0.53, 0.57, 0.61, 0.65, 0.69, 0.73, 0.78, 0.84, 0.91],
@@ -1234,6 +1241,7 @@ export const laevatainChr_0016_laevat_ult_attack3ActionGraph = {
 
 export const laevatainChr_0016_laevat_ult_attack3: SkillDefinition = {
   key: 'chr_0016_laevat_ult_attack3',
+  element: 'heat',
   blackboard: {
     atb: 0,
     atk_scale: [1.15, 1.27, 1.39, 1.5, 1.62, 1.73, 1.85, 1.96, 2.08, 2.22, 2.4, 2.6],
@@ -1435,6 +1443,7 @@ export const laevatainChr_0016_laevat_ult_attack4ActionGraph = {
 
 export const laevatainChr_0016_laevat_ult_attack4: SkillDefinition = {
   key: 'chr_0016_laevat_ult_attack4',
+  element: 'heat',
   blackboard: {
     atb: 22,
     atk_scale: [1.01, 1.11, 1.22, 1.32, 1.42, 1.52, 1.62, 1.72, 1.82, 1.95, 2.1, 2.28],
@@ -1650,6 +1659,7 @@ export const laevatainChr_0016_laevat_power_attackActionGraph = {
 export const laevatainChr_0016_laevat_power_attack: SkillDefinition = {
   actionGraph: laevatainChr_0016_laevat_power_attackActionGraph,
   key: 'chr_0016_laevat_power_attack',
+  element: 'physical',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
   timelineBlockFrames: 51,
   naturalDurationFrames: 141,
@@ -1734,6 +1744,7 @@ export const laevatainChr_0016_laevat_plunging_attack_endActionGraph = {
 export const laevatainChr_0016_laevat_plunging_attack_end: SkillDefinition = {
   actionGraph: laevatainChr_0016_laevat_plunging_attack_endActionGraph,
   key: 'chr_0016_laevat_plunging_attack_end',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
@@ -2016,6 +2027,7 @@ export const laevatainChr_0016_laevat_normal_skillActionGraph = {
 export const laevatainChr_0016_laevat_normal_skill: SkillDefinition = {
   actionGraph: laevatainChr_0016_laevat_normal_skillActionGraph,
   key: 'chr_0016_laevat_normal_skill',
+  element: 'heat',
   blackboard: {
     atb: 0,
     atk_scale: [0.62, 0.68, 0.75, 0.81, 0.87, 0.93, 0.99, 1.06, 1.12, 1.2, 1.29, 1.4],
@@ -2539,6 +2551,7 @@ export const laevatainChr_0016_laevat_normal_skill_during_ultActionGraph = {
 
 export const laevatainChr_0016_laevat_normal_skill_during_ult: SkillDefinition = {
   key: 'chr_0016_laevat_normal_skill_during_ult',
+  element: 'heat',
   blackboard: {
     atb: 0,
     atk_scale: [1.47, 1.61, 1.76, 1.91, 2.05, 2.2, 2.35, 2.49, 2.64, 2.82, 3.04, 3.3],
@@ -2668,6 +2681,7 @@ export const laevatainChr_0016_laevat_ultimate_skillActionGraph = {
 
 export const laevatainChr_0016_laevat_ultimate_skill: SkillDefinition = {
   key: 'chr_0016_laevat_ultimate_skill',
+  element: 'heat',
   blackboard: { duration: 15 },
   timelineBlockFrames: 74,
   naturalDurationFrames: 245,
@@ -3042,6 +3056,7 @@ export const laevatainChr_0016_laevat_combo_skillActionGraph = {
 
 export const laevatainChr_0016_laevat_combo_skill: SkillDefinition = {
   key: 'chr_0016_laevat_combo_skill',
+  element: 'heat',
   blackboard: {
     atk_scale: [2.4, 2.64, 2.88, 3.12, 3.36, 3.6, 3.84, 4.08, 4.32, 4.62, 4.98, 5.4],
     count: 0,

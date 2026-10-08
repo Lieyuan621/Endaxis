@@ -29,7 +29,13 @@ type AbilityEventCandidate = CombatAbilityEvent | { readonly kind: string; reado
 export type SpellBurstAbilityEvent = CombatAbilityEvent<'beforeOutputSpellBurst'> & {
   readonly kind?: never;
 };
-export type CharacterInflictionAbilityEvent = CombatAbilityEvent<'beforeTakeSpellInfliction'> & {
+export type CharacterInflictionAbilityEvent = CombatAbilityEvent<
+  | 'beforeTakeSpellInfliction'
+  | 'afterTakeSpellInfliction'
+  | 'beforeTakeSpellAbnormal'
+  | 'afterTakeSpellAbnormal'
+  | 'squadTakeSpellAbnormal'
+> & {
   readonly kind?: never;
 };
 export function spellBurstAbilityEvent(
@@ -42,7 +48,15 @@ export function spellBurstAbilityEvent(
 export function characterInflictionAbilityEvent(
   event: AbilityEventCandidate,
 ): CharacterInflictionAbilityEvent | undefined {
-  if (!('event' in event) || event.event !== 'beforeTakeSpellInfliction') return undefined;
+  if (
+    !('event' in event) ||
+    (event.event !== 'beforeTakeSpellInfliction' &&
+      event.event !== 'afterTakeSpellInfliction' &&
+      event.event !== 'beforeTakeSpellAbnormal' &&
+      event.event !== 'afterTakeSpellAbnormal' &&
+      event.event !== 'squadTakeSpellAbnormal')
+  )
+    return undefined;
   return event;
 }
 
@@ -320,6 +334,11 @@ export interface AbilityEventPayloadMap {
   beforeOutputInfliction: ElementalInflictionEventPayload;
   afterOutputInfliction: ElementalInflictionEventPayload;
   beforeTakeSpellInfliction: AbilitySpellInflictionPayload;
+  afterTakeSpellInfliction: AbilitySpellInflictionPayload;
+  beforeTakeSpellAbnormal: AbilitySpellInflictionPayload;
+  afterTakeSpellAbnormal: AbilitySpellInflictionPayload;
+  squadTakeSpellAbnormal: AbilitySpellInflictionPayload;
+
   beforeTakeInfliction: ElementalInflictionEventPayload;
   afterTakeInfliction: ElementalInflictionEventPayload;
   beforeOutputSpellBurst: AbilitySpellBurstPayload;

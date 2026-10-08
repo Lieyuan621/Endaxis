@@ -125,6 +125,7 @@ export const xaihiChr_0011_seraph_attack1ActionGraph = {
 
 export const xaihiChr_0011_seraph_attack1: SkillDefinition = {
   key: 'chr_0011_seraph_attack1',
+  element: 'cryo',
   blackboard: {
     atb: 0,
     atk_scale: [0.15, 0.17, 0.18, 0.2, 0.21, 0.23, 0.24, 0.26, 0.27, 0.29, 0.31, 0.34],
@@ -278,6 +279,7 @@ export const xaihiChr_0011_seraph_attack2ActionGraph = {
 
 export const xaihiChr_0011_seraph_attack2: SkillDefinition = {
   key: 'chr_0011_seraph_attack2',
+  element: 'cryo',
   blackboard: {
     atb: 0,
     atk_scale: [0.16, 0.18, 0.19, 0.21, 0.22, 0.24, 0.26, 0.27, 0.29, 0.31, 0.33, 0.36],
@@ -431,6 +433,7 @@ export const xaihiChr_0011_seraph_attack3ActionGraph = {
 
 export const xaihiChr_0011_seraph_attack3: SkillDefinition = {
   key: 'chr_0011_seraph_attack3',
+  element: 'cryo',
   blackboard: {
     atb: 0,
     atk_scale: [0.21, 0.23, 0.25, 0.27, 0.29, 0.32, 0.34, 0.36, 0.38, 0.4, 0.44, 0.47],
@@ -584,6 +587,7 @@ export const xaihiChr_0011_seraph_attack4ActionGraph = {
 
 export const xaihiChr_0011_seraph_attack4: SkillDefinition = {
   key: 'chr_0011_seraph_attack4',
+  element: 'cryo',
   blackboard: {
     atb: 0,
     atk_scale: [0.17, 0.18, 0.2, 0.21, 0.23, 0.25, 0.26, 0.28, 0.3, 0.32, 0.34, 0.37],
@@ -675,6 +679,7 @@ export const xaihiChr_0011_seraph_attack5ActionGraph = {
 
 export const xaihiChr_0011_seraph_attack5: SkillDefinition = {
   key: 'chr_0011_seraph_attack5',
+  element: 'cryo',
   blackboard: {
     atb: 15,
     atk_scale: [0.55, 0.61, 0.66, 0.72, 0.77, 0.83, 0.88, 0.94, 0.99, 1.06, 1.14, 1.24],
@@ -787,6 +792,7 @@ export const xaihiChr_0011_seraph_power_attackActionGraph = {
 export const xaihiChr_0011_seraph_power_attack: SkillDefinition = {
   actionGraph: xaihiChr_0011_seraph_power_attackActionGraph,
   key: 'chr_0011_seraph_power_attack',
+  element: 'cryo',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
   timelineBlockFrames: 51,
   naturalDurationFrames: 160,
@@ -862,6 +868,7 @@ export const xaihiChr_0011_seraph_plunging_attack_endActionGraph = {
 export const xaihiChr_0011_seraph_plunging_attack_end: SkillDefinition = {
   actionGraph: xaihiChr_0011_seraph_plunging_attack_endActionGraph,
   key: 'chr_0011_seraph_plunging_attack_end',
+  element: 'cryo',
   blackboard: {
     atb: 0,
     atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
@@ -959,6 +966,7 @@ export const xaihiChr_0011_seraph_normal_skillActionGraph = {
 export const xaihiChr_0011_seraph_normal_skill: SkillDefinition = {
   actionGraph: xaihiChr_0011_seraph_normal_skillActionGraph,
   key: 'chr_0011_seraph_normal_skill',
+  element: 'cryo',
   blackboard: {
     atb: 0,
     atk_scale: 0.1,
@@ -1279,6 +1287,7 @@ export const xaihiChr_0011_seraph_combo_skillActionGraph = {
 
 export const xaihiChr_0011_seraph_combo_skill: SkillDefinition = {
   key: 'chr_0011_seraph_combo_skill',
+  element: 'cryo',
   blackboard: {
     atk_scale: [2, 2.2, 2.4, 2.6, 2.8, 3, 3.2, 3.4, 3.6, 3.85, 4.15, 4.5],
     cryst_up: 0,
@@ -1385,6 +1394,7 @@ export const xaihiChr_0011_seraph_ultimate_skillActionGraph = {
 export const xaihiChr_0011_seraph_ultimate_skill: SkillDefinition = {
   actionGraph: xaihiChr_0011_seraph_ultimate_skillActionGraph,
   key: 'chr_0011_seraph_ultimate_skill',
+  element: 'cryo',
   blackboard: {
     atk_up: [0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.21, 0.22, 0.24],
     duration: 12,

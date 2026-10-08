@@ -158,6 +158,7 @@ export function prepareStandardPlayerDamageScenarioRuntime(
     reactionCriticalOverrides: input.scenario.battle.reactionCriticalOverrides,
     resolveNonRandomRuntimeSnapshot: input.resolveNonRandomRuntimeSnapshot,
     tagRegistry: gameplayTagRegistry,
+    tagPredefine: new GameplayTagPredefine(GAMEPLAY_TAG_PREDEFINE),
     knockDown: {
       predefine: new GameplayTagPredefine(GAMEPLAY_TAG_PREDEFINE),
       // 下方整场消费者预检通过后才会执行；没有可观察起身阶段时只结束倒地，不模拟动画。

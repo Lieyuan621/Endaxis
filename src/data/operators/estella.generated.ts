@@ -85,6 +85,7 @@ export const estellaChr_0021_whiten_attack1ActionGraph = {
 export const estellaChr_0021_whiten_attack1: SkillDefinition = {
   actionGraph: estellaChr_0021_whiten_attack1ActionGraph,
   key: 'chr_0021_whiten_attack1',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.25, 0.28, 0.3, 0.33, 0.35, 0.38, 0.4, 0.43, 0.45, 0.48, 0.52, 0.56],
@@ -195,6 +196,7 @@ export const estellaChr_0021_whiten_attack2ActionGraph = {
 export const estellaChr_0021_whiten_attack2: SkillDefinition = {
   actionGraph: estellaChr_0021_whiten_attack2ActionGraph,
   key: 'chr_0021_whiten_attack2',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.3, 0.33, 0.36, 0.39, 0.42, 0.45, 0.48, 0.51, 0.54, 0.58, 0.62, 0.68],
@@ -340,6 +342,7 @@ export const estellaChr_0021_whiten_attack3ActionGraph = {
 
 export const estellaChr_0021_whiten_attack3: SkillDefinition = {
   key: 'chr_0021_whiten_attack3',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.15, 0.17, 0.18, 0.2, 0.21, 0.23, 0.24, 0.26, 0.27, 0.29, 0.31, 0.34],
@@ -457,6 +460,7 @@ export const estellaChr_0021_whiten_attack4ActionGraph = {
 export const estellaChr_0021_whiten_attack4: SkillDefinition = {
   actionGraph: estellaChr_0021_whiten_attack4ActionGraph,
   key: 'chr_0021_whiten_attack4',
+  element: 'physical',
   blackboard: {
     atb: 19,
     atk_scale: [0.4, 0.44, 0.48, 0.52, 0.56, 0.6, 0.64, 0.68, 0.72, 0.77, 0.83, 0.9],
@@ -577,6 +581,7 @@ export const estellaChr_0021_whiten_power_attackActionGraph = {
 export const estellaChr_0021_whiten_power_attack: SkillDefinition = {
   actionGraph: estellaChr_0021_whiten_power_attackActionGraph,
   key: 'chr_0021_whiten_power_attack',
+  element: 'physical',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
   timelineBlockFrames: 51,
   naturalDurationFrames: 151,
@@ -661,6 +666,7 @@ export const estellaChr_0021_whiten_plunging_attack_endActionGraph = {
 export const estellaChr_0021_whiten_plunging_attack_end: SkillDefinition = {
   actionGraph: estellaChr_0021_whiten_plunging_attack_endActionGraph,
   key: 'chr_0021_whiten_plunging_attack_end',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
@@ -941,6 +947,7 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
 
 export const estellaChr_0021_whiten_normal_skill: SkillDefinition = {
   key: 'chr_0021_whiten_normal_skill',
+  element: 'cryo',
   blackboard: {
     atb: 0,
     atk_scale: [1.56, 1.71, 1.87, 2.02, 2.18, 2.34, 2.49, 2.65, 2.8, 3, 3.23, 3.5],
@@ -1459,6 +1466,7 @@ export const estellaChr_0021_whiten_ultimate_skillActionGraph = {
 
 export const estellaChr_0021_whiten_ultimate_skill: SkillDefinition = {
   key: 'chr_0021_whiten_ultimate_skill',
+  element: 'physical',
   blackboard: {
     atk_scale: [4.89, 5.38, 5.86, 6.35, 6.84, 7.33, 7.82, 8.31, 8.8, 9.41, 10.14, 11],
     atk_scale_total: 0,
@@ -2413,6 +2421,7 @@ export const estellaChr_0021_whiten_combo_skillActionGraph = {
 
 export const estellaChr_0021_whiten_combo_skill: SkillDefinition = {
   key: 'chr_0021_whiten_combo_skill',
+  element: 'physical',
   blackboard: {
     atk_scale: [1.6, 1.76, 1.92, 2.08, 2.24, 2.4, 2.56, 2.72, 2.88, 3.08, 3.32, 3.6],
     atk_scale2: [2.8, 3.08, 3.36, 3.64, 3.92, 4.2, 4.48, 4.76, 5.04, 5.39, 5.81, 6.3],

@@ -67,6 +67,7 @@ export const arcaneChr_0032_lizhiyan_attack1ActionGraph = {
 
 export const arcaneChr_0032_lizhiyan_attack1: SkillDefinition = {
   key: 'chr_0032_lizhiyan_attack1',
+  element: 'nature',
   blackboard: {
     atb: 0,
     atk_scale: [0.062, 0.069, 0.075, 0.081, 0.087, 0.094, 0.1, 0.106, 0.112, 0.12, 0.129, 0.14],
@@ -171,6 +172,7 @@ export const arcaneChr_0032_lizhiyan_attack2ActionGraph = {
 
 export const arcaneChr_0032_lizhiyan_attack2: SkillDefinition = {
   key: 'chr_0032_lizhiyan_attack2',
+  element: 'nature',
   blackboard: {
     atb: 0,
     atk_scale: [0.071, 0.078, 0.085, 0.092, 0.099, 0.107, 0.114, 0.121, 0.128, 0.137, 0.147, 0.16],
@@ -272,6 +274,7 @@ export const arcaneChr_0032_lizhiyan_attack3ActionGraph = {
 
 export const arcaneChr_0032_lizhiyan_attack3: SkillDefinition = {
   key: 'chr_0032_lizhiyan_attack3',
+  element: 'nature',
   blackboard: {
     atb: 0,
     atk_scale: [0.17, 0.18, 0.2, 0.22, 0.23, 0.25, 0.27, 0.28, 0.3, 0.32, 0.35, 0.38],
@@ -391,6 +394,7 @@ export const arcaneChr_0032_lizhiyan_attack4ActionGraph = {
 
 export const arcaneChr_0032_lizhiyan_attack4: SkillDefinition = {
   key: 'chr_0032_lizhiyan_attack4',
+  element: 'nature',
   blackboard: {
     atb: 0,
     atk_scale: [0.045, 0.049, 0.053, 0.058, 0.062, 0.067, 0.071, 0.076, 0.08, 0.086, 0.092, 0.1],
@@ -641,6 +645,7 @@ export const arcaneChr_0032_lizhiyan_attack5ActionGraph = {
 
 export const arcaneChr_0032_lizhiyan_attack5: SkillDefinition = {
   key: 'chr_0032_lizhiyan_attack5',
+  element: 'nature',
   blackboard: {
     atb: 17,
     atk_scale: [0.47, 0.52, 0.56, 0.61, 0.66, 0.71, 0.75, 0.8, 0.85, 0.9, 0.98, 1.06],
@@ -831,6 +836,7 @@ export const arcaneChr_0032_lizhiyan_power_attackActionGraph = {
 
 export const arcaneChr_0032_lizhiyan_power_attack: SkillDefinition = {
   key: 'chr_0032_lizhiyan_power_attack',
+  element: 'nature',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
   timelineBlockFrames: 52,
   naturalDurationFrames: 163,
@@ -920,6 +926,7 @@ export const arcaneChr_0032_lizhiyan_plunging_attack_endActionGraph = {
 export const arcaneChr_0032_lizhiyan_plunging_attack_end: SkillDefinition = {
   actionGraph: arcaneChr_0032_lizhiyan_plunging_attack_endActionGraph,
   key: 'chr_0032_lizhiyan_plunging_attack_end',
+  element: 'nature',
   blackboard: {
     atb: 0,
     atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
@@ -975,6 +982,7 @@ export const arcaneChr_0032_lizhiyan_normal_skillActionGraph = {
 export const arcaneChr_0032_lizhiyan_normal_skill: SkillDefinition = {
   actionGraph: arcaneChr_0032_lizhiyan_normal_skillActionGraph,
   key: 'chr_0032_lizhiyan_normal_skill',
+  element: 'nature',
   blackboard: {
     atk_scale: 2.85,
     atk_scale_will: [1.33, 1.47, 1.6, 1.73, 1.87, 2, 2.13, 2.27, 2.4, 2.57, 2.77, 3],
@@ -1445,6 +1453,7 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
 
 export const arcaneChr_0032_lizhiyan_combo_skill: SkillDefinition = {
   key: 'chr_0032_lizhiyan_combo_skill',
+  element: 'nature',
   blackboard: {
     atb_return_wisd: [28, 28, 28, 28, 28, 28, 28, 28, 28, 30, 30, 30],
     atk_scale_boom: [0.53, 0.59, 0.64, 0.69, 0.75, 0.8, 0.85, 0.91, 0.96, 1.03, 1.11, 1.2],
@@ -2207,6 +2216,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
 export const arcaneChr_0032_lizhiyan_ultimate_skill: SkillDefinition = {
   actionGraph: arcaneChr_0032_lizhiyan_ultimate_skillActionGraph,
   key: 'chr_0032_lizhiyan_ultimate_skill',
+  element: 'nature',
   blackboard: {
     atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
     atk_scale_laser: [0.2, 0.22, 0.24, 0.26, 0.28, 0.3, 0.32, 0.34, 0.36, 0.38, 0.41, 0.45],
@@ -2856,6 +2866,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill2ActionGraph = {
 
 export const arcaneChr_0032_lizhiyan_ultimate_skill2: SkillDefinition = {
   key: 'chr_0032_lizhiyan_ultimate_skill2',
+  element: 'nature',
   blackboard: {
     atk_scale: [6.4, 7.04, 7.68, 8.32, 8.96, 9.6, 10.24, 10.88, 11.52, 12.32, 13.28, 14.4],
     atk_scale_will: [1.6, 1.76, 1.92, 2.08, 2.24, 2.4, 2.56, 2.72, 2.88, 3.08, 3.32, 3.6],

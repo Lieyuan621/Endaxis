@@ -213,6 +213,8 @@ export interface CombatBuffDefinition<Key extends string> {
   readonly timeClock?: BuffTimeClock;
   /** Buff 实例自身的原生分类标签；不等同于启用期间可能挂到所属实体的标签。 */
   readonly applyTags?: readonly GameplayTag[];
+  /** 跳过施加标签对应的免疫检查。 */
+  readonly ignoreTagImmune?: boolean;
   /** Buff 到期但被 ExtendBuffAction 阻止结束后，临时注册到所属实体的标签。 */
   readonly extendTags?: readonly GameplayTag[];
   readonly stackingType: BuffStackingType;
@@ -1298,6 +1300,7 @@ export class CombatBuffContainer<Key extends string> {
     ) => void,
     /** 只读观察真实启停边界；结束/释放已有独立事实，恢复绑定不得重放。 */
     readonly onBuffEnabledChanged?: (buff: CombatBuff<Key>) => void,
+    readonly tagPredefine?: import('../tags/gameplayTagPredefine').GameplayTagPredefine,
   ) {
     if (restoredState === undefined) {
       this.#state = createBuffContainerState(
@@ -1499,6 +1502,17 @@ export class CombatBuffContainer<Key extends string> {
     return Math.max(0, ...[...this.#state.sustainedProtections.values()].map(value => value[0]));
   }
 
+  setMovementGaitLimit(limit: NonNullable<BuffContainerState['movementGaitLimit']>): void {
+    this.#state.movementGaitActionCount++;
+    this.#state.movementGaitLimit = limit;
+  }
+
+  endMovementGaitLimit(): void {
+    if (--this.#state.movementGaitActionCount > 0) return;
+    this.#state.movementGaitActionCount = 0;
+    this.#state.movementGaitLimit = null;
+  }
+
   get impactResistance(): number {
     return Math.max(0, ...[...this.#state.sustainedProtections.values()].map(value => value[1]));
   }
@@ -1509,9 +1523,16 @@ export class CombatBuffContainer<Key extends string> {
     sourceId: string,
     options?: CombatBuffAddOptions,
     afterPublished?: (buff: CombatBuff<Key>) => void,
+    beforeStack?: () => void,
   ): CombatBuff<Key> | null {
+    if (
+      !definition.ignoreTagImmune &&
+      definition.applyTags?.some(tag => this.tagPredefine?.canAddTag(this, tag) === false)
+    )
+      return null;
+    const stackingKey = definition.stackingKey ?? definition.id;
     if (definition.addingCooldownSeconds !== undefined) {
-      const active = this.#state.addingCooldowns.get(definition.id) ?? [];
+      const active = this.#state.addingCooldowns.get(stackingKey) ?? [];
       if (!definition.ignoreAddingCooldown && active.some(value => value > BUFF_LIFETIME_EPSILON)) {
         return null;
       }
@@ -1526,10 +1547,11 @@ export class CombatBuffContainer<Key extends string> {
       }
       if (duration > BUFF_LIFETIME_EPSILON) {
         active.push(duration);
-        this.#state.addingCooldowns.set(definition.id, active);
+        this.#state.addingCooldowns.set(stackingKey, active);
       }
     }
-    const stackingKey = definition.stackingKey ?? definition.id;
+    // 添加冷却先于容器事件；前置事件重入时也必须看到已创建的冷却。
+    beforeStack?.();
     let group = this.#stackingGroups.get(stackingKey);
     if (group === undefined) {
       group = new BuffStackingGroup(this, stackingKey, definition.stackingType);
@@ -1750,8 +1772,17 @@ export class CombatBuffContainer<Key extends string> {
     return (this.#state.entityTagCounts.get(tag) ?? 0) > 0;
   }
 
+  #onEntityTagAdded?: (tag: GameplayTag) => void;
+
+  configureEntityTagAdded(observer: (tag: GameplayTag) => void): void {
+    this.#onEntityTagAdded = observer;
+  }
+
   addEntityTags(tags: readonly GameplayTag[]): void {
-    addBuffEntityTags(this.#state, tags);
+    for (const tag of tags) {
+      addBuffEntityTags(this.#state, [tag]);
+      this.#onEntityTagAdded?.(tag);
+    }
   }
 
   removeEntityTags(tags: readonly GameplayTag[]): void {

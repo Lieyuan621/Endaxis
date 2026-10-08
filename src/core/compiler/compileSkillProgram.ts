@@ -101,6 +101,7 @@ export function compileSkillProgram(
       ? {}
       : { nativeSkillType: input.skill.nativeSkillType }),
     skillLevel: input.skillLevel,
+    ...(input.skill.skillType === 'dodge' ? {} : { element: input.skill.element ?? 'physical' }),
     initialBlackboard,
     ...(input.skill.smartTarget === undefined ? {} : { smartTarget: input.skill.smartTarget }),
     timelineBlockFrames: input.skill.timelineBlockFrames,

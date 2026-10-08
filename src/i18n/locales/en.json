@@ -773,7 +773,13 @@
       "less": "Less than (<)",
       "lessOrEqual": "Less or equal (≤)",
       "ratio": "Ratio",
-      "exact": "Exact match"
+      "exact": "Exact match",
+      "afterTakeSpellInfliction": "After receiving infliction",
+      "beforeTakeSpellAbnormal": "Before elemental status",
+      "afterTakeSpellAbnormal": "After elemental status",
+      "walk": "Walk",
+      "run": "Run",
+      "sprint": "Sprint"
     },
     "optional": "Optional",
     "unset": "Not set",
@@ -1683,6 +1689,27 @@
       "expression": {
         "name": "String value",
         "help": "Literal text or a string key read at each use."
+      },
+      "event": {
+        "name": "Event"
+      },
+      "eventSource": {
+        "name": "Event source"
+      },
+      "min": {
+        "name": "Minimum gait"
+      },
+      "max": {
+        "name": "Maximum gait"
+      },
+      "directToTriggered": {
+        "name": "Trigger status directly"
+      },
+      "ignoreWeakImmune": {
+        "name": "Ignore weak infliction immunity"
+      },
+      "ignoreAddingCooldown": {
+        "name": "Ignore infliction cooldown"
       }
     },
     "help": "Help",
@@ -2404,6 +2431,26 @@
       "stringOperand": {
         "name": "String value",
         "help": "A literal or string read from the current action blackboard. Each consumer reads its own current context."
+      },
+      "triggerCharacterInflictionEvent": {
+        "name": "Notify operator infliction",
+        "help": "Notify effects listening for an operator receiving an infliction or an elemental status."
+      },
+      "limitMovementGait": {
+        "name": "Limit movement gait",
+        "help": "Restrict the minimum and maximum movement gait while this action is active."
+      },
+      "applyCharacterInfliction": {
+        "name": "Inflict operator",
+        "help": "Apply elemental infliction to the selected operators, or trigger its status directly."
+      },
+      "setBuffRemainingDuration": {
+        "name": "Change remaining status duration",
+        "help": "Find statuses by ID or tag, then set, add to, or scale their remaining duration."
+      },
+      "skillDamageTypeIn": {
+        "name": "Check skill element",
+        "help": "Check the event skill’s element, or the executing skill when there is no event skill."
       }
     },
     "open": "Edit skill graph",

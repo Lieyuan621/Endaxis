@@ -96,6 +96,8 @@ export interface RuntimeSkillTransition {
 
 /** 技能运行时把普通操作和条件判断委托给战斗装配层的端口。 */
 export interface CombatOperationContext {
+  /** 执行动作的技能配置属性，不代表当前命中的属性。 */
+  readonly executingSkillElement?: import('../../game-data/operatorDefinition').DamageElement;
   /** 当前执行程序/放置块；不能用继承的 originCastId 代替实际宿主。 */
   readonly executionActionId?: string;
   /** 仅在执行持有登记的步骤时挂接，实际数据由动作树持有。 */
@@ -389,6 +391,7 @@ export class SkillRuntime {
     this.#advancesCooldown = dependencies.advancesCooldown ?? true;
     const runtime = this;
     this.#operationContext = {
+      executingSkillElement: program.element,
       currentTarget: dependencies.currentTarget,
       addAbilityChildBuff: dependencies.addAbilityChildBuff,
       blackboard: this.#blackboard,
@@ -1128,6 +1131,7 @@ export class SkillRuntime {
     return {
       sourceId: this.#hostIdentity.eventSourceId,
       targetId: this.#hostIdentity.eventSourceId,
+      element: this.#program.element,
       skillType: this.#program.skillType,
       skillId: this.#program.executionSkillId ?? this.#program.skillId,
       skillCastId: this.#execution.skillCastId,

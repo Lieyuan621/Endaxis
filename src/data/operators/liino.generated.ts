@@ -515,6 +515,7 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
 export const liinoChr_0035_liino_combo_skill: SkillDefinition = {
   actionGraph: liinoChr_0035_liino_combo_skillActionGraph,
   key: 'chr_0035_liino_combo_skill',
+  element: 'electric',
   blackboard: {
     atb_return: 5,
     atb_return_duration: 30,
@@ -634,6 +635,7 @@ export const liinoChr_0035_liino_attack1ActionGraph = {
 
 export const liinoChr_0035_liino_attack1: SkillDefinition = {
   key: 'chr_0035_liino_attack1',
+  element: 'electric',
   blackboard: {
     atb: 0,
     atk_scale: [0.094, 0.103, 0.112, 0.122, 0.131, 0.14, 0.15, 0.159, 0.168, 0.18, 0.194, 0.21],
@@ -712,6 +714,7 @@ export const liinoChr_0035_liino_attack2ActionGraph = {
 export const liinoChr_0035_liino_attack2: SkillDefinition = {
   actionGraph: liinoChr_0035_liino_attack2ActionGraph,
   key: 'chr_0035_liino_attack2',
+  element: 'electric',
   blackboard: {
     atb: 0,
     atk_scale: [0.054, 0.059, 0.064, 0.07, 0.075, 0.08, 0.086, 0.091, 0.096, 0.103, 0.111, 0.12],
@@ -1072,6 +1075,7 @@ export const liinoChr_0035_liino_attack3ActionGraph = {
 
 export const liinoChr_0035_liino_attack3: SkillDefinition = {
   key: 'chr_0035_liino_attack3',
+  element: 'electric',
   blackboard: {
     atk_scale: [0.22, 0.24, 0.26, 0.29, 0.31, 0.33, 0.35, 0.37, 0.4, 0.42, 0.46, 0.5],
     atk_scale_2: [0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.02, 0.02, 0.02, 0.02, 0.02],
@@ -1433,6 +1437,7 @@ export const liinoChr_0035_liino_attack4ActionGraph = {
 
 export const liinoChr_0035_liino_attack4: SkillDefinition = {
   key: 'chr_0035_liino_attack4',
+  element: 'electric',
   blackboard: {
     atb: 0,
     atk_scale: [0.036, 0.04, 0.043, 0.047, 0.05, 0.054, 0.058, 0.061, 0.065, 0.069, 0.075, 0.081],
@@ -1784,6 +1789,7 @@ export const liinoChr_0035_liino_attack5ActionGraph = {
 export const liinoChr_0035_liino_attack5: SkillDefinition = {
   actionGraph: liinoChr_0035_liino_attack5ActionGraph,
   key: 'chr_0035_liino_attack5',
+  element: 'electric',
   blackboard: {
     atb: 20,
     atk_scale: [0.45, 0.49, 0.53, 0.58, 0.62, 0.67, 0.71, 0.76, 0.8, 0.86, 0.92, 1],
@@ -2162,6 +2168,7 @@ export const liinoChr_0035_liino_power_attackActionGraph = {
 export const liinoChr_0035_liino_power_attack: SkillDefinition = {
   actionGraph: liinoChr_0035_liino_power_attackActionGraph,
   key: 'chr_0035_liino_power_attack',
+  element: 'electric',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
   timelineBlockFrames: 69,
   naturalDurationFrames: 219,
@@ -2444,6 +2451,7 @@ export const liinoChr_0035_liino_plunging_attack_endActionGraph = {
 
 export const liinoChr_0035_liino_plunging_attack_end: SkillDefinition = {
   key: 'chr_0035_liino_plunging_attack_end',
+  element: 'electric',
   blackboard: {
     atk_scale: [0.64, 0.7, 0.77, 0.83, 0.9, 0.96, 1.02, 1.09, 1.15, 1.23, 1.33, 1.44],
     atk_scale_2: [0.16, 0.18, 0.19, 0.21, 0.22, 0.24, 0.26, 0.27, 0.29, 0.31, 0.33, 0.36],
@@ -4064,6 +4072,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
 
 export const liinoChr_0035_liino_normal_skill: SkillDefinition = {
   key: 'chr_0035_liino_normal_skill',
+  element: 'electric',
   blackboard: {
     atb_return: 0,
     atk_scale: [0.18, 0.2, 0.21, 0.23, 0.25, 0.27, 0.28, 0.3, 0.32, 0.34, 0.37, 0.4],
@@ -4576,6 +4585,7 @@ export const liinoChr_0035_liino_normal_skill_comboActionGraph = {
 
 export const liinoChr_0035_liino_normal_skill_combo: SkillDefinition = {
   key: 'chr_0035_liino_normal_skill_combo',
+  element: 'electric',
   blackboard: {
     atk_scale: [0.18, 0.2, 0.21, 0.23, 0.25, 0.27, 0.28, 0.3, 0.32, 0.34, 0.37, 0.4],
     atk_scale_2: [0.09, 0.1, 0.11, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.2],
@@ -4655,6 +4665,7 @@ export const liinoChr_0035_liino_normal_skill_endActionGraph = {
 export const liinoChr_0035_liino_normal_skill_end: SkillDefinition = {
   actionGraph: liinoChr_0035_liino_normal_skill_endActionGraph,
   key: 'chr_0035_liino_normal_skill_end',
+  element: 'electric',
   blackboard: { atk_scale: 1, atk_up: 0.5 },
   timelineBlockFrames: 1,
   naturalDurationFrames: 1,
@@ -5164,6 +5175,7 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
 
 export const liinoChr_0035_liino_ultimate_skill: SkillDefinition = {
   key: 'chr_0035_liino_ultimate_skill',
+  element: 'electric',
   blackboard: {
     atk_scale: [0.07, 0.08, 0.09, 0.09, 0.1, 0.11, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16],
     atk_scale_2: [2.84, 3.13, 3.41, 3.7, 3.98, 4.27, 4.55, 4.83, 5.12, 5.47, 5.9, 6.4],

@@ -164,6 +164,7 @@ export const purrchenaChr_0038_purrche_attack1ActionGraph = {
 export const purrchenaChr_0038_purrche_attack1: SkillDefinition = {
   actionGraph: purrchenaChr_0038_purrche_attack1ActionGraph,
   key: 'chr_0038_purrche_attack1',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.48, 0.53, 0.58, 0.62, 0.67, 0.72, 0.77, 0.82, 0.86, 0.92, 1, 1.08],
@@ -506,6 +507,7 @@ export const purrchenaChr_0038_purrche_attack2ActionGraph = {
 export const purrchenaChr_0038_purrche_attack2: SkillDefinition = {
   actionGraph: purrchenaChr_0038_purrche_attack2ActionGraph,
   key: 'chr_0038_purrche_attack2',
+  element: 'physical',
   blackboard: {
     atk_scale: [0.52, 0.57, 0.62, 0.67, 0.72, 0.77, 0.82, 0.88, 0.93, 0.99, 1.07, 1.16],
     atk_scale_1: 0,
@@ -762,6 +764,7 @@ export const purrchenaChr_0038_purrche_attack3ActionGraph = {
 export const purrchenaChr_0038_purrche_attack3: SkillDefinition = {
   actionGraph: purrchenaChr_0038_purrche_attack3ActionGraph,
   key: 'chr_0038_purrche_attack3',
+  element: 'physical',
   blackboard: {
     atb: 23,
     atk_scale: [1.02, 1.12, 1.22, 1.33, 1.43, 1.53, 1.63, 1.73, 1.84, 1.96, 2.12, 2.3],
@@ -944,6 +947,7 @@ export const purrchenaChr_0038_purrche_power_attackActionGraph = {
 export const purrchenaChr_0038_purrche_power_attack: SkillDefinition = {
   actionGraph: purrchenaChr_0038_purrche_power_attackActionGraph,
   key: 'chr_0038_purrche_power_attack',
+  element: 'physical',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
   timelineBlockFrames: 47,
   naturalDurationFrames: 137,
@@ -1020,6 +1024,7 @@ export const purrchenaChr_0038_purrche_plunging_attack_endActionGraph = {
 export const purrchenaChr_0038_purrche_plunging_attack_end: SkillDefinition = {
   actionGraph: purrchenaChr_0038_purrche_plunging_attack_endActionGraph,
   key: 'chr_0038_purrche_plunging_attack_end',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
@@ -1476,6 +1481,7 @@ export const purrchenaChr_0038_purrche_normal_skillActionGraph = {
 
 export const purrchenaChr_0038_purrche_normal_skill: SkillDefinition = {
   key: 'chr_0038_purrche_normal_skill',
+  element: 'nature',
   blackboard: {
     atb_return_1: 20,
     dmg_taken_down_1: 0.9,
@@ -1753,6 +1759,7 @@ export const purrchenaChr_0038_purrche_normal_skill_counterActionGraph = {
 export const purrchenaChr_0038_purrche_normal_skill_counter: SkillDefinition = {
   actionGraph: purrchenaChr_0038_purrche_normal_skill_counterActionGraph,
   key: 'chr_0038_purrche_normal_skill_counter',
+  element: 'nature',
   blackboard: {
     atb_return: 0,
     atk_scale: [1.78, 1.95, 2.13, 2.31, 2.49, 2.66, 2.84, 3.02, 3.2, 3.42, 3.69, 4],
@@ -2214,6 +2221,7 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
 
 export const purrchenaChr_0038_purrche_normal_skill_block_1: SkillDefinition = {
   key: 'chr_0038_purrche_normal_skill_block_1',
+  element: 'nature',
   blackboard: { atb_return_2: 20, potential_5_atb: 0, talent_1_stack: 0, talent_1_usp: 0 },
   timelineBlockFrames: 26,
   naturalDurationFrames: 25,
@@ -2722,6 +2730,7 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
 
 export const purrchenaChr_0038_purrche_normal_skill_block_2: SkillDefinition = {
   key: 'chr_0038_purrche_normal_skill_block_2',
+  element: 'physical',
   blackboard: {},
   timelineBlockFrames: 26,
   naturalDurationFrames: 25,
@@ -3021,6 +3030,7 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_1ActionGraph = {
 
 export const purrchenaChr_0038_purrche_normal_skill_loop_1: SkillDefinition = {
   key: 'chr_0038_purrche_normal_skill_loop_1',
+  element: 'physical',
   blackboard: {},
   timelineBlockFrames: 362,
   naturalDurationFrames: 494,
@@ -3321,6 +3331,7 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_2ActionGraph = {
 
 export const purrchenaChr_0038_purrche_normal_skill_loop_2: SkillDefinition = {
   key: 'chr_0038_purrche_normal_skill_loop_2',
+  element: 'physical',
   blackboard: {},
   timelineBlockFrames: 362,
   naturalDurationFrames: 431,
@@ -4342,6 +4353,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
 
 export const purrchenaChr_0038_purrche_combo_skill: SkillDefinition = {
   key: 'chr_0038_purrche_combo_skill',
+  element: 'physical',
   blackboard: {
     angletorotate: 60,
     angletotarget: 0,
@@ -5348,6 +5360,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
 
 export const purrchenaChr_0038_purrche_ultimate_skill: SkillDefinition = {
   key: 'chr_0038_purrche_ultimate_skill',
+  element: 'physical',
   blackboard: {
     add_prob: 0,
     atk_scale: [1.33, 1.47, 1.6, 1.73, 1.87, 2, 2.13, 2.27, 2.4, 2.57, 2.77, 3],

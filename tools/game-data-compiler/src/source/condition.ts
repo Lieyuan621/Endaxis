@@ -230,6 +230,10 @@ export type NativeConditionSource =
       readonly target: TargetReferenceSource;
       readonly objectTypeMask: string | number;
     })
+  | (ConditionIdentity & {
+      readonly kind: 'skillDamageType';
+      readonly damageTypes: readonly DamageElement[];
+    })
   | (ConditionIdentity & { readonly kind: 'damageType'; readonly damageType: DamageElement })
   | (ConditionIdentity & {
       readonly kind: 'damageTypeMask';
@@ -682,6 +686,30 @@ export function parseConditionLeafSource(
         kind: 'probability',
         sourceType,
         value: parseScalarSource(condition.prob, `${path}.prob`, inheritedBlackboard),
+      };
+    case 'CheckSkillDamageType':
+      requireExactFields(
+        condition,
+        new Set([
+          '$type',
+          'isEnable',
+          'priorityLevel',
+          'priorityOffset',
+          'serverActionIndex',
+          'damageTypeList',
+        ]),
+        path,
+      );
+      return {
+        kind: 'skillDamageType',
+        sourceType,
+        damageTypes: requireArray(condition.damageTypeList, `${path}.damageTypeList`).map(
+          (value, index) =>
+            projectNativeDamageElement(
+              requireString(value, `${path}.damageTypeList[${index}]`),
+              `${path}.damageTypeList[${index}]`,
+            ),
+        ),
       };
     case 'CheckSkillType':
       requireExactFields(

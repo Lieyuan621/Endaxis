@@ -79,6 +79,7 @@ export const pogranichnikChr_0029_pograni_attack1ActionGraph = {
 export const pogranichnikChr_0029_pograni_attack1: SkillDefinition = {
   actionGraph: pogranichnikChr_0029_pograni_attack1ActionGraph,
   key: 'chr_0029_pograni_attack1',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.23, 0.25, 0.28, 0.3, 0.32, 0.35, 0.37, 0.39, 0.41, 0.44, 0.48, 0.52],
@@ -231,6 +232,7 @@ export const pogranichnikChr_0029_pograni_attack2ActionGraph = {
 export const pogranichnikChr_0029_pograni_attack2: SkillDefinition = {
   actionGraph: pogranichnikChr_0029_pograni_attack2ActionGraph,
   key: 'chr_0029_pograni_attack2',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.14, 0.15, 0.17, 0.18, 0.2, 0.21, 0.22, 0.24, 0.25, 0.27, 0.29, 0.32],
@@ -391,6 +393,7 @@ export const pogranichnikChr_0029_pograni_attack3ActionGraph = {
 export const pogranichnikChr_0029_pograni_attack3: SkillDefinition = {
   actionGraph: pogranichnikChr_0029_pograni_attack3ActionGraph,
   key: 'chr_0029_pograni_attack3',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.17, 0.18, 0.2, 0.21, 0.23, 0.25, 0.26, 0.28, 0.3, 0.32, 0.34, 0.37],
@@ -546,6 +549,7 @@ export const pogranichnikChr_0029_pograni_attack4ActionGraph = {
 
 export const pogranichnikChr_0029_pograni_attack4: SkillDefinition = {
   key: 'chr_0029_pograni_attack4',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.06, 0.07, 0.08, 0.08, 0.09, 0.1, 0.1, 0.11, 0.11, 0.12, 0.13, 0.14],
@@ -691,6 +695,7 @@ export const pogranichnikChr_0029_pograni_attack5ActionGraph = {
 export const pogranichnikChr_0029_pograni_attack5: SkillDefinition = {
   actionGraph: pogranichnikChr_0029_pograni_attack5ActionGraph,
   key: 'chr_0029_pograni_attack5',
+  element: 'physical',
   blackboard: {
     atb: 20,
     atk_scale: [0.43, 0.47, 0.52, 0.56, 0.6, 0.65, 0.69, 0.73, 0.77, 0.83, 0.89, 0.97],
@@ -887,6 +892,7 @@ export const pogranichnikChr_0029_pograni_power_attackActionGraph = {
 
 export const pogranichnikChr_0029_pograni_power_attack: SkillDefinition = {
   key: 'chr_0029_pograni_power_attack',
+  element: 'physical',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
   timelineBlockFrames: 48,
   naturalDurationFrames: 145,
@@ -965,6 +971,7 @@ export const pogranichnikChr_0029_pograni_plunging_attack_endActionGraph = {
 export const pogranichnikChr_0029_pograni_plunging_attack_end: SkillDefinition = {
   actionGraph: pogranichnikChr_0029_pograni_plunging_attack_endActionGraph,
   key: 'chr_0029_pograni_plunging_attack_end',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
@@ -1494,6 +1501,7 @@ export const pogranichnikChr_0029_pograni_normal_skillActionGraph = {
 
 export const pogranichnikChr_0029_pograni_normal_skill: SkillDefinition = {
   key: 'chr_0029_pograni_normal_skill',
+  element: 'physical',
   blackboard: {
     atb_return: 15,
     atb1: 5,
@@ -2083,6 +2091,7 @@ export const pogranichnikChr_0029_pograni_combo_skillActionGraph = {
 
 export const pogranichnikChr_0029_pograni_combo_skill: SkillDefinition = {
   key: 'chr_0029_pograni_combo_skill',
+  element: 'physical',
   blackboard: {
     atb_ratio: 1,
     atb1: 5,
@@ -2400,6 +2409,7 @@ export const pogranichnikChr_0029_pograni_ultimate_skillActionGraph = {
 
 export const pogranichnikChr_0029_pograni_ultimate_skill: SkillDefinition = {
   key: 'chr_0029_pograni_ultimate_skill',
+  element: 'physical',
   blackboard: {
     angle: 120,
     atb_final: [30, 30, 30, 30, 30, 30, 30, 30, 30, 40, 40, 40],

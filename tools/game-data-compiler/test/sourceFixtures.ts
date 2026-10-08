@@ -233,7 +233,7 @@ export function activeSkillFixture(
     durationFrame: 30,
     exclusiveFrame: 30,
     hittableAttackRange: 0,
-    iconBgType: 'Default',
+    iconBgType: 'Physical',
     iconId: '',
     level: 1,
     needEnemyOutOfScreenWarning: false,

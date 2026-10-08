@@ -90,6 +90,7 @@ export const chenQianyuChr_0005_chen_attack1ActionGraph = {
 
 export const chenQianyuChr_0005_chen_attack1: SkillDefinition = {
   key: 'chr_0005_chen_attack1',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.1, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.21, 0.23],
@@ -174,6 +175,7 @@ export const chenQianyuChr_0005_chen_attack2ActionGraph = {
 export const chenQianyuChr_0005_chen_attack2: SkillDefinition = {
   actionGraph: chenQianyuChr_0005_chen_attack2ActionGraph,
   key: 'chr_0005_chen_attack2',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.24, 0.26, 0.29, 0.31, 0.34, 0.36, 0.38, 0.41, 0.43, 0.46, 0.5, 0.54],
@@ -284,6 +286,7 @@ export const chenQianyuChr_0005_chen_attack3ActionGraph = {
 
 export const chenQianyuChr_0005_chen_attack3: SkillDefinition = {
   key: 'chr_0005_chen_attack3',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.13, 0.15, 0.16, 0.17, 0.19, 0.2, 0.21, 0.23, 0.24, 0.26, 0.28, 0.3],
@@ -397,6 +400,7 @@ export const chenQianyuChr_0005_chen_attack4ActionGraph = {
 
 export const chenQianyuChr_0005_chen_attack4: SkillDefinition = {
   key: 'chr_0005_chen_attack4',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.15, 0.17, 0.18, 0.2, 0.21, 0.23, 0.24, 0.26, 0.27, 0.29, 0.31, 0.34],
@@ -539,6 +543,7 @@ export const chenQianyuChr_0005_chen_attack5ActionGraph = {
 export const chenQianyuChr_0005_chen_attack5: SkillDefinition = {
   actionGraph: chenQianyuChr_0005_chen_attack5ActionGraph,
   key: 'chr_0005_chen_attack5',
+  element: 'physical',
   blackboard: {
     atb: 18,
     atk_scale: [0.4, 0.44, 0.48, 0.52, 0.56, 0.6, 0.64, 0.68, 0.72, 0.77, 0.83, 0.9],
@@ -692,6 +697,7 @@ export const chenQianyuChr_0005_chen_power_attackActionGraph = {
 export const chenQianyuChr_0005_chen_power_attack: SkillDefinition = {
   actionGraph: chenQianyuChr_0005_chen_power_attackActionGraph,
   key: 'chr_0005_chen_power_attack',
+  element: 'physical',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
   timelineBlockFrames: 51,
   naturalDurationFrames: 154,
@@ -769,6 +775,7 @@ export const chenQianyuChr_0005_chen_plunging_attack_endActionGraph = {
 export const chenQianyuChr_0005_chen_plunging_attack_end: SkillDefinition = {
   actionGraph: chenQianyuChr_0005_chen_plunging_attack_endActionGraph,
   key: 'chr_0005_chen_plunging_attack_end',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
@@ -1570,6 +1577,7 @@ export const chenQianyuChr_0005_chen_normal_skillActionGraph = {
 
 export const chenQianyuChr_0005_chen_normal_skill: SkillDefinition = {
   key: 'chr_0005_chen_normal_skill',
+  element: 'physical',
   blackboard: {
     airborne: 0,
     airborne_coefficient: 0,
@@ -2057,6 +2065,7 @@ export const chenQianyuChr_0005_chen_combo_skillActionGraph = {
 
 export const chenQianyuChr_0005_chen_combo_skill: SkillDefinition = {
   key: 'chr_0005_chen_combo_skill',
+  element: 'physical',
   blackboard: {
     atk_scale: [1.2, 1.32, 1.44, 1.56, 1.68, 1.8, 1.92, 2.04, 2.16, 2.31, 2.49, 2.7],
     count: 0,
@@ -2225,6 +2234,7 @@ export const chenQianyuChr_0005_chen_ultimate_skillActionGraph = {
 
 export const chenQianyuChr_0005_chen_ultimate_skill: SkillDefinition = {
   key: 'chr_0005_chen_ultimate_skill',
+  element: 'physical',
   blackboard: {
     atk_scale1: [0.36, 0.4, 0.43, 0.47, 0.5, 0.54, 0.58, 0.61, 0.65, 0.69, 0.75, 0.81],
     atk_scale2: [4.55, 5, 5.45, 5.91, 6.36, 6.82, 7.27, 7.73, 8.18, 8.75, 9.43, 10.23],

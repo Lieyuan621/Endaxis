@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { parseGameRichText, resolveRichTextImage } from './gameRichText';
+import { getRichTextStyle, parseGameRichText, resolveRichTextImage } from './gameRichText';
 
 describe('game rich text', () => {
   test('parses style and term tags without dropping plain text', () => {
@@ -21,5 +21,25 @@ describe('game rich text', () => {
       '/icons/icon_energy_fusion_fire.webp',
     );
     expect(resolveRichTextImage('/images/../private.webp')).toBeNull();
+  });
+
+  test('preserves contract colors, nested terms and text after closing tags', () => {
+    expect(parseGameRichText('获得<color=#009cad><#ba.crystinflict>寒冷附着</></color>。')).toEqual(
+      [
+        { type: 'text', text: '获得' },
+        {
+          type: 'style',
+          id: '#009cad',
+          children: [
+            { type: 'term', id: 'ba.crystinflict', children: [{ type: 'text', text: '寒冷附着' }] },
+          ],
+        },
+        { type: 'text', text: '。' },
+      ],
+    );
+    expect(getRichTextStyle('#009cad')).toEqual({ color: '#009cad', icon: null });
+    expect(parseGameRichText('<color=invalid>内容</color>后文')).toEqual([
+      { type: 'text', text: '<color=invalid>内容</color>后文' },
+    ]);
   });
 });

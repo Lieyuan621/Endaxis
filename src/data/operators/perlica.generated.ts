@@ -117,6 +117,7 @@ export const perlicaChr_0004_pelica_attack1ActionGraph = {
 
 export const perlicaChr_0004_pelica_attack1: SkillDefinition = {
   key: 'chr_0004_pelica_attack1',
+  element: 'electric',
   blackboard: {
     atb: 0,
     atk_scale: [0.25, 0.28, 0.31, 0.33, 0.36, 0.38, 0.41, 0.43, 0.46, 0.49, 0.53, 0.57],
@@ -260,6 +261,7 @@ export const perlicaChr_0004_pelica_attack2ActionGraph = {
 
 export const perlicaChr_0004_pelica_attack2: SkillDefinition = {
   key: 'chr_0004_pelica_attack2',
+  element: 'electric',
   blackboard: {
     atb: 0,
     atk_scale: [0.15, 0.17, 0.18, 0.2, 0.21, 0.23, 0.24, 0.26, 0.27, 0.29, 0.31, 0.34],
@@ -405,6 +407,7 @@ export const perlicaChr_0004_pelica_attack3ActionGraph = {
 
 export const perlicaChr_0004_pelica_attack3: SkillDefinition = {
   key: 'chr_0004_pelica_attack3',
+  element: 'electric',
   blackboard: {
     atb: 0,
     atk_scale: [0.12, 0.14, 0.15, 0.16, 0.17, 0.19, 0.2, 0.21, 0.22, 0.24, 0.26, 0.28],
@@ -554,6 +557,7 @@ export const perlicaChr_0004_pelica_attack4ActionGraph = {
 
 export const perlicaChr_0004_pelica_attack4: SkillDefinition = {
   key: 'chr_0004_pelica_attack4',
+  element: 'electric',
   blackboard: {
     atb: 15,
     atk_scale: [0.57, 0.62, 0.68, 0.73, 0.79, 0.85, 0.9, 0.96, 1.02, 1.09, 1.17, 1.27],
@@ -688,6 +692,7 @@ export const perlicaChr_0004_pelica_power_attackActionGraph = {
 export const perlicaChr_0004_pelica_power_attack: SkillDefinition = {
   actionGraph: perlicaChr_0004_pelica_power_attackActionGraph,
   key: 'chr_0004_pelica_power_attack',
+  element: 'electric',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
   timelineBlockFrames: 51,
   naturalDurationFrames: 135,
@@ -795,6 +800,7 @@ export const perlicaChr_0004_pelica_plunging_attack_endActionGraph = {
 export const perlicaChr_0004_pelica_plunging_attack_end: SkillDefinition = {
   actionGraph: perlicaChr_0004_pelica_plunging_attack_endActionGraph,
   key: 'chr_0004_pelica_plunging_attack_end',
+  element: 'electric',
   blackboard: {
     atb: 0,
     atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
@@ -859,6 +865,7 @@ export const perlicaChr_0004_pelica_normal_skillActionGraph = {
 export const perlicaChr_0004_pelica_normal_skill: SkillDefinition = {
   actionGraph: perlicaChr_0004_pelica_normal_skillActionGraph,
   key: 'chr_0004_pelica_normal_skill',
+  element: 'electric',
   blackboard: {
     atk_scale: [1.78, 1.96, 2.13, 2.31, 2.49, 2.67, 2.85, 3.02, 3.2, 3.42, 3.69, 4],
     poise: 10,
@@ -1017,6 +1024,7 @@ export const perlicaChr_0004_pelica_combo_skillActionGraph = {
 
 export const perlicaChr_0004_pelica_combo_skill: SkillDefinition = {
   key: 'chr_0004_pelica_combo_skill',
+  element: 'electric',
   blackboard: {
     atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
     duration: 5,
@@ -1127,6 +1135,7 @@ export const perlicaChr_0004_pelica_ultimate_skillActionGraph = {
 export const perlicaChr_0004_pelica_ultimate_skill: SkillDefinition = {
   actionGraph: perlicaChr_0004_pelica_ultimate_skillActionGraph,
   key: 'chr_0004_pelica_ultimate_skill',
+  element: 'electric',
   blackboard: {
     atk_scale: [4.45, 4.89, 5.34, 5.78, 6.22, 6.67, 7.11, 7.56, 8, 8.56, 9.23, 10],
     atk_scale_2: 0,

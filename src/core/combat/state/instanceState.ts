@@ -355,6 +355,11 @@ export interface BuffContainerState<Key extends string = string> {
   readonly poiseModifiers: PoiseModifier[];
   readonly activeShields: BuffShieldState[];
   readonly sustainedProtections: Map<BuffInstanceState<Key>, readonly [number, number]>;
+  /** 原生 MoveGaitAction 共用 Skill 限制槽，最后设置值保留到计数归零。 */
+  movementGaitActionCount: number;
+  movementGaitLimit:
+    | import('../../../../packages/game-data-contract/src/actions').CombatStepParameters['limitMovementGait']
+    | null;
   readonly attributes: CombatAttributeState<Key>;
   readonly entityBlackboard: ActionBlackboardState;
   /** 已完成创建的实例数据；尚在 Start 中的实例可能还未进入发布列表。 */
@@ -380,6 +385,8 @@ export function createBuffContainerState<Key extends string = string>(
     poiseModifiers: [],
     activeShields: [],
     sustainedProtections: new Map(),
+    movementGaitActionCount: 0,
+    movementGaitLimit: null,
     attributes,
     entityBlackboard,
     instances: new Map(),

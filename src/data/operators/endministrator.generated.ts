@@ -79,6 +79,7 @@ export const endministratorChr_0003_endminf_attack1ActionGraph = {
 export const endministratorChr_0003_endminf_attack1: SkillDefinition = {
   actionGraph: endministratorChr_0003_endminf_attack1ActionGraph,
   key: 'chr_0003_endminf_attack1',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.23, 0.25, 0.27, 0.29, 0.32, 0.34, 0.36, 0.39, 0.41, 0.44, 0.47, 0.51],
@@ -181,6 +182,7 @@ export const endministratorChr_0003_endminf_attack2ActionGraph = {
 export const endministratorChr_0003_endminf_attack2: SkillDefinition = {
   actionGraph: endministratorChr_0003_endminf_attack2ActionGraph,
   key: 'chr_0003_endminf_attack2',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.27, 0.3, 0.32, 0.35, 0.38, 0.41, 0.43, 0.46, 0.49, 0.52, 0.56, 0.61],
@@ -340,6 +342,7 @@ export const endministratorChr_0003_endminf_attack3ActionGraph = {
 export const endministratorChr_0003_endminf_attack3: SkillDefinition = {
   actionGraph: endministratorChr_0003_endminf_attack3ActionGraph,
   key: 'chr_0003_endminf_attack3',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.15, 0.17, 0.18, 0.2, 0.21, 0.23, 0.24, 0.26, 0.27, 0.29, 0.31, 0.34],
@@ -545,6 +548,7 @@ export const endministratorChr_0003_endminf_attack4ActionGraph = {
 
 export const endministratorChr_0003_endminf_attack4: SkillDefinition = {
   key: 'chr_0003_endminf_attack4',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.09, 0.1, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19],
@@ -704,6 +708,7 @@ export const endministratorChr_0003_endminf_attack5ActionGraph = {
 
 export const endministratorChr_0003_endminf_attack5: SkillDefinition = {
   key: 'chr_0003_endminf_attack5',
+  element: 'physical',
   blackboard: {
     atb: 20,
     atk_scale: [0.4, 0.44, 0.48, 0.52, 0.56, 0.6, 0.64, 0.68, 0.72, 0.77, 0.83, 0.9],
@@ -889,6 +894,7 @@ export const endministratorChr_0003_endminf_power_attack2ActionGraph = {
 
 export const endministratorChr_0003_endminf_power_attack2: SkillDefinition = {
   key: 'chr_0003_endminf_power_attack2',
+  element: 'physical',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
   timelineBlockFrames: 48,
   naturalDurationFrames: 192,
@@ -967,6 +973,7 @@ export const endministratorChr_0003_endminf_plunging_attack_endActionGraph = {
 export const endministratorChr_0003_endminf_plunging_attack_end: SkillDefinition = {
   actionGraph: endministratorChr_0003_endminf_plunging_attack_endActionGraph,
   key: 'chr_0003_endminf_plunging_attack_end',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
@@ -2281,6 +2288,7 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
 
 export const endministratorChr_0003_endminf_normal_skill: SkillDefinition = {
   key: 'chr_0003_endminf_normal_skill',
+  element: 'physical',
   blackboard: {
     atb_return: 0,
     atk_scale: [1.56, 1.71, 1.87, 2.02, 2.18, 2.34, 2.49, 2.65, 2.8, 3, 3.23, 3.5],
@@ -2485,6 +2493,7 @@ export const endministratorChr_0003_endminf_ultimate_skillActionGraph = {
 
 export const endministratorChr_0003_endminf_ultimate_skill: SkillDefinition = {
   key: 'chr_0003_endminf_ultimate_skill',
+  element: 'physical',
   blackboard: {
     atk_scale: [3.56, 3.91, 4.27, 4.62, 4.98, 5.33, 5.69, 6.04, 6.4, 6.84, 7.38, 8],
     originum_ult_break_scale: [2.67, 2.94, 3.2, 3.47, 3.74, 4, 4.27, 4.54, 4.8, 5.14, 5.54, 6],
@@ -2675,6 +2684,7 @@ export const endministratorChr_0003_endminf_combo_skillActionGraph = {
 export const endministratorChr_0003_endminf_combo_skill: SkillDefinition = {
   actionGraph: endministratorChr_0003_endminf_combo_skillActionGraph,
   key: 'chr_0003_endminf_combo_skill',
+  element: 'physical',
   blackboard: {
     atk_scale: [0.45, 0.49, 0.54, 0.58, 0.62, 0.67, 0.71, 0.76, 0.8, 0.86, 0.93, 1],
     atk_scale_trigger: [1.78, 1.96, 2.13, 2.31, 2.49, 2.67, 2.84, 3.02, 3.2, 3.42, 3.69, 4],

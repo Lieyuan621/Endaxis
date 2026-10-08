@@ -76,6 +76,7 @@ export const aleshChr_0024_deepfin_attack1ActionGraph = {
 export const aleshChr_0024_deepfin_attack1: SkillDefinition = {
   actionGraph: aleshChr_0024_deepfin_attack1ActionGraph,
   key: 'chr_0024_deepfin_attack1',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.18, 0.19, 0.21, 0.23, 0.25, 0.26, 0.28, 0.3, 0.32, 0.34, 0.36, 0.39],
@@ -191,6 +192,7 @@ export const aleshChr_0024_deepfin_attack2ActionGraph = {
 
 export const aleshChr_0024_deepfin_attack2: SkillDefinition = {
   key: 'chr_0024_deepfin_attack2',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.1, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.21, 0.23],
@@ -293,6 +295,7 @@ export const aleshChr_0024_deepfin_attack3ActionGraph = {
 
 export const aleshChr_0024_deepfin_attack3: SkillDefinition = {
   key: 'chr_0024_deepfin_attack3',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.28, 0.3, 0.33, 0.36, 0.39, 0.41, 0.44, 0.47, 0.5, 0.53, 0.57, 0.62],
@@ -396,6 +399,7 @@ export const aleshChr_0024_deepfin_attack4ActionGraph = {
 export const aleshChr_0024_deepfin_attack4: SkillDefinition = {
   actionGraph: aleshChr_0024_deepfin_attack4ActionGraph,
   key: 'chr_0024_deepfin_attack4',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.28, 0.3, 0.33, 0.36, 0.39, 0.41, 0.44, 0.47, 0.5, 0.53, 0.57, 0.62],
@@ -538,6 +542,7 @@ export const aleshChr_0024_deepfin_attack5ActionGraph = {
 export const aleshChr_0024_deepfin_attack5: SkillDefinition = {
   actionGraph: aleshChr_0024_deepfin_attack5ActionGraph,
   key: 'chr_0024_deepfin_attack5',
+  element: 'physical',
   blackboard: {
     atb: 19,
     atk_scale: [0.28, 0.3, 0.33, 0.36, 0.39, 0.41, 0.44, 0.47, 0.5, 0.53, 0.57, 0.62],
@@ -725,6 +730,7 @@ export const aleshChr_0024_deepfin_power_attackActionGraph = {
 
 export const aleshChr_0024_deepfin_power_attack: SkillDefinition = {
   key: 'chr_0024_deepfin_power_attack',
+  element: 'physical',
   blackboard: {
     atk_scale1: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
     atk_scale2: [3.2, 3.52, 3.84, 4.16, 4.48, 4.8, 5.12, 5.44, 5.76, 6.16, 6.64, 7.2],
@@ -805,6 +811,7 @@ export const aleshChr_0024_deepfin_plunging_attack_endActionGraph = {
 export const aleshChr_0024_deepfin_plunging_attack_end: SkillDefinition = {
   actionGraph: aleshChr_0024_deepfin_plunging_attack_endActionGraph,
   key: 'chr_0024_deepfin_plunging_attack_end',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
@@ -1214,6 +1221,7 @@ export const aleshChr_0024_deepfin_normal_skillActionGraph = {
 
 export const aleshChr_0024_deepfin_normal_skill: SkillDefinition = {
   key: 'chr_0024_deepfin_normal_skill',
+  element: 'physical',
   blackboard: {
     atb_1: [10, 10, 10, 10, 10, 10, 10, 10, 10, 15, 15, 15],
     atb_2: [20, 20, 20, 20, 20, 20, 20, 20, 20, 25, 25, 25],
@@ -1566,6 +1574,7 @@ export const aleshChr_0024_deepfin_combo_skillActionGraph = {
 
 export const aleshChr_0024_deepfin_combo_skill: SkillDefinition = {
   key: 'chr_0024_deepfin_combo_skill',
+  element: 'physical',
   blackboard: {
     atb: [10, 10, 10, 10, 10, 12, 12, 12, 12, 13, 13, 15],
     atb_sp: 10,
@@ -1858,6 +1867,7 @@ export const aleshChr_0024_deepfin_ultimate_skillActionGraph = {
 
 export const aleshChr_0024_deepfin_ultimate_skill: SkillDefinition = {
   key: 'chr_0024_deepfin_ultimate_skill',
+  element: 'cryo',
   blackboard: {
     atb: [20, 20, 20, 20, 20, 20, 20, 20, 20, 25, 25, 25],
     atb_max: 100,

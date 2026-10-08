@@ -76,6 +76,7 @@ export const rossiChr_0028_wulfa_attack1ActionGraph = {
 export const rossiChr_0028_wulfa_attack1: SkillDefinition = {
   actionGraph: rossiChr_0028_wulfa_attack1ActionGraph,
   key: 'chr_0028_wulfa_attack1',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.27, 0.3, 0.32, 0.35, 0.38, 0.41, 0.43, 0.46, 0.49, 0.52, 0.56, 0.61],
@@ -211,6 +212,7 @@ export const rossiChr_0028_wulfa_attack2ActionGraph = {
 export const rossiChr_0028_wulfa_attack2: SkillDefinition = {
   actionGraph: rossiChr_0028_wulfa_attack2ActionGraph,
   key: 'chr_0028_wulfa_attack2',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.32, 0.35, 0.38, 0.41, 0.44, 0.47, 0.5, 0.54, 0.57, 0.61, 0.65, 0.71],
@@ -369,6 +371,7 @@ export const rossiChr_0028_wulfa_attack3ActionGraph = {
 export const rossiChr_0028_wulfa_attack3: SkillDefinition = {
   actionGraph: rossiChr_0028_wulfa_attack3ActionGraph,
   key: 'chr_0028_wulfa_attack3',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.34, 0.37, 0.41, 0.44, 0.48, 0.51, 0.54, 0.58, 0.61, 0.65, 0.71, 0.77],
@@ -501,6 +504,7 @@ export const rossiChr_0028_wulfa_attack4ActionGraph = {
 
 export const rossiChr_0028_wulfa_attack4: SkillDefinition = {
   key: 'chr_0028_wulfa_attack4',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.41, 0.45, 0.49, 0.53, 0.57, 0.61, 0.65, 0.69, 0.73, 0.78, 0.84, 0.91],
@@ -709,6 +713,7 @@ export const rossiChr_0028_wulfa_attack5ActionGraph = {
 
 export const rossiChr_0028_wulfa_attack5: SkillDefinition = {
   key: 'chr_0028_wulfa_attack5',
+  element: 'physical',
   blackboard: {
     atb: 21,
     atk_scale: [0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.96, 1.04, 1.13],
@@ -950,6 +955,7 @@ export const rossiChr_0028_wulfa_power_attackActionGraph = {
 
 export const rossiChr_0028_wulfa_power_attack: SkillDefinition = {
   key: 'chr_0028_wulfa_power_attack',
+  element: 'physical',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
   timelineBlockFrames: 66,
   naturalDurationFrames: 216,
@@ -1020,6 +1026,7 @@ export const rossiChr_0028_wulfa_plunging_attack_endActionGraph = {
 export const rossiChr_0028_wulfa_plunging_attack_end: SkillDefinition = {
   actionGraph: rossiChr_0028_wulfa_plunging_attack_endActionGraph,
   key: 'chr_0028_wulfa_plunging_attack_end',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
@@ -3571,6 +3578,7 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
 
 export const rossiChr_0028_wulfa_normal_skill: SkillDefinition = {
   key: 'chr_0028_wulfa_normal_skill',
+  element: 'physical',
   blackboard: {
     atb_return: 10,
     atk_scale_1: [0.85, 0.94, 1.02, 1.11, 1.19, 1.28, 1.37, 1.45, 1.54, 1.64, 1.77, 1.92],
@@ -4212,6 +4220,7 @@ export const rossiChr_0028_wulfa_combo_2_skillActionGraph = {
 
 export const rossiChr_0028_wulfa_combo_2_skill: SkillDefinition = {
   key: 'chr_0028_wulfa_combo_2_skill',
+  element: 'physical',
   blackboard: {
     atk_scale: [0.67, 0.73, 0.8, 0.87, 0.93, 1, 1.07, 1.13, 1.2, 1.28, 1.38, 1.5],
     atk_scale_once: 0.01,
@@ -6301,6 +6310,7 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
 
 export const rossiChr_0028_wulfa_combo_3_skill: SkillDefinition = {
   key: 'chr_0028_wulfa_combo_3_skill',
+  element: 'physical',
   blackboard: {
     atk_scale_f: [1.33, 1.47, 1.6, 1.73, 1.87, 2, 2.13, 2.27, 2.4, 2.57, 2.77, 3],
     atk_scale_once: 0,
@@ -6804,6 +6814,7 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
 
 export const rossiChr_0028_wulfa_ultimate_skill: SkillDefinition = {
   key: 'chr_0028_wulfa_ultimate_skill',
+  element: 'heat',
   blackboard: {
     atk_scale_1: [0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.21, 0.22, 0.24],
     atk_scale_2: [1.11, 1.22, 1.33, 1.44, 1.56, 1.67, 1.78, 1.89, 2, 2.14, 2.31, 2.5],

@@ -93,6 +93,7 @@ export type CompiledBuffConditionSource =
     })
   | Condition<'eventDamageTagsMatch' | 'eventDamageGameplayTagsMatch' | 'eventDamageFeaturesMatch'>
   | Condition<'eventSpGainMatch'>
+  | Condition<'skillDamageTypeIn'>
   | (Condition<'eventSkillTypeIn'> & {
       readonly skillTypes: readonly (
         'basicAttack' | 'plungingAttack' | 'battleSkill' | 'comboSkill' | 'ultimate'
@@ -392,6 +393,9 @@ export type CompiledBuffStepSource =
   | Step<'finishParentGlobalBuff'>
   | Step<'finishGlobalBuffsById'>
   | Step<'readSkillSettingData'>
+  | Step<'triggerCharacterInflictionEvent'>
+  | Step<'limitMovementGait'>
+  | Step<'applyCharacterInfliction'>
   | Step<'applyElementalInfliction'>
   | Step<
       'applyElementalReaction',
@@ -433,6 +437,7 @@ export type CompiledBuffStepSource =
   | Step<'calculateActionValue'>
   | Step<'readCurrentBuffRemainingDuration'>
   | Step<'readBuffRemainingDuration'>
+  | Step<'setBuffRemainingDuration'>
   | Step<'setCurrentBuffRemainingDuration'>
   | Step<'refreshCurrentBuffAttributeModifiers'>
   | Step<

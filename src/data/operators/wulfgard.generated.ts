@@ -212,6 +212,7 @@ export const wulfgardChr_0006_wolfgd_attack1ActionGraph = {
 
 export const wulfgardChr_0006_wolfgd_attack1: SkillDefinition = {
   key: 'chr_0006_wolfgd_attack1',
+  element: 'heat',
   blackboard: {
     atb: 0,
     atk_scale: [0.15, 0.17, 0.18, 0.2, 0.21, 0.23, 0.24, 0.26, 0.27, 0.29, 0.31, 0.34],
@@ -357,6 +358,7 @@ export const wulfgardChr_0006_wolfgd_attack2ActionGraph = {
 
 export const wulfgardChr_0006_wolfgd_attack2: SkillDefinition = {
   key: 'chr_0006_wolfgd_attack2',
+  element: 'heat',
   blackboard: {
     atb: 0,
     atk_scale: [0.18, 0.19, 0.21, 0.23, 0.25, 0.26, 0.28, 0.3, 0.32, 0.34, 0.36, 0.39],
@@ -502,6 +504,7 @@ export const wulfgardChr_0006_wolfgd_attack3ActionGraph = {
 
 export const wulfgardChr_0006_wolfgd_attack3: SkillDefinition = {
   key: 'chr_0006_wolfgd_attack3',
+  element: 'heat',
   blackboard: {
     atb: 0,
     atk_scale: [0.19, 0.2, 0.22, 0.24, 0.26, 0.28, 0.3, 0.31, 0.33, 0.36, 0.38, 0.42],
@@ -644,6 +647,7 @@ export const wulfgardChr_0006_wolfgd_attack4ActionGraph = {
 
 export const wulfgardChr_0006_wolfgd_attack4: SkillDefinition = {
   key: 'chr_0006_wolfgd_attack4',
+  element: 'heat',
   blackboard: {
     atb: 18,
     atk_scale: [0.68, 0.74, 0.81, 0.88, 0.95, 1.01, 1.08, 1.15, 1.22, 1.3, 1.4, 1.52],
@@ -751,6 +755,7 @@ export const wulfgardChr_0006_wolfgd_power_attackActionGraph = {
 export const wulfgardChr_0006_wolfgd_power_attack: SkillDefinition = {
   actionGraph: wulfgardChr_0006_wolfgd_power_attackActionGraph,
   key: 'chr_0006_wolfgd_power_attack',
+  element: 'heat',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
   timelineBlockFrames: 61,
   naturalDurationFrames: 150,
@@ -800,6 +805,7 @@ export const wulfgardChr_0006_wolfgd_plunging_attack_endActionGraph = {
 export const wulfgardChr_0006_wolfgd_plunging_attack_end: SkillDefinition = {
   actionGraph: wulfgardChr_0006_wolfgd_plunging_attack_endActionGraph,
   key: 'chr_0006_wolfgd_plunging_attack_end',
+  element: 'heat',
   blackboard: { atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8] },
   timelineBlockFrames: 8,
   naturalDurationFrames: 120,
@@ -1544,6 +1550,7 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
 
 export const wulfgardChr_0006_wolfgd_normal_skill: SkillDefinition = {
   key: 'chr_0006_wolfgd_normal_skill',
+  element: 'heat',
   blackboard: {
     add: 0,
     atk_scale: [0.34, 0.37, 0.41, 0.44, 0.48, 0.51, 0.54, 0.58, 0.61, 0.65, 0.71, 0.77],
@@ -1682,6 +1689,7 @@ export const wulfgardChr_0006_wolfgd_combo_skillActionGraph = {
 
 export const wulfgardChr_0006_wolfgd_combo_skill: SkillDefinition = {
   key: 'chr_0006_wolfgd_combo_skill',
+  element: 'heat',
   blackboard: {
     atk_scale: [0.6, 0.66, 0.72, 0.78, 0.84, 0.9, 0.96, 1.02, 1.08, 1.16, 1.25, 1.35],
     cam_angle: 0,
@@ -1850,6 +1858,7 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
 
 export const wulfgardChr_0006_wolfgd_ultimate_skill: SkillDefinition = {
   key: 'chr_0006_wolfgd_ultimate_skill',
+  element: 'heat',
   blackboard: {
     atk_scale: [0.32, 0.35, 0.38, 0.42, 0.45, 0.48, 0.51, 0.54, 0.58, 0.62, 0.66, 0.72],
     poise: 3,

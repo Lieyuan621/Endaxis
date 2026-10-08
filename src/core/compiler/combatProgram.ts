@@ -103,6 +103,7 @@ export type ResolvedSkillBuffDefinition = Omit<
 
 /** 各宿主共用、等级已经展开的动作数据，不附带施法或对象身份。 */
 export interface CompiledSkillActionProgram {
+  readonly element?: import('../game-data/operatorDefinition').DamageElement;
   readonly initialBlackboard: Readonly<Record<string, number>>;
   readonly timelineActions: readonly CompiledTimelineAction[];
 }
@@ -155,6 +156,9 @@ export interface ResolvedCombatStepParameters {
   spawnAbilityEntity: Omit<CompiledStepParameters['spawnAbilityEntity'], 'definition'> & {
     readonly definition?: ResolvedAbilityEntityDefinition;
   };
+  triggerCharacterInflictionEvent: CompiledStepParameters['triggerCharacterInflictionEvent'];
+  limitMovementGait: CompiledStepParameters['limitMovementGait'];
+  applyCharacterInfliction: CompiledStepParameters['applyCharacterInfliction'];
   applyElementalInfliction: CompiledStepParameters['applyElementalInfliction'];
   applyKnockDown: CompiledStepParameters['applyKnockDown'];
   triggerSpellBurst: CompiledStepParameters['triggerSpellBurst'];
@@ -253,6 +257,7 @@ export interface ResolvedCombatStepParameters {
   readEventBuffBlackboard: CompiledStepParameters['readEventBuffBlackboard'];
   readCurrentBuffRemainingDuration: CompiledStepParameters['readCurrentBuffRemainingDuration'];
   readBuffRemainingDuration: CompiledStepParameters['readBuffRemainingDuration'];
+  setBuffRemainingDuration: CompiledStepParameters['setBuffRemainingDuration'];
   setCurrentBuffRemainingDuration: CompiledStepParameters['setCurrentBuffRemainingDuration'];
   refreshCurrentBuffAttributeModifiers: CompiledStepParameters['refreshCurrentBuffAttributeModifiers'];
   readBuffStackCount: CompiledStepParameters['readBuffStackCount'];
@@ -420,6 +425,9 @@ export const COMBAT_STEP_EXECUTION_ROUTES = {
   startCurrentAbilityEntityChildSkill: 'operation',
   startCurrentAbilityEntityChildSkillById: 'operation',
   spawnAbilityEntity: 'operation',
+  triggerCharacterInflictionEvent: 'operation',
+  limitMovementGait: 'operation',
+  applyCharacterInfliction: 'operation',
   applyElementalInfliction: 'operation',
   triggerSpellBurst: 'operation',
   triggerCustomAbilityEvent: 'operation',
@@ -443,6 +451,7 @@ export const COMBAT_STEP_EXECUTION_ROUTES = {
   readEventBuffBlackboard: 'operation',
   readCurrentBuffRemainingDuration: 'operation',
   readBuffRemainingDuration: 'operation',
+  setBuffRemainingDuration: 'operation',
   setCurrentBuffRemainingDuration: 'operation',
   refreshCurrentBuffAttributeModifiers: 'operation',
   skillAffix: 'operation',

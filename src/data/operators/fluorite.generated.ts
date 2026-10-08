@@ -93,6 +93,7 @@ export const fluoriteChr_0022_bounda_attack1ActionGraph = {
 
 export const fluoriteChr_0022_bounda_attack1: SkillDefinition = {
   key: 'chr_0022_bounda_attack1',
+  element: 'nature',
   blackboard: {
     atb: 0,
     atk_scale: [0.25, 0.28, 0.3, 0.33, 0.35, 0.38, 0.4, 0.43, 0.45, 0.48, 0.52, 0.56],
@@ -209,6 +210,7 @@ export const fluoriteChr_0022_bounda_attack2ActionGraph = {
 
 export const fluoriteChr_0022_bounda_attack2: SkillDefinition = {
   key: 'chr_0022_bounda_attack2',
+  element: 'nature',
   blackboard: {
     atb: 0,
     atk_scale: [0.33, 0.36, 0.39, 0.42, 0.46, 0.49, 0.52, 0.55, 0.59, 0.63, 0.67, 0.73],
@@ -369,6 +371,7 @@ export const fluoriteChr_0022_bounda_attack3ActionGraph = {
 
 export const fluoriteChr_0022_bounda_attack3: SkillDefinition = {
   key: 'chr_0022_bounda_attack3',
+  element: 'nature',
   blackboard: {
     atb: 0,
     atk_scale: [0.26, 0.28, 0.31, 0.33, 0.36, 0.38, 0.41, 0.43, 0.46, 0.49, 0.53, 0.57],
@@ -552,6 +555,7 @@ export const fluoriteChr_0022_bounda_attack4ActionGraph = {
 
 export const fluoriteChr_0022_bounda_attack4: SkillDefinition = {
   key: 'chr_0022_bounda_attack4',
+  element: 'nature',
   blackboard: {
     atb: 15,
     atk_scale: [0.6, 0.66, 0.72, 0.78, 0.84, 0.9, 0.96, 1.02, 1.08, 1.16, 1.25, 1.35],
@@ -727,6 +731,7 @@ export const fluoriteChr_0022_bounda_attack4_1ActionGraph = {
 
 export const fluoriteChr_0022_bounda_attack4_1: SkillDefinition = {
   key: 'chr_0022_bounda_attack4_1',
+  element: 'nature',
   blackboard: {
     atb: 15,
     atk_scale: [0.6, 0.66, 0.72, 0.78, 0.84, 0.9, 0.96, 1.02, 1.08, 1.16, 1.25, 1.35],
@@ -864,6 +869,7 @@ export const fluoriteChr_0022_bounda_power_attackActionGraph = {
 export const fluoriteChr_0022_bounda_power_attack: SkillDefinition = {
   actionGraph: fluoriteChr_0022_bounda_power_attackActionGraph,
   key: 'chr_0022_bounda_power_attack',
+  element: 'physical',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
   timelineBlockFrames: 46,
   naturalDurationFrames: 127,
@@ -940,6 +946,7 @@ export const fluoriteChr_0022_bounda_plunging_attack_endActionGraph = {
 export const fluoriteChr_0022_bounda_plunging_attack_end: SkillDefinition = {
   actionGraph: fluoriteChr_0022_bounda_plunging_attack_endActionGraph,
   key: 'chr_0022_bounda_plunging_attack_end',
+  element: 'nature',
   blackboard: {
     atb: 0,
     atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
@@ -1092,6 +1099,7 @@ export const fluoriteChr_0022_bounda_normal_skillActionGraph = {
 
 export const fluoriteChr_0022_bounda_normal_skill: SkillDefinition = {
   key: 'chr_0022_bounda_normal_skill',
+  element: 'nature',
   blackboard: {
     atk_scale: [1.87, 2.06, 2.24, 2.43, 2.62, 2.8, 2.99, 3.18, 3.36, 3.6, 3.88, 4.2],
     boom_up: 0.3,
@@ -1556,6 +1564,7 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
 
 export const fluoriteChr_0022_bounda_ultimate_skill: SkillDefinition = {
   key: 'chr_0022_bounda_ultimate_skill',
+  element: 'nature',
   blackboard: {
     atk_scale1: [1.11, 1.22, 1.33, 1.44, 1.56, 1.67, 1.78, 1.89, 2, 2.14, 2.31, 2.5],
     atk_scale2: [1.11, 1.22, 1.33, 1.44, 1.56, 1.67, 1.78, 1.89, 2, 2.14, 2.31, 2.5],
@@ -1741,6 +1750,7 @@ export const fluoriteChr_0022_bounda_combo_skillActionGraph = {
 
 export const fluoriteChr_0022_bounda_combo_skill: SkillDefinition = {
   key: 'chr_0022_bounda_combo_skill',
+  element: 'nature',
   blackboard: {
     atk_scale: [1.69, 1.86, 2.03, 2.2, 2.37, 2.54, 2.7, 2.87, 3.04, 3.25, 3.51, 3.8],
     poise: 10,

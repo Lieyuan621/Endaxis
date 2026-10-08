@@ -1,3 +1,4 @@
+import { parseCharacterInflictionEventSource } from './elementalInflictionActions.ts';
 import {
   parseBlackboardCalculationActionSource,
   parseBlackboardMutationActionSource,
@@ -106,6 +107,7 @@ import {
   requireInteger,
   requireNonEmptyString,
   requireRecord,
+  requireNativeEnum,
 } from './primitives.ts';
 import {
   parseDebugPrintActionSource,
@@ -260,6 +262,8 @@ import {
 } from './projectileControlActions.ts';
 import {
   parseContinuousAnimationTimeScaleActionSource,
+  parseTargetAnimationTimeScaleActionSource,
+  type TargetAnimationTimeScaleActionSource,
   type ContinuousAnimationTimeScaleActionSource,
 } from './animationTimingActions.ts';
 import {
@@ -360,6 +364,7 @@ const CONDITION_ACTION_NAMES = new Set([
   'CheckHp',
   'Probablity',
   'CheckSkillType',
+  'CheckSkillDamageType',
   'CheckSkillId',
   'CheckSkillInterruptReason',
   'CheckOriginSkillType',
@@ -442,6 +447,10 @@ export interface HealthFloorActionSource {
 
 /** 已迁移到公共来源 IR 的 Action 叶子；领域适配器只能消费该公共并集。 */
 export type KnownNativeActionLeafSource =
+  | {
+      readonly family: 'disabled';
+      readonly action: { readonly kind: 'disabled'; readonly nativeActionType: string };
+    }
   | { readonly family: 'condition'; readonly action: NativeConditionSource }
   | { readonly family: 'blackboardCalculation'; readonly action: BlackboardCalculationActionSource }
   | { readonly family: 'blackboardMutation'; readonly action: BlackboardMutationActionSource }
@@ -513,11 +522,19 @@ export type KnownNativeActionLeafSource =
     }
   | { readonly family: 'globalBuff'; readonly action: GlobalBuffActionSource }
   | { readonly family: 'skillSetting'; readonly action: SkillSettingReadActionSource }
+  | {
+      readonly family: 'movementGait';
+      readonly action: {
+        readonly min: 'Walk' | 'Run' | 'Sprint';
+        readonly max: 'Walk' | 'Run' | 'Sprint';
+      };
+    }
   | { readonly family: 'selfDefense'; readonly action: SetSuperArmorActionSource }
   | { readonly family: 'projectileControl'; readonly action: ClearProjectileActionSource }
   | {
       readonly family: 'animationTiming';
-      readonly action: ContinuousAnimationTimeScaleActionSource;
+      readonly action:
+        ContinuousAnimationTimeScaleActionSource | TargetAnimationTimeScaleActionSource;
     }
   | { readonly family: 'timedMarker'; readonly action: TimedMarkerApplicationSource }
   | { readonly family: 'globalCooldown'; readonly action: GlobalCooldownApplicationSource }
@@ -559,6 +576,10 @@ export type KnownNativeActionLeafSource =
   | { readonly family: 'buffQuery'; readonly action: BuffStackReadActionSource }
   | { readonly family: 'buffBlackboardRead'; readonly action: BuffBlackboardReadActionSource }
   | { readonly family: 'buffLifeTimeRead'; readonly action: BuffLifeTimeReadActionSource }
+  | {
+      readonly family: 'characterInflictionEvent';
+      readonly action: ReturnType<typeof parseCharacterInflictionEventSource>;
+    }
   | { readonly family: 'buffDurationMutation'; readonly action: BuffDurationMutationActionSource }
   | { readonly family: 'buffTimePause'; readonly action: BuffTimePauseActionSource }
   | {
@@ -659,7 +680,7 @@ export type KnownNativeActionLeafSource =
     };
 
 /**
- * 单一公共分派入口。遇到尚未迁移的原生 Action 必须携带路径失败，不能由领域层各自猜测。
+ * 单一公共分派入口。未知启用动作必须失败；未知关闭动作保留身份，不解析不会执行的载荷。
  */
 export function parseKnownNativeActionLeafSource(
   value: unknown,
@@ -670,6 +691,8 @@ export function parseKnownNativeActionLeafSource(
   if (result) return result;
   const action = requireRecord(value, path);
   const name = nativeActionName(requireNonEmptyString(action.$type, `${path}.$type`));
+  if (action.isEnable === false)
+    return { family: 'disabled', action: { kind: 'disabled', nativeActionType: name } };
   throw new Error(`${path}.$type: unsupported native action ${JSON.stringify(name)}`);
 }
 
@@ -864,6 +887,11 @@ export function tryParseKnownNativeActionLeafSource(
       return {
         family: 'elementalInfliction',
         action: parseElementalInflictionActionSource(value, path),
+      };
+    case 'TriggerCharSpellInflictionEvent':
+      return {
+        family: 'characterInflictionEvent',
+        action: parseCharacterInflictionEventSource(value, path),
       };
     case 'SpellInflictionOnChar':
       return {
@@ -1391,6 +1419,50 @@ export function tryParseKnownNativeActionLeafSource(
         },
       };
     }
+    case 'MoveGaitAction': {
+      const action = requireRecord(value, path);
+      requireExactFields(
+        action,
+        new Set([
+          '$type',
+          'isEnable',
+          'priorityLevel',
+          'priorityOffset',
+          'serverActionIndex',
+          'minGait',
+          'maxGait',
+        ]),
+        path,
+      );
+      return {
+        family: 'movementGait',
+        action: {
+          min: requireNativeEnum(
+            action.minGait,
+            new Map([
+              [0, 'Walk'],
+              [1, 'Run'],
+              [2, 'Sprint'],
+            ] as const),
+            `${path}.minGait`,
+          ),
+          max: requireNativeEnum(
+            action.maxGait,
+            new Map([
+              [0, 'Walk'],
+              [1, 'Run'],
+              [2, 'Sprint'],
+            ] as const),
+            `${path}.maxGait`,
+          ),
+        },
+      };
+    }
+    case 'SetAnimTimeScaleAction':
+      return {
+        family: 'animationTiming',
+        action: parseTargetAnimationTimeScaleActionSource(value, path, inheritedBlackboard),
+      };
     case 'ContinuousSetAnimTimeScale':
       return {
         family: 'animationTiming',

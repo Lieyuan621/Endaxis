@@ -196,6 +196,7 @@ export const mifuChr_0031_mifu_attack1ActionGraph = {
 
 export const mifuChr_0031_mifu_attack1: SkillDefinition = {
   key: 'chr_0031_mifu_attack1',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.34, 0.37, 0.41, 0.44, 0.47, 0.51, 0.54, 0.57, 0.61, 0.65, 0.7, 0.76],
@@ -371,6 +372,7 @@ export const mifuChr_0031_mifu_attack2ActionGraph = {
 export const mifuChr_0031_mifu_attack2: SkillDefinition = {
   actionGraph: mifuChr_0031_mifu_attack2ActionGraph,
   key: 'chr_0031_mifu_attack2',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale1: [0.13, 0.15, 0.16, 0.17, 0.19, 0.2, 0.21, 0.23, 0.24, 0.26, 0.27, 0.3],
@@ -764,6 +766,7 @@ export const mifuChr_0031_mifu_attack3ActionGraph = {
 
 export const mifuChr_0031_mifu_attack3: SkillDefinition = {
   key: 'chr_0031_mifu_attack3',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale1: [0.15, 0.17, 0.18, 0.2, 0.21, 0.23, 0.24, 0.26, 0.27, 0.29, 0.31, 0.34],
@@ -953,6 +956,7 @@ export const mifuChr_0031_mifu_attack4ActionGraph = {
 export const mifuChr_0031_mifu_attack4: SkillDefinition = {
   actionGraph: mifuChr_0031_mifu_attack4ActionGraph,
   key: 'chr_0031_mifu_attack4',
+  element: 'physical',
   blackboard: {
     atb: 28,
     atk_scale1: [0.05, 0.06, 0.06, 0.07, 0.07, 0.08, 0.08, 0.09, 0.09, 0.1, 0.1, 0.11],
@@ -1040,6 +1044,7 @@ export const mifuChr_0031_mifu_plunging_attack_endActionGraph = {
 export const mifuChr_0031_mifu_plunging_attack_end: SkillDefinition = {
   actionGraph: mifuChr_0031_mifu_plunging_attack_endActionGraph,
   key: 'chr_0031_mifu_plunging_attack_end',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
@@ -1291,6 +1296,7 @@ export const mifuChr_0031_mifu_powerattackActionGraph = {
 export const mifuChr_0031_mifu_powerattack: SkillDefinition = {
   actionGraph: mifuChr_0031_mifu_powerattackActionGraph,
   key: 'chr_0031_mifu_powerattack',
+  element: 'physical',
   blackboard: {
     atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9],
     atk_scale2: 0.58,
@@ -1472,6 +1478,7 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
 
 export const mifuChr_0031_mifu_normalskill_1: SkillDefinition = {
   key: 'chr_0031_mifu_normalskill_1',
+  element: 'physical',
   blackboard: {
     atk_scale: [0.67, 0.73, 0.8, 0.87, 0.93, 1, 1.07, 1.13, 1.2, 1.28, 1.38, 1.5],
     effect_z_scale: 1,
@@ -2301,6 +2308,7 @@ export const mifuChr_0031_mifu_normalskill_2ActionGraph = {
 
 export const mifuChr_0031_mifu_normalskill_2: SkillDefinition = {
   key: 'chr_0031_mifu_normalskill_2',
+  element: 'physical',
   blackboard: {
     atk_scale: [0.27, 0.3, 0.32, 0.35, 0.38, 0.41, 0.43, 0.46, 0.49, 0.52, 0.56, 0.61],
     atk_scale2: [0.35, 0.39, 0.42, 0.46, 0.49, 0.53, 0.56, 0.6, 0.63, 0.68, 0.73, 0.79],
@@ -2811,6 +2819,7 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
 
 export const mifuChr_0031_mifu_normalskill_3: SkillDefinition = {
   key: 'chr_0031_mifu_normalskill_3',
+  element: 'physical',
   blackboard: {
     atk_scale: [4, 4.16, 4.32, 4.48, 4.64, 4.8, 4.96, 5.12, 5.28, 5.48, 5.72, 6],
     atk_scale_runtime: 0,
@@ -3469,6 +3478,7 @@ export const mifuChr_0031_mifu_ultimate_skillActionGraph = {
 
 export const mifuChr_0031_mifu_ultimate_skill: SkillDefinition = {
   key: 'chr_0031_mifu_ultimate_skill',
+  element: 'physical',
   blackboard: {
     atk_scale: [0.9, 0.99, 1.08, 1.17, 1.26, 1.35, 1.44, 1.53, 1.62, 1.73, 1.87, 2.03],
     atk_scale2: [2.21, 2.43, 2.65, 2.87, 3.09, 3.31, 3.54, 3.76, 3.98, 4.25, 4.58, 4.97],
@@ -3993,6 +4003,7 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
 
 export const mifuChr_0031_mifu_combo_skill: SkillDefinition = {
   key: 'chr_0031_mifu_combo_skill',
+  element: 'physical',
   blackboard: {
     atk_scale1: [0.3, 0.33, 0.36, 0.39, 0.42, 0.45, 0.48, 0.51, 0.54, 0.58, 0.62, 0.68],
     atk_scale2: [0.51, 0.56, 0.61, 0.66, 0.71, 0.77, 0.82, 0.87, 0.92, 0.98, 1.06, 1.15],

@@ -38,6 +38,7 @@ const LEAF_ACTION_KINDS = [
   'readEventBuffBlackboard',
   'readCurrentBuffRemainingDuration',
   'readBuffRemainingDuration',
+  'setBuffRemainingDuration',
   'setCurrentBuffRemainingDuration',
   'refreshCurrentBuffAttributeModifiers',
   'skillAffix',
@@ -73,6 +74,9 @@ const LEAF_ACTION_KINDS = [
   'finishParentGlobalBuff',
   'finishGlobalBuffsById',
   'readSkillSettingData',
+  'triggerCharacterInflictionEvent',
+  'limitMovementGait',
+  'applyCharacterInfliction',
   'applyElementalInfliction',
   'applyKnockDown',
   'triggerSpellBurst',
@@ -436,6 +440,8 @@ export function compileLeafAction(
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'readBuffRemainingDuration':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'setBuffRemainingDuration':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'setCurrentBuffRemainingDuration':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'refreshCurrentBuffAttributeModifiers':
@@ -555,6 +561,11 @@ export function compileLeafAction(
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'readSkillSettingData':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'limitMovementGait':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'triggerCharacterInflictionEvent':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'applyCharacterInfliction':
     case 'applyElementalInfliction':
     case 'applyKnockDown':
     case 'triggerSpellBurst':

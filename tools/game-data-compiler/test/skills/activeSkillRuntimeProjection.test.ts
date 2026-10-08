@@ -1,3 +1,4 @@
+import { parseSkillPatchSource, resolveSkillElement } from '../../src/source/skillPatch.ts';
 import { readResourceActions, graphBranch } from '../support/graphAssertions.ts';
 import { fixtureGameplayTagRegistry } from '../gameplayTagFixtures.ts';
 import { describe, expect, it } from 'vitest';
@@ -30,6 +31,30 @@ const ACTIVE_CONTEXT = {
 } as const;
 
 describe('HideUI active source projection', () => {
+  it('技能属性以等级补丁覆盖基础配置，拒绝等级间不一致', () => {
+    const patch = parseSkillPatchSource(
+      {
+        SkillPatchDataBundle: [
+          { level: 1, iconBgType: 3, blackboard: [] },
+          { level: 2, iconBgType: 3, blackboard: [] },
+        ],
+      },
+      'test',
+    );
+    expect(resolveSkillElement('Physical', patch, 'test')).toBe('electric');
+    expect(() =>
+      parseSkillPatchSource(
+        {
+          SkillPatchDataBundle: [
+            { level: 1, iconBgType: 3, blackboard: [] },
+            { level: 2, iconBgType: 2, blackboard: [] },
+          ],
+        },
+        'test',
+      ),
+    ).toThrow('skill element differs between levels');
+  });
+
   it.each([true, false])(
     '主控到敌人 Context 的距离仅在目标确定存在时消去集合读取：%s',
     guaranteed => {

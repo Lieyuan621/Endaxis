@@ -117,6 +117,7 @@ export const antalChr_0023_antal_attack1ActionGraph = {
 
 export const antalChr_0023_antal_attack1: SkillDefinition = {
   key: 'chr_0023_antal_attack1',
+  element: 'electric',
   blackboard: {
     atb: 0,
     atk_scale: [0.23, 0.25, 0.28, 0.3, 0.32, 0.35, 0.37, 0.39, 0.41, 0.44, 0.48, 0.52],
@@ -260,6 +261,7 @@ export const antalChr_0023_antal_attack2ActionGraph = {
 
 export const antalChr_0023_antal_attack2: SkillDefinition = {
   key: 'chr_0023_antal_attack2',
+  element: 'electric',
   blackboard: {
     atb: 0,
     atk_scale: [0.28, 0.31, 0.34, 0.36, 0.39, 0.42, 0.45, 0.48, 0.5, 0.54, 0.58, 0.63],
@@ -415,6 +417,7 @@ export const antalChr_0023_antal_attack3ActionGraph = {
 
 export const antalChr_0023_antal_attack3: SkillDefinition = {
   key: 'chr_0023_antal_attack3',
+  element: 'electric',
   blackboard: {
     atb: 0,
     atk_scale: [0.34, 0.37, 0.41, 0.44, 0.48, 0.51, 0.54, 0.58, 0.61, 0.65, 0.71, 0.77],
@@ -640,6 +643,7 @@ export const antalChr_0023_antal_attack4ActionGraph = {
 
 export const antalChr_0023_antal_attack4: SkillDefinition = {
   key: 'chr_0023_antal_attack4',
+  element: 'electric',
   blackboard: {
     atb: 15,
     atk_scale: [0.51, 0.56, 0.61, 0.66, 0.71, 0.77, 0.82, 0.87, 0.92, 0.98, 1.06, 1.15],
@@ -897,6 +901,7 @@ export const antalChr_0023_antal_power_attackActionGraph = {
 
 export const antalChr_0023_antal_power_attack: SkillDefinition = {
   key: 'chr_0023_antal_power_attack',
+  element: 'electric',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
   timelineBlockFrames: 43,
   naturalDurationFrames: 124,
@@ -977,6 +982,7 @@ export const antalChr_0023_antal_plunging_attack_endActionGraph = {
 export const antalChr_0023_antal_plunging_attack_end: SkillDefinition = {
   actionGraph: antalChr_0023_antal_plunging_attack_endActionGraph,
   key: 'chr_0023_antal_plunging_attack_end',
+  element: 'electric',
   blackboard: {
     atb: 0,
     atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
@@ -1078,6 +1084,7 @@ export const antalChr_0023_antal_normal_skillActionGraph = {
 export const antalChr_0023_antal_normal_skill: SkillDefinition = {
   actionGraph: antalChr_0023_antal_normal_skillActionGraph,
   key: 'chr_0023_antal_normal_skill',
+  element: 'electric',
   blackboard: {
     atk_scale: [0.89, 0.98, 1.07, 1.16, 1.24, 1.33, 1.42, 1.51, 1.6, 1.71, 1.85, 2],
     delay_time: 0,
@@ -2373,6 +2380,7 @@ export const antalChr_0023_antal_combo_skillActionGraph = {
 
 export const antalChr_0023_antal_combo_skill: SkillDefinition = {
   key: 'chr_0023_antal_combo_skill',
+  element: 'electric',
   blackboard: {
     atk_scale: [1.51, 1.66, 1.81, 1.96, 2.11, 2.27, 2.42, 2.57, 2.72, 2.91, 3.13, 3.4],
     poise: 10,
@@ -2470,6 +2478,7 @@ export const antalChr_0023_antal_ultimate_skillActionGraph = {
 export const antalChr_0023_antal_ultimate_skill: SkillDefinition = {
   actionGraph: antalChr_0023_antal_ultimate_skillActionGraph,
   key: 'chr_0023_antal_ultimate_skill',
+  element: 'electric',
   blackboard: {
     duration: 12,
     rate: [0.08, 0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.2],

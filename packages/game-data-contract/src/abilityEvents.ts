@@ -41,6 +41,11 @@ export const ABILITY_EVENTS = [
   'afterOutputInfliction',
   'beforeOutputSpellBurst',
   'beforeTakeSpellInfliction',
+  'afterTakeSpellInfliction',
+  'beforeTakeSpellAbnormal',
+  'afterTakeSpellAbnormal',
+  'squadTakeSpellAbnormal',
+
   'beforeTakeInfliction',
   'afterTakeInfliction',
   'takeDamage',
@@ -87,6 +92,12 @@ export type AbilityEventTriggerEndpoint = AbilityEventActionContextEndpoint | nu
  * 未列出的事件不能用于需要完整动作环境的监听器或连携条件。
  */
 export const ABILITY_EVENT_ACTION_CONTEXT_BINDINGS = {
+  beforeTakeSpellInfliction: { inputTarget: 'eventTarget', triggerTarget: 'eventSource' },
+  afterTakeSpellInfliction: { inputTarget: 'eventTarget', triggerTarget: 'eventSource' },
+  beforeTakeSpellAbnormal: { inputTarget: 'eventTarget', triggerTarget: 'eventSource' },
+  afterTakeSpellAbnormal: { inputTarget: 'eventTarget', triggerTarget: 'eventSource' },
+  squadTakeSpellAbnormal: { inputTarget: 'eventTarget', triggerTarget: 'eventSource' },
+
   /** 生命变化由对象自身发布，不把伤害或治疗来源冒充为事件来源。 */
   hpChanged: { inputTarget: 'eventSource', triggerTarget: 'eventSource' },
   /** 投射物是输入目标，闪避中的角色是事件来源和触发者。 */

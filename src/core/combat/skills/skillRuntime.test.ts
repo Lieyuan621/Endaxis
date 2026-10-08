@@ -732,6 +732,7 @@ describe('SkillRuntime', () => {
       skillId: 'entity-callback',
       skillCastId: 77,
       skillType: undefined,
+      element: undefined,
     };
     expect(paid).toHaveBeenCalledExactlyOnceWith(payload);
     expect(ended).toHaveBeenCalledExactlyOnceWith(payload);

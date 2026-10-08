@@ -1,3 +1,5 @@
+import { projectNativeDamageElement } from './damageElement.ts';
+import type { DamageElement } from '../../../../packages/game-data-contract/src/primitives.ts';
 import {
   requireArray,
   requireNonEmptyString,
@@ -7,6 +9,7 @@ import {
 } from './primitives.ts';
 
 export interface SkillPatchSource {
+  readonly element?: DamageElement;
   readonly levels: readonly number[];
   readonly blackboard: Readonly<Record<string, readonly number[]>>;
   readonly cooldownSeconds: readonly number[];
@@ -28,10 +31,17 @@ export function parseSkillPatchSource(value: unknown, skillId: string): SkillPat
   const cooldownSeconds: number[] = [];
   const costTypes: number[] = [];
   const costValues: number[] = [];
+  const iconBgTypes: DamageElement[] = [];
 
   bundles.forEach((rawBundle, index) => {
     const path = `${rootPath}[${index}]`;
     const bundle = requireRecord(rawBundle, path);
+    iconBgTypes.push(
+      projectNativeDamageElement(
+        requireNonNegativeInteger(bundle.iconBgType ?? 0, `${path}.iconBgType`),
+        `${path}.iconBgType`,
+      ),
+    );
     levels.push(requireNonNegativeInteger(bundle.level, `${path}.level`));
 
     const row: Record<string, number> = {};
@@ -63,8 +73,12 @@ export function parseSkillPatchSource(value: unknown, skillId: string): SkillPat
       throw new Error(`${rootPath}: blackboard key ${key} is missing at some levels`);
     }
   }
+  if (iconBgTypes.some(value => value !== iconBgTypes[0])) {
+    throw new Error(`${rootPath}.iconBgType: skill element differs between levels`);
+  }
   return {
     levels,
+    element: iconBgTypes[0]!,
     blackboard: Object.fromEntries(allKeys.map(key => [key, rows.map(row => row[key]!)])),
     cooldownSeconds,
     costTypes,
@@ -78,4 +92,16 @@ function readOptionalNumber(value: unknown, path: string): number {
 
 function readOptionalInteger(value: unknown, path: string): number {
   return value === undefined ? 0 : requireNonNegativeInteger(value, path);
+}
+
+export function resolveSkillElement(
+  raw: unknown,
+  patch: SkillPatchSource | null,
+  sourcePath: string,
+): DamageElement {
+  if (patch?.element !== undefined) return patch.element;
+  if (raw !== undefined && typeof raw !== 'string' && typeof raw !== 'number') {
+    throw new Error(`${sourcePath}.iconBgType: expected native damage type`);
+  }
+  return projectNativeDamageElement(raw ?? 'Physical', `${sourcePath}.iconBgType`);
 }

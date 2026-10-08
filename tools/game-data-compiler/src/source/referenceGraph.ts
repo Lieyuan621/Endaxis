@@ -1,3 +1,4 @@
+import { CHARACTER_INFLICTION_BUFFS } from '../../../../src/core/combat/infliction/characterInfliction.ts';
 import { type NativeActionNodeSource, type NativeSequenceSource } from './controlFlow.ts';
 import {
   nativeActionName,
@@ -294,6 +295,20 @@ function collectLeafReferences(
           ),
         );
       }
+      return;
+    }
+    case 'characterSpellInfliction': {
+      const ids = CHARACTER_INFLICTION_BUFFS[leaf.action.element];
+      output.push(
+        referenceFromIdentity(
+          'buff',
+          'apply',
+          enabled,
+          ids[leaf.action.directToTriggered ? 1 : 0],
+          null,
+          sourcePath,
+        ),
+      );
       return;
     }
     case 'buffApplication': {

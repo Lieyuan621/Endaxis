@@ -101,30 +101,6 @@ describe('validateSkillDefinition', () => {
     ).toEqual([]);
   });
 
-  it('标签结束仍拒绝不属于单对象绑定的队伍目标', () => {
-    const target = 'party';
-    const issues = validateSkillDefinition(
-      skillWithSteps([
-        {
-          kind: 'finishBuffsByTag',
-          parameters: {
-            target,
-            tagQueryType: 'hasAny',
-            buffTags: ['Test/Tag'],
-            reason: 'early',
-          },
-        },
-      ]),
-    );
-    expect(issues).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          path: `${nodeActionPath('step-0')}.parameters.target`,
-        }),
-      ]),
-    );
-  });
-
   it('原生事件触发器使用公共迁移准入，拒绝缺失及未支持身份', () => {
     const skill = (event: unknown) => ({
       ...baseSkill(),

@@ -883,6 +883,48 @@ function validateCombatStep(
       }
       break;
     }
+    case 'triggerCharacterInflictionEvent':
+      requireEnum(
+        parameters,
+        'event',
+        new Set(['afterTakeSpellInfliction', 'beforeTakeSpellAbnormal', 'afterTakeSpellAbnormal']),
+        `${path}.parameters`,
+        out,
+      );
+      requireEnum(
+        parameters,
+        'eventSource',
+        BUFF_APPLICATION_SOURCES_SET,
+        `${path}.parameters`,
+        out,
+      );
+      requireEnum(parameters, 'element', INFLICTION_ELEMENTS_SET, `${path}.parameters`, out);
+      break;
+    case 'limitMovementGait':
+      requireEnum(parameters, 'min', new Set(['walk', 'run', 'sprint']), `${path}.parameters`, out);
+      requireEnum(parameters, 'max', new Set(['walk', 'run', 'sprint']), `${path}.parameters`, out);
+      break;
+    case 'applyCharacterInfliction':
+      requireEnum(parameters, 'element', INFLICTION_ELEMENTS_SET, `${path}.parameters`, out);
+      requireEnum(
+        parameters,
+        'source',
+        new Set([...BUFF_APPLICATION_SOURCES_SET, 'battle']),
+        `${path}.parameters`,
+        out,
+      );
+      requireEnum(
+        parameters,
+        'target',
+        new Set(BUFF_APPLICATION_TARGETS),
+        `${path}.parameters`,
+        out,
+      );
+      validateActionValueOperand(parameters.count, `${path}.parameters.count`, out);
+      requireBoolean(parameters, 'directToTriggered', `${path}.parameters`, out);
+      requireBoolean(parameters, 'ignoreWeakImmune', `${path}.parameters`, out);
+      requireBoolean(parameters, 'ignoreAddingCooldown', `${path}.parameters`, out);
+      break;
     case 'applyElementalInfliction':
       if (parameters.inverseReaction !== undefined)
         requireBoolean(parameters, 'inverseReaction', `${path}.parameters`, out);
@@ -1446,6 +1488,25 @@ function validateCombatStep(
       validateNonEmptyStringArray(parameters.buffIds, `${path}.parameters.buffIds`, out);
       requireString(parameters, 'outputKey', `${path}.parameters`, out);
       break;
+    case 'setBuffRemainingDuration': {
+      requireEnum(parameters, 'target', BUFF_SINGLE_TARGETS_SET, `${path}.parameters`, out);
+      const query = asRecord(parameters.query, `${path}.parameters.query`, out);
+      if (query?.kind === 'id')
+        validateNonEmptyStringArray(query.buffIds, `${path}.parameters.query.buffIds`, out);
+      else if (query?.kind === 'tag') {
+        requireEnum(query, 'tagQueryType', TAG_QUERY_TYPES_SET, `${path}.parameters.query`, out);
+        validateGameplayTags(query.buffTags, `${path}.parameters.query.buffTags`, out);
+      } else push(out, `${path}.parameters.query`, 'expected ID or tag query');
+      requireEnum(
+        parameters,
+        'operation',
+        new Set(['assign', 'add', 'multiply']),
+        `${path}.parameters`,
+        out,
+      );
+      validateActionValueOperand(parameters.value, `${path}.parameters.value`, out);
+      break;
+    }
     case 'setCurrentBuffRemainingDuration':
       if (parameters.target !== undefined)
         requireEnum(parameters, 'target', BUFF_SINGLE_TARGETS_SET, `${path}.parameters`, out);

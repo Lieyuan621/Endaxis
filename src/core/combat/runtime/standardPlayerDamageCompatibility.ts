@@ -128,6 +128,7 @@ function inspectCondition(
     case 'eventInflictionElementIn':
     case 'eventPhysicalInflictionTypeIn':
     case 'eventCustomAbilityNameMatch':
+    case 'skillDamageTypeIn':
     case 'eventSkillTypeIn':
     case 'originSkillTypeIn':
     case 'contextTargetContains':

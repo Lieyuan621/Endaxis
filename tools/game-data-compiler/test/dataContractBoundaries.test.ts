@@ -183,6 +183,7 @@ describe('独立游戏数据契约边界', () => {
     const sharedFiles = [
       join(productRoot, 'core/game-data/definitionGuards.ts'),
       join(productRoot, 'core/mechanics/combatNumbers.ts'),
+      join(productRoot, 'core/combat/infliction/characterInfliction.ts'),
       // Graph input discovery shares finite, pure schema projection. Keep this an
       // explicit file allowlist; no UI, application state, or catalog imports.
       join(productRoot, 'core/editor/fieldSemantics.ts'),

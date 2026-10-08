@@ -129,6 +129,7 @@ export const gilbertaChr_0013_aglina_attack1ActionGraph = {
 
 export const gilbertaChr_0013_aglina_attack1: SkillDefinition = {
   key: 'chr_0013_aglina_attack1',
+  element: 'nature',
   blackboard: {
     atb: 0,
     atk_scale: [0.3, 0.33, 0.36, 0.39, 0.42, 0.45, 0.48, 0.51, 0.54, 0.58, 0.62, 0.68],
@@ -270,6 +271,7 @@ export const gilbertaChr_0013_aglina_attack2ActionGraph = {
 
 export const gilbertaChr_0013_aglina_attack2: SkillDefinition = {
   key: 'chr_0013_aglina_attack2',
+  element: 'nature',
   blackboard: {
     atb: 0,
     atk_scale: [0.18, 0.2, 0.22, 0.23, 0.25, 0.27, 0.29, 0.31, 0.32, 0.35, 0.37, 0.41],
@@ -424,6 +426,7 @@ export const gilbertaChr_0013_aglina_attack3ActionGraph = {
 
 export const gilbertaChr_0013_aglina_attack3: SkillDefinition = {
   key: 'chr_0013_aglina_attack3',
+  element: 'nature',
   blackboard: {
     atb: 0,
     atk_scale: [0.14, 0.15, 0.16, 0.18, 0.19, 0.2, 0.22, 0.23, 0.24, 0.26, 0.28, 0.3],
@@ -675,6 +678,7 @@ export const gilbertaChr_0013_aglina_attack4ActionGraph = {
 
 export const gilbertaChr_0013_aglina_attack4: SkillDefinition = {
   key: 'chr_0013_aglina_attack4',
+  element: 'nature',
   blackboard: {
     atb: 16,
     atk_scale: [0.17, 0.18, 0.2, 0.22, 0.23, 0.25, 0.27, 0.28, 0.3, 0.32, 0.35, 0.37],
@@ -778,6 +782,7 @@ export const gilbertaChr_0013_aglina_power_attackActionGraph = {
 
 export const gilbertaChr_0013_aglina_power_attack: SkillDefinition = {
   key: 'chr_0013_aglina_power_attack',
+  element: 'nature',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
   timelineBlockFrames: 51,
   naturalDurationFrames: 125,
@@ -868,6 +873,7 @@ export const gilbertaChr_0013_aglina_plunging_attack_endActionGraph = {
 export const gilbertaChr_0013_aglina_plunging_attack_end: SkillDefinition = {
   actionGraph: gilbertaChr_0013_aglina_plunging_attack_endActionGraph,
   key: 'chr_0013_aglina_plunging_attack_end',
+  element: 'nature',
   blackboard: {
     atb: 0,
     atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
@@ -1111,6 +1117,7 @@ export const gilbertaChr_0013_aglina_normal_skillActionGraph = {
 
 export const gilbertaChr_0013_aglina_normal_skill: SkillDefinition = {
   key: 'chr_0013_aglina_normal_skill',
+  element: 'nature',
   blackboard: {
     atk_scale_explosion: [0.58, 0.63, 0.69, 0.75, 0.81, 0.86, 0.92, 0.98, 1.04, 1.11, 1.2, 1.3],
     atk_scale_pull: [0.24, 0.27, 0.29, 0.32, 0.34, 0.36, 0.39, 0.41, 0.44, 0.47, 0.5, 0.55],
@@ -1280,6 +1287,7 @@ export const gilbertaChr_0013_aglina_ultimate_skillActionGraph = {
 export const gilbertaChr_0013_aglina_ultimate_skill: SkillDefinition = {
   actionGraph: gilbertaChr_0013_aglina_ultimate_skillActionGraph,
   key: 'chr_0013_aglina_ultimate_skill',
+  element: 'nature',
   blackboard: {
     atk_scale: [3.33, 3.67, 4, 4.33, 4.67, 5, 5.34, 5.67, 6, 6.42, 6.92, 7.5],
     damage_scale: 0.5,
@@ -1869,6 +1877,7 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
 
 export const gilbertaChr_0013_aglina_combo_skill: SkillDefinition = {
   key: 'chr_0013_aglina_combo_skill',
+  element: 'nature',
   blackboard: {
     atk_scale: [1.4, 1.54, 1.68, 1.82, 1.96, 2.1, 2.24, 2.38, 2.52, 2.7, 2.91, 3.15],
     heal_const: 0,

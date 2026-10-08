@@ -100,6 +100,7 @@ export const catcherChr_0020_meurs_attack1ActionGraph = {
 export const catcherChr_0020_meurs_attack1: SkillDefinition = {
   actionGraph: catcherChr_0020_meurs_attack1ActionGraph,
   key: 'chr_0020_meurs_attack1',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.35, 0.39, 0.42, 0.46, 0.49, 0.53, 0.56, 0.6, 0.63, 0.67, 0.73, 0.79],
@@ -217,6 +218,7 @@ export const catcherChr_0020_meurs_attack2ActionGraph = {
 export const catcherChr_0020_meurs_attack2: SkillDefinition = {
   actionGraph: catcherChr_0020_meurs_attack2ActionGraph,
   key: 'chr_0020_meurs_attack2',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.39, 0.42, 0.46, 0.5, 0.54, 0.58, 0.62, 0.65, 0.69, 0.74, 0.8, 0.87],
@@ -328,6 +330,7 @@ export const catcherChr_0020_meurs_attack3ActionGraph = {
 export const catcherChr_0020_meurs_attack3: SkillDefinition = {
   actionGraph: catcherChr_0020_meurs_attack3ActionGraph,
   key: 'chr_0020_meurs_attack3',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.54, 0.59, 0.65, 0.7, 0.76, 0.81, 0.86, 0.92, 0.97, 1.04, 1.12, 1.22],
@@ -456,6 +459,7 @@ export const catcherChr_0020_meurs_attack4ActionGraph = {
 export const catcherChr_0020_meurs_attack4: SkillDefinition = {
   actionGraph: catcherChr_0020_meurs_attack4ActionGraph,
   key: 'chr_0020_meurs_attack4',
+  element: 'physical',
   blackboard: {
     atb: 25,
     atk_scale: [0.71, 0.78, 0.85, 0.92, 0.99, 1.07, 1.14, 1.21, 1.28, 1.37, 1.47, 1.6],
@@ -582,6 +586,7 @@ export const catcherChr_0020_meurs_power_attackActionGraph = {
 export const catcherChr_0020_meurs_power_attack: SkillDefinition = {
   actionGraph: catcherChr_0020_meurs_power_attackActionGraph,
   key: 'chr_0020_meurs_power_attack',
+  element: 'physical',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
   timelineBlockFrames: 76,
   naturalDurationFrames: 135,
@@ -657,6 +662,7 @@ export const catcherChr_0020_meurs_plunging_attack_endActionGraph = {
 export const catcherChr_0020_meurs_plunging_attack_end: SkillDefinition = {
   actionGraph: catcherChr_0020_meurs_plunging_attack_endActionGraph,
   key: 'chr_0020_meurs_plunging_attack_end',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
@@ -957,6 +963,7 @@ export const catcherChr_0020_meurs_normal_skillActionGraph = {
 
 export const catcherChr_0020_meurs_normal_skill: SkillDefinition = {
   key: 'chr_0020_meurs_normal_skill',
+  element: 'physical',
   blackboard: {
     atb_return_base: 30,
     atk_scale: [1.78, 1.96, 2.13, 2.31, 2.49, 2.67, 2.85, 3.02, 3.2, 3.42, 3.69, 4],
@@ -1190,6 +1197,7 @@ export const catcherChr_0020_meurs_combo_skillActionGraph = {
 
 export const catcherChr_0020_meurs_combo_skill: SkillDefinition = {
   key: 'chr_0020_meurs_combo_skill',
+  element: 'physical',
   blackboard: {
     atk_scale: [0.25, 0.27, 0.3, 0.32, 0.34, 0.37, 0.39, 0.42, 0.44, 0.47, 0.51, 0.55],
     atk_scale_1: [1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.93, 2.08, 2.25],
@@ -1410,6 +1418,7 @@ export const catcherChr_0020_meurs_ultimate_skillActionGraph = {
 
 export const catcherChr_0020_meurs_ultimate_skill: SkillDefinition = {
   key: 'chr_0020_meurs_ultimate_skill',
+  element: 'physical',
   blackboard: {
     atk_scale: [0.89, 0.98, 1.07, 1.16, 1.25, 1.34, 1.43, 1.51, 1.6, 1.72, 1.85, 2],
     atk_scale_1: [1.2, 1.32, 1.44, 1.56, 1.68, 1.8, 1.92, 2.04, 2.16, 2.31, 2.49, 2.7],

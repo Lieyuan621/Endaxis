@@ -107,6 +107,7 @@ export interface BuffPresentationSource {
 export interface BuffLifecycleSource {
   readonly addingCooldown: ScalarSource | null;
   readonly ignoreAddingCooldown: boolean;
+  readonly ignoreTagImmune: boolean;
   readonly lifeType: 'Limited' | 'Infinity';
   readonly duration: ScalarSource;
   readonly triggerInterval: ScalarSource;
@@ -259,6 +260,7 @@ export function parseBuffRuntimeSource(
     presentation: parsePresentation(root, sourcePath),
     lifecycle: {
       addingCooldown,
+      ignoreTagImmune: requireBoolean(root.ignoreTagImmune, `${sourcePath}.ignoreTagImmune`),
       ignoreAddingCooldown: requireBoolean(
         root.ignoreCooldownWhenAdding,
         `${sourcePath}.ignoreCooldownWhenAdding`,

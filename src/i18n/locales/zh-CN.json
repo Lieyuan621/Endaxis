@@ -790,7 +790,13 @@
       "less": "小于（<）",
       "lessOrEqual": "小于等于（≤）",
       "ratio": "比例",
-      "exact": "完全匹配"
+      "exact": "完全匹配",
+      "afterTakeSpellInfliction": "受到附着后",
+      "beforeTakeSpellAbnormal": "异常生效前",
+      "afterTakeSpellAbnormal": "异常生效后",
+      "walk": "行走",
+      "run": "跑步",
+      "sprint": "冲刺"
     },
     "optional": "可选",
     "unset": "未设置",
@@ -1700,6 +1706,27 @@
       "expression": {
         "name": "字符串值",
         "help": "字面值或在每个消费点读取的字符串黑板键。"
+      },
+      "event": {
+        "name": "事件"
+      },
+      "eventSource": {
+        "name": "事件来源"
+      },
+      "min": {
+        "name": "最低步态"
+      },
+      "max": {
+        "name": "最高步态"
+      },
+      "directToTriggered": {
+        "name": "直接触发异常"
+      },
+      "ignoreWeakImmune": {
+        "name": "忽略弱附着免疫"
+      },
+      "ignoreAddingCooldown": {
+        "name": "忽略附着冷却"
       }
     },
     "help": "查看说明",
@@ -2421,6 +2448,26 @@
       "stringOperand": {
         "name": "字符串值",
         "help": "字符串常量或当前动作黑板读取；每个消费点独立读取当前上下文。"
+      },
+      "triggerCharacterInflictionEvent": {
+        "name": "通知干员附着事件",
+        "help": "通知干员受到附着或发生异常，使监听这些事件的效果可以响应。"
+      },
+      "limitMovementGait": {
+        "name": "限制移动步态",
+        "help": "限定动作生效期间允许的最低和最高移动步态。"
+      },
+      "applyCharacterInfliction": {
+        "name": "对干员施加附着",
+        "help": "对选中的干员施加元素附着，也可直接触发对应异常。"
+      },
+      "setBuffRemainingDuration": {
+        "name": "修改状态剩余时间",
+        "help": "按状态标识或标签查找目标状态，再设置、增加或缩放剩余时间。"
+      },
+      "skillDamageTypeIn": {
+        "name": "检查技能属性",
+        "help": "检查触发事件的技能属性；无事件技能时检查当前执行技能。"
       }
     },
     "open": "编辑技能图",

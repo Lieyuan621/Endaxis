@@ -177,6 +177,16 @@ function skillIcon(source: SkillLevelSource): string {
   );
 }
 
+function skillBorderColor(source: SkillLevelSource): string {
+  const currentDefinition = definition.value;
+  if (!currentDefinition) return '#888';
+  // 总览按技能组首个基础技能取色，不随形态或当前养成等级变化。
+  const binding = listOperatorSkillDefinitionBindings(currentDefinition).find(
+    ({ skill, origin }) => origin === 'base' && skill.levelSource === source,
+  );
+  return binding ? elementColors[binding.skill.element ?? 'physical']! : '#888';
+}
+
 function setSkillLevel(source: SkillLevelSource, level: number): void {
   const operator = props.operator;
   if (!operator) return;
@@ -421,7 +431,7 @@ function maxOut(): void {
                       :active-form-key="activeFormKey"
                     />
                   </template>
-                  <div class="skill-icon-frame" :style="{ borderColor: elementColor }">
+                  <div class="skill-icon-frame" :style="{ borderColor: skillBorderColor(source) }">
                     <img :src="skillIcon(source)" alt="" class="skill-icon" />
                   </div>
                 </EaTooltip>

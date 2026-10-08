@@ -3,6 +3,7 @@ import { EaTooltip } from '@/design-system';
 import { EaButton, EaDeleteIcon } from '@/design-system';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { GameRichTextRenderer } from '../../presentation';
 import { contingencyContractTagText } from '../contingencyContractBuffPresentation';
 import {
   contingencyContractTags,
@@ -149,8 +150,9 @@ function evaluate(expression: string, tag: ContingencyContractTagPresentation): 
   return total;
 }
 function description(tag: ContingencyContractTagPresentation): string {
-  return contingencyContractTagText(tag, props.locale)
-    .description.replace(/\{([^}]+)\}/g, (_match, content: string) => {
+  return contingencyContractTagText(tag, props.locale).description.replace(
+    /\{([^}]+)\}/g,
+    (_match, content: string) => {
       let target = tag;
       let expression = content;
       const reference = content.match(/^@(\d+)@(.+)$/);
@@ -165,8 +167,8 @@ function description(tag: ContingencyContractTagPresentation): string {
       return expression.slice(separator + 1) === '0%'
         ? `${Math.round(value * 100)}%`
         : `${Math.round(value)}`;
-    })
-    .replace(/<[^>]+>/g, '');
+    },
+  );
 }
 </script>
 
@@ -254,7 +256,9 @@ function description(tag: ContingencyContractTagPresentation): string {
                     {{ contingencyContractTagText(cell.tag, locale).name }}
                     {{ cell.tag.romanNumSuffix }}
                   </div>
-                  <div class="cc-tag-tooltip-desc">{{ description(cell.tag) }}</div>
+                  <div class="cc-tag-tooltip-desc">
+                    <GameRichTextRenderer :text="description(cell.tag)" :locale="locale" />
+                  </div>
                   <div v-if="cell.tag.support === 'blocked'" class="cc-tag-tooltip-state">
                     <strong>{{ statusLabel(cell.tag) }}</strong>
                     <span>{{ noEffectDescription(cell.tag) }}</span>
@@ -317,7 +321,9 @@ function description(tag: ContingencyContractTagPresentation): string {
                   >{{ contingencyContractTagText(tag, locale).name }} {{ tag.romanNumSuffix }}</span
                 ><b>+{{ tag.score }}</b>
               </div>
-              <div class="cc-selected-desc">{{ description(tag) }}</div>
+              <div class="cc-selected-desc">
+                <GameRichTextRenderer :text="description(tag)" :locale="locale" />
+              </div>
             </div>
             <EaButton
               variant="danger"

@@ -34,7 +34,13 @@ const NATIVE_DAMAGE_ELEMENT_ALIASES: Readonly<Record<string, NativeDamageElement
  * 将多个原生 schema 共用的元素身份归一为稳定来源 IR 身份。
  * 条件来源与行为编译器共同复用这里，避免来源层反向依赖 compiler 或各写一份映射。
  */
-export function projectNativeDamageElement(value: string, path: string): DamageElement {
+export function projectNativeDamageElement(value: string | number, path: string): DamageElement {
+  if (typeof value === 'number') {
+    const native = NATIVE_DAMAGE_ELEMENT_NUMBERS[value];
+    if (native === undefined)
+      throw new Error(`${path}: unsupported native damage element ${value}`);
+    value = native;
+  }
   return PROJECTED_NATIVE_DAMAGE_ELEMENTS[parseNativeDamageElementSource(value, path)];
 }
 
@@ -54,3 +60,11 @@ export const PROJECTED_DAMAGE_ELEMENTS = [
   PROJECTED_NATIVE_DAMAGE_ELEMENTS.Cryst,
   PROJECTED_NATIVE_DAMAGE_ELEMENTS.Natural,
 ] as const;
+
+const NATIVE_DAMAGE_ELEMENT_NUMBERS: Readonly<Record<number, NativeDamageElementSource>> = {
+  0: 'Physical',
+  2: 'Fire',
+  3: 'Pulse',
+  4: 'Cryst',
+  6: 'Natural',
+};

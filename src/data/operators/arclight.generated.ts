@@ -61,6 +61,7 @@ export const arclightChr_0007_ikut_attack1ActionGraph = {
 export const arclightChr_0007_ikut_attack1: SkillDefinition = {
   actionGraph: arclightChr_0007_ikut_attack1ActionGraph,
   key: 'chr_0007_ikut_attack1',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.1, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.21, 0.23],
@@ -142,6 +143,7 @@ export const arclightChr_0007_ikut_attack2ActionGraph = {
 export const arclightChr_0007_ikut_attack2: SkillDefinition = {
   actionGraph: arclightChr_0007_ikut_attack2ActionGraph,
   key: 'chr_0007_ikut_attack2',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.13, 0.14, 0.15, 0.16, 0.18, 0.19, 0.2, 0.21, 0.23, 0.24, 0.26, 0.28],
@@ -231,6 +233,7 @@ export const arclightChr_0007_ikut_attack3ActionGraph = {
 
 export const arclightChr_0007_ikut_attack3: SkillDefinition = {
   key: 'chr_0007_ikut_attack3',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.13, 0.14, 0.16, 0.17, 0.18, 0.2, 0.21, 0.22, 0.23, 0.25, 0.27, 0.29],
@@ -339,6 +342,7 @@ export const arclightChr_0007_ikut_attack4ActionGraph = {
 export const arclightChr_0007_ikut_attack4: SkillDefinition = {
   actionGraph: arclightChr_0007_ikut_attack4ActionGraph,
   key: 'chr_0007_ikut_attack4',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.12, 0.13, 0.14, 0.16, 0.17, 0.18, 0.19, 0.2, 0.22, 0.23, 0.25, 0.27],
@@ -448,6 +452,7 @@ export const arclightChr_0007_ikut_attack5ActionGraph = {
 export const arclightChr_0007_ikut_attack5: SkillDefinition = {
   actionGraph: arclightChr_0007_ikut_attack5ActionGraph,
   key: 'chr_0007_ikut_attack5',
+  element: 'physical',
   blackboard: {
     atb: 17,
     atk_scale: [0.48, 0.52, 0.57, 0.62, 0.67, 0.71, 0.76, 0.81, 0.86, 0.91, 0.99, 1.07],
@@ -558,6 +563,7 @@ export const arclightChr_0007_ikut_power_attackActionGraph = {
 
 export const arclightChr_0007_ikut_power_attack: SkillDefinition = {
   key: 'chr_0007_ikut_power_attack',
+  element: 'physical',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
   timelineBlockFrames: 69,
   naturalDurationFrames: 131,
@@ -645,6 +651,7 @@ export const arclightChr_0007_ikut_plunging_attack_endActionGraph = {
 export const arclightChr_0007_ikut_plunging_attack_end: SkillDefinition = {
   actionGraph: arclightChr_0007_ikut_plunging_attack_endActionGraph,
   key: 'chr_0007_ikut_plunging_attack_end',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
@@ -1051,6 +1058,7 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
 
 export const arclightChr_0007_ikut_normal_skill: SkillDefinition = {
   key: 'chr_0007_ikut_normal_skill',
+  element: 'electric',
   blackboard: {
     atb: [30, 30, 30, 30, 30, 35, 35, 35, 35, 35, 35, 40],
     atk_scale: [0.45, 0.5, 0.54, 0.59, 0.63, 0.68, 0.72, 0.77, 0.81, 0.87, 0.93, 1.01],
@@ -1200,6 +1208,7 @@ export const arclightChr_0007_ikut_ultimate_skillActionGraph = {
 export const arclightChr_0007_ikut_ultimate_skill: SkillDefinition = {
   actionGraph: arclightChr_0007_ikut_ultimate_skillActionGraph,
   key: 'chr_0007_ikut_ultimate_skill',
+  element: 'electric',
   blackboard: {
     atk_scale1: [1.56, 1.71, 1.87, 2.02, 2.18, 2.34, 2.49, 2.65, 2.8, 3, 3.23, 3.5],
     atk_scale2: [2.44, 2.69, 2.93, 3.18, 3.42, 3.67, 3.91, 4.15, 4.4, 4.7, 5.07, 5.5],
@@ -1394,6 +1403,7 @@ export const arclightChr_0007_ikut_combo_skillActionGraph = {
 export const arclightChr_0007_ikut_combo_skill: SkillDefinition = {
   actionGraph: arclightChr_0007_ikut_combo_skillActionGraph,
   key: 'chr_0007_ikut_combo_skill',
+  element: 'physical',
   blackboard: {
     atb: [8, 8, 8, 8, 8, 9, 9, 9, 9, 10, 10, 10],
     atk_scale: [0.52, 0.57, 0.62, 0.67, 0.73, 0.78, 0.83, 0.88, 0.93, 1, 1.07, 1.17],
@@ -1696,7 +1706,38 @@ const arclightBuff3: SkillBuffDefinition = {
 };
 
 const arclightBuff4ActionGraph = {
-  main: { nodes: {} },
+  main: {
+    nodes: {
+      applyBuff_1: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffId: 'buff_chr_0007_ikut_talent_2_immune',
+            target: 'buffOwner',
+            source: 'buffSource',
+            inheritSourceSkillCastInfo: true,
+            blackboardAssignments: { duration: { kind: 'constant', value: 0.067 } },
+          },
+        },
+        next: null,
+      },
+      conditional_2: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          whenTrue: { $sequence: 'applyBuff_1' },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'prob' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'probability', probability: { kind: 'valueNode', nodeId: 'data_1' } },
+      },
+    },
+  },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
@@ -1708,6 +1749,9 @@ const arclightBuff4: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { prob: 0.3 },
   attributeModifiers: [],
+  abilityEventResponses: [
+    { event: 'beforeTakeSpellInfliction', priority: 0, sequence: { $sequence: 'conditional_2' } },
+  ],
   actionGraph: arclightBuff4ActionGraph,
 };
 

@@ -118,6 +118,7 @@ export const lifengChr_0015_lifeng_attack1ActionGraph = {
 
 export const lifengChr_0015_lifeng_attack1: SkillDefinition = {
   key: 'chr_0015_lifeng_attack1',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.12, 0.13, 0.15, 0.16, 0.17, 0.18, 0.19, 0.21, 0.22, 0.23, 0.25, 0.27],
@@ -262,6 +263,7 @@ export const lifengChr_0015_lifeng_attack2ActionGraph = {
 export const lifengChr_0015_lifeng_attack2: SkillDefinition = {
   actionGraph: lifengChr_0015_lifeng_attack2ActionGraph,
   key: 'chr_0015_lifeng_attack2',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.29, 0.32, 0.35, 0.38, 0.41, 0.44, 0.47, 0.49, 0.52, 0.56, 0.6, 0.65],
@@ -372,6 +374,7 @@ export const lifengChr_0015_lifeng_attack3ActionGraph = {
 export const lifengChr_0015_lifeng_attack3: SkillDefinition = {
   actionGraph: lifengChr_0015_lifeng_attack3ActionGraph,
   key: 'chr_0015_lifeng_attack3',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.35, 0.39, 0.42, 0.46, 0.49, 0.53, 0.56, 0.6, 0.63, 0.67, 0.73, 0.79],
@@ -547,6 +550,7 @@ export const lifengChr_0015_lifeng_attack5ActionGraph = {
 
 export const lifengChr_0015_lifeng_attack5: SkillDefinition = {
   key: 'chr_0015_lifeng_attack5',
+  element: 'physical',
   blackboard: {
     atb: 21,
     atk_scale: [0.18, 0.19, 0.21, 0.23, 0.25, 0.26, 0.28, 0.3, 0.32, 0.34, 0.36, 0.39],
@@ -706,6 +710,7 @@ export const lifengChr_0015_lifeng_power_attackActionGraph = {
 export const lifengChr_0015_lifeng_power_attack: SkillDefinition = {
   actionGraph: lifengChr_0015_lifeng_power_attackActionGraph,
   key: 'chr_0015_lifeng_power_attack',
+  element: 'physical',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
   timelineBlockFrames: 69,
   naturalDurationFrames: 194,
@@ -791,6 +796,7 @@ export const lifengChr_0015_lifeng_plunging_attack_endActionGraph = {
 export const lifengChr_0015_lifeng_plunging_attack_end: SkillDefinition = {
   actionGraph: lifengChr_0015_lifeng_plunging_attack_endActionGraph,
   key: 'chr_0015_lifeng_plunging_attack_end',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
@@ -919,6 +925,7 @@ export const lifengChr_0015_lifeng_normal_skillActionGraph = {
 
 export const lifengChr_0015_lifeng_normal_skill: SkillDefinition = {
   key: 'chr_0015_lifeng_normal_skill',
+  element: 'physical',
   blackboard: {
     atk_scale: [0.38, 0.42, 0.46, 0.5, 0.53, 0.57, 0.61, 0.65, 0.69, 0.73, 0.79, 0.86],
     atk_scale2: [1.19, 1.31, 1.43, 1.55, 1.67, 1.78, 1.9, 2.02, 2.14, 2.29, 2.47, 2.68],
@@ -1066,6 +1073,7 @@ export const lifengChr_0015_lifeng_ultimate_skillActionGraph = {
 export const lifengChr_0015_lifeng_ultimate_skill: SkillDefinition = {
   actionGraph: lifengChr_0015_lifeng_ultimate_skillActionGraph,
   key: 'chr_0015_lifeng_ultimate_skill',
+  element: 'physical',
   blackboard: {
     atk_scale1: [1.78, 1.96, 2.13, 2.31, 2.49, 2.67, 2.84, 3.02, 3.2, 3.42, 3.69, 4],
     atk_scale2: [1.78, 1.96, 2.13, 2.31, 2.49, 2.67, 2.84, 3.02, 3.2, 3.42, 3.69, 4],
@@ -1221,6 +1229,7 @@ export const lifengChr_0015_lifeng_combo_skillActionGraph = {
 export const lifengChr_0015_lifeng_combo_skill: SkillDefinition = {
   actionGraph: lifengChr_0015_lifeng_combo_skillActionGraph,
   key: 'chr_0015_lifeng_combo_skill',
+  element: 'physical',
   blackboard: {
     atk_scale: [0.47, 0.51, 0.56, 0.61, 0.65, 0.7, 0.75, 0.79, 0.84, 0.9, 0.97, 1.05],
     atk_scale2: [1.67, 1.83, 2, 2.17, 2.33, 2.5, 2.67, 2.83, 3, 3.21, 3.46, 3.75],

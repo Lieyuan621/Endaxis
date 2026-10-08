@@ -855,8 +855,6 @@ export function compileActionNode(
       action.settings.checkType === 'Tag' &&
       action.settings.tagQuery.tagIds.length > 0
     ) {
-      if (target === 'party')
-        throw new Error(`${node.sourcePath}: Buff finish-by-tag party target is unsupported`);
       return wrapOwnerContext([
         {
           kind: 'finishBuffsByTag',
@@ -1074,27 +1072,104 @@ export function compileActionNode(
   if (node.body.value.family === 'elementalInfliction') {
     return [projectElementalInflictionAction(node.body.value.action, node.sourcePath, context)];
   }
+  if (node.body.value.family === 'characterInflictionEvent') {
+    const action = node.body.value.action;
+    if (
+      action.source.targetGroupKey !== '' ||
+      action.source.finderType !== null ||
+      action.source.validatorTypes.length > 0 ||
+      action.source.postProcessorTypes.length > 0
+    )
+      throw new Error(`${node.sourcePath}: unsupported character infliction event source`);
+    const eventSource =
+      action.source.targetSource === 'Source'
+        ? context.actionSourceTarget
+        : action.source.targetSource === 'Owner'
+          ? requireActionOwnerProjection(context, node.sourcePath)
+          : null;
+    if (eventSource === null)
+      throw new Error(`${node.sourcePath}: unsupported character infliction event source`);
+    return [
+      {
+        kind: 'triggerCharacterInflictionEvent',
+        parameters: { event: action.event, element: action.element, eventSource },
+      },
+    ];
+  }
+  if (node.body.value.family === 'movementGait') {
+    const gait = { Walk: 'walk', Run: 'run', Sprint: 'sprint' } as const;
+    return [
+      {
+        kind: 'limitMovementGait',
+        parameters: {
+          min: gait[node.body.value.action.min],
+          max: gait[node.body.value.action.max],
+        },
+      },
+    ];
+  }
   if (node.body.value.family === 'characterSpellInfliction') {
     const action = node.body.value.action;
-    const sourceIsCaster =
-      action.source.targetGroupKey === '' &&
-      ((action.source.targetSource === 'Owner' &&
-        ((context.actionOwnerTarget === 'buffOwner' && context.fixedBuffOwnerTarget === 'caster') ||
-          context.actionOwnerTarget === 'caster')) ||
-        (action.source.targetSource === 'Source' &&
-          (context.actionSourceTarget === 'caster' ||
-            (context.actionSourceTarget === 'buffSource' &&
-              context.fixedBuffSourceTarget === 'caster'))));
-    const targetIsCaster =
-      action.target.targetSource === 'MainCharacter' && action.target.targetGroupKey === '';
-    if (!sourceIsCaster || !targetIsCaster) {
-      throw new Error(
-        `${node.sourcePath}: character spell infliction is only scenario-omittable for proven caster self-target`,
-      );
+    const sourceIsGod =
+      action.source.targetSource === 'InstantSearch' &&
+      action.source.finderType === 'GodEntityFinder';
+    for (const [label, target] of [
+      ['source', action.source],
+      ['target', action.target],
+    ] as const) {
+      if (
+        target.targetGroupKey !== '' ||
+        target.validatorTypes.length !== 0 ||
+        target.postProcessorTypes.length !== 0 ||
+        (target.finderType !== null && !(label === 'source' && sourceIsGod))
+      )
+        throw new Error(
+          `${node.sourcePath}.${label}: unsupported character infliction target modifiers`,
+        );
     }
-    // 严格排轴会照常执行技能；当前后端既不模拟干员受控状态，也不以其计算木桩伤害。
-    // 这里只省略已证明的干员自施加形状，不能扩展为按动作类型全局忽略。
-    return [];
+    const source: BuffApplicationSource | 'battle' =
+      action.source.targetSource === 'Owner'
+        ? requireActionOwnerProjection(context, node.sourcePath)
+        : action.source.targetSource === 'Source'
+          ? context.actionSourceTarget
+          : sourceIsGod
+            ? 'battle'
+            : (() => {
+                throw new Error(`${node.sourcePath}: unsupported character infliction source`);
+              })();
+    const target: BuffApplicationTarget =
+      action.target.targetSource === 'MainCharacter'
+        ? 'controlledOperator'
+        : action.target.targetSource === 'Owner'
+          ? requireActionOwnerProjection(context, node.sourcePath)
+          : action.target.targetSource === 'Source'
+            ? context.actionSourceTarget
+            : action.target.targetSource === 'Target' &&
+                context.actionTargetTarget !== 'currentOperator'
+              ? context.actionTargetTarget
+              : (() => {
+                  throw new Error(`${node.sourcePath}: unsupported character infliction target`);
+                })();
+    if (action.source.targetGroupKey !== '' || action.target.targetGroupKey !== '')
+      throw new Error(`${node.sourcePath}: character infliction Context target is not supported`);
+    return [
+      {
+        kind: 'applyCharacterInfliction',
+        parameters: {
+          element: ({ Fire: 'heat', Pulse: 'electric', Cryst: 'cryo', Natural: 'nature' } as const)[
+            action.element
+          ],
+          source,
+          target,
+          count: action.useCountBlackboardKey
+            ? { kind: 'blackboard', key: action.countBlackboardKey }
+            : { kind: 'constant', value: action.count },
+          directToTriggered: action.directToTriggered,
+          ignoreWeakImmune: action.ignoreImmuneLevel === 'IgnoreWeakImmune',
+          ignoreAddingCooldown: action.ignoreAddingCooldown,
+        },
+      },
+    ];
   }
   if (node.body.value.family === 'forcedElementalStatus') {
     const action = node.body.value.action;
@@ -1496,6 +1571,51 @@ export function compileActionNode(
       (context.actionTargetTarget === 'eventSource' || context.actionTargetTarget === 'eventTarget')
         ? context.actionTargetTarget
         : undefined;
+    if (action.settings.checkType === 'Id' || action.settings.checkType === 'Tag') {
+      const queriedTarget =
+        action.target.targetSource === 'Owner'
+          ? requireActionOwnerProjection(context, node.sourcePath)
+          : action.target.targetSource === 'Source'
+            ? context.actionSourceTarget
+            : action.target.targetSource === 'Target' &&
+                context.actionTargetTarget !== 'currentOperator'
+              ? context.actionTargetTarget
+              : null;
+      if (
+        queriedTarget === null ||
+        queriedTarget === 'partyExceptCaster' ||
+        queriedTarget === 'partyExceptCasterAndSameCharacterType' ||
+        action.target.targetGroupKey !== '' ||
+        action.target.finderType !== null ||
+        action.target.validatorTypes.length > 0 ||
+        action.target.postProcessorTypes.length > 0 ||
+        action.isFinishedEarly ||
+        (operation !== 'assign' && operation !== 'add' && operation !== 'multiply')
+      )
+        throw new Error(`${node.sourcePath}: unsupported Buff duration query`);
+      return [
+        {
+          kind: 'setBuffRemainingDuration',
+          parameters: {
+            target: queriedTarget,
+            query:
+              action.settings.checkType === 'Id'
+                ? { kind: 'id', buffIds: action.settings.buffIds.filter(Boolean) }
+                : {
+                    kind: 'tag',
+                    tagQueryType: action.settings.tagQuery.queryType,
+                    buffTags: projectGameplayTags(
+                      action.settings.tagQuery.tagIds,
+                      context,
+                      node.sourcePath,
+                    ),
+                  },
+            operation,
+            value: actionValueOperand(action.value),
+          },
+        },
+      ];
+    }
     if (
       (action.target.targetSource !== 'Owner' && target === undefined) ||
       action.target.targetGroupKey !== '' ||
@@ -2062,13 +2182,23 @@ export function compileActionNode(
     return [];
   }
   if (node.body.value.family === 'animationTiming') {
+    const action = node.body.value.action;
+    if (
+      action.kind === 'targetAnimationTimeScale' &&
+      !isPlainTargetReference(action.target, 'Owner', '')
+    ) {
+      throw new Error(
+        `${node.sourcePath}: animation component scale requires a plain Owner target`,
+      );
+    }
+
     if (context.enabledAnimationEventListenerPresent !== false) {
       throw new Error(
         `${node.sourcePath}: animation time scale may affect enabled animation-event combat callbacks`,
       );
     }
-    // ContinuousSetAnimTimeScale 只维护动画 TickComponent 的附加倍率。完整主动技能图已证明
-    // 不存在启用中的 AnimEventReceiver 后，伤害/Buff/资源仍由 SkillData 时间轴调度，故可省略。
+    // 两种动画倍率动作只维护动画组件句柄。完整宿主图已证明
+    // 没有动画事件驱动的战斗回调后，按现有非渲染后端省略；不能据此暂停技能或 Buff 时钟。
     return [];
   }
   if (node.body.value.family === 'animationEventListener') {

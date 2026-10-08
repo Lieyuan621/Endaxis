@@ -1,10 +1,10 @@
+import { CHARACTER_INFLICTION_BUFFS } from '../../../../../src/core/combat/infliction/characterInfliction.ts';
 import type { GameplayTagRegistry } from '../../source/nativeGameplayTags.ts';
 import { requireRecord } from '../../source/primitives.ts';
 import { buffShowsTimelineActions, type BuffRuntimeSource } from '../../source/buffRuntime.ts';
 import {
   collectBuffRuntimePresentationActionPaths,
   collectBuffRuntimeLevelEventActionPaths,
-  collectBuffRuntimeCharacterStatusActionPaths,
   compileBuffRuntimeDefinitionSource,
   isAfterEnemyDefeatedOnlyBuffRuntime,
   isPresentationOnlyBuffStackEffect,
@@ -169,16 +169,6 @@ export function compileStandardStumpBuffClosure(
         reason:
           'strictly validated GameLevelEvent/BattleRecorder publication has no registered production consumer in the fixed-target combat runtime',
       });
-    }
-    if (buffOwnerTargets.get(buffId) === 'caster') {
-      for (const sourcePath of collectBuffRuntimeCharacterStatusActionPaths(source)) {
-        diagnostics.push({
-          status: 'scenario-omitted',
-          sourcePath,
-          reason:
-            'strictly validated operator self-infliction only changes operator abnormal/control state, which cannot change fixed-stump damage under forced timeline execution',
-        });
-      }
     }
     const omittedEvents = new Set<string | number>();
     for (const event of source.graph.abilityEvents) {
@@ -348,6 +338,10 @@ function collectConditionBuffIds(value: unknown): string[] {
   if (Array.isArray(value)) return value.flatMap(collectConditionBuffIds);
   if (value === null || typeof value !== 'object') return [];
   const record = value as Readonly<Record<string, unknown>>;
+  if (record.kind === 'characterSpellInfliction') {
+    const element = record.element as keyof typeof CHARACTER_INFLICTION_BUFFS;
+    return [...CHARACTER_INFLICTION_BUFFS[element]];
+  }
   if (
     record.kind === 'constant' &&
     typeof record.value === 'string' &&
@@ -610,6 +604,27 @@ function propagateBuffTargets(
           }[node.body.value.action.statusElement];
           changed = register(owners, ownerConflicts, childId, 'enemy') || changed;
           changed = register(sourceTargets, sourceConflicts, childId, sourceTarget) || changed;
+          continue;
+        }
+        if (node.body.value.family === 'characterSpellInfliction') {
+          const action = node.body.value.action;
+          const resolve = (target: typeof action.target): Target | undefined =>
+            target.targetSource === 'Owner'
+              ? owner
+              : target.targetSource === 'Source'
+                ? sourceTarget
+                : target.targetSource === 'MainCharacter' ||
+                    isControlledOperatorInstantSearch(target)
+                  ? 'caster'
+                  : target.targetSource === 'Target' && lifecycleNodes.has(node)
+                    ? owner
+                    : undefined;
+          const childOwner = resolve(action.target);
+          const childSource = resolve(action.source);
+          const childId =
+            CHARACTER_INFLICTION_BUFFS[action.element][action.directToTriggered ? 1 : 0];
+          changed = register(owners, ownerConflicts, childId, childOwner) || changed;
+          changed = register(sourceTargets, sourceConflicts, childId, childSource) || changed;
           continue;
         }
         if (node.body.value.family !== 'buffApplication') continue;

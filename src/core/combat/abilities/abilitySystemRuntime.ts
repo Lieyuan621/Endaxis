@@ -572,6 +572,16 @@ export class AbilitySystemRuntime implements FrameRuntime {
       : undefined;
   }
 
+  /** 控制标签新增时的原生中断；移除标签不会恢复此前技能。 */
+  applyControlTagChange(interrupt: boolean, clearCombo: boolean): void {
+    if (interrupt) {
+      const current = this.#currentSkill;
+      if (current?.state === 'casting') current.interrupt('default');
+      if (this.#currentSkill === current && current?.state !== 'casting') this.#currentSkill = null;
+    }
+    if (clearCombo) this.#clearComboOffset(true);
+  }
+
   /** CenterDashState.OnEnter：Dash 独立于技能接续许可，直接以 Dash 原因结束当前技能。 */
   interruptCurrentSkillForDash(): {
     readonly skillId: string;

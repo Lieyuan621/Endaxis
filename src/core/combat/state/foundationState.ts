@@ -87,6 +87,7 @@ export interface AttackReceiptSnapshot {
 }
 
 export interface SkillCastEventData extends AbilityOriginPayload {
+  readonly element?: import('../../game-data/operatorDefinition').DamageElement;
   /** 玩家技能库分类；实体内部技能没有此分类。 */
   readonly skillType?: SkillType;
   readonly skillId: string;

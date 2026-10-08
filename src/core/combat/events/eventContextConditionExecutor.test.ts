@@ -11,6 +11,43 @@ const terminal = {
 };
 
 describe('EventContextConditionExecutor', () => {
+  it('技能属性读取事件技能，再回退执行技能，不读取命中属性', () => {
+    const executor = new EventContextConditionExecutor(terminal);
+    const condition = { kind: 'skillDamageTypeIn' as const, damageTypes: ['heat'] as const };
+    const context = {
+      blackboard: new ActionBlackboard(),
+      executingSkillElement: 'heat' as const,
+    };
+    expect(executor.evaluate(condition, context)).toBe(true);
+    expect(executor.evaluate(condition, { blackboard: context.blackboard })).toBe(false);
+    const event = {
+      event: 'beforeCastSkill' as const,
+      payload: {
+        sourceId: 'operator',
+        targetId: 'operator',
+        skillId: 'other',
+        skillCastId: 1,
+        element: 'electric' as const,
+      },
+    };
+    expect(executor.evaluate(condition, { ...context, event })).toBe(false);
+    expect(() =>
+      executor.evaluate(condition, {
+        ...context,
+        event: { ...event, payload: { ...event.payload, element: undefined } },
+      }),
+    ).toThrow('skill element check is not supported');
+    expect(
+      executor.evaluate(condition, {
+        ...context,
+        event: {
+          ...event,
+          payload: { ...event.payload, element: 'heat' },
+        },
+      }),
+    ).toBe(true);
+  });
+
   it('伤害 GameplayTag 为空时排除查询也失败，不把无标签解释为匹配', () => {
     const executor = new EventContextConditionExecutor(terminal);
     const input = {

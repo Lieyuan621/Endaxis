@@ -19,11 +19,11 @@ export function removeBuffEntityTags(
 
 export function advanceBuffAddingCooldowns(state: BuffContainerState, deltaTime: number): void {
   if (!Number.isFinite(deltaTime)) throw new TypeError('buff delta time must be finite');
-  for (const [buffId, values] of state.addingCooldowns) {
+  for (const [stackingKey, values] of state.addingCooldowns) {
     const remaining = values
       .map(value => value - Math.max(0, deltaTime))
       .filter(value => value > 0.00001);
-    if (remaining.length === 0) state.addingCooldowns.delete(buffId);
-    else state.addingCooldowns.set(buffId, remaining);
+    if (remaining.length === 0) state.addingCooldowns.delete(stackingKey);
+    else state.addingCooldowns.set(stackingKey, remaining);
   }
 }

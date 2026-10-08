@@ -85,6 +85,7 @@ export const snowshineChr_0014_aurora_attack1ActionGraph = {
 export const snowshineChr_0014_aurora_attack1: SkillDefinition = {
   actionGraph: snowshineChr_0014_aurora_attack1ActionGraph,
   key: 'chr_0014_aurora_attack1',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.55, 0.61, 0.66, 0.72, 0.77, 0.83, 0.88, 0.94, 0.99, 1.06, 1.14, 1.24],
@@ -187,6 +188,7 @@ export const snowshineChr_0014_aurora_attack2ActionGraph = {
 export const snowshineChr_0014_aurora_attack2: SkillDefinition = {
   actionGraph: snowshineChr_0014_aurora_attack2ActionGraph,
   key: 'chr_0014_aurora_attack2',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.59, 0.64, 0.7, 0.76, 0.82, 0.88, 0.94, 0.99, 1.05, 1.13, 1.21, 1.32],
@@ -392,6 +394,7 @@ export const snowshineChr_0014_aurora_attack3ActionGraph = {
 export const snowshineChr_0014_aurora_attack3: SkillDefinition = {
   actionGraph: snowshineChr_0014_aurora_attack3ActionGraph,
   key: 'chr_0014_aurora_attack3',
+  element: 'physical',
   blackboard: {
     atb: 25,
     atk_scale: [1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.93, 2.08, 2.25],
@@ -507,6 +510,7 @@ export const snowshineChr_0014_aurora_power_attackActionGraph = {
 export const snowshineChr_0014_aurora_power_attack: SkillDefinition = {
   actionGraph: snowshineChr_0014_aurora_power_attackActionGraph,
   key: 'chr_0014_aurora_power_attack',
+  element: 'physical',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
   timelineBlockFrames: 76,
   naturalDurationFrames: 133,
@@ -581,6 +585,7 @@ export const snowshineChr_0014_aurora_plunging_attack_endActionGraph = {
 export const snowshineChr_0014_aurora_plunging_attack_end: SkillDefinition = {
   actionGraph: snowshineChr_0014_aurora_plunging_attack_endActionGraph,
   key: 'chr_0014_aurora_plunging_attack_end',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
@@ -945,6 +950,7 @@ export const snowshineChr_0014_aurora_normal_skillActionGraph = {
 
 export const snowshineChr_0014_aurora_normal_skill: SkillDefinition = {
   key: 'chr_0014_aurora_normal_skill',
+  element: 'cryo',
   blackboard: {
     atb_return_base: 30,
     atk_scale: [2, 2.2, 2.4, 2.6, 2.8, 3, 3.2, 3.4, 3.6, 3.85, 4.15, 4.5],
@@ -1128,6 +1134,7 @@ export const snowshineChr_0014_aurora_combo_skillActionGraph = {
 
 export const snowshineChr_0014_aurora_combo_skill: SkillDefinition = {
   key: 'chr_0014_aurora_combo_skill',
+  element: 'cryo',
   blackboard: {
     atk_scale: 0.42,
     cam_angle: 0,
@@ -1282,6 +1289,7 @@ export const snowshineChr_0014_aurora_ultimate_skillActionGraph = {
 export const snowshineChr_0014_aurora_ultimate_skill: SkillDefinition = {
   actionGraph: snowshineChr_0014_aurora_ultimate_skillActionGraph,
   key: 'chr_0014_aurora_ultimate_skill',
+  element: 'cryo',
   blackboard: {
     atk_scale: [2, 2.2, 2.4, 2.6, 2.8, 3, 3.2, 3.4, 3.6, 3.85, 4.15, 4.5],
     extra_duration: 0,
@@ -1497,7 +1505,41 @@ const snowshineBuff3: SkillBuffDefinition = {
 };
 
 const snowshineBuff4ActionGraph = {
-  main: { nodes: {} },
+  main: {
+    nodes: {
+      applyBuff_1: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffId: 'buff_chr_0014_aurora_potential_1',
+            target: 'buffOwner',
+            source: 'buffSource',
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      conditional_2: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+          whenTrue: { $sequence: 'applyBuff_1' },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityTagMatch',
+          target: 'buffOwner',
+          tagQueryType: 'hasAny',
+          tags: ['Skill/Character/Common/Affixes/Shelter'],
+        },
+      },
+    },
+  },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
@@ -1510,6 +1552,9 @@ const snowshineBuff4: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 9999 },
   attributeModifiers: [],
+  abilityEventResponses: [
+    { event: 'beforeTakeSpellInfliction', priority: 0, sequence: { $sequence: 'conditional_2' } },
+  ],
   actionGraph: snowshineBuff4ActionGraph,
 };
 

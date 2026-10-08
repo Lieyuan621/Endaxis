@@ -126,6 +126,7 @@ export const ardeliaChr_0025_ardelia_attack1ActionGraph = {
 
 export const ardeliaChr_0025_ardelia_attack1: SkillDefinition = {
   key: 'chr_0025_ardelia_attack1',
+  element: 'nature',
   blackboard: {
     atb: 0,
     atk_scale: [0.3, 0.33, 0.36, 0.39, 0.42, 0.45, 0.48, 0.51, 0.54, 0.58, 0.62, 0.68],
@@ -278,6 +279,7 @@ export const ardeliaChr_0025_ardelia_attack2ActionGraph = {
 
 export const ardeliaChr_0025_ardelia_attack2: SkillDefinition = {
   key: 'chr_0025_ardelia_attack2',
+  element: 'nature',
   blackboard: {
     atb: 0,
     atk_scale: [0.2, 0.22, 0.24, 0.26, 0.28, 0.3, 0.32, 0.34, 0.36, 0.39, 0.42, 0.45],
@@ -457,6 +459,7 @@ export const ardeliaChr_0025_ardelia_attack3ActionGraph = {
 
 export const ardeliaChr_0025_ardelia_attack3: SkillDefinition = {
   key: 'chr_0025_ardelia_attack3',
+  element: 'nature',
   blackboard: {
     atb: 0,
     atk_scale: [0.04, 0.04, 0.04, 0.05, 0.05, 0.05, 0.06, 0.06, 0.06, 0.07, 0.07, 0.08],
@@ -618,6 +621,7 @@ export const ardeliaChr_0025_ardelia_attack4ActionGraph = {
 
 export const ardeliaChr_0025_ardelia_attack4: SkillDefinition = {
   key: 'chr_0025_ardelia_attack4',
+  element: 'nature',
   blackboard: {
     atb: 18,
     atk_scale: [0.55, 0.61, 0.66, 0.72, 0.77, 0.83, 0.88, 0.94, 0.99, 1.06, 1.14, 1.24],
@@ -858,6 +862,7 @@ export const ardeliaChr_0025_ardelia_power_attackActionGraph = {
 
 export const ardeliaChr_0025_ardelia_power_attack: SkillDefinition = {
   key: 'chr_0025_ardelia_power_attack',
+  element: 'physical',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
   timelineBlockFrames: 66,
   naturalDurationFrames: 215,
@@ -975,6 +980,7 @@ export const ardeliaChr_0025_ardelia_plunging_attack_endActionGraph = {
 export const ardeliaChr_0025_ardelia_plunging_attack_end: SkillDefinition = {
   actionGraph: ardeliaChr_0025_ardelia_plunging_attack_endActionGraph,
   key: 'chr_0025_ardelia_plunging_attack_end',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
@@ -1322,6 +1328,7 @@ export const ardeliaChr_0025_ardelia_normal_skillActionGraph = {
 
 export const ardeliaChr_0025_ardelia_normal_skill: SkillDefinition = {
   key: 'chr_0025_ardelia_normal_skill',
+  element: 'nature',
   blackboard: {
     additional_def_decrease: 0,
     atk_scale: [1.42, 1.56, 1.71, 1.85, 1.99, 2.13, 2.28, 2.42, 2.56, 2.74, 2.95, 3.2],
@@ -1582,6 +1589,7 @@ export const ardeliaChr_0025_ardelia_combo_skillActionGraph = {
 
 export const ardeliaChr_0025_ardelia_combo_skill: SkillDefinition = {
   key: 'chr_0025_ardelia_combo_skill',
+  element: 'nature',
   blackboard: {
     atk_scale: [0.45, 0.49, 0.54, 0.58, 0.62, 0.67, 0.71, 0.76, 0.8, 0.86, 0.93, 1],
     atk_scale_boom: [1.11, 1.22, 1.33, 1.44, 1.55, 1.67, 1.78, 1.89, 2, 2.14, 2.3, 2.5],
@@ -1893,6 +1901,7 @@ export const ardeliaChr_0025_ardelia_ultimate_skillActionGraph = {
 
 export const ardeliaChr_0025_ardelia_ultimate_skill: SkillDefinition = {
   key: 'chr_0025_ardelia_ultimate_skill',
+  element: 'nature',
   blackboard: {
     atk_scale: [0.73, 0.81, 0.88, 0.95, 1.03, 1.1, 1.17, 1.25, 1.32, 1.41, 1.52, 1.65],
     atk_scale_2: 0,

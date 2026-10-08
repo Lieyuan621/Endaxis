@@ -1,3 +1,4 @@
+import { createEventBuff } from '../events/buffEventTestFixture';
 import { numberInput } from '../../../test/compiledGraphInputs';
 import { rootActionSteps } from '../../compiler/actionProgramInspection';
 import { createTestBuffReference } from './buffTestFixtures';
@@ -23,6 +24,53 @@ const delegate: CombatOperationExecutor = {
 };
 
 describe('BuffOperationExecutor', () => {
+  it('干员附着在多层循环外检查冷却，直接异常消费附着而不派发普通 Before 事件', () => {
+    const attached = 'buff_common_enemy_spell_cryst_attached';
+    const triggered = 'buff_common_enemy_spell_cryst_triggered_frozen';
+    const definition = {
+      stackingType: 'unlimited' as const,
+      addingCooldownSeconds: 1,
+      ignoreAddingCooldown: true,
+    };
+    const container = new CombatBuffContainer('receiver', new CombatAttributeSet());
+    const target = new BuffDefinitionOperationTarget(container, {
+      get: id => ({ ...definition, id }),
+      compile: entry => ({ ...definition, id: entry.id }),
+    });
+    const before = vi.fn();
+    const executor = new BuffOperationExecutor({
+      sourceId: 'source',
+      resolveTarget: () => target,
+      resolveApplicationTargets: () => [target],
+      resolveBuffDefinition: id => (id === attached ? definition : { stackingType: 'unique' }),
+      isCharacterTarget: id => id === 'receiver',
+      beforeCharacterInfliction: before,
+      delegate,
+    });
+    const parameters = {
+      element: 'cryo' as const,
+      source: 'caster' as const,
+      target: 'caster' as const,
+      count: numberInput({ kind: 'constant', value: 3 }),
+      directToTriggered: false,
+      ignoreWeakImmune: true,
+      ignoreAddingCooldown: false,
+    };
+    const context = { blackboard: new ActionBlackboard() };
+    executor.execute({ kind: 'applyCharacterInfliction', parameters }, context);
+    expect(container.getCountByIds([attached])).toBe(3);
+    executor.execute({ kind: 'applyCharacterInfliction', parameters }, context);
+    expect(container.getCountByIds([attached])).toBe(3);
+    expect(before).toHaveBeenCalledTimes(2);
+    executor.execute(
+      { kind: 'applyCharacterInfliction', parameters: { ...parameters, directToTriggered: true } },
+      context,
+    );
+    expect(container.getCountByIds([attached])).toBe(0);
+    expect(container.getCountByIds([triggered])).toBe(1);
+    expect(before).toHaveBeenCalledTimes(2);
+  });
+
   it('拒绝旧内嵌蓝图，不忽略它或改用目录中的同名定义', () => {
     const parameters = {
       buffId: 'owned',
@@ -2838,6 +2886,34 @@ describe('BuffOperationExecutor', () => {
     expect(unrelated?.isFinished).toBe(false);
   });
 
+  it('按标签清除全队状态，各目标保留不匹配的 Buff', () => {
+    const members = ['a', 'b'].map(id => new CombatBuffContainer(id, new CombatAttributeSet()));
+    const frozen = members.map(member =>
+      member.add({ id: 'frozen', stackingType: 'unlimited', applyTags: ['Frozen'] }, 'a'),
+    );
+    const other = members[1]!.add(
+      { id: 'other', stackingType: 'unlimited', applyTags: ['Other'] },
+      'a',
+    );
+    const executor = new BuffOperationExecutor({
+      sourceId: 'a',
+      delegate,
+      resolveTarget: () => members[0]!,
+      resolveApplicationTargets: () => members,
+    });
+    executor.execute({
+      kind: 'finishBuffsByTag',
+      parameters: {
+        target: 'party',
+        tagQueryType: 'hasAny',
+        buffTags: ['Frozen'],
+        reason: 'other',
+      },
+    });
+    expect(frozen.map(buff => buff?.isFinished)).toEqual([true, true]);
+    expect(other?.isFinished).toBe(false);
+  });
+
   it('queries and finishes caster buffs by stable Buff identity', () => {
     const caster = new CombatBuffContainer('operator', new CombatAttributeSet());
     const active = caster.add(
@@ -3023,4 +3099,50 @@ describe('BuffOperationExecutor', () => {
     expect(originalState).toEqual({ active: true, references: [reference] });
   });
 });
-import { createEventBuff } from '../events/buffEventTestFixture';
+
+it('步态动作作用于 owner，共享限制槽在切面恢复后仍由最后一个 End 清理', () => {
+  const original = new CombatBuffContainer('owner', new CombatAttributeSet<string>());
+  const bind = (container: CombatBuffContainer<string>) =>
+    new BuffOperationExecutor({
+      sourceId: 'different-source',
+      resolveTarget: () => {
+        throw new Error('不能改写 source 的步态');
+      },
+      resolveEventTarget: id => {
+        expect(id).toBe('owner');
+        return new BuffDefinitionOperationTarget(container, { get: () => undefined });
+      },
+      delegate,
+    });
+  const first = { kind: 'limitMovementGait', parameters: { min: 'run', max: 'sprint' } } as const;
+  const second = { kind: 'limitMovementGait', parameters: { min: 'walk', max: 'run' } } as const;
+  const context = { actionOwnerId: 'owner', blackboard: new ActionBlackboard() };
+  const executor = bind(original);
+  executor.execute(first, context);
+  executor.execute(second, context);
+  const saved = structuredClone(original.runtimeState);
+  const restored = new CombatBuffContainer(
+    'owner',
+    new CombatAttributeSet(saved.attributes),
+    undefined,
+    null,
+    ActionBlackboard.bindRuntimeState(saved.entityBlackboard),
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    saved,
+  );
+  for (const container of [original, restored]) {
+    const runtime = bind(container);
+    runtime.end(first, context);
+    expect(container.runtimeState.movementGaitLimit).toEqual(second.parameters);
+    expect(container.runtimeState.movementGaitActionCount).toBe(1);
+    runtime.end(second, context);
+    expect(container.runtimeState.movementGaitLimit).toBeNull();
+    expect(container.runtimeState.movementGaitActionCount).toBe(0);
+  }
+  expect(restored.runtimeState).toEqual(original.runtimeState);
+});

@@ -43,6 +43,47 @@ const emptySequence = chainEntry('buff-empty', []);
 type Attribute = 'cost';
 
 describe('BuffDefinitionOperationTarget', () => {
+  it('按 ID 和标签修改所有匹配有限寿命 Buff，不改无限寿命和其他 Buff', () => {
+    const container = new CombatBuffContainer('operator', new CombatAttributeSet());
+    const target = new BuffDefinitionOperationTarget(container, {
+      get: () => undefined,
+      compile: entry => ({ id: entry.id, stackingType: entry.stackingType }),
+    });
+    const first = container.add(
+      { id: 'cold', stackingType: 'unlimited', durationSeconds: 10, applyTags: ['cold'] },
+      'source',
+    )!;
+    const second = container.add(
+      { id: 'cold', stackingType: 'unlimited', durationSeconds: 5, applyTags: ['cold'] },
+      'source',
+    )!;
+    const infinite = container.add(
+      { id: 'cold', stackingType: 'unlimited', applyTags: ['cold'] },
+      'source',
+    )!;
+    const other = container.add(
+      { id: 'other', stackingType: 'unique', durationSeconds: 4 },
+      'source',
+    )!;
+    target.setRemainingDuration({ kind: 'id', buffIds: ['cold'] }, 'assign', 20);
+    expect([
+      first.remainingDuration,
+      second.remainingDuration,
+      infinite.remainingDuration,
+      other.remainingDuration,
+    ]).toEqual([20, 20, null, 4]);
+    target.setRemainingDuration(
+      { kind: 'tag', buffTags: ['cold'], tagQueryType: 'hasAny' },
+      'multiply',
+      0.5,
+    );
+    expect([
+      first.remainingDuration,
+      second.remainingDuration,
+      infinite.remainingDuration,
+      other.remainingDuration,
+    ]).toEqual([10, 10, null, 4]);
+  });
   it('终结技暂停普通 Buff，只有采用实体时间的 Buff 可随施法者继续推进', () => {
     const dilation = new TimeDilationRuntime({});
     dilation.startGlobal({
@@ -605,56 +646,60 @@ describe('BuffDefinitionOperationTarget', () => {
     );
   });
 
-  it('publishes before-output identity before attempting to create the Buff instance', () => {
-    const container = new CombatBuffContainer('enemy', new CombatAttributeSet());
-    const countsBeforeAttempt: number[] = [];
-    const before = vi.fn(event => {
-      countsBeforeAttempt.push(container.buffs.length);
-      expect(event).toEqual({
-        targetId: 'enemy',
+  it.each([undefined, 0.2])(
+    'publishes before-output after cooldown %s admission and before stacking',
+    addingCooldownSeconds => {
+      const container = new CombatBuffContainer('enemy', new CombatAttributeSet());
+      const countsBeforeAttempt: number[] = [];
+      const before = vi.fn(event => {
+        countsBeforeAttempt.push(container.buffs.length);
+        expect(event).toEqual({
+          targetId: 'enemy',
+          buffId: 'frozen',
+          sourceId: 'yvonne',
+          buffTags: ['Skill/Character/Common/SpellStatus/Frozen'],
+          skillCastInfo: null,
+          isExtra: false,
+        });
+      });
+      const after = vi.fn();
+      const output = vi.fn();
+      const target = new BuffDefinitionOperationTarget(
+        container,
+        {
+          get: () => undefined,
+          compile: entry => ({
+            id: entry.id,
+            stackingType: entry.stackingType,
+            applyTags: entry.applyTags,
+            addingCooldownSeconds,
+          }),
+        },
+        undefined,
+        undefined,
+        after,
+        before,
+        output,
+      );
+      const request = {
         buffId: 'frozen',
         sourceId: 'yvonne',
-        buffTags: ['Skill/Character/Common/SpellStatus/Frozen'],
-        skillCastInfo: null,
-        isExtra: false,
-      });
-    });
-    const after = vi.fn();
-    const output = vi.fn();
-    const target = new BuffDefinitionOperationTarget(
-      container,
-      {
-        get: () => undefined,
-        compile: entry => ({
-          id: entry.id,
-          stackingType: entry.stackingType,
-          applyTags: entry.applyTags,
-        }),
-      },
-      undefined,
-      undefined,
-      after,
-      before,
-      output,
-    );
-    const request = {
-      buffId: 'frozen',
-      sourceId: 'yvonne',
-      blackboardValues: {},
-      definition: {
-        stackingType: 'unique' as const,
-        applyTags: ['Skill/Character/Common/SpellStatus/Frozen'],
-      },
-    };
+        blackboardValues: {},
+        definition: {
+          stackingType: 'unique' as const,
+          applyTags: ['Skill/Character/Common/SpellStatus/Frozen'],
+        },
+      };
 
-    expect(target.apply(request)).toBe(true);
-    expect(target.apply(request)).toBe(false);
+      expect(target.apply(request)).toBe(true);
+      expect(target.apply(request)).toBe(false);
 
-    expect(before).toHaveBeenCalledTimes(2);
-    expect(after).toHaveBeenCalledOnce();
-    expect(output).toHaveBeenCalledOnce();
-    expect(countsBeforeAttempt).toEqual([0, 1]);
-  });
+      expect(before).toHaveBeenCalledTimes(addingCooldownSeconds === undefined ? 2 : 1);
+      expect(after).toHaveBeenCalledOnce();
+      expect(output).toHaveBeenCalledOnce();
+      expect(countsBeforeAttempt).toEqual(addingCooldownSeconds === undefined ? [0, 1] : [0]);
+    },
+  );
 
   it('publishes the exact successful Buff application through the native added callback', () => {
     const observer = vi.fn();

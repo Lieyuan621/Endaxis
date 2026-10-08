@@ -708,14 +708,14 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
       hydrate(stripSkillGroupCompilationEvidence(definition)),
     ]),
   );
-  const dodgeSkill =
-    input.dodgeSkill === undefined
-      ? undefined
-      : {
-          ...hydrate(stripSkillGroupCompilationEvidence(input.dodgeSkill.definition)),
-          skillType: 'dodge' as const,
-          nativeSkillType: 'dodge' as const,
-        };
+  let dodgeSkill: OperatorDefinition['dodgeSkill'];
+  if (input.dodgeSkill !== undefined) {
+    const { element, ...definition } = hydrate(
+      stripSkillGroupCompilationEvidence(input.dodgeSkill.definition),
+    );
+    if (element !== undefined) throw new Error('dodge skill must not declare an element');
+    dodgeSkill = { ...definition, skillType: 'dodge', nativeSkillType: 'dodge' };
+  }
   const routedSkills = new Map((input.routedSkills ?? []).map(item => [item.key, item] as const));
   for (const routed of routedSkills.values()) {
     const wrapper = runtimeDefinitions.get(routed.key);

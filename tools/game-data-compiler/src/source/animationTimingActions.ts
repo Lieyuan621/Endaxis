@@ -1,3 +1,4 @@
+import { parseTargetReferenceSource, type TargetReferenceSource } from './target.ts';
 import { requireExactFields, requireRecord } from './primitives.ts';
 import { parseScalarSource, type BlackboardLevelValues, type ScalarSource } from './scalar.ts';
 
@@ -31,6 +32,38 @@ export function parseContinuousAnimationTimeScaleActionSource(
   );
   return {
     kind: 'continuousAnimationTimeScale',
+    timeScale: parseScalarSource(action.timeScale, `${path}.timeScale`, inheritedBlackboard),
+  };
+}
+
+export interface TargetAnimationTimeScaleActionSource {
+  readonly kind: 'targetAnimationTimeScale';
+  readonly target: TargetReferenceSource;
+  readonly timeScale: ScalarSource;
+}
+
+export function parseTargetAnimationTimeScaleActionSource(
+  value: unknown,
+  path: string,
+  inheritedBlackboard: BlackboardLevelValues,
+): TargetAnimationTimeScaleActionSource {
+  const action = requireRecord(value, path);
+  requireExactFields(
+    action,
+    new Set([
+      '$type',
+      'isEnable',
+      'priorityLevel',
+      'priorityOffset',
+      'serverActionIndex',
+      'target',
+      'timeScale',
+    ]),
+    path,
+  );
+  return {
+    kind: 'targetAnimationTimeScale',
+    target: parseTargetReferenceSource(action.target, `${path}.target`),
     timeScale: parseScalarSource(action.timeScale, `${path}.timeScale`, inheritedBlackboard),
   };
 }

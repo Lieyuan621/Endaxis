@@ -11,5 +11,22 @@
   "buff_physical_airborne": "lift",
   "buff_physical_knockdown": "knockdown",
   "buff_physical_crushed": "crush",
-  "buff_physical_do_fracture": "breach"
+  "buff_physical_do_fracture": "breach",
+  "buff_common_enemy_spell_fire_attached": "heat_infliction",
+  "buff_common_enemy_spell_fire_triggered_burning": "combustion",
+  "buff_common_enemy_spell_fire_triggered_fx": "combustion",
+  "buff_common_enemy_spell_status_burning": "combustion",
+  "buff_common_enemy_spell_pulse_attached": "electric_infliction",
+  "buff_common_enemy_spell_pulse_triggered_conduct": "electrification",
+  "buff_common_enemy_spell_pulse_triggered_fx": "electrification",
+  "buff_common_enemy_spell_status_conduct": "electrification",
+  "buff_common_enemy_spell_cryst_attached": "cryo_infliction",
+  "buff_common_enemy_spell_cryst_triggered_frozen": "solidification",
+  "buff_common_enemy_spell_cryst_triggered_fx": "solidification",
+  "buff_common_enemy_spell_status_frozen": "solidification",
+  "buff_common_enemy_spell_natural_attached": "nature_infliction",
+  "buff_common_enemy_spell_natural_triggered_corrupt": "corrosion",
+  "buff_common_enemy_spell_natural_triggered_fx": "corrosion",
+  "buff_common_enemy_spell_status_corrupt": "corrosion",
+  "buff_common_enemy_spell_status_do_frozen": "solidification"
 }

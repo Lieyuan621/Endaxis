@@ -1816,6 +1816,29 @@ describe('公共 Action 叶子分派', () => {
     ).toThrow('unsupported combat animation-event listener');
   });
 
+  it('未知关闭动作不阻塞转换，启用后仍然拒绝', () => {
+    const action = {
+      ...META,
+      $type: 'Beyond.Gameplay.Core.UnimplementedAction+Data, Gameplay.Beyond',
+      isEnable: false,
+    };
+    const parsed = parseKnownNativeActionSequenceSource(sequence([action]), 'disabled', {});
+    expect(
+      projectSequence(parsed, {
+        actionOwnerTarget: 'caster',
+        actionSourceTarget: 'caster',
+        actionTargetTarget: 'enemy',
+      }),
+    ).toEqual({ steps: [] });
+    expect(() =>
+      parseKnownNativeActionSequenceSource(
+        sequence([{ ...action, isEnable: true }]),
+        'enabled',
+        {},
+      ),
+    ).toThrow('unsupported native action');
+  });
+
   it('ContinuousSetAnimTimeScale 严格保留动态倍率来源', () => {
     expect(
       parseKnownNativeActionLeafSource(
@@ -1841,40 +1864,44 @@ describe('公共 Action 叶子分派', () => {
     });
   });
 
-  it('ContinuousSetAnimTimeScale 仅在完整技能证明无启用动画事件监听器时省略', () => {
-    const parsed = parseKnownNativeActionSequenceSource(
-      sequence([
-        {
-          ...META,
-          $type: 'Beyond.Gameplay.Core.ContinuousSetAnimTimeScale+Data, Gameplay.Beyond',
-          serverActionIndex: 1497,
-          timeScale: {
-            useBlackboardKey: true,
-            value: 0,
-            blackboardKey: 'AnimScale',
+  it.each(['ContinuousSetAnimTimeScale', 'SetAnimTimeScaleAction'])(
+    '%s 仅在完整宿主证明无战斗动画回调时省略',
+    actionType => {
+      const parsed = parseKnownNativeActionSequenceSource(
+        sequence([
+          {
+            ...META,
+            $type: `Beyond.Gameplay.Core.${actionType}+Data, Gameplay.Beyond`,
+            ...(actionType === 'SetAnimTimeScaleAction' ? { target: targetFixture('Owner') } : {}),
+            serverActionIndex: 1497,
+            timeScale: {
+              useBlackboardKey: true,
+              value: 0,
+              blackboardKey: 'AnimScale',
+            },
           },
-        },
-      ]),
-      'fixture.continuousAnimationTimeScaleSequence',
-      { AnimScale: [1] },
-    );
-    expect(
-      projectSequence(parsed, {
-        actionOwnerTarget: 'caster',
-        actionSourceTarget: 'caster',
-        actionTargetTarget: 'enemy',
-        enabledAnimationEventListenerPresent: false,
-      }),
-    ).toEqual({ steps: [] });
-    expect(() =>
-      projectSequence(parsed, {
-        actionOwnerTarget: 'caster',
-        actionSourceTarget: 'caster',
-        actionTargetTarget: 'enemy',
-        enabledAnimationEventListenerPresent: true,
-      }),
-    ).toThrow('animation time scale may affect enabled animation-event combat callbacks');
-  });
+        ]),
+        'fixture.continuousAnimationTimeScaleSequence',
+        { AnimScale: [1] },
+      );
+      expect(
+        projectSequence(parsed, {
+          actionOwnerTarget: 'caster',
+          actionSourceTarget: 'caster',
+          actionTargetTarget: 'enemy',
+          enabledAnimationEventListenerPresent: false,
+        }),
+      ).toEqual({ steps: [] });
+      expect(() =>
+        projectSequence(parsed, {
+          actionOwnerTarget: 'caster',
+          actionSourceTarget: 'caster',
+          actionTargetTarget: 'enemy',
+          enabledAnimationEventListenerPresent: true,
+        }),
+      ).toThrow('animation time scale may affect enabled animation-event combat callbacks');
+    },
+  );
 
   it('SendBattleSignalToLevel 保留关卡信号载荷但不建立木桩战斗消费者', () => {
     const parsed = parseKnownNativeActionSequenceSource(

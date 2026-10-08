@@ -725,6 +725,9 @@ function compileConditionLeaf(
         : {}),
     };
   }
+  if (condition.kind === 'skillDamageType') {
+    return { kind: 'skillDamageTypeIn', damageTypes: condition.damageTypes };
+  }
   if (condition.kind === 'skillType') {
     const skillTypes = mapNativeSkillTypes(condition.skillTypes, condition.attackTypeMask);
     if (condition.checkTargetCurrentSkill) {

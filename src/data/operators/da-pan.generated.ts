@@ -100,6 +100,7 @@ export const daPanChr_0018_dapan_attack1ActionGraph = {
 export const daPanChr_0018_dapan_attack1: SkillDefinition = {
   actionGraph: daPanChr_0018_dapan_attack1ActionGraph,
   key: 'chr_0018_dapan_attack1',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.28, 0.31, 0.34, 0.37, 0.39, 0.42, 0.45, 0.48, 0.51, 0.54, 0.58, 0.63],
@@ -202,6 +203,7 @@ export const daPanChr_0018_dapan_attack2ActionGraph = {
 export const daPanChr_0018_dapan_attack2: SkillDefinition = {
   actionGraph: daPanChr_0018_dapan_attack2ActionGraph,
   key: 'chr_0018_dapan_attack2',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.34, 0.37, 0.4, 0.44, 0.47, 0.5, 0.54, 0.57, 0.6, 0.64, 0.7, 0.75],
@@ -363,6 +365,7 @@ export const daPanChr_0018_dapan_attack3ActionGraph = {
 
 export const daPanChr_0018_dapan_attack3: SkillDefinition = {
   key: 'chr_0018_dapan_attack3',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.17, 0.18, 0.2, 0.22, 0.23, 0.25, 0.27, 0.28, 0.3, 0.32, 0.35, 0.38],
@@ -473,6 +476,7 @@ export const daPanChr_0018_dapan_attack4ActionGraph = {
 export const daPanChr_0018_dapan_attack4: SkillDefinition = {
   actionGraph: daPanChr_0018_dapan_attack4ActionGraph,
   key: 'chr_0018_dapan_attack4',
+  element: 'physical',
   blackboard: {
     atb: 21,
     atk_scale: [0.6, 0.66, 0.72, 0.78, 0.84, 0.9, 0.96, 1.03, 1.09, 1.16, 1.25, 1.36],
@@ -605,6 +609,7 @@ export const daPanChr_0018_dapan_power_attackActionGraph = {
 export const daPanChr_0018_dapan_power_attack: SkillDefinition = {
   actionGraph: daPanChr_0018_dapan_power_attackActionGraph,
   key: 'chr_0018_dapan_power_attack',
+  element: 'physical',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
   timelineBlockFrames: 47,
   naturalDurationFrames: 215,
@@ -689,6 +694,7 @@ export const daPanChr_0018_dapan_plunging_attack_endActionGraph = {
 export const daPanChr_0018_dapan_plunging_attack_end: SkillDefinition = {
   actionGraph: daPanChr_0018_dapan_plunging_attack_endActionGraph,
   key: 'chr_0018_dapan_plunging_attack_end',
+  element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
@@ -1222,6 +1228,7 @@ export const daPanChr_0018_dapan_normal_skillActionGraph = {
 
 export const daPanChr_0018_dapan_normal_skill: SkillDefinition = {
   key: 'chr_0018_dapan_normal_skill',
+  element: 'physical',
   blackboard: {
     airborne_duration: 1.8,
     atk_scale: [1.15, 1.27, 1.38, 1.5, 1.61, 1.73, 1.84, 1.96, 2.07, 2.22, 2.39, 2.59],
@@ -1816,6 +1823,7 @@ export const daPanChr_0018_dapan_ultimate_skillActionGraph = {
 
 export const daPanChr_0018_dapan_ultimate_skill: SkillDefinition = {
   key: 'chr_0018_dapan_ultimate_skill',
+  element: 'physical',
   blackboard: {
     atk_scale_end: [1.78, 1.96, 2.13, 2.31, 2.49, 2.67, 2.84, 3.02, 3.2, 3.42, 3.69, 4],
     atk_scale_loop: [0.22, 0.24, 0.26, 0.29, 0.31, 0.33, 0.35, 0.37, 0.4, 0.42, 0.46, 0.5],
@@ -2433,6 +2441,7 @@ export const daPanChr_0018_dapan_combo_skillActionGraph = {
 
 export const daPanChr_0018_dapan_combo_skill: SkillDefinition = {
   key: 'chr_0018_dapan_combo_skill',
+  element: 'physical',
   blackboard: {
     atk_scale: [2.89, 3.18, 3.47, 3.75, 4.04, 4.33, 4.62, 4.91, 5.2, 5.56, 5.99, 6.5],
     crush_multi: [1.1, 1.1, 1.1, 1.1, 1.1, 1.1, 1.1, 1.1, 1.15, 1.15, 1.15, 1.2],

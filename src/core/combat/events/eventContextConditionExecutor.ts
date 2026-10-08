@@ -61,6 +61,18 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
   }
 
   evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
+    if (condition.kind === 'skillDamageTypeIn') {
+      const eventSkill =
+        context?.event === undefined ? undefined : skillAbilityEvent(context.event);
+      const element =
+        eventSkill === undefined ? context?.executingSkillElement : eventSkill.payload.element;
+      if (
+        element === undefined &&
+        (eventSkill !== undefined || context?.skillCastInfo !== undefined)
+      )
+        throw new Error('skill element check is not supported for this skill');
+      return element !== undefined && condition.damageTypes.includes(element);
+    }
     const modifierContext = context?.modifierContext;
     const modifier = modifierContext?.kind === 'damage' ? modifierContext.input : undefined;
     if (modifier !== undefined) {

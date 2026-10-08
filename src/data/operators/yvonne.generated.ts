@@ -136,6 +136,7 @@ export const yvonneChr_0017_yvonne_attack1ActionGraph = {
 
 export const yvonneChr_0017_yvonne_attack1: SkillDefinition = {
   key: 'chr_0017_yvonne_attack1',
+  element: 'cryo',
   blackboard: {
     atb: 0,
     atk_scale: [0.24, 0.26, 0.28, 0.31, 0.33, 0.35, 0.38, 0.4, 0.42, 0.45, 0.49, 0.53],
@@ -403,6 +404,7 @@ export const yvonneChr_0017_yvonne_attack2ActionGraph = {
 
 export const yvonneChr_0017_yvonne_attack2: SkillDefinition = {
   key: 'chr_0017_yvonne_attack2',
+  element: 'cryo',
   blackboard: {
     atb: 0,
     atk_scale: [0.13, 0.14, 0.15, 0.16, 0.18, 0.19, 0.2, 0.21, 0.23, 0.24, 0.26, 0.28],
@@ -568,6 +570,7 @@ export const yvonneChr_0017_yvonne_attack3ActionGraph = {
 
 export const yvonneChr_0017_yvonne_attack3: SkillDefinition = {
   key: 'chr_0017_yvonne_attack3',
+  element: 'cryo',
   blackboard: {
     atb: 0,
     atk_scale: [0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.2, 0.22, 0.24],
@@ -728,6 +731,7 @@ export const yvonneChr_0017_yvonne_attack4ActionGraph = {
 
 export const yvonneChr_0017_yvonne_attack4: SkillDefinition = {
   key: 'chr_0017_yvonne_attack4',
+  element: 'cryo',
   blackboard: {
     atb: 0,
     atk_scale: [0.41, 0.45, 0.49, 0.53, 0.58, 0.62, 0.66, 0.7, 0.74, 0.79, 0.85, 0.92],
@@ -956,6 +960,7 @@ export const yvonneChr_0017_yvonne_attack5ActionGraph = {
 
 export const yvonneChr_0017_yvonne_attack5: SkillDefinition = {
   key: 'chr_0017_yvonne_attack5',
+  element: 'cryo',
   blackboard: {
     atb: 17,
     atk_scale: [0.56, 0.62, 0.67, 0.73, 0.79, 0.84, 0.9, 0.96, 1.01, 1.08, 1.17, 1.26],
@@ -1175,6 +1180,7 @@ export const yvonneChr_0017_yvonne_ult_attack1_1ActionGraph = {
 
 export const yvonneChr_0017_yvonne_ult_attack1_1: SkillDefinition = {
   key: 'chr_0017_yvonne_ult_attack1_1',
+  element: 'cryo',
   blackboard: {
     atk_scale: [0.089, 0.098, 0.107, 0.116, 0.125, 0.134, 0.143, 0.151, 0.16, 0.172, 0.185, 0.2],
     crit_rate_up: 0.06,
@@ -1634,6 +1640,7 @@ export const yvonneChr_0017_yvonne_ult_attack2_1ActionGraph = {
 
 export const yvonneChr_0017_yvonne_ult_attack2_1: SkillDefinition = {
   key: 'chr_0017_yvonne_ult_attack2_1',
+  element: 'cryo',
   blackboard: {
     atk_scale: [0.089, 0.098, 0.107, 0.116, 0.125, 0.134, 0.143, 0.151, 0.16, 0.172, 0.185, 0.2],
   },
@@ -1992,6 +1999,7 @@ export const yvonneChr_0017_yvonne_ult_attack2_2ActionGraph = {
 
 export const yvonneChr_0017_yvonne_ult_attack2_2: SkillDefinition = {
   key: 'chr_0017_yvonne_ult_attack2_2',
+  element: 'cryo',
   blackboard: {
     atk_scale: [0.089, 0.098, 0.107, 0.116, 0.125, 0.134, 0.143, 0.151, 0.16, 0.172, 0.185, 0.2],
   },
@@ -2569,6 +2577,7 @@ export const yvonneChr_0017_yvonne_ult_attack3_1ActionGraph = {
 
 export const yvonneChr_0017_yvonne_ult_attack3_1: SkillDefinition = {
   key: 'chr_0017_yvonne_ult_attack3_1',
+  element: 'cryo',
   blackboard: {
     atk_scale: [0.089, 0.098, 0.107, 0.116, 0.125, 0.134, 0.143, 0.151, 0.16, 0.172, 0.185, 0.2],
   },
@@ -3136,6 +3145,7 @@ export const yvonneChr_0017_yvonne_ult_attack3_2ActionGraph = {
 
 export const yvonneChr_0017_yvonne_ult_attack3_2: SkillDefinition = {
   key: 'chr_0017_yvonne_ult_attack3_2',
+  element: 'cryo',
   blackboard: {
     atk_scale: [0.089, 0.098, 0.107, 0.116, 0.125, 0.134, 0.143, 0.151, 0.16, 0.172, 0.185, 0.2],
   },
@@ -3664,6 +3674,7 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
 
 export const yvonneChr_0017_yvonne_ult_attack_end: SkillDefinition = {
   key: 'chr_0017_yvonne_ult_attack_end',
+  element: 'cryo',
   blackboard: {
     atk_scale: [1.33, 1.47, 1.6, 1.73, 1.86, 2, 2.13, 2.26, 2.4, 2.56, 2.76, 3],
     atk_scale_extra: [2.67, 2.94, 3.2, 3.47, 3.74, 4, 4.27, 4.54, 4.8, 5.14, 5.54, 6],
@@ -3919,6 +3930,7 @@ export const yvonneChr_0017_yvonne_power_attackActionGraph = {
 
 export const yvonneChr_0017_yvonne_power_attack: SkillDefinition = {
   key: 'chr_0017_yvonne_power_attack',
+  element: 'cryo',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
   timelineBlockFrames: 46,
   naturalDurationFrames: 135,
@@ -4085,6 +4097,7 @@ export const yvonneChr_0017_yvonne_plunging_attack_endActionGraph = {
 
 export const yvonneChr_0017_yvonne_plunging_attack_end: SkillDefinition = {
   key: 'chr_0017_yvonne_plunging_attack_end',
+  element: 'cryo',
   blackboard: {
     atb: 0,
     atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
@@ -4180,6 +4193,7 @@ export const yvonneChr_0017_yvonne_normal_skillActionGraph = {
 export const yvonneChr_0017_yvonne_normal_skill: SkillDefinition = {
   actionGraph: yvonneChr_0017_yvonne_normal_skillActionGraph,
   key: 'chr_0017_yvonne_normal_skill',
+  element: 'cryo',
   blackboard: {
     atb_return: 10,
     atk_scale: [1.11, 1.22, 1.33, 1.44, 1.55, 1.67, 1.78, 1.89, 2, 2.14, 2.3, 2.5],
@@ -4373,6 +4387,7 @@ export const yvonneChr_0017_yvonne_ultimate_skillActionGraph = {
 
 export const yvonneChr_0017_yvonne_ultimate_skill: SkillDefinition = {
   key: 'chr_0017_yvonne_ultimate_skill',
+  element: 'cryo',
   blackboard: {
     atk_scale_extra: [2.67, 2.94, 3.2, 3.47, 3.74, 4, 4.27, 4.54, 4.8, 5.14, 5.54, 6],
     atk_scale1: [0.089, 0.098, 0.107, 0.116, 0.125, 0.134, 0.143, 0.151, 0.16, 0.172, 0.185, 0.2],
@@ -4472,6 +4487,7 @@ export const yvonneChr_0017_yvonne_combo_skillActionGraph = {
 export const yvonneChr_0017_yvonne_combo_skill: SkillDefinition = {
   actionGraph: yvonneChr_0017_yvonne_combo_skillActionGraph,
   key: 'chr_0017_yvonne_combo_skill',
+  element: 'cryo',
   blackboard: {
     atk_scale_boom: [0.89, 0.98, 1.07, 1.16, 1.25, 1.34, 1.42, 1.51, 1.6, 1.71, 1.85, 2],
     atk_scale_tick: [0.45, 0.49, 0.54, 0.58, 0.62, 0.67, 0.71, 0.76, 0.8, 0.86, 0.93, 1],
