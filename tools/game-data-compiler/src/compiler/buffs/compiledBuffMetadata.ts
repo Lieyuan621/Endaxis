@@ -10,7 +10,3 @@ export interface CompiledBuffCapturedTargetGroupsSource {
   readonly enemyKeys: readonly string[];
   readonly zeroSpaceKeys: readonly string[];
 }
-
-export interface CompiledBuffCapturedTargetGroupsCarrier {
-  readonly [COMPILED_BUFF_CAPTURED_TARGET_GROUPS]?: CompiledBuffCapturedTargetGroupsSource;
-}

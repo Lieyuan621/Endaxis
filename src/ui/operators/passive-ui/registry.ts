@@ -1,11 +1,7 @@
 import type { Component } from 'vue';
 import type {
   OperatorPassiveUiAppearance,
-  OperatorPassiveUiDefinition,
   NumericPassiveUiDefinition,
-  LiinoPassiveUiDefinition,
-  TyphoeaPassiveUiDefinition,
-  AbilityEntityCountPassiveUiDefinition,
 } from '../../../../packages/game-data-contract/src/operators';
 import TangtangPassiveUi from './TangtangPassiveUi.vue';
 import LaevatainPassiveUi from './LaevatainPassiveUi.vue';
@@ -62,45 +58,3 @@ export const passiveUiSkins = {
     numeric: Appearance extends NumericPassiveUiDefinition['appearance'] ? true : false;
   };
 };
-
-export const numericPassiveUiAppearances = Object.fromEntries(
-  Object.entries(passiveUiSkins)
-    .filter(([, skin]) => skin.numeric)
-    .map(([key, skin]) => [key, skin.label]),
-);
-
-const defaults = {
-  numeric: { kind: 'numeric', appearance: 'tangtangDroplets', maximum: 1 },
-  buffProgress: {
-    kind: 'buffProgress',
-    appearance: 'liinoMusic',
-    normalBuffId: '',
-    ultimateBuffId: '',
-  },
-  buffCounters: {
-    kind: 'buffCounters',
-    appearance: 'typhoeaArrows',
-    reserveArrowBuffId: '',
-    battleArrowBuffId: '',
-    pointBuffId: '',
-    maximumArrows: 1,
-    maximumPoints: 1,
-  },
-  abilityEntityCount: {
-    kind: 'abilityEntityCount',
-    abilityEntityId: '',
-    icon: '',
-    nameKey: '',
-  },
-} satisfies {
-  numeric: NumericPassiveUiDefinition;
-  buffProgress: LiinoPassiveUiDefinition;
-  buffCounters: TyphoeaPassiveUiDefinition;
-  abilityEntityCount: AbilityEntityCountPassiveUiDefinition;
-};
-
-export function createPassiveUiDefinition(
-  kind: OperatorPassiveUiDefinition['kind'],
-): OperatorPassiveUiDefinition {
-  return { ...defaults[kind] };
-}

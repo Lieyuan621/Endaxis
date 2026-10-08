@@ -266,39 +266,6 @@ export function getOperatorCombatSkillFormKeys(
   return Object.keys(forms).filter(key => key.trim());
 }
 
-export function getOperatorSubSkillName(
-  slug: string,
-  subSkillKey: string,
-  locale?: string | null,
-  fallback?: string | null,
-) {
-  const semanticKey = `${subSkillKey} ${fallback ?? ''}`.replace(/[^a-z]/gi, '').toLowerCase();
-  const commonSkillTypeKey = semanticKey.includes('enhancedbasicattack')
-    ? 'enhancedAttack'
-    : semanticKey.includes('enhancedbattleskill')
-      ? 'enhancedSkill'
-      : semanticKey.includes('enhancedcomboskill')
-        ? 'enhancedLink'
-        : semanticKey.includes('enhancedultimate')
-          ? 'enhancedUltimate'
-          : null;
-  if (commonSkillTypeKey) {
-    const messages = i18n.global.getLocaleMessage(
-      normalizeLocale(locale ?? i18n.global.locale.value),
-    ) as LocaleTable;
-    const commonName = readTrimmedText(messages.skillType?.[commonSkillTypeKey]);
-    if (commonName) return commonName;
-  }
-  const entry = getOperatorEntry(slug, locale);
-  const table = entry?.subSkills;
-  const fallbackKey = readTrimmedText(fallback);
-  return (
-    readTrimmedText(table?.[subSkillKey]) ||
-    (fallbackKey ? readTrimmedText(table?.[fallbackKey]) : null) ||
-    humanizeIdentifier(fallbackKey || subSkillKey)
-  );
-}
-
 export function getWeaponGameName(slug: string, locale?: string | null) {
   const entry = getWeaponEntry(slug, locale);
   return readTrimmedText(entry?.name) || humanizeIdentifier(slug);
@@ -330,15 +297,6 @@ export function getWeaponSkillDescription(
   return formatIndexedDescription(description, getIndexedValues(entry?.[skillKey]?.values, level));
 }
 
-export function getWeaponSkillPrefix(
-  slug: string,
-  skillKey: 'skill1' | 'skill2' | 'skill3',
-  locale?: string | null,
-) {
-  const entry = getWeaponEntry(slug, locale);
-  return readTrimmedText(entry?.[skillKey]?.prefix);
-}
-
 export function getGearPieceGameName(slug: string, locale?: string | null) {
   const source = gameLocaleRegistry.getFamily(
     normalizeLocale(locale ?? i18n.global.locale.value),
@@ -359,11 +317,6 @@ export function getGearSetGameDescription(slug: string, locale?: string | null) 
   const entry = getGearSetEntry(slug, locale);
   if (!entry || typeof entry !== 'object') return null;
   return readTrimmedText(entry.description);
-}
-
-export function getGearSetZhName(slug: string) {
-  const entry = (gameLocaleRegistry.getFamily('zh-CN', 'gears').gearsets as LocaleTable)[slug];
-  return readTrimmedText(entry?.setName ?? entry?.name);
 }
 
 export function getEnemyGameName(slug: string, locale?: string | null) {

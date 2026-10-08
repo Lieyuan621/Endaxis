@@ -2,8 +2,7 @@ import { createEmptyScenario } from '../../../core/project/createProject';
 import { PROJECT_FPS, type TrackIndex } from '../../../core/project/schema';
 import { gameDataRepository } from '../../../data/gameDataRepository';
 
-/** 公开轴动作坐标摘录，不是存档迁移器。来源与未保留项见 public-share-regression-samples.md。 */
-export const LOW_STAR_SHARE_URL = 'https://www.end-axis.com/shares/6960d9afaf72c0e43d122dfb';
+/** 公开轴动作坐标摘录，不是存档迁移器。来源：https://www.end-axis.com/shares/6960d9afaf72c0e43d122dfb */
 const sourceFps = 60;
 const chen = [
   [302, 'basicAttack1'],

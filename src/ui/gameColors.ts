@@ -66,54 +66,6 @@ export const qualityColors: Record<string, string> = {
   gold: '#ffa726',
 };
 
-// ─── Enemy tiers (high → low; used for filters + list sort weight) ───────────
-
-export const ENEMY_TIERS = [
-  { labelKey: 'enemyTier.leader', value: 'leader', color: '#ff4d4f' },
-  { labelKey: 'enemyTier.boss', value: 'boss', color: '#ffd700' },
-  { labelKey: 'enemyTier.elite', value: 'elite', color: '#d8b4fe' },
-  { labelKey: 'enemyTier.advanced', value: 'advanced', color: '#52c41a' },
-  { labelKey: 'enemyTier.normal', value: 'normal', color: '#a0a0a0' },
-] as const;
-
-type EnemyTierValue = (typeof ENEMY_TIERS)[number]['value'];
-
-/** Higher number = higher tier. Derived from ENEMY_TIERS order. */
-export const ENEMY_TIER_WEIGHT: Record<EnemyTierValue, number> = Object.fromEntries(
-  ENEMY_TIERS.map((tier, index) => [tier.value, ENEMY_TIERS.length - index]),
-) as Record<EnemyTierValue, number>;
-
-// ─── Effect / status bar colors ─────────────────────────────────────────────
-// Used by simulation projection for effect status bars on the timeline.
-// Distinct from ELEMENT_COLORS which colors action bars.
-
-export const EFFECT_COLORS: Record<string, string> = {
-  // Inflictions
-  heat_infliction: '#ff4d4f',
-  electric_infliction: '#ffd700',
-  cryo_infliction: '#1890ff',
-  nature_infliction: '#52c41a',
-  // Bursts
-  heat_burst: '#ff4d4f',
-  electric_burst: '#ffd700',
-  cryo_burst: '#00e5ff',
-  nature_burst: '#52c41a',
-  // Reactions
-  combustion: '#f5222d',
-  electrification: '#ffec3d',
-  solidification: '#1890ff',
-  corrosion: '#52c41a',
-  shatter: '#bae7ff',
-  // Physical statuses
-  vulnerability: '#d9d9d9',
-  breach: '#d9d9d9',
-  crush: '#d9d9d9',
-  knockdown: '#d9d9d9',
-  lift: '#d9d9d9',
-};
-
-export const FALLBACK_EFFECT_COLOR = '#8c8c8c';
-
 // ─── Color utilities ────────────────────────────────────────────────────────
 
 /** Convert hex color to rgba string with given alpha. */

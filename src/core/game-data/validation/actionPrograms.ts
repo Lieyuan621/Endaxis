@@ -421,16 +421,6 @@ function validateAbilityEntityPassiveSkill(
   });
 }
 
-/** 校验实体局部子技能；宿主实体上下文始终可用，区别于独立干员动作序列。 */
-export function validateAbilityEntityChildSkillDefinition(
-  value: unknown,
-  path = '$',
-): SkillDefinitionValidationIssue[] {
-  const out: SkillDefinitionValidationIssue[] = [];
-  validateAbilityEntityChildSkill(value, path, out);
-  return out;
-}
-
 /** 严格验证可独立保存在干员层级的能力实体蓝图。 */
 export function validateAbilityEntityDefinition(
   value: unknown,

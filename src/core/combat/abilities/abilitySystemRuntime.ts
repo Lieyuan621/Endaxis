@@ -142,11 +142,6 @@ function nativeSkillInterruptPriority(skillType: NativeSkillType): number {
   }[skillType];
 }
 
-/** 按唯一身份调用技能启动的端口。 */
-export interface AbilitySkillStarter {
-  tryStartByKey(key: string): boolean;
-}
-
 export interface AbilitySystemRuntimeOptions {
   /** 真正进入施放时发布；待发布的数据保存在能力系统状态中。 */
   readonly emitBeforeSkillCast?: (

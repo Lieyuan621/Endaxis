@@ -1,6 +1,6 @@
 import { mountSetup } from '../../test/componentSetup';
 import { h } from 'vue';
-import { renderToString } from '@vue/server-renderer';
+import { renderToString } from 'vue/server-renderer';
 import { createSSRApp } from 'vue';
 import { expect, it } from 'vitest';
 import { i18n } from '../../i18n';

@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createSSRApp, h, type Component } from 'vue';
-import { renderToString } from '@vue/server-renderer';
+import { renderToString } from 'vue/server-renderer';
 import { ID_INJECTION_KEY, ZINDEX_INJECTION_KEY } from 'element-plus';
 import { i18n, setLocale } from '../../../i18n/index';
 import { gameDataRepository } from '../../../data/gameDataRepository';

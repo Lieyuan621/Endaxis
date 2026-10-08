@@ -228,15 +228,6 @@
   text-align: right;
 }
 
-html[data-theme='light'] .ea-glyph-icon {
-  filter: brightness(0) opacity(0.72);
-}
-
-html[data-theme='light'] .ea-glyph-icon.is-active,
-html[data-theme='light'] .is-active .ea-glyph-icon {
-  filter: brightness(0) opacity(0.92);
-}
-
 @media (hover: hover) and (pointer: fine) {
   .header-more-check-row:hover:not(:disabled) {
     background: var(--ea-hover-fill);
@@ -262,10 +253,6 @@ html[data-theme='light'] .is-active .ea-glyph-icon {
   .ea-range::-webkit-slider-thumb:hover {
     background: var(--ea-fg);
     transform: scale(1.25);
-  }
-
-  html[data-theme='light'] .ea-button:hover .ea-glyph-icon {
-    filter: brightness(0) opacity(0.92);
   }
 }
 

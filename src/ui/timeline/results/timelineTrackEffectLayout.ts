@@ -14,7 +14,6 @@ export interface TimelineTrackEffectLayout {
 }
 
 export const TIMELINE_TRACK_BASE_HEIGHT = 160;
-export const TIMELINE_ACTION_BASE_TOP = 55;
 export const TIMELINE_BUFF_LANE_PITCH = 22;
 export const TIMELINE_UPPER_BUFF_LANE_PITCH = 24;
 /** 旧版紧凑轨道允许压到 50px 技能区上下各留 8px。 */

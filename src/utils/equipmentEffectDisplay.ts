@@ -79,62 +79,6 @@ function getEquipmentElementPairId(elements: string[]): string {
   return '';
 }
 
-function sameEquipmentValue(a: unknown, b: unknown): boolean {
-  return JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
-}
-
-/**
- * Collapse paired element dmgBonus lines (heat+nature / cryo+electric) that share the
- * same value array into a single effect with `elements: [a, b]` for display.
- */
-export function mergeEquipmentElementPairEffects<T extends EquipmentEffectLike>(
-  effects: T[] | null | undefined,
-): T[] {
-  const list = Array.isArray(effects) ? effects : [];
-  const out: T[] = [];
-  const used = new Set<number>();
-
-  list.forEach((effect, index) => {
-    if (used.has(index)) return;
-
-    const stat = effect?.stat;
-    const element = typeof stat?.elements === 'string' ? stat.elements : '';
-    if (stat?.modifier !== 'dmgBonus' || !element) {
-      out.push(effect);
-      return;
-    }
-
-    const pairIndex = list.findIndex((candidate, candidateIndex) => {
-      if (candidateIndex <= index || used.has(candidateIndex)) return false;
-      const candidateStat = candidate?.stat;
-      if (candidateStat?.modifier !== 'dmgBonus') return false;
-      const candidateElement =
-        typeof candidateStat?.elements === 'string' ? candidateStat.elements : '';
-      if (!candidateElement) return false;
-      if (!sameEquipmentValue(effect.value, candidate.value)) return false;
-      return !!getEquipmentElementPairId([element, candidateElement]);
-    });
-
-    if (pairIndex < 0) {
-      out.push(effect);
-      return;
-    }
-
-    used.add(index);
-    used.add(pairIndex);
-    const pairedElement = list[pairIndex]!.stat!.elements as string;
-    out.push({
-      ...effect,
-      stat: {
-        ...stat,
-        elements: [element, pairedElement],
-      },
-    });
-  });
-
-  return out;
-}
-
 function isEquipmentArtsDmgElements(elements: string | string[] | null | undefined): boolean {
   const set = new Set(normalizeEquipmentStatArray(elements));
   return (
@@ -293,32 +237,9 @@ export function formatEquipmentEffectLabel(
   return getEquipmentModifierLabel(modifierId, t);
 }
 
-export function equipmentValueNeedsPercent(stat: EquipmentStatLike | null | undefined): boolean {
-  return [
-    'attributePercent',
-    'atkPercent',
-    'hpPercent',
-    'critRate',
-    'critDmg',
-    'dmgBonus',
-    'ultimateGainEfficiency',
-    'susceptibility',
-    'heal',
-    'protection',
-  ].includes(stat?.modifier ?? '');
-}
-
 export function formatEquipmentNumber(value: unknown): string {
   const num = Number(value);
   if (!Number.isFinite(num)) return String(value ?? '');
   if (Math.abs(num - Math.round(num)) < 0.0001) return String(Math.round(num));
   return num.toFixed(1).replace(/\.0$/, '');
-}
-
-export function formatEquipmentEffectStatValue(
-  effect: EquipmentEffectLike | null | undefined,
-  value: unknown,
-): string {
-  const suffix = equipmentValueNeedsPercent(effect?.stat) ? '%' : '';
-  return `${formatEquipmentNumber(value)}${suffix}`;
 }

@@ -15,7 +15,6 @@ import type {
   WeaponInstanceDocument,
   GearInstanceDocument,
   ExternalCombatEventDocument,
-  ExternalEventMarkerDocument,
   ExternalEventTargetDocument,
   DodgeMarkerDocument,
   SkillCastDocument,
@@ -948,25 +947,4 @@ export function addExternalEventMarker(
       externalEventMarkers: [...current, { id, frame, target, event }],
     },
   };
-}
-
-/** 更新外部事实本身；时间轴位置继续由专用移动命令维护。 */
-export function updateExternalEventMarker(
-  scenario: ScenarioDocument,
-  id: string,
-  patch: Partial<Pick<ExternalEventMarkerDocument, 'target' | 'event'>>,
-): ScenarioDocument {
-  const current = scenario.battle.externalEventMarkers ?? [];
-  const index = current.findIndex(item => item.id === id);
-  if (index < 0) return scenario;
-  const marker = current[index]!;
-  const target = patch.target ?? marker.target;
-  if (target.scope === 'operator' && scenario.tracks[target.trackIndex] === null) {
-    throw new Error(`track ${target.trackIndex} is empty`);
-  }
-  const updated = { ...marker, ...patch };
-  if (updated.target === marker.target && updated.event === marker.event) return scenario;
-  const externalEventMarkers = [...current];
-  externalEventMarkers[index] = updated;
-  return { ...scenario, battle: { ...scenario.battle, externalEventMarkers } };
 }

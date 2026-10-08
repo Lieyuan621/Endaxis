@@ -220,23 +220,6 @@ export function resolveActionValueOperand(
   return resolveActionOperand(operand, key => blackboard.getNumber(key));
 }
 
-/** 只拆分已明确记录的乘数，不用命中时的属性反推先前读取的值。 */
-export function resolveArtsIntensityFactor(
-  operand: CompiledValueInput | number,
-  blackboard: ActionBlackboard,
-): number | undefined {
-  const key = valueInputBlackboardKey(operand);
-  return key !== undefined ? blackboard.getArtsIntensityFactor(key) : undefined;
-}
-
-export function resolveArtsIntensityValue(
-  operand: CompiledValueInput | number,
-  blackboard: ActionBlackboard,
-): number | undefined {
-  const key = valueInputBlackboardKey(operand);
-  return key !== undefined ? blackboard.getArtsIntensityDetail(key)?.intensity : undefined;
-}
-
 /** 记录技能表基础值之后实际执行的乘除；不从运算结果反推基础值。 */
 export function combineSkillSettingFactors(
   operation: import('../state/foundationState').ActionValueCalculation['operation'],

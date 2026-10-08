@@ -6,7 +6,6 @@ import {
 import {
   requireInteger,
   requireNumber,
-  requireNonEmptyString,
   requireNonNegativeInteger,
   requireRecord,
 } from './primitives.ts';
@@ -41,16 +40,6 @@ export function parseSkillCastResourceMetadataSource(value: unknown, sourcePath:
     cooldownTime: requireNumber(castData.cooldownTime, `${sourcePath}.castData.cooldownTime`),
     maxChargeTime: requireInteger(castData.maxChargeTime, `${sourcePath}.castData.maxChargeTime`),
     costData: parseSkillCostSource(castData.costData, `${sourcePath}.castData.costData`),
-  };
-}
-
-export function parseSkillCastMetadataSource(value: unknown, sourcePath: string) {
-  const root = requireRecord(value, sourcePath);
-  return {
-    sourcePath,
-    skillId: requireNonEmptyString(root.skillId, `${sourcePath}.skillId`),
-    ...parseSkillCastResourceMetadataSource(value, sourcePath),
-    targetSelection: parseSkillTargetSelectionHeaderSource(value, sourcePath),
   };
 }
 

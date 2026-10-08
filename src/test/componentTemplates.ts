@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import * as Vue from 'vue';
-import { compileScript, compileTemplate, parse } from '@vue/compiler-sfc';
+import { compileScript, compileTemplate, parse } from 'vue/compiler-sfc';
 import { expect } from 'vitest';
 import ts from 'typescript';
 
