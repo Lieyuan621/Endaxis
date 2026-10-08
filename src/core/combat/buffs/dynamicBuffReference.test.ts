@@ -1,3 +1,4 @@
+import { numberInput, stringInput } from '../../../test/compiledGraphInputs';
 import { describe, expect, it, vi } from 'vitest';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { BuffOperationExecutor, type BuffApplicationRequest } from './buffOperationExecutor';
@@ -8,7 +9,7 @@ import { validateActionGraphActions } from '../../game-data/validation/actionPro
 const step = {
   kind: 'applyBuff',
   parameters: {
-    buffId: { blackboardKey: 'child' },
+    buffId: stringInput('child'),
     target: 'enemy',
   },
 } as const;
@@ -49,7 +50,7 @@ describe('动态 Buff 引用复用公共施加管线', () => {
         parameters: {
           ...step.parameters,
           count: { kind: 'constant', value: 2 },
-          blackboardAssignments: { rate: { kind: 'blackboard', key: 'rate' } },
+          blackboardAssignments: { rate: numberInput({ kind: 'blackboard', key: 'rate' }) },
         },
       },
       { blackboard },

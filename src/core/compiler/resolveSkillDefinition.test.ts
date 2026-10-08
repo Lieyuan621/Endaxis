@@ -23,11 +23,17 @@ const customSkill: SkillDefinition = skillFixture({
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   timelineBlockFrames: 60,
-  availability: { kind: 'combatActive' },
+  availability: { kind: 'conditionNode', nodeId: 'active' },
   costs: [{ resource: 'sp', value: [80, 90, 100, 110, 120, 125, 130, 135, 140, 145, 150, 155] }],
   costFrame: 0,
   scheduledSequences: [{ startFrame: 0, sequence: { $sequence: null } }],
-  actionGraph: { main: { nodes: {} }, macros: {} },
+  actionGraph: {
+    main: {
+      nodes: {},
+      dataNodes: { active: { type: 'boolean', expression: { kind: 'combatActive' } } },
+    },
+    macros: {},
+  },
 });
 
 const skillGroup: SkillGroupDefinition = {

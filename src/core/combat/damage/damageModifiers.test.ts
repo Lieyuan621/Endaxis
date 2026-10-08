@@ -1,3 +1,7 @@
+import { chainEntry } from '../../../test/compiledGraphEntry';
+import { CombatActionSequenceRuntime } from '../actions/combatActionSequenceRuntime';
+import { ActionBlackboard } from '../actions/actionBlackboard';
+import { createDamageModifierCondition } from './damageModifierSequenceRuntime';
 import { describe, expect, it, vi } from 'vitest';
 import { createActionBlackboardState } from '../state/foundationState';
 import { DamageModifier } from './damageModifiers';
@@ -64,11 +68,11 @@ describe('DamageModifier', () => {
     });
     const record = vi.fn();
     const context = createContext();
-    modifier.apply('beforeCalculation', 'attacker', context, undefined, record);
-    modifier.apply('afterCalculation', 'defender', context, undefined, record);
-    modifier.apply('afterCalculation', 'attacker', createContext('lifeDrain'), undefined, record);
+    modifier.apply('beforeCalculation', 'attacker', context, record);
+    modifier.apply('afterCalculation', 'defender', context, record);
+    modifier.apply('afterCalculation', 'attacker', createContext('lifeDrain'), record);
     expect(record).not.toHaveBeenCalled();
-    modifier.apply('afterCalculation', 'attacker', context, undefined, record);
+    modifier.apply('afterCalculation', 'attacker', context, record);
     expect(record).toHaveBeenCalledExactlyOnceWith('attacker', {
       kind: 'damageScale',
       zone: 'normal',
@@ -76,27 +80,6 @@ describe('DamageModifier', () => {
     });
     expect(context.damageScales.getFinalValue()).toBe(1.2);
   });
-  it('only applies a source-skill-cast modifier to damage from the captured cast', () => {
-    const modifier = new DamageModifier(
-      'operator',
-      {
-        enabledSide: 'attacker',
-        condition: { kind: 'sourceSkillCastMatch' },
-        processors: [{ kind: 'damageScale', side: 'attacker', zone: 'normal', addition: 0.6 }],
-      },
-      undefined,
-      42,
-    );
-    const matching = createContext('physical', () => undefined, 42);
-    const unrelated = createContext('physical', () => undefined, 43);
-
-    modifier.apply('afterCalculation', 'attacker', matching, () => true);
-    modifier.apply('afterCalculation', 'attacker', unrelated, () => true);
-
-    expect(matching.damageScales.getFinalValue()).toBeCloseTo(1.6);
-    expect(unrelated.damageScales.getFinalValue()).toBe(1);
-  });
-
   it('resolves a Buff value into a one-hit instant attribute modifier', () => {
     const addInstantAttributeModifier = vi.fn();
     const context = createContext('physical', addInstantAttributeModifier);
@@ -104,11 +87,6 @@ describe('DamageModifier', () => {
       'operator',
       {
         enabledSide: 'attacker',
-        condition: {
-          kind: 'eventDamageTagsMatch',
-          match: 'hasAll',
-          tags: ['ultimateSkill'],
-        },
         processors: [
           {
             kind: 'instantAttribute',
@@ -128,7 +106,7 @@ describe('DamageModifier', () => {
       },
     );
 
-    modifier.apply('beforeCalculation', 'attacker', context, () => true);
+    modifier.apply('beforeCalculation', 'attacker', context);
 
     expect(addInstantAttributeModifier).toHaveBeenCalledWith('attacker', {
       attribute: 'criticalDamageIncrease',
@@ -137,100 +115,41 @@ describe('DamageModifier', () => {
     });
   });
 
-  it('evaluates composite event conditions and Buff-instance blackboard comparisons', () => {
-    const context = createContext();
-    const evaluateCondition = vi.fn(() => true);
-    const modifier = new DamageModifier(
-      'operator',
-      {
-        enabledSide: 'attacker',
-        condition: {
-          kind: 'all',
-          conditions: [
-            { kind: 'casterControlled' },
-            {
-              kind: 'eventDamageTagsMatch',
-              match: 'hasAny',
-              tags: ['normalAttackLastCombo'],
-            },
-            {
-              kind: 'buffBlackboardCompare',
-              left: { blackboardKey: 'potential_1' },
-              operator: 'equal',
-              right: 1,
-            },
-          ],
-        },
-        processors: [{ kind: 'damageScale', side: 'attacker', zone: 'normal', addition: 0.25 }],
-      },
-      { buffId: 'test', blackboard: createActionBlackboardState({ potential_1: 1 }) },
-    );
-
-    modifier.apply('afterCalculation', 'attacker', context, evaluateCondition);
-
-    expect(evaluateCondition).toHaveBeenCalledTimes(2);
-    expect(context.damageScales.getFinalValue()).toBeCloseTo(1.25);
-  });
-
   it('checks side, owner and condition before running processors in declaration order', () => {
-    const condition = {
-      kind: 'entityTagMatch',
-      target: 'enemy',
-      tagQueryType: 'hasAny',
-      tags: ['Skill/Character/Common/Affixes/Slow'],
-    } as const;
-    const evaluateCondition = vi.fn(() => true);
-    const context = createContext();
-    const modifier = new DamageModifier('operator', {
-      enabledSide: 'attacker',
-      condition,
-      processors: [
-        {
-          kind: 'multiplyValue',
-          timing: 'beforeCalculation',
-          targetHealthTypes: ['normal'],
-          scale: 1.5,
-        },
-        { kind: 'damageScale', side: 'attacker', zone: 'product', addition: 0.2 },
-      ],
-    });
-
-    modifier.apply('beforeCalculation', 'defender', context, evaluateCondition);
-    modifier.apply('beforeCalculation', 'attacker', context, evaluateCondition);
-    context.setCalculationResult(100);
-    modifier.apply('afterCalculation', 'attacker', context, evaluateCondition);
-
-    expect(evaluateCondition).toHaveBeenCalledTimes(2);
-    expect(evaluateCondition).toHaveBeenLastCalledWith(condition, expect.any(Function));
-    expect(context.value).toBe(150);
-    expect(context.damageScales.getFinalValue()).toBeCloseTo(1.2);
-  });
-
-  it('passes target-health conditions and the owning Buff number resolver to the environment', () => {
-    const context = createContext();
-    const condition = {
-      kind: 'targetHealthCompare',
-      target: 'enemy',
-      valueType: 'ratio',
-      operator: 'less',
-      value: { blackboardKey: 'hp_remain' },
-    } as const;
-    const evaluateCondition = vi.fn(
-      (_condition, resolveNumber) => resolveNumber(condition.value) === 0.5,
+    const condition = createDamageModifierCondition(
+      chainEntry('modifier-order', []),
+      new CombatActionSequenceRuntime(
+        { execute: () => true, evaluate: () => true },
+        { blackboard: new ActionBlackboard() },
+      ),
     );
+    const evaluateCondition = vi.spyOn(condition, 'execute');
+    const context = createContext();
     const modifier = new DamageModifier(
       'operator',
       {
         enabledSide: 'attacker',
-        condition,
-        processors: [{ kind: 'damageScale', side: 'attacker', zone: 'normal', addition: 0.2 }],
+        processors: [
+          {
+            kind: 'multiplyValue',
+            timing: 'beforeCalculation',
+            targetHealthTypes: ['normal'],
+            scale: 1.5,
+          },
+          { kind: 'damageScale', side: 'attacker', zone: 'product', addition: 0.2 },
+        ],
       },
-      { buffId: 'test', blackboard: createActionBlackboardState({ hp_remain: 0.5 }) },
+      undefined,
+      condition,
     );
 
-    modifier.apply('afterCalculation', 'attacker', context, evaluateCondition);
+    modifier.apply('beforeCalculation', 'defender', context);
+    modifier.apply('beforeCalculation', 'attacker', context);
+    context.setCalculationResult(100);
+    modifier.apply('afterCalculation', 'attacker', context);
 
-    expect(evaluateCondition).toHaveBeenCalledWith(condition, expect.any(Function));
+    expect(evaluateCondition).toHaveBeenCalledTimes(2);
+    expect(context.value).toBe(150);
     expect(context.damageScales.getFinalValue()).toBeCloseTo(1.2);
   });
 

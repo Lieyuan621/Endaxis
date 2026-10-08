@@ -66,13 +66,7 @@ const definition = {
             conditional_2: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerablePhysic'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
@@ -99,8 +93,8 @@ const definition = {
                 parameters: {
                   key: 'phy_dmg_up_final',
                   operation: 'add',
-                  left: { kind: 'blackboard', key: 'phy_dmg_up2' },
-                  right: { kind: 'blackboard', key: 'phy_dmg_up_middle' },
+                  left: { kind: 'valueNode', nodeId: 'data_2' },
+                  right: { kind: 'valueNode', nodeId: 'data_3' },
                 },
               },
               next: 'applyBuff_3',
@@ -111,8 +105,8 @@ const definition = {
                 parameters: {
                   key: 'phy_dmg_up_middle',
                   operation: 'multiply',
-                  left: { kind: 'blackboard', key: 'atk_up_mult' },
-                  right: { kind: 'blackboard', key: 'count' },
+                  left: { kind: 'valueNode', nodeId: 'data_4' },
+                  right: { kind: 'valueNode', nodeId: 'data_5' },
                 },
               },
               next: 'calculateActionValue_4',
@@ -135,16 +129,7 @@ const definition = {
             conditional_7: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'buffStackCompare',
-                    target: 'actionInputTarget',
-                    tagQueryType: 'hasAny',
-                    buffTags: ['Skill/Character/Common/NoGuard'],
-                    operator: 'greaterOrEqual',
-                    value: { kind: 'constant', value: 1 },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
                 whenTrue: { $sequence: 'readBuffStackCount_6' },
               },
               next: null,
@@ -152,12 +137,42 @@ const definition = {
             conditional_8: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: { kind: 'eventPhysicalInflictionTypeIn', types: ['crush'] },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
                 whenTrue: { $sequence: 'conditional_7' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerablePhysic'],
+              },
+            },
+            data_2: { type: 'number', expression: { kind: 'blackboard', key: 'phy_dmg_up2' } },
+            data_3: {
+              type: 'number',
+              expression: { kind: 'blackboard', key: 'phy_dmg_up_middle' },
+            },
+            data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_up_mult' } },
+            data_5: { type: 'number', expression: { kind: 'blackboard', key: 'count' } },
+            data_6: {
+              type: 'boolean',
+              expression: {
+                kind: 'buffStackCompare',
+                target: 'actionInputTarget',
+                tagQueryType: 'hasAny',
+                buffTags: ['Skill/Character/Common/NoGuard'],
+                operator: 'greaterOrEqual',
+                value: { kind: 'constant', value: 1 },
+              },
+            },
+            data_7: {
+              type: 'boolean',
+              expression: { kind: 'eventPhysicalInflictionTypeIn', types: ['crush'] },
             },
           },
         },

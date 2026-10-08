@@ -40,7 +40,7 @@ const graph: ActionGraphDefinition = {
           target: 'caster',
           blackboardAssignments: {
             constant: [10, 20],
-            dynamic: { kind: 'blackboard', key: 'power' },
+            dynamic: { kind: 'valueNode', nodeId: 'test_data_1' },
           },
         },
       },
@@ -54,6 +54,8 @@ const graph: ActionGraphDefinition = {
       next: null,
     },
   },
+
+  dataNodes: { test_data_1: { type: 'number', expression: { kind: 'blackboard', key: 'power' } } },
 };
 
 describe('嵌套宿主直接图编译', () => {
@@ -257,9 +259,9 @@ describe('嵌套宿主直接图编译', () => {
     expectEntry(buff.scheduledSequences?.[0]?.sequence, buffGraph, 'hit');
     expectEntry(buff.abilityEventResponses?.[0]?.sequence, buffGraph, 'hit');
     expectEntry(buff.igniteEventResponses?.[0]?.sequence, buffGraph, 'hit');
-    expect(action.parameters.blackboardAssignments).toEqual({
+    expect(action.parameters.blackboardAssignments).toMatchObject({
       constant: { kind: 'constant', value: 20 },
-      dynamic: { kind: 'blackboard', key: 'power' },
+      dynamic: { kind: 'valueNode', node: { expression: { kind: 'blackboard', key: 'power' } } },
     });
     expect(result.nodes.size).toBe(3);
     expect(result.nodes.get('hit')!.action).toMatchObject({ parameters: { attackScale: 2 } });
@@ -361,12 +363,16 @@ it('按入口编译共享节点，不让无关技能的等级数组影响 Buff �
       buff: {
         action: {
           kind: 'dealStagger',
-          parameters: { value: { kind: 'blackboard', key: 'poise' } },
+          parameters: { value: { kind: 'valueNode', nodeId: 'test_data_1' } },
         },
         next: null,
       },
       skill: { action: { kind: 'dealStagger', parameters: { value: [1, 2] } }, next: 'buff' },
       other: { action: { kind: 'dealStagger', parameters: { value: 3 } }, next: 'buff' },
+    },
+
+    dataNodes: {
+      test_data_1: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
     },
   };
   const compilation = createActionGraphCompilation(source, 0);

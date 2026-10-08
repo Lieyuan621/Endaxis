@@ -1,8 +1,5 @@
 {
-  "ignoredRuntimeTemplateSourceFiles": [
-    "CharacterData/chr_0002_endminm.runtime-template.json",
-    "CharacterData/chr_0038_purrche.runtime-template.json"
-  ],
+  "ignoredRuntimeTemplateSourceFiles": ["CharacterData/chr_0002_endminm.runtime-template.json"],
   "simulationNoEffectBuffIds": [],
   "operators": [
     {

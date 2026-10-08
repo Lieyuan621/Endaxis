@@ -16,8 +16,9 @@ const compileGraphEntry = (
   revision: string,
   entry: string | null,
   nodes: Record<string, ActionGraphNode>,
+  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => ({
-  graph: createActionGraphCompilation({ nodes }, 1, revision).compileAll(),
+  graph: createActionGraphCompilation({ nodes, dataNodes }, 1, revision).compileAll(),
   entry,
   callSite: revision,
 });
@@ -25,6 +26,7 @@ const compileGraphEntry = (
 const chainEntry = (
   revision: string,
   actions: readonly ActionGraphStep[],
+  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => {
   const nodes: Record<string, ActionGraphNode> = {};
   actions.forEach((action, index) => {
@@ -33,7 +35,7 @@ const chainEntry = (
       next: index + 1 < actions.length ? `step-${index + 1}` : null,
     };
   });
-  return compileGraphEntry(revision, actions.length === 0 ? null : 'step-0', nodes);
+  return compileGraphEntry(revision, actions.length === 0 ? null : 'step-0', nodes, dataNodes);
 };
 
 function program(sequence: ResolvedActionSequence): CompiledSkillProgram {
@@ -333,26 +335,36 @@ describe('standardPlayerDamageCompatibility', () => {
     const issues = inspectStandardPlayerDamageCompatibility(
       compatibilityInput(
         operator(
-          compileGraphEntry('compat-buff-blackboard-compare', 'branch', {
-            branch: {
-              action: {
-                kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'buffBlackboardValueCompare',
-                    target: 'caster',
-                    query: { kind: 'id', buffIds: ['buff:test'] },
-                    desiredKey: 'enabled',
-                    outputKey: 'enabled',
-                    operator: 'greater',
-                    value: { kind: 'constant', value: 0 },
+          compileGraphEntry(
+            'compat-buff-blackboard-compare',
+            'branch',
+            {
+              branch: {
+                action: {
+                  kind: 'conditional',
+                  parameters: {
+                    condition: { kind: 'conditionNode', nodeId: 'input_1' },
                   },
+                  whenTrue: { $sequence: null },
                 },
-                whenTrue: { $sequence: null },
+                next: null,
               },
-              next: null,
             },
-          }),
+            {
+              input_1: {
+                type: 'boolean',
+                expression: {
+                  kind: 'buffBlackboardValueCompare',
+                  target: 'caster',
+                  query: { kind: 'id', buffIds: ['buff:test'] },
+                  desiredKey: 'enabled',
+                  outputKey: 'enabled',
+                  operator: 'greater',
+                  value: { kind: 'constant', value: 0 },
+                },
+              },
+            },
+          ),
         ),
       ),
     );
@@ -389,25 +401,35 @@ describe('standardPlayerDamageCompatibility', () => {
         tags: [],
       },
     };
-    const sequence: ResolvedActionSequence = compileGraphEntry('compat-heal-check', 'step-0', {
-      'step-0': { action: healStep, next: 'step-1' },
-      'step-1': {
-        action: {
-          kind: 'conditional',
-          parameters: {
-            condition: {
-              kind: 'healthCompare',
-              target: 'buffSource',
-              valueType: 'ratio',
-              operator: 'less',
-              value: { kind: 'constant', value: 1 },
+    const sequence: ResolvedActionSequence = compileGraphEntry(
+      'compat-heal-check',
+      'step-0',
+      {
+        'step-0': { action: healStep, next: 'step-1' },
+        'step-1': {
+          action: {
+            kind: 'conditional',
+            parameters: {
+              condition: { kind: 'conditionNode', nodeId: 'input_1' },
             },
+            whenTrue: { $sequence: null },
           },
-          whenTrue: { $sequence: null },
+          next: null,
         },
-        next: null,
       },
-    });
+      {
+        input_1: {
+          type: 'boolean',
+          expression: {
+            kind: 'healthCompare',
+            target: 'buffSource',
+            valueType: 'ratio',
+            operator: 'less',
+            value: { kind: 'constant', value: 1 },
+          },
+        },
+      },
+    );
 
     expect(
       inspectStandardPlayerDamageCompatibility(compatibilityInput(operator(sequence, 0, true))),
@@ -449,80 +471,99 @@ describe('standardPlayerDamageCompatibility', () => {
     const issues = inspectStandardPlayerDamageCompatibility(
       compatibilityInput(
         operator(
-          compileGraphEntry('compat-nested-report', 'branch', {
-            branch: {
-              action: {
-                kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'all',
-                    conditions: [
-                      { kind: 'combatActive' },
-                      {
-                        kind: 'not',
-                        condition: { kind: 'skillBranchEnabled', branchKey: 'unsupported' },
-                      },
-                    ],
+          compileGraphEntry(
+            'compat-nested-report',
+            'branch',
+            {
+              branch: {
+                action: {
+                  kind: 'conditional',
+                  parameters: {
+                    condition: { kind: 'conditionNode', nodeId: 'input_4' },
                   },
+                  whenTrue: { $sequence: null },
+                  whenFalse: { $sequence: 'nested-once' },
                 },
-                whenTrue: { $sequence: null },
-                whenFalse: { $sequence: 'nested-once' },
+                next: null,
               },
-              next: null,
-            },
-            'nested-once': {
-              action: {
-                kind: 'once',
-                parameters: { scopeKey: 'nested' },
-                body: { $sequence: 'nested-infliction' },
+              'nested-once': {
+                action: {
+                  kind: 'once',
+                  parameters: { scopeKey: 'nested' },
+                  body: { $sequence: 'nested-infliction' },
+                },
+                next: null,
               },
-              next: null,
-            },
-            'nested-infliction': {
-              action: {
-                kind: 'applyPhysicalInfliction',
-                parameters: {
-                  type: 'fracture',
-                  target: 'enemy',
-                  isExtra: false,
-                  noGuardBuffId: 'buff:inline',
-                  noGuardDefinition: {
-                    stackingType: 'stack',
-                    priority: 0,
-                    maxStackCount: 1,
-                    lifecycleSequences: {
-                      enable: { $sequence: 'nested-unsupported-operation' },
-                    },
-                    actionGraph: {
-                      main: {
-                        nodes: {
-                          'nested-unsupported-operation': {
-                            action: {
-                              kind: 'setContextFlag',
-                              parameters: {
-                                flag: 'unsupported-nested-operation',
-                                value: true,
-                                target: 'caster',
+              'nested-infliction': {
+                action: {
+                  kind: 'applyPhysicalInfliction',
+                  parameters: {
+                    type: 'fracture',
+                    target: 'enemy',
+                    isExtra: false,
+                    noGuardBuffId: 'buff:inline',
+                    noGuardDefinition: {
+                      stackingType: 'stack',
+                      priority: 0,
+                      maxStackCount: 1,
+                      lifecycleSequences: {
+                        enable: { $sequence: 'nested-unsupported-operation' },
+                      },
+                      actionGraph: {
+                        main: {
+                          nodes: {
+                            'nested-unsupported-operation': {
+                              action: {
+                                kind: 'setContextFlag',
+                                parameters: {
+                                  flag: 'unsupported-nested-operation',
+                                  value: true,
+                                  target: 'caster',
+                                },
                               },
+                              next: null,
                             },
-                            next: null,
                           },
                         },
+                        macros: {},
                       },
-                      macros: {},
+                    },
+                    fractureBuffId: 'buff:fracture',
+                    fractureDefinition: {
+                      stackingType: 'stack',
+                      priority: 0,
+                      maxStackCount: 1,
                     },
                   },
-                  fractureBuffId: 'buff:fracture',
-                  fractureDefinition: {
-                    stackingType: 'stack',
-                    priority: 0,
-                    maxStackCount: 1,
-                  },
+                },
+                next: null,
+              },
+            },
+            {
+              input_1: { type: 'boolean', expression: { kind: 'combatActive' } },
+              input_2: {
+                type: 'boolean',
+                expression: { kind: 'skillBranchEnabled', branchKey: 'unsupported' },
+              },
+              input_3: {
+                type: 'boolean',
+                expression: {
+                  kind: 'not',
+                  condition: { kind: 'conditionNode', nodeId: 'input_2' },
                 },
               },
-              next: null,
+              input_4: {
+                type: 'boolean',
+                expression: {
+                  kind: 'all',
+                  conditions: [
+                    { kind: 'conditionNode', nodeId: 'input_1' },
+                    { kind: 'conditionNode', nodeId: 'input_3' },
+                  ],
+                },
+              },
             },
-          }),
+          ),
         ),
       ),
     );

@@ -496,6 +496,17 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
+      data_38: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffStackCompare',
+          target: 'caster',
+          tagQueryType: 'hasAny',
+          buffTags: ['Skill/Character/chr_0035_liino/UltSkillMusic'],
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+        },
+      },
     },
   },
   macros: {},
@@ -558,14 +569,7 @@ export const liinoChr_0035_liino_combo_skill: SkillDefinition = {
   ],
   smartTarget: 'enemy',
   switchToBuffCast: {
-    condition: {
-      kind: 'buffStackCompare',
-      target: 'caster',
-      tagQueryType: 'hasAny',
-      buffTags: ['Skill/Character/chr_0035_liino/UltSkillMusic'],
-      operator: 'greaterOrEqual',
-      value: { kind: 'constant', value: 1 },
-    },
+    condition: { kind: 'conditionNode', nodeId: 'data_38' },
     asSkillCast: true,
     sequence: { $sequence: 'applyBuff_1' },
   },

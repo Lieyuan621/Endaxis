@@ -1,5 +1,5 @@
 import type { OperatorPassiveUiDefinition } from '../../../../../packages/game-data-contract/src/operators.ts';
-import type { OperatorDefinition } from '../../../../../packages/game-data-contract/src/operators.ts';
+import type { OperatorDefinition } from '../../compiler/intermediateDefinitions.ts';
 import {
   compileOperatorPassiveUiPrefabComponent,
   type OperatorPassiveUiPrefabComponentEvidence,

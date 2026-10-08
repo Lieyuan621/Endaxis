@@ -466,22 +466,28 @@ export {
 } from './domains/equipment/suitRuntimeDefinition.ts';
 export {
   buffRuntimeReadsBlackboardKey,
-  collectBuffRuntimeClosure,
   compileBuffRuntimeDefinitionSource,
   compileCombatActionSequenceSource,
   compileCombatConditionSequenceSource,
   isAfterEnemyDefeatedOnlyBuffRuntime,
   isPresentationOnlyBuffStackEffect,
+} from './compiler/buffs/buffRuntimeProjection.ts';
+export { collectBuffRuntimeClosure } from './compiler/buffs/buffReferenceClosure.ts';
+export {
   type CompiledBuffAttributeModifierSource,
-  type CompiledBuffConditionSource,
   type CompiledBuffDefinitionSource,
   type CompiledBuffNumberSource,
   type CompiledBuffPresentationSource,
+} from './compiler/buffs/buffProjectionTypes.ts';
+export {
+  type CompiledBuffConditionSource,
   type CompiledBuffSequenceSource,
   type CompiledBuffStepSource,
+} from './compiler/actions/combatActionProjectionTypes.ts';
+export {
   type CombatActionProjectionContextSource,
   type CombatActionProjectionExtensionsSource,
-} from './compiler/buffs/buffRuntimeProjection.ts';
+} from './compiler/combatProjectionCommon.ts';
 export {
   evaluateStandardStumpFullHealthComparison,
   standardStumpBuffAbilityEventOmissionReason,

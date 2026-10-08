@@ -1,4 +1,5 @@
-import type { CombatCondition } from '../../game-data/operatorDefinition';
+import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
+
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
 import { abilityEventSourceId, abilityEventTargetId } from '../events/combatAbilityEvent';
 import { runtimeTargetFromEntityId } from '../../game-data/logicalAbilityEntity';
@@ -168,7 +169,7 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
     this.delegate.end?.(step, context);
   }
 
-  evaluate(condition: CombatCondition, context?: CombatOperationContext): boolean {
+  evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     if (condition.kind === 'contextTargetObjectTypeMatch') {
       if (context?.targetContext === undefined)
         throw new Error('object type check requires a combat target context');

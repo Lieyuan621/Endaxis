@@ -1,3 +1,7 @@
+import {
+  extractGraphDataNodes,
+  extractResourceDataNodes,
+} from '../../src/compiler/extractGraphDataNodes.ts';
 /** 测试侧共享：把图构建器的产物编译成可执行入口；不展开、不还原树。 */
 import { createActionGraphCompilation } from '../../../../src/core/compiler/compileActionGraph.ts';
 import type { CompiledGraphEntry } from '../../../../src/core/compiler/combatProgram.ts';
@@ -6,7 +10,7 @@ import type {
   ActionGraphReference,
   ActionGraphResourceDefinition,
   ActionGraphStep,
-} from '../../../../packages/game-data-contract/src/actionGraph.ts';
+} from '../../src/compiler/intermediateDefinitions.ts';
 
 export function compileGraphSequence(
   entry: ActionGraphReference,
@@ -14,7 +18,11 @@ export function compileGraphSequence(
   skillLevel = 1,
   revision = 'test-support',
 ): CompiledGraphEntry {
-  const compilation = createActionGraphCompilation(graph, skillLevel, revision);
+  const compilation = createActionGraphCompilation(
+    'main' in graph ? extractResourceDataNodes(graph) : extractGraphDataNodes(graph),
+    skillLevel,
+    revision,
+  );
   const compiled = compilation.compileEntry(entry, revision);
   compilation.compileAll();
   return compiled;
@@ -37,7 +45,7 @@ export function compileFlatSteps<Action extends ActionGraphStep>(
   });
   return compileGraphSequence(
     { $sequence: steps.length === 0 ? null : `${prefix}0` },
-    { nodes },
+    { nodes, dataNodes: base?.dataNodes },
     1,
     revision,
   );

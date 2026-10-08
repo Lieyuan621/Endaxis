@@ -21,8 +21,9 @@ const compileGraphEntry = (
   revision: string,
   entry: string | null,
   nodes: ActionGraphDefinition['nodes'],
+  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => ({
-  graph: createActionGraphCompilation({ nodes }, 1, revision).compileAll(),
+  graph: createActionGraphCompilation({ nodes, dataNodes }, 1, revision).compileAll(),
   entry,
   callSite: revision,
 });
@@ -144,22 +145,32 @@ function elementConditionSequence(mask: number, savedKey = ''): ResolvedActionSe
   const elements = (['heat', 'electric', 'cryo', 'nature'] as const).filter(
     (_, index) => (mask & (1 << index)) !== 0,
   );
-  return compileGraphEntry(`combo-element-${mask}-${savedKey}`, 'guard', {
-    guard: {
-      action: {
-        kind: 'conditional',
-        parameters: {
-          condition: {
-            kind: 'eventInflictionElementIn',
-            elements,
-            ...(savedKey === '' ? {} : { outputKey: savedKey }),
+  return compileGraphEntry(
+    `combo-element-${mask}-${savedKey}`,
+    'guard',
+    {
+      guard: {
+        action: {
+          kind: 'conditional',
+          parameters: {
+            condition: { kind: 'conditionNode', nodeId: 'input_1' },
           },
+          whenTrue: { $sequence: null },
         },
-        whenTrue: { $sequence: null },
+        next: null,
       },
-      next: null,
     },
-  });
+    {
+      input_1: {
+        type: 'boolean',
+        expression: {
+          kind: 'eventInflictionElementIn',
+          elements,
+          ...(savedKey === '' ? {} : { outputKey: savedKey }),
+        },
+      },
+    },
+  );
 }
 
 describe('原生连携条件注册环境', () => {
@@ -216,36 +227,50 @@ describe('原生连携条件注册环境', () => {
       options({
         event: 'beforeOutputDamage',
         operations: targetOperations,
-        sequence: compileGraphEntry('combo-output-damage-targets', 'outer', {
-          outer: {
-            action: {
-              kind: 'conditional',
-              parameters: {
-                condition: {
-                  kind: 'actionInputTargetObjectTypeMatch',
-                  objectTypes: ['enemy'],
+        sequence: compileGraphEntry(
+          'combo-output-damage-targets',
+          'outer',
+          {
+            outer: {
+              action: {
+                kind: 'conditional',
+                parameters: {
+                  condition: { kind: 'conditionNode', nodeId: 'input_1' },
                 },
+                whenTrue: { $sequence: 'inner' },
               },
-              whenTrue: { $sequence: 'inner' },
+              next: null,
             },
-            next: null,
-          },
-          inner: {
-            action: {
-              kind: 'conditional',
-              parameters: {
-                condition: {
-                  kind: 'contextTargetIdentityMatch',
-                  contextKey: 'trigger',
-                  other: 'controlledOperator',
-                  operator: 'equal',
+            inner: {
+              action: {
+                kind: 'conditional',
+                parameters: {
+                  condition: { kind: 'conditionNode', nodeId: 'input_2' },
                 },
+                whenTrue: { $sequence: null },
               },
-              whenTrue: { $sequence: null },
+              next: null,
             },
-            next: null,
           },
-        }),
+          {
+            input_1: {
+              type: 'boolean',
+              expression: {
+                kind: 'actionInputTargetObjectTypeMatch',
+                objectTypes: ['enemy'],
+              },
+            },
+            input_2: {
+              type: 'boolean',
+              expression: {
+                kind: 'contextTargetIdentityMatch',
+                contextKey: 'trigger',
+                other: 'controlledOperator',
+                operator: 'equal',
+              },
+            },
+          },
+        ),
         onPending: pending,
       }),
     );
@@ -315,22 +340,32 @@ describe('原生连携条件注册环境', () => {
     runtime.registerPendingCondition(
       options({
         event: 'afterTakePhysicalInfliction',
-        sequence: compileGraphEntry('combo-physical-infliction', 'guard', {
-          guard: {
-            action: {
-              kind: 'conditional',
-              parameters: {
-                condition: {
-                  kind: 'eventPhysicalInflictionTypeIn',
-                  types: ['knockDown'],
-                  outputKey: 'physicalType',
+        sequence: compileGraphEntry(
+          'combo-physical-infliction',
+          'guard',
+          {
+            guard: {
+              action: {
+                kind: 'conditional',
+                parameters: {
+                  condition: { kind: 'conditionNode', nodeId: 'input_1' },
                 },
+                whenTrue: { $sequence: null },
               },
-              whenTrue: { $sequence: null },
+              next: null,
             },
-            next: null,
           },
-        }),
+          {
+            input_1: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventPhysicalInflictionTypeIn',
+                types: ['knockDown'],
+                outputKey: 'physicalType',
+              },
+            },
+          },
+        ),
         initialValues: { physicalType: -1 },
         onPending: pending,
       }),
@@ -373,16 +408,21 @@ describe('原生连携条件注册环境', () => {
     runtime.registerPendingCondition(
       options({
         event: event.event,
-        sequence: compileGraphEntry(`combo-condition-${condition.kind}`, 'guard', {
-          guard: {
-            action: {
-              kind: 'conditional',
-              parameters: { condition },
-              whenTrue: { $sequence: null },
+        sequence: compileGraphEntry(
+          `combo-condition-${condition.kind}`,
+          'guard',
+          {
+            guard: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'guard' } },
+                whenTrue: { $sequence: null },
+              },
+              next: null,
             },
-            next: null,
           },
-        }),
+          { guard: { type: 'boolean', expression: condition } },
+        ),
         onPending: pending,
       }),
     );

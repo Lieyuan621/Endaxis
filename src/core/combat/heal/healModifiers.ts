@@ -1,3 +1,7 @@
+/** 单次治疗计算包，以及 Buff 实例持有的治疗修正器。 */
+import type { ModifierConditionRuntime } from '../actions/modifierConditionRuntime';
+import { resolveBuffModifierNumber } from '../buffs/buffModifierNumberSource';
+import { applyHealModifier } from './healModifierExecution';
 import type { GameplayTag } from '../../../../packages/game-data-contract/src/gameplayTags';
 import {
   type HealModifierDefinition,
@@ -5,17 +9,7 @@ import {
 } from '../../../../packages/game-data-contract/src/modifiers.ts';
 import type { CombatVitals } from '../resources/combatVitals';
 import type { BuffModifierNumberSource } from '../state/foundationState';
-import { type HealModifier } from '../state/foundationState';
-// 纯数据契约由独立包唯一声明；此路径保留兼容导出。
-export {
-  type HealModifierCondition,
-  type HealModifierDefinition,
-  type HealModifierNumber,
-  type HealModifierSide,
-  type HealProcessTiming,
-  type ModifyHealCalculationResultProcessorDefinition,
-  type ModifyHealingIncreaseProcessorDefinition,
-} from '../../../../packages/game-data-contract/src/modifiers.ts';
+import { type HealModifier as HealModifierState } from '../state/foundationState';
 
 export class HealCalculationContext {
   constructor(
@@ -33,10 +27,44 @@ export class HealCalculationContext {
   }
 }
 
-export function createHealModifier(
-  ownerId: string,
-  definition: HealModifierDefinition,
-  numberSource: BuffModifierNumberSource,
-): HealModifier {
-  return { ownerId, definition, numberSource };
+/** 本次治疗计算的只读条件输入；不保存可变结算包。 */
+export interface HealModifierConditionInput {
+  readonly side: HealModifierSide;
+  readonly healerId: string;
+  readonly receiverId: string;
+  readonly tags: readonly GameplayTag[];
+}
+export class HealModifier {
+  readonly runtimeState: HealModifierState;
+  constructor(
+    readonly ownerId: string,
+    readonly definition: Omit<HealModifierDefinition, 'condition'>,
+    readonly numberSource: BuffModifierNumberSource,
+    readonly condition?: ModifierConditionRuntime<HealModifierConditionInput>,
+    restoredState?: HealModifierState,
+  ) {
+    this.runtimeState = restoredState ?? {
+      ownerId,
+      definition: { enabledSide: definition.enabledSide, processors: definition.processors },
+      numberSource,
+      condition: condition?.runtimeState ?? null,
+    };
+    if (restoredState && restoredState.condition !== (condition?.runtimeState ?? null))
+      throw new Error('restored heal modifier condition is not bound to its saved state');
+  }
+  apply(
+    timing: import('../../../../packages/game-data-contract/src/modifiers').HealProcessTiming,
+    side: HealModifierSide,
+    context: HealCalculationContext,
+  ): void {
+    applyHealModifier(
+      this.ownerId,
+      this.definition,
+      value => resolveBuffModifierNumber(this.numberSource, value, 'heal'),
+      timing,
+      side,
+      context,
+      this.condition,
+    );
+  }
 }

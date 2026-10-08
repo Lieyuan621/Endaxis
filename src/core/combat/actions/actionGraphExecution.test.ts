@@ -5,7 +5,7 @@ import type {
   ActionGraphResourceDefinition,
 } from '../../../../packages/game-data-contract/src/actionGraph';
 import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
-import { ActionBlackboard } from './actionBlackboard';
+import { ActionBlackboard, resolveActionValueOperand } from './actionBlackboard';
 import { CombatActionSequenceRuntime } from './combatActionSequenceRuntime';
 import type { CombatOperationExecutor } from '../skills/skillRuntime';
 import { AbilitySystemRuntime } from '../abilities/abilitySystemRuntime';
@@ -538,7 +538,7 @@ describe('直接图执行', () => {
         repeat: {
           action: {
             kind: 'repeatByActionValue',
-            parameters: { count: { kind: 'blackboard', key: 'count' } },
+            parameters: { count: { kind: 'valueNode', nodeId: 'test_data_1' } },
             body: { $sequence: 'add' },
           },
           next: null,
@@ -550,6 +550,10 @@ describe('直接图执行', () => {
           },
           next: null,
         },
+      },
+
+      dataNodes: {
+        test_data_1: { type: 'number', expression: { kind: 'blackboard', key: 'count' } },
       },
     };
     const board = new ActionBlackboard({ count: 3 });
@@ -1208,4 +1212,95 @@ describe('直接图执行', () => {
     const runtime = fixture().runtime;
     expect(runtime.createGraphSequence(program, 'spawn', 'root').tryExecute({})).toBe(true);
   });
+});
+
+it('宏参数绑定保留独立子技能的可执行图，子技能仍能单独执行', () => {
+  const resource: ActionGraphResourceDefinition = {
+    main: {
+      nodes: {
+        call: {
+          action: {
+            kind: 'callMacro',
+            macroId: 'spawn',
+            arguments: { duration: { kind: 'constant', value: 3 } },
+          },
+          next: null,
+        },
+      },
+    },
+    macros: {
+      spawn: {
+        parameters: ['duration'],
+        entry: { $sequence: 'spawn' },
+        graph: {
+          dataNodes: {
+            duration: { type: 'number', expression: { kind: 'parameter', parameter: 'duration' } },
+          },
+          nodes: {
+            spawn: {
+              next: null,
+              action: {
+                kind: 'spawnAbilityEntity',
+                parameters: {
+                  abilityEntityId: 'child',
+                  dieWhenSourceDies: false,
+                  overrideDurationSeconds: { kind: 'valueNode', nodeId: 'duration' },
+                  definition: {
+                    lifetime: { kind: 'infinite' },
+                    childSkill: {
+                      skillId: 'child',
+                      nativeSkillType: 'normalSkill',
+                      naturalDurationFrames: 10,
+                      castResource: {
+                        costFrame: 0,
+                        cooldownSeconds: 0,
+                        maxChargeTime: 1,
+                        cost: { resource: 'sp', value: 0, availabilityThreshold: 0 },
+                      },
+                      scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'flag' } }],
+                      actionGraph: {
+                        main: {
+                          nodes: {
+                            flag: {
+                              next: null,
+                              action: {
+                                kind: 'setContextFlag',
+                                parameters: {
+                                  flag: 'child-executed',
+                                  value: true,
+                                  target: 'caster',
+                                },
+                              },
+                            },
+                          },
+                        },
+                        macros: {},
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  };
+  const flags: string[] = [];
+  const host = fixture((step, context) => {
+    if (step.kind === 'spawnAbilityEntity') {
+      expect(
+        resolveActionValueOperand(step.parameters.overrideDurationSeconds!, context!.blackboard),
+      ).toBe(3);
+      const entry = step.parameters.definition!.childSkill!.timelineActions[0]!.sequence;
+      host.runtime.createSequence(entry).executeInstant({});
+    } else if (step.kind === 'setContextFlag') flags.push(step.parameters.flag);
+    return true;
+  });
+  const compiled = createActionGraphCompilation(resource, 1).compileEntry(
+    { $sequence: 'call' },
+    'call',
+  );
+  host.runtime.createSequence(compiled).executeInstant({});
+  expect(flags).toEqual(['child-executed']);
 });

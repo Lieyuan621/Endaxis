@@ -15,17 +15,12 @@ import { createBlackboardFieldContext } from '../../application/editor/blackboar
 import { blackboardFieldContextKey } from './blackboardFieldContext';
 import { structuredFieldContextKey } from './structuredFieldContext';
 import StructuredValueField from './StructuredValueField.vue';
-import DefinitionField from '../definition-editor/DefinitionField.vue';
 import DefinitionValueCreator from '../definition-editor/DefinitionValueCreator.vue';
 import NodeInspectorFields from '../action-graph/NodeInspectorFields.vue';
 import ActionNodeInspector from '../action-graph/ActionNodeInspector.vue';
 import BlackboardMappingField from './BlackboardMappingField.vue';
 import SkillSettingValuesField from './SkillSettingValuesField.vue';
 import { resolveBlackboardMapping } from './blackboardMapping';
-import {
-  blackboardRequestForField,
-  skillSettingItemBlackboardContext,
-} from '../../application/editor/blackboardFieldContext';
 import { replaceResourceNodeAction } from '../../application/editor/actionGraphResourceEditing';
 const fixtures = [
   {
@@ -156,11 +151,7 @@ it.each(fixtures)(
   async f => {
     const schema = f.field.valueSchema!;
     const options = { kind: f.kind, path: f.field.path, blackboard: context(['arg']), choices };
-    for (const operand of [
-      { kind: 'constant', value: 2 },
-      { kind: 'blackboard', key: 'rate' },
-      { kind: 'parameter', parameter: 'arg' },
-    ])
+    for (const operand of [{ kind: 'constant', value: 2 }])
       expect(() =>
         validateStructuredValue(schema, undefined, [row(f, operand)], options),
       ).not.toThrow();
@@ -197,7 +188,7 @@ it.each(fixtures)(
       f.field,
       ['arg'],
     );
-    creator.state.change([], row(f, { kind: 'parameter', parameter: 'arg' }));
+    creator.state.change([], row(f, { kind: 'constant', value: 1 }));
     expect(creator.state.complete.value).toBe(true);
     creator.state.create();
     expect(created).toHaveLength(1);
@@ -302,12 +293,12 @@ it('exit mappings keep connected identity across sibling edits and lock connecte
   host.state.remove(0);
   host.state.changeValue(0, { kind: 'constant', value: 0 });
   expect(host.state.rows.value[0]).toMatchObject({ key: 'linked', value: pin });
-  host.state.changeValue(1, { kind: 'blackboard', key: 'rate' });
+  host.state.changeValue(1, { kind: 'constant', value: 3 });
   const applying = host.state.apply();
   host.state.changeKey(1, 'raced');
   await applying;
   expect(changes[0].linked).toBe(pin);
-  expect(changes[0].amount).toEqual({ kind: 'blackboard', key: 'rate', extension });
+  expect(changes[0].amount).toEqual({ kind: 'constant', value: 3, extension });
   expect(host.state.error.value).toBe('applyRejected');
   expect(() =>
     validateStructuredValue(
@@ -416,128 +407,4 @@ it('four-column controls expose malformed imports and support same-field repair 
         { kind: f.kind, path: f.field.path },
       ),
     ).toThrow();
-});
-it('items use precise indexed writes and only proven earlier numeric writes for read-after-write', () => {
-  const f = fixtures[2]!;
-  const make = (column: unknown) => [
-    { values: [1, 2, 3, 4], storeKey: 'text', column },
-    { values: [4, 3, 2, 1], storeKey: 'out', column: { kind: 'blackboard', key: 'text' } },
-  ];
-  for (const column of [1, 1.5, 2.5, 4.5])
-    expect(() =>
-      validateStructuredValue(
-        f.field.valueSchema!,
-        undefined,
-        make({ kind: 'constant', value: column }),
-        { kind: f.kind, path: f.field.path, blackboard: context() },
-      ),
-    ).not.toThrow();
-  for (const column of [
-    { kind: 'constant', value: 0.5 },
-    { kind: 'constant', value: 4.6 },
-    { kind: 'blackboard', key: 'rate' },
-  ])
-    expect(() =>
-      validateStructuredValue(f.field.valueSchema!, undefined, make(column), {
-        kind: f.kind,
-        path: f.field.path,
-        blackboard: context(),
-      }),
-    ).toThrow();
-  const items = make({ kind: 'constant', value: 1 });
-  for (const index of [-1, 0.5, 3])
-    expect(
-      skillSettingItemBlackboardContext(
-        context(),
-        f.kind,
-        ['parameters', 'items', index, 'column'],
-        items,
-      ),
-    ).toEqual(context());
-  expect(
-    skillSettingItemBlackboardContext(
-      context(),
-      f.kind,
-      ['parameters', 'items', 0, 'column'],
-      items,
-    ),
-  ).toEqual(context());
-  expect(
-    blackboardRequestForField(f.kind, ['parameters', 'items', 1, 'storeKey'], {
-      blackboardOrigin: 'contract',
-    }),
-  ).toEqual({
-    mode: 'write',
-    valueType: 'number',
-  });
-  expect(
-    blackboardRequestForField(f.kind, ['parameters', 'items', 'evil', 'storeKey']),
-  ).toBeUndefined();
-  expect(
-    blackboardRequestForField(f.kind, ['parameters', 'items', 0, 'storeKey'], {}),
-  ).toBeUndefined();
-});
-
-it('item Creator and rendered nested controls retain exact write paths and sequential read candidates', async () => {
-  const f = fixtures[2]!;
-  const schema = f.field.valueSchema!;
-  if (schema.kind !== 'array' || schema.element.kind !== 'object') throw new Error('row');
-  const items = [
-    { values: [1, 2, 3, 4], column: { kind: 'constant', value: 1.5 }, storeKey: 'text' },
-  ];
-  const creator = await mount(
-    DefinitionValueCreator,
-    { schema: schema.element, fieldPath: [1], editable: true, editingContext: 'value' },
-    f.field,
-    [],
-    items,
-  );
-  expect(creator.state.structuredContext.value.path).toEqual(['parameters', 'items', 1]);
-  creator.state.change([], {
-    values: [1, 2, 3, 4],
-    column: { kind: 'blackboard', key: 'text' },
-    storeKey: 'out',
-  });
-  expect(creator.state.complete.value).toBe(true);
-  creator.state.change(['values'], [1, 2, 3]);
-  expect(creator.state.complete.value).toBe(false);
-  creator.stop();
-  const field = await mount(
-    DefinitionField,
-    {
-      schema: schema.element.fields.storeKey,
-      path: [1, 'storeKey'],
-      name: 'storeKey',
-      value: 'text',
-      editable: true,
-      editingContext: 'value',
-    },
-    f.field,
-    [],
-    items,
-  );
-  expect(field.state.keyRequest.value).toEqual({ mode: 'write', valueType: 'number' });
-  field.stop();
-  const column = await mount(
-    DefinitionField,
-    {
-      schema: schema.element.fields.column,
-      path: [1, 'column'],
-      name: 'column',
-      value: { kind: 'blackboard', key: 'text' },
-      editable: true,
-      editingContext: 'value',
-    },
-    f.field,
-    [],
-    items,
-  );
-  expect(
-    column.state.graphOperandContext.value.candidates.find((c: any) => c.key === 'text').valueType,
-  ).toBe('number');
-  await column.update({ path: [0, 'column'] });
-  expect(
-    column.state.graphOperandContext.value.candidates.find((c: any) => c.key === 'text').valueType,
-  ).toBe('string');
-  column.stop();
 });

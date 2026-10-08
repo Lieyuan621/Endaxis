@@ -21,8 +21,16 @@ const compileGraphEntry = (
   revision: string,
   entry: string | null,
   nodes: Record<string, ActionGraphNode>,
+  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {
+    absent: { type: 'number', expression: { kind: 'blackboard', key: 'absent' } },
+    choice: { type: 'number', expression: { kind: 'blackboard', key: 'choice' } },
+    first: { type: 'number', expression: { kind: 'blackboard', key: 'first' } },
+    missing: { type: 'number', expression: { kind: 'blackboard', key: 'missing' } },
+    second: { type: 'number', expression: { kind: 'blackboard', key: 'second' } },
+    active: { type: 'boolean', expression: { kind: 'combatActive' } },
+  },
 ): ResolvedActionSequence => ({
-  graph: createActionGraphCompilation({ nodes }, 1, revision).compileAll(),
+  graph: createActionGraphCompilation({ nodes, dataNodes }, 1, revision).compileAll(),
   entry,
   callSite: revision,
 });
@@ -71,7 +79,7 @@ describe('Switch 原生选择和生命周期', () => {
       constant(20),
       constant(7),
       constant(7),
-      { kind: 'blackboard', key: 'missing' },
+      { kind: 'valueNode', nodeId: 'missing' },
     ]);
     expect(
       f.runtime
@@ -107,9 +115,9 @@ describe('Switch 原生选择和生命周期', () => {
     const blackboard = new ActionBlackboard({ choice: 4, first: 2, second: 4 });
     const reads = vi.spyOn(blackboard, 'getNumber');
     const f = fixture(blackboard);
-    const nodes = selectNodes({ kind: 'blackboard', key: 'choice' }, [
-      { kind: 'blackboard', key: 'first' },
-      { kind: 'blackboard', key: 'second' },
+    const nodes = selectNodes({ kind: 'valueNode', nodeId: 'choice' }, [
+      { kind: 'valueNode', nodeId: 'first' },
+      { kind: 'valueNode', nodeId: 'second' },
     ]);
     const sequence = f.runtime.createSequence(compileGraphEntry('switch-reads', 'select', nodes));
     sequence.executeInstant({});
@@ -125,7 +133,7 @@ describe('Switch 原生选择和生命周期', () => {
           compileGraphEntry(
             'switch-absent-choice',
             'select',
-            selectNodes({ kind: 'blackboard', key: 'absent' }, []),
+            selectNodes({ kind: 'valueNode', nodeId: 'absent' }, []),
           ),
         )
         .executeInstant({}),
@@ -136,7 +144,7 @@ describe('Switch 原生选择和生命周期', () => {
           compileGraphEntry(
             'switch-absent-option',
             'select',
-            selectNodes(constant(1), [{ kind: 'blackboard', key: 'absent' }]),
+            selectNodes(constant(1), [{ kind: 'valueNode', nodeId: 'absent' }]),
           ),
         )
         .executeInstant({}),
@@ -176,7 +184,7 @@ describe('Switch 原生选择和生命周期', () => {
       select: {
         action: {
           kind: 'switch',
-          parameters: { choice: { kind: 'blackboard', key: 'choice' }, alwaysNext: false },
+          parameters: { choice: { kind: 'valueNode', nodeId: 'choice' }, alwaysNext: false },
           options: [
             { value: constant(0), sequence: { $sequence: 'option-0' } },
             { value: constant(1), sequence: { $sequence: 'option-1' } },
@@ -188,7 +196,7 @@ describe('Switch 原生选择和生命周期', () => {
       'option-1': {
         action: {
           kind: 'conditional',
-          parameters: { condition: { kind: 'combatActive' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'active' } },
           whenTrue: { $sequence: 'true' },
           whenFalse: { $sequence: 'false' },
         },
@@ -220,7 +228,7 @@ describe('Switch 原生选择和生命周期', () => {
       select: {
         action: {
           kind: 'switch',
-          parameters: { choice: { kind: 'blackboard', key: 'choice' }, alwaysNext: true },
+          parameters: { choice: { kind: 'valueNode', nodeId: 'choice' }, alwaysNext: true },
           options: [
             { value: constant(0), sequence: { $sequence: 'tick-0' } },
             { value: constant(1), sequence: { $sequence: 'tick-1' } },

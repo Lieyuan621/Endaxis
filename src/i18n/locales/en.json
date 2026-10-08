@@ -405,7 +405,7 @@
     "openGraph": "Open action graph",
     "addGraph": "Create empty action graph",
     "specialField": "Editing is not available for this field",
-    "conditionReadOnly": "Condition ({kind}) cannot be edited in this form yet",
+    "conditionRequiresGraph": "Edit this condition in its resource action graph",
     "conditionAbsent": "No condition set; condition editing is not available yet",
     "graphKindUnsupported": "Graph editing is not available for this resource yet.",
     "graphEntries": "Execution entries",
@@ -5470,6 +5470,12 @@
       "electric": "Electric",
       "cryo": "Cryo",
       "nature": "Nature"
+    },
+    "requirements": {
+      "casterControlled": "Caster is the controlled operator",
+      "heavyAttack": "This hit is a heavy attack",
+      "sameSkillCast": "Same cast as the effect source",
+      "additional": "Additional conditions apply; see the condition graph"
     }
   },
   "hitDetail": {
@@ -5675,15 +5681,10 @@
     "recursive-type": "Recursive fields are not expanded in this form yet",
     "unsupported-type": "This type is not supported by the form yet",
     "structured-editor-pending": "Structured editor pending; the current control and validation are preserved",
-    "tuple-editor-pending": "Fixed tuple slots are preserved but cannot be edited in this form yet",
-    "condition-editor-pending": "Use the appropriate condition or graph editor"
+    "tuple-editor-pending": "Fixed tuple slots are preserved but cannot be edited in this form yet"
   },
   "stringOperand": {
-    "mode": "Input mode",
-    "literal": "Literal",
-    "blackboard": "Read string from blackboard",
-    "current": "Stored expression",
-    "readHelp": "Reads at each use site. This is a string key expression, not a numeric data connection."
+    "current": "Stored value"
   },
   "blackboardMapping": {
     "edit": "Edit mappings",
@@ -5697,12 +5698,9 @@
     "valueMode": "Value type",
     "levels": "Number / level values",
     "constant": "Number constant",
-    "readNumber": "Read number from blackboard",
-    "parameter": "Numeric macro parameter",
     "connection": "Existing numeric connection",
     "keepConnection": "This connection is preserved; edit its connection in the graph or explicitly choose a replacement",
     "useFallback": "Use explicit fallback",
-    "fallback": "Fallback",
     "strictRead": "Strict read: a missing key is an error",
     "add": "Add mapping",
     "remove": "Remove mapping",
@@ -5799,12 +5797,6 @@
     "useTag": "Use tag",
     "invalidTag": "Enter a readable tag path with nonempty segments.",
     "refineSearch": "Showing the first 50 of {count} matches. Refine the path to search further."
-  },
-  "inlineCondition": {
-    "availabilityDeferred": "Read-only: this skill availability field has no established runtime consumer in this revision.",
-    "legacyHandlerDeferred": "Read-only: compilation rejects legacy skill eventHandlers without listener intervals.",
-    "edit": "Edit condition",
-    "hint": "Inline condition only. Graph connections and macro parameters are unavailable here."
   },
   "structuredValue": {
     "edit": "Edit structure",

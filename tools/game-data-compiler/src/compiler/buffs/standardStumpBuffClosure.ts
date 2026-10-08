@@ -2,7 +2,6 @@ import type { GameplayTagRegistry } from '../../source/nativeGameplayTags.ts';
 import { requireRecord } from '../../source/primitives.ts';
 import { buffShowsTimelineActions, type BuffRuntimeSource } from '../../source/buffRuntime.ts';
 import {
-  collectBuffRuntimeClosure,
   collectBuffRuntimePresentationActionPaths,
   collectBuffRuntimeLevelEventActionPaths,
   collectBuffRuntimeCharacterStatusActionPaths,
@@ -10,6 +9,7 @@ import {
   isAfterEnemyDefeatedOnlyBuffRuntime,
   isPresentationOnlyBuffStackEffect,
 } from './buffRuntimeProjection.ts';
+import { collectBuffRuntimeClosure } from './buffReferenceClosure.ts';
 import type { CompiledBuffDefinitionSource } from './buffProjectionTypes.ts';
 import { standardStumpBuffAbilityEventOmissionReason } from '../scenario/standardStumpScenarioPolicy.ts';
 import {

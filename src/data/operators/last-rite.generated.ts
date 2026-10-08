@@ -982,6 +982,7 @@ export const lastRiteChr_0026_lastrite_normal_skillActionGraph = {
         expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_11' } },
       },
       data_13: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_14: { type: 'boolean', expression: { kind: 'casterControlled' } },
     },
   },
   macros: {},
@@ -1031,7 +1032,7 @@ export const lastRiteChr_0026_lastrite_normal_skill: SkillDefinition = {
   switchToBuffCast: {
     currentSkillTypes: ['basicAttack'],
     requiresCurrentSkillNotInterruptible: true,
-    condition: { kind: 'casterControlled' },
+    condition: { kind: 'conditionNode', nodeId: 'data_14' },
     asSkillCast: true,
     sequence: { $sequence: 'applyBuff_1' },
   },
@@ -1823,17 +1824,41 @@ const lastRiteBuff1: SkillBuffDefinition = {
 const lastRiteBuff2ActionGraph = {
   main: {
     nodes: {
+      conditional_16: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          whenTrue: { $sequence: null },
+        },
+        next: null,
+      },
+      conditional_17: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          whenTrue: { $sequence: 'conditional_16' },
+        },
+        next: null,
+      },
+      conditional_18: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+          whenTrue: { $sequence: 'conditional_17' },
+        },
+        next: null,
+      },
       dealStagger_1: {
         action: {
           kind: 'dealStagger',
-          parameters: { value: { kind: 'valueNode', nodeId: 'data_1' } },
+          parameters: { value: { kind: 'valueNode', nodeId: 'data_5' } },
         },
         next: null,
       },
       conditional_2: {
         action: {
           kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
           whenTrue: { $sequence: 'dealStagger_1' },
         },
         next: null,
@@ -1841,7 +1866,7 @@ const lastRiteBuff2ActionGraph = {
       conditional_3: {
         action: {
           kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
           whenTrue: { $sequence: 'conditional_2' },
         },
         next: null,
@@ -1849,7 +1874,7 @@ const lastRiteBuff2ActionGraph = {
       conditional_4: {
         action: {
           kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
           whenTrue: { $sequence: 'conditional_3' },
         },
         next: null,
@@ -1857,7 +1882,7 @@ const lastRiteBuff2ActionGraph = {
       conditional_5: {
         action: {
           kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
           whenTrue: { $sequence: 'conditional_4' },
         },
         next: null,
@@ -1915,7 +1940,7 @@ const lastRiteBuff2ActionGraph = {
       conditional_11: {
         action: {
           kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' }, alwaysNext: true },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' }, alwaysNext: true },
           whenTrue: { $sequence: 'applyBuff_7' },
           whenFalse: { $sequence: 'applyBuff_9' },
         },
@@ -1924,7 +1949,7 @@ const lastRiteBuff2ActionGraph = {
       conditional_12: {
         action: {
           kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
           whenTrue: { $sequence: 'conditional_11' },
         },
         next: null,
@@ -1932,7 +1957,7 @@ const lastRiteBuff2ActionGraph = {
       conditional_13: {
         action: {
           kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' } },
           whenTrue: { $sequence: 'conditional_12' },
         },
         next: null,
@@ -1940,7 +1965,7 @@ const lastRiteBuff2ActionGraph = {
       conditional_14: {
         action: {
           kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_15' } },
           whenTrue: { $sequence: 'conditional_13' },
         },
         next: null,
@@ -1948,29 +1973,27 @@ const lastRiteBuff2ActionGraph = {
       conditional_15: {
         action: {
           kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_16' } },
           whenTrue: { $sequence: 'conditional_14' },
         },
         next: null,
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_2: {
+      data_1: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'potential_1', fallback: 0 },
       },
-      data_3: {
+      data_2: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_2' },
+          left: { kind: 'valueNode', nodeId: 'data_1' },
           operator: 'equal',
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_5: {
+      data_3: {
         type: 'boolean',
         expression: {
           kind: 'eventDamageTagsMatch',
@@ -1978,23 +2001,19 @@ const lastRiteBuff2ActionGraph = {
           tags: ['normalAttackLastCombo'],
         },
       },
+      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
       data_6: {
-        type: 'boolean',
-        expression: {
-          kind: 'healthCompare',
-          target: 'enemy',
-          valueType: 'current',
-          operator: 'greater',
-          value: { kind: 'constant', value: 0 },
-        },
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'potential_1', fallback: 0 },
       },
       data_7: {
         type: 'boolean',
         expression: {
-          kind: 'entityTagMatch',
-          target: 'buffOwner',
-          tagQueryType: 'hasAny',
-          tags: ['Skill/Character/chr_0026_lastrite'],
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_6' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
         },
       },
       data_8: { type: 'boolean', expression: { kind: 'casterControlled' } },
@@ -2009,16 +2028,44 @@ const lastRiteBuff2ActionGraph = {
       data_10: {
         type: 'boolean',
         expression: {
+          kind: 'healthCompare',
+          target: 'enemy',
+          valueType: 'current',
+          operator: 'greater',
+          value: { kind: 'constant', value: 0 },
+        },
+      },
+      data_11: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityTagMatch',
+          target: 'buffOwner',
+          tagQueryType: 'hasAny',
+          tags: ['Skill/Character/chr_0026_lastrite'],
+        },
+      },
+      data_12: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_13: {
+        type: 'boolean',
+        expression: {
+          kind: 'eventDamageTagsMatch',
+          match: 'hasAny',
+          tags: ['normalAttackLastCombo'],
+        },
+      },
+      data_14: {
+        type: 'boolean',
+        expression: {
           kind: 'timedMarkerPresent',
           target: 'buffOwner',
           markerId: 'buff_chr_0026_lastrite_normal_skill_marker',
         },
       },
-      data_11: {
+      data_15: {
         type: 'boolean',
-        expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_10' } },
+        expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_14' } },
       },
-      data_12: {
+      data_16: {
         type: 'boolean',
         expression: {
           kind: 'healthCompare',
@@ -2067,19 +2114,7 @@ const lastRiteBuff2: SkillBuffDefinition = {
   damageModifiers: [
     {
       enabledSide: 'attacker',
-      condition: {
-        kind: 'all',
-        conditions: [
-          { kind: 'casterControlled' },
-          { kind: 'eventDamageTagsMatch', match: 'hasAny', tags: ['normalAttackLastCombo'] },
-          {
-            kind: 'buffBlackboardCompare',
-            left: { blackboardKey: 'potential_1' },
-            operator: 'equal',
-            right: 1,
-          },
-        ],
-      },
+      condition: { $sequence: 'conditional_18' },
       processors: [
         {
           kind: 'damageScale',

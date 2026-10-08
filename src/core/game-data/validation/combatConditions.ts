@@ -54,7 +54,7 @@ const HEALTH_VALUE_TYPES_SET = new Set<string>(['current', 'ratio']);
 const TAG_QUERY_TYPES_WITH_EXACT_SET = new Set<string>(GAMEPLAY_TAG_MATCH_TYPES);
 
 /**
- * CombatCondition 的严格验证。覆盖全部条件 kind 及其必填/可选字段。
+ * 校验布尔节点的操作及输入字段；节点引用的归属和连线类型由所属图校验。
  */
 export function validateCombatCondition(
   value: unknown,
@@ -65,6 +65,10 @@ export function validateCombatCondition(
   const record = asRecord(value, path, out);
   if (record === null) return;
   const kind = requireString(record, 'kind', path, out);
+  if (kind === 'conditionNode') {
+    requireString(record, 'nodeId', path, out);
+    return;
+  }
   if (kind === null || !CONDITION_KINDS.has(kind)) {
     if (kind !== null) push(out, `${path}.kind`, 'unknown condition kind');
     return;
@@ -169,7 +173,8 @@ export function validateCombatCondition(
       validateActionValueOperand(record.value, `${path}.value`, out);
       break;
     case 'poiseCompare':
-      requireEnum(record, 'target', COMBAT_TARGETS_SET, path, out);
+      if (record.target !== 'currentTarget')
+        requireEnum(record, 'target', COMBAT_TARGETS_SET, path, out);
       requireBoolean(record, 'returnValueIfMissing', path, out);
       requireEnum(record, 'operator', COMPARISON_OPERATORS_SET, path, out);
       validateActionValueOperand(record.value, `${path}.value`, out);

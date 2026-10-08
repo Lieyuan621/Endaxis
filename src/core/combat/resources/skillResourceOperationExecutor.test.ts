@@ -1,3 +1,4 @@
+import { numberInput } from '../../../test/compiledGraphInputs';
 import type { SkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
 import { describe, expect, it } from 'vitest';
 import { perlica } from '../../../data/operators/perlica.generated';
@@ -448,8 +449,8 @@ describe('SkillResourceOperationExecutor', () => {
           kind: 'changeResourceByActionValue',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'blackboard', key: 'atbReturn' },
-            coefficient: { kind: 'blackboard', key: 'coefficient' },
+            amount: numberInput({ kind: 'blackboard', key: 'atbReturn' }),
+            coefficient: numberInput({ kind: 'blackboard', key: 'coefficient' }),
             recipient: 'team',
             spGainKind: 'refund',
             spGainSource: 'default',

@@ -1,4 +1,5 @@
-import type { CombatCondition } from '../../game-data/operatorDefinition';
+import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
+
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
 /** 把普通治疗步骤写入干员生命账本；目标选择和面板来源由场景环境提供。 */
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
@@ -9,11 +10,11 @@ import type { CombatClock } from '../time/combatClock';
 import type { CombatVitals } from '../resources/combatVitals';
 import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
 import type { HealAbilityEvent } from '../events/combatAbilityEvent';
+import { HealCalculationContext } from './healModifiers';
 import {
-  HealCalculationContext,
   type HealModifierSide,
   type HealProcessTiming,
-} from './healModifiers';
+} from '../../../../packages/game-data-contract/src/modifiers';
 
 type HealStep = ResolvedCombatStepForKind<'heal'>;
 
@@ -155,7 +156,7 @@ export class HealOperationExecutor implements CombatOperationExecutor {
     this.dependencies.delegate.end?.(step, context);
   }
 
-  evaluate(condition: CombatCondition, context?: CombatOperationContext): boolean {
+  evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     return this.dependencies.delegate.evaluate(condition, context);
   }
 

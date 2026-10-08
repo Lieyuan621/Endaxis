@@ -1,15 +1,18 @@
+import type { CompiledInputs } from './compiledGraphData';
+import type {
+  CompiledValueInput,
+  CompiledCondition,
+  CompiledStepParameters,
+} from './compiledGraphData.ts';
 /**
  * 游戏数据与战斗运行时之间的解析后协议。这里的值已经确定等级和引用，
  * 运行时可以直接消费，但不得修改或重新解释原始干员配置。
  */
 import type {
-  ActionValueOperand,
   AbilityEntityDefinition,
-  CombatCondition,
   CombatEventTrigger,
   CombatResource,
   CombatStepKind,
-  CombatStepParameters,
   DamageFeature,
   DamageTag,
   DamageType,
@@ -76,12 +79,22 @@ export type ResolvedSkillBuffDefinition = Omit<
   | 'abilityEventResponses'
   | 'igniteEventResponses'
   | 'damageModifiers'
+  | 'healModifiers'
+  | 'poiseModifiers'
   | 'actionGraph'
 > & {
   readonly damageModifiers?: readonly (Omit<
     NonNullable<SkillBuffDefinition['damageModifiers']>[number],
-    'conditionProgram'
-  > & { readonly conditionProgram?: ResolvedActionSequence })[];
+    'condition'
+  > & { readonly condition?: ResolvedActionSequence })[];
+  readonly healModifiers?: readonly (Omit<
+    NonNullable<SkillBuffDefinition['healModifiers']>[number],
+    'condition'
+  > & { readonly condition?: ResolvedActionSequence })[];
+  readonly poiseModifiers?: readonly (Omit<
+    NonNullable<SkillBuffDefinition['poiseModifiers']>[number],
+    'condition'
+  > & { readonly condition?: ResolvedActionSequence })[];
   readonly scheduledSequences?: readonly CompiledTimelineAction[];
   readonly lifecycleSequences?: ResolvedSkillBuffLifecycleSequences;
   readonly abilityEventResponses?: readonly ResolvedSkillBuffAbilityEventResponse[];
@@ -121,152 +134,152 @@ export interface ResolvedAbilityEntityDefinition {
 }
 
 export interface ResolvedCombatStepParameters {
-  mergeContextTargets: CombatStepParameters['mergeContextTargets'];
-  findCharacterTeamTargets: CombatStepParameters['findCharacterTeamTargets'];
-  findUnfinishedProjectileTargets: CombatStepParameters['findUnfinishedProjectileTargets'];
-  createSpatialPointTargets: CombatStepParameters['createSpatialPointTargets'];
-  findOwnerSpawnedAbilityEntities: CombatStepParameters['findOwnerSpawnedAbilityEntities'];
-  pickContextTarget: CombatStepParameters['pickContextTarget'];
-  forEachContextTarget: CombatStepParameters['forEachContextTarget'];
-  repeatByActionValue: CombatStepParameters['repeatByActionValue'];
-  readAbilityEntityRemainingDuration: CombatStepParameters['readAbilityEntityRemainingDuration'];
-  setAbilityEntityRemainingDuration: CombatStepParameters['setAbilityEntityRemainingDuration'];
-  finishCurrentAbilityEntity: CombatStepParameters['finishCurrentAbilityEntity'];
-  finishActionOwnerAbilityEntity: CombatStepParameters['finishActionOwnerAbilityEntity'];
-  finishCurrentAbilityEntityWhenSourceDies: CombatStepParameters['finishCurrentAbilityEntityWhenSourceDies'];
+  mergeContextTargets: CompiledStepParameters['mergeContextTargets'];
+  findCharacterTeamTargets: CompiledStepParameters['findCharacterTeamTargets'];
+  findUnfinishedProjectileTargets: CompiledStepParameters['findUnfinishedProjectileTargets'];
+  createSpatialPointTargets: CompiledStepParameters['createSpatialPointTargets'];
+  findOwnerSpawnedAbilityEntities: CompiledStepParameters['findOwnerSpawnedAbilityEntities'];
+  pickContextTarget: CompiledStepParameters['pickContextTarget'];
+  forEachContextTarget: CompiledStepParameters['forEachContextTarget'];
+  repeatByActionValue: CompiledStepParameters['repeatByActionValue'];
+  readAbilityEntityRemainingDuration: CompiledStepParameters['readAbilityEntityRemainingDuration'];
+  setAbilityEntityRemainingDuration: CompiledStepParameters['setAbilityEntityRemainingDuration'];
+  finishCurrentAbilityEntity: CompiledStepParameters['finishCurrentAbilityEntity'];
+  finishActionOwnerAbilityEntity: CompiledStepParameters['finishActionOwnerAbilityEntity'];
+  finishCurrentAbilityEntityWhenSourceDies: CompiledStepParameters['finishCurrentAbilityEntityWhenSourceDies'];
   startCurrentAbilityEntityChildSkill: {
     readonly childSkill: CompiledAbilityEntityChildSkillProgram;
   };
-  startCurrentAbilityEntityChildSkillById: CombatStepParameters['startCurrentAbilityEntityChildSkillById'];
-  spawnAbilityEntity: Omit<CombatStepParameters['spawnAbilityEntity'], 'definition'> & {
+  startCurrentAbilityEntityChildSkillById: CompiledStepParameters['startCurrentAbilityEntityChildSkillById'];
+  spawnAbilityEntity: Omit<CompiledStepParameters['spawnAbilityEntity'], 'definition'> & {
     readonly definition?: ResolvedAbilityEntityDefinition;
   };
-  applyElementalInfliction: CombatStepParameters['applyElementalInfliction'];
-  applyKnockDown: CombatStepParameters['applyKnockDown'];
-  triggerSpellBurst: CombatStepParameters['triggerSpellBurst'];
-  triggerCustomAbilityEvent: CombatStepParameters['triggerCustomAbilityEvent'];
+  applyElementalInfliction: CompiledStepParameters['applyElementalInfliction'];
+  applyKnockDown: CompiledStepParameters['applyKnockDown'];
+  triggerSpellBurst: CompiledStepParameters['triggerSpellBurst'];
+  triggerCustomAbilityEvent: CompiledStepParameters['triggerCustomAbilityEvent'];
   applyPhysicalInfliction:
     | (Omit<
-        Extract<CombatStepParameters['applyPhysicalInfliction'], { type: 'fracture' }>,
+        Extract<CompiledStepParameters['applyPhysicalInfliction'], { type: 'fracture' }>,
         'noGuardDefinition' | 'fractureDefinition'
       > & {
         readonly noGuardDefinition: ResolvedSkillBuffDefinition;
         readonly fractureDefinition: ResolvedSkillBuffDefinition;
       })
     | (Omit<
-        Extract<CombatStepParameters['applyPhysicalInfliction'], { type: 'crush' }>,
+        Extract<CompiledStepParameters['applyPhysicalInfliction'], { type: 'crush' }>,
         'noGuardDefinition' | 'crushedDefinition'
       > & {
         readonly noGuardDefinition: ResolvedSkillBuffDefinition;
         readonly crushedDefinition: ResolvedSkillBuffDefinition;
       })
     | (Omit<
-        Extract<CombatStepParameters['applyPhysicalInfliction'], { type: 'airborne' }>,
+        Extract<CompiledStepParameters['applyPhysicalInfliction'], { type: 'airborne' }>,
         'noGuardDefinition' | 'airborneDefinition'
       > & {
         readonly noGuardDefinition: ResolvedSkillBuffDefinition;
         readonly airborneDefinition: ResolvedSkillBuffDefinition;
       });
-  applyElementalReaction: CombatStepParameters['applyElementalReaction'];
-  consumeElementalReaction: CombatStepParameters['consumeElementalReaction'];
-  outputAirborne: CombatStepParameters['outputAirborne'];
-  outputKnockDown: CombatStepParameters['outputKnockDown'];
+  applyElementalReaction: CompiledStepParameters['applyElementalReaction'];
+  consumeElementalReaction: CompiledStepParameters['consumeElementalReaction'];
+  outputAirborne: CompiledStepParameters['outputAirborne'];
+  outputKnockDown: CompiledStepParameters['outputKnockDown'];
   dealDamage: {
     damageType: DamageType;
     calculation?: 'standard' | 'breakingAttack' | 'attribute';
-    attackScale: number | ActionValueOperand;
+    attackScale: number | CompiledValueInput;
     takeAttackSnapshot?: boolean;
     calculationMultiplier?: number;
     calculationAttribute?: string;
-    calculationAddition?: number | ActionValueOperand;
+    calculationAddition?: number | CompiledValueInput;
     tags: readonly DamageTag[];
     gameplayTags?: readonly GameplayTag[];
     features?: readonly DamageFeature[];
-    stagger?: number | ActionValueOperand;
-    staggerMultiplier?: number | ActionValueOperand;
+    stagger?: number | CompiledValueInput;
+    staggerMultiplier?: number | CompiledValueInput;
     staggerOnlyWhenCasterControlled?: boolean;
     attackScalePerStatusStack?: {
       statusKey: string;
       target: 'caster' | 'enemy';
       coefficient: number;
     };
-    instantAttributeModifiers?: CombatStepParameters['dealDamage']['instantAttributeModifiers'];
-    instantDamageScaleModifiers?: CombatStepParameters['dealDamage']['instantDamageScaleModifiers'];
+    instantAttributeModifiers?: CompiledStepParameters['dealDamage']['instantAttributeModifiers'];
+    instantDamageScaleModifiers?: CompiledStepParameters['dealDamage']['instantDamageScaleModifiers'];
   };
   dealFixedDamage: {
     damageType: DamageType;
-    value: number | ActionValueOperand;
+    value: number | CompiledValueInput;
     tags: readonly DamageTag[];
     features?: readonly DamageFeature[];
-    stagger?: number | ActionValueOperand;
-    staggerMultiplier?: number | ActionValueOperand;
+    stagger?: number | CompiledValueInput;
+    staggerMultiplier?: number | CompiledValueInput;
     staggerOnlyWhenCasterControlled?: boolean;
   };
   dealStagger: {
-    value: number | ActionValueOperand;
-    valueMultiplier?: number | ActionValueOperand;
+    value: number | CompiledValueInput;
+    valueMultiplier?: number | CompiledValueInput;
     features?: readonly DamageFeature[];
   };
   heal: HealTargetBinding & {
-    source?: CombatStepParameters['heal']['source'];
+    source?: CompiledStepParameters['heal']['source'];
     alwaysNext?: boolean;
     tags: readonly GameplayTag[];
   } & (
       | {
           attribute: HealCalculationAttribute;
           attributeSource?: 'target';
-          multiplier: number | ActionValueOperand;
-          addition: number | ActionValueOperand;
+          multiplier: number | CompiledValueInput;
+          addition: number | CompiledValueInput;
           amount?: never;
         }
       | {
-          amount: number | ActionValueOperand;
+          amount: number | CompiledValueInput;
           attribute?: never;
           multiplier?: never;
           addition?: never;
         }
     );
-  applyBuff: Omit<CombatStepParameters['applyBuff'], 'blackboardAssignments'> & {
-    readonly blackboardAssignments?: Readonly<Record<string, ActionValueOperand>>;
+  applyBuff: Omit<CompiledStepParameters['applyBuff'], 'blackboardAssignments'> & {
+    readonly blackboardAssignments?: Readonly<Record<string, CompiledValueInput>>;
   };
-  createGlobalBuff: Omit<CombatStepParameters['createGlobalBuff'], 'definition'> & {
-    readonly definition: SkillGlobalBuffDefinition;
+  createGlobalBuff: Omit<CompiledStepParameters['createGlobalBuff'], 'definition'> & {
+    readonly definition: CompiledGlobalBuffDefinition;
   };
-  finishParentGlobalBuff: CombatStepParameters['finishParentGlobalBuff'];
-  finishGlobalBuffsById: CombatStepParameters['finishGlobalBuffsById'];
-  readSkillSettingData: CombatStepParameters['readSkillSettingData'];
-  readBuffBlackboard: CombatStepParameters['readBuffBlackboard'];
-  readEventBuffBlackboard: CombatStepParameters['readEventBuffBlackboard'];
-  readCurrentBuffRemainingDuration: CombatStepParameters['readCurrentBuffRemainingDuration'];
-  readBuffRemainingDuration: CombatStepParameters['readBuffRemainingDuration'];
-  setCurrentBuffRemainingDuration: CombatStepParameters['setCurrentBuffRemainingDuration'];
-  refreshCurrentBuffAttributeModifiers: CombatStepParameters['refreshCurrentBuffAttributeModifiers'];
-  readBuffStackCount: CombatStepParameters['readBuffStackCount'];
-  finishBuffsByTag: CombatStepParameters['finishBuffsByTag'];
-  finishBuffsById: CombatStepParameters['finishBuffsById'];
-  finishCurrentBuff: CombatStepParameters['finishCurrentBuff'];
-  skillAffix: CombatStepParameters['skillAffix'];
-  setCurrentBuffTimePaused: CombatStepParameters['setCurrentBuffTimePaused'];
-  igniteBuffs: CombatStepParameters['igniteBuffs'];
-  adjustSkillCooldown: CombatStepParameters['adjustSkillCooldown'];
-  holdBuffsById: CombatStepParameters['holdBuffsById'];
-  inheritBuffById: CombatStepParameters['inheritBuffById'];
-  createTimedMarker: CombatStepParameters['createTimedMarker'];
-  setGlobalCooldown: CombatStepParameters['setGlobalCooldown'];
-  createAbilityEntityTimedMarker: CombatStepParameters['createAbilityEntityTimedMarker'];
-  startTimeDilation: CombatStepParameters['startTimeDilation'];
-  startUltimateTimeDilation: CombatStepParameters['startUltimateTimeDilation'];
-  hideUi: CombatStepParameters['hideUi'];
-  setIgnoreGlobalTimeScale: CombatStepParameters['setIgnoreGlobalTimeScale'];
-  storeCurrentTimelineFrame: CombatStepParameters['storeCurrentTimelineFrame'];
-  storeEventSpGainAmount: CombatStepParameters['storeEventSpGainAmount'];
-  storeEventHealValues: CombatStepParameters['storeEventHealValues'];
-  storeShieldValue: CombatStepParameters['storeShieldValue'];
-  modifyActionValue: CombatStepParameters['modifyActionValue'];
-  calculateActionValue: CombatStepParameters['calculateActionValue'];
-  storeSourceAttributeValue: CombatStepParameters['storeSourceAttributeValue'];
-  storeEntityPropertyValue: CombatStepParameters['storeEntityPropertyValue'];
-  setHealthFloor: CombatStepParameters['setHealthFloor'];
+  finishParentGlobalBuff: CompiledStepParameters['finishParentGlobalBuff'];
+  finishGlobalBuffsById: CompiledStepParameters['finishGlobalBuffsById'];
+  readSkillSettingData: CompiledStepParameters['readSkillSettingData'];
+  readBuffBlackboard: CompiledStepParameters['readBuffBlackboard'];
+  readEventBuffBlackboard: CompiledStepParameters['readEventBuffBlackboard'];
+  readCurrentBuffRemainingDuration: CompiledStepParameters['readCurrentBuffRemainingDuration'];
+  readBuffRemainingDuration: CompiledStepParameters['readBuffRemainingDuration'];
+  setCurrentBuffRemainingDuration: CompiledStepParameters['setCurrentBuffRemainingDuration'];
+  refreshCurrentBuffAttributeModifiers: CompiledStepParameters['refreshCurrentBuffAttributeModifiers'];
+  readBuffStackCount: CompiledStepParameters['readBuffStackCount'];
+  finishBuffsByTag: CompiledStepParameters['finishBuffsByTag'];
+  finishBuffsById: CompiledStepParameters['finishBuffsById'];
+  finishCurrentBuff: CompiledStepParameters['finishCurrentBuff'];
+  skillAffix: CompiledStepParameters['skillAffix'];
+  setCurrentBuffTimePaused: CompiledStepParameters['setCurrentBuffTimePaused'];
+  igniteBuffs: CompiledStepParameters['igniteBuffs'];
+  adjustSkillCooldown: CompiledStepParameters['adjustSkillCooldown'];
+  holdBuffsById: CompiledStepParameters['holdBuffsById'];
+  inheritBuffById: CompiledStepParameters['inheritBuffById'];
+  createTimedMarker: CompiledStepParameters['createTimedMarker'];
+  setGlobalCooldown: CompiledStepParameters['setGlobalCooldown'];
+  createAbilityEntityTimedMarker: CompiledStepParameters['createAbilityEntityTimedMarker'];
+  startTimeDilation: CompiledStepParameters['startTimeDilation'];
+  startUltimateTimeDilation: CompiledStepParameters['startUltimateTimeDilation'];
+  hideUi: CompiledStepParameters['hideUi'];
+  setIgnoreGlobalTimeScale: CompiledStepParameters['setIgnoreGlobalTimeScale'];
+  storeCurrentTimelineFrame: CompiledStepParameters['storeCurrentTimelineFrame'];
+  storeEventSpGainAmount: CompiledStepParameters['storeEventSpGainAmount'];
+  storeEventHealValues: CompiledStepParameters['storeEventHealValues'];
+  storeShieldValue: CompiledStepParameters['storeShieldValue'];
+  modifyActionValue: CompiledStepParameters['modifyActionValue'];
+  calculateActionValue: CompiledStepParameters['calculateActionValue'];
+  storeSourceAttributeValue: CompiledStepParameters['storeSourceAttributeValue'];
+  storeEntityPropertyValue: CompiledStepParameters['storeEntityPropertyValue'];
+  setHealthFloor: CompiledStepParameters['setHealthFloor'];
   changeResource: {
     resource: CombatResource;
     amount: number;
@@ -279,18 +292,18 @@ export interface ResolvedCombatStepParameters {
     ignoreUltimateEnergyGainMultiplier?: boolean;
   };
   changeResourceByActionValue: Omit<
-    CombatStepParameters['changeResourceByActionValue'],
+    CompiledStepParameters['changeResourceByActionValue'],
     'coefficient' | 'ultimateRecoveryTag'
   > & {
-    coefficient?: number | ActionValueOperand;
+    coefficient?: number | CompiledValueInput;
     ultimateRecoveryTag?: GameplayTag;
   };
-  recoverDashEnergy: CombatStepParameters['recoverDashEnergy'];
-  recordPerfectDodge: CombatStepParameters['recordPerfectDodge'];
+  recoverDashEnergy: CompiledStepParameters['recoverDashEnergy'];
+  recordPerfectDodge: CompiledStepParameters['recordPerfectDodge'];
   gainSquadUltimateEnergyFromSkillCost: { coefficient: number };
-  gainFinisherSp: CombatStepParameters['gainFinisherSp'];
+  gainFinisherSp: CompiledStepParameters['gainFinisherSp'];
   restrictUltimateEnergyRecovery: Omit<
-    CombatStepParameters['restrictUltimateEnergyRecovery'],
+    CompiledStepParameters['restrictUltimateEnergyRecovery'],
     'allowedRecoveryTags'
   > & { readonly allowedRecoveryTags: readonly GameplayTag[] };
   applyStatus: {
@@ -301,28 +314,28 @@ export interface ResolvedCombatStepParameters {
     maxStacks?: number;
     modifiers?: readonly ResolvedStatusModifier[];
   };
-  consumeStatus: CombatStepParameters['consumeStatus'];
-  jumpTimeline: CombatStepParameters['jumpTimeline'];
-  finishTimeline: CombatStepParameters['finishTimeline'];
-  reachSkillOperableBoundary: CombatStepParameters['reachSkillOperableBoundary'];
-  markCurrentSkillCanDash: CombatStepParameters['markCurrentSkillCanDash'];
-  markCurrentSkillCanInterrupt: CombatStepParameters['markCurrentSkillCanInterrupt'];
-  conditional: CombatStepParameters['conditional'];
-  switch: CombatStepParameters['switch'];
-  once: CombatStepParameters['once'];
-  repeatEachTick: CombatStepParameters['repeatEachTick'];
-  launchProjectile: CombatStepParameters['launchProjectile'];
-  setContextFlag: CombatStepParameters['setContextFlag'];
-  openComboWindow: CombatStepParameters['openComboWindow'];
-  showComboRingQte: CombatStepParameters['showComboRingQte'];
-  changeSkillSlot: CombatStepParameters['changeSkillSlot'];
-  overrideBasicAttackMapping: CombatStepParameters['overrideBasicAttackMapping'];
-  overrideMultiDashLimit: CombatStepParameters['overrideMultiDashLimit'];
-  changePlayerActionMode: CombatStepParameters['changePlayerActionMode'];
-  changeNativeSkillType: CombatStepParameters['changeNativeSkillType'];
-  setCharacterPassiveUiValue: CombatStepParameters['setCharacterPassiveUiValue'];
-  inheritSkillCastInfoForBasicAttack: CombatStepParameters['inheritSkillCastInfoForBasicAttack'];
-  castSkillDuringAction: CombatStepParameters['castSkillDuringAction'];
+  consumeStatus: CompiledStepParameters['consumeStatus'];
+  jumpTimeline: CompiledStepParameters['jumpTimeline'];
+  finishTimeline: CompiledStepParameters['finishTimeline'];
+  reachSkillOperableBoundary: CompiledStepParameters['reachSkillOperableBoundary'];
+  markCurrentSkillCanDash: CompiledStepParameters['markCurrentSkillCanDash'];
+  markCurrentSkillCanInterrupt: CompiledStepParameters['markCurrentSkillCanInterrupt'];
+  conditional: CompiledStepParameters['conditional'];
+  switch: CompiledStepParameters['switch'];
+  once: CompiledStepParameters['once'];
+  repeatEachTick: CompiledStepParameters['repeatEachTick'];
+  launchProjectile: CompiledStepParameters['launchProjectile'];
+  setContextFlag: CompiledStepParameters['setContextFlag'];
+  openComboWindow: CompiledStepParameters['openComboWindow'];
+  showComboRingQte: CompiledStepParameters['showComboRingQte'];
+  changeSkillSlot: CompiledStepParameters['changeSkillSlot'];
+  overrideBasicAttackMapping: CompiledStepParameters['overrideBasicAttackMapping'];
+  overrideMultiDashLimit: CompiledStepParameters['overrideMultiDashLimit'];
+  changePlayerActionMode: CompiledStepParameters['changePlayerActionMode'];
+  changeNativeSkillType: CompiledStepParameters['changeNativeSkillType'];
+  setCharacterPassiveUiValue: CompiledStepParameters['setCharacterPassiveUiValue'];
+  inheritSkillCastInfoForBasicAttack: CompiledStepParameters['inheritSkillCastInfoForBasicAttack'];
+  castSkillDuringAction: CompiledStepParameters['castSkillDuringAction'];
   withActionBlackboardScope: {
     scopeKey: string;
     lifetime?: 'parent' | 'execution';
@@ -331,7 +344,7 @@ export interface ResolvedCombatStepParameters {
     initialValues: Readonly<Record<string, number>>;
     inheritParent: boolean;
     entityInitialValues?: Readonly<Record<string, number>>;
-    entityAssignments?: Readonly<Record<string, ActionValueOperand>>;
+    entityAssignments?: Readonly<Record<string, CompiledValueInput>>;
   };
   listenForCombatEvents: {
     responses: readonly {
@@ -339,7 +352,7 @@ export interface ResolvedCombatStepParameters {
       readonly event: CombatEventTrigger;
       readonly phase?: 'dataAction' | 'skill';
       readonly priority?: number;
-      readonly condition?: CombatCondition;
+      readonly condition?: CompiledCondition;
       readonly sequence: ResolvedActionSequence;
     }[];
   };
@@ -596,7 +609,7 @@ export interface CompiledSkillExecutionProgram extends CompiledSkillActionProgra
   readonly switchToBuffCast?: {
     readonly currentSkillTypes?: readonly SkillType[];
     readonly requiresCurrentSkillNotInterruptible?: boolean;
-    readonly condition?: CombatCondition;
+    readonly condition?: CompiledCondition;
     readonly asSkillCast: boolean;
     readonly sequence: ResolvedActionSequence;
   };
@@ -654,3 +667,5 @@ export interface CompiledComboSkillConditionProgram {
 }
 
 export type { ElementalReaction, StatusModifierDefinition };
+
+export type CompiledGlobalBuffDefinition = CompiledInputs<SkillGlobalBuffDefinition>;

@@ -8,7 +8,7 @@ import type { CompiledAbilityEntityTemplateCatalogSource } from './abilities/abi
 import type { GlobalBuffActionSource } from '../source/globalBuffActions.ts';
 import type { SkillSettingReadActionSource } from '../source/skillSettingActions.ts';
 import type { TargetGroupActionSource } from '../source/targetGroup.ts';
-import type { ActionValueOperand } from '../../../../packages/game-data-contract/src/conditions.ts';
+import type { ActionValueOperand } from './intermediateDefinitions.ts';
 import type { ComparisonOperator } from '../../../../packages/game-data-contract/src/primitives.ts';
 import type { SkillSlotReplacementActionSource } from '../source/skillSlotActions.ts';
 import type { TargetReferenceSource } from '../source/target.ts';
@@ -98,8 +98,8 @@ export interface CombatActionProjectionContextSource {
   readonly preserveSkillOperableBoundary?: boolean;
   /** 当前 Buff AbilityEvent；仅用于投影原生事件负载条件，不替代公开事件身份。 */
   readonly nativeAbilityEvent?: string | number;
-  /** 同步伤害修正宿主具有 BeforeApplyDamageModifierContext；不代表发生 AbilitySystem 广播。 */
-  readonly damageModifierContext?: true;
+  /** 同步修正宿主提供相应计算包上下文；不代表发生 AbilitySystem 广播。 */
+  readonly modifierContext?: 'damage' | 'heal' | 'poise';
   /** 回调宿主未投影时显式 unavailable；读取 Owner 必须失败，不能借用发射者。 */
   /** 来源侧标签解析；动作、条件、Buff 和时间槽共用，不依赖某个领域宿主。 */
   readonly gameplayTagRegistry?: GameplayTagRegistry;

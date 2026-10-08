@@ -52,7 +52,7 @@ const definition = {
                 parameters: {
                   target: 'caster',
                   markerId: 'buff_equipsuit_physuit_01',
-                  durationSeconds: { kind: 'blackboard', key: 'duration' },
+                  durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
                 },
               },
               next: null,
@@ -62,9 +62,9 @@ const definition = {
                 kind: 'dealDamage',
                 parameters: {
                   damageType: 'physical',
-                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                  attackScale: { kind: 'valueNode', nodeId: 'data_2' },
                   tags: [],
-                  stagger: { kind: 'blackboard', key: 'poise' },
+                  stagger: { kind: 'valueNode', nodeId: 'data_3' },
                 },
               },
               next: 'setGlobalCooldown_1',
@@ -72,16 +72,7 @@ const definition = {
             conditional_3: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'not',
-                    condition: {
-                      kind: 'globalCooldownPresent',
-                      target: 'buffOwner',
-                      markerId: 'buff_equipsuit_physuit_01',
-                    },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
                 whenTrue: { $sequence: 'dealDamage_2' },
               },
               next: null,
@@ -89,16 +80,35 @@ const definition = {
             conditional_4: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/PhysicalStatus'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
                 whenTrue: { $sequence: 'conditional_3' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
+            data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+            data_3: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+            data_4: {
+              type: 'boolean',
+              expression: {
+                kind: 'globalCooldownPresent',
+                target: 'buffOwner',
+                markerId: 'buff_equipsuit_physuit_01',
+              },
+            },
+            data_5: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+            },
+            data_6: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/PhysicalStatus'],
+              },
             },
           },
         },

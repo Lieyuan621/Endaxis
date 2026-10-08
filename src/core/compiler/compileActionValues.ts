@@ -1,9 +1,6 @@
+import type { CompiledValueInput } from './compiledGraphData.ts';
 /** 动作、Buff 与技能宿主共用的等级数值解析。 */
-import type {
-  LevelValues,
-  ActionValueOperand,
-  StatusModifierDefinition,
-} from '../game-data/operatorDefinition';
+import type { LevelValues, StatusModifierDefinition } from '../game-data/operatorDefinition';
 import type { ResolvedStatusModifier } from './combatProgram';
 export function resolveLevelValue(value: LevelValues, skillLevel: number, path: string): number {
   if (skillLevel === 0 && typeof value !== 'number') {
@@ -18,10 +15,10 @@ export function resolveLevelValue(value: LevelValues, skillLevel: number, path: 
 }
 
 export function resolveLevelValueOrActionOperand(
-  value: LevelValues | ActionValueOperand,
+  value: LevelValues | CompiledValueInput,
   skillLevel: number,
   path: string,
-): number | ActionValueOperand {
+): number | CompiledValueInput {
   if (typeof value === 'object' && 'kind' in value) return value;
   return resolveLevelValue(value as LevelValues, skillLevel, path);
 }
@@ -69,7 +66,7 @@ export function resolveStatusModifier(
 /** 黑板作用域的等级参数解析；图与旧来源共用，不创建子程序。 */
 export function compileActionScopeParameters<Key extends string | undefined>(
   parameters: Omit<
-    import('../game-data/operatorDefinition').CombatStepParameters['withActionBlackboardScope'],
+    import('./compiledGraphData').CompiledStepParameters['withActionBlackboardScope'],
     'scopeKey'
   > & { readonly scopeKey: Key },
   skillLevel: number,

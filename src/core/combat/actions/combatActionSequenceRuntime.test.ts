@@ -27,8 +27,9 @@ const compileGraphEntry = (
   revision: string,
   entry: string | null,
   nodes: Record<string, ActionGraphNode>,
+  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => ({
-  graph: createActionGraphCompilation({ nodes }, 1, revision).compileAll(),
+  graph: createActionGraphCompilation({ nodes, dataNodes }, 1, revision).compileAll(),
   entry,
   callSite: revision,
 });
@@ -36,6 +37,7 @@ const compileGraphEntry = (
 const chainEntry = (
   revision: string,
   actions: readonly ActionGraphStep[],
+  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => {
   const nodes: Record<string, ActionGraphNode> = {};
   actions.forEach((action, index) => {
@@ -44,7 +46,7 @@ const chainEntry = (
       next: index + 1 < actions.length ? `step-${index + 1}` : null,
     };
   });
-  return compileGraphEntry(revision, actions.length === 0 ? null : 'step-0', nodes);
+  return compileGraphEntry(revision, actions.length === 0 ? null : 'step-0', nodes, dataNodes);
 };
 
 function createFixture(conditionResult = true) {
@@ -516,28 +518,33 @@ describe('CombatActionSequenceRuntime', () => {
   });
 
   it('恢复同步循环、结束时间轴和可操作边界步骤，不重放已执行动作', () => {
-    const definition = compileGraphEntry('restored-counted-loop', 'repeat', {
-      repeat: {
-        action: {
-          kind: 'repeatByActionValue',
-          parameters: { count: { kind: 'blackboard', key: 'count' } },
-          body: { $sequence: 'hit' },
+    const definition = compileGraphEntry(
+      'restored-counted-loop',
+      'repeat',
+      {
+        repeat: {
+          action: {
+            kind: 'repeatByActionValue',
+            parameters: { count: { kind: 'valueNode', nodeId: 'input_1' } },
+            body: { $sequence: 'hit' },
+          },
+          next: 'boundary',
         },
-        next: 'boundary',
+        boundary: {
+          action: { kind: 'reachSkillOperableBoundary', parameters: { skillIds: ['native'] } },
+          next: 'finish',
+        },
+        finish: {
+          action: { kind: 'finishTimeline', parameters: {} },
+          next: null,
+        },
+        hit: {
+          action: operation('hit'),
+          next: null,
+        },
       },
-      boundary: {
-        action: { kind: 'reachSkillOperableBoundary', parameters: { skillIds: ['native'] } },
-        next: 'finish',
-      },
-      finish: {
-        action: { kind: 'finishTimeline', parameters: {} },
-        next: null,
-      },
-      hit: {
-        action: operation('hit'),
-        next: null,
-      },
-    });
+      { input_1: { type: 'number', expression: { kind: 'blackboard', key: 'count' } } },
+    );
     const bind = () => {
       const execute = vi.fn(() => true);
       const finish = vi.fn();
@@ -655,33 +662,41 @@ describe('CombatActionSequenceRuntime', () => {
   });
 
   it('重新绑定分支循环后只继续 Tick，不重放 Execute 或重新求值分支', () => {
-    const definition = compileGraphEntry('restored-branch-loop', 'branch', {
-      branch: {
-        action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'combatActive' }, alwaysNext: true },
-          whenTrue: { $sequence: 'tick-loop' },
-          whenFalse: { $sequence: 'wrong' },
+    const definition = compileGraphEntry(
+      'restored-branch-loop',
+      'branch',
+      {
+        branch: {
+          action: {
+            kind: 'conditional',
+            parameters: {
+              condition: { kind: 'conditionNode', nodeId: 'input_1' },
+              alwaysNext: true,
+            },
+            whenTrue: { $sequence: 'tick-loop' },
+            whenFalse: { $sequence: 'wrong' },
+          },
+          next: null,
         },
-        next: null,
-      },
-      'tick-loop': {
-        action: {
-          kind: 'repeatEachTick',
-          parameters: {},
-          body: { $sequence: 'tick' },
+        'tick-loop': {
+          action: {
+            kind: 'repeatEachTick',
+            parameters: {},
+            body: { $sequence: 'tick' },
+          },
+          next: null,
         },
-        next: null,
+        tick: {
+          action: operation('tick'),
+          next: null,
+        },
+        wrong: {
+          action: operation('wrong-branch'),
+          next: null,
+        },
       },
-      tick: {
-        action: operation('tick'),
-        next: null,
-      },
-      wrong: {
-        action: operation('wrong-branch'),
-        next: null,
-      },
-    });
+      { input_1: { type: 'boolean', expression: { kind: 'combatActive' } } },
+    );
     const original = createFixture(true);
     const action = original.runtime.createSequence(definition);
     action.execute({});
@@ -702,28 +717,36 @@ describe('CombatActionSequenceRuntime', () => {
   it('从父序列保存分支内的循环进度，后续执行不会修改已保存的数据', () => {
     const { runtime } = createFixture();
     const action = runtime.createSequence(
-      compileGraphEntry('saved-branch-progress', 'branch', {
-        branch: {
-          action: {
-            kind: 'conditional',
-            parameters: { condition: { kind: 'combatActive' }, alwaysNext: true },
-            whenTrue: { $sequence: 'loop' },
+      compileGraphEntry(
+        'saved-branch-progress',
+        'branch',
+        {
+          branch: {
+            action: {
+              kind: 'conditional',
+              parameters: {
+                condition: { kind: 'conditionNode', nodeId: 'input_1' },
+                alwaysNext: true,
+              },
+              whenTrue: { $sequence: 'loop' },
+            },
+            next: null,
           },
-          next: null,
-        },
-        loop: {
-          action: {
-            kind: 'repeatEachTick',
-            parameters: {},
-            body: { $sequence: 'frame' },
+          loop: {
+            action: {
+              kind: 'repeatEachTick',
+              parameters: {},
+              body: { $sequence: 'frame' },
+            },
+            next: null,
           },
-          next: null,
+          frame: {
+            action: operation('frame'),
+            next: null,
+          },
         },
-        frame: {
-          action: operation('frame'),
-          next: null,
-        },
-      }),
+        { input_1: { type: 'boolean', expression: { kind: 'combatActive' } } },
+      ),
     );
     action.execute({});
     const branch = action.runtimeState.nodes.get('branch');
@@ -818,30 +841,40 @@ describe('CombatActionSequenceRuntime', () => {
       'owner',
     );
     const listener = runtime.createSequence(
-      compileGraphEntry('gated-listener', 'listen', {
-        listen: {
-          action: {
-            kind: 'listenForCombatEvents',
-            parameters: {
-              responses: [
-                {
-                  key: 'gated',
-                  event: { kind: 'abilityEvent', event: 'addedBuff' },
-                  phase: 'dataAction',
-                  priority: 0,
-                  condition: { kind: 'probability', probability: { kind: 'constant', value: 1 } },
-                  sequence: { $sequence: 'respond' },
-                },
-              ],
+      compileGraphEntry(
+        'gated-listener',
+        'listen',
+        {
+          listen: {
+            action: {
+              kind: 'listenForCombatEvents',
+              parameters: {
+                responses: [
+                  {
+                    key: 'gated',
+                    event: { kind: 'abilityEvent', event: 'addedBuff' },
+                    phase: 'dataAction',
+                    priority: 0,
+                    condition: { kind: 'conditionNode', nodeId: 'input_1' },
+                    sequence: { $sequence: 'respond' },
+                  },
+                ],
+              },
             },
+            next: null,
           },
-          next: null,
+          respond: {
+            action: operation('response'),
+            next: null,
+          },
         },
-        respond: {
-          action: operation('response'),
-          next: null,
+        {
+          input_1: {
+            type: 'boolean',
+            expression: { kind: 'probability', probability: { kind: 'constant', value: 1 } },
+          },
         },
-      }),
+      ),
     );
     const emit = () =>
       emitAddedBuff({ sourceId: 'owner', targetId: 'owner', buffId: 'signal', buffTags: [] });
@@ -1074,47 +1107,57 @@ describe('CombatActionSequenceRuntime', () => {
       'owner',
     );
     const listener = runtime.createSequence(
-      compileGraphEntry('reentry-guard-listener', 'listen', {
-        listen: {
-          action: {
-            kind: 'listenForCombatEvents',
-            parameters: {
-              responses: [
-                {
-                  key: 'reentry',
-                  event: { kind: 'abilityEvent', event: 'addedBuff' },
-                  sequence: { $sequence: 'guard' },
-                },
-              ],
-            },
-          },
-          next: null,
-        },
-        guard: {
-          action: {
-            kind: 'conditional',
-            parameters: {
-              condition: {
-                kind: 'buffIdStackCompare',
-                target: 'caster',
-                buffIds: ['signal'],
-                operator: 'greaterOrEqual',
-                value: { kind: 'constant', value: 1 },
+      compileGraphEntry(
+        'reentry-guard-listener',
+        'listen',
+        {
+          listen: {
+            action: {
+              kind: 'listenForCombatEvents',
+              parameters: {
+                responses: [
+                  {
+                    key: 'reentry',
+                    event: { kind: 'abilityEvent', event: 'addedBuff' },
+                    sequence: { $sequence: 'guard' },
+                  },
+                ],
               },
             },
-            whenTrue: { $sequence: 'emit' },
+            next: null,
           },
-          next: null,
+          guard: {
+            action: {
+              kind: 'conditional',
+              parameters: {
+                condition: { kind: 'conditionNode', nodeId: 'input_1' },
+              },
+              whenTrue: { $sequence: 'emit' },
+            },
+            next: null,
+          },
+          emit: {
+            action: operation('emit'),
+            next: 'tail',
+          },
+          tail: {
+            action: operation('tail'),
+            next: null,
+          },
         },
-        emit: {
-          action: operation('emit'),
-          next: 'tail',
+        {
+          input_1: {
+            type: 'boolean',
+            expression: {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['signal'],
+              operator: 'greaterOrEqual',
+              value: { kind: 'constant', value: 1 },
+            },
+          },
         },
-        tail: {
-          action: operation('tail'),
-          next: null,
-        },
-      }),
+      ),
     );
     listener.execute({});
     emit('first');
@@ -1122,14 +1165,16 @@ describe('CombatActionSequenceRuntime', () => {
     expect(calls).toEqual([
       'check:first',
       'emit:first',
+      'check:nested',
       'tail:first',
       'check:second',
       'emit:second',
+      'check:nested',
       'tail:second',
     ]);
     listener.end({});
     emit('after-end');
-    expect(calls).toHaveLength(6);
+    expect(calls).toHaveLength(8);
   });
 
   it.each([
@@ -1218,36 +1263,41 @@ describe('CombatActionSequenceRuntime', () => {
     expect(
       runtime
         .createSequence(
-          compileGraphEntry('single-target-isolation', 'loop', {
-            loop: {
-              action: {
-                kind: 'forEachContextTarget',
-                parameters: { target: 'enemy' },
-                body: { $sequence: 'guard' },
+          compileGraphEntry(
+            'single-target-isolation',
+            'loop',
+            {
+              loop: {
+                action: {
+                  kind: 'forEachContextTarget',
+                  parameters: { target: 'enemy' },
+                  body: { $sequence: 'guard' },
+                },
+                next: 'outside',
               },
-              next: 'outside',
-            },
-            guard: {
-              action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'combatActive' } },
-                whenTrue: { $sequence: 'guarded' },
+              guard: {
+                action: {
+                  kind: 'conditional',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'input_1' } },
+                  whenTrue: { $sequence: 'guarded' },
+                },
+                next: 'inside',
               },
-              next: 'inside',
+              guarded: {
+                action: operation('guarded'),
+                next: null,
+              },
+              inside: {
+                action: operation('inside-after-failed-guard'),
+                next: null,
+              },
+              outside: {
+                action: operation('outside-after-loop'),
+                next: null,
+              },
             },
-            guarded: {
-              action: operation('guarded'),
-              next: null,
-            },
-            inside: {
-              action: operation('inside-after-failed-guard'),
-              next: null,
-            },
-            outside: {
-              action: operation('outside-after-loop'),
-              next: null,
-            },
-          }),
+            { input_1: { type: 'boolean', expression: { kind: 'combatActive' } } },
+          ),
         )
         .executeInstant({}),
     ).toBe(true);
@@ -1284,32 +1334,37 @@ describe('CombatActionSequenceRuntime', () => {
     expect(
       runtime
         .createSequence(
-          compileGraphEntry('per-target-failure-skip', 'loop', {
-            loop: {
-              action: {
-                kind: 'forEachContextTarget',
-                parameters: { contextKey: 'items' },
-                body: { $sequence: 'guard' },
+          compileGraphEntry(
+            'per-target-failure-skip',
+            'loop',
+            {
+              loop: {
+                action: {
+                  kind: 'forEachContextTarget',
+                  parameters: { contextKey: 'items' },
+                  body: { $sequence: 'guard' },
+                },
+                next: 'after',
               },
-              next: 'after',
-            },
-            guard: {
-              action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'combatActive' } },
-                whenTrue: { $sequence: 'accepted' },
+              guard: {
+                action: {
+                  kind: 'conditional',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'input_1' } },
+                  whenTrue: { $sequence: 'accepted' },
+                },
+                next: null,
               },
-              next: null,
+              accepted: {
+                action: operation('accepted'),
+                next: null,
+              },
+              after: {
+                action: operation('after'),
+                next: null,
+              },
             },
-            accepted: {
-              action: operation('accepted'),
-              next: null,
-            },
-            after: {
-              action: operation('after'),
-              next: null,
-            },
-          }),
+            { input_1: { type: 'boolean', expression: { kind: 'combatActive' } } },
+          ),
         )
         .executeInstant({}),
     ).toBe(true);
@@ -1601,37 +1656,42 @@ describe('CombatActionSequenceRuntime', () => {
     const fixture = createFixture(false);
     fixture.runtime
       .createSequence(
-        compileGraphEntry(`callback-boundary-${alwaysNext}`, 'scope', {
-          scope: {
-            action: {
-              kind: 'withActionBlackboardScope',
-              parameters: {
-                scopeKey: 'callback',
-                initialValues: {},
-                inheritParent: true,
-                alwaysNext,
+        compileGraphEntry(
+          `callback-boundary-${alwaysNext}`,
+          'scope',
+          {
+            scope: {
+              action: {
+                kind: 'withActionBlackboardScope',
+                parameters: {
+                  scopeKey: 'callback',
+                  initialValues: {},
+                  inheritParent: true,
+                  alwaysNext,
+                },
+                body: { $sequence: 'guard' },
               },
-              body: { $sequence: 'guard' },
+              next: 'after',
             },
-            next: 'after',
-          },
-          guard: {
-            action: {
-              kind: 'conditional',
-              parameters: { condition: { kind: 'combatActive' } },
-              whenTrue: { $sequence: 'blocked' },
+            guard: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'input_1' } },
+                whenTrue: { $sequence: 'blocked' },
+              },
+              next: null,
             },
-            next: null,
+            blocked: {
+              action: operation('blocked'),
+              next: null,
+            },
+            after: {
+              action: operation('after'),
+              next: null,
+            },
           },
-          blocked: {
-            action: operation('blocked'),
-            next: null,
-          },
-          after: {
-            action: operation('after'),
-            next: null,
-          },
-        }),
+          { input_1: { type: 'boolean', expression: { kind: 'combatActive' } } },
+        ),
       )
       .executeInstant({});
     expect(fixture.operations.evaluate).toHaveBeenCalledTimes(1);
@@ -1660,58 +1720,63 @@ describe('CombatActionSequenceRuntime', () => {
     expect(
       runtime
         .createSequence(
-          compileGraphEntry('sibling-callback-shared-board', 'first', {
-            first: {
-              action: {
-                kind: 'withActionBlackboardScope',
-                parameters: {
-                  scopeKey: 'first',
-                  lifetime: 'execution',
-                  alwaysNext: true,
-                  shareParentBlackboard: true,
-                  initialValues: {},
-                  inheritParent: true,
+          compileGraphEntry(
+            'sibling-callback-shared-board',
+            'first',
+            {
+              first: {
+                action: {
+                  kind: 'withActionBlackboardScope',
+                  parameters: {
+                    scopeKey: 'first',
+                    lifetime: 'execution',
+                    alwaysNext: true,
+                    shareParentBlackboard: true,
+                    initialValues: {},
+                    inheritParent: true,
+                  },
+                  body: { $sequence: 'write' },
                 },
-                body: { $sequence: 'write' },
+                next: 'second',
               },
-              next: 'second',
-            },
-            second: {
-              action: {
-                kind: 'withActionBlackboardScope',
-                parameters: {
-                  scopeKey: 'second',
-                  lifetime: 'execution',
-                  alwaysNext: true,
-                  shareParentBlackboard: true,
-                  initialValues: {},
-                  inheritParent: true,
+              second: {
+                action: {
+                  kind: 'withActionBlackboardScope',
+                  parameters: {
+                    scopeKey: 'second',
+                    lifetime: 'execution',
+                    alwaysNext: true,
+                    shareParentBlackboard: true,
+                    initialValues: {},
+                    inheritParent: true,
+                  },
+                  body: { $sequence: 'read' },
                 },
-                body: { $sequence: 'read' },
+                next: null,
               },
-              next: null,
-            },
-            write: {
-              action: operation('write'),
-              next: 'unreachable-guard',
-            },
-            'unreachable-guard': {
-              action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'combatActive' } },
-                whenTrue: { $sequence: 'unreachable' },
+              write: {
+                action: operation('write'),
+                next: 'unreachable-guard',
               },
-              next: null,
+              'unreachable-guard': {
+                action: {
+                  kind: 'conditional',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'input_1' } },
+                  whenTrue: { $sequence: 'unreachable' },
+                },
+                next: null,
+              },
+              unreachable: {
+                action: operation('unreachable'),
+                next: null,
+              },
+              read: {
+                action: operation('read'),
+                next: null,
+              },
             },
-            unreachable: {
-              action: operation('unreachable'),
-              next: null,
-            },
-            read: {
-              action: operation('read'),
-              next: null,
-            },
-          }),
+            { input_1: { type: 'boolean', expression: { kind: 'combatActive' } } },
+          ),
         )
         .executeInstant({}),
     ).toBe(true);
@@ -1796,33 +1861,43 @@ describe('CombatActionSequenceRuntime', () => {
     );
     runtime
       .createSequence(
-        compileGraphEntry('counted-repeat-scopes', 'repeat', {
-          repeat: {
-            action: {
-              kind: 'repeatByActionValue',
-              parameters: { count: { kind: 'blackboard', key: 'projectile_count' } },
-              body: { $sequence: 'scope' },
-            },
-            next: null,
-          },
-          scope: {
-            action: {
-              kind: 'withActionBlackboardScope',
-              parameters: {
-                scopeKey: 'projectile:reach',
-                lifetime: 'execution',
-                initialValues: {},
-                inheritParent: true,
+        compileGraphEntry(
+          'counted-repeat-scopes',
+          'repeat',
+          {
+            repeat: {
+              action: {
+                kind: 'repeatByActionValue',
+                parameters: { count: { kind: 'valueNode', nodeId: 'input_1' } },
+                body: { $sequence: 'scope' },
               },
-              body: { $sequence: 'reach' },
+              next: null,
             },
-            next: null,
+            scope: {
+              action: {
+                kind: 'withActionBlackboardScope',
+                parameters: {
+                  scopeKey: 'projectile:reach',
+                  lifetime: 'execution',
+                  initialValues: {},
+                  inheritParent: true,
+                },
+                body: { $sequence: 'reach' },
+              },
+              next: null,
+            },
+            reach: {
+              action: operation('reach'),
+              next: null,
+            },
           },
-          reach: {
-            action: operation('reach'),
-            next: null,
+          {
+            input_1: {
+              type: 'number',
+              expression: { kind: 'blackboard', key: 'projectile_count' },
+            },
           },
-        }),
+        ),
       )
       .executeInstant({});
 
@@ -1849,20 +1924,25 @@ describe('CombatActionSequenceRuntime', () => {
 
     runtime
       .createSequence(
-        compileGraphEntry('counted-repeat-prepare', 'repeat', {
-          repeat: {
-            action: {
-              kind: 'repeatByActionValue',
-              parameters: { count: { kind: 'blackboard', key: 'count' } },
-              body: { $sequence: 'prepared' },
+        compileGraphEntry(
+          'counted-repeat-prepare',
+          'repeat',
+          {
+            repeat: {
+              action: {
+                kind: 'repeatByActionValue',
+                parameters: { count: { kind: 'valueNode', nodeId: 'input_1' } },
+                body: { $sequence: 'prepared' },
+              },
+              next: null,
             },
-            next: null,
+            prepared: {
+              action: operation('prepared'),
+              next: null,
+            },
           },
-          prepared: {
-            action: operation('prepared'),
-            next: null,
-          },
-        }),
+          { input_1: { type: 'number', expression: { kind: 'blackboard', key: 'count' } } },
+        ),
       )
       .executeInstant({});
   });
@@ -1956,27 +2036,37 @@ describe('CombatActionSequenceRuntime', () => {
 
     fixture.runtime
       .createSequence(
-        compileGraphEntry('conditional-branches', 'branch', {
-          branch: {
-            action: {
-              kind: 'conditional',
-              parameters: {
-                condition: { kind: 'contextFlagEquals', flag: 'enabled', value: true },
+        compileGraphEntry(
+          'conditional-branches',
+          'branch',
+          {
+            branch: {
+              action: {
+                kind: 'conditional',
+                parameters: {
+                  condition: { kind: 'conditionNode', nodeId: 'input_1' },
+                },
+                whenTrue: { $sequence: 'true' },
+                whenFalse: { $sequence: 'false' },
               },
-              whenTrue: { $sequence: 'true' },
-              whenFalse: { $sequence: 'false' },
+              next: null,
             },
-            next: null,
+            true: {
+              action: operation('true'),
+              next: null,
+            },
+            false: {
+              action: operation('false'),
+              next: null,
+            },
           },
-          true: {
-            action: operation('true'),
-            next: null,
+          {
+            input_1: {
+              type: 'boolean',
+              expression: { kind: 'contextFlagEquals', flag: 'enabled', value: true },
+            },
           },
-          false: {
-            action: operation('false'),
-            next: null,
-          },
-        }),
+        ),
       )
       .executeInstant({});
 
@@ -2002,20 +2092,25 @@ describe('CombatActionSequenceRuntime', () => {
       { blackboard: new ActionBlackboard() },
     );
     const action = runtime.createSequence(
-      compileGraphEntry('held-branch-action', 'branch', {
-        branch: {
-          action: {
-            kind: 'conditional',
-            parameters: { condition: { kind: 'combatActive' } },
-            whenTrue: { $sequence: 'held' },
+      compileGraphEntry(
+        'held-branch-action',
+        'branch',
+        {
+          branch: {
+            action: {
+              kind: 'conditional',
+              parameters: { condition: { kind: 'conditionNode', nodeId: 'input_1' } },
+              whenTrue: { $sequence: 'held' },
+            },
+            next: null,
           },
-          next: null,
+          held: {
+            action: operation('held'),
+            next: null,
+          },
         },
-        held: {
-          action: operation('held'),
-          next: null,
-        },
-      }),
+        { input_1: { type: 'boolean', expression: { kind: 'combatActive' } } },
+      ),
     );
 
     expect(action.tryExecute({})).toBe(true);
@@ -2031,27 +2126,37 @@ describe('CombatActionSequenceRuntime', () => {
 
     const result = fixture.runtime
       .createSequence(
-        compileGraphEntry('always-next-failure', 'guard', {
-          guard: {
-            action: {
-              kind: 'conditional',
-              parameters: {
-                condition: { kind: 'contextFlagEquals', flag: 'enabled', value: true },
-                alwaysNext: true,
+        compileGraphEntry(
+          'always-next-failure',
+          'guard',
+          {
+            guard: {
+              action: {
+                kind: 'conditional',
+                parameters: {
+                  condition: { kind: 'conditionNode', nodeId: 'input_1' },
+                  alwaysNext: true,
+                },
+                whenTrue: { $sequence: 'true' },
               },
-              whenTrue: { $sequence: 'true' },
+              next: 'after',
             },
-            next: 'after',
+            true: {
+              action: operation('true'),
+              next: null,
+            },
+            after: {
+              action: operation('after'),
+              next: null,
+            },
           },
-          true: {
-            action: operation('true'),
-            next: null,
+          {
+            input_1: {
+              type: 'boolean',
+              expression: { kind: 'contextFlagEquals', flag: 'enabled', value: true },
+            },
           },
-          after: {
-            action: operation('after'),
-            next: null,
-          },
-        }),
+        ),
       )
       .executeInstant({});
 
@@ -2152,38 +2257,48 @@ describe('CombatActionSequenceRuntime', () => {
   it('原生 Channeling 忽略子序列的 false 返回值并继续后续扫描', () => {
     const fixture = createFixture(false);
     const action = fixture.runtime.createSequence(
-      compileGraphEntry('native-channeling-guard', 'loop', {
-        loop: {
-          action: {
-            kind: 'repeatEachTick',
-            parameters: {
-              nativeChanneling: {
-                executeEachFrame: false,
-                triggerIntervalSeconds: 0.1,
-                maxCountPerTarget: -1,
-                targetTriggerIntervalSeconds: 0,
+      compileGraphEntry(
+        'native-channeling-guard',
+        'loop',
+        {
+          loop: {
+            action: {
+              kind: 'repeatEachTick',
+              parameters: {
+                nativeChanneling: {
+                  executeEachFrame: false,
+                  triggerIntervalSeconds: 0.1,
+                  maxCountPerTarget: -1,
+                  targetTriggerIntervalSeconds: 0,
+                },
               },
+              body: { $sequence: 'guard' },
             },
-            body: { $sequence: 'guard' },
+            next: null,
           },
-          next: null,
-        },
-        guard: {
-          action: {
-            kind: 'conditional',
-            parameters: {
-              condition: { kind: 'contextFlagEquals', flag: 'enabled', value: true },
-              alwaysNext: false,
+          guard: {
+            action: {
+              kind: 'conditional',
+              parameters: {
+                condition: { kind: 'conditionNode', nodeId: 'input_1' },
+                alwaysNext: false,
+              },
+              whenTrue: { $sequence: 'unreachable' },
             },
-            whenTrue: { $sequence: 'unreachable' },
+            next: null,
           },
-          next: null,
+          unreachable: {
+            action: operation('unreachable'),
+            next: null,
+          },
         },
-        unreachable: {
-          action: operation('unreachable'),
-          next: null,
+        {
+          input_1: {
+            type: 'boolean',
+            expression: { kind: 'contextFlagEquals', flag: 'enabled', value: true },
+          },
         },
-      }),
+      ),
     );
 
     expect(() => {
@@ -2358,14 +2473,18 @@ describe('CombatActionSequenceRuntime', () => {
       blackboard: new ActionBlackboard(),
       requestTimelineJump,
     });
-    const condition = { kind: 'combatActive' } as const;
+    const condition = { kind: 'conditionNode', nodeId: 'active' } as const;
     const action = runtime.createSequence(
-      chainEntry('conditional-jump', [
-        {
-          kind: 'jumpTimeline',
-          parameters: { destinationFrame: 89, condition },
-        },
-      ]),
+      chainEntry(
+        'conditional-jump',
+        [
+          {
+            kind: 'jumpTimeline',
+            parameters: { destinationFrame: 89, condition },
+          },
+        ],
+        { active: { type: 'boolean', expression: { kind: 'combatActive' } } },
+      ),
     );
 
     action.execute({});

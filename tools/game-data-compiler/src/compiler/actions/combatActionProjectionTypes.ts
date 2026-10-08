@@ -3,12 +3,12 @@ import type {
   CombatStepParameters,
   ActionSwitchOptionDefinition,
   CombatEventResponseDefinition,
-} from '../../../../../packages/game-data-contract/src/actions.ts';
+} from '../intermediateDefinitions.ts';
 import type {
   ActionValueOperand,
   CombatCondition,
   TimeScaleCurveDefinition,
-} from '../../../../../packages/game-data-contract/src/conditions.ts';
+} from '../intermediateDefinitions.ts';
 import type { AbilityEntityTargetQuery } from '../../../../../packages/game-data-contract/src/skills.ts';
 
 /**
@@ -124,7 +124,7 @@ export type CompiledBuffConditionSource =
       readonly value: CompiledActionValueOperandSource;
     })
   | (Condition<'entityTagMatch'> & { readonly target: BuffQueryTarget })
-  | (Condition<'poiseCompare'> & { readonly target: 'enemy' })
+  | Condition<'poiseCompare'>
   | (Pick<Condition<'all' | 'any'>, 'kind'> & {
       readonly conditions: readonly CompiledBuffConditionSource[];
     })
@@ -263,7 +263,7 @@ type HealParameters = (
   );
 
 export type CompiledBuffStepSource =
-  | import('../../../../../packages/game-data-contract/src/actionGraph.ts').ActionGraphResourceCall
+  | import('../intermediateDefinitions.ts').ActionGraphResourceCall
   | Step<'applyKnockDown'>
   | Step<'applyPhysicalInfliction'>
   | Step<'findCharacterTeamTargets'>
@@ -361,7 +361,7 @@ export type CompiledBuffStepSource =
       readonly callbacks: readonly {
         readonly event: 'hit' | 'block' | 'reach' | 'finish';
         readonly skill: {
-          readonly actionGraph: import('../../../../../packages/game-data-contract/src/actionGraph.ts').ActionGraphResourceDefinition;
+          readonly actionGraph: import('../intermediateDefinitions.ts').ActionGraphResourceDefinition;
           readonly skillId: string;
           readonly nativeSkillType: import('../../../../../packages/game-data-contract/src/index.ts').NativeSkillType;
           readonly naturalDurationFrames: number;

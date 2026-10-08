@@ -154,7 +154,7 @@ function compileConditionLeaf(
   if (
     context.actionTargetTarget === 'enemy' &&
     !(
-      context.damageModifierContext &&
+      context.modifierContext === 'damage' &&
       ['damageType', 'damageTypeMask', 'skillCastId'].includes(condition.kind)
     ) &&
     ![
@@ -583,7 +583,9 @@ function compileConditionLeaf(
     if (
       condition.targetSource === 'Target' &&
       condition.targetGroupKey === '' &&
-      (context.actionTargetTarget === 'eventSource' || context.actionTargetTarget === 'eventTarget')
+      (context.actionTargetTarget === 'eventSource' ||
+        context.actionTargetTarget === 'eventTarget' ||
+        context.actionTargetTarget === 'actionInputTarget')
     ) {
       return {
         kind: 'actionInputTargetIdentityMatch',
@@ -669,7 +671,9 @@ function compileConditionLeaf(
         ? ('controlledOperator' as const)
         : condition.targetSource === 'Target' && context.actionTargetTarget === 'enemy'
           ? ('enemy' as const)
-          : condition.targetSource === 'Target' && context.actionTargetTarget === 'currentOperator'
+          : condition.targetSource === 'Target' &&
+              (context.actionTargetTarget === 'currentOperator' ||
+                context.actionTargetTarget === 'actionInputTarget')
             ? ('currentTarget' as const)
             : condition.targetSource === 'Owner' &&
                 condition.targetGroupKey === '' &&
@@ -1558,16 +1562,13 @@ function compileConditionLeaf(
     throw new Error(`${sourcePath}: unsupported event target Buff identity condition`);
   }
   if (condition.kind === 'poise') {
-    if (context.damageModifierContext && context.actionTargetTarget !== 'enemy') {
-      throw new Error(`${sourcePath}: damage modifier poise target is not the enemy`);
-    }
     if (condition.target.targetSource !== 'Target' || condition.target.targetGroupKey !== '')
       throw new Error(`${sourcePath}: unsupported poise condition target`);
     const operator = COMPARISON_OPERATORS[condition.comparison];
     if (operator === undefined) throw new Error(`${sourcePath}: unsupported poise comparison`);
     return {
       kind: 'poiseCompare',
-      target: 'enemy',
+      target: context.actionTargetTarget === 'actionInputTarget' ? 'currentTarget' : 'enemy',
       returnValueIfMissing: condition.returnValueIfMissing,
       operator,
       value: actionValueOperand(condition.value),

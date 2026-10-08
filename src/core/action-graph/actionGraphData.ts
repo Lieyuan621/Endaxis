@@ -1,187 +1,89 @@
-/** 数据连接的绑定与校验。只绑定表达式定义，不读取战斗状态，也不缓存求值结果。 */
+/** 数据图引用的查询与拓扑检查；不把节点展开回内联表达式。 */
 import type {
   ActionGraphDefinition,
   ActionGraphDataNode,
 } from '../../../packages/game-data-contract/src/actionGraph.ts';
 
-/** 只有契约明确声明的 ActionStringOperand 字段允许字符串接线。 */
-function actionStringField(kind: unknown): string | undefined {
-  switch (kind) {
-    case 'applyBuff':
-      return 'buffId';
-    case 'castSkillDuringAction':
-      return 'skillId';
-    case 'createTimedMarker':
-    case 'createAbilityEntityTimedMarker':
-      return 'markerId';
-  }
+export interface GraphDataReference {
+  readonly kind: 'valueNode' | 'conditionNode' | 'stringNode';
+  readonly nodeId: string;
 }
-
-function assertStringExpression(value: unknown, id: string): void {
-  if (typeof value === 'string' && value.length > 0) return;
-  if (
+export function isGraphDataReference(value: unknown): value is GraphDataReference {
+  return (
     value !== null &&
     typeof value === 'object' &&
-    !Array.isArray(value) &&
-    Object.keys(value).length === 1 &&
-    Object.hasOwn(value, 'blackboardKey') &&
-    'blackboardKey' in value &&
-    typeof value.blackboardKey === 'string' &&
-    value.blackboardKey.length > 0
-  )
+    'kind' in value &&
+    (value.kind === 'valueNode' || value.kind === 'conditionNode' || value.kind === 'stringNode')
+  );
+}
+export function graphDataReferenceType(reference: GraphDataReference): ActionGraphDataNode['type'] {
+  return reference.kind === 'valueNode'
+    ? 'number'
+    : reference.kind === 'conditionNode'
+      ? 'boolean'
+      : 'string';
+}
+export function graphDataNode(
+  graph: ActionGraphDefinition,
+  id: string,
+  type: ActionGraphDataNode['type'],
+): ActionGraphDataNode {
+  const node = graph.dataNodes?.[id];
+  if (!node) throw new Error(`missing ${type} data node: ${id}`);
+  if (node.type !== type) throw new Error(`data node ${id}: expected ${type}, got ${node.type}`);
+  return node;
+}
+/** 转接节点只沿引用寻址；返回操作本身，操作的子输入仍是引用。 */
+export function graphDataExpression(
+  graph: ActionGraphDefinition,
+  id: string,
+  type: ActionGraphDataNode['type'],
+): ActionGraphDataNode['expression'] {
+  const seen = new Set<string>();
+  while (true) {
+    if (seen.has(id)) throw new Error(`recursive data graph: ${id}`);
+    seen.add(id);
+    const expression = graphDataNode(graph, id, type).expression;
+    if (!isGraphDataReference(expression)) return expression;
+    if (graphDataReferenceType(expression) !== type)
+      throw new Error(`data node ${id}: expected ${type}`);
+    id = expression.nodeId;
+  }
+}
+/** 枚举当前图输入中的连线；独立资源的连线由其自己的图负责。 */
+export function visitGraphDataReferences(
+  value: unknown,
+  visit: (reference: GraphDataReference) => void,
+): void {
+  if (!value || typeof value !== 'object' || 'actionGraph' in value) return;
+  if (isGraphDataReference(value)) {
+    visit(value);
     return;
-  throw new Error(`data node ${id}: expected a non-empty string or string blackboard reference`);
+  }
+  for (const child of Object.values(value)) visitGraphDataReferences(child, visit);
 }
-
-export function createGraphDataResolver(graph: ActionGraphDefinition) {
-  const resolved = new Map<string, unknown>();
+export function validateGraphDataReferences(graph: ActionGraphDefinition): void {
   const visiting = new Set<string>();
-  function node(id: string, type: ActionGraphDataNode['type']): unknown {
-    if (!graph.dataNodes || !Object.hasOwn(graph.dataNodes, id))
-      throw new Error(`missing ${type} data node: ${id}`);
-    const definition = graph.dataNodes[id]!;
-    if (
-      !definition ||
-      (definition.type !== 'number' &&
-        definition.type !== 'boolean' &&
-        definition.type !== 'string')
-    )
-      throw new Error(`invalid data node: ${id}`);
-    if (definition.type !== type)
-      throw new Error(`data node ${id}: expected ${type}, got ${definition.type}`);
-    if (resolved.has(id)) return resolved.get(id);
-    if (visiting.has(id)) throw new Error(`recursive data graph: ${id}`);
-    visiting.add(id);
-    try {
-      const result = bind(definition.expression, type === 'string');
-      if (type === 'string') assertStringExpression(result, id);
-      resolved.set(id, result);
-      return result;
-    } finally {
-      visiting.delete(id);
-    }
-  }
-  function bind(value: unknown, stringInput?: boolean, parameterStringField?: string): unknown {
-    const result = bindValue(value, stringInput, parameterStringField);
-    if (stringInput === true) assertStringExpression(result, 'string input');
-    return result;
-  }
-  function bindValue(
-    value: unknown,
-    stringInput?: boolean,
-    parameterStringField?: string,
-  ): unknown {
-    if (value === null || typeof value !== 'object') return value;
-    if (
-      'kind' in value &&
-      (value.kind === 'conditionNode' || value.kind === 'valueNode' || value.kind === 'stringNode')
-    ) {
-      if (
-        !('nodeId' in value) ||
-        typeof value.nodeId !== 'string' ||
-        value.nodeId.length === 0 ||
-        !Object.hasOwn(value, 'kind') ||
-        !Object.hasOwn(value, 'nodeId') ||
-        Object.keys(value).length !== 2
-      )
-        throw new Error('invalid data node reference');
-      if (stringInput === true && value.kind !== 'stringNode')
-        throw new Error('string input expects a stringNode data reference');
-      if (value.kind === 'stringNode' && stringInput === false)
-        throw new Error('string data reference is only allowed in an ActionStringOperand input');
-      return node(
-        value.nodeId,
-        value.kind === 'conditionNode'
-          ? 'boolean'
-          : value.kind === 'stringNode'
-            ? 'string'
-            : 'number',
-      );
-    }
-    if ('actionGraph' in value) return value;
-    if (Array.isArray(value)) {
-      const result = value.map(item => bind(item, false));
-      return result.every((v, i) => v === value[i]) ? value : result;
-    }
-    const entries = Object.entries(value);
-    const kind = 'kind' in value ? value.kind : undefined;
-    const conditionStringField =
-      kind === 'timedMarkerPresent' || kind === 'abilityEntityTimedMarkerPresent'
-        ? 'markerId'
-        : undefined;
-    const result = entries.map(
-      ([key, item]) =>
-        [
-          key,
-          bind(
-            item,
-            key === parameterStringField || key === conditionStringField,
-            key === 'parameters' ? actionStringField(kind) : undefined,
-          ),
-        ] as const,
-    );
-    return result.every(([, item], i) => item === entries[i]![1])
-      ? value
-      : Object.fromEntries(result);
-  }
-  return { bind, node };
-}
-
-/** 编译与既有领域校验消费绑定后的表达式；多个输入共用定义对象，仍分别按需执行。 */
-export function resolveGraphData(graph: ActionGraphDefinition): ActionGraphDefinition {
-  const resolver = createGraphDataResolver(graph);
-  for (const [id, node] of Object.entries(graph.dataNodes ?? {})) {
-    if (
-      !id ||
-      !node ||
-      (node.type !== 'number' && node.type !== 'boolean' && node.type !== 'string')
-    )
-      throw new Error(`invalid data node: ${id}`);
-    resolver.node(id, node.type);
-  }
-  // 带随机或写值副作用的表达式只允许一个消费者。它仍在原调用位置和
-  // 短路分支中求值，不能用“共享节点”悄悄增加一次抽样或黑板写入。
-  const uses = new Map<string, number>();
-  function references(value: unknown): void {
-    if (!value || typeof value !== 'object' || 'actionGraph' in value) return;
-    if (
-      'kind' in value &&
-      (value.kind === 'conditionNode' ||
-        value.kind === 'valueNode' ||
-        value.kind === 'stringNode') &&
-      'nodeId' in value
-    ) {
-      const id = String(value.nodeId);
-      uses.set(id, (uses.get(id) ?? 0) + 1);
-      return;
-    }
-    Object.values(value).forEach(references);
-  }
-  Object.values(graph.nodes).forEach(node => references(node.action));
-  Object.values(graph.dataNodes ?? {}).forEach(node => references(node.expression));
-  function hasEffects(value: unknown): boolean {
-    if (!value || typeof value !== 'object') return false;
-    if (
-      'kind' in value &&
-      (value.kind === 'probability' || value.kind === 'buffBlackboardValueCompare')
-    )
-      return true;
-    return Object.values(value).some(hasEffects);
-  }
-  for (const [id, count] of uses) {
-    const node = graph.dataNodes?.[id];
-    if (node && count > 1 && hasEffects(resolver.node(id, node.type)))
-      throw new Error(`data node ${id}: 有副作用的条件不能连接到多个输入，请创建独立条件`);
-  }
-  return {
-    nodes: Object.fromEntries(
-      Object.entries(graph.nodes).map(([id, node]) => [
-        id,
-        {
-          ...node,
-          action: resolver.bind(node.action, false) as typeof node.action,
-        },
-      ]),
-    ),
+  const complete = new Set<string>();
+  const visit = (reference: GraphDataReference): void => {
+    const node = graphDataNode(graph, reference.nodeId, graphDataReferenceType(reference));
+    if (complete.has(reference.nodeId)) return;
+    if (visiting.has(reference.nodeId))
+      throw new Error(`recursive data graph: ${reference.nodeId}`);
+    visiting.add(reference.nodeId);
+    visitGraphDataReferences(node.expression, visit);
+    visiting.delete(reference.nodeId);
+    complete.add(reference.nodeId);
   };
+  for (const node of Object.values(graph.nodes)) visitGraphDataReferences(node.action, visit);
+  for (const [nodeId, node] of Object.entries(graph.dataNodes ?? {}))
+    visit({
+      kind:
+        node.type === 'boolean'
+          ? 'conditionNode'
+          : node.type === 'string'
+            ? 'stringNode'
+            : 'valueNode',
+      nodeId,
+    });
 }

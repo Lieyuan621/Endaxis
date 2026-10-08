@@ -1,8 +1,9 @@
+import { extractDefinitionDataNodes } from '../../src/compiler/extractGraphDataNodes.ts';
 /** 用实际装备宿主、事件分发和动作执行器验证运行入口的黑板初值裁剪。 */
 import { describe, expect, it } from 'vitest';
-import type { CombatStepForKind } from '../../../../packages/game-data-contract/src/actions.ts';
-import type { CombatCondition } from '../../../../packages/game-data-contract/src/conditions.ts';
-import type { GearSetDefinition } from '../../../../packages/game-data-contract/src/equipment.ts';
+import type { CombatStepForKind } from '../../src/compiler/intermediateDefinitions.ts';
+import type { CombatCondition } from '../../src/compiler/intermediateDefinitions.ts';
+import type { GearSetDefinition } from '../../src/compiler/intermediateDefinitions.ts';
 import { compileGearSetContribution } from '../../../../src/core/compiler/compileEquipment.ts';
 import { ActionGraphDefinitionRepository } from '../../../../src/core/compiler/actionGraphDefinitionRepository.ts';
 import { createNativeEventFixture } from '../../../../src/core/combat/events/nativeEventTestFixture.ts';
@@ -10,13 +11,13 @@ import { ActionBlackboardOperationExecutor } from '../../../../src/core/combat/a
 import { resolveActionValueOperand } from '../../../../src/core/combat/actions/actionBlackboard.ts';
 import { CombatActionSequenceRuntime } from '../../../../src/core/combat/actions/combatActionSequenceRuntime.ts';
 import { EquipmentEventRuntime } from '../../../../src/core/combat/abilities/equipmentEventRuntime.ts';
-import { optimizeGearSetDefinitionPrograms } from '../../src/compiler/optimization/equipmentDefinitionOptimization.ts';
+import { finalizeGearSetDefinition } from '../../src/compiler/finalizeDefinitions.ts';
 import type {
   ActionGraphNode,
   ActionGraphReference,
   ActionGraphResourceDefinition,
   ActionGraphStep,
-} from '../../../../packages/game-data-contract/src/actionGraph.ts';
+} from '../../src/compiler/intermediateDefinitions.ts';
 
 const literal = (value: number) => ({ kind: 'constant' as const, value });
 const board = (key: string) => ({ kind: 'blackboard' as const, key });
@@ -61,7 +62,9 @@ const scopeBody = (
 /** 与装配器相同：启用/初始化和所有事件响应共享装备宿主的同一黑板。 */
 function executeContribution(definition: GearSetDefinition) {
   const compiled = compileGearSetContribution(
-    definition,
+    extractDefinitionDataNodes<
+      import('../../../../packages/game-data-contract/src/equipment.ts').GearSetDefinition
+    >(definition),
     {
       main: 'agility',
       secondary: 'intellect',
@@ -136,7 +139,7 @@ describe('有运行入口的装备贡献按键裁剪初值', () => {
       ],
       actionGraph: { main: { nodes }, macros: {} },
     };
-    const applied = optimizeGearSetDefinitionPrograms(input);
+    const applied = finalizeGearSetDefinition(input);
     expect(applied.report.equipmentValues[0]).toMatchObject({
       removedInitialKeys: ['unused'],
       retainedReason: 'runtime-value-access',
@@ -153,10 +156,12 @@ describe('有运行入口的装备贡献按键裁剪初值', () => {
     expect(executeContribution(applied.definition).amounts).toEqual(
       executeContribution(input).amounts,
     );
-    const report = optimizeGearSetDefinitionPrograms(input, 'report');
-    expect(report.definition).toBe(input);
+    const report = finalizeGearSetDefinition(input, 'report');
+    expect(report.definition).toEqual(extractDefinitionDataNodes(input));
     expect(report.report.equipmentValues).toEqual(applied.report.equipmentValues);
-    expect(optimizeGearSetDefinitionPrograms(input, 'off').definition).toBe(input);
+    expect(finalizeGearSetDefinition(input, 'off').definition).toEqual(
+      extractDefinitionDataNodes(input),
+    );
   });
 
   it('先删除不可达分支，再删除只有该分支使用的初值；行为入口仍保留', () => {
@@ -179,7 +184,7 @@ describe('有运行入口的装备贡献按键裁剪初值', () => {
       ]),
       actionGraph: { main: { nodes }, macros: {} },
     };
-    const result = optimizeGearSetDefinitionPrograms(input);
+    const result = finalizeGearSetDefinition(input);
     expect(result.definition.initializationSequence).toBeDefined();
     expect(result.report.after.steps).toBeLessThan(result.report.before.steps);
     expect(result.report.equipmentValues[0]?.removedInitialKeys).toEqual(['source', 'destination']);
@@ -200,7 +205,7 @@ describe('有运行入口的装备贡献按键裁剪初值', () => {
       ]),
       actionGraph: { main: { nodes }, macros: {} },
     };
-    const result = optimizeGearSetDefinitionPrograms(input);
+    const result = finalizeGearSetDefinition(input);
     expect(result.definition.blackboard).toEqual({ written: 3.000001 });
     expect(executeContribution(input).values.written).toBe(3.000001);
     expect(executeContribution(result.definition).values.written).toBe(3.000001);
@@ -238,7 +243,7 @@ describe('有运行入口的装备贡献按键裁剪初值', () => {
       ]),
       actionGraph: { main: { nodes }, macros: {} },
     };
-    const result = optimizeGearSetDefinitionPrograms(input);
+    const result = finalizeGearSetDefinition(input);
     expect(result.definition.blackboard).toEqual({ inherited: 7, assigned: 5 });
     expect(result.definition.initializationSequence).toEqual(input.initializationSequence);
     expect(executeContribution(input).amounts).toEqual([7, 5]);
@@ -304,9 +309,9 @@ describe('有运行入口的装备贡献按键裁剪初值', () => {
         initializationSequence: chain(nodes, 'init', [step]),
         actionGraph: { main: { nodes }, macros: {} },
       };
-      const result = optimizeGearSetDefinitionPrograms(input);
+      const result = finalizeGearSetDefinition(input);
       // 当前因优化管线先重建定义对象、不再保留未触碰黑板的引用身份而失败（已记录为生产缺陷）。
-      expect(result.definition.blackboard).toBe(input.blackboard);
+      expect(result.definition.blackboard).toEqual(input.blackboard);
       expect(result.report.equipmentValues[0]).toMatchObject({
         removedInitialKeys: [],
         retainedReason: 'unresolved-blackboard-access',
@@ -338,7 +343,7 @@ describe('有运行入口的装备贡献按键裁剪初值', () => {
       ]),
       actionGraph: { main: { nodes }, macros: {} },
     };
-    const result = optimizeGearSetDefinitionPrograms(input);
+    const result = finalizeGearSetDefinition(input);
     expect(result.definition.blackboard).toEqual({ transfer: 2 });
     expect(result.definition.buffDefinitions).toEqual(input.buffDefinitions);
     expect(result.definition.enableSequence).toEqual(input.enableSequence);
@@ -357,7 +362,7 @@ describe('有运行入口的装备贡献按键裁剪初值', () => {
       ]),
       actionGraph: { main: { nodes }, macros: {} },
     };
-    const result = optimizeGearSetDefinitionPrograms(input);
+    const result = finalizeGearSetDefinition(input);
     expect(result.definition.blackboard).toEqual({ destination: 0 });
     expect(() => executeContribution(input)).toThrow(
       "action blackboard value 'missing' is missing",

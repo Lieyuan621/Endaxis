@@ -652,11 +652,18 @@ describe('operator upgrade compilation', () => {
                             buffId: 'persistent-buff',
                             target: 'caster',
                             blackboardAssignments: {
-                              attackIncrease: { kind: 'blackboard', key: 'attackIncrease' },
+                              attackIncrease: { kind: 'valueNode', nodeId: 'test_data_1' },
                             },
                           },
                         },
                         next: null,
+                      },
+                    },
+
+                    dataNodes: {
+                      test_data_1: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'attackIncrease' },
                       },
                     },
                   },
@@ -683,7 +690,13 @@ describe('operator upgrade compilation', () => {
               buffId: 'persistent-buff',
               target: 'caster',
               blackboardAssignments: {
-                attackIncrease: { kind: 'blackboard', key: 'attackIncrease' },
+                attackIncrease: expect.objectContaining({
+                  kind: 'valueNode',
+                  node: {
+                    type: 'number',
+                    expression: { kind: 'blackboard', key: 'attackIncrease' },
+                  },
+                }),
               },
             },
           },

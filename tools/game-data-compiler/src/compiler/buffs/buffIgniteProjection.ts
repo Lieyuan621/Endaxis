@@ -1,4 +1,4 @@
-import type { CombatStepParameters } from '../../../../../packages/game-data-contract/src/actions.ts';
+import type { CombatStepParameters } from '../intermediateDefinitions.ts';
 import type { BuffIgniteActionSource } from '../../source/buffActions.ts';
 import type { TargetReferenceSource } from '../../source/target.ts';
 import {

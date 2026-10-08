@@ -1,3 +1,4 @@
+import { numberInput, conditionInput } from '../../../test/compiledGraphInputs';
 import { describe, expect, it, vi } from 'vitest';
 import { ActionBlackboard } from './actionBlackboard';
 import { ActionBlackboardOperationExecutor } from './actionBlackboardOperationExecutor';
@@ -168,8 +169,8 @@ describe('ActionBlackboardOperationExecutor', () => {
             stage: 'finalNonConverted',
             useFloor: true,
             divisor: { kind: 'constant', value: 2 },
-            multiplier: { kind: 'blackboard', key: 'multiplier' },
-            base: { kind: 'blackboard', key: 'base' },
+            multiplier: numberInput({ kind: 'blackboard', key: 'multiplier' }),
+            base: numberInput({ kind: 'blackboard', key: 'base' }),
             targetKey: 'result',
           },
         },
@@ -196,7 +197,7 @@ describe('ActionBlackboardOperationExecutor', () => {
           attribute: { kind: 'specific', key: 'cryoAbnormalDamageIncrease' },
           stage: 'finalNonConverted',
           useFloor: false,
-          divisor: { kind: 'blackboard', key: 'missing' },
+          divisor: numberInput({ kind: 'blackboard', key: 'missing' }),
           multiplier: { kind: 'constant', value: 2 },
           base: { kind: 'constant', value: 3 },
           targetKey: 'result',
@@ -236,7 +237,7 @@ describe('ActionBlackboardOperationExecutor', () => {
             property: 'currentHealth',
             useFloor: true,
             divisor: { kind: 'constant', value: 4 },
-            multiplier: { kind: 'blackboard', key: 'multiplier' },
+            multiplier: numberInput({ kind: 'blackboard', key: 'multiplier' }),
             base: { kind: 'constant', value: 2 },
             targetKey: 'result',
           },
@@ -267,7 +268,7 @@ describe('ActionBlackboardOperationExecutor', () => {
       parameters: {
         target: 'actionOwner' as const,
         mode: 'maxHealthRatio' as const,
-        value: { kind: 'blackboard' as const, key: 'floor' },
+        value: numberInput({ kind: 'blackboard' as const, key: 'floor' }),
       },
     };
     const context = { blackboard, actionOwnerId: 'enemy' };
@@ -456,7 +457,7 @@ describe('ActionBlackboardOperationExecutor', () => {
             parameters: {
               key: 'result',
               operation,
-              left: { kind: 'blackboard', key: 'left' },
+              left: numberInput({ kind: 'blackboard', key: 'left' }),
               right: { kind: 'constant', value: right },
             },
           },
@@ -509,8 +510,8 @@ describe('ActionBlackboardOperationExecutor', () => {
         parameters: {
           key: 'finalScale',
           operation: 'add',
-          left: { kind: 'blackboard', key: 'base' },
-          right: { kind: 'blackboard', key: 'bonus' },
+          left: numberInput({ kind: 'blackboard', key: 'base' }),
+          right: numberInput({ kind: 'blackboard', key: 'bonus' }),
         },
       },
       { blackboard },
@@ -521,8 +522,8 @@ describe('ActionBlackboardOperationExecutor', () => {
         parameters: {
           key: 'finalScale',
           operation: 'multiply',
-          left: { kind: 'blackboard', key: 'finalScale' },
-          right: { kind: 'blackboard', key: 'finalRate' },
+          left: numberInput({ kind: 'blackboard', key: 'finalScale' }),
+          right: numberInput({ kind: 'blackboard', key: 'finalRate' }),
         },
       },
       { blackboard },
@@ -552,7 +553,7 @@ describe('ActionBlackboardOperationExecutor', () => {
           parameters: {
             key: 'result',
             operation: 'add',
-            left: { kind: 'blackboard', key: 'missing' },
+            left: numberInput({ kind: 'blackboard', key: 'missing' }),
             right: { kind: 'constant', value: 1 },
           },
         },
@@ -573,17 +574,17 @@ describe('ActionBlackboardOperationExecutor', () => {
           items: [
             {
               values: [10, 20, 30, 40],
-              column: { kind: 'blackboard', key: 'evenColumn' },
+              column: numberInput({ kind: 'blackboard', key: 'evenColumn' }),
               storeKey: 'evenResult',
             },
             {
               values: [10, 20, 30, 40],
-              column: { kind: 'blackboard', key: 'oddColumn' },
+              column: numberInput({ kind: 'blackboard', key: 'oddColumn' }),
               storeKey: 'oddResult',
             },
             {
               values: [10, 20, 30, 40],
-              column: { kind: 'blackboard', key: 'invalid' },
+              column: numberInput({ kind: 'blackboard', key: 'invalid' }),
               storeKey: 'untouched',
             },
           ],
@@ -679,7 +680,7 @@ describe('ActionBlackboardOperationExecutor', () => {
           parameters: {
             key: 'scale',
             operation: 'multiply',
-            left: { kind: 'blackboard', key: 'scale' },
+            left: numberInput({ kind: 'blackboard', key: 'scale' }),
             right: { kind: 'constant', value: multiplier },
           },
         },
@@ -706,7 +707,7 @@ describe('ActionBlackboardOperationExecutor', () => {
         parameters: {
           key: 'copy',
           operation: 'assign',
-          value: { kind: 'blackboard', key: 'scale' },
+          value: numberInput({ kind: 'blackboard', key: 'scale' }),
         },
       },
       copied,
@@ -774,8 +775,8 @@ describe('ActionBlackboardOperationExecutor', () => {
         parameters: {
           key: 'scale',
           operation: 'multiply',
-          left: { kind: 'blackboard', key: 'scale' },
-          right: { kind: 'blackboard', key: 'artsFactor' },
+          left: numberInput({ kind: 'blackboard', key: 'scale' }),
+          right: numberInput({ kind: 'blackboard', key: 'artsFactor' }),
         },
       },
       context,
@@ -807,7 +808,7 @@ describe('ActionBlackboardOperationExecutor', () => {
       executor.evaluate(
         {
           kind: 'actionValueCompare',
-          left: { kind: 'blackboard', key: 'swordCount' },
+          left: numberInput({ kind: 'blackboard', key: 'swordCount' }),
           operator: 'equal',
           right: { kind: 'constant', value: 3.000009 },
         },
@@ -823,7 +824,7 @@ describe('ActionBlackboardOperationExecutor', () => {
       executor.evaluate(
         {
           kind: 'actionValueCompare',
-          left: { kind: 'blackboard', key: 'missing' },
+          left: numberInput({ kind: 'blackboard', key: 'missing' }),
           operator: 'greater',
           right: { kind: 'constant', value: 0 },
         },
@@ -856,7 +857,7 @@ describe('ActionBlackboardOperationExecutor', () => {
       executor.evaluate(
         {
           kind: 'probability',
-          probability: { kind: 'blackboard', key: 'procChance' },
+          probability: numberInput({ kind: 'blackboard', key: 'procChance' }),
         },
         { blackboard: new ActionBlackboard({ procChance: 0.25 }) },
       ),
@@ -905,20 +906,20 @@ describe('ActionBlackboardOperationExecutor', () => {
         {
           kind: 'all',
           conditions: [
-            {
+            conditionInput({
               kind: 'actionValueCompare',
-              left: { kind: 'blackboard', key: 'swordCount' },
+              left: numberInput({ kind: 'blackboard', key: 'swordCount' }),
               operator: 'equal',
               right: { kind: 'constant', value: 3 },
-            },
-            {
+            }),
+            conditionInput({
               kind: 'buffStackCompare',
               target: 'enemy',
               tagQueryType: 'hasAny',
               buffTags: ['Test/Tag1'],
               operator: 'greaterOrEqual',
               value: { kind: 'constant', value: 1 },
-            },
+            }),
           ],
         },
         { blackboard: new ActionBlackboard({ swordCount: 3 }) },

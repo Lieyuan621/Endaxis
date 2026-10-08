@@ -1,5 +1,6 @@
+import type { CompiledStepForKind } from './compiledGraphData.ts';
 /** 所有不携带子程序的动作共用编译规则；正式图编译都调用此入口。 */
-import type { CombatStepForKind } from '../../../packages/game-data-contract/src/actions';
+
 import type { ActionGraphStep } from '../../../packages/game-data-contract/src/actionGraph';
 import type { ResolvedCombatStepForKind } from './combatProgram';
 import {
@@ -95,7 +96,7 @@ const LEAF_ACTION_KINDS = [
   'adjustSkillCooldown',
   'applyElementalReaction',
 ] as const;
-type LeafAction = CombatStepForKind<(typeof LEAF_ACTION_KINDS)[number]>;
+type LeafAction = CompiledStepForKind<(typeof LEAF_ACTION_KINDS)[number]>;
 export type ResolvedLeafAction = ResolvedCombatStepForKind<(typeof LEAF_ACTION_KINDS)[number]>;
 const leafKinds: ReadonlySet<string> = new Set(LEAF_ACTION_KINDS);
 export function isLeafCombatStep(step: ActionGraphStep): step is LeafAction {

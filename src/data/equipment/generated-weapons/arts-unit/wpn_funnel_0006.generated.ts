@@ -71,12 +71,16 @@ const definition = {
             conditional_2: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: { kind: 'eventSkillTypeIn', skillTypes: ['battleSkill'] },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: { kind: 'eventSkillTypeIn', skillTypes: ['battleSkill'] },
             },
           },
         },
@@ -160,7 +164,7 @@ const definition = {
                 parameters: {
                   key: 'spell_dmg_up_final',
                   operation: 'add',
-                  value: { kind: 'blackboard', key: 'spell_dmg_up' },
+                  value: { kind: 'valueNode', nodeId: 'data_1' },
                 },
               },
               next: 'applyBuff_3',
@@ -171,8 +175,8 @@ const definition = {
                 parameters: {
                   key: 'spell_dmg_up_final',
                   operation: 'multiply',
-                  left: { kind: 'blackboard', key: 'count' },
-                  right: { kind: 'blackboard', key: 'spell_dmg_up2' },
+                  left: { kind: 'valueNode', nodeId: 'data_2' },
+                  right: { kind: 'valueNode', nodeId: 'data_3' },
                 },
               },
               next: 'modifyActionValue_4',
@@ -180,14 +184,7 @@ const definition = {
             conditional_6: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'actionValueCompare',
-                    left: { kind: 'blackboard', key: 'count', fallback: 0 },
-                    operator: 'lessOrEqual',
-                    right: { kind: 'blackboard', key: 'max_stack', fallback: 0 },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
                 whenTrue: { $sequence: 'calculateActionValue_5' },
               },
               next: null,
@@ -195,15 +192,7 @@ const definition = {
             conditional_7: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'contextTargetCountCompare',
-                    contextKey: 'wpn_funnel_0006_total_tar',
-                    operator: 'greaterOrEqual',
-                    value: 1,
-                    outputKey: 'count',
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
                 whenTrue: { $sequence: 'conditional_6' },
               },
               next: null,
@@ -224,16 +213,7 @@ const definition = {
             conditional_9: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'not',
-                    condition: {
-                      kind: 'contextTargetContains',
-                      parentContextKey: 'wpn_funnel_0006_total_tar',
-                      child: 'eventTarget',
-                    },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
                 whenTrue: { $sequence: 'mergeContextTargets_8' },
               },
               next: null,
@@ -241,9 +221,7 @@ const definition = {
             conditional_10: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: { kind: 'originSkillTypeIn', skillTypes: ['battleSkill'] },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
                 whenTrue: { $sequence: 'conditional_9' },
               },
               next: null,
@@ -251,7 +229,7 @@ const definition = {
             conditional_11: {
               action: {
                 kind: 'conditional',
-                parameters: { condition: { kind: 'eventSkillCastMatchesBuffSource' } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
                 whenTrue: { $sequence: 'conditional_10' },
               },
               next: null,
@@ -259,12 +237,63 @@ const definition = {
             conditional_12: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: { kind: 'eventInflictionElementIn', elements: ['nature'] },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
                 whenTrue: { $sequence: 'conditional_11' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'spell_dmg_up' } },
+            data_2: { type: 'number', expression: { kind: 'blackboard', key: 'count' } },
+            data_3: { type: 'number', expression: { kind: 'blackboard', key: 'spell_dmg_up2' } },
+            data_4: {
+              type: 'number',
+              expression: { kind: 'blackboard', key: 'count', fallback: 0 },
+            },
+            data_5: {
+              type: 'number',
+              expression: { kind: 'blackboard', key: 'max_stack', fallback: 0 },
+            },
+            data_6: {
+              type: 'boolean',
+              expression: {
+                kind: 'actionValueCompare',
+                left: { kind: 'valueNode', nodeId: 'data_4' },
+                operator: 'lessOrEqual',
+                right: { kind: 'valueNode', nodeId: 'data_5' },
+              },
+            },
+            data_7: {
+              type: 'boolean',
+              expression: {
+                kind: 'contextTargetCountCompare',
+                contextKey: 'wpn_funnel_0006_total_tar',
+                operator: 'greaterOrEqual',
+                value: 1,
+                outputKey: 'count',
+              },
+            },
+            data_8: {
+              type: 'boolean',
+              expression: {
+                kind: 'contextTargetContains',
+                parentContextKey: 'wpn_funnel_0006_total_tar',
+                child: 'eventTarget',
+              },
+            },
+            data_9: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+            },
+            data_10: {
+              type: 'boolean',
+              expression: { kind: 'originSkillTypeIn', skillTypes: ['battleSkill'] },
+            },
+            data_11: { type: 'boolean', expression: { kind: 'eventSkillCastMatchesBuffSource' } },
+            data_12: {
+              type: 'boolean',
+              expression: { kind: 'eventInflictionElementIn', elements: ['nature'] },
             },
           },
         },

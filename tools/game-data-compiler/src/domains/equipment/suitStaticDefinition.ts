@@ -1,4 +1,4 @@
-import type { GearSetDefinition } from '../../../../../packages/game-data-contract/src/equipment.ts';
+import type { GearSetDefinition } from '../../compiler/intermediateDefinitions.ts';
 import { compileCardSkillBuildModifiers } from '../../compiler/build/cardSkillBuildModifiers.ts';
 import { compilePassiveSkillRequestBatch } from '../../compiler/skills/passiveSkillBatch.ts';
 import {

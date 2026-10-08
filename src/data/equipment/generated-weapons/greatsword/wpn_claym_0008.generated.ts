@@ -56,7 +56,7 @@ const definition = {
             conditional_2: {
               action: {
                 kind: 'conditional',
-                parameters: { condition: { kind: 'not', condition: { kind: 'casterControlled' } } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
@@ -64,13 +64,7 @@ const definition = {
             conditional_3: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventDamageTagsMatch',
-                    match: 'hasAll',
-                    tags: ['normalAttackLastCombo'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 whenTrue: { $sequence: 'conditional_2' },
               },
               next: null,
@@ -94,8 +88,8 @@ const definition = {
                 parameters: {
                   key: 'atk_up_dynamic',
                   operation: 'multiply',
-                  left: { kind: 'blackboard', key: 'atk_up' },
-                  right: { kind: 'blackboard', key: 'multi' },
+                  left: { kind: 'valueNode', nodeId: 'data_4' },
+                  right: { kind: 'valueNode', nodeId: 'data_5' },
                 },
               },
               next: 'applyBuff_4',
@@ -103,7 +97,7 @@ const definition = {
             conditional_6: {
               action: {
                 kind: 'conditional',
-                parameters: { condition: { kind: 'casterControlled' } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
                 whenTrue: { $sequence: 'calculateActionValue_5' },
               },
               next: null,
@@ -111,13 +105,7 @@ const definition = {
             conditional_7: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventDamageTagsMatch',
-                    match: 'hasAll',
-                    tags: ['normalAttackLastCombo'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
                 whenTrue: { $sequence: 'conditional_6' },
               },
               next: null,
@@ -128,12 +116,40 @@ const definition = {
                 parameters: {
                   buffId: 'buff_wpn_claym_0008',
                   target: 'caster',
-                  blackboardAssignments: {
-                    poise_up: { kind: 'blackboard', key: 'install_0_poise_up' },
-                  },
+                  blackboardAssignments: { poise_up: { kind: 'valueNode', nodeId: 'data_8' } },
                 },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+            data_2: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+            },
+            data_3: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventDamageTagsMatch',
+                match: 'hasAll',
+                tags: ['normalAttackLastCombo'],
+              },
+            },
+            data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_up' } },
+            data_5: { type: 'number', expression: { kind: 'blackboard', key: 'multi' } },
+            data_6: { type: 'boolean', expression: { kind: 'casterControlled' } },
+            data_7: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventDamageTagsMatch',
+                match: 'hasAll',
+                tags: ['normalAttackLastCombo'],
+              },
+            },
+            data_8: {
+              type: 'number',
+              expression: { kind: 'blackboard', key: 'install_0_poise_up' },
             },
           },
         },
@@ -180,13 +196,7 @@ const definition = {
       poiseModifiers: [
         {
           enabledSide: 'attacker',
-          condition: {
-            kind: 'all',
-            conditions: [
-              { kind: 'eventDamageTagsMatch', match: 'hasAll', tags: ['normalAttackLastCombo'] },
-              { kind: 'casterControlled' },
-            ],
-          },
+          condition: { $sequence: 'conditional_2' },
           processors: [
             {
               kind: 'modifyPoiseScalar',
@@ -197,7 +207,40 @@ const definition = {
           ],
         },
       ],
-      actionGraph: { main: { nodes: {} }, macros: {} },
+      actionGraph: {
+        main: {
+          nodes: {
+            conditional_1: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+                whenTrue: { $sequence: null },
+              },
+              next: null,
+            },
+            conditional_2: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+                whenTrue: { $sequence: 'conditional_1' },
+              },
+              next: null,
+            },
+          },
+          dataNodes: {
+            data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+            data_2: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventDamageTagsMatch',
+                match: 'hasAll',
+                tags: ['normalAttackLastCombo'],
+              },
+            },
+          },
+        },
+        macros: {},
+      },
     },
     buff_wpn_claym_0008_atk_up: {
       stackingType: 'highPriority',

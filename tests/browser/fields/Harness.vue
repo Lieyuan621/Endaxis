@@ -2,7 +2,6 @@
 import StringGraphHarness from './StringGraphHarness.vue';
 import SpawnResourceHarness from './SpawnResourceHarness.vue';
 import BranchSequenceHarness from './BranchSequenceHarness.vue';
-import FiniteReferenceHarness from './FiniteReferenceHarness.vue';
 import TimeScaleCurveHarness from './TimeScaleCurveHarness.vue';
 import { computed, provide, ref, shallowRef } from 'vue';
 import {
@@ -22,11 +21,10 @@ import StringCollectionHarness from './StringCollectionHarness.vue';
 import NativeIdHarness from './NativeIdHarness.vue';
 import GlobalBuffHarness from './GlobalBuffHarness.vue';
 import GraphOperandHarness from './GraphOperandHarness.vue';
-import InlineConditionHarness from './InlineConditionHarness.vue';
 import ConditionListHarness from './ConditionListHarness.vue';
 import StructuredValueHarness from './StructuredValueHarness.vue';
 
-const stringOperand = shallowRef<unknown>('known');
+const stringOperand = shallowRef<unknown>('stale-id');
 // This host deliberately models state/history only, not the application's command history.
 const schemas = {
   union: { kind: 'union', variants: [{ kind: 'string' }, { kind: 'null' }] },
@@ -114,21 +112,11 @@ const pending = ref(false);
 const fields: NodeFieldSchema[] = [
   {
     path: ['buffId'],
-    label: 'buffId',
     description: '',
-    type: 'string',
-    required: true,
     control: 'string',
-    source: ['packages/game-data-contract/src/actions.ts:694:7'],
+    valueSchema: { kind: 'string', referenceKind: 'buff' },
   },
-  {
-    path: ['amount'],
-    label: 'amount',
-    description: '',
-    type: 'number',
-    required: true,
-    control: 'number',
-  },
+  { path: ['amount'], description: '', control: 'number', valueSchema: { kind: 'number' } },
 ];
 function applyNode(value: unknown) {
   if (rejectNode.value) return false;
@@ -222,7 +210,6 @@ function applyNode(value: unknown) {
     <ConditionListHarness />
     <StringCollectionHarness />
     <NativeIdHarness />
-    <InlineConditionHarness />
     <GraphOperandHarness field="instantAttributeModifiers" />
     <GraphOperandHarness field="instantDamageScaleModifiers" />
     <GraphOperandHarness field="keywordEnhancements" />
@@ -235,7 +222,6 @@ function applyNode(value: unknown) {
     <BranchSequenceHarness kind="listenForCombatEvents" />
     <StructuredValueHarness />
     <TimeScaleCurveHarness />
-    <FiniteReferenceHarness />
   </main>
 </template>
 <style>

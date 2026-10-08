@@ -1,3 +1,5 @@
+import { ActionBlackboard } from '../../core/combat/actions/actionBlackboard';
+import { EventContextConditionExecutor } from '../../core/combat/events/eventContextConditionExecutor';
 import { describe, expect, it, vi } from 'vitest';
 import { CombatAttributeSet } from '../../core/combat/attributes/combatAttributes';
 import { CombatBuffContainer } from '../../core/combat/buffs/combatBuffs';
@@ -37,6 +39,15 @@ describe('elementalAttachments', () => {
     const emitStarted = vi.fn();
     const onSpellBurstTriggered = vi.fn();
     const index = compileCombatBuffDefinitions<Attribute>(elementalAttachments, {
+      resolveConditionOperations: () =>
+        new EventContextConditionExecutor({
+          execute: () => {
+            throw new Error('unexpected action');
+          },
+          evaluate: () => {
+            throw new Error('unexpected condition');
+          },
+        }),
       emitElementalInflictionStarted: emitStarted,
       onSpellBurstTriggered,
       onAttackScaledDamageTriggered: vi.fn(),
@@ -63,6 +74,15 @@ describe('elementalAttachments', () => {
 
   it('resolves real nature layers through the factory into an active conduct status', () => {
     const index = compileCombatBuffDefinitions<Attribute>(elementalAttachments, {
+      resolveConditionOperations: () =>
+        new EventContextConditionExecutor({
+          execute: () => {
+            throw new Error('unexpected action');
+          },
+          evaluate: () => {
+            throw new Error('unexpected condition');
+          },
+        }),
       emitElementalInflictionStarted: () => undefined,
       onSpellBurstTriggered: () => undefined,
       onAttackScaledDamageTriggered: () => undefined,
@@ -98,11 +118,59 @@ describe('elementalAttachments', () => {
     expect(conduct?.blackboard.getNumber('spell_resistance_decrease')).toBeCloseTo(0.12);
     expect(conduct?.blackboard.getNumber('final_spell_resistance_decrease')).toBeCloseTo(0.12);
     expect(conduct?.remainingDuration).toBe(12);
+    if (!conduct) throw new Error('missing conduct Buff');
+    const input = {
+      side: 'defender' as const,
+      sourceId: 'operator',
+      targetId: 'enemy',
+      skillCastId: null,
+      damageType: 'electric' as const,
+      tags: [],
+      features: [],
+    };
+    const results = (buff: typeof conduct) =>
+      buff.damageModifiers.map(modifier => modifier.condition!.execute(input));
+    expect(results(conduct)).toEqual([false, true, false, false]);
+    const saved = structuredClone(container.runtimeState);
+    const restored = new CombatBuffContainer<Attribute>(
+      'enemy',
+      new CombatAttributeSet(saved.attributes),
+      undefined,
+      null,
+      ActionBlackboard.bindRuntimeState(saved.entityBlackboard),
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      saved,
+    );
+    restored.bindRestoredInstances(state => index.get(state.identity.definitionId));
+    const restoredConduct = restored.getInstance(conduct.instanceId)!;
+    expect(results(restoredConduct)).toEqual(results(conduct));
+    expect(restoredConduct.blackboard.getNumber('final_spell_resistance_decrease')).toBeCloseTo(
+      0.12,
+    );
+    expect(
+      restoredConduct.damageModifiers.every(
+        modifier => !modifier.condition!.execute({ ...input, damageType: 'physical' }),
+      ),
+    ).toBe(true);
   });
 
   it('四种反应配方均能生成状态并发布初始异常伤害', () => {
     const emittedDamage = vi.fn();
     const index = compileCombatBuffDefinitions<Attribute>(elementalAttachments, {
+      resolveConditionOperations: () =>
+        new EventContextConditionExecutor({
+          execute: () => {
+            throw new Error('unexpected action');
+          },
+          evaluate: () => {
+            throw new Error('unexpected condition');
+          },
+        }),
       emitElementalInflictionStarted: () => undefined,
       onSpellBurstTriggered: () => undefined,
       onAttackScaledDamageTriggered: emittedDamage,

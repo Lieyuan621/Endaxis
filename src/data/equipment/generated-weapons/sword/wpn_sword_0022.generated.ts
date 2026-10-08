@@ -62,15 +62,7 @@ const definition = {
             conditional_2: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'buffIdStackCompare',
-                    target: 'caster',
-                    buffIds: ['buff_wpn_sword_0022_final'],
-                    operator: 'less',
-                    value: { kind: 'constant', value: 1 },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
@@ -78,15 +70,7 @@ const definition = {
             conditional_3: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'buffIdStackCompare',
-                    target: 'caster',
-                    buffIds: ['buff_wpn_sword_0022_layer'],
-                    operator: 'greaterOrEqual',
-                    value: { kind: 'blackboard', key: 'max_stack' },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 whenTrue: { $sequence: 'conditional_2' },
               },
               next: null,
@@ -103,6 +87,29 @@ const definition = {
                 },
               },
               next: 'conditional_3',
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: {
+                kind: 'buffIdStackCompare',
+                target: 'caster',
+                buffIds: ['buff_wpn_sword_0022_final'],
+                operator: 'less',
+                value: { kind: 'constant', value: 1 },
+              },
+            },
+            data_2: { type: 'number', expression: { kind: 'blackboard', key: 'max_stack' } },
+            data_3: {
+              type: 'boolean',
+              expression: {
+                kind: 'buffIdStackCompare',
+                target: 'caster',
+                buffIds: ['buff_wpn_sword_0022_layer'],
+                operator: 'greaterOrEqual',
+                value: { kind: 'valueNode', nodeId: 'data_2' },
+              },
             },
           },
         },

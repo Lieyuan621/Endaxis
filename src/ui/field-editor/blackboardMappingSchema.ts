@@ -17,7 +17,6 @@ export type BlackboardMappingDestination =
 export interface BlackboardMappingDescriptor {
   readonly value: BlackboardMappingValue;
   readonly destination: BlackboardMappingDestination;
-  readonly allowsParameters?: boolean;
 }
 
 /** 仅正式声明具有映射角色；同名字段、错误宿主路径和容器子槽不能获得映射能力。 */
@@ -89,8 +88,7 @@ export function resolveBlackboardMapping(
     const original = actionNodeSchemas[kind].fields.find(
       candidate => candidate.path.join('.') === path.join('.'),
     );
-    if (sameFieldDeclaration(original?.valueSchema, shape))
-      return { value, destination, ...(kind === 'callMacro' ? { allowsParameters: false } : {}) };
+    if (sameFieldDeclaration(original?.valueSchema, shape)) return { value, destination };
   }
   return undefined;
 }

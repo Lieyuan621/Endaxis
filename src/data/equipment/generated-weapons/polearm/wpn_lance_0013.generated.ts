@@ -60,13 +60,7 @@ const definition = {
             conditional_2: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventConsumedBuffLayerCompare',
-                    operator: 'greaterOrEqual',
-                    value: { kind: 'constant', value: 1 },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
@@ -74,13 +68,7 @@ const definition = {
             conditional_3: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/SpellStatus/Frozen'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                 whenTrue: { $sequence: 'conditional_2' },
               },
               next: null,
@@ -91,13 +79,30 @@ const definition = {
                 parameters: {
                   buffId: 'buff_wpn_lance_0013_damage01',
                   target: 'caster',
-                  blackboardAssignments: {
-                    dmg_up: { kind: 'blackboard', key: 'install_0_dmg_up' },
-                  },
+                  blackboardAssignments: { dmg_up: { kind: 'valueNode', nodeId: 'data_3' } },
                 },
               },
               next: null,
             },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventConsumedBuffLayerCompare',
+                operator: 'greaterOrEqual',
+                value: { kind: 'constant', value: 1 },
+              },
+            },
+            data_2: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/SpellStatus/Frozen'],
+              },
+            },
+            data_3: { type: 'number', expression: { kind: 'blackboard', key: 'install_0_dmg_up' } },
           },
         },
         macros: {},
@@ -174,15 +179,7 @@ const definition = {
       damageModifiers: [
         {
           enabledSide: 'attacker',
-          condition: {
-            kind: 'entityTagMatch',
-            target: 'enemy',
-            tagQueryType: 'hasAny',
-            tags: [
-              'Skill/Character/Common/SpellInflict/CrystInflict',
-              'Skill/Character/Common/SpellStatus/Frozen',
-            ],
-          },
+          condition: { $sequence: 'conditional_1' },
           processors: [
             {
               kind: 'damageScale',
@@ -193,7 +190,35 @@ const definition = {
           ],
         },
       ],
-      actionGraph: { main: { nodes: {} }, macros: {} },
+      actionGraph: {
+        main: {
+          nodes: {
+            conditional_1: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+                whenTrue: { $sequence: null },
+              },
+              next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: {
+                kind: 'entityTagMatch',
+                target: 'actionInputTarget',
+                tagQueryType: 'hasAny',
+                tags: [
+                  'Skill/Character/Common/SpellInflict/CrystInflict',
+                  'Skill/Character/Common/SpellStatus/Frozen',
+                ],
+              },
+            },
+          },
+        },
+        macros: {},
+      },
     },
   },
 } as const satisfies WeaponDefinition;

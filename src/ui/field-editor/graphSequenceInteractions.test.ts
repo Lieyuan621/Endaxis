@@ -22,6 +22,9 @@ import { createResourceEditorView } from '../editor/resourceEditorView';
 import { useResourceGraphEditor } from '../action-graph/useResourceGraphEditor';
 import { useSkillGraphEditor } from '../action-graph/useSkillGraphEditor';
 import { perlica } from '../../data/operators/perlica.generated';
+import lastRite from '../../data/operators/last-rite.generated';
+import { definitionSchemas } from '../definition-editor/definitionSchemas.generated';
+import { fieldSchemaForValue } from '../definition-editor/definitionFieldRuntime';
 vi.mock('@/design-system', async importOriginal => {
   const original = await importOriginal<Record<string, unknown>>();
   const { createFieldPrimitives } = await import('../../test/fieldPrimitives');
@@ -49,6 +52,46 @@ beforeAll(() => {
     ],
     import.meta.url,
   );
+});
+
+it('只读 Buff 修正条件可定位真实动作入口，不提供字段写入', async () => {
+  const buff = lastRite.buffDefinitions!.buff_chr_0026_lastrite_normal_skill!;
+  const definition = fieldSchemaForValue(definitionSchemas.buff, buff);
+  if (definition.kind !== 'object') throw new Error('expected Buff schema');
+  const modifiers = fieldSchemaForValue(definition.fields.damageModifiers, buff.damageModifiers);
+  if (modifiers.kind !== 'array') throw new Error('expected modifiers');
+  const modifier = fieldSchemaForValue(modifiers.element, buff.damageModifiers![0]);
+  if (modifier.kind !== 'object') throw new Error('expected modifier schema');
+  const path = [
+    'buffDefinitions',
+    'buff_chr_0026_lastrite_normal_skill',
+    'damageModifiers',
+    0,
+    'condition',
+  ];
+  const open = vi.fn(),
+    change = vi.fn();
+  const root = node('root');
+  const value = buff.damageModifiers![0]!.condition!;
+  const app = renderer.createApp({
+    render: () =>
+      h(DefinitionField, {
+        name: 'condition',
+        path,
+        value,
+        schema: modifier.fields.condition,
+        editable: false,
+        onOpenGraph: open,
+        onChange: change,
+      }),
+  });
+  app.use(i18n).provide(ssrContextKey, { modules: new Set() });
+  app.mount(root);
+  await nextTick();
+  await click(root, `${value.$sequence} ↗`);
+  expect(open).toHaveBeenCalledWith(path);
+  expect(change).not.toHaveBeenCalled();
+  app.unmount();
 });
 
 it('switch rendered row Creator selects an operand, reports invalid draft, repairs, creates, cancels and stages', async () => {

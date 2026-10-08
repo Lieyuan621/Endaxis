@@ -1,3 +1,4 @@
+import { numberInput } from '../../../src/test/compiledGraphInputs';
 import { gameplayTagIdFromPath } from '../src/source/nativeGameplayTags.ts';
 import { compileActionNode } from '../src/compiler/actions/combatActionLeafProjection.ts';
 import type { CombatActionProjectionContextSource } from '../src/compiler/combatProjectionCommon.ts';
@@ -251,7 +252,7 @@ describe('公共 Buff 环境读取：来源到正式执行器', () => {
     const condition = {
       kind: 'currentBuffStackCompare',
       operator: 'equal',
-      value: { kind: 'blackboard', key: 'required' },
+      value: numberInput({ kind: 'blackboard', key: 'required' }),
     } as const;
     expect(() => operations.evaluate(condition, { blackboard })).toThrow('Buff operation context');
     expect(() =>

@@ -1,9 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { CombatAttributeSet } from '../attributes/combatAttributes';
-import {
-  compileCombatBuffDefinitions,
-  type CombatBuffDefinitionsDocument,
-} from './combatBuffDefinitions';
+import { compileCombatBuffDefinitions } from './combatBuffDefinitions';
+import { type CombatBuffDefinitionsDocument } from '../../../../packages/game-data-contract/src/buffs';
 import { resolveElementalInfliction } from '../infliction/elementalInfliction';
 import { ElementalBuffRuntime } from './elementalBuffRuntime';
 

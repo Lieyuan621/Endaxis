@@ -79,9 +79,7 @@ const definition = {
             conditional_2: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: { kind: 'eventBuffIdMatch', buffIds: ['buff_common_originum_frozen'] },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
@@ -89,13 +87,7 @@ const definition = {
             conditional_4: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/SpellStatus/Frozen'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
@@ -116,15 +108,7 @@ const definition = {
             conditional_6: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'buffIdStackCompare',
-                    target: 'caster',
-                    buffIds: ['buff_wpn_sword_0021_exist'],
-                    operator: 'greaterOrEqual',
-                    value: { kind: 'constant', value: 1 },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 whenTrue: { $sequence: 'applyBuff_5' },
               },
               next: null,
@@ -132,12 +116,38 @@ const definition = {
             conditional_7: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: { kind: 'eventSkillTypeIn', skillTypes: ['battleSkill', 'ultimate'] },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
                 whenTrue: { $sequence: 'conditional_6' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_common_originum_frozen'] },
+            },
+            data_2: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/SpellStatus/Frozen'],
+              },
+            },
+            data_3: {
+              type: 'boolean',
+              expression: {
+                kind: 'buffIdStackCompare',
+                target: 'caster',
+                buffIds: ['buff_wpn_sword_0021_exist'],
+                operator: 'greaterOrEqual',
+                value: { kind: 'constant', value: 1 },
+              },
+            },
+            data_4: {
+              type: 'boolean',
+              expression: { kind: 'eventSkillTypeIn', skillTypes: ['battleSkill', 'ultimate'] },
             },
           },
         },

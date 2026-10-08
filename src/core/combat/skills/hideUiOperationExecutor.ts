@@ -1,4 +1,5 @@
-import type { CombatCondition } from '../../game-data/operatorDefinition';
+import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
+
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 import type { CombatOperationContext, CombatOperationExecutor } from './skillRuntime';
 import type { UltimatePresentationRuntime } from './ultimatePresentationRuntime';
@@ -29,7 +30,7 @@ export class HideUiOperationExecutor implements CombatOperationExecutor {
     this.#set(step.parameters.onlyBlockInput, false);
   }
 
-  evaluate(condition: CombatCondition, context?: CombatOperationContext): boolean {
+  evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     return this.delegate.evaluate(condition, context);
   }
 

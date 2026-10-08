@@ -35,7 +35,6 @@ export interface FieldDeclarationMetadata {
   readonly declaration?: FieldDeclarationId;
   readonly referenceKind?: FieldReferenceKind;
   readonly readonlyDeclaration?: true;
-  readonly deferredCondition?: 'availability' | 'legacyHandler';
   readonly nativeId?: true;
   /** Host paths still determine which runtime blackboard is available. */
   readonly blackboardOrigin?: 'contract' | 'abilityEntity' | 'globalBuff';
@@ -95,14 +94,9 @@ export type FieldFallbackReason =
   | 'recursive-type'
   | 'unsupported-type'
   | 'structured-editor-pending'
-  | 'tuple-editor-pending'
-  | 'condition-editor-pending';
-
-/** Definition-only authoring scopes, never graph/macro binding environments. */
-export type InlineConditionScope = 'equipment' | 'skillSwitch' | 'enemyStaggered';
+  | 'tuple-editor-pending';
 
 export interface FieldSemanticMetadata extends FieldDeclarationMetadata {
-  readonly inlineCondition?: InlineConditionScope;
   readonly semantics?: FieldSemantics;
   readonly fallback?: {
     readonly reason: FieldFallbackReason;

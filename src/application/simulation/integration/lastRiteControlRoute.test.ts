@@ -83,4 +83,26 @@ it.each([null, 0])('别礼开场普攻夹战技：切入帧 %s 决定旁路，�
   ).toMatchObject({ skillId: 'chr_0026_lastrite_attack2', accepted: true });
   expect(run.receiptEntries.some(e => e.frame < 0)).toBe(false);
   expect(scenario).toEqual(before);
+  // 战技条件已创建后保存，再执行重击；恢复要保留 Buff 条件实例及变量。
+  const followup = structuredClone(scenario);
+  followup.tracks[3]!.operator!.potential = 1;
+  followup.tracks[3]!.skillCasts.push({
+    id: 'heavy',
+    source: {
+      kind: 'operatorSkill',
+      skillGroupKey: 'basicAttack',
+      skillKey: 'chr_0026_lastrite_attack4',
+    },
+    placement: { startFrame: 100 },
+  });
+  const original = createEditorSimulationService().createCombatSession(followup);
+  original.advanceToFrame(60);
+  const restored = original.fork(original.runtime.save());
+  original.advanceToFrame(220);
+  restored.advanceToFrame(220);
+  const full = original.collectResult();
+  expect(
+    full.receiptEntries.some(e => e.event === 'DamageApplied' && e.data?.castId === 'heavy'),
+  ).toBe(true);
+  expect(restored.collectResult()).toEqual(full);
 });

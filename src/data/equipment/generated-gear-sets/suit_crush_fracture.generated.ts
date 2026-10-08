@@ -62,7 +62,7 @@ const definition = {
                 parameters: {
                   key: 'phy_dmg_up_perstack_dynamic',
                   operation: 'multiply',
-                  value: { kind: 'blackboard', key: 'special_multi' },
+                  value: { kind: 'valueNode', nodeId: 'data_1' },
                 },
               },
               next: null,
@@ -91,7 +91,7 @@ const definition = {
                 parameters: {
                   key: 'phy_dmg_up_final',
                   operation: 'multiply',
-                  value: { kind: 'blackboard', key: 'phy_dmg_up_perstack_dynamic' },
+                  value: { kind: 'valueNode', nodeId: 'data_2' },
                 },
               },
               next: 'applyBuff_2',
@@ -100,33 +100,7 @@ const definition = {
               action: {
                 kind: 'conditional',
                 parameters: {
-                  condition: {
-                    kind: 'any',
-                    conditions: [
-                      {
-                        kind: 'buffStackCompare',
-                        target: 'actionInputTarget',
-                        tagQueryType: 'hasAny',
-                        buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerablePhysic'],
-                        operator: 'greaterOrEqual',
-                        value: { kind: 'constant', value: 1 },
-                      },
-                      {
-                        kind: 'buffIdStackCompare',
-                        target: 'actionInputTarget',
-                        buffIds: ['buff_common_originum_frozen'],
-                        operator: 'greaterOrEqual',
-                        value: { kind: 'constant', value: 1 },
-                      },
-                      {
-                        kind: 'poiseCompare',
-                        target: 'enemy',
-                        returnValueIfMissing: false,
-                        operator: 'equal',
-                        value: { kind: 'constant', value: 0 },
-                      },
-                    ],
-                  },
+                  condition: { kind: 'conditionNode', nodeId: 'data_6' },
                   alwaysNext: true,
                 },
                 whenTrue: { $sequence: 'modifyActionValue_1' },
@@ -165,7 +139,7 @@ const definition = {
                 parameters: {
                   key: 'phy_dmg_up_perstack_dynamic',
                   operation: 'assign',
-                  value: { kind: 'blackboard', key: 'phy_dmg_up_perstack' },
+                  value: { kind: 'valueNode', nodeId: 'data_7' },
                 },
               },
               next: 'modifyActionValue_6',
@@ -173,16 +147,7 @@ const definition = {
             conditional_8: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'buffStackCompare',
-                    target: 'actionInputTarget',
-                    tagQueryType: 'hasAny',
-                    buffTags: ['Skill/Character/Common/NoGuard'],
-                    operator: 'greaterOrEqual',
-                    value: { kind: 'constant', value: 1 },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
                 whenTrue: { $sequence: 'modifyActionValue_7' },
               },
               next: null,
@@ -190,15 +155,78 @@ const definition = {
             conditional_9: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventPhysicalInflictionTypeIn',
-                    types: ['fracture', 'crush'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
                 whenTrue: { $sequence: 'conditional_8' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'special_multi' } },
+            data_2: {
+              type: 'number',
+              expression: { kind: 'blackboard', key: 'phy_dmg_up_perstack_dynamic' },
+            },
+            data_3: {
+              type: 'boolean',
+              expression: {
+                kind: 'buffStackCompare',
+                target: 'actionInputTarget',
+                tagQueryType: 'hasAny',
+                buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerablePhysic'],
+                operator: 'greaterOrEqual',
+                value: { kind: 'constant', value: 1 },
+              },
+            },
+            data_4: {
+              type: 'boolean',
+              expression: {
+                kind: 'buffIdStackCompare',
+                target: 'actionInputTarget',
+                buffIds: ['buff_common_originum_frozen'],
+                operator: 'greaterOrEqual',
+                value: { kind: 'constant', value: 1 },
+              },
+            },
+            data_5: {
+              type: 'boolean',
+              expression: {
+                kind: 'poiseCompare',
+                target: 'enemy',
+                returnValueIfMissing: false,
+                operator: 'equal',
+                value: { kind: 'constant', value: 0 },
+              },
+            },
+            data_6: {
+              type: 'boolean',
+              expression: {
+                kind: 'any',
+                conditions: [
+                  { kind: 'conditionNode', nodeId: 'data_3' },
+                  { kind: 'conditionNode', nodeId: 'data_4' },
+                  { kind: 'conditionNode', nodeId: 'data_5' },
+                ],
+              },
+            },
+            data_7: {
+              type: 'number',
+              expression: { kind: 'blackboard', key: 'phy_dmg_up_perstack' },
+            },
+            data_8: {
+              type: 'boolean',
+              expression: {
+                kind: 'buffStackCompare',
+                target: 'actionInputTarget',
+                tagQueryType: 'hasAny',
+                buffTags: ['Skill/Character/Common/NoGuard'],
+                operator: 'greaterOrEqual',
+                value: { kind: 'constant', value: 1 },
+              },
+            },
+            data_9: {
+              type: 'boolean',
+              expression: { kind: 'eventPhysicalInflictionTypeIn', types: ['fracture', 'crush'] },
             },
           },
         },

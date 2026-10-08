@@ -1,6 +1,7 @@
+import type { CompiledStepForKind } from './compiledGraphData.ts';
 /** 携带内联宿主的动作编译；入口绑定由调用方提供，不依赖树编译器。 */
 import type { CombatStepKind, LevelValues } from '../game-data/operatorDefinition';
-import type { CombatStepForKind } from '../../../packages/game-data-contract/src/actions';
+
 import type { ResolvedCombatStepForKind } from './combatProgram';
 import type { CompiledGraphEntry } from './combatProgram';
 import type { ActionGraphReference } from '../../../packages/game-data-contract/src/actionGraph';
@@ -28,7 +29,7 @@ export function isNestedAction<Step extends { kind: CombatStepKind }>(
   );
 }
 export function compileNestedAction(
-  step: CombatStepForKind<NestedActionKind>,
+  step: CompiledStepForKind<NestedActionKind>,
   skillLevel: number,
   path: string,
   compileEntry: (source: ActionGraphReference, path: string) => CompiledGraphEntry,

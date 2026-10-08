@@ -105,7 +105,7 @@ const definition = {
             conditional_2: {
               action: {
                 kind: 'conditional',
-                parameters: { condition: { kind: 'eventSkillTypeIn', skillTypes: ['ultimate'] } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
@@ -129,10 +129,20 @@ const definition = {
             conditional_4: {
               action: {
                 kind: 'conditional',
-                parameters: { condition: { kind: 'eventSkillTypeIn', skillTypes: ['comboSkill'] } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                 whenTrue: { $sequence: 'applyBuff_3' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: { kind: 'eventSkillTypeIn', skillTypes: ['ultimate'] },
+            },
+            data_2: {
+              type: 'boolean',
+              expression: { kind: 'eventSkillTypeIn', skillTypes: ['comboSkill'] },
             },
           },
         },

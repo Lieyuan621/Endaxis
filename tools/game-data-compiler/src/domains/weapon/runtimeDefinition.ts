@@ -9,7 +9,7 @@ import type {
   EquipmentEventHandlerDefinition,
   WeaponDefinition,
   WeaponTraitDefinition,
-} from '../../../../../packages/game-data-contract/src/equipment.ts';
+} from '../../compiler/intermediateDefinitions.ts';
 import { EQUIPMENT_ABILITY_EVENTS } from '../../../../../packages/game-data-contract/src/equipment.ts';
 import { buffRuntimeReadsBlackboardKey } from '../../compiler/buffs/buffRuntimeProjection.ts';
 import type { CompiledBuffDefinitionSource } from '../../compiler/buffs/buffProjectionTypes.ts';
@@ -43,7 +43,7 @@ export type CompiledWeaponRuntimeDefinitionSource = Omit<
     readonly buffDefinitions?: Readonly<Record<string, CompiledBuffDefinitionSource>>;
     readonly traits: readonly (CompiledWeaponStaticDefinitionSource['traits'][number] &
       Readonly<Pick<WeaponTraitDefinition, 'blackboard' | 'skillId'>> & {
-        readonly actionGraph?: import('../../../../../packages/game-data-contract/src/actionGraph.ts').ActionGraphResourceDefinition;
+        readonly actionGraph?: import('../../compiler/intermediateDefinitions.ts').ActionGraphResourceDefinition;
         readonly enableSequence?: CompiledBuffSequenceSource;
         readonly initializationSequence?: CompiledBuffSequenceSource;
         readonly eventHandlers?: readonly CompiledWeaponEventHandlerSource[];

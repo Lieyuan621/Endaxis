@@ -1,8 +1,8 @@
 import { validateActionGraphOwner } from '../../../../../src/core/action-graph/actionGraphValidation.ts';
 import { renderGraphValue } from '../../compiler/optimization/actionGraphSourceRenderer.ts';
 import type { CompiledWeaponRuntimeDefinitionBatchSource } from './runtimeDefinition.ts';
-import type { WeaponDefinition } from '../../../../../packages/game-data-contract/src/equipment.ts';
-import type { DefinitionProgramOptimizationReport } from '../../compiler/optimization/definitionProgramOptimization.ts';
+import type { WeaponDefinition } from '../../compiler/intermediateDefinitions.ts';
+import type { DefinitionProgramOptimizationReport } from '../../compiler/finalizeDefinitions.ts';
 
 /** 渲染接收组装、优化后的正式定义，不要求仍属于来源编译器的窄子集。 */
 interface WeaponDefinitionRenderBatch {

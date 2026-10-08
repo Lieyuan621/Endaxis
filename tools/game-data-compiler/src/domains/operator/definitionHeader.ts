@@ -1,4 +1,4 @@
-import type { OperatorDefinition } from '../../../../../packages/game-data-contract/src/operators.ts';
+import type { OperatorDefinition } from '../../compiler/intermediateDefinitions.ts';
 import type { CompiledOperatorAttributeGrowthSource } from './characterTable.ts';
 import type { OperatorSourceClosure } from './sourceClosure.ts';
 import type { CompiledTrustAttributeBonusSource } from './talentNodes.ts';

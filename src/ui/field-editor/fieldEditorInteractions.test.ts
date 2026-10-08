@@ -5,7 +5,6 @@ import DefinitionValueCreator from '../definition-editor/DefinitionValueCreator.
 import NodeInspectorFields from '../action-graph/NodeInspectorFields.vue';
 import ReferenceField from './ReferenceField.vue';
 import StringOperandField from './StringOperandField.vue';
-import { unknownBlackboardContext } from '@/application/editor/blackboardFieldContext';
 import { actionNodeSchemas, dataNodeSchemas } from '../action-graph/actionNodeSchemas.generated';
 import { validReferenceDraft } from './referenceDraftValidation';
 import { referenceCatalog, referenceCandidate } from './referenceTestFixtures';
@@ -362,10 +361,10 @@ it('validates semantic object children without inheriting the container family',
   ).toBe(true);
 });
 
-it('switches string operand branches atomically and cancellation preserves the stored expression', async () => {
+it('字符串常量草稿支持取消，并在提交时复查目录与只读状态', async () => {
   const changes: unknown[] = [];
   const f = await mountSetup(StringOperandField, {
-    value: 'known',
+    value: 'old',
     label: 'Buff',
     editable: true,
     required: true,
@@ -374,69 +373,22 @@ it('switches string operand branches atomically and cancellation preserves the s
     onChange: (v: unknown) => changes.push(v),
   });
   try {
-    f.state.chooseMode('blackboard');
+    f.state.changeLiteral('known');
+    f.state.discard();
+    expect(f.state.literal.value).toBe('old');
     expect(changes).toEqual([]);
-    f.state.apply();
-    expect(changes).toEqual([]);
-    f.state.changeKey('runtimeBuff');
-    f.state.reset();
-    expect(f.state.mode.value).toBe('literal');
-    expect(changes).toEqual([]);
-    f.state.chooseMode('blackboard');
-    f.state.changeKey('runtimeBuff');
-    f.state.apply();
-    expect(changes).toEqual([{ blackboardKey: 'runtimeBuff' }]);
-    await f.update({ value: changes[0] });
-    f.state.chooseMode('literal');
-    expect(f.state.literal.value).toBe('');
     f.state.changeLiteral('known');
     await f.update({ referenceChoices: { buff: referenceCatalog('buff', []) } });
     f.state.apply();
-    expect(changes).toHaveLength(1);
-    expect(f.state.literal.value).toBe('known');
-  } finally {
-    f.stop();
-  }
-});
-
-it('blocks known numeric string reads and respects read-only string operands', async () => {
-  const changes: unknown[] = [];
-  const context = {
-    ...unknownBlackboardContext(),
-    status: 'known',
-    scopes: [{ id: 'current', label: 'root' }],
-    candidates: [
-      {
-        key: 'amount',
-        valueType: 'number',
-        readable: true,
-        writable: true,
-        scope: 'current',
-        source: 'root',
-      },
-    ],
-  };
-  const f = await mountSetup(StringOperandField, {
-    value: { blackboardKey: 'old' },
-    label: 'Read',
-    editable: true,
-    required: true,
-    blackboardContext: context,
-    onChange: (v: unknown) => changes.push(v),
-  });
-  try {
-    f.state.changeKey('amount');
-    f.state.apply();
     expect(changes).toEqual([]);
-    expect(f.state.valid.value).toBe(false);
+    await f.update({ referenceChoices: candidates });
+    f.state.apply();
+    expect(changes).toEqual(['known']);
     await f.update({ editable: false });
-    f.state.chooseMode('literal');
-    f.state.changeKey('external');
+    f.state.changeLiteral('other');
     f.state.apply();
     f.state.unset();
-    expect(changes).toEqual([]);
-    expect(f.state.mode.value).toBe('blackboard');
-    expect(f.state.key.value).toBe('amount');
+    expect(changes).toEqual(['known']);
   } finally {
     f.stop();
   }
@@ -463,12 +415,10 @@ it('node string operand commit revalidates catalogs and keeps refused drafts', a
     await f.update({ referenceChoices: { buff: referenceCatalog('buff', []) } });
     expect(f.state.apply()).toBe(false);
     expect(accepted).toHaveLength(1);
-    f.state.changeStructured(field, { blackboardKey: 'runtimeBuff' });
+    await f.update({ referenceChoices: candidates });
+    f.state.changeStructured(field, 'known');
     expect(accepted).toHaveLength(2);
-    expect(accepted[1]).toEqual({
-      kind: 'applyBuff',
-      parameters: { buffId: { blackboardKey: 'runtimeBuff' } },
-    });
+    expect(accepted[1]).toEqual({ kind: 'applyBuff', parameters: { buffId: 'known' } });
   } finally {
     f.stop();
   }
@@ -476,14 +426,9 @@ it('node string operand commit revalidates catalogs and keeps refused drafts', a
 
 it('creates typed string operands without a separate untyped union branch chooser', async () => {
   const created: unknown[] = [];
-  const schema = {
-    kind: 'union',
-    variants: [
-      { kind: 'string' },
-      { kind: 'object', fields: { blackboardKey: { kind: 'string' } } },
-    ],
-    semantics: { aliases: ['ActionStringOperand'] },
-  };
+  const schema = actionNodeSchemas.applyBuff.fields.find(
+    f => f.path.at(-1) === 'buffId',
+  )!.valueSchema;
   const f = await mountSetup(DefinitionValueCreator, {
     schema,
     editable: true,
@@ -493,55 +438,10 @@ it('creates typed string operands without a separate untyped union branch choose
   });
   try {
     expect(f.state.variants.value).toHaveLength(1);
-    f.state.change([], { blackboardKey: 'runtimeBuff' });
+    f.state.change([], 'known');
     expect(f.state.complete.value).toBe(true);
     f.state.create();
-    expect(created).toEqual([{ blackboardKey: 'runtimeBuff' }]);
-  } finally {
-    f.stop();
-  }
-});
-
-it('revalidates mapping sources on retry while retaining the exact staged mapping', async () => {
-  const field = actionNodeSchemas.applyBuff.fields.find(
-    f => f.path.at(-1) === 'blackboardAssignments',
-  )!;
-  const attempted: unknown[] = [];
-  const f = await mountSetup(NodeInspectorFields, {
-    value: { kind: 'applyBuff', parameters: { buffId: 'known', blackboardAssignments: {} } },
-    kind: 'applyBuff',
-    fields: [field],
-    applyValue: (v: unknown) => {
-      attempted.push(v);
-      return false;
-    },
-  });
-  try {
-    f.state.changeStructured(field, { power: { kind: 'blackboard', key: 'source' } });
-    expect(attempted).toHaveLength(1);
-    const staged = f.state.inputs.value['parameters.blackboardAssignments'];
-    await f.update({
-      blackboardContext: {
-        status: 'known',
-        scopes: [{ id: 'current', label: 'root' }],
-        parameters: [],
-        candidates: [
-          {
-            key: 'source',
-            valueType: 'string',
-            readable: true,
-            writable: true,
-            scope: 'current',
-            source: 'root',
-          },
-        ],
-      },
-    });
-    expect(f.state.apply()).toBe(false);
-    expect(attempted).toHaveLength(1);
-    expect(f.state.inputs.value['parameters.blackboardAssignments']).toBe(staged);
-    f.state.changeStructured(field, { power: { kind: 'blackboard', key: 'source', fallback: 7 } });
-    expect(attempted).toHaveLength(2);
+    expect(created).toEqual(['known']);
   } finally {
     f.stop();
   }
@@ -568,10 +468,7 @@ it.each(['buffId', 'blackboardAssignments'])(
       },
     });
     try {
-      f.state.changeStructured(
-        field,
-        name === 'buffId' ? { blackboardKey: 'runtimeBuff' } : { new: 2 },
-      );
+      f.state.changeStructured(field, name === 'buffId' ? 'known' : { new: 2 });
       expect(f.state.pending.value).toBe(true);
       f.state.discardStructured(field);
       expect(f.state.pending.value).toBe(false);
@@ -593,7 +490,7 @@ it('the string child sends discard only for user cancellation, never a parent re
     onDiscard: () => discards++,
   });
   try {
-    f.state.chooseMode('blackboard');
+    f.state.changeLiteral('draft');
     f.state.discard();
     expect(discards).toBe(1);
     await f.update({ value: 'another' });
@@ -1366,9 +1263,7 @@ it('string graph references are navigable read-only boundaries, even with synthe
   try {
     expect(f.state.mode.value).toBe('graph');
     expect(f.state.graphSource.value).toBe('shared');
-    f.state.chooseMode('literal');
     f.state.changeLiteral('other');
-    f.state.changeKey('other');
     f.state.apply();
     f.state.unset();
     expect(changes).toEqual([]);

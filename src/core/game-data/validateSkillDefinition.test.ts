@@ -706,24 +706,6 @@ describe('validateSkillDefinition', () => {
     expect(validateSkillDefinition(wrapped)).toEqual([]);
   });
 
-  it('rejects mixing a lightweight damage modifier condition with a condition program', () => {
-    const definition: Record<string, unknown> = {
-      stackingType: 'unique',
-      damageModifiers: [
-        {
-          enabledSide: 'attacker',
-          condition: { kind: 'combatActive' },
-          conditionProgram: { $sequence: null },
-          processors: [],
-        },
-      ],
-    };
-    expect(validateBuff(definition)).toContainEqual({
-      path: '$.definition.damageModifiers[0]',
-      message: 'cannot define both condition and conditionProgram',
-    });
-  });
-
   it('rejects conditional without whenTrue', () => {
     const skill = skillWithSteps([
       { kind: 'conditional', parameters: { condition: { kind: 'combatActive' } } },

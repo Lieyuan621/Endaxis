@@ -11,6 +11,83 @@ const terminal = {
 };
 
 describe('EventContextConditionExecutor', () => {
+  it('伤害 GameplayTag 为空时排除查询也失败，不把无标签解释为匹配', () => {
+    const executor = new EventContextConditionExecutor(terminal);
+    const input = {
+      side: 'attacker' as const,
+      sourceId: 'a',
+      targetId: 'enemy',
+      skillCastId: null,
+      damageType: 'physical' as const,
+      tags: [],
+      features: [],
+      gameplayTags: [] as string[],
+    };
+    const context = {
+      blackboard: new ActionBlackboard(),
+      modifierContext: { kind: 'damage' as const, input },
+    };
+    const check = {
+      kind: 'eventDamageGameplayTagsMatch' as const,
+      match: 'exceptAny' as const,
+      tags: ['Damage/Excluded'],
+    };
+    expect(executor.evaluate(check, context)).toBe(false);
+    input.gameplayTags = ['Damage/Other'];
+    expect(executor.evaluate(check, context)).toBe(true);
+  });
+
+  it('输入目标检查不要求事件回调，修正条件按当前输入目标判断', () => {
+    const executor = new EventContextConditionExecutor(terminal, id => id === 'controlled');
+    const context = {
+      blackboard: new ActionBlackboard(),
+      actionInputTarget: { kind: 'operator' as const, operatorId: 'controlled' },
+      actionSourceId: 'caster',
+    };
+    expect(
+      executor.evaluate(
+        { kind: 'actionInputTargetIdentityMatch', other: 'controlledOperator', operator: 'equal' },
+        context,
+      ),
+    ).toBe(true);
+    expect(
+      executor.evaluate(
+        { kind: 'actionInputTargetIdentityMatch', other: 'actionSource', operator: 'equal' },
+        context,
+      ),
+    ).toBe(false);
+    expect(
+      executor.evaluate(
+        { kind: 'actionInputTargetObjectTypeMatch', objectTypes: ['character'] },
+        context,
+      ),
+    ).toBe(true);
+  });
+
+  it('伤害检查不能读取治疗修正上下文，也不能导致模拟失败', () => {
+    const executor = new EventContextConditionExecutor(terminal);
+    const context = {
+      blackboard: new ActionBlackboard(),
+      modifierContext: {
+        kind: 'heal' as const,
+        input: { side: 'healer' as const, healerId: 'a', receiverId: 'b', tags: ['heal'] },
+      },
+    };
+    expect(
+      executor.evaluate({ kind: 'eventDamageTypeIn', damageTypes: ['physical'] }, context),
+    ).toBe(false);
+    expect(
+      executor.evaluate(
+        { kind: 'eventDamageTagsMatch', match: 'hasAny', tags: ['normalAttackLastCombo'] },
+        context,
+      ),
+    ).toBe(false);
+    expect(executor.evaluate({ kind: 'eventSkillCastMatchesBuffSource' }, context)).toBe(false);
+    expect(
+      executor.evaluate({ kind: 'eventHealTagsMatch', match: 'hasAny', tags: ['heal'] }, context),
+    ).toBe(true);
+  });
+
   it('物理异常事件按 Buff 的 affix 编号匹配，不能拿普通创建来源代替', () => {
     const executor = new EventContextConditionExecutor(terminal);
     const cast = {
@@ -128,15 +205,18 @@ describe('EventContextConditionExecutor', () => {
           features: [],
         },
       },
-      beforeApplyDamageModifier: {
-        side: 'attacker' as const,
-        sourceId: 'operator',
-        targetId: 'enemy',
-        skillCastId: 42,
-        damageType: 'physical' as const,
-        tags: ['normalSkill'] as const,
-        gameplayTags: ['Damage/TyphoeaSkill/FloatingHit_Weak'] as const,
-        features: ['dot'] as const,
+      modifierContext: {
+        kind: 'damage' as const,
+        input: {
+          side: 'attacker' as const,
+          sourceId: 'operator',
+          targetId: 'enemy',
+          skillCastId: 42,
+          damageType: 'physical' as const,
+          tags: ['normalSkill'] as const,
+          gameplayTags: ['Damage/TyphoeaSkill/FloatingHit_Weak'] as const,
+          features: ['dot'] as const,
+        },
       },
     };
     expect(

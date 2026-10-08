@@ -19,8 +19,9 @@ const compileGraphEntry = (
   revision: string,
   entry: string | null,
   nodes: Record<string, ActionGraphNode>,
+  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => ({
-  graph: createActionGraphCompilation({ nodes }, 1, revision).compileAll(),
+  graph: createActionGraphCompilation({ nodes, dataNodes }, 1, revision).compileAll(),
   entry,
   callSite: revision,
 });
@@ -28,6 +29,7 @@ const compileGraphEntry = (
 const chainEntry = (
   revision: string,
   actions: readonly ActionGraphStep[],
+  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => {
   const nodes: Record<string, ActionGraphNode> = {};
   actions.forEach((action, index) => {
@@ -36,7 +38,7 @@ const chainEntry = (
       next: index + 1 < actions.length ? `step-${index + 1}` : null,
     };
   });
-  return compileGraphEntry(revision, actions.length === 0 ? null : 'step-0', nodes);
+  return compileGraphEntry(revision, actions.length === 0 ? null : 'step-0', nodes, dataNodes);
 };
 
 const condition: CompiledComboSkillConditionProgram = {
@@ -216,18 +218,29 @@ describe('assembly 原生常驻连携条件', () => {
     f.owner.comboConditionPrograms = [
       {
         ...condition,
-        sequence: compileGraphEntry('combo-pending-guard', 'step-0', {
-          'step-0': {
-            action: {
-              kind: 'conditional',
-              parameters: {
-                condition: { kind: 'not', condition: { kind: 'casterComboPending' } },
+        sequence: compileGraphEntry(
+          'combo-pending-guard',
+          'step-0',
+          {
+            'step-0': {
+              action: {
+                kind: 'conditional',
+                parameters: {
+                  condition: { kind: 'conditionNode', nodeId: 'input_2' },
+                },
+                whenTrue: { $sequence: null },
               },
-              whenTrue: { $sequence: null },
+              next: null,
             },
-            next: null,
           },
-        }),
+          {
+            input_1: { type: 'boolean', expression: { kind: 'casterComboPending' } },
+            input_2: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'input_1' } },
+            },
+          },
+        ),
       },
     ];
     const assembly = new CombatRuntimeAssembly({
@@ -746,16 +759,20 @@ describe('assembly 原生常驻连携条件', () => {
     const f = setup();
     f.owner.comboConditionPrograms[0] = {
       ...condition,
-      sequence: chainEntry('combo-entity-board-read', [
-        {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'local',
-            operation: 'add',
-            value: { kind: 'blackboard', key: 'EntityBB_value' },
+      sequence: chainEntry(
+        'combo-entity-board-read',
+        [
+          {
+            kind: 'modifyActionValue',
+            parameters: {
+              key: 'local',
+              operation: 'add',
+              value: { kind: 'valueNode', nodeId: 'input_1' },
+            },
           },
-        },
-      ]),
+        ],
+        { input_1: { type: 'number', expression: { kind: 'blackboard', key: 'EntityBB_value' } } },
+      ),
     };
     f.owner.skills.push(
       action('write', [

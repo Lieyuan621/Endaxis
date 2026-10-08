@@ -1,7 +1,7 @@
 import type { ScheduledSequenceDefinition } from '../../../../../packages/game-data-contract/src/actions.ts';
 import { createActionGraphBuilder } from '../actions/actionGraphBuilder.ts';
 import type { CompiledBuffStepSource } from '../actions/combatActionProjectionTypes.ts';
-import type { SkillDefinition } from '../../../../../packages/game-data-contract/src/skills.ts';
+import type { SkillDefinition } from '../intermediateDefinitions.ts';
 import { NATIVE_SKILL_HAS_HIT_BLACKBOARD_KEY } from '../../../../../packages/game-data-contract/src/conditions.ts';
 import { numericDeclaredBlackboard } from '../../source/blackboard.ts';
 import type { SkillPatchSource } from '../../source/skillPatch.ts';
@@ -63,7 +63,7 @@ export type CompiledActiveSkillTimelineSequenceSource = Readonly<
  * 原生时长与技能块宽度仍分别保留；技能等级的具体取值由最终消费者选择。
  */
 export interface CompiledActiveSkillRuntimeProjectionSource {
-  readonly actionGraph: import('../../../../../packages/game-data-contract/src/actionGraph.ts').ActionGraphResourceDefinition;
+  readonly actionGraph: import('../intermediateDefinitions.ts').ActionGraphResourceDefinition;
   readonly skillId: string;
   readonly durationFrame: number;
   readonly timelineBlockFrames: number;

@@ -1,35 +1,25 @@
-import type { CombatBuffContainer } from '../buffs/combatBuffs';
-import type { CombatVitals } from '../resources/combatVitals';
-import type { DamageModifierExternalCondition } from './damageModifiers';
 /** 伤害修正的条件与处理器算法；所有本次输入由调用方传入，不保留伤害上下文。 */
 import type {
-  DamageModifierCondition,
   DamageModifierDefinition,
   DamageModifierNumber,
   DamageProcessorDefinition,
 } from '../../../../packages/game-data-contract/src/modifiers.ts';
-import { compareCombatNumbers } from '../../mechanics/combatNumbers.ts';
 import { attributeModifierValues } from '../attributes/combatAttributes';
 import type {
   DamageModifierSide,
   DamageProcessTiming,
   PlayerDamageContext,
 } from './playerDamageContext';
-import type {
-  DamageModifierConditionEvaluator,
-  DamageModifierConditionProgram,
-} from './damageModifiers';
+import type { DamageModifierConditionRuntime } from './damageModifiers';
 
 export function applyDamageModifier(
   ownerId: string,
-  sourceSkillCastId: number | null,
-  definition: DamageModifierDefinition,
+  definition: Omit<DamageModifierDefinition, 'condition'>,
   resolveNumber: (value: DamageModifierNumber) => number,
-  conditionProgram: DamageModifierConditionProgram | undefined,
+  condition: DamageModifierConditionRuntime | undefined,
   timing: DamageProcessTiming,
   side: DamageModifierSide,
   context: PlayerDamageContext,
-  evaluateCondition?: DamageModifierConditionEvaluator,
   recordModifier?: (
     side: import('./damageScale').DamageScaleSide,
     result: import('./damageScale').DamageModifierResult,
@@ -39,8 +29,8 @@ export function applyDamageModifier(
     return;
   }
   if (
-    conditionProgram !== undefined &&
-    !conditionProgram.execute({
+    condition !== undefined &&
+    !condition.execute({
       side,
       sourceId: context.sourceId,
       targetId: context.targetId,
@@ -52,64 +42,8 @@ export function applyDamageModifier(
     })
   )
     return;
-  if (definition.condition !== undefined) {
-    if (evaluateCondition === undefined) {
-      throw new Error('conditional damage modifier requires a condition evaluator');
-    }
-    if (
-      !evaluateDamageCondition(
-        definition.condition,
-        evaluateCondition,
-        context,
-        sourceSkillCastId,
-        resolveNumber,
-      )
-    )
-      return;
-  }
   for (const processor of definition.processors) {
     applyProcessor(processor, timing, context, resolveNumber, recordModifier, side);
-  }
-}
-
-function evaluateDamageCondition(
-  condition: DamageModifierCondition,
-  evaluateExternal: DamageModifierConditionEvaluator,
-  context: PlayerDamageContext,
-  sourceSkillCastId: number | null,
-  resolveNumber: (value: DamageModifierNumber) => number,
-): boolean {
-  switch (condition.kind) {
-    case 'sourceSkillCastMatch':
-      return (
-        sourceSkillCastId !== null &&
-        sourceSkillCastId > 0 &&
-        context.skillCastId === sourceSkillCastId
-      );
-    case 'buffBlackboardCompare':
-      return compareCombatNumbers(
-        resolveNumber(condition.left),
-        resolveNumber(condition.right),
-        condition.operator,
-      );
-    case 'not':
-      return !evaluateDamageCondition(
-        condition.condition,
-        evaluateExternal,
-        context,
-        sourceSkillCastId,
-        resolveNumber,
-      );
-    case 'all':
-      return condition.conditions.every(child =>
-        evaluateDamageCondition(child, evaluateExternal, context, sourceSkillCastId, resolveNumber),
-      );
-    case 'any':
-      return condition.conditions.some(child =>
-        evaluateDamageCondition(child, evaluateExternal, context, sourceSkillCastId, resolveNumber),
-      );
-    default:
-      return evaluateExternal(condition, resolveNumber);
   }
 }
 
@@ -164,78 +98,5 @@ function applyProcessor(
             });
         }
       }
-  }
-}
-
-/** 场景提供查询端口，伤害修正模块统一解释条件；仅主控条件读取控制时间线。 */
-export function evaluateDamageModifierEnvironmentCondition(
-  condition: DamageModifierExternalCondition,
-  operatorBuffs: Pick<CombatBuffContainer<string>, 'matchesEntityTags' | 'getCountByIds'>,
-  enemyBuffs: Pick<CombatBuffContainer<string>, 'matchesEntityTags' | 'getCountByIds'>,
-  enemyVitals: Pick<CombatVitals, 'health' | 'maxHealth' | 'hasPoise' | 'poise'>,
-  damageContext: PlayerDamageContext,
-  resolveNumber: (value: DamageModifierNumber) => number,
-  readControlled: () => boolean,
-): boolean {
-  switch (condition.kind) {
-    case 'entityTagMatch': {
-      const target = condition.target === 'caster' ? operatorBuffs : enemyBuffs;
-      return target.matchesEntityTags(condition.tags, condition.tagQueryType);
-    }
-    case 'casterControlled':
-      return readControlled();
-    case 'buffIdCountCompare': {
-      const target = condition.target === 'caster' ? operatorBuffs : enemyBuffs;
-      return compareCombatNumbers(
-        target.getCountByIds(condition.buffIds),
-        resolveNumber(condition.value),
-        condition.operator,
-      );
-    }
-    case 'eventDamageTagsMatch':
-      return matchDamageProperties(damageContext.tags, condition.tags, condition.match);
-    case 'eventDamageFeaturesMatch':
-      return matchDamageProperties(damageContext.features, condition.features, condition.match);
-    case 'eventDamageTypesMatch':
-      return condition.damageTypes.includes(damageContext.damageType);
-    case 'targetHealthCompare': {
-      const current =
-        condition.valueType === 'ratio'
-          ? enemyVitals.health / enemyVitals.maxHealth
-          : enemyVitals.health;
-      return compareCombatNumbers(current, resolveNumber(condition.value), condition.operator);
-    }
-    case 'targetPoiseCompare':
-      return enemyVitals.hasPoise
-        ? compareCombatNumbers(
-            enemyVitals.poise,
-            resolveNumber(condition.value),
-            condition.operator,
-          )
-        : condition.returnValueIfMissing;
-  }
-}
-
-function matchDamageProperties<
-  T extends PlayerDamageContext['tags'][number] | PlayerDamageContext['features'][number],
->(
-  actualValues: readonly T[],
-  expectedValues: readonly T[],
-  match: 'exact' | 'hasAny' | 'hasAll' | 'exceptAny' | 'exceptAll',
-): boolean {
-  const actual = new Set(actualValues);
-  const hasAny = expectedValues.some(value => actual.has(value));
-  const hasAll = expectedValues.every(value => actual.has(value));
-  switch (match) {
-    case 'exact':
-      return actual.size === new Set(expectedValues).size && hasAll;
-    case 'hasAny':
-      return hasAny;
-    case 'hasAll':
-      return hasAll;
-    case 'exceptAny':
-      return !hasAny;
-    case 'exceptAll':
-      return !hasAll;
   }
 }

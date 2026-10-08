@@ -93,7 +93,7 @@ const definition = {
                 parameters: {
                   key: 'atk_up_ex',
                   operation: 'add',
-                  value: { kind: 'blackboard', key: 'atk_up_add' },
+                  value: { kind: 'valueNode', nodeId: 'data_1' },
                 },
               },
               next: 'applyBuff_3',
@@ -104,8 +104,8 @@ const definition = {
                 parameters: {
                   key: 'atk_up_ex',
                   operation: 'multiply',
-                  left: { kind: 'blackboard', key: 'atk_up_mult' },
-                  right: { kind: 'blackboard', key: 'consume_layer' },
+                  left: { kind: 'valueNode', nodeId: 'data_2' },
+                  right: { kind: 'valueNode', nodeId: 'data_3' },
                 },
               },
               next: 'modifyActionValue_4',
@@ -113,14 +113,7 @@ const definition = {
             conditional_6: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventConsumedBuffLayerCompare',
-                    operator: 'greaterOrEqual',
-                    value: { kind: 'constant', value: 1 },
-                    outputKey: 'consume_layer',
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
                 whenTrue: { $sequence: 'calculateActionValue_5' },
               },
               next: null,
@@ -128,16 +121,32 @@ const definition = {
             conditional_7: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/NoGuard'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
                 whenTrue: { $sequence: 'conditional_6' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_up_add' } },
+            data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_up_mult' } },
+            data_3: { type: 'number', expression: { kind: 'blackboard', key: 'consume_layer' } },
+            data_4: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventConsumedBuffLayerCompare',
+                operator: 'greaterOrEqual',
+                value: { kind: 'constant', value: 1 },
+                outputKey: 'consume_layer',
+              },
+            },
+            data_5: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/NoGuard'],
+              },
             },
           },
         },

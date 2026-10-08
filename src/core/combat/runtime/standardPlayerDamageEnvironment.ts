@@ -4,7 +4,6 @@ import {
   type ReactionDamageIdentity,
 } from '../damage/reactionDamageCritical';
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
-import { evaluateDamageModifierEnvironmentCondition } from '../damage/damageModifierExecution';
 import type { AbilityEventPayloadMap, CombatAbilityEvent } from '../events/combatAbilityEvent';
 import { submitSimulationCastSeed } from '../random/simulationRandom';
 import {
@@ -46,31 +45,26 @@ import { BuffProgressRecorder, type BuffProgressCurve } from '../buffs/buffProgr
 import {
   compileCombatBuffDefinitions,
   CompiledCombatBuffDefinitions,
-  type CombatBuffDefinitionsDocument,
 } from '../buffs/combatBuffDefinitions';
+import { type CombatBuffDefinitionsDocument } from '../../../../packages/game-data-contract/src/buffs';
 import { CombatBuffContainer, type CombatBuff } from '../buffs/combatBuffs';
 import {
   POISE_BREAK_BUFF_ID,
   FINISHER_ELIGIBILITY_BUFF_ID,
   PoiseBreakBuffRuntime,
 } from '../buffs/poiseBreakBuffRuntime';
-import type { DamageModifierExternalCondition } from '../damage/damageModifiers';
 import { resolveBuffModifierNumber } from '../buffs/buffModifierNumberSource';
 
 function damageEffects(
   buff: CombatBuff<string>,
 ): import('../receipt/combatReceipt').BuffDamageEffect[] {
   return buff.damageModifiers.flatMap(modifier => {
-    const condition = modifier.definition.condition;
-    if (condition?.kind === 'eventDamageTypesMatch' && condition.damageTypes.length === 0)
-      return [];
+    const damageTypes = modifier.condition?.damageTypes;
+    if (damageTypes?.length === 0) return [];
     const applicability = {
-      ...(condition?.kind === 'eventDamageTypesMatch'
-        ? { damageTypes: [...condition.damageTypes] }
-        : {}),
-      conditional:
-        modifier.conditionProgram !== undefined ||
-        (condition !== undefined && condition.kind !== 'eventDamageTypesMatch'),
+      ...(damageTypes === undefined ? {} : { damageTypes: [...damageTypes] }),
+      conditional: damageTypes === undefined && modifier.condition !== undefined,
+      ...(modifier.condition?.summary ? { conditionSummary: modifier.condition.summary } : {}),
     };
     return modifier.definition.processors.flatMap(
       (processor): import('../receipt/combatReceipt').BuffDamageEffect[] => {
@@ -146,7 +140,7 @@ import {
 } from '../damage/staticPlayerDamageSnapshots';
 import { resolveAbilityEventActionContextBinding } from '../events/abilityEventActionContext';
 import { AbilityEventDispatcher, type AbilityEventFromMap } from '../events/abilityEventDispatcher';
-import type { HealModifierSide } from '../heal/healModifiers';
+import type { HealModifierSide } from '../../../../packages/game-data-contract/src/modifiers';
 import { HealOperationExecutor, type ResolvedHealTarget } from '../heal/healOperationExecutor';
 import type { CompoundStatusFactoriesDocument } from '../infliction/compoundStatusFactories';
 import { executeCompoundStatusFactory } from '../infliction/compoundStatusFactory';
@@ -833,18 +827,7 @@ export class StandardPlayerDamageEnvironment {
   > {
     return {
       applyDamageModifiers: (timing, side, damageContext) =>
-        this.#buffContainer(side, operatorBuffs).applyDamageModifiers(
-          timing,
-          side,
-          damageContext,
-          (condition, resolveNumber) =>
-            this.#evaluateDamageModifierCondition(
-              condition,
-              operatorBuffs,
-              damageContext,
-              resolveNumber,
-            ),
-        ),
+        this.#buffContainer(side, operatorBuffs).applyDamageModifiers(timing, side, damageContext),
       addInstantAttributeModifier: (side, request) => {
         const attributes = this.#buffContainer(side, operatorBuffs).attributes;
         if (!attributes.has(request.attribute)) {
@@ -1054,30 +1037,6 @@ export class StandardPlayerDamageEnvironment {
       container: this.#reactions,
       delegate: this.#createInflictionExecutor(context),
     });
-  }
-
-  #evaluateDamageModifierCondition(
-    condition: DamageModifierExternalCondition,
-    operatorBuffs: CombatBuffContainer<string>,
-    damageContext: import('../damage/playerDamageContext').PlayerDamageContext,
-    resolveNumber: (value: import('../damage/damageModifiers').DamageModifierNumber) => number,
-  ): boolean {
-    return evaluateDamageModifierEnvironmentCondition(
-      condition,
-      operatorBuffs,
-      this.#enemyBuffs,
-      this.#enemyVitals,
-      damageContext,
-      resolveNumber,
-      () => {
-        if (this.#isOperatorControlled === undefined || this.#clock === null) {
-          throw new Error(
-            'caster-controlled damage modifier requires the scenario control timeline',
-          );
-        }
-        return this.#isOperatorControlled(operatorBuffs.ownerId, this.#clock.frame);
-      },
-    );
   }
 
   #createInflictionExecutor(context: CombatOperationExecutorContext): CombatOperationExecutor {
@@ -1403,7 +1362,7 @@ export class StandardPlayerDamageEnvironment {
   }
 
   #compileInlineBuffDefinition(
-    entry: import('../buffs/combatBuffDefinitions').CombatBuffDefinitionEntry,
+    entry: import('../../../../packages/game-data-contract/src/buffs').CombatBuffDefinitionEntry,
   ): import('../buffs/combatBuffs').CombatBuffDefinition<string> {
     const definitions = new CompiledCombatBuffDefinitions(`inline:${entry.id}`, [entry], {
       emitElementalInflictionStarted: payload =>
@@ -1506,6 +1465,11 @@ export class StandardPlayerDamageEnvironment {
       throw new Error('elemental infliction requires an elemental infliction document');
     }
     this.#elementalDefinitions = compileCombatBuffDefinitions(document, {
+      resolveConditionOperations: source =>
+        (source.ownerId === 'enemy'
+          ? this.#enemyBuffRuntime
+          : this.#operatorBuffRuntime(source.ownerId)
+        ).resolveLifecycleOperations(source),
       emitElementalInflictionStarted: payload =>
         this.#emit('enemy', 'elementalInflictionStarted', payload),
       onSpellBurstTriggered: payload => this.#onSpellBurstTriggered(payload),

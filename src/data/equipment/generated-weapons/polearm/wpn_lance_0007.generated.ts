@@ -66,12 +66,7 @@ const definition = {
             conditional_2: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'originSkillTypeIn',
-                    skillTypes: ['comboSkill', 'ultimate', 'battleSkill'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
@@ -79,13 +74,7 @@ const definition = {
             conditional_3: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerableFire'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                 whenTrue: { $sequence: 'conditional_2' },
               },
               next: null,
@@ -106,7 +95,7 @@ const definition = {
             conditional_5: {
               action: {
                 kind: 'conditional',
-                parameters: { condition: { kind: 'eventInflictionElementIn', elements: ['heat'] } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 whenTrue: { $sequence: 'applyBuff_4' },
               },
               next: null,
@@ -114,15 +103,38 @@ const definition = {
             conditional_6: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'originSkillTypeIn',
-                    skillTypes: ['battleSkill', 'comboSkill', 'ultimate'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
                 whenTrue: { $sequence: 'conditional_5' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: {
+                kind: 'originSkillTypeIn',
+                skillTypes: ['comboSkill', 'ultimate', 'battleSkill'],
+              },
+            },
+            data_2: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerableFire'],
+              },
+            },
+            data_3: {
+              type: 'boolean',
+              expression: { kind: 'eventInflictionElementIn', elements: ['heat'] },
+            },
+            data_4: {
+              type: 'boolean',
+              expression: {
+                kind: 'originSkillTypeIn',
+                skillTypes: ['battleSkill', 'comboSkill', 'ultimate'],
+              },
             },
           },
         },

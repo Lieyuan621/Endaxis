@@ -66,9 +66,7 @@ const definition = {
             conditional_2: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: { kind: 'originSkillTypeIn', skillTypes: ['comboSkill'] },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
@@ -92,16 +90,7 @@ const definition = {
             conditional_4: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'not',
-                    condition: {
-                      kind: 'actionInputTargetIdentityMatch',
-                      other: 'actionOwner',
-                      operator: 'equal',
-                    },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 whenTrue: { $sequence: 'applyBuff_3' },
               },
               next: null,
@@ -109,16 +98,36 @@ const definition = {
             conditional_5: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventHealTagsMatch',
-                    match: 'hasAny',
-                    tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
                 whenTrue: { $sequence: 'conditional_4' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: { kind: 'originSkillTypeIn', skillTypes: ['comboSkill'] },
+            },
+            data_2: {
+              type: 'boolean',
+              expression: {
+                kind: 'actionInputTargetIdentityMatch',
+                other: 'actionOwner',
+                operator: 'equal',
+              },
+            },
+            data_3: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+            },
+            data_4: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventHealTagsMatch',
+                match: 'hasAny',
+                tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
+              },
             },
           },
         },

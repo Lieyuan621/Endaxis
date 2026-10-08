@@ -140,13 +140,7 @@ async function apply() {
   }
   if (
     !unsetRequested.value &&
-    !validMappingSources(
-      rows.value,
-      original.value,
-      props.descriptor.value,
-      context.value,
-      props.descriptor.allowsParameters !== false,
-    )
+    !validMappingSources(rows.value, original.value, props.descriptor.value, context.value)
   ) {
     error.value = 'incompatibleSource';
     return;
@@ -190,23 +184,14 @@ watch(
 watch(
   () => props.descriptor,
   (value, previous) => {
-    if (
-      value.value !== previous.value ||
-      value.destination !== previous.destination ||
-      value.allowsParameters !== previous.allowsParameters
-    )
-      cancel();
+    if (value.value !== previous.value || value.destination !== previous.destination) cancel();
   },
 );
 function valueLabel(value: unknown): string {
   if (typeof value === 'string') return JSON.stringify(value);
   if (isMappingRecord(value)) {
-    if (value.kind === 'blackboard')
-      return `${t('blackboardMapping.readNumber')}: ${String(value.key)}${Object.hasOwn(value, 'fallback') ? ` (${t('blackboardMapping.fallback')}: ${String(value.fallback)})` : ''}`;
     if (value.kind === 'constant')
       return `${t('blackboardMapping.constant')}: ${String(value.value)}`;
-    if (value.kind === 'parameter')
-      return `${t('blackboardMapping.parameter')}: ${String(value.parameter)}`;
     if (value.kind === 'valueNode')
       return `${t('blackboardMapping.connection')}: ${String(value.nodeId)}`;
   }
@@ -286,7 +271,6 @@ function valueLabel(value: unknown): string {
         <BlackboardMappingValueField
           :value="row.value"
           :mode="descriptor.value"
-          :allows-parameters="descriptor.allowsParameters !== false"
           :label="`${label} ${t('blackboardMapping.value')} ${index + 1}`"
           @change="changeValue(index, $event)"
           :readonly="!editable || awaitingAcceptance || connected(row.value)"

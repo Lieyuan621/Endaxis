@@ -1,3 +1,4 @@
+import { numberInput } from '../../../test/compiledGraphInputs';
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
 import { describe, expect, it } from 'vitest';
 
@@ -66,7 +67,7 @@ describe('ElementalReactionOperationExecutor', () => {
       parameters: {
         reaction: 'electrification',
         target: 'enemy',
-        durationSeconds: { kind: 'blackboard', key: 'duration' },
+        durationSeconds: numberInput({ kind: 'blackboard', key: 'duration' }),
         durationMultiplier: 1.5,
         effectiveness: 1,
       },

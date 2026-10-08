@@ -1,4 +1,5 @@
-import type { CombatCondition } from '../../game-data/operatorDefinition';
+import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
+
 import type { CombatOperationContext } from '../skills/skillRuntime';
 /**
  * 把语义状态动作接到具体状态所有者，并在状态所有者完成结算后记录前后快照。
@@ -96,7 +97,7 @@ export class StatusOperationExecutor implements CombatOperationExecutor {
     this.dependencies.delegate.end?.(step, context);
   }
 
-  evaluate(condition: CombatCondition, context?: CombatOperationContext): boolean {
+  evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     if (condition.kind === 'statusActive') {
       const stacks = this.dependencies
         .resolveTarget(condition.target)

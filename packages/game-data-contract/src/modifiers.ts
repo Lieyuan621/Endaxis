@@ -4,14 +4,7 @@
  * Buff 等战斗能力用这些结构注册处理器。模拟器会在指定计算阶段检查来源方、目标方、
  * 伤害标签和其他条件，再把数值写入对应的公式槽或倍率区间。
  */
-import type { GameplayTag, GameplayTagMatchType, GameplayTagQueryType } from './gameplayTags.ts';
-import {
-  type CombatTarget,
-  type ComparisonOperator,
-  type DamageFeature,
-  type DamageTag,
-  type DamageType,
-} from './primitives.ts';
+import type { ActionGraphReference } from './actionGraph.ts';
 
 /** 属性修正是在构筑阶段写入，还是在战斗运行时写入。 */
 export const ATTRIBUTE_MODIFIER_TIMINGS = ['deck', 'runtime'] as const;
@@ -103,119 +96,6 @@ export type DamageModifierNumber =
       readonly blackboardKey: string;
     };
 
-/** 只依赖本次伤害事件和参战对象状态的伤害修正条件。 */
-export type DamageModifierExternalCondition =
-  | {
-      /** 检查来源方或目标方的 GameplayTag。 */
-      readonly kind: 'entityTagMatch';
-      /** 要检查的对象。 */
-      readonly target: CombatTarget;
-      /** 标签集合的匹配方式。 */
-      readonly tagQueryType: GameplayTagQueryType;
-      /** 参与匹配的标签。 */
-      readonly tags: readonly GameplayTag[];
-    }
-  /** 仅在伤害来源是当前受控干员时成立。 */
-  | {
-      /** 条件种类判别值。 */
-      readonly kind: 'casterControlled';
-    }
-  | {
-      /** 比较指定对象身上若干 Buff 的实例总数。 */
-      readonly kind: 'buffIdCountCompare';
-      /** 要统计 Buff 的对象。 */
-      readonly target: 'caster' | 'enemy';
-      /** 计入统计的 Buff ID。 */
-      readonly buffIds: readonly string[];
-      /** 计数比较符。 */
-      readonly operator: ComparisonOperator;
-      /** 与实例总数比较的值。 */
-      readonly value: DamageModifierNumber;
-    }
-  | {
-      /** 检查本次伤害携带的伤害标签。 */
-      readonly kind: 'eventDamageTagsMatch';
-      /** 标签集合的匹配方式。 */
-      readonly match: GameplayTagMatchType;
-      /** 参与匹配的伤害标签。 */
-      readonly tags: readonly DamageTag[];
-    }
-  | {
-      /** 检查本次伤害携带的特征。 */
-      readonly kind: 'eventDamageFeaturesMatch';
-      /** 特征集合的匹配方式。 */
-      readonly match: GameplayTagMatchType;
-      /** 参与匹配的伤害特征。 */
-      readonly features: readonly DamageFeature[];
-    }
-  | {
-      /** 检查本次伤害的伤害类型。 */
-      readonly kind: 'eventDamageTypesMatch';
-      /** 任一匹配即可成立的伤害类型。 */
-      readonly damageTypes: readonly DamageType[];
-    }
-  | {
-      /** 比较敌人的当前生命或生命比例。 */
-      readonly kind: 'targetHealthCompare';
-      /** 当前只支持伤害目标。 */
-      readonly target: 'enemy';
-      /** 比较生命数值还是生命比例。 */
-      readonly valueType: 'current' | 'ratio';
-      /** 数值比较符。 */
-      readonly operator: ComparisonOperator;
-      /** 与目标生命比较的值。 */
-      readonly value: DamageModifierNumber;
-    }
-  | {
-      /** 比较敌人的当前失衡值。 */
-      readonly kind: 'targetPoiseCompare';
-      /** 当前只支持伤害目标。 */
-      readonly target: 'enemy';
-      /** 目标没有失衡条时直接采用的判断结果。 */
-      readonly returnValueIfMissing: boolean;
-      /** 数值比较符。 */
-      readonly operator: ComparisonOperator;
-      /** 与目标失衡值比较的值。 */
-      readonly value: DamageModifierNumber;
-    };
-
-/** 伤害修正专用条件树；Buff 黑板只在持有该修正的实例内求值。 */
-export type DamageModifierCondition =
-  | DamageModifierExternalCondition
-  /** 本次伤害与创建当前 Buff 的技能属于同一次施放。 */
-  | {
-      /** 条件种类判别值。 */
-      readonly kind: 'sourceSkillCastMatch';
-    }
-  | {
-      /** 比较同一 Buff 黑板中的两个动态值或常量。 */
-      readonly kind: 'buffBlackboardCompare';
-      /** 左操作数。 */
-      readonly left: DamageModifierNumber;
-      /** 数值比较符。 */
-      readonly operator: ComparisonOperator;
-      /** 右操作数。 */
-      readonly right: DamageModifierNumber;
-    }
-  | {
-      /** 对一个子条件取反。 */
-      readonly kind: 'not';
-      /** 要取反的条件。 */
-      readonly condition: DamageModifierCondition;
-    }
-  | {
-      /** 所有子条件都成立时返回真。 */
-      readonly kind: 'all';
-      /** 需要同时成立的条件。 */
-      readonly conditions: readonly DamageModifierCondition[];
-    }
-  | {
-      /** 任一子条件成立时返回真。 */
-      readonly kind: 'any';
-      /** 只需其中一项成立的条件。 */
-      readonly conditions: readonly DamageModifierCondition[];
-    };
-
 /** 在指定阶段向倍率区间或即时属性写入修正的处理器定义。 */
 export type DamageProcessorDefinition =
   | {
@@ -270,8 +150,8 @@ export interface DamageModifierDefinition {
   readonly enabledSide: DamageModifierSide;
   /** 按顺序执行的伤害处理器。 */
   readonly processors: readonly DamageProcessorDefinition[];
-  /** 启用处理器前必须满足的条件。 */
-  readonly condition?: DamageModifierCondition;
+  /** 所属 Buff 图中的条件动作入口；序列返回真后才执行处理器。 */
+  readonly condition?: ActionGraphReference;
 }
 
 /** 治疗修正安装在治疗者或受治疗者一方。 */
@@ -286,37 +166,6 @@ export type HealModifierNumber =
   | {
       /** 读取数值的 Buff 黑板键。 */
       readonly blackboardKey: string;
-    };
-
-/** 决定一项治疗修正是否生效的条件。 */
-export type HealModifierCondition =
-  | {
-      /** 比较受治疗者的当前生命值或生命比例。 */
-      readonly kind: 'targetHealthCompare';
-      /** 比较当前生命值还是当前生命比例。 */
-      readonly valueType: 'current' | 'ratio';
-      /** 数值比较符。 */
-      readonly operator: ComparisonOperator;
-      /** 与生命值或比例比较的值。 */
-      readonly value: HealModifierNumber;
-    }
-  | {
-      /** 比较同一 Buff 黑板中的两个动态值或常量。 */
-      readonly kind: 'buffBlackboardCompare';
-      /** 左操作数。 */
-      readonly left: HealModifierNumber;
-      /** 数值比较符。 */
-      readonly operator: ComparisonOperator;
-      /** 右操作数。 */
-      readonly right: HealModifierNumber;
-    }
-  | {
-      /** 检查本次治疗携带的标签。 */
-      readonly kind: 'healTagsMatch';
-      /** 匹配任一标签或全部标签。 */
-      readonly match: 'hasAny' | 'hasAll';
-      /** 参与匹配的治疗标签。 */
-      readonly tags: readonly GameplayTag[];
     };
 
 /** 在基础治疗计算完成后乘算结果。 */
@@ -347,8 +196,8 @@ export interface ModifyHealingIncreaseProcessorDefinition {
 export interface HealModifierDefinition {
   /** 只有此修正安装在指定一方时才启用。 */
   readonly enabledSide: HealModifierSide;
-  /** 启用处理器前必须满足的条件。 */
-  readonly condition?: HealModifierCondition;
+  /** 所属 Buff 图中的条件动作入口；序列返回真后才执行处理器。 */
+  readonly condition?: ActionGraphReference;
   /** 按顺序执行的治疗处理器。 */
   readonly processors: readonly (
     ModifyHealCalculationResultProcessorDefinition | ModifyHealingIncreaseProcessorDefinition
@@ -369,28 +218,6 @@ export type PoiseModifierNumber =
       readonly blackboardKey: string;
     };
 
-/** 决定一项失衡伤害修正是否生效的条件。 */
-export type PoiseModifierCondition =
-  /** 伤害来源是当前主控干员。 */
-  | {
-      /** 条件种类判别值。 */
-      readonly kind: 'casterControlled';
-    }
-  | {
-      /** 检查本次伤害携带的标签。 */
-      readonly kind: 'eventDamageTagsMatch';
-      /** 匹配任一标签或全部标签。 */
-      readonly match: 'hasAny' | 'hasAll';
-      /** 参与匹配的伤害标签。 */
-      readonly tags: readonly DamageTag[];
-    }
-  | {
-      /** 所有子条件都成立时返回真。 */
-      readonly kind: 'all';
-      /** 需要同时成立的条件。 */
-      readonly conditions: readonly PoiseModifierCondition[];
-    };
-
 /** 在失衡伤害计算前修改攻击方或目标方的倍率。 */
 export interface ModifyPoiseScalarProcessorDefinition {
   /** 处理器种类判别值。 */
@@ -407,8 +234,8 @@ export interface ModifyPoiseScalarProcessorDefinition {
 export interface PoiseModifierDefinition {
   /** 只有此修正安装在指定一方时才启用。 */
   readonly enabledSide: PoiseModifierSide;
-  /** 启用处理器前必须满足的条件。 */
-  readonly condition?: PoiseModifierCondition;
+  /** 所属 Buff 图中的条件动作入口；序列返回真后才执行处理器。 */
+  readonly condition?: ActionGraphReference;
   /** 按顺序执行的失衡伤害处理器。 */
   readonly processors: readonly ModifyPoiseScalarProcessorDefinition[];
 }

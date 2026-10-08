@@ -1,5 +1,5 @@
 import { mountSetup } from '../../test/componentSetup';
-import { computed, createSSRApp, h, nextTick, shallowRef } from 'vue';
+import { computed, createSSRApp, h, shallowRef } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 import { ID_INJECTION_KEY, ZINDEX_INJECTION_KEY } from 'element-plus';
 import { describe, expect, it } from 'vitest';
@@ -8,7 +8,6 @@ import type { BlackboardFieldContext } from '../../application/editor/blackboard
 import { unknownBlackboardContext } from '../../application/editor/blackboardFieldContext';
 import { blackboardFieldContextKey } from './blackboardFieldContext';
 import BlackboardMappingField from './BlackboardMappingField.vue';
-import BlackboardMappingValueField from './BlackboardMappingValueField.vue';
 
 async function mount(
   component: unknown,
@@ -121,28 +120,6 @@ describe('atomic mapping editing', () => {
     }
   });
 
-  it.each(['string', 'other'])(
-    'rejects a numeric source %s without discarding typed draft',
-    async key => {
-      const changes: unknown[] = [];
-      const f = await mount(BlackboardMappingField, props({}, changes), known);
-      try {
-        f.state.begin();
-        f.state.add();
-        f.state.rows.value[0] = { key: 'target', value: { kind: 'blackboard', key } };
-        await f.state.apply();
-        expect(changes).toEqual([]);
-        expect(f.state.error.value).toBe('incompatibleSource');
-        expect(f.state.rows.value[0].value.key).toBe(key);
-        f.state.rows.value[0].value = { kind: 'blackboard', key: 'number' };
-        await f.state.apply();
-        expect(changes).toEqual([{ target: { kind: 'blackboard', key: 'number' } }]);
-      } finally {
-        f.stop();
-      }
-    },
-  );
-
   it('copies either numeric or string keys, but never a literal disguised as a source', async () => {
     const changes: unknown[] = [];
     const f = await mount(BlackboardMappingField, props({}, changes, 'copy'), known);
@@ -152,44 +129,6 @@ describe('atomic mapping editing', () => {
       f.state.rows.value[0] = { key: 'target', value: 'string' };
       await f.state.apply();
       expect(changes).toEqual([{ target: 'string' }]);
-    } finally {
-      f.stop();
-    }
-  });
-
-  it('rechecks current scope without replacing drafts and blocks undeclared parameters', async () => {
-    const changes: unknown[] = [];
-    const f = await mount(BlackboardMappingField, props({}, changes), known);
-    try {
-      f.state.begin();
-      f.state.add();
-      f.state.rows.value[0] = { key: 'target', value: { kind: 'blackboard', key: 'number' } };
-      f.context.value = {
-        ...known,
-        candidates: known.candidates.map(candidate => ({ ...candidate, readable: false })),
-      };
-      await nextTick();
-      await f.state.apply();
-      expect(changes).toEqual([]);
-      expect(f.state.rows.value[0].value.key).toBe('number');
-      f.state.rows.value[0].value = { kind: 'parameter', parameter: 'p' };
-      await f.state.apply();
-      expect(changes).toEqual([]);
-      f.context.value = {
-        ...known,
-        parameters: [
-          {
-            key: 'p',
-            valueType: 'number',
-            readable: true,
-            writable: false,
-            scope: 'parameter',
-            source: 'macro',
-          },
-        ],
-      };
-      await f.state.apply();
-      expect(changes).toEqual([{ target: { kind: 'parameter', parameter: 'p' } }]);
     } finally {
       f.stop();
     }
@@ -239,32 +178,6 @@ describe('atomic mapping editing', () => {
   });
 });
 
-it('numeric leaf modes preserve strict read semantics and cannot invent macro parameters', async () => {
-  const changes: unknown[] = [];
-  const f = await mount(
-    BlackboardMappingValueField,
-    {
-      value: { kind: 'valueNode', nodeId: 'existing' },
-      mode: 'operand',
-      label: 'value',
-      onChange: (value: unknown) => changes.push(value),
-    },
-    known,
-  );
-  try {
-    expect(f.state.branch.value).toBe('valueNode');
-    f.state.switchBranch('parameter');
-    expect(changes).toEqual([]);
-    f.state.switchBranch('blackboard');
-    expect(changes).toEqual([{ kind: 'blackboard', key: '' }]);
-    await f.update({ value: { kind: 'blackboard', key: 'number', fallback: 0 } });
-    f.state.updateOperand('fallback', undefined);
-    expect(changes.at(-1)).toEqual({ kind: 'blackboard', key: 'number' });
-  } finally {
-    f.stop();
-  }
-});
-
 it('renders contract-specific direction and unknown destination without JSON editing', async () => {
   for (const mode of ['copy', 'string', 'levelsOrOperand']) {
     const app = createSSRApp({
@@ -308,30 +221,5 @@ it('unsets optional mappings distinctly from an empty record and can cancel', as
     expect(f.state.editing.value).toBe(false);
   } finally {
     f.stop();
-  }
-});
-
-it('shows the legal explicit fallback state on the numeric source control', async () => {
-  for (const fallback of [undefined, 0]) {
-    const value = {
-      kind: 'blackboard',
-      key: 'string',
-      ...(fallback === undefined ? {} : { fallback }),
-    };
-    const app = createSSRApp({
-      render: () => h(BlackboardMappingValueField, { value, mode: 'operand', label: 'Value' }),
-    });
-    app
-      .use(i18n)
-      .provide(
-        blackboardFieldContextKey,
-        computed(() => known),
-      )
-      .provide(ID_INJECTION_KEY, { prefix: 102, current: 0 })
-      .provide(ZINDEX_INJECTION_KEY, { current: 0 });
-    const html = await renderToString(app);
-    expect(html).toContain(
-      `data-blackboard-state="${fallback === undefined ? 'typeMismatch' : 'fallback'}"`,
-    );
   }
 });

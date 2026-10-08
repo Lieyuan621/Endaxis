@@ -55,12 +55,15 @@ const definition = {
                 kind: 'dealDamage',
                 parameters: {
                   damageType: 'physical',
-                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                  attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                   tags: [],
                 },
               },
               next: null,
             },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
           },
         },
         macros: {},

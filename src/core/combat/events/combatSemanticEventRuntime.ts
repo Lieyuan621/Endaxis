@@ -1,3 +1,5 @@
+import { conditionInputExpression } from '../../compiler/compiledGraphData';
+import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
 /**
  * 战斗语义事件的同步分发中心。
  *
@@ -5,7 +7,6 @@
  * `CombatEventTrigger` 订阅。它不执行条件和动作，也不依赖 UI 或项目存档。
  */
 import type {
-  CombatCondition,
   CombatEventTrigger,
   SkillTriggerScope,
   UpgradeEvent,
@@ -85,7 +86,7 @@ export type CombatEventPhase = (typeof COMBAT_EVENT_PHASES)[number];
 interface CombatEventHandlerRegistrationBase {
   readonly ownerOperatorId: string;
   readonly trigger: CombatEventTrigger | UpgradeEvent;
-  readonly condition?: CombatCondition;
+  readonly condition?: CompiledCondition;
   /** 带条件的监听器必须提供与普通动作相同的条件执行链。 */
   readonly createOperations?: (context: CombatSemanticEventContext) => CombatOperationExecutor;
   /** 技能临时监听器复用本次释放黑板；常驻监听器省略时使用事件私有黑板。 */
@@ -310,7 +311,7 @@ export class CombatSemanticEventRuntime {
         if (operationContext.canExecuteAction?.() === false) return;
         if (
           !withCombatEventResponseContext(operationContext, context, () =>
-            getOperations().evaluate(condition, operationContext),
+            getOperations().evaluate(conditionInputExpression(condition), operationContext),
           )
         )
           return;

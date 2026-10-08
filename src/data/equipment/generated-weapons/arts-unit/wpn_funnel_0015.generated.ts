@@ -53,7 +53,7 @@ const definition = {
                 parameters: {
                   target: 'caster',
                   markerId: 'sk_wpn_funnel_0015',
-                  durationSeconds: { kind: 'blackboard', key: 'cd' },
+                  durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
                   autoFinishByAction: false,
                 },
               },
@@ -79,13 +79,7 @@ const definition = {
             conditional_3: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/SpellStatus'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                 whenTrue: { $sequence: 'applyBuff_2' },
               },
               next: null,
@@ -93,9 +87,7 @@ const definition = {
             conditional_4: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: { kind: 'originSkillTypeIn', skillTypes: ['battleSkill'] },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 whenTrue: { $sequence: 'conditional_3' },
               },
               next: null,
@@ -103,16 +95,7 @@ const definition = {
             conditional_5: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'not',
-                    condition: {
-                      kind: 'timedMarkerPresent',
-                      target: 'caster',
-                      markerId: 'sk_wpn_funnel_0015',
-                    },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
                 whenTrue: { $sequence: 'conditional_4' },
               },
               next: null,
@@ -136,10 +119,41 @@ const definition = {
             conditional_7: {
               action: {
                 kind: 'conditional',
-                parameters: { condition: { kind: 'eventSkillTypeIn', skillTypes: ['ultimate'] } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
                 whenTrue: { $sequence: 'applyBuff_6' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'cd' } },
+            data_2: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/SpellStatus'],
+              },
+            },
+            data_3: {
+              type: 'boolean',
+              expression: { kind: 'originSkillTypeIn', skillTypes: ['battleSkill'] },
+            },
+            data_4: {
+              type: 'boolean',
+              expression: {
+                kind: 'timedMarkerPresent',
+                target: 'caster',
+                markerId: 'sk_wpn_funnel_0015',
+              },
+            },
+            data_5: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+            },
+            data_6: {
+              type: 'boolean',
+              expression: { kind: 'eventSkillTypeIn', skillTypes: ['ultimate'] },
             },
           },
         },
@@ -210,13 +224,7 @@ const definition = {
       damageModifiers: [
         {
           enabledSide: 'attacker',
-          condition: {
-            kind: 'all',
-            conditions: [
-              { kind: 'eventDamageTagsMatch', match: 'hasAll', tags: ['normalSkill'] },
-              { kind: 'eventDamageTypesMatch', damageTypes: ['electric'] },
-            ],
-          },
+          condition: { $sequence: 'conditional_2' },
           processors: [
             {
               kind: 'damageScale',
@@ -227,7 +235,39 @@ const definition = {
           ],
         },
       ],
-      actionGraph: { main: { nodes: {} }, macros: {} },
+      actionGraph: {
+        main: {
+          nodes: {
+            conditional_1: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+                whenTrue: { $sequence: null },
+              },
+              next: null,
+            },
+            conditional_2: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+                whenTrue: { $sequence: 'conditional_1' },
+              },
+              next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: { kind: 'eventDamageTypeIn', damageTypes: ['electric'] },
+            },
+            data_2: {
+              type: 'boolean',
+              expression: { kind: 'eventDamageTagsMatch', match: 'hasAll', tags: ['normalSkill'] },
+            },
+          },
+        },
+        macros: {},
+      },
     },
     buff_wpn_funnel_0015_ultimate: {
       stackingType: 'refresh',
@@ -266,13 +306,7 @@ const definition = {
       damageModifiers: [
         {
           enabledSide: 'attacker',
-          condition: {
-            kind: 'all',
-            conditions: [
-              { kind: 'eventDamageTagsMatch', match: 'hasAll', tags: ['normalSkill'] },
-              { kind: 'eventDamageTypesMatch', damageTypes: ['electric'] },
-            ],
-          },
+          condition: { $sequence: 'conditional_2' },
           processors: [
             {
               kind: 'damageScale',
@@ -283,7 +317,39 @@ const definition = {
           ],
         },
       ],
-      actionGraph: { main: { nodes: {} }, macros: {} },
+      actionGraph: {
+        main: {
+          nodes: {
+            conditional_1: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+                whenTrue: { $sequence: null },
+              },
+              next: null,
+            },
+            conditional_2: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+                whenTrue: { $sequence: 'conditional_1' },
+              },
+              next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: { kind: 'eventDamageTypeIn', damageTypes: ['electric'] },
+            },
+            data_2: {
+              type: 'boolean',
+              expression: { kind: 'eventDamageTagsMatch', match: 'hasAll', tags: ['normalSkill'] },
+            },
+          },
+        },
+        macros: {},
+      },
     },
   },
 } as const satisfies WeaponDefinition;

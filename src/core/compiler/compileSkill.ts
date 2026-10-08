@@ -67,8 +67,10 @@ export function compileSkill(input: CompileSkillInput) {
     input.abilityEntityDefinitions,
     input.importedAbilityEntityDefinitions,
   );
-  const program = compileSkillProgram(input, (entry, path) =>
-    compilation.compileEntry(entry, `${input.skill.key}:${path}`),
+  const program = compileSkillProgram(
+    input,
+    (entry, path) => compilation.compileEntry(entry, `${input.skill.key}:${path}`),
+    compilation.compileInputs,
   );
   return { ...program, abilityEntityDefinitions: compilation.program.abilityEntityDefinitions };
 }

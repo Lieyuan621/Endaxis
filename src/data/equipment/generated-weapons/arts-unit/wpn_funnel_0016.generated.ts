@@ -122,12 +122,7 @@ const definition = {
               action: {
                 kind: 'conditional',
                 parameters: {
-                  condition: {
-                    kind: 'deckAttributeCompare',
-                    left: 'intellect',
-                    operator: 'greaterOrEqual',
-                    right: 'will',
-                  },
+                  condition: { kind: 'conditionNode', nodeId: 'data_1' },
                   alwaysNext: true,
                 },
                 whenTrue: { $sequence: 'finishBuffsById_2' },
@@ -142,21 +137,61 @@ const definition = {
                   buffId: 'buff_wpn_funnel_0016',
                   target: 'caster',
                   blackboardAssignments: {
-                    atk_up2: { kind: 'blackboard', key: 'install_0_atk_up2' },
-                    duration: { kind: 'blackboard', key: 'install_0_duration' },
-                    duration2: { kind: 'blackboard', key: 'install_0_duration2' },
-                    duration3: { kind: 'blackboard', key: 'install_0_duration3' },
-                    duration4: { kind: 'blackboard', key: 'install_0_duration4' },
-                    spell_dmg_taken_up: { kind: 'blackboard', key: 'install_0_spell_dmg_taken_up' },
-                    spell_dmg_taken_up2: {
-                      kind: 'blackboard',
-                      key: 'install_0_spell_dmg_taken_up2',
-                    },
-                    spell_dmg_up: { kind: 'blackboard', key: 'install_0_spell_dmg_up' },
+                    atk_up2: { kind: 'valueNode', nodeId: 'data_2' },
+                    duration: { kind: 'valueNode', nodeId: 'data_3' },
+                    duration2: { kind: 'valueNode', nodeId: 'data_4' },
+                    duration3: { kind: 'valueNode', nodeId: 'data_5' },
+                    duration4: { kind: 'valueNode', nodeId: 'data_6' },
+                    spell_dmg_taken_up: { kind: 'valueNode', nodeId: 'data_7' },
+                    spell_dmg_taken_up2: { kind: 'valueNode', nodeId: 'data_8' },
+                    spell_dmg_up: { kind: 'valueNode', nodeId: 'data_9' },
                   },
                 },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: {
+                kind: 'deckAttributeCompare',
+                left: 'intellect',
+                operator: 'greaterOrEqual',
+                right: 'will',
+              },
+            },
+            data_2: {
+              type: 'number',
+              expression: { kind: 'blackboard', key: 'install_0_atk_up2' },
+            },
+            data_3: {
+              type: 'number',
+              expression: { kind: 'blackboard', key: 'install_0_duration' },
+            },
+            data_4: {
+              type: 'number',
+              expression: { kind: 'blackboard', key: 'install_0_duration2' },
+            },
+            data_5: {
+              type: 'number',
+              expression: { kind: 'blackboard', key: 'install_0_duration3' },
+            },
+            data_6: {
+              type: 'number',
+              expression: { kind: 'blackboard', key: 'install_0_duration4' },
+            },
+            data_7: {
+              type: 'number',
+              expression: { kind: 'blackboard', key: 'install_0_spell_dmg_taken_up' },
+            },
+            data_8: {
+              type: 'number',
+              expression: { kind: 'blackboard', key: 'install_0_spell_dmg_taken_up2' },
+            },
+            data_9: {
+              type: 'number',
+              expression: { kind: 'blackboard', key: 'install_0_spell_dmg_up' },
             },
           },
         },
@@ -273,18 +308,24 @@ const definition = {
               action: {
                 kind: 'conditional',
                 parameters: {
-                  condition: {
-                    kind: 'deckAttributeCompare',
-                    left: 'intellect',
-                    operator: 'greaterOrEqual',
-                    right: 'will',
-                  },
+                  condition: { kind: 'conditionNode', nodeId: 'data_1' },
                   alwaysNext: true,
                 },
                 whenTrue: { $sequence: 'finishBuffsById_2' },
                 whenFalse: { $sequence: 'finishBuffsById_4' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: {
+                kind: 'deckAttributeCompare',
+                left: 'intellect',
+                operator: 'greaterOrEqual',
+                right: 'will',
+              },
             },
           },
         },
@@ -328,12 +369,7 @@ const definition = {
             conditional_2: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'originSkillTypeIn',
-                    skillTypes: ['battleSkill', 'comboSkill', 'ultimate'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
@@ -357,12 +393,7 @@ const definition = {
             conditional_4: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'originSkillTypeIn',
-                    skillTypes: ['battleSkill', 'comboSkill', 'ultimate'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                 whenTrue: { $sequence: 'applyBuff_3' },
               },
               next: null,
@@ -370,16 +401,34 @@ const definition = {
             conditional_5: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerableSpell'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 whenTrue: { $sequence: 'conditional_4' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: {
+                kind: 'originSkillTypeIn',
+                skillTypes: ['battleSkill', 'comboSkill', 'ultimate'],
+              },
+            },
+            data_2: {
+              type: 'boolean',
+              expression: {
+                kind: 'originSkillTypeIn',
+                skillTypes: ['battleSkill', 'comboSkill', 'ultimate'],
+              },
+            },
+            data_3: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerableSpell'],
+              },
             },
           },
         },
@@ -423,10 +472,7 @@ const definition = {
       damageModifiers: [
         {
           enabledSide: 'defender',
-          condition: {
-            kind: 'eventDamageTypesMatch',
-            damageTypes: ['heat', 'electric', 'cryo', 'nature'],
-          },
+          condition: { $sequence: 'conditional_3' },
           processors: [
             {
               kind: 'damageScale',
@@ -464,6 +510,23 @@ const definition = {
                 parameters: { outputKey: 'duration_dynamic' },
               },
               next: 'applyBuff_1',
+            },
+            conditional_3: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+                whenTrue: { $sequence: null },
+              },
+              next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventDamageTypeIn',
+                damageTypes: ['heat', 'electric', 'cryo', 'nature'],
+              },
             },
           },
         },
@@ -507,10 +570,7 @@ const definition = {
       damageModifiers: [
         {
           enabledSide: 'defender',
-          condition: {
-            kind: 'eventDamageTypesMatch',
-            damageTypes: ['heat', 'electric', 'cryo', 'nature'],
-          },
+          condition: { $sequence: 'conditional_3' },
           processors: [
             {
               kind: 'damageScale',
@@ -548,6 +608,23 @@ const definition = {
                 parameters: { outputKey: 'duration_dynamic' },
               },
               next: 'applyBuff_1',
+            },
+            conditional_3: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+                whenTrue: { $sequence: null },
+              },
+              next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventDamageTypeIn',
+                damageTypes: ['heat', 'electric', 'cryo', 'nature'],
+              },
             },
           },
         },
@@ -595,13 +672,13 @@ const definition = {
             setCurrentBuffRemainingDuration_1: {
               action: {
                 kind: 'setCurrentBuffRemainingDuration',
-                parameters: {
-                  operation: 'assign',
-                  value: { kind: 'blackboard', key: 'duration_dynamic' },
-                },
+                parameters: { operation: 'assign', value: { kind: 'valueNode', nodeId: 'data_1' } },
               },
               next: null,
             },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'duration_dynamic' } },
           },
         },
         macros: {},
@@ -644,12 +721,7 @@ const definition = {
             conditional_2: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'originSkillTypeIn',
-                    skillTypes: ['battleSkill', 'comboSkill', 'ultimate'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
@@ -670,12 +742,7 @@ const definition = {
             conditional_4: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'originSkillTypeIn',
-                    skillTypes: ['battleSkill', 'comboSkill', 'ultimate'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                 whenTrue: { $sequence: 'applyBuff_3' },
               },
               next: null,
@@ -683,16 +750,34 @@ const definition = {
             conditional_5: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerableSpell'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 whenTrue: { $sequence: 'conditional_4' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: {
+                kind: 'originSkillTypeIn',
+                skillTypes: ['battleSkill', 'comboSkill', 'ultimate'],
+              },
+            },
+            data_2: {
+              type: 'boolean',
+              expression: {
+                kind: 'originSkillTypeIn',
+                skillTypes: ['battleSkill', 'comboSkill', 'ultimate'],
+              },
+            },
+            data_3: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerableSpell'],
+              },
             },
           },
         },

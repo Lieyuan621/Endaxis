@@ -98,7 +98,7 @@ P2、P3 均依赖 P1；P4 中不涉及字符串数据流的工作可与 P3 并�
 
 控件产出类型化草稿/修改意图，由 `definitionDraftSession`、`skillGraphCommands`、`immutableGraphDocument` 等已有入口整体校验、应用与撤销。取消、失焦、切换节点或卸载不得留下半次修改。
 
-`StructuredValueField` 与 `InlineCombatConditionField` 通过 `useStructuredDraft` 共用整值草稿的开始、取消、拒绝修订和宿主接受确认。共享部分不负责决定可编辑范围；两种宿主仍各自提供校验上下文和失效条件，保留图/资源身份、条件作用域及只读边界。曲线的分支缓存、映射的冲突保留与迟到接受采用各自的状态处理，不强行统一。旧字符串引用的类别与正式声明文件归同一配置项，分派中的专用控件分类也只维护一份。
+`StructuredValueField` 通过 `useStructuredDraft` 管理整值草稿的开始、取消、拒绝修订和宿主接受确认。曲线的分支缓存、映射的冲突保留与迟到接受采用各自的状态处理。条件输入使用所属资源图中的常量或节点引用，当前实现见[编辑器架构](../architecture/editor.md)。
 
 连线替换与切回常量形成单次事务；拖线失败保留旧线。断线不凭空填零，也不缓存运行时读取结果为常量：可恢复明确保留的编辑草稿，或要求选择合法内联表达式。删除共享来源不能误删其他消费者；自动清理孤立节点应另有明确规则。
 
@@ -330,7 +330,7 @@ P3.2 构建仍保留既有大 chunk 提示；未进行性能基准，不声称�
 - `StructuredValueField` 先 Stage field，宿主再 Apply 整个节点；`nativeChanneling`、`nativeTickInterval`、`nativeExecuteInterval` 可在同一事务中替换互斥模式，不逐字段提交中间无效状态。已有列表/映射/操作数在此期间共用暂存确认，重复 Stage/Apply 不丢已接受草稿；拒绝保留、显式取消/只读/节点变更丢弃对应暂存
 - 结构草稿保持 typed value，不初始化或往返 JSON 文本，原有允许的未知扩展及 Infinity 值不被静默改成 null。分支切换保留真正未知扩展、移除旧分支专有字段；新增未知属性、修改未知子树与跨边界删除拒绝。数组/optional 的图与资源保护按身份及次数保留，新旧引用验证防止额外复制失效旧项
 - 固定 tuple 分槽查看/编辑，不提供同质数组排序/删槽；`skillAliases` 兼容映射与敌人 `levelHp` 只读约束继承到所有子槽。optional/rest tuple 明确保留未支持。LevelValues 在定义侧复用既有控件，保持未设、单值、等级数组以及混合操作数原有图入口
-- 不让含图/资源/未实现操作数或条件叶子的整容器进入通用表单；既有 GraphDataInputs/引用导航保持原规则。当前 BuildCondition 实际只含 deckAttributeCompare；历史 8 个递归边界是 Buff 局部 DamageModifierCondition/PoiseModifierCondition，不是 CombatCondition，不会改造成同一模型
+- 不让含图/资源/未实现操作数或条件叶子的整容器进入通用表单；既有 GraphDataInputs/引用导航保持原规则。BuildCondition 只含 deckAttributeCompare；Buff 的伤害、治疗、失衡修正条件引用所属动作图入口，通过图导航编辑，不进入通用嵌套表单
 - 覆盖后备 284 → 256；历史 57 个有值 JSON 已解决 34 → 55，保留曲线与原生 globalBuffIds 两项。共享结构还覆盖 5 个未观察普通结构槽，不混入历史计数。动作 452、数据 152 不变；固定 tuple 展开新增 10 个定义位置，定义非根 2,113 → 2,123。两生成文件合计 1,315,839 字节，未声称加载优化
 
 独立复审已通过。首轮完整测试发现既有 LevelValues 输入恢复和工作区 Buff 分支匹配回归：已恢复有旧数值时的无效输入显示；生成器现在将 static Buff 的 `actionGraph?: never` 保留为真实 no-present-type，而不是错误的 graph。这新增一个正确分类的不可取值边界（10 → 11），不增加编辑缺口，历史计数不变。修复及新增可见 label/help 的 focused/SSR 验证通过，随后重新冻结完整验收。最终重新冻结后，生成一致性、能力门禁、schema 测试（17 项）、契约/tools/浏览器类型检查、应用类型检查（4 GB 堆）、完整应用测试（472 文件、3,992 通过、1 既有跳过）、应用 build、修改文件 Prettier 和 `git diff --check` 全部通过。初轮完整验收的 3 个失败不计为通过，最终结果来自修复后的全新完整运行。相对 P4.1 新增 14 项应用回归，覆盖生成结构、完整事务及边界保护。浏览器发现 22 项（新增 2 项），独立 harness 生产构建与浏览器类型检查通过；**22 项实际浏览器断言仍未执行**，不重试已确认被拒的路径。
@@ -379,35 +379,15 @@ Focused 回归覆盖真实生成的递归 Buff 条件、真实 WorkspaceAssetSes
 - 共享 StringCollection descriptor 仅接纳正式 actions 声明、精确属性/节点路径及同质 string 类型。复用列表原子草稿，提供逐项原生 ID 文本控件和“无匹配不产生效果”的说明，无目录依赖、导航或字符串图引脚。原始空白（含 tab/CR/LF）、顺序、重复项均保留；额外只读转义显示让不可见字符可辨识，不 trim 或按目录修复
 - 空列表/空字符串在创建、已有值 Apply 和 readonly 错误显示中有真实校验，旧非法项不能借 stale-reference 保留规则通过。未知非空 ID 可正常输入；取消、快速重复 Apply、reopen/no-op、readonly 转换及与已接受同节点草稿的重复 staging 继续遵循原子提交规则
 - 测试包括包含生成字段的 DefinitionValueCreator、真实 addResourceNode/replaceResourceNodeAction、DefinitionDraftSession 撤销/重做和 JSON roundtrip，非法 ID 或整个 action 校验失败均不写历史。覆盖的是字段/包含值创建及已有节点编辑；**没有新增完整节点创建向导**，`listNodeCreations` 仍不能用非法空列表默认值直接实例化该节点
-- 分母仍为定义非根 3,736、动作 452、数据 152；仅此 1 条后备 116 → 115，历史有值 JSON 57/57 全部逐项记账。condition-editor-pending 11 条、其余操作数混合容器与 GlobalBuff 局部上下文继续待交付；原 139 深层责任 ledger 和 50/34/11 硬边界不变，不声称 P4.4 整体完成
+- 分母仍为定义非根 3,736、动作 452、数据 152；仅此 1 条后备 116 → 115，历史有值 JSON 57/57 全部逐项记账。当时尚未完成的条件字段、其余操作数混合容器与 GlobalBuff 局部上下文继续待交付；原 139 深层责任 ledger 和 50/34/11 硬边界不变，不声称 P4.4 整体完成
 
 新增浏览器断言检查精确 ID、空列表拒绝、取消/重开、readonly 和命令历史；**实际浏览器仍 UNRUN**。开发 focused 5 文件 81 项通过，独立审查另行复跑 3 文件 23 项通过。最终冻结后，双生成一致性、能力门禁、schema 测试（21 项）、契约/tools/浏览器类型检查、应用类型检查（4 GB 堆）、完整应用测试（475 文件、4,037 通过、1 既有跳过）、应用 build、修改文件 Prettier 及 `git diff --check` 全部通过。相对 P4.4a 新增 7 项应用回归；浏览器发现 26 项（新增 1 项），独立 harness 生产构建通过。发现/类型/harness 构建不能当作交互通过。
 
 构建仍有既有大 chunk 提示：`TimelineEditor` 约 1,928.32 kB / gzip 469.54 kB，`AssetWorkspace` 379.83 kB / gzip 65.26 kB，`SkillGraphPanels` 718.36 kB / gzip 115.38 kB。未进行加载性能基准。
 
-## 第十一阶段检查点（P4.4b2）：七个定义内联条件宿主
+## 第十一阶段检查点（P4.4b2）：条件字段（已被图输入方案替代）
 
-本检查点按实际执行路径关闭原 11 个 `condition-editor-pending` 入口中的 7 个：gearSet 和 weaponTrait 各两种 eventHandler 分支、两种 SkillDefinition 的 switchToBuffCast.condition，以及 operatorUpgrade.addConditionalDamage.condition。7 个原路径逐项保存在 `resolvedDefinitionConditionPositions`，与仍待交付的 4 个路径合计固定 11 项；不是把整个条件领域一次标为完成。
-
-- 正式定义生成器在来源可核对的宿主语境下，沿用现有 union/object/ref 描述内联条件。一个纯编辑器 `inlineCondition` 标记携带 equipment/skillSwitch/enemyStaggered 语境，并进入引用身份与组合等价判断；动作/数据节点的生成描述不改变。没有新增领域条件类型、运行时模型或字符串引脚
-- 独立 `InlineCombatConditionField` 只负责原子草稿，复用 DefinitionField/Creator、有限深层视窗、标签/引用/StringOperand 控件，以及 BlackboardMappingValueField 的 constant/blackboard 数值控件。内层数值黑板 key 只在明确条件草稿中使用 value 编辑语境，普通定义 key 仍受身份保护。命令层拒绝越过整条件边界直接修改子路径；合法分支切换先保留图边界，再把复用名称的新类型字段当作新槽处理
-- 整条件提交复用 `validateCombatCondition`，再用同一有限 schema/resolver 校验全部已声明子树；所有候选均排除 conditionNode、valueNode、宏 parameter 和 forEachContextTarget 专属条件。all/any 非空、数值有限、标签语法及实际资产引用目录仍在提交时校验。图 CombatCondition 继续沿用 GraphDataInputs/TypedDataInput 与原主图/宏环境；拥有 actionGraph 不给外层条件提供绑定能力
-- 装备条件只提供所属 contribution.blackboard 的初始声明；switch 条件只提供候选技能初始黑板声明。运行时注入/实体回退/prepared-start 键是外部上下文，不假装已有完整目录；不投影任意图写入或宏形参。目标 Buff 的 desiredKey 使用已有 externalBuff 语境，outputKey 保留写入角色。未知宿主显式 unknown，不继承偶然存在的图黑板 provider
-- addConditionalDamage 更窄：编译器只接受 targetStaggered/enemy，因此该生成入口只提供这一种完整值，不开放 all/any/数值树。BuildCondition 仍是独立的 deckAttributeCompare 普通结构；Damage/PoiseModifierCondition 的 8 个 Buff-local 递归位置和 `{blackboardKey}` 保持原类型及编辑规则
-- 另外 4 处保留后备和说明：两种 skill.availability 尚未找到此版本的运行时消费者；两种 skill.eventHandlers 的非空列表被 compileSkillProgram 明确按旧式无监听区间定义拒绝。保留类型化编辑责任，不借其 actionGraph 声称可执行，也不新增监听语义
-
-有限描述扩展使定义非根分母 3,736 → 35,197（+31,461，含 207 个 ref 边），其中 70 个 inlineCondition、1,104 个 inlineOperand 是各来源语境下可达条件结构的位置，不是新增宿主或同时挂载控件的数量。生成源码由 456,527 → 876,454 字节；现有 8 层/50 行视窗与有限值/工作预算保持。动作 452、数据 152、历史有值 JSON 57/57 不变；后备 115 → 108，剩余 condition 4、structured 9、graph 34、owned 50、no-present 11。原 139 深层责任和 95 个硬边界逐项保持，没有删除目录或泛化条件模型。
-
-Focused 测试逐项覆盖 7 个真实生成入口的创建、已有/readonly/非法条件、整值编辑边界，以及真实 WorkspaceAssetSession 历史、saveProjectTemplateDefinition → serializeProjectDocument → parseProjectDocument 正式导入闭环；另覆盖递归条件、未绑定宏参数拒绝、目录刷新草稿保留、分支 creator 局部路径、readonly 数值事件、分支切换和深度预算。新增浏览器场景仅编写/发现，**实际浏览器仍 UNRUN**；开发 focused 5 文件 110 项通过（其中新增条件专项 37 项）；独立审查通过并复核能力门禁与责任账本。首次冻结 tools 类型检查发现生成器条件展开的判别联合推断问题，已改为同义的显式类型分支并重冻结全套；随后完整应用测试 476 文件、4,074 通过、1 既有跳过，双生成、能力门禁、schema 21 项、契约/tools/浏览器类型、应用 4 GB 类型检查及 build 全部通过。最终 harness 构建又发现新 Vue fixture 漏闭括号；仅修复该测试文件并重新通过浏览器类型、27 项发现和独立 harness 生产构建，全部 tracked/untracked 修改文件 Prettier 与 `git diff --check` 通过。相对 P4.4b1 新增 37 项应用回归，不以 SSR 或发现代替交互验收。剩余操作数容器、GlobalBuff 局部作用域与执行序列容器不在此检查点范围。
-
-构建仍有大 chunk 提示：`TimelineEditor` 约 1,930.56 kB / gzip 470.18 kB，`AssetWorkspace` 663.13 kB / gzip 87.05 kB，`SkillGraphPanels` 723.17 kB / gzip 116.63 kB。新增条件描述使 AssetWorkspace 源码 chunk 增大；未作加载性能基准，不声称性能改善。
-
-### P4.4b2 窄修：非法条件草稿原位纠错及四处有意只读
-
-- 修复真实 gearSet 条件中 `right.value` 清空后，严格整树选型返回 opaque、数字控件随之消失的问题。仅在正在编辑的内联条件事务内，且正式生成 union 存在唯一、单值 `kind` 判别匹配时，保留该分支的渲染形状。未编辑的损坏导入值、未知/歧义 kind 不做推测；提交、Creator 完整性、命令验证继续使用原严格 resolver/validator。取消或 readonly 转换撤销这项仅渲染能力
-- 同一生产组件实例及原样 client 模板测试覆盖直接条件和 all/not 内层的清空 → 非法 Apply → 同一数字控件修正 → 正式 WorkspaceAssetSession 提交/撤销，另覆盖取消、readonly、旧输入事件与坏导入。测试仅替换设计系统视觉原语的事件接口，不声称实际浏览器执行通过
-- 四处技能条件按明确范围选择保持只读：`definition/skill/<0>/availability`、`definition/skill/<1>/availability` 未建立此版本运行时消费；`definition/skill/<0>/eventHandlers/[]/condition`、`definition/skill/<1>/eventHandlers/[]/condition` 所属非空旧列表被编译器拒绝。UI 在缺省/有值状态均显示只读原因；这不是待接入作者模式的交付承诺，不增添执行语义。保留四个原 `condition-editor-pending` 审计键及诊断分类以维持责任追踪，不通过删后备宣称新覆盖
-- 不改生成schema、分母、7个已开宿主、139深层责任、95硬边界或57个历史JSON位置；剩余9个结构容器另按有限checkpoint实现。浏览器场景补充同字段原位修正后 Apply，实际浏览器仍 UNRUN。开发 focused 101 项、独立新增 repair 5 项通过；最终冻结双生成/能力门禁、schema 21 项、契约/tools/browser/app 4 GB 类型、完整应用测试（477 文件、4,080 通过、1 既有跳过）、应用 build、27 项浏览器发现与独立 harness 生产构建、全部 tracked/untracked 修改文件格式和 diff 检查均通过。源码/生成字节和能力数量保持；构建仍有大 chunk 警告，未测加载时延
+此阶段曾采用独立内联条件编辑器，该实现及其描述标记现已删除。条件字段统一使用布尔常量或所属资源图的条件节点引用；不再保留此阶段的七个开放、四个只读的划分。当前行为以[编辑器架构](../architecture/editor.md)为准，下文其他阶段的数量仅表示当时的验收记录。
 
 ## 第十二阶段检查点（P4.4c1）：两个伤害动作操作数容器
 
@@ -492,7 +472,7 @@ P4 的可编辑范围已完成非浏览器验收并在本地分阶段提交；�
 
 - 后备净数 322 → 99；structured/depth/recursive 缺口均已关闭。历史有值 JSON 57/57 全部逐项交付，139 个原深层截断位置、7 个实际条件宿主、6 个 graph operand 容器、2 个 sequence 容器及 1 个 owned 外层容器都有可审计账本，不靠移除统计位置降数
 - 剩余 50 owned-resource：独立资源完整槽由专属资源/图入口处理，外层不直接替换。34 graph-reference：真实执行/数据引用沿既有类型化连接、断开和导航命令处理，不作普通 JSON 写入。11 no-present-type：正式契约没有可取值，包含 static Buff 的 actionGraph?: never，不创建编辑器
-- 剩余 4 condition-editor-pending 原键按明确范围选择有意只读：两种 skill.availability 无当前模拟消费者，两种 skill.eventHandlers 旧非空列表被编译器拒绝。UI 显示原因，原键继续追踪；它们不是本阶段未兑现的作者模式承诺，也不能为了清零改变运行时
+- 条件字段的历史只读划分已取消，当前按所属资源图提供常量和节点连接编辑。
 - 定义非根分母 35,197、动作 452、数据 152。定义分母包含有限引用体/边和多来源语境展开，不能解释为同时挂载的控件数或同比文件膨胀。最终生成文件实际为定义 876,454 字节、动作 853,312 字节，总 1,729,766 字节；表单仍有 8 层/50 行视窗，真实值和资源发现有明确预算/错误恢复
 - 最终 build 的 TimelineEditor 为 2,441.75 kB / gzip 527.30 kB，AssetWorkspace 为 665.90 kB / gzip 87.91 kB，SkillGraphPanels 为 240.18 kB / gzip 68.06 kB。此前存在分块归属移动，不能用单块增量代表总新增代码；实际加载时延/内存未测，不宣称性能改善
 - 36 项浏览器测试仅完成发现、TypeScript 与独立生产 harness 构建，实际执行全部 UNRUN。已确认的环境访问限制没有重试或绕过；Vue 原样模板/SSR/命令/runtime 证据均分别标注。P2 动态 owner 未知、未提供新子资源创建向导、以及尚无独立保存通道的资产保持原限制

@@ -1,3 +1,4 @@
+import { numberInput } from '../../../test/compiledGraphInputs';
 import { describe, expect, it } from 'vitest';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 import { ActionBlackboard } from '../actions/actionBlackboard';
@@ -120,7 +121,7 @@ describe('TimedMarkerOperationExecutor', () => {
       parameters: {
         target: 'caster',
         markerId: 'voice',
-        durationSeconds: { kind: 'blackboard', key: 'duration' },
+        durationSeconds: numberInput({ kind: 'blackboard', key: 'duration' }),
         autoFinishByAction: true,
       },
     };

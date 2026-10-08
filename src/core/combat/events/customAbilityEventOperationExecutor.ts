@@ -1,4 +1,5 @@
-import type { CombatCondition } from '../../game-data/operatorDefinition';
+import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
+
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 import { logicalAbilityEntityRuntimeId } from '../../game-data/logicalAbilityEntity';
@@ -37,7 +38,7 @@ export class CustomAbilityEventOperationExecutor implements CombatOperationExecu
     this.dependencies.delegate.end?.(step, context);
   }
 
-  evaluate(condition: CombatCondition, context?: CombatOperationContext): boolean {
+  evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     return this.dependencies.delegate.evaluate(condition, context);
   }
 

@@ -5,15 +5,14 @@ import {
   type GraphContainerBoundaries,
 } from './graphSequenceContainerSchema';
 import type { ActionGraphDefinition } from '../../../packages/game-data-contract/src/actionGraph';
-import { createGraphDataResolver } from '../../core/action-graph/actionGraphData';
 import {
   globalBuffBlackboardContext,
   isGlobalBuffDefinitionPath,
   type GlobalBuffDraftContext,
 } from '../../application/editor/globalBuffFieldContext';
 import { graphOperandSchemas, isSkillSettingValuesSchema } from './graphOperandContainerSchema';
-import { validMappingValue, validMappingSources } from './blackboardMapping';
-import { unknownBlackboardContext } from '../../application/editor/blackboardFieldContext';
+import { validMappingValue, validNumericReadSource } from './blackboardMapping';
+import { graphDataExpression } from '../../core/action-graph/actionGraphData';
 import {
   assertEditableValue,
   fieldValueAt,
@@ -29,7 +28,7 @@ import type { ReferenceChoices } from '../definition-editor/fieldInputConfig';
 import { validReferenceDraft } from './referenceDraftValidation';
 import {
   blackboardContextForField,
-  skillSettingItemBlackboardContext,
+  unknownBlackboardContext,
   blackboardRequestForField,
   resolveBlackboardKey,
   type BlackboardFieldContext,
@@ -143,7 +142,8 @@ export function validateStructuredValue(
     )
       throw new Error('skillSettingValues.invalid');
     if (graphOperands?.has(declared)) {
-      let source = value;
+      if (!validMappingValue(value, 'operand')) throw new Error('actionGraphEditor.invalid');
+      // 全局效果拥有自己的变量作用域；连接到的数据节点在该作用域读取。
       if (
         isGlobalBuffDefinitionPath(options.kind, path) &&
         value &&
@@ -152,25 +152,14 @@ export function validateStructuredValue(
         value.kind === 'valueNode'
       ) {
         if (!options.graph) throw new Error('globalBuffField.graphRequired');
-        assertFiniteFieldValue(options.graph);
-        source = createGraphDataResolver(options.graph).bind(value);
-        assertFiniteFieldValue(source);
+        const expression = graphDataExpression(
+          options.graph,
+          String('nodeId' in value ? value.nodeId : ''),
+          'number',
+        );
+        if (!validNumericReadSource(expression, context ?? unknownBlackboardContext()))
+          throw new Error('actionGraphEditor.invalid');
       }
-      if (
-        !validMappingValue(source, 'operand') ||
-        !validMappingSources(
-          [{ key: 'value', value: source }],
-          undefined,
-          'operand',
-          skillSettingItemBlackboardContext(
-            context ?? unknownBlackboardContext(),
-            options.kind,
-            path,
-            options.items ?? (options.path?.join('.') === 'parameters.items' ? next : undefined),
-          ),
-        )
-      )
-        throw new Error('actionGraphEditor.invalid');
       return;
     }
     let request = blackboardRequestForField(options.kind, path, declared);

@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import { computed, inject, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { EaButton, EaInput, EaSelect, type EaSelectValue } from '@/design-system';
+import { EaButton, EaInput } from '@/design-system';
 import { type ReferenceChoices } from '@/application/editor/referenceResolver';
-import type { BlackboardFieldContext } from '@/application/editor/blackboardFieldContext';
 import { isStringNodeReference, validStringOperandDraft } from './stringOperandDraft';
-import { blackboardNavigationKey, useBlackboardFieldContext } from './blackboardFieldContext';
-import BlackboardKeyField from './BlackboardKeyField.vue';
+import { blackboardNavigationKey } from './blackboardFieldContext';
 import ReferenceField from './ReferenceField.vue';
 
 const props = defineProps<{
@@ -16,12 +14,9 @@ const props = defineProps<{
   required?: boolean;
   referenceKind?: string;
   referenceChoices?: ReferenceChoices;
-  blackboardContext?: BlackboardFieldContext;
 }>();
 const emit = defineEmits<{ change: [value: unknown]; discard: [] }>();
 const { t } = useI18n();
-const inheritedContext = useBlackboardFieldContext();
-const context = computed(() => props.blackboardContext ?? inheritedContext.value);
 const navigate = inject(blackboardNavigationKey, undefined);
 const graphReference = computed(() => isStringNodeReference(props.value));
 const graphSource = computed(() =>
@@ -33,25 +28,15 @@ const graphSource = computed(() =>
     ? props.value.nodeId
     : undefined,
 );
-const inlineEditable = computed(() => props.editable && !graphReference.value);
-const mode = ref<'literal' | 'blackboard' | 'graph'>('literal');
+const literalEditable = computed(() => props.editable && !graphReference.value);
+const mode = computed(() => (graphReference.value ? 'graph' : 'literal'));
 const literal = ref('');
-const key = ref('');
 const dirty = ref(false);
 const original = computed(() =>
   typeof props.value === 'string' ? props.value : JSON.stringify(props.value),
 );
 function reset() {
-  mode.value = graphReference.value
-    ? 'graph'
-    : typeof props.value === 'object' && props.value !== null && 'blackboardKey' in props.value
-      ? 'blackboard'
-      : 'literal';
   literal.value = typeof props.value === 'string' ? props.value : '';
-  key.value =
-    mode.value === 'blackboard'
-      ? String((props.value as { blackboardKey: unknown }).blackboardKey)
-      : '';
   dirty.value = false;
 }
 function discard() {
@@ -59,41 +44,28 @@ function discard() {
   emit('discard');
 }
 watch(() => props.value, reset, { immediate: true });
-function chooseMode(next: EaSelectValue | EaSelectValue[]) {
-  if (!inlineEditable.value || (next !== 'literal' && next !== 'blackboard')) return;
-  mode.value = next;
-  dirty.value = true;
-}
 function changeLiteral(value: string | undefined) {
-  if (!inlineEditable.value) return;
+  if (!literalEditable.value) return;
   literal.value = value ?? '';
   dirty.value = true;
 }
-function changeKey(value: string) {
-  if (!inlineEditable.value) return;
-  key.value = value;
-  dirty.value = true;
-}
-const draft = computed(() =>
-  mode.value === 'literal' ? literal.value : { blackboardKey: key.value },
-);
 const valid = computed(() =>
-  validStringOperandDraft(draft.value, props.referenceKind, props.referenceChoices, context.value),
+  validStringOperandDraft(literal.value, props.referenceKind, props.referenceChoices),
 );
 function apply() {
-  // Re-evaluate at commit: catalogs/scopes may have changed with a draft open.
+  // 草稿打开期间目录可能变化，提交时重新检查。
   if (
-    inlineEditable.value &&
+    literalEditable.value &&
     dirty.value &&
-    validStringOperandDraft(draft.value, props.referenceKind, props.referenceChoices, context.value)
+    validStringOperandDraft(literal.value, props.referenceKind, props.referenceChoices)
   )
-    emit('change', draft.value);
+    emit('change', literal.value);
 }
 function locate() {
   if (graphSource.value) navigate?.({ owner: 'data', id: graphSource.value });
 }
 function unset() {
-  if (inlineEditable.value && !props.required) emit('change', undefined);
+  if (literalEditable.value && !props.required) emit('change', undefined);
 }
 </script>
 
@@ -110,47 +82,24 @@ function unset() {
         t('blackboardField.locate')
       }}</EaButton>
     </template>
-    <EaSelect
-      v-else
-      :aria-label="`${label} · ${t('stringOperand.mode')}`"
-      :model-value="mode"
-      :disabled="!inlineEditable"
-      :options="[
-        { value: 'literal', label: t('stringOperand.literal') },
-        { value: 'blackboard', label: t('stringOperand.blackboard') },
-      ]"
-      @change="chooseMode"
-    />
     <ReferenceField
       v-if="mode === 'literal' && referenceKind"
       :value="literal"
       :label="label"
       :reference-kind="referenceKind"
       :choices="referenceChoices?.[referenceKind]"
-      :disabled="!inlineEditable"
+      :disabled="!literalEditable"
       @change="changeLiteral"
     />
     <EaInput
       v-else-if="mode === 'literal'"
       :aria-label="label"
       :model-value="literal"
-      :disabled="!inlineEditable"
+      :disabled="!literalEditable"
       @input="changeLiteral"
     />
-    <BlackboardKeyField
-      v-else-if="mode === 'blackboard'"
-      :value="key"
-      :label="label"
-      :editable="inlineEditable"
-      :context="context"
-      mode="read"
-      value-type="string"
-      @draft-change="changeKey"
-      @change="changeKey"
-    />
     <small>{{ t('stringOperand.current') }}: {{ original ?? t('actionGraphEditor.unset') }}</small>
-    <small v-if="mode === 'blackboard'">{{ t('stringOperand.readHelp') }}</small>
-    <div v-if="inlineEditable" class="string-operand__actions">
+    <div v-if="literalEditable" class="string-operand__actions">
       <EaButton v-if="dirty" :disabled="!valid" size="sm" @click="apply">{{
         t('actionGraphEditor.apply')
       }}</EaButton>

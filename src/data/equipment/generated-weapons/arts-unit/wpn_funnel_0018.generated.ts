@@ -120,9 +120,7 @@ const definition = {
             conditional_3: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: { kind: 'originSkillTypeIn', skillTypes: ['comboSkill'] },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
                 whenTrue: { $sequence: 'applyBuff_2' },
               },
               next: null,
@@ -130,13 +128,7 @@ const definition = {
             conditional_4: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerableFire'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                 whenTrue: { $sequence: 'conditional_3' },
               },
               next: null,
@@ -144,13 +136,7 @@ const definition = {
             conditional_8: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerableCryst'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 whenTrue: { $sequence: 'conditional_3' },
               },
               next: null,
@@ -158,13 +144,7 @@ const definition = {
             conditional_12: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerablePulse'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
                 whenTrue: { $sequence: 'conditional_3' },
               },
               next: null,
@@ -172,16 +152,48 @@ const definition = {
             conditional_16: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerableNatural'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
                 whenTrue: { $sequence: 'conditional_3' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: { kind: 'originSkillTypeIn', skillTypes: ['comboSkill'] },
+            },
+            data_2: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerableFire'],
+              },
+            },
+            data_3: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerableCryst'],
+              },
+            },
+            data_4: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerablePulse'],
+              },
+            },
+            data_5: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerableNatural'],
+              },
             },
           },
         },

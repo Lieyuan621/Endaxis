@@ -1,12 +1,13 @@
+import type { CompiledStepParameters } from '../../compiler/compiledGraphData.ts';
 /**
  * 投射物寿命的无状态算法。每次调用显式接收当前数据和本次步进的宿主端口。
  * 保留原生结束、标记回收、reset 三个阶段及 float32 运算；不推导空间命中或更改技能规则。
  */
-import type { CombatStepParameters } from '../../game-data/operatorDefinition';
+
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import type { ProjectileLifecycleState } from '../state/instanceState';
 
-export type ProjectileFinishTiming = CombatStepParameters['launchProjectile']['finish'];
+export type ProjectileFinishTiming = CompiledStepParameters['launchProjectile']['finish'];
 
 export interface ProjectileLaunchData {
   readonly callbacks?: readonly import('../state/instanceState').ProjectileCallbackState[];

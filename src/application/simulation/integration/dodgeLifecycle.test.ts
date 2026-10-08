@@ -5,12 +5,12 @@ import { rossi } from '../../../data/operators/rossi.generated';
 import { commonBuffDefinitions } from '../../../data/buffs/commonDefinitions';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import type { DodgeMarkerDocument, ScenarioDocument } from '../../../core/project/schema';
-import { prepareStandardPlayerDamageScenarioRuntime } from '../../../application/simulation/runStandardPlayerDamageScenarioSimulation';
-import { createStandardPlayerDamageCombatSession } from '../../../application/simulation/standardPlayerDamageCombatSession';
+import { prepareStandardPlayerDamageScenarioRuntime } from '../runStandardPlayerDamageScenarioSimulation';
+import { createStandardPlayerDamageCombatSession } from '../standardPlayerDamageCombatSession';
 import { CombatRuntimeAssembly } from '../../../core/combat/runtime/combatRuntimeAssembly';
 import { swapTimelineTracks } from '../../../ui/timeline/interaction/timelineDocumentCommands';
 import { compileScenarioDodgeInputs } from '../../../core/compiler/compileScenarioRuntimeAssembly';
-import { createInheritedScenario } from '../../../application/editor/scenarioInheritance';
+import { createInheritedScenario } from '../../editor/scenarioInheritance';
 import { CombatObjectOrigins } from '../../../core/projection/combatObjectOrigins';
 import { projectDodgeMarkerEffects } from '../../../core/projection/dodgeMarkerEffects';
 

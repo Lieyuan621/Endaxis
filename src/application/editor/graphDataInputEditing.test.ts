@@ -185,13 +185,17 @@ function conditionListFixture(kind: 'all' | 'any'): ActionGraphDefinition {
           kind,
           conditions: [
             { kind: 'conditionNode', nodeId: 'test' },
-            { kind: 'not', condition: { kind: 'constant', value: false } },
+            { kind: 'conditionNode', nodeId: 'test_data_1' },
             { kind: 'constant', value: true },
             { kind: 'conditionNode', nodeId: 'test' },
           ],
         },
       },
       unused: { type: 'number', expression: { kind: 'constant', value: 19 } },
+      test_data_1: {
+        type: 'boolean',
+        expression: { kind: 'not', condition: { kind: 'constant', value: false } },
+      },
     },
   };
 }

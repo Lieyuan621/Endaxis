@@ -1,3 +1,4 @@
+import type { CombatConditionExpression } from '../../../../packages/game-data-contract/src/conditions';
 import type { SkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
 /**
  * 算出一个技能块上的命中点画在哪、对应哪个命中。
@@ -20,6 +21,7 @@ import {
 import { compareCombatNumbers } from '../../../core/mechanics/combatNumbers.ts';
 import type {
   ActionGraphDefinition,
+  ActionGraphDataNode,
   ActionGraphResourceDefinition,
   ActionGraphReference,
   ActionGraphStep,
@@ -76,7 +78,20 @@ export function projectTimelineHitMarkerLeftPx(leftPx: number): number {
   return Math.max(0, leftPx);
 }
 
-function resolveStaticCondition(condition: CombatCondition): boolean | null {
+function resolveStaticCondition(
+  input: CombatCondition,
+  graph: ActionGraphDefinition,
+): boolean | null {
+  let condition: CombatConditionExpression = input;
+  const visited = new Set<string>();
+  while (condition.kind === 'conditionNode') {
+    if (visited.has(condition.nodeId)) return null;
+    visited.add(condition.nodeId);
+    const node: ActionGraphDataNode | undefined = graph.dataNodes?.[condition.nodeId];
+    if (node?.type !== 'boolean') return null;
+    condition = node.expression;
+  }
+  if (condition.kind === 'constant') return condition.value;
   if (
     condition.kind !== 'actionValueCompare' ||
     condition.left.kind !== 'constant' ||
@@ -258,7 +273,7 @@ export function projectCastGraphHitMarkers(
         return;
       }
       if (step.kind === 'conditional') {
-        const staticResult = resolveStaticCondition(step.parameters.condition);
+        const staticResult = resolveStaticCondition(step.parameters.condition, graph);
         if (staticResult !== false)
           collect(
             step.whenTrue,

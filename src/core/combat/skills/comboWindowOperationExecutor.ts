@@ -1,4 +1,5 @@
-import type { CombatCondition } from '../../game-data/operatorDefinition';
+import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
+
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 /** 把技能调度中的开启连携窗口步骤接到场景级连携账本。 */
 import type { CombatOperationContext, CombatOperationExecutor } from './skillRuntime';
@@ -93,7 +94,7 @@ export class ComboWindowOperationExecutor implements CombatOperationExecutor {
     else this.delegate.end?.(step, context);
   }
 
-  evaluate(condition: CombatCondition, context?: CombatOperationContext): boolean {
+  evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     if (condition.kind === 'casterComboPending') return this.windows.hasPending(this.operatorId);
     if (condition.kind === 'eventComboRingQteSucceeded') {
       const skillCastId = context?.eventSkillCastInfo?.skillCastId;

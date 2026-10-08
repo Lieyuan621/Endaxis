@@ -82,16 +82,7 @@ const definition = {
             conditional_3: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'not',
-                    condition: {
-                      kind: 'timedMarkerPresent',
-                      target: 'eventTarget',
-                      markerId: 'sk_wpn_lance_0014',
-                    },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                 whenTrue: { $sequence: 'applyBuff_2' },
               },
               next: null,
@@ -99,16 +90,7 @@ const definition = {
             conditional_4: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'not',
-                    condition: {
-                      kind: 'actionInputTargetIdentityMatch',
-                      other: 'actionOwner',
-                      operator: 'equal',
-                    },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
                 whenTrue: { $sequence: 'conditional_3' },
               },
               next: null,
@@ -116,20 +98,48 @@ const definition = {
             conditional_5: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventHealTagsMatch',
-                    match: 'hasAny',
-                    tags: [
-                      'Skill/Character/Common/Heal/NormalSkillHeal',
-                      'Skill/Character/Common/Heal/ComboSkillHeal',
-                      'Skill/Character/Common/Heal/UltimateSkillHeal',
-                    ],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
                 whenTrue: { $sequence: 'conditional_4' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: {
+                kind: 'timedMarkerPresent',
+                target: 'eventTarget',
+                markerId: 'sk_wpn_lance_0014',
+              },
+            },
+            data_2: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+            },
+            data_3: {
+              type: 'boolean',
+              expression: {
+                kind: 'actionInputTargetIdentityMatch',
+                other: 'actionOwner',
+                operator: 'equal',
+              },
+            },
+            data_4: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+            },
+            data_5: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventHealTagsMatch',
+                match: 'hasAny',
+                tags: [
+                  'Skill/Character/Common/Heal/NormalSkillHeal',
+                  'Skill/Character/Common/Heal/ComboSkillHeal',
+                  'Skill/Character/Common/Heal/UltimateSkillHeal',
+                ],
+              },
             },
           },
         },

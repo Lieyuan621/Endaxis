@@ -15,15 +15,23 @@ export interface BuffAttributeEffect {
   readonly value: number;
 }
 
-/** 已解析数值的伤害规则；condition 是适用条件，不表示任意一次命中已经满足它。 */
+/** 已解析数值的伤害规则；条件摘要描述适用范围，不表示本次命中已经满足条件。 */
 export interface BuffDamageEffect {
   readonly side: 'attacker' | 'defender';
   readonly zone: string;
   readonly addition: number;
   readonly damageTypes?: readonly string[];
   readonly conditional: boolean;
+  /** 从条件图识别的必要条件，仅供展示，不能用于决定修正是否生效。 */
+  readonly conditionSummary?: BuffConditionSummary;
   readonly multiplier?: number;
   readonly attributeEffect?: BuffAttributeEffect;
+}
+
+export interface BuffConditionSummary {
+  readonly requirements: readonly ('casterControlled' | 'heavyAttack' | 'sameSkillCast')[];
+  /** 图中还有未解释的判断或操作，不能把摘要当作完整生效规则。 */
+  readonly partial: boolean;
 }
 
 /** 一条带帧、事实类型和结构化数据的运行时回执。 */

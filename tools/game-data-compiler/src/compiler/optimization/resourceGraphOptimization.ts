@@ -2,8 +2,7 @@
 import type {
   ActionGraphReference,
   ActionGraphResourceDefinition,
-} from '../../../../../packages/game-data-contract/src/actionGraph.ts';
-import { validateActionGraphResource } from '../../../../../src/core/action-graph/actionGraphValidation.ts';
+} from '../intermediateDefinitions.ts';
 import { optimizeActionGraphEntries } from './graphSequenceOptimization.ts';
 import { deduplicateActionGraph } from './actionGraphDeduplication.ts';
 import { extractActionGraphMiddleSegments } from './actionGraphMiddleSegments.ts';
@@ -87,7 +86,6 @@ export function optimizeResourceGraphs<T>(
       phase,
     ) as ActionGraphResourceDefinition;
     if (resource !== record.actionGraph) changed = true;
-    validateActionGraphResource(resource);
     const entries: ActionGraphReference[] = [];
     mapEntries(fields, entry => {
       entries.push(entry);
@@ -119,7 +117,6 @@ export function optimizeResourceGraphs<T>(
           ? resource
           : { main: extracted.graph, macros: extracted.macros };
       if (finalResource !== record.actionGraph) changed = true;
-      validateActionGraphResource(finalResource);
       return changed ? { ...(metadata as object), actionGraph: finalResource } : value;
     }
     const optimized = optimizeActionGraphEntries(resource.main, entries, {
@@ -173,7 +170,6 @@ export function optimizeResourceGraphs<T>(
       deduplicated.graph === resource.main && !macrosChanged
         ? resource
         : { main: deduplicated.graph, macros };
-    validateActionGraphResource(finalResource);
     if (!changed) return value;
     return { ...(metadata as object), actionGraph: finalResource };
   }

@@ -56,7 +56,7 @@ const definition = {
                 parameters: {
                   target: 'caster',
                   markerId: 'sk_wpn_sword_0005',
-                  durationSeconds: { kind: 'blackboard', key: 'cd' },
+                  durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
                   autoFinishByAction: false,
                 },
               },
@@ -82,19 +82,25 @@ const definition = {
             conditional_3: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'not',
-                    condition: {
-                      kind: 'timedMarkerPresent',
-                      target: 'caster',
-                      markerId: 'sk_wpn_sword_0005',
-                    },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 whenTrue: { $sequence: 'applyBuff_2' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'cd' } },
+            data_2: {
+              type: 'boolean',
+              expression: {
+                kind: 'timedMarkerPresent',
+                target: 'caster',
+                markerId: 'sk_wpn_sword_0005',
+              },
+            },
+            data_3: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_2' } },
             },
           },
         },

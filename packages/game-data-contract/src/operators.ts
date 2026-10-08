@@ -16,7 +16,7 @@ import {
   type OperatorWeaponType,
   type SkillLevelSource,
 } from './primitives.ts';
-import { type BuildCondition, type CombatCondition } from './conditions.ts';
+import { type BuildCondition, type CombatConditionExpression } from './conditions.ts';
 import type { ActionGraphReference, ActionGraphResourceDefinition } from './actionGraph.ts';
 import { type CombatEventTrigger } from './actions.ts';
 import {
@@ -100,8 +100,10 @@ export type UpgradeModifierDefinition =
   | {
       /** 满足条件时增加伤害。 */
       kind: 'addConditionalDamage';
-      /** 增伤生效条件。 */
-      condition: CombatCondition;
+      /** 此修正只支持伤害快照中的敌人失衡状态，不执行动作图条件。 */
+      condition: Extract<CombatConditionExpression, { kind: 'targetStaggered' }> & {
+        target: 'enemy';
+      };
       /** 单个增伤值或按养成等级排列的增伤值。 */
       values: LevelValues;
     }

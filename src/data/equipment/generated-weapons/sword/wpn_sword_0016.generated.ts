@@ -53,7 +53,7 @@ const definition = {
                 parameters: {
                   target: 'caster',
                   markerId: 'wpn_sword_0016',
-                  durationSeconds: { kind: 'blackboard', key: 'cd' },
+                  durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
                   autoFinishByAction: false,
                 },
               },
@@ -96,16 +96,7 @@ const definition = {
             conditional_4: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'not',
-                    condition: {
-                      kind: 'timedMarkerPresent',
-                      target: 'caster',
-                      markerId: 'wpn_sword_0016',
-                    },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 whenTrue: { $sequence: 'applyBuff_3' },
               },
               next: null,
@@ -113,9 +104,7 @@ const definition = {
             conditional_5: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: { kind: 'eventSpGainMatch', sources: ['skill'], gainKinds: ['gain'] },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
                 whenTrue: { $sequence: 'conditional_4' },
               },
               next: null,
@@ -126,12 +115,33 @@ const definition = {
                 parameters: {
                   buffId: 'buff_wpn_sword_0016',
                   target: 'caster',
-                  blackboardAssignments: {
-                    phy_dmg_up: { kind: 'blackboard', key: 'install_0_phy_dmg_up' },
-                  },
+                  blackboardAssignments: { phy_dmg_up: { kind: 'valueNode', nodeId: 'data_5' } },
                 },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'cd' } },
+            data_2: {
+              type: 'boolean',
+              expression: {
+                kind: 'timedMarkerPresent',
+                target: 'caster',
+                markerId: 'wpn_sword_0016',
+              },
+            },
+            data_3: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+            },
+            data_4: {
+              type: 'boolean',
+              expression: { kind: 'eventSpGainMatch', sources: ['skill'], gainKinds: ['gain'] },
+            },
+            data_5: {
+              type: 'number',
+              expression: { kind: 'blackboard', key: 'install_0_phy_dmg_up' },
             },
           },
         },

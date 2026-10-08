@@ -1,11 +1,12 @@
+import type { CompiledCondition } from '../../compiler/compiledGraphData';
+import type { CompiledStepParameters } from '../../compiler/compiledGraphData.ts';
 import type { TimelineActionProcessor } from '../timeline/timelineActionProcessor';
-import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
 import type { CallbackSkillHostFactory } from '../abilities/callbackSkillHost';
 import type {
   ProjectileFinishTiming,
   ProjectileLifetimeReference,
 } from '../abilities/projectileLifecycleRuntime';
-import type { CombatStepParameters } from '../../game-data/operatorDefinition';
+
 import {
   DamageCalculationSnapshots,
   type DamageCalculationSnapshotProgram,
@@ -40,7 +41,7 @@ export type LaunchProjectile = (request: {
   readonly skillCastInfo?: CombatSkillCastInfo;
   readonly sourceId?: string;
   readonly producedBy?: import('../receipt/combatReceipt').CombatObjectRef;
-  readonly hit?: CombatStepParameters['launchProjectile']['hit'];
+  readonly hit?: CompiledStepParameters['launchProjectile']['hit'];
   readonly hitTarget?: import('../../game-data/logicalAbilityEntity').RuntimeTargetRef;
 }) => ProjectileLifetimeReference;
 
@@ -100,11 +101,21 @@ export interface CombatOperationContext {
   /** 仅在执行持有登记的步骤时挂接，实际数据由动作树持有。 */
   actionRegistrationState?: import('../state/actionState').ActionRegistrationState;
   actionBuffReferencesState?: import('../state/actionState').ActionBuffReferencesState;
-  /** 临时 BeforeApplyDamageModifierContext；不是 AbilitySystem 广播，不覆盖普通来源施法。 */
-  readonly beforeApplyDamageModifier?: import('../damage/damageModifiers').DamageModifierConditionInput & {
-    /** 原生 Buff.affixSkillCastId。未绑定与明确无效的 0/null 必须区分，不回退普通 SkillCastInfo。 */
-    readonly getBuffAffixSkillCastId?: () => number | null;
-  };
+  /** 三类结算互斥的临时上下文；不冒充能力事件，也不覆盖 Buff 的来源身份。 */
+  readonly modifierContext?:
+    | {
+        readonly kind: 'damage';
+        readonly input: import('../damage/damageModifiers').DamageModifierConditionInput;
+        readonly getBuffAffixSkillCastId?: () => number | null;
+      }
+    | {
+        readonly kind: 'heal';
+        readonly input: import('../heal/healModifiers').HealModifierConditionInput;
+      }
+    | {
+        readonly kind: 'poise';
+        readonly input: import('../damage/poiseModifiers').PoiseModifierConditionInput;
+      };
   /** 当前动作环境独占的 direct 黑板；生命周期由技能、Buff 或连携条件宿主管理。 */
   readonly blackboard: ActionBlackboard;
   /** 由宿主 Reset 准备、按动作实例保存的原生攻击计算快照。 */
@@ -113,7 +124,7 @@ export interface CombatOperationContext {
   readonly targetContext?: RuntimeTargetContext;
   /** 原生 InputTarget；技能保存施放目标，事件响应临时绑定事件目标，二者不能混用。 */
   readonly actionInputTarget?: RuntimeTargetRef;
-  /** 只在 forEachContextTarget 的 body 内存在。 */
+  /** 当前动作的单个目标，由目标遍历或修正器条件调用绑定；退出调用后恢复。 */
   readonly currentTarget?: RuntimeTargetRef;
   /** 能力实体子技能的稳定 ActionOwner；内层 forEach 不得覆盖。 */
   readonly actionOwnerAbilityEntity?: AbilityEntityTargetRef;
@@ -207,10 +218,7 @@ export interface CombatOperationExecutor {
   prepare?(step: ResolvedCombatOperationStep, context: CombatOperationContext): void;
   execute(step: ResolvedCombatOperationStep, context?: CombatOperationContext): boolean;
   end?(step: ResolvedCombatOperationStep, context?: CombatOperationContext): void;
-  evaluate(
-    condition: ResolvedCombatStepForKind<'conditional'>['parameters']['condition'],
-    context?: CombatOperationContext,
-  ): boolean;
+  evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean;
 }
 
 /**

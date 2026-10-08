@@ -93,7 +93,6 @@ test('derives the string data family from the actual contract operand without a 
   for (const schema of Object.values(generated)) assert.deepEqual(Object.keys(schema), ['fields']);
   const expression = generated['string:stringOperand']!.fields[0]!;
   assert.deepEqual(expression.path, ['expression']);
-  assert.ok(expression.valueSchema.semantics?.aliases?.includes('ActionStringOperand'));
   assert.ok(expression.valueSchema);
   assert.equal(generated['string:blackboardString'], undefined);
 });
@@ -112,7 +111,6 @@ test('shared values preserve complete catalogs, field order and distinct source/
     source: [`packages/game-data-contract/src/actions.ts:${index + 1}:3`],
     description,
     optional: index % 2 === 0,
-    inlineCondition: index % 2 === 0 ? 'equipment' : 'skillSwitch',
     references: { child: { kind: 'string', source: [`owner:${index}`] } },
   });
   const values = [

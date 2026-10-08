@@ -1,3 +1,4 @@
+import { extractGraphDataNodes } from '../../../../tools/game-data-compiler/src/compiler/extractGraphDataNodes';
 import { createKillEvent } from '../events/killEventTestFixture';
 import { describe, expect, it, vi } from 'vitest';
 import { parseKnownNativeActionSequenceSource } from '../../../../tools/game-data-compiler/src/source/actionLeaf.ts';
@@ -13,7 +14,6 @@ import type { ActionGraphNode } from '../../../../packages/game-data-contract/sr
 import type { ResolvedActionSequence } from '../../compiler/combatProgram';
 import { CombatAttributeSet } from '../attributes/combatAttributes';
 import { CombatBuffContainer, type CombatBuffDefinition } from '../buffs/combatBuffs';
-import { DamageModifier } from './damageModifiers';
 import { PlayerDamageContext, type PlayerDamageAttributeSnapshots } from './playerDamageContext';
 import {
   DAMAGE_SCALE_ATTRIBUTE_KEYS,
@@ -23,9 +23,67 @@ import type { DamageTag } from '../../game-data/operatorDefinition';
 import { ActionBlackboardOperationExecutor } from '../actions/actionBlackboardOperationExecutor';
 import { EventContextConditionExecutor } from '../events/eventContextConditionExecutor';
 import { CombatActionSequenceRuntime } from '../actions/combatActionSequenceRuntime';
-import { createDamageModifierConditionProgram } from './damageModifierSequenceRuntime';
+import { createDamageModifierCondition } from './damageModifierSequenceRuntime';
 import type { CombatOperationContext } from '../skills/skillRuntime';
 import { ActionBlackboard } from '../actions/actionBlackboard';
+import lastRite from '../../../data/operators/last-rite.generated';
+
+it('别礼正式战技条件：潜能、主控、重击缺一不可，连续命中与切面恢复一致', () => {
+  const buff = lastRite.buffDefinitions!.buff_chr_0026_lastrite_normal_skill!;
+  if (!buff.actionGraph) throw new Error('战技 Buff 缺少动作图');
+  const reference = buff.damageModifiers![0]!.condition!;
+  const sequence = createActionGraphCompilation(
+    buff.actionGraph,
+    12,
+    'last-rite-condition',
+  ).compileEntry(reference, 'damage-condition');
+  for (const potential of [0, 1])
+    for (const controlled of [false, true]) {
+      const operations = new ActionBlackboardOperationExecutor(
+        new EventContextConditionExecutor({
+          execute: () => {
+            throw new Error('条件不应执行外部操作');
+          },
+          evaluate(check) {
+            if (check.kind !== 'casterControlled')
+              throw new Error(`unexpected condition ${check.kind}`);
+            return controlled;
+          },
+        }),
+      );
+      const create = (state?: import('../state/actionState').ActionSequenceState) =>
+        createDamageModifierCondition(
+          sequence,
+          new CombatActionSequenceRuntime(operations, {
+            blackboard: new ActionBlackboard({ potential_1: potential }),
+          }),
+          {},
+          state,
+        );
+      const condition = create();
+      expect(condition.summary).toEqual({
+        requirements: ['casterControlled', 'heavyAttack'],
+        partial: true,
+      });
+      for (const heavy of [false, true, false, true]) {
+        const input = {
+          side: 'attacker' as const,
+          sourceId: 'last-rite',
+          targetId: 'enemy',
+          skillCastId: 1,
+          damageType: 'cryo' as const,
+          tags: heavy ? ['normalAttackLastCombo' as const] : ['normalAttack' as const],
+          features: [],
+        };
+        const saved = structuredClone(condition.runtimeState);
+        const expected = potential === 1 && controlled && heavy;
+        expect(condition.execute(input), `${potential}/${controlled}/${heavy}`).toBe(expected);
+        const restored = create(saved);
+        expect(restored.execute(input)).toBe(expected);
+        expect(restored.runtimeState).toEqual(condition.runtimeState);
+      }
+    }
+});
 
 // 对应当前 skillimbue 条件结构；走正式原生解析、公共投影和技能程序编译，不手写等价 JS 分支。
 const compileGraphEntry = (
@@ -46,7 +104,7 @@ const compileDomainSequence = (
   const builder = createActionGraphBuilder<CompiledBuffStepSource>();
   const reference = compileCombatConditionSequenceSource(source, {
     graph: builder,
-    damageModifierContext: true,
+    modifierContext: 'damage',
     actionOwnerTarget: 'buffOwner',
     actionSourceTarget: 'caster',
     actionTargetTarget: 'enemy',
@@ -54,7 +112,11 @@ const compileDomainSequence = (
     fixedBuffSourceTarget: 'caster',
   });
   return {
-    graph: createActionGraphCompilation(builder.finish(), 1, revision).compileAll(),
+    graph: createActionGraphCompilation(
+      extractGraphDataNodes(builder.finish()),
+      1,
+      revision,
+    ).compileAll(),
     entry: reference.$sequence,
     callSite: revision,
   };
@@ -155,7 +217,7 @@ function fixture(
       ? { kind: 'enemy' as const, enemyId: id }
       : { kind: 'operator' as const, operatorId: id },
   );
-  const createConditionProgram = vi.fn((buff: NonNullable<ReturnType<typeof owner.add>>) => {
+  const createCondition = vi.fn((buff: NonNullable<ReturnType<typeof owner.add>>) => {
     const delegate = {
       execute: () => {
         throw Error('unexpected operation');
@@ -170,7 +232,7 @@ function fixture(
     const runtime = new CombatActionSequenceRuntime(
       {
         execute: (step, context) => {
-          if (context) contexts.push(context);
+          if (context) contexts.push({ ...context });
           return operations.execute(step, context);
         },
         evaluate: (condition, context) => operations.evaluate(condition, context),
@@ -193,7 +255,7 @@ function fixture(
         },
       },
     );
-    return createDamageModifierConditionProgram(sourceProgram(), runtime, {
+    return createDamageModifierCondition(sourceProgram(), runtime, {
       getBuffAffixSkillCastId: options.bindBuffAffix
         ? () => buff.affixSkillCastId
         : options.getAffix,
@@ -207,7 +269,7 @@ function fixture(
     damageModifiers: [
       {
         enabledSide: 'attacker',
-        createConditionProgram,
+        createCondition,
         processors: options.emptyProcessors
           ? []
           : [
@@ -254,10 +316,70 @@ function fixture(
         clearInstantAttributeModifiers: () => undefined,
       },
     });
-  return { owner, buff, add, pack, contexts, resolveTarget, createConditionProgram };
+  return { owner, buff, add, pack, contexts, resolveTarget, createCondition };
 }
 
 describe('Buff 同步伤害条件程序', () => {
+  it('伤害类型摘要保留类型名称，但不能把忽略条件结果的分支显示为类型限制', () => {
+    const compilation = (alwaysNext: boolean) =>
+      createActionGraphCompilation(
+        {
+          nodes: {
+            guard: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'type' }, alwaysNext },
+                whenTrue: { $sequence: null },
+              },
+              next: null,
+            },
+          },
+          dataNodes: {
+            type: {
+              type: 'boolean',
+              expression: { kind: 'eventDamageTypeIn', damageTypes: ['cryo'] },
+            },
+          },
+        },
+        1,
+        'type-summary',
+      );
+    const runtime = new CombatActionSequenceRuntime(
+      new EventContextConditionExecutor({
+        execute: () => true,
+        evaluate: () => {
+          throw new Error('unexpected condition');
+        },
+      }),
+      { blackboard: new ActionBlackboard() },
+    );
+    const create = (alwaysNext: boolean) =>
+      createDamageModifierCondition(
+        {
+          graph: compilation(alwaysNext).compileAll(),
+          entry: 'guard',
+          callSite: 'type-summary',
+        },
+        runtime,
+      );
+    const restricted = create(false);
+    const unrestricted = create(true);
+    const input = {
+      side: 'attacker' as const,
+      sourceId: 'operator',
+      targetId: 'enemy',
+      skillCastId: null,
+      damageType: 'physical' as const,
+      tags: [],
+      features: [],
+    };
+    expect(restricted.damageTypes).toEqual(['cryo']);
+    expect(restricted.execute(input)).toBe(false);
+    expect(restricted.execute({ ...input, damageType: 'cryo' })).toBe(true);
+    expect(unrestricted.damageTypes).toBeUndefined();
+    expect(unrestricted.execute(input)).toBe(true);
+  });
+
   it('从实例读取独立 affix 状态，普通来源相同也不能通过未登记门禁', () => {
     const f = fixture({ bindBuffAffix: true });
     expect(f.buff.affixSkillCastId).toBe(0);
@@ -320,13 +442,13 @@ describe('Buff 同步伤害条件程序', () => {
       {
         execute: () => true,
         evaluate: (_condition, context) => {
-          observed = context;
+          observed = context && { ...context };
           return true;
         },
       },
       original,
     );
-    const program = createDamageModifierConditionProgram(
+    const program = createDamageModifierCondition(
       compileGraphEntry('defender-input-target', 'step-0', {
         'step-0': {
           action: {
@@ -355,7 +477,7 @@ describe('Buff 同步伤害条件程序', () => {
     expect(observed?.event).toBeUndefined();
     expect(original.actionInputTarget).toEqual({ kind: 'operator', operatorId: 'old' });
     expect(original.event).toMatchObject({ payload: { sourceId: 'old' } });
-    expect(original.beforeApplyDamageModifier).toBeUndefined();
+    expect(original.modifierContext).toBeUndefined();
   });
 
   it.each([
@@ -374,7 +496,7 @@ describe('Buff 同步伤害条件程序', () => {
       damage.setCalculationResult(100);
       expect(damage.resolveFinalAttackValue()).toBe(expectedDamage);
       expect(f.buff.blackboard.getNumber('real_imbue_scale')).toBe(expectedValue);
-      expect(f.createConditionProgram).toHaveBeenCalledTimes(1);
+      expect(f.createCondition).toHaveBeenCalledTimes(1);
     },
   );
 
@@ -396,7 +518,8 @@ describe('Buff 同步伤害条件程序', () => {
       ),
     ).toBe(true);
     expect(f.contexts.at(-1)?.skillCastInfo?.skillCastId).toBe(999);
-    expect(f.contexts.at(-1)?.beforeApplyDamageModifier?.skillCastId).toBe(42);
+    const observed = f.contexts.at(-1)?.modifierContext;
+    expect(observed?.kind === 'damage' ? observed.input.skillCastId : undefined).toBe(42);
     expect(f.resolveTarget).toHaveBeenCalledWith('enemy');
   });
 
@@ -421,7 +544,7 @@ describe('Buff 同步伤害条件程序', () => {
     expect(damage.resolveFinalAttackValue()).toBe(212.5);
     expect(f.buff.blackboard.getNumber('real_imbue_scale')).toBe(0.75);
     expect(other.blackboard.getNumber('real_imbue_scale')).toBe(0.375);
-    expect(f.createConditionProgram).toHaveBeenCalledTimes(2);
+    expect(f.createCondition).toHaveBeenCalledTimes(2);
   });
 
   it('未知 affix 不回退普通 SkillCastInfo，缺值错误后可在新调用恢复', () => {
@@ -458,40 +581,5 @@ describe('Buff 同步伤害条件程序', () => {
     expect(() =>
       f.pack(['normalSkill'], 42, 'other', 'operator').applyModifiers('afterCalculation'),
     ).not.toThrow();
-  });
-
-  it('不能同时安装纯条件和条件程序', () => {
-    expect(
-      () =>
-        new DamageModifier(
-          'operator',
-          { enabledSide: 'attacker', condition: { kind: 'sourceSkillCastMatch' }, processors: [] },
-          undefined,
-          42,
-          { execute: () => true },
-        ),
-    ).toThrow('cannot combine');
-  });
-
-  it('未支持的持续动作在安装时拒绝，而不是仅执行第一帧', () => {
-    const runtime = new CombatActionSequenceRuntime(
-      { execute: () => true, evaluate: () => true },
-      { blackboard: fixture().buff.blackboard },
-    );
-    expect(() =>
-      createDamageModifierConditionProgram(
-        compileGraphEntry('unsupported-synchronous-step', 'step-0', {
-          'step-0': {
-            action: {
-              kind: 'repeatEachTick',
-              parameters: {},
-              body: { $sequence: null },
-            },
-            next: null,
-          },
-        }),
-        runtime,
-      ),
-    ).toThrow('unsupported synchronous modifier step');
   });
 });

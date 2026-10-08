@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { CombatAttributeSet } from '../attributes/combatAttributes';
 import { CombatBuffContainer, type CombatBuffDefinition } from './combatBuffs';
 import { ActionBlackboard } from '../actions/actionBlackboard';
-import type { CombatBuffDefinitionEntry } from './combatBuffDefinitions';
+import type { CombatBuffDefinitionEntry } from '../../../../packages/game-data-contract/src/buffs';
 import { BuffDefinitionOperationTarget } from './buffDefinitionOperationTarget';
 import { TimeDilationRuntime } from '../time/timeDilationRuntime';
 import type { ResolvedActionSequence } from '../../compiler/combatProgram';
@@ -16,8 +16,9 @@ const compileGraphEntry = (
   revision: string,
   entry: string | null,
   nodes: Record<string, ActionGraphNode>,
+  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => ({
-  graph: createActionGraphCompilation({ nodes }, 1, revision).compileAll(),
+  graph: createActionGraphCompilation({ nodes, dataNodes }, 1, revision).compileAll(),
   entry,
   callSite: revision,
 });
@@ -25,6 +26,7 @@ const compileGraphEntry = (
 const chainEntry = (
   revision: string,
   actions: readonly ActionGraphStep[],
+  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => {
   const nodes: Record<string, ActionGraphNode> = {};
   actions.forEach((action, index) => {
@@ -33,7 +35,7 @@ const chainEntry = (
       next: index + 1 < actions.length ? `step-${index + 1}` : null,
     };
   });
-  return compileGraphEntry(revision, actions.length === 0 ? null : 'step-0', nodes);
+  return compileGraphEntry(revision, actions.length === 0 ? null : 'step-0', nodes, dataNodes);
 };
 
 const emptySequence = chainEntry('buff-empty', []);

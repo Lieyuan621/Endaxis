@@ -1,19 +1,13 @@
-// 纯数据契约由独立包唯一声明；此路径保留兼容导出。
-export {
-  COMBAT_BUFF_DEFINITIONS_SCHEMA_VERSION,
-  type CombatBuffDefinitionAction,
-  type CombatBuffDefinitionAttributeModifier,
-  type CombatBuffDefinitionAttributeSelector,
-  type CombatBuffDefinitionAttributeStage,
-  type CombatBuffDefinitionDamageModifier,
-  type CombatBuffDefinitionDamageProcessor,
-  type CombatBuffDefinitionEntry,
-  type CombatBuffDefinitionLifecycleActions,
-  type CombatBuffDefinitionNumberOperand,
-  type CombatBuffDefinitionsDocument,
-  type CombatBuffSemanticRole,
-  type CombatBuffSpellBurstDefinition,
-} from '../../../../packages/game-data-contract/src/buffs.ts';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import { validateActionGraphResource } from '../../action-graph/actionGraphValidation';
+import type {
+  ActionGraphReference,
+  ActionGraphResourceDefinition,
+} from '../../../../packages/game-data-contract/src/actionGraph';
+import { attachBuffModifierSequences } from './buffLifecycleSequenceRuntime';
+import type { BuffLifecycleOperationSource } from './buffOperationExecutor';
+import type { CombatOperationExecutor } from '../skills/skillRuntime';
+
 import {
   COMBAT_BUFF_DEFINITIONS_SCHEMA_VERSION,
   type CombatBuffDefinitionAction,
@@ -34,7 +28,6 @@ import {
  * 数据源必须先转换为这里支持的原语；未知原生行为不能以回调或静默缺省方式穿透。
  */
 import {
-  COMPARISON_OPERATORS,
   DAMAGE_FEATURES,
   DAMAGE_TAGS,
   DAMAGE_TYPES,
@@ -47,11 +40,10 @@ import {
 import type { ActionBlackboardValue } from '../actions/actionBlackboard';
 import { ATTRIBUTE_MODIFIER_SLOTS, attributeModifierValues } from '../attributes/combatAttributes';
 import { ATTRIBUTE_MODIFIER_SOURCES } from '../state/foundationState';
-import type { DamageModifierCondition } from '../damage/damageModifiers';
 import { DAMAGE_SCALE_SIDES, DAMAGE_SCALE_ZONES } from '../damage/damageScale';
 import { DAMAGE_MODIFIER_SIDES } from '../damage/playerDamageContext';
-import type { PoiseModifierCondition, PoiseModifierDefinition } from '../damage/poiseModifiers';
-import type { HealModifierDefinition } from '../heal/healModifiers';
+import type { PoiseModifierDefinition } from '../../../../packages/game-data-contract/src/modifiers';
+import type { HealModifierDefinition } from '../../../../packages/game-data-contract/src/modifiers';
 import type {
   ElementalInflictionBuffIndex,
   ElementalInflictionStartedPayload,
@@ -79,6 +71,10 @@ export interface CombatBuffDefinitionAttributeReadRequest {
 
 /** 把定义语义角色和动作编译为核心定义时使用的受控端口。 */
 export interface CombatBuffDefinitionCompilerPorts<Key extends string> {
+  /** 条件图读取宿主所在战斗的完整操作链；实例状态由公共 Buff 动作宿主管理。 */
+  readonly resolveConditionOperations?: (
+    source: BuffLifecycleOperationSource,
+  ) => CombatOperationExecutor;
   readonly emitElementalInflictionStarted: (
     payload: ElementalInflictionStartedPayload,
     buff: CombatBuff<Key>,
@@ -169,7 +165,35 @@ export class CompiledCombatBuffDefinitions<
     if (this.#definitions.has(entry.id)) {
       throw new Error(`duplicate buff definition entry '${entry.id}'`);
     }
-    const definition: CombatBuffDefinition<Key> = {
+    const hasConditions = [entry.damageModifiers, entry.healModifiers, entry.poiseModifiers].some(
+      modifiers => modifiers?.some(modifier => modifier.condition !== undefined),
+    );
+    if (hasConditions && entry.actionGraph === undefined)
+      throw new Error(`buff '${entry.id}' modifier conditions require their own action graph`);
+    const compilation = hasConditions
+      ? createActionGraphCompilation(entry.actionGraph!, 1, `${this.revision}:${entry.id}`)
+      : undefined;
+    const compileConditions = (
+      modifiers: readonly { readonly condition?: ActionGraphReference }[] | undefined,
+      kind: string,
+    ) =>
+      modifiers?.map((modifier, index) =>
+        modifier.condition === undefined
+          ? undefined
+          : compilation!.compileEntry(
+              modifier.condition,
+              `${entry.id}.${kind}[${index}].condition`,
+            ),
+      );
+    const conditions = {
+      damage: compileConditions(entry.damageModifiers, 'damageModifiers'),
+      heal: compileConditions(entry.healModifiers, 'healModifiers'),
+      poise: compileConditions(entry.poiseModifiers, 'poiseModifiers'),
+    };
+    const withoutConditions = <T extends { readonly condition?: ActionGraphReference }>(
+      modifiers: readonly T[] | undefined,
+    ) => modifiers?.map(({ condition: _, ...modifier }) => modifier);
+    let definition: CombatBuffDefinition<Key> = {
       id: entry.id,
       affixSkillCastIdentity: entry.affixSkillCastIdentity,
       presentation: entry.presentation,
@@ -201,14 +225,32 @@ export class CompiledCombatBuffDefinitions<
             ? ATTRIBUTE_MODIFIER_SOURCES.converted
             : ATTRIBUTE_MODIFIER_SOURCES.buff,
       })),
-      damageModifiers: entry.damageModifiers,
+      damageModifiers: withoutConditions(entry.damageModifiers),
       keywordEnhancements: entry.keywordEnhancements,
-      healModifiers: entry.healModifiers,
-      poiseModifiers: entry.poiseModifiers,
+      healModifiers: withoutConditions(entry.healModifiers),
+      poiseModifiers: withoutConditions(entry.poiseModifiers),
       shields: entry.shields,
       sustainedProtection: entry.sustainedProtection,
       actions: compileLifecycleActions(entry, ports),
     };
+    if (hasConditions) {
+      definition = attachBuffModifierSequences(
+        definition,
+        conditions,
+        (buff, actionSourceId, skillCastInfo, operations) => {
+          if (ports.resolveConditionOperations === undefined)
+            throw new Error(`buff '${entry.id}' condition operation chain is not configured`);
+          return ports.resolveConditionOperations({
+            ownerId: buff.owner.ownerId,
+            sourceId: actionSourceId ?? buff.sourceId,
+            definitionOwnerId: buff.definitionOwnerId,
+            sourceActionId: buff.sourceActionId,
+            skillCastInfo: skillCastInfo === undefined ? buff.skillCastInfo : skillCastInfo,
+            operations,
+          });
+        },
+      );
+    }
     this.#definitions.set(entry.id, definition);
     this.registerRole(entry.role, definition);
     this.registerSpellBurst(entry.spellBurst, entry.id);
@@ -278,6 +320,7 @@ export function parseCombatBuffDefinitionEntry(
   const entry = requireObject(input, path);
   requireOnlyKeys(entry, path, [
     'id',
+    'actionGraph',
     'affixSkillCastIdentity',
     'presentation',
     'childPresentations',
@@ -306,9 +349,12 @@ export function parseCombatBuffDefinitionEntry(
     'actions',
     'spellBurst',
   ]);
+  const actionGraph = entry.actionGraph as ActionGraphResourceDefinition | undefined;
+  if (actionGraph !== undefined) validateActionGraphResource(actionGraph);
   const stackingType = requireEnum(entry.stackingType, BUFF_STACKING_TYPES, `${path}.stackingType`);
   return {
     id: requireNonEmptyString(entry.id, `${path}.id`),
+    ...(actionGraph === undefined ? {} : { actionGraph }),
     ...(entry.affixSkillCastIdentity === undefined
       ? {}
       : {
@@ -606,10 +652,7 @@ function parseOptionalDamageModifiers(
         ...(modifier.condition === undefined
           ? {}
           : {
-              condition: parseDamageModifierCondition(
-                modifier.condition,
-                `${modifierPath}.condition`,
-              ),
+              condition: parseModifierCondition(modifier.condition, `${modifierPath}.condition`),
             }),
         processors: modifier.processors.map((processor, processorIndex) =>
           parseDamageModifierProcessor(processor, `${modifierPath}.processors[${processorIndex}]`),
@@ -671,8 +714,8 @@ function parseOptionalHealModifiers(
       const modifierPath = `${path}.healModifiers[${index}]`;
       const modifier = requireObject(input, modifierPath);
       requireOnlyKeys(modifier, modifierPath, ['enabledSide', 'condition', 'processors']);
-      if (!Array.isArray(modifier.processors) || modifier.processors.length === 0) {
-        throw new Error(`${modifierPath}.processors: expected non-empty array`);
+      if (!Array.isArray(modifier.processors)) {
+        throw new Error(`${modifierPath}.processors: expected array`);
       }
       return {
         enabledSide: requireEnum(
@@ -683,10 +726,7 @@ function parseOptionalHealModifiers(
         ...(modifier.condition === undefined
           ? {}
           : {
-              condition: parseHealModifierCondition(
-                modifier.condition,
-                `${modifierPath}.condition`,
-              ),
+              condition: parseModifierCondition(modifier.condition, `${modifierPath}.condition`),
             }),
         processors: modifier.processors.map((inputProcessor, processorIndex) => {
           const processorPath = `${modifierPath}.processors[${processorIndex}]`;
@@ -741,45 +781,6 @@ function parseOptionalHealModifiers(
   };
 }
 
-function parseHealModifierCondition(
-  input: unknown,
-  path: string,
-): NonNullable<HealModifierDefinition['condition']> {
-  const condition = requireObject(input, path);
-  if (condition.kind === 'healTagsMatch') {
-    requireOnlyKeys(condition, path, ['kind', 'match', 'tags']);
-    if (!Array.isArray(condition.tags)) throw new Error(`${path}.tags: expected array`);
-    return {
-      kind: 'healTagsMatch',
-      match: requireEnum(condition.match, ['hasAny', 'hasAll'] as const, `${path}.match`),
-      tags: condition.tags.map((tagId, index) => parseGameplayTag(tagId, `${path}.tags[${index}]`)),
-    };
-  }
-  if (condition.kind === 'targetHealthCompare') {
-    requireOnlyKeys(condition, path, ['kind', 'valueType', 'operator', 'value']);
-    return {
-      kind: 'targetHealthCompare',
-      valueType: requireEnum(
-        condition.valueType,
-        ['current', 'ratio'] as const,
-        `${path}.valueType`,
-      ),
-      operator: requireEnum(condition.operator, COMPARISON_OPERATORS, `${path}.operator`),
-      value: parseDefinitionNumberOperand(condition.value, `${path}.value`),
-    };
-  }
-  if (condition.kind === 'buffBlackboardCompare') {
-    requireOnlyKeys(condition, path, ['kind', 'left', 'operator', 'right']);
-    return {
-      kind: 'buffBlackboardCompare',
-      left: parseDefinitionNumberOperand(condition.left, `${path}.left`),
-      operator: requireEnum(condition.operator, COMPARISON_OPERATORS, `${path}.operator`),
-      right: parseDefinitionNumberOperand(condition.right, `${path}.right`),
-    };
-  }
-  throw new Error(`${path}.kind: unsupported heal modifier condition '${String(condition.kind)}'`);
-}
-
 function parseOptionalPoiseModifiers(
   entry: Readonly<Record<string, unknown>>,
   path: string,
@@ -793,8 +794,8 @@ function parseOptionalPoiseModifiers(
       const modifierPath = `${path}.poiseModifiers[${index}]`;
       const modifier = requireObject(input, modifierPath);
       requireOnlyKeys(modifier, modifierPath, ['enabledSide', 'condition', 'processors']);
-      if (!Array.isArray(modifier.processors) || modifier.processors.length === 0) {
-        throw new Error(`${modifierPath}.processors: expected non-empty array`);
+      if (!Array.isArray(modifier.processors)) {
+        throw new Error(`${modifierPath}.processors: expected array`);
       }
       return {
         enabledSide: requireEnum(
@@ -805,10 +806,7 @@ function parseOptionalPoiseModifiers(
         ...(modifier.condition === undefined
           ? {}
           : {
-              condition: parsePoiseModifierCondition(
-                modifier.condition,
-                `${modifierPath}.condition`,
-              ),
+              condition: parseModifierCondition(modifier.condition, `${modifierPath}.condition`),
             }),
         processors: modifier.processors.map((inputProcessor, processorIndex) => {
           const processorPath = `${modifierPath}.processors[${processorIndex}]`;
@@ -837,168 +835,19 @@ function parseOptionalPoiseModifiers(
   };
 }
 
-function parsePoiseModifierCondition(input: unknown, path: string): PoiseModifierCondition {
-  const condition = requireObject(input, path);
-  if (condition.kind === 'casterControlled') {
-    requireOnlyKeys(condition, path, ['kind']);
-    return { kind: 'casterControlled' };
-  }
-  if (condition.kind === 'eventDamageTagsMatch') {
-    requireOnlyKeys(condition, path, ['kind', 'match', 'tags']);
-    return {
-      kind: 'eventDamageTagsMatch',
-      match: requireEnum(condition.match, ['hasAny', 'hasAll'] as const, `${path}.match`),
-      tags: parseEnumArray(condition.tags, DAMAGE_TAGS, `${path}.tags`),
-    };
-  }
-  if (condition.kind === 'all') {
-    requireOnlyKeys(condition, path, ['kind', 'conditions']);
-    if (!Array.isArray(condition.conditions) || condition.conditions.length === 0) {
-      throw new Error(`${path}.conditions: expected non-empty array`);
-    }
-    return {
-      kind: 'all',
-      conditions: condition.conditions.map((child, index) =>
-        parsePoiseModifierCondition(child, `${path}.conditions[${index}]`),
-      ),
-    };
-  }
-  throw new Error(`${path}.kind: unsupported poise modifier condition '${String(condition.kind)}'`);
-}
-
-function parseDamageModifierCondition(input: unknown, path: string): DamageModifierCondition {
-  const condition = requireObject(input, path);
-  switch (condition.kind) {
-    case 'entityTagMatch': {
-      requireOnlyKeys(condition, path, ['kind', 'target', 'tagQueryType', 'tags']);
-      if (!Array.isArray(condition.tags) || condition.tags.length === 0) {
-        throw new Error(`${path}.tags: expected non-empty array`);
-      }
-      return {
-        kind: 'entityTagMatch',
-        target: requireEnum(condition.target, ['caster', 'enemy'] as const, `${path}.target`),
-        tagQueryType: requireEnum(
-          condition.tagQueryType,
-          ['hasAny', 'hasAll', 'exceptAny', 'exceptAll'] as const,
-          `${path}.tagQueryType`,
-        ),
-        tags: condition.tags.map((value, index) => {
-          try {
-            assertGameplayTag(value);
-            return value;
-          } catch {
-            throw new Error(`${path}.tags[${index}]: expected readable GameplayTag path`);
-          }
-        }),
-      };
-    }
-    case 'casterControlled':
-      requireOnlyKeys(condition, path, ['kind']);
-      return { kind: 'casterControlled' };
-    case 'sourceSkillCastMatch':
-      requireOnlyKeys(condition, path, ['kind']);
-      return { kind: 'sourceSkillCastMatch' };
-    case 'buffIdCountCompare':
-      requireOnlyKeys(condition, path, ['kind', 'target', 'buffIds', 'operator', 'value']);
-      if (
-        !Array.isArray(condition.buffIds) ||
-        condition.buffIds.length === 0 ||
-        !condition.buffIds.every(value => typeof value === 'string' && value.length > 0)
-      ) {
-        throw new Error(`${path}.buffIds: expected non-empty Buff ID array`);
-      }
-      return {
-        kind: 'buffIdCountCompare',
-        target: requireEnum(condition.target, ['caster', 'enemy'] as const, `${path}.target`),
-        buffIds: condition.buffIds as string[],
-        operator: requireEnum(
-          condition.operator,
-          ['equal', 'notEqual', 'less', 'lessOrEqual', 'greater', 'greaterOrEqual'] as const,
-          `${path}.operator`,
-        ),
-        value: parseDefinitionNumberOperand(condition.value, `${path}.value`),
-      };
-    case 'targetPoiseCompare':
-      requireOnlyKeys(condition, path, [
-        'kind',
-        'target',
-        'returnValueIfMissing',
-        'operator',
-        'value',
-      ]);
-      return {
-        kind: 'targetPoiseCompare',
-        target: requireEnum(condition.target, ['enemy'] as const, `${path}.target`),
-        returnValueIfMissing: requireBoolean(
-          condition.returnValueIfMissing,
-          `${path}.returnValueIfMissing`,
-        ),
-        operator: requireEnum(
-          condition.operator,
-          ['equal', 'notEqual', 'less', 'lessOrEqual', 'greater', 'greaterOrEqual'] as const,
-          `${path}.operator`,
-        ),
-        value: parseDefinitionNumberOperand(condition.value, `${path}.value`),
-      };
-    case 'eventDamageTagsMatch':
-      requireOnlyKeys(condition, path, ['kind', 'match', 'tags']);
-      return {
-        kind: 'eventDamageTagsMatch',
-        match: requireEnum(
-          condition.match,
-          ['exact', 'hasAny', 'hasAll', 'exceptAny', 'exceptAll'] as const,
-          `${path}.match`,
-        ),
-        tags: parseEnumArray(condition.tags, DAMAGE_TAGS, `${path}.tags`),
-      };
-    case 'eventDamageFeaturesMatch':
-      requireOnlyKeys(condition, path, ['kind', 'match', 'features']);
-      return {
-        kind: 'eventDamageFeaturesMatch',
-        match: requireEnum(
-          condition.match,
-          ['exact', 'hasAny', 'hasAll', 'exceptAny', 'exceptAll'] as const,
-          `${path}.match`,
-        ),
-        features: parseEnumArray(condition.features, DAMAGE_FEATURES, `${path}.features`),
-      };
-    case 'eventDamageTypesMatch':
-      requireOnlyKeys(condition, path, ['kind', 'damageTypes']);
-      return {
-        kind: 'eventDamageTypesMatch',
-        damageTypes: parseEnumArray(condition.damageTypes, DAMAGE_TYPES, `${path}.damageTypes`),
-      };
-    case 'buffBlackboardCompare':
-      requireOnlyKeys(condition, path, ['kind', 'left', 'operator', 'right']);
-      return {
-        kind: 'buffBlackboardCompare',
-        left: parseDefinitionNumberOperand(condition.left, `${path}.left`),
-        operator: requireEnum(condition.operator, COMPARISON_OPERATORS, `${path}.operator`),
-        right: parseDefinitionNumberOperand(condition.right, `${path}.right`),
-      };
-    case 'not':
-      requireOnlyKeys(condition, path, ['kind', 'condition']);
-      return {
-        kind: 'not',
-        condition: parseDamageModifierCondition(condition.condition, `${path}.condition`),
-      };
-    case 'all':
-    case 'any':
-      requireOnlyKeys(condition, path, ['kind', 'conditions']);
-      if (!Array.isArray(condition.conditions) || condition.conditions.length === 0) {
-        throw new Error(`${path}.conditions: expected non-empty array`);
-      }
-      return {
-        kind: condition.kind,
-        conditions: condition.conditions.map((child, index) =>
-          parseDamageModifierCondition(child, `${path}.conditions[${index}]`),
-        ),
-      };
-    default:
-      throw new Error(
-        `${path}.kind: unsupported damage modifier condition '${String(condition.kind)}'`,
-      );
-  }
+/** 三种修正条件都使用所属 Buff 图中的动作入口。 */
+function parseModifierCondition(
+  input: unknown,
+  path: string,
+): import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphReference {
+  const reference = requireObject(input, path);
+  requireOnlyKeys(reference, path, ['$sequence']);
+  return {
+    $sequence:
+      reference.$sequence === null
+        ? null
+        : requireNonEmptyString(reference.$sequence, `${path}.$sequence`),
+  };
 }
 
 function parseDamageModifierProcessor(
@@ -1555,17 +1404,6 @@ function requireEnum<const Values extends readonly string[]>(
   return input;
 }
 
-function parseEnumArray<const Values extends readonly string[]>(
-  input: unknown,
-  values: Values,
-  path: string,
-): readonly Values[number][] {
-  if (!Array.isArray(input) || input.length === 0) {
-    throw new Error(`${path}: expected non-empty array`);
-  }
-  return input.map((value, index) => requireEnum(value, values, `${path}[${index}]`));
-}
-
 function compileLifecycleActions<Key extends string>(
   entry: CombatBuffDefinitionEntry,
   ports: CombatBuffDefinitionCompilerPorts<Key>,
@@ -1813,13 +1651,4 @@ function requireRole<Key, Attribute extends string>(
   const definition = entries.get(key);
   if (definition === undefined) throw new Error(`buff definition is missing ${label}`);
   return definition;
-}
-
-function parseGameplayTag(value: unknown, path: string): string {
-  try {
-    assertGameplayTag(value);
-    return value;
-  } catch {
-    throw new Error(`${path}: expected readable GameplayTag path`);
-  }
 }

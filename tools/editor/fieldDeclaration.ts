@@ -146,7 +146,6 @@ export function mergeFieldDeclarationMetadata(
     'declaration',
     'referenceKind',
     'readonlyDeclaration',
-    'deferredCondition',
     'nativeId',
     'blackboardOrigin',
   ] as const;
@@ -179,18 +178,6 @@ export function createFieldDeclarationExtractor(root: string) {
           : undefined;
       const readonlyDeclaration =
         module === 'operators' && path === 'OperatorDefinition.skillAliases';
-      const deferredCondition =
-        module === 'skills' && path === 'SkillDefinitionProperties.availability'
-          ? 'availability'
-          : module === 'actions' &&
-              [
-                'CombatStepParameters.jumpTimeline.condition',
-                'CombatStepParameters.conditional.condition',
-                'CombatEventResponseDefinition.condition',
-                'CombatEventHandlerDefinition.condition',
-              ].includes(path)
-            ? 'legacyHandler'
-            : undefined;
       const nativeId =
         module === 'actions' && path === 'CombatStepParameters.finishGlobalBuffsById.globalBuffIds';
       const blackboardOrigin =
@@ -201,8 +188,13 @@ export function createFieldDeclarationExtractor(root: string) {
             : (module === 'actions' &&
                   blackboardActionPaths.has(path.replace(/^CombatStepParameters\./, ''))) ||
                 (module === 'conditions' &&
-                  (['ActionValueOperand.key', 'ActionValueOperand.parameter'].includes(path) ||
-                    (['CombatCondition.desiredKey', 'CombatCondition.outputKey'].includes(path) &&
+                  (['ActionValueExpression.key', 'ActionValueExpression.parameter'].includes(
+                    path,
+                  ) ||
+                    ([
+                      'CombatConditionExpression.desiredKey',
+                      'CombatConditionExpression.outputKey',
+                    ].includes(path) &&
                       declarationVariant(node) === 'buffBlackboardValueCompare')))
               ? 'contract'
               : undefined;
@@ -210,7 +202,6 @@ export function createFieldDeclarationExtractor(root: string) {
         ...(declaration ? { declaration } : {}),
         ...(reference?.files.includes(module) ? { referenceKind: reference.kind } : {}),
         ...(readonlyDeclaration ? { readonlyDeclaration: true } : {}),
-        ...(deferredCondition ? { deferredCondition } : {}),
         ...(nativeId ? { nativeId: true } : {}),
         ...(blackboardOrigin ? { blackboardOrigin } : {}),
       };

@@ -4,8 +4,8 @@ import type {
   ActionGraphNode,
   ActionGraphReference,
   ActionGraphStep,
-} from '../../../../packages/game-data-contract/src/actionGraph.ts';
-import type { CombatCondition } from '../../../../packages/game-data-contract/src/conditions.ts';
+} from '../../src/compiler/intermediateDefinitions.ts';
+import type { CombatCondition } from '../../src/compiler/intermediateDefinitions.ts';
 import { optimizeActionGraphDefinition } from '../../src/compiler/optimization/graphSequenceOptimization.ts';
 
 const literal = (value: number) => ({ kind: 'constant' as const, value });

@@ -1,7 +1,11 @@
+import { numberInput } from '../../../test/compiledGraphInputs';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import type { CompiledGraphEntry, ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
-import type { ActionGraphStep } from '../../../../packages/game-data-contract/src/actionGraph';
+import type {
+  ActionGraphDefinition,
+  ActionGraphStep,
+} from '../../../../packages/game-data-contract/src/actionGraph';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { CombatOperationPrograms } from '../actions/combatOperationPrograms';
 import { StateStepper } from '../runtime/stateStepper';
@@ -31,9 +35,13 @@ const childMetadata = {
   },
 };
 
-const stepEntry = (revision: string, action: ActionGraphStep): CompiledGraphEntry => ({
+const stepEntry = (
+  revision: string,
+  action: ActionGraphStep,
+  dataNodes?: ActionGraphDefinition['dataNodes'],
+): CompiledGraphEntry => ({
   graph: createActionGraphCompilation(
-    { nodes: { 'step-0': { action, next: null } } },
+    { nodes: { 'step-0': { action, next: null } }, dataNodes },
     1,
     revision,
   ).compileAll(),
@@ -518,11 +526,11 @@ describe('AbilityEntityOperationExecutor', () => {
             },
 
             target: 'enemy',
-            overrideDurationSeconds: { kind: 'blackboard', key: 'duration' },
+            overrideDurationSeconds: numberInput({ kind: 'blackboard', key: 'duration' }),
             saveToContextKey: 'bunshin1',
             dieWhenSourceDies: false,
             blackboardAssignments: {
-              EntityBB_wisd_greater_will: { kind: 'blackboard', key: 'will' },
+              EntityBB_wisd_greater_will: numberInput({ kind: 'blackboard', key: 'will' }),
             },
             stringBlackboardAssignments: {
               EntityBB_hitedMark: 'attack1UltHitMark',
@@ -816,7 +824,7 @@ describe('AbilityEntityOperationExecutor', () => {
           parameters: {
             sourceContextKey: 'swords',
             saveToContextKey: 'swordInst',
-            index: { kind: 'blackboard', key: 'swordIndex' },
+            index: numberInput({ kind: 'blackboard', key: 'swordIndex' }),
           },
         },
         {
@@ -962,14 +970,23 @@ describe('AbilityEntityOperationExecutor', () => {
               timelineActions: [
                 {
                   startFrame: 2,
-                  sequence: stepEntry('embedded-child-timeline', {
-                    kind: 'modifyActionValue',
-                    parameters: {
-                      key: 'result',
-                      operation: 'assign',
-                      value: { kind: 'blackboard', key: 'inherited' },
+                  sequence: stepEntry(
+                    'embedded-child-timeline',
+                    {
+                      kind: 'modifyActionValue',
+                      parameters: {
+                        key: 'result',
+                        operation: 'assign',
+                        value: { kind: 'valueNode', nodeId: 'inherited' },
+                      },
                     },
-                  }),
+                    {
+                      inherited: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'inherited' },
+                      },
+                    },
+                  ),
                 },
               ],
             },

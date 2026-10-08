@@ -81,13 +81,14 @@ const definition = {
                 parameters: {
                   buffId: 'buff_wpn_funnel_0001',
                   target: 'caster',
-                  blackboardAssignments: {
-                    atk_up: { kind: 'blackboard', key: 'install_0_atk_up' },
-                  },
+                  blackboardAssignments: { atk_up: { kind: 'valueNode', nodeId: 'data_1' } },
                 },
               },
               next: null,
             },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'install_0_atk_up' } },
           },
         },
         macros: {},

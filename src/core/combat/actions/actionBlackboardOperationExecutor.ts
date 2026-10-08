@@ -1,3 +1,5 @@
+import { valueInputBlackboardKey } from '../../compiler/compiledGraphData';
+import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 import { abilityEventTargetId } from '../events/combatAbilityEvent';
 import { spGainAbilityEvent } from '../events/combatAbilityEvent';
@@ -9,7 +11,6 @@ import { healAbilityEvent } from '../events/combatAbilityEvent';
 import type {
   ActionValueCalculationOperation,
   ActionValueOperation,
-  CombatCondition,
   DamageElement,
   OperatorAttribute,
   OperatorRole,
@@ -140,10 +141,9 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
       );
       const oldValue = Math.fround(context.blackboard.getNumber(step.parameters.key) ?? 0);
       const previousCalculation = context.blackboard.getValueCalculation(step.parameters.key);
+      const sourceKey = valueInputBlackboardKey(step.parameters.value);
       const copiedCalculation =
-        step.parameters.value.kind === 'blackboard'
-          ? context.blackboard.getValueCalculation(step.parameters.value.key)
-          : undefined;
+        sourceKey === undefined ? undefined : context.blackboard.getValueCalculation(sourceKey);
       const detail = combineSkillSettingFactors(
         step.parameters.operation,
         context.blackboard.getArtsIntensityDetail(step.parameters.key),
@@ -176,10 +176,10 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
               ...(previousCalculation === undefined
                 ? {}
                 : { leftCalculation: previousCalculation }),
-              ...(step.parameters.value.kind !== 'blackboard'
+              ...(sourceKey === undefined
                 ? {}
                 : {
-                    rightKey: step.parameters.value.key,
+                    rightKey: sourceKey,
                     ...(copiedCalculation === undefined
                       ? {}
                       : { rightCalculation: copiedCalculation }),
@@ -197,10 +197,8 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
       const right = Math.fround(
         resolveActionValueOperand(step.parameters.right, context.blackboard),
       );
-      const leftKey =
-        step.parameters.left.kind === 'blackboard' ? step.parameters.left.key : undefined;
-      const rightKey =
-        step.parameters.right.kind === 'blackboard' ? step.parameters.right.key : undefined;
+      const leftKey = valueInputBlackboardKey(step.parameters.left);
+      const rightKey = valueInputBlackboardKey(step.parameters.right);
       const leftCalculation =
         leftKey === undefined ? undefined : context.blackboard.getValueCalculation(leftKey);
       const rightCalculation =
@@ -390,7 +388,9 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
     remove(entityId, handle);
   }
 
-  evaluate(condition: CombatCondition, context?: CombatOperationContext): boolean {
+  evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
+    if (condition.kind === 'conditionNode')
+      return this.evaluate(condition.node.expression, context);
     if (condition.kind === 'constant') return condition.value;
     if (condition.kind === 'combatActive') return true;
     if (condition.kind === 'singleEnemyPresent') return true;

@@ -4,7 +4,7 @@ import type {
   ActionGraphNode,
   ActionGraphReference,
   ActionGraphStep,
-} from '../../../../packages/game-data-contract/src/actionGraph.ts';
+} from '../../src/compiler/intermediateDefinitions.ts';
 import { deduplicateActionGraph } from '../../src/compiler/optimization/actionGraphDeduplication.ts';
 import { extractActionGraphMiddleSegments } from '../../src/compiler/optimization/actionGraphMiddleSegments.ts';
 

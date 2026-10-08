@@ -50,7 +50,7 @@ it('projects boolean conditions and existing record values but never ordinary st
     kind: 'applyBuff',
     parameters: {
       target: 'caster',
-      buffId: { blackboardKey: 'buff' },
+      buffId: { kind: 'stringNode', nodeId: 'buff' },
       blackboardAssignments: { power: [2, 3] },
       stringBlackboardAssignments: { name: 'label' },
     },
@@ -65,14 +65,7 @@ it('projects boolean conditions and existing record values but never ordinary st
 it('keeps one input for a declared condition, rather than exposing its implementation twice', () => {
   const inputs = actionTypedInputs({
     kind: 'conditional',
-    parameters: {
-      condition: {
-        kind: 'actionValueCompare',
-        left: { kind: 'constant', value: 1 },
-        operator: 'equal',
-        right: { kind: 'blackboard', key: 'n' },
-      },
-    },
+    parameters: { condition: { kind: 'conditionNode', nodeId: 'comparison' } },
     whenTrue: { $sequence: null },
     whenFalse: { $sequence: null },
   });
@@ -148,7 +141,7 @@ it('uses structural container objects and preserves operands only at explicit de
 
 it('projects reordered condition-list items at their new indexed paths without duplicating nested inputs', () => {
   const shared = { kind: 'conditionNode' as const, nodeId: 'shared' };
-  const inline = { kind: 'not' as const, condition: { kind: 'constant' as const, value: false } };
+  const inline = { kind: 'constant' as const, value: false };
   const conditions = [shared, inline, shared];
   for (const kind of ['all', 'any'] as const) {
     expect(dataTypedInputs({ type: 'boolean', expression: { kind, conditions: [] } })).toEqual([]);
@@ -211,7 +204,6 @@ it('uses full value schemas for nested object operands and keeps non-pin declara
           kind: 'condition',
           optional: true,
           semantics: { aliases: ['CombatCondition'] },
-          fallback: { reason: 'condition-editor-pending' },
         },
       },
     ]),

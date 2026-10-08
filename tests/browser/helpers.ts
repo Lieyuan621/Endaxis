@@ -4,7 +4,7 @@ export const test = base.extend<{ checkBrowserErrors: void }>({
   checkBrowserErrors: [
     async ({ page }, use) => {
       const errors: string[] = [];
-      page.on('pageerror', error => errors.push(error.message));
+      page.on('pageerror', error => errors.push(error.stack ?? error.message));
       await use();
       expect(errors, '页面不应出现未捕获异常').toEqual([]);
     },

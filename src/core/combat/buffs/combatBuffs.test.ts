@@ -1,3 +1,6 @@
+import { chainEntry } from '../../../test/compiledGraphEntry';
+import { CombatActionSequenceRuntime } from '../actions/combatActionSequenceRuntime';
+import { createDamageModifierCondition } from '../damage/damageModifierSequenceRuntime';
 import { describe, expect, it } from 'vitest';
 import { ATTRIBUTE_MODIFIER_SOURCES } from '../state/foundationState';
 import {
@@ -175,7 +178,16 @@ it('正式容器数据图保留 Buff 黑板与属性修正的共享关系', () =
           {
             enabledSide: 'attacker',
             processors: [],
-            createConditionProgram: () => ({ execute: () => true }),
+            createCondition: (buff, state) =>
+              createDamageModifierCondition(
+                chainEntry('data-graph-condition', []),
+                new CombatActionSequenceRuntime(
+                  { execute: () => true, evaluate: () => true },
+                  { blackboard: buff.blackboard },
+                ),
+                {},
+                state,
+              ),
           },
         ],
         healModifiers: [{ enabledSide: 'healer', processors: [] }],
@@ -219,7 +231,7 @@ it('正式容器数据图保留 Buff 黑板与属性修正的共享关系', () =
   expect(instance.blackboard.entity).toBe(copied.entityBlackboard);
   expect(instance.attributes.modifiers[0]).toBe(copied.attributes.modifiers[0]);
   expect(instance.damageModifiers[0]).toBe(copied.damageModifiers[0]);
-  expect(copied.damageModifiers[0]!.hasConditionProgram).toBe(true);
+  expect(copied.damageModifiers[0]!.condition).not.toBeNull();
   expect(copied.damageModifiers[0]!.numberSource!.blackboard).toBe(instance.blackboard);
   expect(instance.healModifiers[0]).toBe(copied.healModifiers[0]);
   expect(instance.poiseModifiers[0]).toBe(copied.poiseModifiers[0]);

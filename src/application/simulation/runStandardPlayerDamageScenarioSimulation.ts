@@ -5,7 +5,7 @@ import type { ResolvedCombatStepForKind } from '../../core/compiler/combatProgra
  * 随机样本等输入由调用方给；环境不支持的东西在跑之前就报错。
  */
 import type { CompileScenarioRuntimeAssemblyOptions } from '../../core/compiler/compileScenarioRuntimeAssembly';
-import type { CombatBuffDefinitionsDocument } from '../../core/combat/buffs/combatBuffDefinitions';
+import type { CombatBuffDefinitionsDocument } from '../../../packages/game-data-contract/src/buffs';
 import type { SkillSettingsDocument } from '../../core/combat/infliction/skillSettings';
 import type { CompoundStatusFactoriesDocument } from '../../core/combat/infliction/compoundStatusFactories';
 import type { PlayerDamageNonRandomRuntimeSnapshot } from '../../core/combat/damage/playerActiveDamageInput';

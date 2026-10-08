@@ -2,7 +2,7 @@ import type {
   AirborneActionSource,
   PhysicalInflictionActionSource,
 } from '../../source/physicalInflictionActions.ts';
-import type { SkillBuffDefinition } from '../../../../../packages/game-data-contract/src/buffs.ts';
+import type { SkillBuffDefinition } from '../intermediateDefinitions.ts';
 import type { CompiledBuffStepSource } from './combatActionProjectionTypes.ts';
 import {
   actionValueOperand,

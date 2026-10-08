@@ -1,3 +1,4 @@
+import type { CompiledInputs } from '../../compiler/compiledGraphData';
 /** 图执行的事件订阅生命周期。保存的数据仅含响应进度和订阅引用。 */
 import type { CombatEventResponseDefinition } from '../../../../packages/game-data-contract/src/actions';
 import type { ActionGraphReference } from '../../../../packages/game-data-contract/src/actionGraph';
@@ -22,7 +23,7 @@ export class CombatActionEventListener<State> {
   readonly #registrations: AbilityEventRegistration[] = [];
 
   constructor(
-    readonly responses: readonly CombatEventResponseDefinition[],
+    readonly responses: readonly CompiledInputs<CombatEventResponseDefinition>[],
     readonly runtimeState: CombatEventListenerState<State>,
     readonly operations: CombatOperationExecutor,
     readonly context: CombatOperationContext,

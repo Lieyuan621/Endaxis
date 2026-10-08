@@ -14,7 +14,7 @@ import {
 import type {
   ActionGraphReference,
   ActionGraphResourceDefinition,
-} from '../../../../packages/game-data-contract/src/actionGraph.ts';
+} from '../../src/compiler/intermediateDefinitions.ts';
 import type { CombatActionProjectionContextSource } from '../../src/compiler/combatProjectionCommon.ts';
 import {
   createActionGraphBuilder,
@@ -461,47 +461,51 @@ describe('公共 Buff 运行时投影', () => {
   it('防御方修正的 Target 不能误读为敌人失衡值', () => {
     const source = sourceFixture();
     const seed = source.graph.abilityEvents[0]!.actions[0]!;
-    expect(() =>
-      compileBuffRuntimeDefinitionSource({
-        ...source,
-        damageModifiers: [
-          {
-            enabledSide: 'Defender',
-            condition: {
-              ...seed,
-              actions: [
-                {
-                  sourcePath: 'modifier.defender.poise',
-                  metadata: seed.actions[0]!.metadata,
-                  body: {
-                    kind: 'leaf',
-                    value: {
-                      family: 'condition',
-                      action: {
-                        kind: 'poise',
-                        sourceType: 'CheckPoiseValue',
-                        target: fixedTarget('Target'),
-                        comparison: 'LE',
-                        returnValueIfMissing: false,
-                        value: { value: 0, blackboardKey: null, levelValues: null },
-                      },
+    const definition = compileBuffRuntimeDefinitionSource({
+      ...source,
+      damageModifiers: [
+        {
+          enabledSide: 'Defender',
+          condition: {
+            ...seed,
+            actions: [
+              {
+                sourcePath: 'modifier.defender.poise',
+                metadata: seed.actions[0]!.metadata,
+                body: {
+                  kind: 'leaf',
+                  value: {
+                    family: 'condition',
+                    action: {
+                      kind: 'poise',
+                      sourceType: 'CheckPoiseValue',
+                      target: { ...fixedTarget('Target'), targetGroupKey: '' },
+                      comparison: 'LE',
+                      returnValueIfMissing: false,
+                      value: { value: 0, blackboardKey: null, levelValues: null },
                     },
                   },
                 },
-              ],
-            },
-            processors: [
-              {
-                kind: 'damageScale',
-                side: 'Defender',
-                zoneName: 'NormalCalcZone',
-                addition: { value: 0.1, blackboardKey: null, levelValues: null },
               },
             ],
           },
-        ],
-      }),
-    ).toThrow('damage modifier poise target is not the enemy');
+          processors: [
+            {
+              kind: 'damageScale',
+              side: 'Defender',
+              zoneName: 'NormalCalcZone',
+              addition: { value: 0.1, blackboardKey: null, levelValues: null },
+            },
+          ],
+        },
+      ],
+    });
+    expect(
+      readResourceActions(definition, definition.damageModifiers![0]!.condition!)[0],
+    ).toMatchObject({
+      kind: 'conditional',
+      parameters: { condition: { kind: 'poiseCompare', target: 'currentTarget' } },
+    });
   });
 
   it.each([
@@ -550,12 +554,17 @@ describe('公共 Buff 运行时投影', () => {
         },
       ],
     });
-    expect(result.damageModifiers?.[0]?.condition).toEqual({
-      kind,
-      conditions: [
-        { kind: 'eventDamageTagsMatch', match, tags: ['normalSkill'] },
-        { kind: 'eventDamageFeaturesMatch', match, features: ['dot'] },
-      ],
+    expect(readResourceActions(result, result.damageModifiers![0]!.condition!)[0]).toMatchObject({
+      kind: 'conditional',
+      parameters: {
+        condition: {
+          kind,
+          conditions: [
+            { kind: 'eventDamageTagsMatch', match, tags: ['normalSkill'] },
+            { kind: 'eventDamageFeaturesMatch', match, features: ['dot'] },
+          ],
+        },
+      },
     });
   });
 
@@ -599,9 +608,14 @@ describe('公共 Buff 运行时投影', () => {
         },
       ],
     });
-    expect(result.damageModifiers?.[0]?.condition).toEqual({
-      kind: 'not',
-      condition: { kind: 'sourceSkillCastMatch' },
+    expect(readResourceActions(result, result.damageModifiers![0]!.condition!)[0]).toMatchObject({
+      kind: 'conditional',
+      parameters: {
+        condition: {
+          kind: 'not',
+          condition: { kind: 'eventSkillCastMatchesBuffSource' },
+        },
+      },
     });
   });
 
@@ -645,12 +659,12 @@ describe('公共 Buff 运行时投影', () => {
     expect(
       result.damageModifiers?.map(modifier => ({
         ...modifier,
-        conditionProgram: modifier.conditionProgram,
+        condition: modifier.condition,
       })),
     ).toEqual([
       {
         enabledSide: 'attacker',
-        conditionProgram: graphBranch(result.actionGraph!.main, [
+        condition: graphBranch(result.actionGraph!.main, [
           {
             kind: 'calculateActionValue',
             parameters: {
@@ -2691,14 +2705,22 @@ describe('公共 Buff 运行时投影', () => {
       { gameplayTagRegistry: fixtureGameplayTagRegistry, ...{} },
     );
 
-    expect(definition.healModifiers).toEqual([
-      {
-        enabledSide: 'healer',
+    expect(
+      readResourceActions(definition, definition.healModifiers![0]!.condition!)[0],
+    ).toMatchObject({
+      kind: 'conditional',
+      parameters: {
         condition: {
-          kind: 'healTagsMatch',
+          kind: 'eventHealTagsMatch',
           match: 'hasAny',
           tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
         },
+      },
+    });
+    expect(definition.healModifiers).toEqual([
+      {
+        enabledSide: 'healer',
+        condition: definition.healModifiers![0]!.condition,
         processors: [
           {
             kind: 'modifyHealingIncrease',
@@ -2755,15 +2777,23 @@ describe('公共 Buff 运行时投影', () => {
       ],
     } as never);
 
+    expect(
+      readResourceActions(definition, definition.healModifiers![0]!.condition!)[0],
+    ).toMatchObject({
+      kind: 'conditional',
+      parameters: {
+        condition: {
+          kind: 'healthCompare',
+          target: 'currentTarget',
+          operator: 'lessOrEqual',
+          valueType: 'ratio',
+        },
+      },
+    });
     expect(definition.healModifiers).toEqual([
       {
         enabledSide: 'healer',
-        condition: {
-          kind: 'targetHealthCompare',
-          valueType: 'ratio',
-          operator: 'lessOrEqual',
-          value: { blackboardKey: 'rate' },
-        },
+        condition: definition.healModifiers![0]!.condition,
         processors: [
           {
             kind: 'modifyCalculationResult',
@@ -2845,21 +2875,26 @@ describe('公共 Buff 运行时投影', () => {
         { gameplayTagRegistry: fixtureGameplayTagRegistry, ...{} },
       );
 
-    expect(() => project(128)).toThrow('unsupported poise decorate mask 128');
-    expect(project(2097152).poiseModifiers).toEqual([
+    const definition = project(2097152);
+    const guard = readResourceActions(definition, definition.poiseModifiers![0]!.condition!)[0]!;
+    expect(guard).toMatchObject({
+      kind: 'conditional',
+      parameters: {
+        condition: {
+          kind: 'eventDamageTagsMatch',
+          match: 'hasAll',
+          tags: ['normalAttackLastCombo'],
+        },
+      },
+    });
+    if (guard.kind !== 'conditional') throw new Error('expected conditional action');
+    expect(readResourceActions(definition, guard.whenTrue)).toMatchObject([
+      { kind: 'conditional', parameters: { condition: { kind: 'casterControlled' } } },
+    ]);
+    expect(definition.poiseModifiers).toEqual([
       {
         enabledSide: 'attacker',
-        condition: {
-          kind: 'all',
-          conditions: [
-            {
-              kind: 'eventDamageTagsMatch',
-              match: 'hasAll',
-              tags: ['normalAttackLastCombo'],
-            },
-            { kind: 'casterControlled' },
-          ],
-        },
+        condition: definition.poiseModifiers![0]!.condition,
         processors: [
           {
             kind: 'modifyPoiseScalar',
@@ -3456,41 +3491,45 @@ describe('公共 Buff 运行时投影', () => {
       { gameplayTagRegistry: fixtureGameplayTagRegistry, ...{} },
     );
 
-    expect(definition.damageModifiers?.map(item => item.condition)).toEqual([
-      { kind: 'eventDamageTypesMatch', damageTypes: ['cryo', 'nature'] },
-      {
-        kind: 'eventDamageTagsMatch',
-        match: 'hasAny',
-        tags: ['normalSkill', 'ultimateSkill'],
-      },
-      {
-        kind: 'entityTagMatch',
-        target: 'enemy',
-        tagQueryType: 'hasAny',
-        tags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
-      },
-      {
-        kind: 'buffIdCountCompare',
-        target: 'enemy',
-        buffIds: ['buff_physical_no_guard'],
-        operator: 'greaterOrEqual',
-        value: 1,
-      },
-      {
-        kind: 'targetPoiseCompare',
-        target: 'enemy',
-        returnValueIfMissing: false,
-        operator: 'lessOrEqual',
-        value: 0,
-      },
-      {
-        kind: 'targetHealthCompare',
-        target: 'enemy',
-        valueType: 'ratio',
-        operator: 'less',
-        value: { blackboardKey: 'hp_remain' },
-      },
-    ]);
+    expect(
+      definition.damageModifiers?.map(item => readResourceActions(definition, item.condition!)[0]),
+    ).toMatchObject(
+      [
+        { kind: 'eventDamageTypeIn', damageTypes: ['cryo', 'nature'] },
+        {
+          kind: 'eventDamageTagsMatch',
+          match: 'hasAny',
+          tags: ['normalSkill', 'ultimateSkill'],
+        },
+        {
+          kind: 'entityTagMatch',
+          target: 'actionInputTarget',
+          tagQueryType: 'hasAny',
+          tags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
+        },
+        {
+          kind: 'buffIdStackCompare',
+          target: 'actionInputTarget',
+          buffIds: ['buff_physical_no_guard'],
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+        },
+        {
+          kind: 'poiseCompare',
+          target: 'currentTarget',
+          returnValueIfMissing: false,
+          operator: 'lessOrEqual',
+          value: { kind: 'constant', value: 0 },
+        },
+        {
+          kind: 'healthCompare',
+          target: 'currentTarget',
+          valueType: 'ratio',
+          operator: 'less',
+          value: { kind: 'blackboard', key: 'hp_remain' },
+        },
+      ].map(condition => ({ kind: 'conditional', parameters: { condition } })),
+    );
   });
 
   it('把技能类型守卫、动态传参、属性修正和图标投影为正式 Next 定义', () => {

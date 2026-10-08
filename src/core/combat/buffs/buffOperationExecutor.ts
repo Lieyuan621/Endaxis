@@ -1,4 +1,6 @@
-import type { CombatCondition, PhysicalInflictionType } from '../../game-data/operatorDefinition';
+import { valueInputBlackboardKey, stringInputExpression } from '../../compiler/compiledGraphData';
+import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
+import type { PhysicalInflictionType } from '../../game-data/operatorDefinition';
 import {
   abilityEventSourceId,
   abilityEventTargetId,
@@ -20,7 +22,11 @@ import type {
 } from '../../compiler/combatProgram';
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import type { BuffApplicationTarget, CombatTarget } from '../../game-data/operatorDefinition';
-import { resolveActionValueOperand, type ActionBlackboard } from '../actions/actionBlackboard';
+import {
+  resolveActionValueOperand,
+  resolveSkillSettingFactor,
+  type ActionBlackboard,
+} from '../actions/actionBlackboard';
 import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
 import type { BuffFinishReason, CombatSkillCastInfo } from '../state/foundationState';
 import { type BuffReference } from '../state/foundationState';
@@ -425,9 +431,7 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
     }
 
     if (step.kind === 'applyBuff') {
-      const identity = step.parameters.buffId;
-      if (typeof identity !== 'string' && 'kind' in identity)
-        throw new Error(`unbound string data node: ${identity.nodeId}`);
+      const identity = stringInputExpression(step.parameters.buffId);
       const dynamicId = typeof identity !== 'string';
       if (
         dynamicId &&
@@ -624,12 +628,7 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
                     Object.fromEntries([
                       ...Object.entries(assignments).map(
                         ([key, operand]) =>
-                          [
-                            key,
-                            operand.kind === 'blackboard'
-                              ? context.blackboard.getArtsIntensityDetail(operand.key)
-                              : undefined,
-                          ] as const,
+                          [key, resolveSkillSettingFactor(operand, context.blackboard)] as const,
                       ),
                       ...Object.keys(stringAssignments).map(key => [key, undefined] as const),
                       ...Object.entries(copiedAssignments).map(
@@ -656,9 +655,12 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
                     Object.fromEntries([
                       ...Object.entries(assignments).map(([key, operand]) => [
                         key,
-                        operand.kind === 'blackboard'
-                          ? context.blackboard.getValueCalculation(operand.key)
-                          : undefined,
+                        (() => {
+                          const sourceKey = valueInputBlackboardKey(operand);
+                          return sourceKey === undefined
+                            ? undefined
+                            : context.blackboard.getValueCalculation(sourceKey);
+                        })(),
                       ]),
                       ...Object.keys(stringAssignments).map(key => [key, undefined]),
                       ...Object.entries(copiedAssignments).map(([key, sourceKey]) => [
@@ -1345,7 +1347,7 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
     return rebound?.isFinished === true ? undefined : rebound;
   }
 
-  evaluate(condition: CombatCondition, context?: CombatOperationContext): boolean {
+  evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     if (condition.kind === 'contextTargetBuffStackCompare') {
       if (context?.targetContext === undefined)
         throw new Error('context Buff count requires a combat target context');

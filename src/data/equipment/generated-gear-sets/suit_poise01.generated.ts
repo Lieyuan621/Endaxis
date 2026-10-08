@@ -74,16 +74,7 @@ const definition = {
             conditional_2: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'buffStackCompare',
-                    target: 'actionInputTarget',
-                    tagQueryType: 'hasAny',
-                    buffTags: ['Skill/Character/Common/NoGuard'],
-                    operator: 'greaterOrEqual',
-                    value: { kind: 'blackboard', key: 'stack_cond' },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
@@ -104,16 +95,32 @@ const definition = {
             conditional_4: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/NoGuard'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 whenTrue: { $sequence: 'applyBuff_3' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'stack_cond' } },
+            data_2: {
+              type: 'boolean',
+              expression: {
+                kind: 'buffStackCompare',
+                target: 'actionInputTarget',
+                tagQueryType: 'hasAny',
+                buffTags: ['Skill/Character/Common/NoGuard'],
+                operator: 'greaterOrEqual',
+                value: { kind: 'valueNode', nodeId: 'data_1' },
+              },
+            },
+            data_3: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/NoGuard'],
+              },
             },
           },
         },

@@ -1,3 +1,5 @@
+import { extractDefinitionDataNodes } from '../../src/compiler/extractGraphDataNodes.ts';
+import type { OperatorPassiveSkillDefinition } from '../../../../packages/game-data-contract/src/operators.ts';
 import { describe, expect, it } from 'vitest';
 import { compileOperatorUpgradePassiveSkills } from '../../src/domains/operator/passiveSkillDefinition.ts';
 import {
@@ -62,8 +64,12 @@ describe('公共被动技能批量编译', () => {
       { event, priority: 0, sequence: { $sequence: null } },
     ]);
     expect(
-      compileOperatorPassivePrograms([], result.definitions, undefined, compileEntry)[0]
-        ?.abilityEventResponses?.[0]?.event,
+      compileOperatorPassivePrograms(
+        [],
+        extractDefinitionDataNodes<readonly OperatorPassiveSkillDefinition[]>(result.definitions),
+        undefined,
+        compileEntry,
+      )[0]?.abilityEventResponses?.[0]?.event,
     ).toBe(event);
   });
 
@@ -101,8 +107,12 @@ describe('公共被动技能批量编译', () => {
       { event: 'addedBuff', priority: 0, sequence: { $sequence: null } },
     ]);
     expect(
-      compileOperatorPassivePrograms([], compiled.definitions, undefined, compileEntry)[0]
-        ?.abilityEventResponses?.[0]?.event,
+      compileOperatorPassivePrograms(
+        [],
+        extractDefinitionDataNodes<readonly OperatorPassiveSkillDefinition[]>(compiled.definitions),
+        undefined,
+        compileEntry,
+      )[0]?.abilityEventResponses?.[0]?.event,
     ).toBe('addedBuff');
     const withStartup = {
       ...raw,

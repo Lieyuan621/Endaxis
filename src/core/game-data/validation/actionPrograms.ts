@@ -66,7 +66,7 @@ import {
   requireInteger,
 } from './definitionValues';
 import { validateCombatCondition } from './combatConditions';
-import { resolveGraphData, createGraphDataResolver } from '../../action-graph/actionGraphData';
+import { validateGraphDataReferences } from '../../action-graph/actionGraphData';
 import type { ActionGraphDefinition } from '../../../../packages/game-data-contract/src/actionGraph';
 import { validateBuffApplication, validateBuffDefinition } from './buffApplication';
 import { NATIVE_SKILL_TYPES_SET, COMBAT_RESOURCES_SET } from './definitionValues';
@@ -2615,16 +2615,15 @@ export function validateActionGraphActions(
     try {
       if (value && typeof value === 'object' && 'dataNodes' in value) {
         const graph = value as ActionGraphDefinition;
-        const resolver = createGraphDataResolver(graph);
+        validateGraphDataReferences(graph);
         for (const [id, node] of Object.entries(graph.dataNodes ?? {})) {
-          const expression = resolver.node(id, node.type);
+          const expression = node.expression;
           if (node.type === 'boolean')
             validateCombatCondition(expression, `${path}.dataNodes.${id}`, out);
           else if (node.type === 'string')
             validateActionStringOperand(expression, `${path}.dataNodes.${id}`, out);
           else validateActionValueOperand(expression, `${path}.dataNodes.${id}`, out);
         }
-        value = resolveGraphData(graph);
       }
     } catch (error) {
       push(out, path, error instanceof Error ? error.message : String(error));

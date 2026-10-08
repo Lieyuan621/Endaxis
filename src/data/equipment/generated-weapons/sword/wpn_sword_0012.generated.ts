@@ -82,9 +82,7 @@ const definition = {
             conditional_2: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: { kind: 'eventSpGainMatch', sources: ['skill'], gainKinds: ['gain'] },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
@@ -92,12 +90,7 @@ const definition = {
             conditional_4: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffIdMatch',
-                    buffIds: ['buff_common_affixes_combo_trigger'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
@@ -105,16 +98,31 @@ const definition = {
             conditional_5: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'actionInputTargetIdentityMatch',
-                    other: 'actionOwner',
-                    operator: 'equal',
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 whenTrue: { $sequence: 'conditional_4' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: { kind: 'eventSpGainMatch', sources: ['skill'], gainKinds: ['gain'] },
+            },
+            data_2: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffIdMatch',
+                buffIds: ['buff_common_affixes_combo_trigger'],
+              },
+            },
+            data_3: {
+              type: 'boolean',
+              expression: {
+                kind: 'actionInputTargetIdentityMatch',
+                other: 'actionOwner',
+                operator: 'equal',
+              },
             },
           },
         },

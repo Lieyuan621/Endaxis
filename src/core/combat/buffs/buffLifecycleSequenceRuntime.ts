@@ -1,3 +1,5 @@
+import { createModifierConditionRuntime } from '../actions/modifierConditionRuntime';
+import type { ActionSequenceState } from '../state/actionState';
 import { skillAbilityEvent } from '../events/combatAbilityEvent';
 import { createSkillAffixState } from '../state/instanceState';
 import {
@@ -27,7 +29,7 @@ import {
   DamageCalculationSnapshotProgram,
   DamageCalculationSnapshots,
 } from '../damage/damageCalculationSnapshots';
-import { createDamageModifierConditionProgram } from '../damage/damageModifierSequenceRuntime';
+import { createDamageModifierCondition } from '../damage/damageModifierSequenceRuntime';
 import type { AbilityEventRuntimeActionContext } from '../events/abilityEventActionContext';
 import type { AbilityEventRegistration } from '../events/abilityEventDispatcher';
 import {
@@ -307,6 +309,35 @@ export type BindRestoredSkillAffixObjectReference = (
   release: () => void,
 ) => { dispose(): void };
 
+export interface BuffModifierConditions {
+  readonly damage?: readonly (ResolvedActionSequence | undefined)[];
+  readonly heal?: readonly (ResolvedActionSequence | undefined)[];
+  readonly poise?: readonly (ResolvedActionSequence | undefined)[];
+}
+
+/** 元素异常的内置生命周期仍由语义动作驱动；条件图使用同一 Buff 动作宿主与恢复机制。 */
+export function attachBuffModifierSequences<Key extends string>(
+  definition: CombatBuffDefinition<Key>,
+  conditions: BuffModifierConditions,
+  resolveOperations: Parameters<typeof attachBuffLifecycleSequences<Key>>[2],
+): CombatBuffDefinition<Key> {
+  const { actions, ...base } = definition;
+  const bound = attachBuffLifecycleSequences(
+    base,
+    {},
+    resolveOperations,
+    undefined,
+    [],
+    undefined,
+    [],
+    [],
+    [],
+    undefined,
+    conditions,
+  );
+  return { ...bound, actions };
+}
+
 /** 为一份已编译 Buff 定义安装同步生命周期序列。 */
 export function attachBuffLifecycleSequences<Key extends string>(
   definition: CombatBuffDefinition<Key>,
@@ -324,7 +355,7 @@ export function attachBuffLifecycleSequences<Key extends string>(
   igniteEventResponses: readonly ResolvedSkillBuffIgniteEventResponse[] = [],
   skillSlotReplacements: readonly SkillBuffSlotReplacement[] = [],
   registerSemanticEventAction?: RegisterBuffSemanticEventAction,
-  damageModifierConditionPrograms: readonly (ResolvedActionSequence | undefined)[] = [],
+  modifierConditions: BuffModifierConditions = {},
   registerAbilityEventCallback?: RegisterBuffAbilityEventCallback,
   registerPostSkillCastRequest?: RegisterPostSkillCastRequest,
   resolveProjectileRuntimeDependencies?: (
@@ -913,29 +944,73 @@ export function attachBuffLifecycleSequences<Key extends string>(
           },
         }),
   };
-  if (
-    damageModifierConditionPrograms.length !== 0 &&
-    damageModifierConditionPrograms.length !== (definition.damageModifiers?.length ?? 0)
-  ) {
-    throw new Error(`buff '${definition.id}' damage modifier condition programs are misaligned`);
-  }
   const damageModifiers = definition.damageModifiers?.map((modifier, index) => {
-    const program = damageModifierConditionPrograms[index];
-    if (program === undefined) return modifier;
-    if (modifier.condition !== undefined) {
-      throw new Error(`buff '${definition.id}' damage modifier cannot mix condition forms`);
-    }
-    return {
-      ...modifier,
-      createConditionProgram: (buff: CombatBuff<Key>) =>
-        createDamageModifierConditionProgram(program, runtimeFor(buff), {
-          getBuffAffixSkillCastId: () => buff.affixSkillCastId,
-        }),
-    };
+    const sequence = modifierConditions.damage?.[index];
+    return sequence === undefined
+      ? modifier
+      : {
+          ...modifier,
+          createCondition: (buff: CombatBuff<Key>, state?: ActionSequenceState) =>
+            createDamageModifierCondition(
+              sequence,
+              runtimeFor(buff),
+              {
+                getBuffAffixSkillCastId: () => buff.affixSkillCastId,
+                resolveInputTarget: runtimeTargetFromEntityId,
+              },
+              state,
+            ),
+        };
+  });
+  const healModifiers = definition.healModifiers?.map((modifier, index) => {
+    const sequence = modifierConditions.heal?.[index];
+    return sequence === undefined
+      ? modifier
+      : {
+          ...modifier,
+          createCondition: (buff: CombatBuff<Key>, state?: ActionSequenceState) =>
+            createModifierConditionRuntime<
+              import('../heal/healModifiers').HealModifierConditionInput
+            >(
+              sequence,
+              runtimeFor(buff),
+              input => ({
+                context: { kind: 'heal', input },
+                target: runtimeTargetFromEntityId(
+                  input.side === 'healer' ? input.receiverId : input.healerId,
+                ),
+              }),
+              state,
+            ),
+        };
+  });
+  const poiseModifiers = definition.poiseModifiers?.map((modifier, index) => {
+    const sequence = modifierConditions.poise?.[index];
+    return sequence === undefined
+      ? modifier
+      : {
+          ...modifier,
+          createCondition: (buff: CombatBuff<Key>, state?: ActionSequenceState) =>
+            createModifierConditionRuntime<
+              import('../damage/poiseModifiers').PoiseModifierConditionInput
+            >(
+              sequence,
+              runtimeFor(buff),
+              input => ({
+                context: { kind: 'poise', input },
+                target: runtimeTargetFromEntityId(
+                  input.side === 'attacker' ? input.defenderId : input.attackerId,
+                ),
+              }),
+              state,
+            ),
+        };
   });
   return {
     ...definition,
     ...(damageModifiers === undefined ? {} : { damageModifiers }),
+    ...(healModifiers === undefined ? {} : { healModifiers }),
+    ...(poiseModifiers === undefined ? {} : { poiseModifiers }),
     actions,
     bindRestoredActions,
     bindRestoredRelations,

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ConditionInputField from '../field-editor/ConditionInputField.vue';
 import OwnedSpawnResourceField from '../field-editor/OwnedSpawnResourceField.vue';
 import GraphRowBoundaryField from '../field-editor/GraphRowBoundaryField.vue';
 import {
@@ -12,18 +13,9 @@ import { isSkillSettingValuesSchema } from '../field-editor/graphOperandContaine
 import { auditDefinitionSchema } from '../../core/editor/auditDefinitionSchema';
 import { useSchemaReferences } from './schemaReferenceContext';
 import { resolveDefinitionSchema } from '../../core/editor/resolveDefinitionSchema';
-import InlineCombatConditionField from '../field-editor/InlineCombatConditionField.vue';
 import BlackboardMappingValueField from '../field-editor/BlackboardMappingValueField.vue';
-import {
-  inlineConditionDraftKey,
-  inlineConditionEditingKey,
-} from '../field-editor/inlineConditionContext';
 import { useBlackboardFieldContext } from '../field-editor/blackboardFieldContext';
-import {
-  blackboardContextForField,
-  skillSettingItemBlackboardContext,
-} from '../../application/editor/blackboardFieldContext';
-import { hasSemanticAlias } from '../../core/editor/fieldSemantics.ts';
+import { skillSettingItemBlackboardContext } from '../../application/editor/blackboardFieldContext';
 import TimeScaleCurveField from '../field-editor/TimeScaleCurveField.vue';
 import StringCollectionField from '../field-editor/StringCollectionField.vue';
 import GameplayTagField from '../field-editor/GameplayTagField.vue';
@@ -86,7 +78,6 @@ const emit = defineEmits<{
 }>();
 const { t, te } = useI18n({ useScope: 'global' });
 const references = useSchemaReferences(() => props.schema);
-const inlineEditing = inject(inlineConditionEditingKey, undefined);
 const schemaProblem = computed(() => {
   try {
     if (props.schema) auditDefinitionSchema({ ...props.schema, references: references.value });
@@ -100,32 +91,6 @@ const resolution = computed(() => {
     if (schemaProblem.value) throw new Error(schemaProblem.value);
     let shape = fieldSchemaForValue(props.schema, props.value, props.name, references.value);
     const declared = props.schema && resolveDefinitionSchema(props.schema, references.value);
-    // An invalid leaf (for example an empty numeric draft) must not erase the already
-    // selected condition branch. This is rendering only: Apply still uses the strict
-    // resolver and complete-condition validator, and unknown/ambiguous kinds stay opaque.
-    if (
-      inlineEditing?.value &&
-      declared?.inlineCondition &&
-      declared.kind === 'union' &&
-      shape.kind === 'opaque' &&
-      props.value &&
-      typeof props.value === 'object' &&
-      Object.hasOwn(props.value, 'kind')
-    ) {
-      const kind = (props.value as Record<string, unknown>).kind;
-      const matches = declared.variants
-        .map(variant => resolveDefinitionSchema(variant, references.value))
-        .filter(variant => {
-          if (variant.kind !== 'object' || !variant.fields.kind) return false;
-          const discriminator = resolveDefinitionSchema(variant.fields.kind, references.value);
-          return (
-            discriminator.kind === 'enum' &&
-            discriminator.options.length === 1 &&
-            discriminator.options[0] === kind
-          );
-        });
-      if (matches.length === 1) shape = matches[0]!;
-    }
     return {
       shape,
       declared,
@@ -141,17 +106,6 @@ const resolution = computed(() => {
 });
 const declaredSchema = computed(() => resolution.value.declared);
 const schemaError = computed(() => resolution.value.error);
-const inlineSchema = computed(
-  () => declaredSchema.value && { ...declaredSchema.value, references: references.value },
-);
-const deferredConditionMessage = computed(() => {
-  if (props.schema?.optional || props.schema?.kind !== 'condition') return '';
-  if (props.name === 'availability' && props.schema.deferredCondition === 'availability')
-    return t('inlineCondition.availabilityDeferred');
-  if (props.name === 'condition' && props.schema.deferredCondition === 'legacyHandler')
-    return t('inlineCondition.legacyHandlerDeferred');
-  return '';
-});
 const inheritedWindow = inject(definitionFieldWindowKey, undefined);
 const ownsWindow = props.root === true || !inheritedWindow;
 const focusHistory = shallowRef<readonly DefinitionFieldFocus[]>([]);
@@ -239,34 +193,16 @@ watch(
 function closeFocus() {
   focusHistory.value = focusHistory.value.slice(0, -1);
 }
-const inlineDraft = inject(inlineConditionDraftKey, undefined);
 const blackboard = useBlackboardFieldContext();
-const inlineKey = computed(() => {
-  if (!inlineDraft || !props.path.length) return undefined;
-  const parent = fieldValueAt(inlineDraft.value, props.path.slice(0, -1));
-  if (
-    !parent ||
-    typeof parent !== 'object' ||
-    !('kind' in parent) ||
-    typeof parent.kind !== 'string'
-  )
-    return undefined;
-  const request = blackboardRequestForField(parent.kind, [props.path.at(-1)!], props.schema);
-  return (
-    request && {
-      request,
-      context: blackboardContextForField(blackboard.value, parent.kind, [props.path.at(-1)!]),
-    }
-  );
-});
 const structuredContext = inject(structuredFieldContextKey, undefined);
 const ownedResource = computed(
   () => declaredSchema.value && structuredContext?.value.ownedResources?.get(declaredSchema.value),
 );
 const graphSequence = computed(
   () =>
-    !!declaredSchema.value &&
-    !!structuredContext?.value.graphBoundaries?.sequences.has(declaredSchema.value),
+    editorSchema.value.semantics?.aliases?.includes('ActionGraphReference') ||
+    (!!declaredSchema.value &&
+      !!structuredContext?.value.graphBoundaries?.sequences.has(declaredSchema.value)),
 );
 const graphCondition = computed(
   () =>
@@ -294,7 +230,6 @@ const connectedOperand = computed(
     props.value.kind === 'valueNode',
 );
 const keyRequest = computed(() => {
-  if (inlineKey.value) return inlineKey.value.request;
   if (!structuredContext) return;
   const path = [...structuredContext.value.path, ...props.path];
   const request = blackboardRequestForField(structuredContext.value.kind, path, props.schema);
@@ -440,7 +375,6 @@ const editorSchema = computed((): DefinitionFieldSchema =>
   !schemaError.value && props.schema?.semantics
     ? {
         ...shape.value,
-        inlineCondition: declaredSchema.value?.inlineCondition ?? shape.value.inlineCondition,
         semantics: {
           ...props.schema.semantics,
           ...shape.value.semantics,
@@ -458,6 +392,7 @@ const editor = computed(() =>
     referenceKind: referenceKind.value,
     editable: props.editable === true,
     graphOperand: graphOperand.value,
+    resourceGraph: !!structuredContext?.value.graph,
     protectedIdentity: protectedIdentity.value,
     references: references.value,
   }),
@@ -659,7 +594,6 @@ function switchVariant(chosen: EaSelectValue | EaSelectValue[]): void {
       'definition-field--container': isContainer,
     }"
   >
-    <p v-if="deferredConditionMessage" role="status">{{ deferredConditionMessage }}</p>
     <p v-if="schemaError" role="alert" data-field-traversal-error>{{ schemaError }}</p>
     <OwnedSpawnResourceField
       v-else-if="ownedResource"
@@ -673,6 +607,19 @@ function switchVariant(chosen: EaSelectValue | EaSelectValue[]): void {
       :value="value"
       :label="label"
       :sequence="graphSequence"
+      @open="emit('openGraph', path)"
+    />
+    <ConditionInputField
+      v-else-if="shape.kind === 'condition' && structuredContext?.graph"
+      :key="structuredContext.identity"
+      :value="value"
+      :graph="structuredContext.graph"
+      :label="label"
+      :description="schema?.description"
+      :optional="schema?.optional"
+      :readonly="readonlyField"
+      @change="update"
+      @open="emit('openGraph', path)"
     />
     <template v-else-if="schema?.optional">
       <EaCheckbox
@@ -705,15 +652,6 @@ function switchVariant(chosen: EaSelectValue | EaSelectValue[]): void {
         @open-graph="emit('openGraph', $event)"
       />
     </template>
-    <InlineCombatConditionField
-      v-else-if="editor.control === 'inlineCondition' && !inlineDraft"
-      :schema="inlineSchema!"
-      :value="value"
-      :editable="!readonlyField"
-      :label="label"
-      :reference-choices="referenceChoices"
-      @change="update"
-    />
     <SkillSettingValuesField
       v-else-if="declaredSchema && isSkillSettingValuesSchema(declaredSchema)"
       :value="value"
@@ -729,17 +667,6 @@ function switchVariant(chosen: EaSelectValue | EaSelectValue[]): void {
       :label="label"
       :readonly="readonlyField || !!connectedOperand"
       @change="changeGraphOperand"
-    />
-    <BlackboardMappingValueField
-      v-else-if="editor.control === 'inlineOperand' && inlineDraft"
-      :value="value"
-      :mode="
-        hasSemanticAlias(editorSchema.semantics, 'LevelValues') ? 'levelsOrOperand' : 'operand'
-      "
-      :label="label"
-      :readonly="readonlyField"
-      :allows-parameters="false"
-      @change="update"
     />
     <div v-else-if="editor.control === 'timeScaleCurve'">
       <span v-if="!hideLabel"
@@ -770,7 +697,6 @@ function switchVariant(chosen: EaSelectValue | EaSelectValue[]): void {
       /></span>
       <BlackboardKeyField
         :value="value as string | undefined"
-        :context="inlineKey?.context"
         :mode="keyRequest.mode"
         :value-type="keyRequest.valueType"
         :fallback="keyRequest.fallback"
@@ -1257,9 +1183,7 @@ function switchVariant(chosen: EaSelectValue | EaSelectValue[]): void {
           t('definitionEditor.valueTypes.null')
         }}</span>
         <span v-else-if="editor.control === 'condition'" class="definition-field__unsupported">{{
-          t('definitionEditor.conditionReadOnly', {
-            kind: (value as { kind?: string } | undefined)?.kind ?? '-',
-          })
+          t('definitionEditor.conditionRequiresGraph')
         }}</span>
         <span v-else class="definition-field__unsupported">{{
           t('definitionEditor.specialField')
@@ -1411,11 +1335,6 @@ function switchVariant(chosen: EaSelectValue | EaSelectValue[]): void {
 }
 .definition-field__item > .definition-field {
   flex: 1;
-}
-.definition-field__pending {
-  display: flex;
-  gap: 6px;
-  margin-top: 6px;
 }
 .definition-field__unsupported {
   color: var(--ea-fg-muted);

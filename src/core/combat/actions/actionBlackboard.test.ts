@@ -1,3 +1,4 @@
+import { numberInput } from '../../../test/compiledGraphInputs';
 import { describe, expect, it } from 'vitest';
 import { ActionBlackboard, resolveActionValueOperand } from './actionBlackboard';
 
@@ -40,12 +41,12 @@ describe('ActionBlackboard', () => {
 
     expect(
       resolveActionValueOperand(
-        { kind: 'blackboard', key: 'EntityBB_counter', fallback: 0 },
+        numberInput({ kind: 'blackboard', key: 'EntityBB_counter', fallback: 0 }),
         blackboard,
       ),
     ).toBe(0);
     expect(() =>
-      resolveActionValueOperand({ kind: 'blackboard', key: 'missing' }, blackboard),
+      resolveActionValueOperand(numberInput({ kind: 'blackboard', key: 'missing' }), blackboard),
     ).toThrow("action blackboard value 'missing' is missing");
   });
 

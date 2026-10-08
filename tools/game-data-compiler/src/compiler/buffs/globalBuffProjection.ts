@@ -1,4 +1,4 @@
-import type { SkillGlobalBuffDefinition } from '../../../../../packages/game-data-contract/src/buffs.ts';
+import type { SkillGlobalBuffDefinition } from '../intermediateDefinitions.ts';
 import type { GlobalBuffActionSource } from '../../source/globalBuffActions.ts';
 import type {
   GlobalBuffTemplateCatalogSource,

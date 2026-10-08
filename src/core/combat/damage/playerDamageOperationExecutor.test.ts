@@ -1,3 +1,4 @@
+import { numberInput } from '../../../test/compiledGraphInputs';
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
 import { describe, expect, it, vi } from 'vitest';
 import {
@@ -654,7 +655,7 @@ describe('PlayerDamageOperationExecutor', () => {
         ...DAMAGE_STEP,
         parameters: {
           ...DAMAGE_STEP.parameters,
-          attackScale: { kind: 'blackboard', key: 'attackScale' },
+          attackScale: numberInput({ kind: 'blackboard', key: 'attackScale' }),
           stagger: undefined,
           tags: ['electricBurst'],
         },
@@ -709,7 +710,7 @@ describe('PlayerDamageOperationExecutor', () => {
       ...DAMAGE_STEP,
       parameters: {
         ...DAMAGE_STEP.parameters,
-        attackScale: { kind: 'blackboard' as const, key: 'snapshotScale' },
+        attackScale: numberInput({ kind: 'blackboard' as const, key: 'snapshotScale' }),
         takeAttackSnapshot: true,
         stagger: undefined,
       },
@@ -794,29 +795,53 @@ describe('PlayerDamageOperationExecutor', () => {
       branchContext,
     );
     const branchSequence = branchRuntime.createSequence(
-      compileGraphEntry('damage-snapshot-branch', 'switch-0', {
-        'switch-0': {
-          action: {
-            kind: 'switch',
-            parameters: { choice: { kind: 'blackboard', key: 'choice' }, alwaysNext: false },
-            options: [
-              { value: { kind: 'constant', value: 0 }, sequence: { $sequence: null } },
-              { value: { kind: 'constant', value: 1 }, sequence: { $sequence: 'case-1-0' } },
-            ],
+      compileGraphEntry(
+        'damage-snapshot-branch',
+        'switch-0',
+        {
+          'switch-0': {
+            action: {
+              kind: 'switch',
+              parameters: {
+                choice: { kind: 'valueNode', nodeId: 'choice' },
+                alwaysNext: false,
+              },
+              options: [
+                { value: { kind: 'constant', value: 0 }, sequence: { $sequence: null } },
+                { value: { kind: 'constant', value: 1 }, sequence: { $sequence: 'case-1-0' } },
+              ],
+            },
+            next: null,
           },
-          next: null,
-        },
-        'case-1-0': {
-          action: {
-            kind: 'conditional',
-            parameters: { condition: { kind: 'combatActive' } },
-            whenTrue: { $sequence: null },
-            whenFalse: { $sequence: 'false-0' },
+          'case-1-0': {
+            action: {
+              kind: 'conditional',
+              parameters: { condition: { kind: 'conditionNode', nodeId: 'input_1' } },
+              whenTrue: { $sequence: null },
+              whenFalse: { $sequence: 'false-0' },
+            },
+            next: null,
           },
-          next: null,
+          'false-0': {
+            action: {
+              ...snapshotStep,
+              parameters: {
+                ...snapshotStep.parameters,
+                attackScale: { kind: 'valueNode', nodeId: 'snapshotScale' },
+              },
+            },
+            next: null,
+          },
         },
-        'false-0': { action: snapshotStep, next: null },
-      }),
+        {
+          input_1: { type: 'boolean', expression: { kind: 'combatActive' } },
+          choice: { type: 'number', expression: { kind: 'blackboard', key: 'choice' } },
+          snapshotScale: {
+            type: 'number',
+            expression: { kind: 'blackboard', key: 'snapshotScale' },
+          },
+        },
+      ),
     );
     runtimeAttack = 200;
     branchSequence.reset({});
@@ -1110,8 +1135,8 @@ describe('PlayerDamageOperationExecutor', () => {
       {
         kind: 'dealStagger',
         parameters: {
-          value: { kind: 'blackboard', key: 'poise' },
-          valueMultiplier: { kind: 'blackboard', key: 'poise_scale' },
+          value: numberInput({ kind: 'blackboard', key: 'poise' }),
+          valueMultiplier: numberInput({ kind: 'blackboard', key: 'poise_scale' }),
         },
       },
       { blackboard: new ActionBlackboard({ poise: 25, poise_scale: 0.5 }) },

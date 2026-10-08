@@ -1,3 +1,4 @@
+import { stringInputExpression } from '../../core/compiler/compiledGraphData';
 import { expect, it } from 'vitest';
 import type { ActionGraphDefinition } from '../../../packages/game-data-contract/src/actionGraph';
 import { actionTypedInputs, dataTypedInputs } from '../../ui/action-graph/typedGraphInputs';
@@ -26,17 +27,18 @@ function fixture(): ActionGraphDefinition {
           kind: 'applyBuff',
           parameters: { target: 'caster', buffId: { kind: 'stringNode', nodeId: 'shared' } },
         },
-        next: 'legacy',
+        next: 'independent',
       },
-      legacy: {
+      independent: {
         action: {
           kind: 'applyBuff',
-          parameters: { target: 'caster', buffId: { blackboardKey: 'legacyBuff' } },
+          parameters: { target: 'caster', buffId: { kind: 'stringNode', nodeId: 'independent' } },
         },
         next: null,
       },
     },
     dataNodes: {
+      independent: { type: 'string', expression: { blackboardKey: 'independentBuff' } },
       shared: { type: 'string', expression: { blackboardKey: 'buff' } },
       alias: { type: 'string', expression: { kind: 'stringNode', nodeId: 'shared' } },
       numeric: { type: 'number', expression: { kind: 'constant', value: 1 } },
@@ -49,7 +51,7 @@ function input(graph: ActionGraphDefinition, id = 'first') {
   )!;
 }
 
-it('string connections retain raw exact literals, shared readers, legacy operands and one undo/redo step', () => {
+it('string connections retain raw exact literals, shared readers, independent readers and one undo/redo step', () => {
   const original = { actionGraph: { main: fixture(), macros: {} } };
   const session = new DefinitionDraftSession(original, true);
   const initial = session.current;
@@ -66,7 +68,9 @@ it('string connections retain raw exact literals, shared readers, legacy operand
   expect(input(changed.actionGraph.main).value).toBe(literal);
   expect(input(changed.actionGraph.main, 'second').source).toBe('shared');
   expect(changed.actionGraph.main.dataNodes).toBe(initial.actionGraph.main.dataNodes);
-  expect(changed.actionGraph.main.nodes.legacy).toBe(initial.actionGraph.main.nodes.legacy);
+  expect(changed.actionGraph.main.nodes.independent).toBe(
+    initial.actionGraph.main.nodes.independent,
+  );
   expect(session.undo()).toBe(true);
   expect(session.current).toBe(initial);
   expect(session.canUndo).toBe(false);
@@ -134,7 +138,10 @@ it('main and macro string sources with the same id stay graph-local through edit
   const main = fixture();
   const macro = {
     ...fixture(),
-    dataNodes: { shared: { type: 'string' as const, expression: 'macro buff' } },
+    dataNodes: {
+      ...fixture().dataNodes,
+      shared: { type: 'string' as const, expression: 'macro buff' },
+    },
   };
   const original = {
     actionGraph: {
@@ -162,7 +169,7 @@ it('main and macro string sources with the same id stay graph-local through edit
   expect(() =>
     session.update(owner =>
       updateResourceGraph(owner, { kind: 'macro', macroId: 'local' }, graph =>
-        setGraphDataInput(graph, 'action', 'first', input(graph), 'alias'),
+        setGraphDataInput(graph, 'action', 'first', input(graph), 'missing'),
       ),
     ),
   ).toThrow('类型');
@@ -170,7 +177,7 @@ it('main and macro string sources with the same id stay graph-local through edit
   expect(session.canRedo).toBe(true);
 });
 
-it('workspace save and official project import preserve mixed old/new string operands and compile graph-local sources', () => {
+it('workspace save and official project import preserve literal and connected string operands and compile graph-local sources', () => {
   const main = fixture();
   const macro = {
     ...fixture(),
@@ -187,7 +194,7 @@ it('workspace save and official project import preserve mixed old/new string ope
         ...main,
         nodes: {
           ...main.nodes,
-          legacy: { ...main.nodes.legacy!, next: 'literal' },
+          independent: { ...main.nodes.independent!, next: 'literal' },
           literal: {
             action: {
               kind: 'applyBuff' as const,
@@ -249,8 +256,9 @@ it('workspace save and official project import preserve mixed old/new string ope
     kind: 'stringNode',
     nodeId: 'shared',
   });
-  expect(reopened.actionGraph.main.nodes.legacy!.action).toHaveProperty('parameters.buffId', {
-    blackboardKey: 'legacyBuff',
+  expect(reopened.actionGraph.main.nodes.independent!.action).toHaveProperty('parameters.buffId', {
+    kind: 'stringNode',
+    nodeId: 'independent',
   });
   expect(reopened.actionGraph.main.nodes.literal!.action).toHaveProperty(
     'parameters.buffId',
@@ -263,13 +271,13 @@ it('workspace save and official project import preserve mixed old/new string ope
   const compilation = createActionGraphCompilation(reopened.actionGraph, 1);
   compilation.compileEntry({ $sequence: 'first' }, 'roundtrip');
   const ids = [...compilation.program.nodes.values()].flatMap(node =>
-    node.action.kind === 'applyBuff' ? [node.action.parameters.buffId] : [],
+    node.action.kind === 'applyBuff' ? [stringInputExpression(node.action.parameters.buffId)] : [],
   );
   expect(ids).toContain(literal);
   expect(ids).toContain('macro buff');
   expect(ids).toContain('legacy literal');
   expect(ids).toContainEqual({ blackboardKey: 'buff' });
-  expect(ids).toContainEqual({ blackboardKey: 'legacyBuff' });
+  expect(ids).toContainEqual({ blackboardKey: 'independentBuff' });
   expect(
     ids.some(
       value => value && typeof value === 'object' && 'kind' in value && value.kind === 'stringNode',

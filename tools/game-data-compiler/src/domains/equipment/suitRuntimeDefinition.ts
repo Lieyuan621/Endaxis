@@ -9,11 +9,11 @@ import type {
 import {
   buffRuntimeReadsBlackboardKey,
   collectBuffRuntimePresentationActionPaths,
-  collectBuffRuntimeClosure,
   compileBuffRuntimeDefinitionSource,
   isAfterEnemyDefeatedOnlyBuffRuntime,
   isPresentationOnlyBuffStackEffect,
 } from '../../compiler/buffs/buffRuntimeProjection.ts';
+import { collectBuffRuntimeClosure } from '../../compiler/buffs/buffReferenceClosure.ts';
 import type {
   CompiledGearSetStaticDefinitionSource,
   CompiledGearSetRuntimeDependencySource,
@@ -26,7 +26,7 @@ import { standardStumpBuffAbilityEventOmissionReason } from '../../compiler/scen
 export interface CompiledEquipmentSuitRuntimeBatchSource {
   readonly definitions: readonly (CompiledGearSetStaticDefinitionSource & {
     readonly skillId: string;
-    readonly actionGraph?: import('../../../../../packages/game-data-contract/src/actionGraph.ts').ActionGraphResourceDefinition;
+    readonly actionGraph?: import('../../compiler/intermediateDefinitions.ts').ActionGraphResourceDefinition;
     readonly buffDefinitions?: Readonly<Record<string, CompiledBuffDefinitionSource>>;
     readonly enableSequence?: CompiledBuffSequenceSource;
     readonly initializationSequence?: CompiledBuffSequenceSource;

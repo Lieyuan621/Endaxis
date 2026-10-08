@@ -1,11 +1,11 @@
 import { expect, it } from 'vitest';
 import { actionNodeSchemas, dataNodeSchemas } from './actionNodeSchemas.generated';
 import { dataInputType } from '../../core/action-graph/actionGraphDataNodes';
-import { createGraphDataResolver } from '../../core/action-graph/actionGraphData';
+import { compileGraphData } from '../../core/compiler/compiledGraphData';
 import { writeNodeField } from './nodeFieldValues';
 
 it('keeps schema string pin eligibility aligned with the runtime consumption allowlist', () => {
-  const resolver = createGraphDataResolver({
+  const resolver = compileGraphData({
     nodes: {},
     dataNodes: { read: { type: 'string', expression: { blackboardKey: 'id' } } },
   });
@@ -17,7 +17,11 @@ it('keeps schema string pin eligibility aligned with the runtime consumption all
       slots.push(`action/${kind}/${field.path.join('.')}`);
       const value = writeNodeField({ kind }, field.path, { kind: 'stringNode', nodeId: 'read' });
       expect(resolver.bind(value)).toEqual(
-        writeNodeField({ kind }, field.path, { blackboardKey: 'id' }),
+        writeNodeField({ kind }, field.path, {
+          kind: 'stringNode',
+          nodeId: 'read',
+          node: { type: 'string', expression: { blackboardKey: 'id' } },
+        }),
       );
     }
   }
@@ -30,7 +34,11 @@ it('keeps schema string pin eligibility aligned with the runtime consumption all
       slots.push(`data/${name}/${field.path.join('.')}`);
       const value = writeNodeField({ kind }, field.path, { kind: 'stringNode', nodeId: 'read' });
       expect(resolver.bind(value)).toEqual(
-        writeNodeField({ kind }, field.path, { blackboardKey: 'id' }),
+        writeNodeField({ kind }, field.path, {
+          kind: 'stringNode',
+          nodeId: 'read',
+          node: { type: 'string', expression: { blackboardKey: 'id' } },
+        }),
       );
     }
   }

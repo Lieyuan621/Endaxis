@@ -2,7 +2,7 @@ import type { GameplayTagRegistry } from '../../source/nativeGameplayTags.ts';
 import type {
   AbilityEntityDefinition,
   AbilityEntityPassiveSkillDefinition,
-} from '../../../../../packages/game-data-contract/src/index.ts';
+} from '../intermediateDefinitions.ts';
 import type { NativeAbilityEntityTemplateSource } from '../../source/abilityEntity.ts';
 import { compileAbilityEntityChildSkillSource } from './abilityEntityChildSkill.ts';
 import { compilePassiveSkillSource } from '../skills/passiveSkillDefinition.ts';

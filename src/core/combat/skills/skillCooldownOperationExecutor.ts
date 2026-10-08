@@ -1,4 +1,8 @@
-import type { CombatCondition, CombatStepParameters } from '../../game-data/operatorDefinition';
+import type {
+  CompiledCondition,
+  CompiledStepParameters,
+} from '../../compiler/compiledGraphData.ts';
+
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 import { resolveActionValueOperand } from '../actions/actionBlackboard';
 import { COMBAT_FRAMES_PER_SECOND } from '../time/combatClock';
@@ -18,7 +22,7 @@ export function adjustMatchingSkillCooldowns(
     }
   >,
   operatorId: string,
-  skill: CombatStepParameters['adjustSkillCooldown']['skill'],
+  skill: CompiledStepParameters['adjustSkillCooldown']['skill'],
   operation: 'reduce' | 'set',
   basis: 'baseDurationRatio' | 'absoluteFrames',
   value: number,
@@ -57,19 +61,19 @@ export function adjustMatchingSkillCooldowns(
 
 export interface SkillCooldownOperationExecutorOptions {
   readonly reduceByBaseDurationRatio: (
-    skill: CombatStepParameters['adjustSkillCooldown']['skill'],
+    skill: CompiledStepParameters['adjustSkillCooldown']['skill'],
     ratio: number,
   ) => number;
   readonly reduceByAbsoluteFrames: (
-    skill: CombatStepParameters['adjustSkillCooldown']['skill'],
+    skill: CompiledStepParameters['adjustSkillCooldown']['skill'],
     frames: number,
   ) => number;
   readonly setByBaseDurationRatio: (
-    skill: CombatStepParameters['adjustSkillCooldown']['skill'],
+    skill: CompiledStepParameters['adjustSkillCooldown']['skill'],
     ratio: number,
   ) => number;
   readonly setByAbsoluteFrames: (
-    skill: CombatStepParameters['adjustSkillCooldown']['skill'],
+    skill: CompiledStepParameters['adjustSkillCooldown']['skill'],
     frames: number,
   ) => number;
   readonly delegate: CombatOperationExecutor;
@@ -109,7 +113,7 @@ export class SkillCooldownOperationExecutor implements CombatOperationExecutor {
     this.options.delegate.end?.(step, context);
   }
 
-  evaluate(condition: CombatCondition, context?: CombatOperationContext): boolean {
+  evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     return context === undefined
       ? this.options.delegate.evaluate(condition)
       : this.options.delegate.evaluate(condition, context);

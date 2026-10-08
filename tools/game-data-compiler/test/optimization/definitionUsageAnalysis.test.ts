@@ -1,9 +1,10 @@
+import { numberInput } from '../../../../src/test/compiledGraphInputs';
 import { skillFixture } from '../../../../src/test/skillFixture';
 /** 对照执行器验证黑板用途摘要，防止把条件的旧值读取或外部对象读取漏掉。 */
 import { describe, expect, it } from 'vitest';
-import type { CombatCondition } from '../../../../packages/game-data-contract/src/conditions.ts';
-import type { CombatStepForKind } from '../../../../packages/game-data-contract/src/actions.ts';
-import type { SkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
+import type { CombatCondition } from '../../src/compiler/intermediateDefinitions.ts';
+import type { CombatStepForKind } from '../../src/compiler/intermediateDefinitions.ts';
+import type { SkillDefinition } from '../../src/compiler/intermediateDefinitions.ts';
 import type { CombatOperationContext } from '../../../../src/core/combat/skills/skillRuntime.ts';
 import { ActionBlackboard } from '../../../../src/core/combat/actions/actionBlackboard.ts';
 import { ActionBlackboardOperationExecutor } from '../../../../src/core/combat/actions/actionBlackboardOperationExecutor.ts';
@@ -126,10 +127,24 @@ describe('黑板用途的读取对象', () => {
       execute: () => false,
       evaluate: () => false,
     });
-    expect(() => executor.execute(strict, { blackboard: new ActionBlackboard() })).toThrow(
-      "'input' is missing",
-    );
-    expect(executor.execute(fallback, { blackboard: new ActionBlackboard() })).toBe(true);
+    expect(() =>
+      executor.execute(
+        {
+          ...strict,
+          parameters: { ...strict.parameters, value: numberInput(strict.parameters.value) },
+        },
+        { blackboard: new ActionBlackboard() },
+      ),
+    ).toThrow("'input' is missing");
+    expect(
+      executor.execute(
+        {
+          ...fallback,
+          parameters: { ...fallback.parameters, value: numberInput(fallback.parameters.value) },
+        },
+        { blackboard: new ActionBlackboard() },
+      ),
+    ).toBe(true);
   });
 
   it('数值事件参数保留旧值依赖，字符串 Buff ID 则直接覆盖', () => {

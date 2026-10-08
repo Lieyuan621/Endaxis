@@ -5897,7 +5897,100 @@ const yvonneBuff9: SkillBuffDefinition = {
 };
 
 const yvonneBuff10ActionGraph = {
-  main: { nodes: {} },
+  main: {
+    nodes: {
+      conditional_1: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+          whenTrue: { $sequence: null },
+        },
+        next: null,
+      },
+      conditional_2: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          whenTrue: { $sequence: 'conditional_1' },
+        },
+        next: null,
+      },
+      conditional_3: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          whenTrue: { $sequence: null },
+        },
+        next: null,
+      },
+      conditional_4: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+          whenTrue: { $sequence: 'conditional_3' },
+        },
+        next: null,
+      },
+      conditional_5: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+          whenTrue: { $sequence: null },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityTagMatch',
+          target: 'actionInputTarget',
+          tagQueryType: 'exceptAny',
+          tags: ['Skill/Character/Common/SpellStatus/Frozen'],
+        },
+      },
+      data_2: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityTagMatch',
+          target: 'actionInputTarget',
+          tagQueryType: 'hasAny',
+          tags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
+        },
+      },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityTagMatch',
+          target: 'actionInputTarget',
+          tagQueryType: 'exceptAny',
+          tags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
+        },
+      },
+      data_4: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityTagMatch',
+          target: 'actionInputTarget',
+          tagQueryType: 'hasAny',
+          tags: ['Skill/Character/Common/SpellStatus/Frozen'],
+        },
+      },
+      data_5: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityTagMatch',
+          target: 'actionInputTarget',
+          tagQueryType: 'hasAll',
+          tags: [
+            'Skill/Character/Common/SpellInflict/CrystInflict',
+            'Skill/Character/Common/SpellStatus/Frozen',
+          ],
+        },
+      },
+    },
+  },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
@@ -5912,23 +6005,7 @@ const yvonneBuff10: SkillBuffDefinition = {
   damageModifiers: [
     {
       enabledSide: 'attacker',
-      condition: {
-        kind: 'all',
-        conditions: [
-          {
-            kind: 'entityTagMatch',
-            target: 'enemy',
-            tagQueryType: 'hasAny',
-            tags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
-          },
-          {
-            kind: 'entityTagMatch',
-            target: 'enemy',
-            tagQueryType: 'exceptAny',
-            tags: ['Skill/Character/Common/SpellStatus/Frozen'],
-          },
-        ],
-      },
+      condition: { $sequence: 'conditional_2' },
       processors: [
         {
           kind: 'instantAttribute',
@@ -5941,23 +6018,7 @@ const yvonneBuff10: SkillBuffDefinition = {
     },
     {
       enabledSide: 'attacker',
-      condition: {
-        kind: 'all',
-        conditions: [
-          {
-            kind: 'entityTagMatch',
-            target: 'enemy',
-            tagQueryType: 'hasAny',
-            tags: ['Skill/Character/Common/SpellStatus/Frozen'],
-          },
-          {
-            kind: 'entityTagMatch',
-            target: 'enemy',
-            tagQueryType: 'exceptAny',
-            tags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
-          },
-        ],
-      },
+      condition: { $sequence: 'conditional_4' },
       processors: [
         {
           kind: 'instantAttribute',
@@ -5970,15 +6031,7 @@ const yvonneBuff10: SkillBuffDefinition = {
     },
     {
       enabledSide: 'attacker',
-      condition: {
-        kind: 'entityTagMatch',
-        target: 'enemy',
-        tagQueryType: 'hasAll',
-        tags: [
-          'Skill/Character/Common/SpellInflict/CrystInflict',
-          'Skill/Character/Common/SpellStatus/Frozen',
-        ],
-      },
+      condition: { $sequence: 'conditional_5' },
       processors: [
         {
           kind: 'instantAttribute',

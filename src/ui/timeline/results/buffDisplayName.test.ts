@@ -154,6 +154,24 @@ describe('Buff display name', () => {
         {
           enabled: true,
           damageEffects: [
+            {
+              ...damageEffects[0]!,
+              conditional: true,
+              conditionSummary: {
+                requirements: ['casterControlled', 'heavyAttack'],
+                partial: true,
+              },
+            },
+          ],
+        },
+        translate,
+      ),
+    ).toContain('施法者为主控干员；本次命中为重击；另有条件，请查看条件图');
+    expect(
+      resolveBuffEffectSummary(
+        {
+          enabled: true,
+          damageEffects: [
             { side: 'defender', zone: 'product', addition: -0.3, conditional: false },
           ],
         },

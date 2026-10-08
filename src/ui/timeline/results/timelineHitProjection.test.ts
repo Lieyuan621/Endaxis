@@ -41,7 +41,13 @@ function createCast(
     key: 'battleSkill',
     timelineBlockFrames: 30,
     scheduledSequences: [{ startFrame: 10, sequence }],
-    actionGraph: { main: { nodes }, macros: {} },
+    actionGraph: {
+      main: {
+        nodes,
+        dataNodes: { active: { type: 'boolean', expression: { kind: 'combatActive' } } },
+      },
+      macros: {},
+    },
   });
   return {
     id: 'cast:1',
@@ -81,7 +87,7 @@ describe('projectCastGraphHitMarkers', () => {
         damageStep('direct', 'direct'),
         {
           kind: 'conditional',
-          parameters: { condition: { kind: 'combatActive' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'active' } },
           whenTrue: chainNodes(nodes, 'cond', [damageStep('conditional', 'conditional')]),
         },
         {
@@ -243,7 +249,7 @@ describe('projectCastGraphHitMarkers', () => {
       chainNodes(nodes, 'root', [
         {
           kind: 'conditional',
-          parameters: { condition: { kind: 'combatActive' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'active' } },
           whenTrue: chainNodes(nodes, 'true', [
             damageStep(undefined, 'hit:true'),
             {

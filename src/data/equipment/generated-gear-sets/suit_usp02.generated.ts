@@ -62,21 +62,25 @@ const definition = {
             conditional_2: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: [
-                      'Skill/Character/Common/Affixes/Weak',
-                      'Skill/Character/Common/Affixes/Enhance',
-                      'Skill/Character/Common/Affixes/Shelter',
-                      'Skill/Character/Common/Affixes/Vulnerable',
-                    ],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: [
+                  'Skill/Character/Common/Affixes/Weak',
+                  'Skill/Character/Common/Affixes/Enhance',
+                  'Skill/Character/Common/Affixes/Shelter',
+                  'Skill/Character/Common/Affixes/Vulnerable',
+                ],
+              },
             },
           },
         },

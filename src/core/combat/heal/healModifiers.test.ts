@@ -1,3 +1,9 @@
+import { chainEntry } from '../../../test/compiledGraphEntry';
+import { CombatActionSequenceRuntime } from '../actions/combatActionSequenceRuntime';
+import { createModifierConditionRuntime } from '../actions/modifierConditionRuntime';
+import { EventContextConditionExecutor } from '../events/eventContextConditionExecutor';
+import { CombatVitalsConditionExecutor } from '../resources/combatVitalsConditionExecutor';
+import type { HealModifierConditionInput } from './healModifiers';
 import { describe, expect, it } from 'vitest';
 import { CombatAttributeSet } from '../attributes/combatAttributes';
 import { CombatBuffContainer } from '../buffs/combatBuffs';
@@ -28,11 +34,43 @@ describe('heal modifiers', () => {
         healModifiers: [
           {
             enabledSide: 'healer',
-            condition: {
-              kind: 'healTagsMatch',
-              match: 'hasAny',
-              tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
-            },
+            createCondition: (buff, state) =>
+              createModifierConditionRuntime<HealModifierConditionInput>(
+                chainEntry(
+                  'heal-tag',
+                  [
+                    {
+                      kind: 'conditional',
+                      parameters: { condition: { kind: 'conditionNode', nodeId: 'tag' } },
+                      whenTrue: { $sequence: null },
+                    },
+                  ],
+                  {
+                    tag: {
+                      type: 'boolean',
+                      expression: {
+                        kind: 'eventHealTagsMatch',
+                        match: 'hasAny',
+                        tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
+                      },
+                    },
+                  },
+                ),
+                new CombatActionSequenceRuntime(
+                  new EventContextConditionExecutor({
+                    execute: () => true,
+                    evaluate: () => {
+                      throw new Error('unexpected condition');
+                    },
+                  }),
+                  { blackboard: buff.blackboard },
+                ),
+                input => ({
+                  context: { kind: 'heal', input },
+                  target: { kind: 'operator', operatorId: input.receiverId },
+                }),
+                state,
+              ),
             processors: [
               {
                 kind: 'modifyHealingIncrease',
@@ -67,6 +105,7 @@ describe('heal modifiers', () => {
 
   it('uses the Buff blackboard and target health condition after calculation', () => {
     const buffs = new CombatBuffContainer('snowshine', new CombatAttributeSet());
+    const allyVitals = vitals(500);
     const buff = buffs.add(
       {
         id: 'buff.snowshine.talent',
@@ -75,12 +114,55 @@ describe('heal modifiers', () => {
         healModifiers: [
           {
             enabledSide: 'healer',
-            condition: {
-              kind: 'targetHealthCompare',
-              valueType: 'ratio',
-              operator: 'lessOrEqual',
-              value: { blackboardKey: 'rate' },
-            },
+            createCondition: (buff, state) =>
+              createModifierConditionRuntime<HealModifierConditionInput>(
+                chainEntry(
+                  'heal-health',
+                  [
+                    {
+                      kind: 'conditional',
+                      parameters: { condition: { kind: 'conditionNode', nodeId: 'health' } },
+                      whenTrue: { $sequence: null },
+                    },
+                  ],
+                  {
+                    health: {
+                      type: 'boolean',
+                      expression: {
+                        kind: 'healthCompare',
+                        target: 'currentTarget',
+                        valueType: 'ratio',
+                        operator: 'lessOrEqual',
+                        value: { kind: 'valueNode', nodeId: 'threshold' },
+                      },
+                    },
+                    threshold: { type: 'number', expression: { kind: 'blackboard', key: 'rate' } },
+                  },
+                ),
+                new CombatActionSequenceRuntime(
+                  new CombatVitalsConditionExecutor({
+                    resolveTarget: () => {
+                      throw new Error('expected explicit target');
+                    },
+                    resolveContextTarget: id => {
+                      expect(id).toBe('ally');
+                      return allyVitals;
+                    },
+                    delegate: {
+                      execute: () => true,
+                      evaluate: () => {
+                        throw new Error('unexpected condition');
+                      },
+                    },
+                  }),
+                  { blackboard: buff.blackboard },
+                ),
+                input => ({
+                  context: { kind: 'heal', input },
+                  target: { kind: 'operator', operatorId: input.receiverId },
+                }),
+                state,
+              ),
             processors: [
               {
                 kind: 'modifyCalculationResult',
@@ -95,17 +177,18 @@ describe('heal modifiers', () => {
       'snowshine',
     );
     if (buff === null) throw new Error('expected Buff');
-    const lowHealth = new HealCalculationContext('snowshine', 'ally', vitals(500), 100);
+    const lowHealth = new HealCalculationContext('snowshine', 'ally', allyVitals, 100);
 
     buffs.applyHealModifiers('afterCalculation', 'healer', lowHealth);
     expect(lowHealth.value).toBeCloseTo(110);
 
-    const highHealth = new HealCalculationContext('snowshine', 'ally', vitals(501), 100);
+    allyVitals.heal(1);
+    const highHealth = new HealCalculationContext('snowshine', 'ally', allyVitals, 100);
     buffs.applyHealModifiers('afterCalculation', 'healer', highHealth);
     expect(highHealth.value).toBe(100);
 
     buff.finish();
-    const afterFinish = new HealCalculationContext('snowshine', 'ally', vitals(500), 100);
+    const afterFinish = new HealCalculationContext('snowshine', 'ally', allyVitals, 100);
     buffs.applyHealModifiers('afterCalculation', 'healer', afterFinish);
     expect(afterFinish.value).toBe(100);
   });

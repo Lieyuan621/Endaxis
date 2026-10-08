@@ -1,3 +1,4 @@
+import { numberInput } from '../../../test/compiledGraphInputs';
 import { describe, expect, it, vi } from 'vitest';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { CombatVitals } from './combatVitals';
@@ -29,7 +30,7 @@ describe('CombatVitalsConditionExecutor', () => {
           target: 'enemy',
           valueType: 'ratio',
           operator: 'less',
-          value: { kind: 'blackboard', key: 'threshold' },
+          value: numberInput({ kind: 'blackboard', key: 'threshold' }),
         },
         context,
       ),
@@ -212,6 +213,7 @@ describe('CombatVitalsConditionExecutor', () => {
     let current = withPoise;
     const executor = new CombatVitalsConditionExecutor({
       resolveTarget: () => current,
+      resolveContextTarget: () => withoutPoise,
       delegate: { execute: vi.fn(() => false), evaluate: vi.fn(() => false) },
     });
     const condition = {
@@ -223,6 +225,25 @@ describe('CombatVitalsConditionExecutor', () => {
     };
 
     expect(executor.evaluate(condition, { blackboard: new ActionBlackboard() })).toBe(true);
+    // 修正器的 Target 是本次计算的对方；对干员检查时不能误读敌人的失衡值。
+    expect(
+      executor.evaluate(
+        { ...condition, target: 'currentTarget' },
+        {
+          blackboard: new ActionBlackboard(),
+          currentTarget: { kind: 'operator', operatorId: 'attacker' },
+        },
+      ),
+    ).toBe(false);
+    expect(
+      executor.evaluate(
+        { ...condition, target: 'currentTarget' },
+        {
+          blackboard: new ActionBlackboard(),
+          currentTarget: { kind: 'enemy' },
+        },
+      ),
+    ).toBe(true);
     current = withoutPoise;
     expect(executor.evaluate(condition, { blackboard: new ActionBlackboard() })).toBe(false);
     expect(

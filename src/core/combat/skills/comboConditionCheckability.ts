@@ -1,3 +1,4 @@
+import { conditionInputExpression } from '../../compiler/compiledGraphData';
 import type { CompiledComboSkillConditionProgram } from '../../compiler/combatProgram';
 
 /** 当前木桩不攻击干员。仅识别明确的主控受击条件链，未知结构仍保留诊断。 */
@@ -20,7 +21,7 @@ export function hasUnmodeledIncomingAttackTrigger(
         action.parameters.alwaysNext
       )
         return false;
-      const condition = action.parameters.condition;
+      const condition = conditionInputExpression(action.parameters.condition);
       switch (condition.kind) {
         case 'contextTargetIdentityMatch':
           if (

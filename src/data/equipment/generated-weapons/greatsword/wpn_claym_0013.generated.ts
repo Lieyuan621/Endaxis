@@ -89,16 +89,7 @@ const definition = {
             conditional_3: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'not',
-                    condition: {
-                      kind: 'timedMarkerPresent',
-                      target: 'caster',
-                      markerId: 'wpn_claym_0013_1',
-                    },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                 whenTrue: { $sequence: 'applyBuff_2' },
               },
               next: null,
@@ -106,7 +97,7 @@ const definition = {
             conditional_4: {
               action: {
                 kind: 'conditional',
-                parameters: { condition: { kind: 'eventInflictionElementIn', elements: ['cryo'] } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 whenTrue: { $sequence: 'conditional_3' },
               },
               next: null,
@@ -114,9 +105,7 @@ const definition = {
             conditional_5: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: { kind: 'originSkillTypeIn', skillTypes: ['battleSkill'] },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
                 whenTrue: { $sequence: 'conditional_4' },
               },
               next: null,
@@ -151,16 +140,7 @@ const definition = {
             conditional_8: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'not',
-                    condition: {
-                      kind: 'timedMarkerPresent',
-                      target: 'caster',
-                      markerId: 'wpn_claym_0013_2',
-                    },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
                 whenTrue: { $sequence: 'applyBuff_7' },
               },
               next: null,
@@ -168,16 +148,7 @@ const definition = {
             conditional_9: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'buffStackCompare',
-                    target: 'actionInputTarget',
-                    tagQueryType: 'hasAny',
-                    buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
-                    operator: 'greaterOrEqual',
-                    value: { kind: 'constant', value: 1 },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
                 whenTrue: { $sequence: 'conditional_8' },
               },
               next: null,
@@ -185,16 +156,59 @@ const definition = {
             conditional_10: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventDamageTagsMatch',
-                    match: 'hasAll',
-                    tags: ['comboSkill'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
                 whenTrue: { $sequence: 'conditional_9' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: {
+                kind: 'timedMarkerPresent',
+                target: 'caster',
+                markerId: 'wpn_claym_0013_1',
+              },
+            },
+            data_2: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+            },
+            data_3: {
+              type: 'boolean',
+              expression: { kind: 'eventInflictionElementIn', elements: ['cryo'] },
+            },
+            data_4: {
+              type: 'boolean',
+              expression: { kind: 'originSkillTypeIn', skillTypes: ['battleSkill'] },
+            },
+            data_5: {
+              type: 'boolean',
+              expression: {
+                kind: 'timedMarkerPresent',
+                target: 'caster',
+                markerId: 'wpn_claym_0013_2',
+              },
+            },
+            data_6: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+            },
+            data_7: {
+              type: 'boolean',
+              expression: {
+                kind: 'buffStackCompare',
+                target: 'actionInputTarget',
+                tagQueryType: 'hasAny',
+                buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
+                operator: 'greaterOrEqual',
+                value: { kind: 'constant', value: 1 },
+              },
+            },
+            data_8: {
+              type: 'boolean',
+              expression: { kind: 'eventDamageTagsMatch', match: 'hasAll', tags: ['comboSkill'] },
             },
           },
         },

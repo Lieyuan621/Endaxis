@@ -1,5 +1,6 @@
+import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
-import type { CombatCondition } from '../../game-data/operatorDefinition';
+
 import { CombatOperationPrograms } from '../actions/combatOperationPrograms';
 import type { SkillCastInheritanceActionState } from '../state/actionState';
 import type {
@@ -86,7 +87,7 @@ export class SkillCastInheritanceOperationExecutor implements CombatOperationExe
     this.runtimeState.registrations.delete(slot);
   }
 
-  evaluate(condition: CombatCondition, context?: CombatOperationContext): boolean {
+  evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     return context === undefined
       ? this.delegate.evaluate(condition)
       : this.delegate.evaluate(condition, context);

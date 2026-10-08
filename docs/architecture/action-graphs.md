@@ -64,9 +64,17 @@
 
 ## 编译、执行与保存
 
+资源生成先投影为生成器内部定义，再由 `finalizeDefinitions.ts` 统一完成可选优化和必需的数据节点转换。关闭优化或仅生成优化报告时，仍会把表达式转换为节点；正式定义始终只保存常量或节点引用。内部表达式类型只供生成器使用，不进入保存、编辑和模拟接口。
+
 定义经过结构和领域校验后，场景编译器按定义、等级及构筑绑定运行程序。编辑器和项目保存正式定义，不保存编译结果；运行程序不可变，执行状态另存。编译器共享宏程序，不恢复一棵完整展开的动作树。
 
 调用状态记录独立进度、局部变量、计时和订阅关系。保存切面只记录状态和程序引用，不复制程序，不因恢复重新执行初始化。详情见[战斗切面](checkpoints.md)。
+
+伤害、治疗和失衡修正器的 `condition` 引用所属 Buff 图的动作入口。三者共用动作执行器及数据节点，各自提供独立的计算上下文，保留各自侧别、阶段和处理器顺序。动作的 Target 是本次计算的对方对象，不能用 Buff 来源替代。
+
+每个 Buff 修正器持有独立条件实例，即时调用逐动作结束并复位。普通执行及 IfElse 分支正文保留状态，由父动作结束和复位时清理。嵌套调用遇到仍在执行的动作时返回失败，不结束外层动作；返回后恢复外层上下文。切面保存条件动作状态，不保存临时伤害、治疗或失衡计算包。处理器直接读取 Buff 变量的标量参数与图内的数据节点引用是两种不同机制。
+
+修正条件可从属性检查器定位到所属 Buff 图的动作入口。状态详情从同一图提取可解释的必要条件；遇到未解释的判断或写入时明确提示仍有其他条件。摘要只供展示，不参与模拟求值，也不另存一份可执行条件结构。
 
 ## 代码入口与验证
 
@@ -78,14 +86,17 @@
 
 当前条件详情提供最终判断和真实黑板读取，尚未逐项解释所有非黑板条件操作数。技能宿主的扣费、启动和打断摘要，以及缺少施法关联的延迟响应，仍需补齐展示连接。
 
-| 位置                                                  | 职责                             |
-| ----------------------------------------------------- | -------------------------------- |
-| `packages/game-data-contract/src/actionGraph.ts`      | 数据类型                         |
-| `src/core/action-graph/`                              | 数据节点提取、引用绑定和结构校验 |
-| `src/core/game-data/validation/actionPrograms.ts`     | 动作参数及使用上下文校验         |
-| `tools/game-data-compiler/src/compiler/optimization/` | 来源转换后的去重、裁剪和宏提取   |
-| `src/core/compiler/compileActionGraph.ts`             | 编译运行程序                     |
-| `src/core/combat/actions/actionGraphExecution.ts`     | 按调用位置执行并维护状态         |
-| `src/application/editor/`                             | 不可变编辑和历史                 |
+| 位置                                                             | 职责                               |
+| ---------------------------------------------------------------- | ---------------------------------- |
+| `packages/game-data-contract/src/actionGraph.ts`                 | 数据类型                           |
+| `src/core/action-graph/`                                         | 图结构、连线和作用域校验           |
+| `src/core/game-data/validation/actionPrograms.ts`                | 动作参数及使用上下文校验           |
+| `tools/game-data-compiler/src/compiler/optimization/`            | 来源转换后的去重、裁剪和宏提取     |
+| `tools/game-data-compiler/src/compiler/finalizeDefinitions.ts`   | 将内部投影收尾为正式定义           |
+| `tools/game-data-compiler/src/compiler/extractGraphDataNodes.ts` | 将表达式转换为数据节点             |
+| `src/core/compiler/compiledGraphData.ts`                         | 编译时绑定数据节点引用，执行时求值 |
+| `src/core/compiler/compileActionGraph.ts`                        | 编译运行程序                       |
+| `src/core/combat/actions/actionGraphExecution.ts`                | 按调用位置执行并维护状态           |
+| `src/application/editor/`                                        | 不可变编辑和历史                   |
 
 修改共享规则时，既比较生成大小，也比较固定输入下的伤害、资源、状态、来源、诊断与有序记录。重点覆盖重复调用、变量写入前后读取、短路、延迟回调、打断和切面恢复。生成更小或类型检查通过，都不能代替行为一致性验证。

@@ -2354,7 +2354,31 @@ const chenQianyuComboCondition1: ComboSkillConditionDefinition = {
 };
 
 const chenQianyuBuff1ActionGraph = {
-  main: { nodes: {} },
+  main: {
+    nodes: {
+      conditional_1: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          whenTrue: { $sequence: null },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'hp_remain' } },
+      data_2: {
+        type: 'boolean',
+        expression: {
+          kind: 'healthCompare',
+          target: 'currentTarget',
+          valueType: 'ratio',
+          operator: 'less',
+          value: { kind: 'valueNode', nodeId: 'data_1' },
+        },
+      },
+    },
+  },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
@@ -2369,13 +2393,7 @@ const chenQianyuBuff1: SkillBuffDefinition = {
   damageModifiers: [
     {
       enabledSide: 'attacker',
-      condition: {
-        kind: 'targetHealthCompare',
-        target: 'enemy',
-        valueType: 'ratio',
-        operator: 'less',
-        value: { blackboardKey: 'hp_remain' },
-      },
+      condition: { $sequence: 'conditional_1' },
       processors: [
         {
           kind: 'damageScale',

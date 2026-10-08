@@ -1,4 +1,4 @@
-import type { SkillBuffDefinition } from '../../../../../packages/game-data-contract/src/buffs.ts';
+import type { SkillBuffDefinition } from '../intermediateDefinitions.ts';
 import type { CompiledBuffDefinitionSource } from '../buffs/buffProjectionTypes.ts';
 
 /** 编译器只在闭包完成前保留物理异常 Buff ID；正式定义树必须内联完整蓝图。 */

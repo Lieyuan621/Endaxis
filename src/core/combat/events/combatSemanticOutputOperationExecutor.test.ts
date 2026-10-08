@@ -1,3 +1,4 @@
+import { numberInput } from '../../../test/compiledGraphInputs';
 import { describe, expect, it, vi } from 'vitest';
 import { CombatReceiptCollector } from '../receipt/combatReceipt';
 import { CombatClock } from '../time/combatClock';
@@ -25,7 +26,10 @@ describe('CombatSemanticOutputOperationExecutor', () => {
       executor.execute(
         {
           kind: 'setCharacterPassiveUiValue',
-          parameters: { target: 'caster', value: { kind: 'blackboard', key: 'layers' } },
+          parameters: {
+            target: 'caster',
+            value: numberInput({ kind: 'blackboard', key: 'layers' }),
+          },
         },
         { blackboard: new ActionBlackboard({ layers: 3 }) },
       ),

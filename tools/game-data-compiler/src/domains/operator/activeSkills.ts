@@ -3,7 +3,7 @@ import {
   type SkillLevelSource,
   type SkillType,
 } from '../../../../../packages/game-data-contract/src/primitives.ts';
-import type { SkillDefinition } from '../../../../../packages/game-data-contract/src/skills.ts';
+import type { SkillDefinition } from '../../compiler/intermediateDefinitions.ts';
 export type { SkillType as OperatorActiveSkillTypeSource } from '../../../../../packages/game-data-contract/src/primitives.ts';
 
 import {

@@ -1,3 +1,4 @@
+import type { CompiledGlobalBuffDefinition } from '../../../compiler/combatProgram.ts';
 /**
  * 协调整场战斗中所有 Buff 目标的恢复阶段。
  *
@@ -6,7 +7,7 @@
  */
 import type { ResolvedSkillBuffDefinition } from '../../../compiler/combatProgram';
 import { logicalAbilityEntityRuntimeId } from '../../../game-data/logicalAbilityEntity';
-import type { SkillGlobalBuffDefinition } from '../../../game-data/operatorDefinition';
+
 import type { LogicalAbilityEntityRuntime } from '../../abilities/logicalAbilityEntityRuntime';
 import type { BuffApplicationHandle, BuffOperationTarget } from '../../buffs/buffOperationExecutor';
 import { buffReferenceKey } from '../../buffs/buffReference';
@@ -28,7 +29,7 @@ export interface CombatBuffRestorationOptions {
     sourceActionOwnerId: string | undefined,
     sourceActionId: string | undefined,
     definitionProgramId: number | null,
-  ) => SkillGlobalBuffDefinition | undefined;
+  ) => CompiledGlobalBuffDefinition | undefined;
 }
 
 export interface RestoredCombatBuffTargetDirectoryOptions {

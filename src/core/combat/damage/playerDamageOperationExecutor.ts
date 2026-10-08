@@ -1,5 +1,7 @@
+import { valueInputBlackboardKey } from '../../compiler/compiledGraphData';
+import type { CompiledCondition, CompiledValueInput } from '../../compiler/compiledGraphData.ts';
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
-import type { CombatCondition } from '../../game-data/operatorDefinition';
+
 import type { ActionValueCalculation } from '../state/foundationState';
 /**
  * 生命伤害与独立失衡步骤进入玩家主动伤害生命周期的装配点。
@@ -7,7 +9,7 @@ import type { ActionValueCalculation } from '../state/foundationState';
  */
 import { NATIVE_SKILL_HAS_HIT_BLACKBOARD_KEY } from '../../../../packages/game-data-contract/src/conditions';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
-import type { ActionValueOperand, SkillType } from '../../game-data/operatorDefinition';
+import type { SkillType } from '../../game-data/operatorDefinition';
 import {
   limitValueCalculation,
   resolveActionValueOperand,
@@ -49,11 +51,11 @@ import {
   type PlayerDamageAttributeSnapshots,
 } from './playerDamageContext';
 import { executePoiseDamage, type PoiseDamageEvent, type PoiseDamageModifier } from './poiseDamage';
+import { PoiseCalculationContext } from './poiseModifiers';
 import {
-  PoiseCalculationContext,
   type PoiseModifierSide,
   type PoiseProcessTiming,
-} from './poiseModifiers';
+} from '../../../../packages/game-data-contract/src/modifiers';
 
 type RuntimeOperation = ResolvedCombatOperationStep;
 type DamageStep = ResolvedCombatStepForKind<'dealDamage' | 'dealFixedDamage'>;
@@ -182,11 +184,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       operationContext,
       'snapshot damage scale',
     );
-    const attackScaleSourceKey =
-      typeof step.parameters.attackScale !== 'number' &&
-      step.parameters.attackScale.kind === 'blackboard'
-        ? step.parameters.attackScale.key
-        : undefined;
+    const attackScaleSourceKey = valueInputBlackboardKey(step.parameters.attackScale);
     const attackScaleCalculation =
       attackScaleSourceKey === undefined
         ? undefined
@@ -730,11 +728,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       operationContext,
       'dynamic damage scale',
     );
-    const attackScaleSourceKey =
-      typeof step.parameters.attackScale !== 'number' &&
-      step.parameters.attackScale.kind === 'blackboard'
-        ? step.parameters.attackScale.key
-        : undefined;
+    const attackScaleSourceKey = valueInputBlackboardKey(step.parameters.attackScale);
     const attackScaleCalculation =
       attackScaleSourceKey === undefined
         ? undefined
@@ -783,7 +777,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       this.dependencies.sourceOperatorId,
       this.dependencies.targetId,
       step.kind === 'dealStagger' ? [] : step.parameters.tags,
-      this.dependencies.isSourceControlled?.() ?? false,
+      step.kind === 'dealStagger' ? [] : (step.parameters.features ?? []),
       multipliers.output,
       multipliers.taken,
     );
@@ -808,7 +802,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
   }
 
   #resolveActionValue(
-    value: number | ActionValueOperand,
+    value: number | CompiledValueInput,
     operationContext: CombatOperationContext | undefined,
     missingContextMessage: string,
   ): number {
@@ -822,7 +816,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
     this.dependencies.delegate.end?.(step, context);
   }
 
-  evaluate(condition: CombatCondition, context?: CombatOperationContext): boolean {
+  evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     return context === undefined
       ? this.dependencies.delegate.evaluate(condition)
       : this.dependencies.delegate.evaluate(condition, context);

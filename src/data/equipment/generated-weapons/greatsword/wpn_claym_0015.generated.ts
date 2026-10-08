@@ -81,7 +81,7 @@ const definition = {
                 parameters: {
                   target: 'caster',
                   markerId: 'wpn_claym_0015',
-                  durationSeconds: { kind: 'blackboard', key: 'cd' },
+                  durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
                   autoFinishByAction: false,
                 },
               },
@@ -90,16 +90,7 @@ const definition = {
             conditional_3: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'not',
-                    condition: {
-                      kind: 'timedMarkerPresent',
-                      target: 'caster',
-                      markerId: 'wpn_claym_0015',
-                    },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 whenTrue: { $sequence: 'createTimedMarker_2' },
               },
               next: null,
@@ -107,13 +98,7 @@ const definition = {
             conditional_4: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/Affixes/Weak'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
                 whenTrue: { $sequence: 'conditional_3' },
               },
               next: null,
@@ -121,12 +106,37 @@ const definition = {
             conditional_8: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: { kind: 'eventPhysicalInflictionTypeIn', types: ['knockDown'] },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
                 whenTrue: { $sequence: 'conditional_3' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'cd' } },
+            data_2: {
+              type: 'boolean',
+              expression: {
+                kind: 'timedMarkerPresent',
+                target: 'caster',
+                markerId: 'wpn_claym_0015',
+              },
+            },
+            data_3: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+            },
+            data_4: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/Affixes/Weak'],
+              },
+            },
+            data_5: {
+              type: 'boolean',
+              expression: { kind: 'eventPhysicalInflictionTypeIn', types: ['knockDown'] },
             },
           },
         },

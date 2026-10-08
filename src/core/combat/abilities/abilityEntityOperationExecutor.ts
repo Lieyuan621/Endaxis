@@ -1,4 +1,5 @@
-import type { CombatCondition } from '../../game-data/operatorDefinition';
+import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
+
 import type {
   CompiledAbilityEntityChildSkillProgram,
   ResolvedAbilityEntityDefinition,
@@ -483,7 +484,7 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
     this.#delegate.end?.(step, context);
   }
 
-  evaluate(condition: CombatCondition, context?: CombatOperationContext): boolean {
+  evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     if (condition.kind === 'ownerSpawnedAbilityEntityPresent') {
       const sourceSkillCastId = condition.sameSourceSkillCast
         ? context?.skillCastInfo?.skillCastId

@@ -1,5 +1,6 @@
-import type { ActionStringOperand } from '../../../../packages/game-data-contract/src/primitives';
-import type { CombatCondition } from '../../game-data/operatorDefinition';
+import { stringInputExpression } from '../../compiler/compiledGraphData';
+import type { CompiledStringInput, CompiledCondition } from '../../compiler/compiledGraphData.ts';
+
 import type { CombatOperationContext } from '../skills/skillRuntime';
 import { healAbilityEvent } from '../events/combatAbilityEvent';
 /**
@@ -122,7 +123,7 @@ export class TimedMarkerOperationExecutor implements CombatOperationExecutor {
     this.dependencies.delegate.end?.(step, context);
   }
 
-  evaluate(condition: CombatCondition, context?: CombatOperationContext): boolean {
+  evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     if (condition.kind === 'globalCooldownPresent') {
       const { cooldowns, characterId } = this.#resolveCooldown(condition.target, context);
       return cooldowns.has(characterId, condition.markerId);
@@ -220,14 +221,14 @@ export class TimedMarkerOperationExecutor implements CombatOperationExecutor {
 }
 
 function resolveMarkerId(
-  operand: ActionStringOperand,
+  operand: CompiledStringInput,
   context: CombatOperationContext | undefined,
 ): string {
-  if (typeof operand === 'string') return operand;
-  if ('kind' in operand) throw new Error(`unbound string data node: ${operand.nodeId}`);
-  const value = context?.blackboard.getString(operand.blackboardKey);
+  const expression = stringInputExpression(operand);
+  if (typeof expression === 'string') return expression;
+  const value = context?.blackboard.getString(expression.blackboardKey);
   if (value === undefined || value.length === 0) {
-    throw new Error(`marker id blackboard '${operand.blackboardKey}' is missing`);
+    throw new Error(`marker id blackboard '${expression.blackboardKey}' is missing`);
   }
   return value;
 }

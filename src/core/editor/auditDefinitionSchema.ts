@@ -18,7 +18,7 @@ export function auditDefinitionSchema(root: DefinitionFieldSchema) {
       edges++;
       return;
     }
-    if (['opaque', 'condition'].includes(schema.kind) && !schema.fallback)
+    if (schema.kind === 'opaque' && !schema.fallback)
       throw new Error('unexplained schema fallback');
     ancestors.add(schema);
     if (schema.kind === 'object') Object.values(schema.fields).forEach(visit);

@@ -79,7 +79,7 @@ export interface ZeroDistanceProjectileProjectionCatalogSource {
 }
 
 type ProjectileLaunchHitParameters = NonNullable<
-  import('../../../../../packages/game-data-contract/src/actions.ts').CombatStepParameters['launchProjectile']['hit']
+  import('../intermediateDefinitions.ts').CombatStepParameters['launchProjectile']['hit']
 >;
 
 /**
@@ -314,7 +314,7 @@ export function createZeroDistanceProjectileProjectionExtensionSource(input: {
     }
     if (!Number.isFinite(runtime.finishDuration) || runtime.finishDuration <= 0)
       throw new Error(`${sourcePath}: projectile duration must be positive and finite`);
-    const finish: import('../../../../../packages/game-data-contract/src/actions.ts').CombatStepParameters['launchProjectile']['finish'] =
+    const finish: import('../intermediateDefinitions.ts').CombatStepParameters['launchProjectile']['finish'] =
       landsOnFirstTick
         ? ('firstTickBlock' as const)
         : runtime.finishOnReach

@@ -1,5 +1,6 @@
+import { numberInput } from '../../../test/compiledGraphInputs';
 import { describe, expect, it, vi } from 'vitest';
-import type { CombatStepParameters } from '../../../../packages/game-data-contract/src/actions';
+import type { CompiledStepParameters } from '../../compiler/compiledGraphData';
 import { CombatAttributeSet } from '../attributes/combatAttributes';
 import { CombatBuffContainer, type CombatBuffDefinition } from '../buffs/combatBuffs';
 import { GameplayTagPredefine } from '../tags/gameplayTagPredefine';
@@ -21,7 +22,7 @@ const NO_GUARD = 'buff_physical_no_guard';
 const DOWN_BUFF = 'buff_physical_knockdown';
 const DOWN_TAG = 'Status/Immobilized/KnockDown';
 const INTERRUPTED_TAG = 'Status/SkillCast/WeaknessInterrupted';
-const step = (overrides: Partial<CombatStepParameters['applyKnockDown']> = {}) => ({
+const step = (overrides: Partial<CompiledStepParameters['applyKnockDown']> = {}) => ({
   kind: 'applyKnockDown' as const,
   parameters: {
     target: 'enemy' as const,
@@ -248,7 +249,7 @@ describe('普通根倒地：复用真实 Buff 目标与控制标签', () => {
     const action = step({
       force: true,
       returnWhen: 'success',
-      duration: { kind: 'blackboard', key: 'missing' },
+      duration: numberInput({ kind: 'blackboard', key: 'missing' }),
     });
     expect(s.executor.execute(action, s.context)).toBe(false);
     expect(s.readAddition).not.toHaveBeenCalled();
@@ -270,7 +271,7 @@ describe('普通根倒地：复用真实 Buff 目标与控制标签', () => {
       if (event === 'forceTriggerWeakness') s.setAddition(10);
     });
     s.executor.execute(
-      step({ force: true, duration: { kind: 'blackboard', key: 'duration' } }),
+      step({ force: true, duration: numberInput({ kind: 'blackboard', key: 'duration' }) }),
       s.context,
     );
     expect(s.control.remaining).toBe(2.25);

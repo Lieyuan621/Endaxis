@@ -221,7 +221,7 @@ describe('shared field editor dispatch', () => {
     expect(
       resolveFieldEditor({ kind: 'opaque', fallback: { reason: 'depth-limit' } }).fallback,
     ).toBe('depth-limit');
-    expect(resolveFieldEditor({ kind: 'condition' }).fallback).toBe('condition-editor-pending');
+    expect(resolveFieldEditor({ kind: 'condition' }).fallback).toBe('graph-reference-boundary');
     for (const schema of [{ kind: 'graph' }, node('sequence'), node('resource')] as const) {
       expect(resolveFieldEditor(schema)).toMatchObject({
         view: 'navigation',

@@ -1,3 +1,5 @@
+import { readRequiredActionNumber } from '../actions/actionBlackboard';
+import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 import { spellBurstAbilityEvent, characterInflictionAbilityEvent } from './combatAbilityEvent';
 import { skillAbilityEvent } from './combatAbilityEvent';
@@ -20,10 +22,10 @@ import { buffApplicationEvent, buffAbilityEvent } from './combatAbilityEvent';
 /**
  * 求值依赖当前事件负载的条件。
  *
- * 该执行器只读取当前调用的事件或 BeforeApplyDamageModifier 临时上下文，不持有事件实例。
+ * 该执行器只读取当前调用的事件或伤害、治疗、失衡修正临时上下文，不持有事件实例。
  * 技能临时监听器、常驻监听器与同步伤害条件共用；普通技能步骤误用事件条件时会明确失败。
  */
-import type { CombatCondition, DamageFeature, DamageTag } from '../../game-data/operatorDefinition';
+import type { DamageFeature, DamageTag } from '../../game-data/operatorDefinition';
 import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
 import type { GameplayTagQueryType } from '../tags/gameplayTags';
 import { resolveActionValueOperand } from '../actions/actionBlackboard';
@@ -58,16 +60,19 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
     this.delegate.end?.(step, context);
   }
 
-  evaluate(condition: CombatCondition, context?: CombatOperationContext): boolean {
-    const modifier = context?.beforeApplyDamageModifier;
+  evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
+    const modifierContext = context?.modifierContext;
+    const modifier = modifierContext?.kind === 'damage' ? modifierContext.input : undefined;
     if (modifier !== undefined) {
       if (condition.kind === 'eventSkillCastMatchesBuffSource') {
-        if (modifier.getBuffAffixSkillCastId === undefined) {
+        const getAffix =
+          modifierContext?.kind === 'damage' ? modifierContext.getBuffAffixSkillCastId : undefined;
+        if (getAffix === undefined) {
           throw new Error(
             'damage modifier skill-cast check requires an explicit Buff affix skill cast identity',
           );
         }
-        const expected = modifier.getBuffAffixSkillCastId();
+        const expected = getAffix();
         if (
           expected !== null &&
           (!Number.isSafeInteger(expected) || expected < 0 || expected > 0xffffffff)
@@ -85,6 +90,26 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
         return matchDamageCondition(condition, modifier);
       }
     }
+    if (modifierContext?.kind === 'heal' && condition.kind === 'eventHealTagsMatch') {
+      return matchValues(modifierContext.input.tags, condition.tags, condition.match);
+    }
+    if (modifierContext?.kind === 'poise') {
+      if (condition.kind === 'eventDamageTagsMatch')
+        return matchValues(modifierContext.input.tags, condition.tags, condition.match);
+      if (condition.kind === 'eventDamageFeaturesMatch')
+        return matchValues(modifierContext.input.features, condition.features, condition.match);
+    }
+    // 原生检查遇到其他修正上下文时返回 false，不读取外层事件或中止模拟。
+    if (
+      modifierContext !== undefined &&
+      (condition.kind === 'eventDamageTypeIn' ||
+        condition.kind === 'eventDamageTagsMatch' ||
+        condition.kind === 'eventDamageFeaturesMatch' ||
+        condition.kind === 'eventDamageGameplayTagsMatch' ||
+        condition.kind === 'eventHealTagsMatch' ||
+        condition.kind === 'eventSkillCastMatchesBuffSource')
+    )
+      return false;
     if (
       condition.kind !== 'eventDamageTagsMatch' &&
       condition.kind !== 'eventDamageGameplayTagsMatch' &&
@@ -158,6 +183,42 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
         condition.skillTypes.includes(skillCastInfo.originSkillType)
       );
     }
+    if (condition.kind === 'actionInputTargetObjectTypeMatch') {
+      const target = context?.actionInputTarget;
+      if (context === undefined || target === undefined) {
+        throw new Error('actionInputTargetObjectTypeMatch requires an action InputTarget');
+      }
+      if (target.kind === 'spatialPoint') return false;
+      return matchesCombatObjectType(
+        condition.objectTypes,
+        resolveCombatObjectType(target, this.resolveAbilityEntityObjectType),
+      );
+    }
+    if (condition.kind === 'actionInputTargetIdentityMatch') {
+      const target = context?.actionInputTarget;
+      if (context === undefined || target === undefined) {
+        throw new Error('actionInputTargetIdentityMatch requires an action InputTarget');
+      }
+      const targetId =
+        target.kind === 'operator'
+          ? target.operatorId
+          : target.kind === 'abilityEntity'
+            ? `abilityEntity:${target.instanceId}`
+            : 'enemy';
+      const matches =
+        condition.other === 'controlledOperator'
+          ? (() => {
+              if (target.kind !== 'operator') return false;
+              if (this.isOperatorControlled === undefined) {
+                throw new Error('actionInputTargetIdentityMatch requires control state');
+              }
+              return this.isOperatorControlled(target.operatorId);
+            })()
+          : condition.other === 'actionSource'
+            ? context.actionSourceId !== undefined && targetId === context.actionSourceId
+            : context.actionOwnerId !== undefined && targetId === context.actionOwnerId;
+      return condition.operator === 'equal' ? matches : !matches;
+    }
     if (context?.event === undefined) {
       throw new Error(`${condition.kind} requires a combat event context`);
     }
@@ -210,42 +271,6 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
       const poise = poiseAbilityEvent(context.event);
       return poise !== undefined && this.isOperatorControlled(poise.payload.sourceId);
     }
-    if (condition.kind === 'actionInputTargetObjectTypeMatch') {
-      const target = context.actionInputTarget;
-      if (target === undefined) {
-        throw new Error('actionInputTargetObjectTypeMatch requires an action InputTarget');
-      }
-      if (target.kind === 'spatialPoint') return false;
-      return matchesCombatObjectType(
-        condition.objectTypes,
-        resolveCombatObjectType(target, this.resolveAbilityEntityObjectType),
-      );
-    }
-    if (condition.kind === 'actionInputTargetIdentityMatch') {
-      const target = context.actionInputTarget;
-      if (target === undefined) {
-        throw new Error('actionInputTargetIdentityMatch requires an action InputTarget');
-      }
-      const targetId =
-        target.kind === 'operator'
-          ? target.operatorId
-          : target.kind === 'abilityEntity'
-            ? `abilityEntity:${target.instanceId}`
-            : 'enemy';
-      const matches =
-        condition.other === 'controlledOperator'
-          ? (() => {
-              if (target.kind !== 'operator') return false;
-              if (this.isOperatorControlled === undefined) {
-                throw new Error('actionInputTargetIdentityMatch requires control state');
-              }
-              return this.isOperatorControlled(target.operatorId);
-            })()
-          : condition.other === 'actionSource'
-            ? context.actionSourceId !== undefined && targetId === context.actionSourceId
-            : context.actionOwnerId !== undefined && targetId === context.actionOwnerId;
-      return condition.operator === 'equal' ? matches : !matches;
-    }
     if (condition.kind === 'eventSkillTypeIn') {
       const skill = skillAbilityEvent(context.event);
       if (skill === undefined) return false;
@@ -276,12 +301,7 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
       if (condition.outputKey !== undefined && condition.outputKey !== '') {
         // CheckSpellInflictionType 先严格 GetFloat，再比较 float32 epsilon，最后 AssignDynamic。
         // 不能直接写入：缺声明、direct 遮蔽 entity 及相等时不写都属于可观察语义。
-        const old = Math.fround(
-          resolveActionValueOperand(
-            { kind: 'blackboard', key: condition.outputKey },
-            context.blackboard,
-          ),
-        );
+        const old = Math.fround(readRequiredActionNumber(context.blackboard, condition.outputKey));
         const value = NATIVE_ELEMENT_VALUES[element];
         if (!(Math.abs(Math.fround(old - value)) <= Math.fround(0.00001))) {
           context.blackboard.assignDynamicUnconditionally(condition.outputKey, value);
@@ -295,12 +315,7 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
       const matched = type !== undefined && condition.types.includes(type);
       if (matched && condition.outputKey !== undefined) {
         const values = { airborne: 0, knockDown: 1, fracture: 2, crush: 3 } as const;
-        const old = Math.fround(
-          resolveActionValueOperand(
-            { kind: 'blackboard', key: condition.outputKey },
-            context.blackboard,
-          ),
-        );
+        const old = Math.fround(readRequiredActionNumber(context.blackboard, condition.outputKey));
         const value = values[type];
         if (!(Math.abs(Math.fround(old - value)) <= Math.fround(0.00001))) {
           context.blackboard.assignDynamicUnconditionally(condition.outputKey, value);
@@ -446,7 +461,7 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
 
 function matchDamageCondition(
   condition: Extract<
-    CombatCondition,
+    CompiledCondition,
     {
       kind:
         | 'eventDamageTypeIn'
@@ -461,7 +476,10 @@ function matchDamageCondition(
     return damage.damageType !== undefined && condition.damageTypes.includes(damage.damageType);
   }
   if (condition.kind === 'eventDamageGameplayTagsMatch') {
-    return matchValues(damage.gameplayTags ?? [], condition.tags, condition.match);
+    const tags = damage.gameplayTags;
+    return (
+      tags !== undefined && tags.length > 0 && matchValues(tags, condition.tags, condition.match)
+    );
   }
   return condition.kind === 'eventDamageTagsMatch'
     ? matchValues(damage.tags, condition.tags, condition.match)

@@ -108,62 +108,6 @@ it.each(fixtures)(
 );
 
 it.each(fixtures)(
-  '$name creates numeric reads and scoped parameters, rejects invalid drafts and rechecks source context',
-  fixture => {
-    const schema = fixture.field.valueSchema!;
-    const options = {
-      kind: 'dealDamage',
-      path: fixture.field.path,
-      blackboard: context(['argument']),
-    };
-    for (const value of [
-      { kind: 'constant', value: 2 },
-      { kind: 'blackboard', key: 'rate' },
-      { kind: 'blackboard', key: 'external', fallback: 1 },
-      { kind: 'parameter', parameter: 'argument' },
-    ]) {
-      expect(() =>
-        validateStructuredValue(
-          schema,
-          undefined,
-          [{ ...fixture.row, [fixture.key]: value }],
-          options,
-        ),
-      ).not.toThrow();
-    }
-    for (const value of [
-      { kind: 'constant', value: '' },
-      { kind: 'constant', value: Infinity },
-      { kind: 'parameter', parameter: 'missing' },
-      { kind: 'blackboard', key: 'text' },
-      { kind: 'valueNode', nodeId: 'raw' },
-      3,
-      [1, 2],
-    ]) {
-      expect(() =>
-        validateStructuredValue(
-          schema,
-          undefined,
-          [{ ...fixture.row, [fixture.key]: value }],
-          options,
-        ),
-      ).toThrow();
-    }
-    const value = [{ ...fixture.row, [fixture.key]: { kind: 'parameter', parameter: 'argument' } }];
-    expect(() =>
-      validateStructuredValue(schema, value, [{ ...value[0], ...fixture.patch }], {
-        ...options,
-        blackboard: context(),
-      }),
-    ).toThrow();
-    const invalid = [{ ...fixture.row, [fixture.key]: { kind: 'futureOperand', extra: 1 } }];
-    expect(() =>
-      validateStructuredValue(schema, invalid, [{ ...invalid[0], ...fixture.patch }], options),
-    ).toThrow();
-  },
-);
-
-it.each(fixtures)(
   '$name preserves connected rows, reference identity/count and unknown extensions',
   fixture => {
     const pin = { kind: 'valueNode', nodeId: 'shared' },
@@ -225,7 +169,7 @@ it.each(fixtures)(
 );
 
 it.each(fixtures)(
-  '$name creator uses inherited graph scope while connected operand events and branch extension loss are guarded',
+  '$name creator edits constants while preserving connected inputs and extension fields',
   async fixture => {
     const schema = fixture.field.valueSchema!;
     if (schema.kind !== 'array') throw new Error('expected array');
@@ -238,10 +182,10 @@ it.each(fixtures)(
     try {
       creator.state.change([], {
         ...fixture.row,
-        [fixture.key]: { kind: 'parameter', parameter: 'argument' },
+        [fixture.key]: { kind: 'constant', value: 2 },
       });
       expect(creator.state.complete.value).toBe(true);
-      creator.state.change([fixture.key], { kind: 'parameter', parameter: 'missing' });
+      creator.state.change([fixture.key], { kind: 'constant', value: '' });
       expect(creator.state.complete.value).toBe(false);
       creator.state.change([fixture.key], { kind: 'valueNode', nodeId: 'shared' });
       expect(creator.state.complete.value).toBe(false);
@@ -267,8 +211,8 @@ it.each(fixtures)(
       fixture.field,
     );
     try {
-      field.state.changeGraphOperand({ kind: 'blackboard', key: 'rate' });
-      expect(changes).toEqual([{ kind: 'blackboard', key: 'rate', extension }]);
+      field.state.changeGraphOperand({ kind: 'constant', value: 3 });
+      expect(changes).toEqual([{ kind: 'constant', value: 3, extension }]);
       await field.update({ value: { kind: 'valueNode', nodeId: 'shared' } });
       field.state.changeGraphOperand({ kind: 'constant', value: 0 });
       expect(changes).toHaveLength(1);

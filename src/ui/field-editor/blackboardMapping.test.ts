@@ -7,7 +7,6 @@ import {
   resolveBlackboardMapping,
   validMappingValue,
   validMappingDraft,
-  defaultMappingValue,
 } from './blackboardMapping';
 
 const field = (kind: keyof typeof actionNodeSchemas, name: string) =>
@@ -92,11 +91,7 @@ describe('blackboard mapping transaction helpers', () => {
     expect(validMappingValue([1, 2], 'levels')).toBe(true);
     expect(validMappingValue({ kind: 'constant', value: 2 }, 'levels')).toBe(false);
     expect(validMappingValue(2, 'operand')).toBe(false);
-    expect(validMappingValue({ kind: 'blackboard', key: 'x' }, 'operand')).toBe(true);
-    expect(validMappingValue({ kind: 'blackboard', key: 'x', fallback: 0 }, 'operand')).toBe(true);
-    expect(validMappingValue({ kind: 'blackboard', key: 'x', fallback: '' }, 'operand')).toBe(
-      false,
-    );
+    expect(validMappingValue({ kind: 'constant', value: 2 }, 'operand')).toBe(true);
     expect(validMappingValue({ kind: 'constant', value: NaN }, 'operand')).toBe(false);
     expect(validMappingValue({ kind: 'valueNode', nodeId: 'number' }, 'levelsOrOperand')).toBe(
       true,
@@ -132,7 +127,7 @@ describe('blackboard mapping transaction helpers', () => {
   });
 });
 
-it('uses typed call arguments without allowing parameter operands at the call site', () => {
+it('宏实参通过常量或数据节点传入', () => {
   const args = actionNodeSchemas.callMacro.fields.find(
     field => field.path.join('.') === 'arguments',
   )!;
@@ -140,67 +135,17 @@ it('uses typed call arguments without allowing parameter operands at the call si
   expect(descriptor).toEqual({
     value: 'operand',
     destination: 'macroArguments',
-    allowsParameters: false,
   });
-  const context = {
-    status: 'known' as const,
-    scopes: [],
-    candidates: [],
-    parameters: [
-      {
-        key: 'p',
-        valueType: 'number' as const,
-        readable: true,
-        writable: false,
-        scope: 'macro',
-        source: 'macro',
-      },
-    ],
-  };
-  expect(
-    validMappingDraft({ p: { kind: 'parameter', parameter: 'p' } }, {}, descriptor, context),
-  ).toBe(false);
-  expect(validMappingDraft({ p: { kind: 'constant', value: 2 } }, {}, descriptor, context)).toBe(
-    true,
-  );
-});
-
-it('does not invent numeric values and respects explicit fallback for unavailable/wrong-typed sources', () => {
-  expect(defaultMappingValue('operand')).toBeUndefined();
-  expect(defaultMappingValue('levels')).toBeUndefined();
-  const context = {
-    status: 'known' as const,
-    scopes: [],
-    parameters: [],
-    candidates: [
-      {
-        key: 'string',
-        valueType: 'string' as const,
-        readable: false,
-        writable: false,
-        scope: 'other',
-        source: 'other',
-      },
-    ],
-  };
-  const descriptor = { value: 'operand' as const, destination: 'buff' as const };
-  expect(
-    validMappingDraft({ target: { kind: 'blackboard', key: 'string' } }, {}, descriptor, context),
-  ).toBe(false);
+  const context = { status: 'known' as const, scopes: [], candidates: [], parameters: [] };
   expect(
     validMappingDraft(
-      { target: { kind: 'blackboard', key: 'string', fallback: 0 } },
+      { p: { kind: 'valueNode', nodeId: 'parameter-read' } },
       {},
       descriptor,
       context,
     ),
   ).toBe(true);
-  expect(
-    validMappingDraft(
-      { target: { kind: 'blackboard', key: 'string', fallback: '' } },
-      {},
-      descriptor,
-      context,
-    ),
-  ).toBe(false);
+  expect(validMappingDraft({ p: { kind: 'constant', value: 2 } }, {}, descriptor, context)).toBe(
+    true,
+  );
 });

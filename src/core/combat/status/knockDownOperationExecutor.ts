@@ -1,8 +1,9 @@
+import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
 import type {
   ResolvedCombatOperationStep,
   ResolvedSkillBuffDefinition,
 } from '../../compiler/combatProgram';
-import type { CombatCondition } from '../../game-data/operatorDefinition';
+
 import { resolveActionValueOperand } from '../actions/actionBlackboard';
 import type { BuffDefinitionOperationTarget } from '../buffs/buffDefinitionOperationTarget';
 import type { BuffApplicationHandle } from '../buffs/buffOperationExecutor';
@@ -152,7 +153,7 @@ export class KnockDownOperationExecutor implements CombatOperationExecutor {
   end(step: ResolvedCombatOperationStep, context?: CombatOperationContext): void {
     this.dependencies.delegate.end?.(step, context);
   }
-  evaluate(condition: CombatCondition, context?: CombatOperationContext): boolean {
+  evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     return this.dependencies.delegate.evaluate(condition, context);
   }
 }

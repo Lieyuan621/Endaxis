@@ -62,7 +62,7 @@ const definition = {
                 kind: 'changeResourceByActionValue',
                 parameters: {
                   resource: 'sp',
-                  amount: { kind: 'blackboard', key: 'atb_recover' },
+                  amount: { kind: 'valueNode', nodeId: 'data_1' },
                   coefficient: { kind: 'constant', value: 1 },
                   recipient: 'team',
                   spGainKind: 'refund',
@@ -85,14 +85,7 @@ const definition = {
             conditional_4: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'actionValueCompare',
-                    left: { kind: 'blackboard', key: 'has_gain_atb', fallback: 0 },
-                    operator: 'equal',
-                    right: { kind: 'constant', value: 0 },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 whenTrue: { $sequence: 'modifyActionValue_3' },
               },
               next: null,
@@ -100,12 +93,30 @@ const definition = {
             conditional_5: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: { kind: 'eventSkillTypeIn', skillTypes: ['battleSkill'] },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
                 whenTrue: { $sequence: 'conditional_4' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb_recover' } },
+            data_2: {
+              type: 'number',
+              expression: { kind: 'blackboard', key: 'has_gain_atb', fallback: 0 },
+            },
+            data_3: {
+              type: 'boolean',
+              expression: {
+                kind: 'actionValueCompare',
+                left: { kind: 'valueNode', nodeId: 'data_2' },
+                operator: 'equal',
+                right: { kind: 'constant', value: 0 },
+              },
+            },
+            data_4: {
+              type: 'boolean',
+              expression: { kind: 'eventSkillTypeIn', skillTypes: ['battleSkill'] },
             },
           },
         },

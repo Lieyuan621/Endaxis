@@ -26,8 +26,9 @@ const compileGraphEntry = (
   revision: string,
   entry: string | null,
   nodes: Record<string, ActionGraphNode>,
+  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => ({
-  graph: createActionGraphCompilation({ nodes }, 1, revision).compileAll(),
+  graph: createActionGraphCompilation({ nodes, dataNodes }, 1, revision).compileAll(),
   entry,
   callSite: revision,
 });
@@ -35,6 +36,7 @@ const compileGraphEntry = (
 const chainEntry = (
   revision: string,
   actions: readonly ActionGraphStep[],
+  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => {
   const nodes: Record<string, ActionGraphNode> = {};
   actions.forEach((action, index) => {
@@ -43,7 +45,7 @@ const chainEntry = (
       next: index + 1 < actions.length ? `step-${index + 1}` : null,
     };
   });
-  return compileGraphEntry(revision, actions.length === 0 ? null : 'step-0', nodes);
+  return compileGraphEntry(revision, actions.length === 0 ? null : 'step-0', nodes, dataNodes);
 };
 
 const enemy = {
@@ -145,45 +147,55 @@ function createFixture(
         ? [
             {
               startFrame: 2,
-              sequence: compileGraphEntry('camera-sensitive-selection', 'branch', {
-                branch: {
-                  action: {
-                    kind: 'conditional',
-                    parameters: {
-                      condition: {
-                        kind: 'cameraToTargetAngleCompare',
-                        operator: 'greater',
-                        value: { kind: 'constant', value: 0 },
+              sequence: compileGraphEntry(
+                'camera-sensitive-selection',
+                'branch',
+                {
+                  branch: {
+                    action: {
+                      kind: 'conditional',
+                      parameters: {
+                        condition: { kind: 'conditionNode', nodeId: 'input_1' },
+                      },
+                      whenTrue: { $sequence: 'selected-one' },
+                      whenFalse: { $sequence: 'selected-two' },
+                    },
+                    next: null,
+                  },
+                  'selected-one': {
+                    action: {
+                      kind: 'modifyActionValue',
+                      parameters: {
+                        key: 'selected',
+                        operation: 'assign',
+                        value: { kind: 'constant', value: 1 },
                       },
                     },
-                    whenTrue: { $sequence: 'selected-one' },
-                    whenFalse: { $sequence: 'selected-two' },
+                    next: null,
                   },
-                  next: null,
+                  'selected-two': {
+                    action: {
+                      kind: 'modifyActionValue',
+                      parameters: {
+                        key: 'selected',
+                        operation: 'assign',
+                        value: { kind: 'constant', value: 2 },
+                      },
+                    },
+                    next: null,
+                  },
                 },
-                'selected-one': {
-                  action: {
-                    kind: 'modifyActionValue',
-                    parameters: {
-                      key: 'selected',
-                      operation: 'assign',
-                      value: { kind: 'constant', value: 1 },
+                {
+                  input_1: {
+                    type: 'boolean',
+                    expression: {
+                      kind: 'cameraToTargetAngleCompare',
+                      operator: 'greater',
+                      value: { kind: 'constant', value: 0 },
                     },
                   },
-                  next: null,
                 },
-                'selected-two': {
-                  action: {
-                    kind: 'modifyActionValue',
-                    parameters: {
-                      key: 'selected',
-                      operation: 'assign',
-                      value: { kind: 'constant', value: 2 },
-                    },
-                  },
-                  next: null,
-                },
-              }),
+              ),
             },
           ]
         : [],

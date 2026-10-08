@@ -405,7 +405,7 @@
     "openGraph": "打开动作图",
     "addGraph": "创建空动作图",
     "specialField": "此字段暂不支持编辑",
-    "conditionReadOnly": "条件（{kind}）暂不支持在表单中编辑",
+    "conditionRequiresGraph": "请在所属资源的动作图中编辑条件",
     "conditionAbsent": "未设置条件；条件编辑暂不可用",
     "graphKindUnsupported": "此资源的动作图编辑尚未接入。",
     "graphEntries": "执行入口",
@@ -5487,6 +5487,12 @@
       "electric": "电磁",
       "cryo": "寒冷",
       "nature": "自然"
+    },
+    "requirements": {
+      "casterControlled": "施法者为主控干员",
+      "heavyAttack": "本次命中为重击",
+      "sameSkillCast": "与施加此效果的技能属于同次施放",
+      "additional": "另有条件，请查看条件图"
     }
   },
   "hitDetail": {
@@ -5692,15 +5698,10 @@
     "recursive-type": "此表单暂不展开递归类型",
     "unsupported-type": "此类型尚未接入表单控件",
     "structured-editor-pending": "结构化控件待接入，保留现有编辑与校验",
-    "tuple-editor-pending": "已保留固定元组槽位，此表单暂不支持编辑",
-    "condition-editor-pending": "请使用对应的条件或图编辑入口"
+    "tuple-editor-pending": "已保留固定元组槽位，此表单暂不支持编辑"
   },
   "stringOperand": {
-    "mode": "输入方式",
-    "literal": "字面值",
-    "blackboard": "从黑板读取字符串",
-    "current": "已保存表达式",
-    "readHelp": "在每个使用点读取当前上下文。这是字符串键表达式，不是数值数据连线。"
+    "current": "已保存值"
   },
   "blackboardMapping": {
     "edit": "编辑映射",
@@ -5714,12 +5715,9 @@
     "valueMode": "值类型",
     "levels": "数值／逐级值",
     "constant": "数值常量",
-    "readNumber": "从黑板读取数值",
-    "parameter": "数值宏参数",
     "connection": "已有数值连接",
     "keepConnection": "保留此连接；请在图中编辑连接，或明确选择替代值",
     "useFallback": "使用明确的回退值",
-    "fallback": "回退值",
     "strictRead": "严格读取：缺少键时报告错误",
     "add": "添加映射",
     "remove": "删除映射",
@@ -5816,12 +5814,6 @@
     "useTag": "使用标签",
     "invalidTag": "请输入各级非空的可读标签路径。",
     "refineSearch": "显示 {count} 个匹配中的前 50 个，请输入更完整路径继续筛选。"
-  },
-  "inlineCondition": {
-    "availabilityDeferred": "只读：此版本尚未建立技能 availability 字段的运行时消费路径。",
-    "legacyHandlerDeferred": "只读：编译器拒绝没有监听区间的旧技能 eventHandlers。",
-    "edit": "编辑条件",
-    "hint": "仅编辑内联条件。此处不提供图连线或宏参数。"
   },
   "structuredValue": {
     "edit": "编辑结构",

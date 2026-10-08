@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n';
 import { EaButton } from '@/design-system';
 import { blackboardNavigationKey } from './blackboardFieldContext';
 const props = defineProps<{ value: unknown; label: string; sequence: boolean }>();
+const emit = defineEmits<{ open: [] }>();
 const { t } = useI18n();
 const navigate = inject(blackboardNavigationKey, undefined);
 const target = computed(() => {
@@ -41,9 +42,11 @@ const summary = computed(() =>
   <div data-graph-row-boundary :data-graph-boundary-kind="sequence ? 'sequence' : 'condition'">
     <span>{{ label }} · {{ summary }}</span>
     <EaButton
-      v-if="target && navigate"
+      v-if="target"
       size="sm"
-      @click="navigate({ owner: sequence ? 'action' : 'data', id: target })"
+      @click="
+        navigate ? navigate({ owner: sequence ? 'action' : 'data', id: target }) : emit('open')
+      "
       >{{ target }} ↗</EaButton
     >
     <small>{{

@@ -1,3 +1,4 @@
+import { numberInput } from '../../../test/compiledGraphInputs';
 import { describe, expect, it } from 'vitest';
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
 import { logicalAbilityEntityRuntimeId } from '../../game-data/logicalAbilityEntity';
@@ -68,7 +69,7 @@ describe('TimeDilationOperationExecutor', () => {
       kind: 'startTimeDilation',
       parameters: {
         scope: 'global',
-        durationSeconds: { kind: 'blackboard', key: 'duration' },
+        durationSeconds: numberInput({ kind: 'blackboard', key: 'duration' }),
         slot: 'Test/TimeSlot1',
         priority: PRIORITY,
         curve: { kind: 'named', key: 'constant-half' },

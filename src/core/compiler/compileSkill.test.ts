@@ -44,14 +44,15 @@ function linearSkill(
   fixture: Omit<SkillFixtureProperties, 'scheduledSequences' | 'actionGraph'> & {
     readonly startFrame?: number;
     readonly steps: readonly ActionGraphStep[];
+    readonly dataNodes?: import('../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'];
   },
 ): SkillDefinition {
-  const { startFrame = 0, steps, ...fields } = fixture;
+  const { startFrame = 0, steps, dataNodes, ...fields } = fixture;
   const chain = linearChain('s0', steps);
   return skillFixture({
     ...fields,
     scheduledSequences: [{ startFrame, sequence: { $sequence: chain.entry } }],
-    actionGraph: { main: { nodes: chain.nodes }, macros: {} },
+    actionGraph: { main: { nodes: chain.nodes, dataNodes }, macros: {} },
   });
 }
 
@@ -304,7 +305,7 @@ describe('compileSkill', () => {
         targetSide: 'attacker',
         attribute: 'criticalRate',
         slot: 'baseAddition',
-        value: { kind: 'blackboard', key: 'crit_delta' },
+        value: { kind: 'valueNode', nodeId: 'critical' },
         attributeTiming: 'runtime',
       },
     ] as const;
@@ -315,6 +316,9 @@ describe('compileSkill', () => {
       skillLevel: 2,
       skill: linearSkill({
         key: 'features',
+        dataNodes: {
+          critical: { type: 'number', expression: { kind: 'blackboard', key: 'crit_delta' } },
+        },
         timelineBlockFrames: 1,
         steps: [
           {
@@ -348,7 +352,15 @@ describe('compileSkill', () => {
         attackScale: 2,
         tags: [],
         features: ['shatter', 'dot'],
-        instantAttributeModifiers,
+        instantAttributeModifiers: [
+          expect.objectContaining({
+            ...instantAttributeModifiers[0],
+            value: expect.objectContaining({
+              kind: 'valueNode',
+              node: { type: 'number', expression: { kind: 'blackboard', key: 'crit_delta' } },
+            }),
+          }),
+        ],
       },
       {
         damageType: 'physical',
@@ -442,12 +454,16 @@ describe('compileSkill', () => {
                 kind: 'dealDamage',
                 parameters: {
                   damageType: 'physical',
-                  attackScale: { kind: 'blackboard', key: 'scale' },
+                  attackScale: { kind: 'valueNode', nodeId: 'test_data_1' },
                   tags: [],
                 },
               },
               next: null,
             },
+          },
+
+          dataNodes: {
+            test_data_1: { type: 'number', expression: { kind: 'blackboard', key: 'scale' } },
           },
         },
         macros: {},
@@ -460,7 +476,15 @@ describe('compileSkill', () => {
     );
     expect(result.stackingType).toBe('refresh');
     expect(rootActionSteps(result.lifecycleSequences!.start!)).toMatchObject([
-      { kind: 'dealDamage', parameters: { attackScale: { kind: 'blackboard', key: 'scale' } } },
+      {
+        kind: 'dealDamage',
+        parameters: {
+          attackScale: expect.objectContaining({
+            kind: 'valueNode',
+            node: { type: 'number', expression: { kind: 'blackboard', key: 'scale' } },
+          }),
+        },
+      },
     ]);
   });
 

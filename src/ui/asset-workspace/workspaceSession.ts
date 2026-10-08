@@ -92,11 +92,19 @@ export class WorkspaceAssetSession {
           resource.path.every((part, index) => path[index] === part),
       )
       .sort((left, right) => right.path.length - left.path.length)[0]!;
+    const owner = fieldValueAt(current.edit.definition, resource.path);
+    const graphOwner =
+      owner && typeof owner === 'object' && 'actionGraph' in owner
+        ? (owner as ActionGraphResourceOwner)
+        : undefined;
     assertEditableDefinitionField(
       definitionSchemas[resource.kind],
       fieldValueAt(current.edit.definition, resource.path),
       path.slice(resource.path.length),
       value,
+      'definition',
+      undefined,
+      graphOwner?.actionGraph.main,
     );
     this.history.update(draft =>
       updateDefinitionField(draft, ['edit', 'definition', ...path], value, true),

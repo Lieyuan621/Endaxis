@@ -2,7 +2,7 @@
 import type { BlackboardFieldContext } from '../../application/editor/blackboardFieldContext';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { EaCheckbox, EaInput, EaSelect, type EaSelectValue } from '@/design-system';
+import { EaInput, EaSelect, type EaSelectValue } from '@/design-system';
 import NodeLevelValues from '../action-graph/NodeLevelValues.vue';
 import BlackboardKeyField from './BlackboardKeyField.vue';
 import { useBlackboardFieldContext } from './blackboardFieldContext';
@@ -12,7 +12,6 @@ const props = defineProps<{
   value: unknown;
   mode: BlackboardMappingValue;
   label: string;
-  allowsParameters?: boolean;
   readonly?: boolean;
   context?: BlackboardFieldContext;
 }>();
@@ -31,20 +30,7 @@ const options = computed(() => [
     ? [{ value: 'levels', label: t('blackboardMapping.levels') }]
     : []),
   ...(props.mode === 'operand' || props.mode === 'levelsOrOperand'
-    ? [
-        { value: 'constant', label: t('blackboardMapping.constant') },
-        { value: 'blackboard', label: t('blackboardMapping.readNumber') },
-        ...((props.allowsParameters !== false && context.value.parameters.length) ||
-        branch.value === 'parameter'
-          ? [
-              {
-                value: 'parameter',
-                label: t('blackboardMapping.parameter'),
-                disabled: props.allowsParameters === false || !context.value.parameters.length,
-              },
-            ]
-          : []),
-      ]
+    ? [{ value: 'constant', label: t('blackboardMapping.constant') }]
     : []),
   ...(branch.value === 'valueNode'
     ? [{ value: 'valueNode', label: t('blackboardMapping.connection'), disabled: true }]
@@ -72,9 +58,6 @@ function switchBranch(value: EaSelectValue | EaSelectValue[]) {
     change(0);
   if (props.mode !== 'operand' && props.mode !== 'levelsOrOperand') return;
   if (value === 'constant') change({ kind: 'constant', value: 0 });
-  if (value === 'blackboard') change({ kind: 'blackboard', key: '' });
-  if (value === 'parameter' && props.allowsParameters !== false && context.value.parameters.length)
-    change({ kind: 'parameter', parameter: '' });
 }
 function updateOperand(key: string, value: unknown) {
   if (props.readonly) return;
@@ -139,53 +122,6 @@ function numeric(raw: string): number | string {
         step="any"
         :aria-label="label"
         @input="updateOperand('value', numeric($event))"
-      />
-      <template v-else-if="branch === 'blackboard'">
-        <BlackboardKeyField
-          :context="context"
-          :value="typeof operand.key === 'string' ? operand.key : undefined"
-          :label="label"
-          mode="read"
-          :fallback="
-            typeof operand.fallback === 'number' && Number.isFinite(operand.fallback)
-              ? operand.fallback
-              : undefined
-          "
-          value-type="number"
-          :editable="!readonly"
-          @change="updateOperand('key', $event)"
-          @draft-change="updateOperand('key', $event)"
-        />
-        <EaCheckbox
-          :disabled="readonly"
-          :model-value="Object.hasOwn(operand, 'fallback')"
-          @change="updateOperand('fallback', $event ? 0 : undefined)"
-          >{{ t('blackboardMapping.useFallback') }}</EaCheckbox
-        >
-        <EaInput
-          :disabled="readonly"
-          v-if="Object.hasOwn(operand, 'fallback')"
-          type="number"
-          step="any"
-          :aria-label="`${label} ${t('blackboardMapping.fallback')}`"
-          :model-value="String(operand.fallback ?? '')"
-          @input="updateOperand('fallback', numeric($event))"
-        />
-        <small v-if="Object.hasOwn(operand, 'fallback')">{{
-          t('blackboardMapping.fallbackRead')
-        }}</small>
-        <small v-else>{{ t('blackboardMapping.strictRead') }}</small>
-      </template>
-      <BlackboardKeyField
-        :context="context"
-        v-else-if="branch === 'parameter'"
-        :value="typeof operand.parameter === 'string' ? operand.parameter : undefined"
-        :label="label"
-        mode="parameter"
-        value-type="number"
-        :editable="!readonly"
-        @change="updateOperand('parameter', $event)"
-        @draft-change="updateOperand('parameter', $event)"
       />
       <small v-else-if="branch === 'valueNode'" role="status"
         >{{ t('blackboardMapping.keepConnection') }}: {{ operand.nodeId }}</small

@@ -1,4 +1,5 @@
-import type { CombatCondition } from '../../game-data/operatorDefinition';
+import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
+
 /**
  * 反应步骤与敌人反应状态容器之间的接线。
  *
@@ -55,7 +56,7 @@ export class ElementalReactionOperationExecutor implements CombatOperationExecut
     this.dependencies.delegate.end?.(step, context);
   }
 
-  evaluate(condition: CombatCondition, operationContext?: CombatOperationContext): boolean {
+  evaluate(condition: CompiledCondition, operationContext?: CombatOperationContext): boolean {
     if (condition.kind === 'elementalReactionActive') {
       return this.dependencies.container.isActive(
         condition.reaction,

@@ -1,4 +1,5 @@
-import type { CombatCondition } from '../../game-data/operatorDefinition';
+import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
+
 /**
  * 执行技能步骤中的普通时间膨胀动作，并按动作生命周期清理实例。
  * 曲线存储方式不决定作用范围；目标解析由整场战斗的装配根提供。
@@ -233,7 +234,7 @@ export class TimeDilationOperationExecutor implements CombatOperationExecutor {
     this.dependencies.delegate.end?.(step, context);
   }
 
-  evaluate(condition: CombatCondition, context?: CombatOperationContext): boolean {
+  evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     return context === undefined
       ? this.dependencies.delegate.evaluate(condition)
       : this.dependencies.delegate.evaluate(condition, context);

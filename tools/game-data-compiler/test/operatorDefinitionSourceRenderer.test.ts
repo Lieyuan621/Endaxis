@@ -10,12 +10,12 @@ import type {
   ComboSkillConditionDefinition,
   OperatorDefinition,
   OperatorPassiveSkillDefinition,
-} from '../../../packages/game-data-contract/src/operators.ts';
+} from '../../../packages/game-data-contract/src/index.ts';
 import type {
   AbilityEntityDefinition,
   SkillDefinition,
-} from '../../../packages/game-data-contract/src/skills.ts';
-import type { SkillBuffDefinition } from '../../../packages/game-data-contract/src/buffs.ts';
+} from '../../../packages/game-data-contract/src/index.ts';
+import type { SkillBuffDefinition } from '../../../packages/game-data-contract/src/index.ts';
 import {
   compileSkill,
   compileIndependentBuffResource,
@@ -40,8 +40,9 @@ function evaluate(source: string): Record<string, unknown> {
 const singleNodeGraph = (
   id: string,
   action: graph.ActionGraphStep,
+  dataNodes?: graph.ActionGraphDefinition['dataNodes'],
 ): graph.ActionGraphResourceDefinition => ({
-  main: { nodes: { [id]: { action, next: null } } },
+  main: { nodes: { [id]: { action, next: null } }, ...(dataNodes ? { dataNodes } : {}) },
   macros: {},
 });
 const entryOf = (id: string): graph.ActionGraphReference => ({ $sequence: id });
@@ -184,10 +185,14 @@ it('公共 Buff 生成的生命周期保留共享图引用，可直接进入正�
     shared: {
       stackingType: 'refresh',
       lifecycleSequences: { start: body, finish: body },
-      actionGraph: singleNodeGraph('hit', {
-        kind: 'dealStagger',
-        parameters: { value: { kind: 'blackboard', key: 'poise' } },
-      }),
+      actionGraph: singleNodeGraph(
+        'hit',
+        {
+          kind: 'dealStagger',
+          parameters: { value: { kind: 'valueNode', nodeId: 'poise' } },
+        },
+        { poise: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } } },
+      ),
     },
   });
   const exported = evaluate(source);
@@ -204,8 +209,8 @@ it('公共 Buff 生成的生命周期保留共享图引用，可直接进入正�
   expect(lifecycle.start!.graph).toBe(lifecycle.finish!.graph);
   expect(lifecycle.start!.entry).toBe(lifecycle.finish!.entry);
   expect(lifecycle.start!.callSite).not.toBe(lifecycle.finish!.callSite);
-  expect(rootActionSteps(lifecycle.start!)[0]!.parameters).toEqual({
-    value: { kind: 'blackboard', key: 'poise' },
+  expect(rootActionSteps(lifecycle.start!)[0]!.parameters).toMatchObject({
+    value: { kind: 'valueNode', node: { expression: { kind: 'blackboard', key: 'poise' } } },
   });
 });
 

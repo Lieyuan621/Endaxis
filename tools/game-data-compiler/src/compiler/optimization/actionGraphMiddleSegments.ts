@@ -5,7 +5,7 @@ import type {
   ActionGraphNode,
   ActionGraphReference,
   ActionGraphStep,
-} from '../../../../../packages/game-data-contract/src/actionGraph.ts';
+} from '../intermediateDefinitions.ts';
 
 const MIN_NODES = 8;
 const MAX_NODES = 64;

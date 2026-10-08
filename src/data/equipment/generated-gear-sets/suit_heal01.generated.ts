@@ -132,7 +132,7 @@ const definition = {
             conditional_2: {
               action: {
                 kind: 'conditional',
-                parameters: { condition: { kind: 'eventOverheal' } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
@@ -154,10 +154,18 @@ const definition = {
             conditional_4: {
               action: {
                 kind: 'conditional',
-                parameters: { condition: { kind: 'not', condition: { kind: 'eventOverheal' } } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 whenTrue: { $sequence: 'applyBuff_3' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: { type: 'boolean', expression: { kind: 'eventOverheal' } },
+            data_2: { type: 'boolean', expression: { kind: 'eventOverheal' } },
+            data_3: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_2' } },
             },
           },
         },

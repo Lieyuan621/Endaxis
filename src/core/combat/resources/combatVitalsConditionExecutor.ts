@@ -1,9 +1,10 @@
+import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 /**
  * 求值依赖实体生命账本的战斗条件，并把其他操作交给执行器链。
  * 调用方必须按目标身份提供同一场模拟中的 `CombatVitals`，不得用面板快照代替运行时生命。
  */
-import type { CombatCondition } from '../../game-data/operatorDefinition';
+
 import { resolveActionValueOperand } from '../actions/actionBlackboard';
 import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
 import type { CombatVitals } from './combatVitals';
@@ -12,7 +13,7 @@ import { compareCombatNumbers } from '../../mechanics/combatNumbers.ts';
 export interface CombatVitalsConditionDependencies {
   readonly resolveTarget: (
     target: Extract<
-      CombatCondition,
+      CompiledCondition,
       { kind: 'healthCompare' | 'poiseCompare' | 'targetStaggered' }
     >['target'],
     buffSourceId?: string,
@@ -36,7 +37,7 @@ export class CombatVitalsConditionExecutor implements CombatOperationExecutor {
     this.dependencies.delegate.end?.(step, context);
   }
 
-  evaluate(condition: CombatCondition, context?: CombatOperationContext): boolean {
+  evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     if (
       condition.kind !== 'healthCompare' &&
       condition.kind !== 'poiseCompare' &&
@@ -51,7 +52,7 @@ export class CombatVitalsConditionExecutor implements CombatOperationExecutor {
     const vitals =
       condition.kind === 'healthCompare' && condition.target === 'contextTarget'
         ? this.#resolveContextTarget(condition.contextKey, context)
-        : condition.kind === 'healthCompare' && condition.target === 'currentTarget'
+        : condition.target === 'currentTarget'
           ? this.#resolveCurrentTarget(context)
           : this.dependencies.resolveTarget(condition.target, context.buffSourceId);
     if (condition.kind === 'targetStaggered') return vitals.hasPoiseBrokenTag;
@@ -100,8 +101,10 @@ export class CombatVitalsConditionExecutor implements CombatOperationExecutor {
   }
 
   #resolveCurrentTarget(context: CombatOperationContext): CombatVitals {
+    if (context.currentTarget?.kind === 'enemy')
+      return this.dependencies.resolveTarget('enemy', context.buffSourceId);
     if (context.currentTarget?.kind !== 'operator') {
-      throw new Error("healthCompare target 'currentTarget' requires one current operator");
+      throw new Error('currentTarget requires an enemy or operator');
     }
     const resolve = this.dependencies.resolveContextTarget;
     if (resolve === undefined) throw new Error('current health target resolver is not configured');

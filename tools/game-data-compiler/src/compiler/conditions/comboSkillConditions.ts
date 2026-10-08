@@ -26,7 +26,7 @@ export function createOperatorComboActionProjectionContext(
 }
 
 export interface CompiledComboConditionSource {
-  readonly actionGraph: import('../../../../../packages/game-data-contract/src/actionGraph.ts').ActionGraphResourceDefinition;
+  readonly actionGraph: import('../intermediateDefinitions.ts').ActionGraphResourceDefinition;
   readonly source: ComboSkillConditionSource;
   readonly event: AbilityEvent;
   readonly sequence: CompiledBuffSequenceSource;

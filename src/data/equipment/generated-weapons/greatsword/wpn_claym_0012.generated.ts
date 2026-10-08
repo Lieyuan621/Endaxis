@@ -53,12 +53,16 @@ const definition = {
                 parameters: {
                   buffId: 'buff_wpn_claym_0012_up',
                   target: 'caster',
-                  blackboardAssignments: {
-                    heal_up: { kind: 'blackboard', key: 'install_0_heal_up' },
-                  },
+                  blackboardAssignments: { heal_up: { kind: 'valueNode', nodeId: 'data_1' } },
                 },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'number',
+              expression: { kind: 'blackboard', key: 'install_0_heal_up' },
             },
           },
         },
@@ -108,11 +112,7 @@ const definition = {
       healModifiers: [
         {
           enabledSide: 'healer',
-          condition: {
-            kind: 'healTagsMatch',
-            match: 'hasAny',
-            tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
-          },
+          condition: { $sequence: 'conditional_1' },
           processors: [
             {
               kind: 'modifyHealingIncrease',
@@ -123,7 +123,31 @@ const definition = {
           ],
         },
       ],
-      actionGraph: { main: { nodes: {} }, macros: {} },
+      actionGraph: {
+        main: {
+          nodes: {
+            conditional_1: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+                whenTrue: { $sequence: null },
+              },
+              next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventHealTagsMatch',
+                match: 'hasAny',
+                tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
+              },
+            },
+          },
+        },
+        macros: {},
+      },
     },
   },
 } as const satisfies WeaponDefinition;

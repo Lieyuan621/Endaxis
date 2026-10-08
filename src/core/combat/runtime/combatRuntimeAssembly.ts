@@ -1,3 +1,4 @@
+import type { CompiledStepParameters } from '../../compiler/compiledGraphData.ts';
 import { isEmptyActionProgram } from '../../compiler/actionProgramInspection';
 import { hasUnmodeledIncomingAttackTrigger } from '../skills/comboConditionCheckability';
 import { bindProjectileCallbackLifecycle } from '../abilities/projectileCallbackRuntime';
@@ -49,7 +50,6 @@ import {
 } from '../../game-data/logicalAbilityEntity';
 import type { BuffReference } from '../state/foundationState';
 import type {
-  CombatStepParameters,
   CombatTarget,
   DamageElement,
   GlobalCooldownTarget,
@@ -467,7 +467,7 @@ export interface CombatRuntimeEnvironmentOptions extends CombatRuntimeInputRules
   /** StoreAttributeValue 的动态来源属性读取端口；只有技能实际使用时才要求提供。 */
   readonly readSourceAttributeValue?: (
     sourceId: string,
-    request: CombatStepParameters['storeSourceAttributeValue'],
+    request: CompiledStepParameters['storeSourceAttributeValue'],
   ) => number;
   /** 必须先于养成初始化和常驻被动执行，使帧 0 行为拥有同一时钟、回执和资源账本。 */
   readonly bindBattleRuntime?: (
@@ -3774,7 +3774,7 @@ export class CombatRuntimeAssembly {
 
   #adjustSkillCooldowns(
     operatorId: string,
-    skill: import('../../game-data/operatorDefinition').CombatStepParameters['adjustSkillCooldown']['skill'],
+    skill: import('../../compiler/compiledGraphData').CompiledStepParameters['adjustSkillCooldown']['skill'],
     operation: 'reduce' | 'set',
     basis: 'baseDurationRatio' | 'absoluteFrames',
     value: number,

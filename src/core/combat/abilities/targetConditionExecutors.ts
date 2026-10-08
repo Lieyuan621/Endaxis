@@ -1,6 +1,7 @@
+import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
 /** 单敌人属性及本次输入提供的目标条件。 */
 import type { CombatOperationContext } from '../skills/skillRuntime';
-import type { CombatCondition } from '../../game-data/operatorDefinition';
+
 import type { EnemyRank } from '../../game-data/enemyRank';
 import type { CombatOperationExecutor } from '../skills/skillRuntime';
 import { resolveActionValueOperand } from '../actions/actionBlackboard';
@@ -19,7 +20,7 @@ export class EnemyRankConditionExecutor implements CombatOperationExecutor {
   end: NonNullable<CombatOperationExecutor['end']> = (step, context) =>
     this.delegate.end?.(step, context);
 
-  evaluate(condition: CombatCondition, context?: CombatOperationContext): boolean {
+  evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     if (condition.kind === 'enemyRankIn') return condition.ranks.includes(this.rank);
     return this.delegate.evaluate(condition, context);
   }
@@ -38,7 +39,7 @@ export class EnemySuperArmorConditionExecutor implements CombatOperationExecutor
   end: NonNullable<CombatOperationExecutor['end']> = (step, context) =>
     this.delegate.end?.(step, context);
 
-  evaluate(condition: CombatCondition, context?: CombatOperationContext): boolean {
+  evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     if (condition.kind !== 'enemySuperArmorCompare') {
       return this.delegate.evaluate(condition, context);
     }
@@ -67,7 +68,7 @@ export class CameraTargetAngleConditionExecutor implements CombatOperationExecut
   end: NonNullable<CombatOperationExecutor['end']> = (step, context) =>
     this.delegate.end?.(step, context);
 
-  evaluate(condition: CombatCondition, context?: CombatOperationContext): boolean {
+  evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     if (condition.kind !== 'cameraToTargetAngleCompare') {
       return this.delegate.evaluate(condition, context);
     }

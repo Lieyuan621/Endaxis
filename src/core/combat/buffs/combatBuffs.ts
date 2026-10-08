@@ -90,40 +90,33 @@ import {
   type AttributeModifierValues,
   type CombatAttributeSet,
 } from '../attributes/combatAttributes';
-import {
-  DamageModifier,
-  type DamageModifierConditionEvaluator,
-  type DamageModifierDefinition,
-} from '../damage/damageModifiers';
+import { DamageModifier } from '../damage/damageModifiers';
+import { type DamageModifierDefinition } from '../../../../packages/game-data-contract/src/modifiers';
 import type {
   DamageModifierSide,
   DamageProcessTiming,
   PlayerDamageContext,
 } from '../damage/playerDamageContext';
-import { applyPoiseModifier } from '../damage/poiseModifierExecution';
+import { PoiseModifier, type PoiseCalculationContext } from '../damage/poiseModifiers';
 import {
-  createPoiseModifier,
-  type PoiseCalculationContext,
   type PoiseModifierDefinition,
   type PoiseModifierSide,
   type PoiseProcessTiming,
-} from '../damage/poiseModifiers';
-import { applyHealModifier } from '../heal/healModifierExecution';
+} from '../../../../packages/game-data-contract/src/modifiers';
+import { HealModifier, type HealCalculationContext } from '../heal/healModifiers';
 import {
-  createHealModifier,
-  type HealCalculationContext,
   type HealModifierDefinition,
   type HealModifierSide,
   type HealProcessTiming,
-} from '../heal/healModifiers';
+} from '../../../../packages/game-data-contract/src/modifiers';
 import {
   createSharedSpGainModifier,
   type SharedSpGainModifierSet,
 } from '../resources/sharedSpGainModifiers';
 import type { CombatSkillCastInfo, DamageModifierState } from '../state/foundationState';
 import {
-  type HealModifier,
-  type PoiseModifier,
+  type HealModifier as HealModifierState,
+  type PoiseModifier as PoiseModifierState,
   type SharedSpGainAttribute,
   type SharedSpGainModifierOperation,
 } from '../state/foundationState';
@@ -133,7 +126,6 @@ import {
   type GameplayTagQueryType,
 } from '../tags/gameplayTags';
 import { advanceBuffTriggers } from './buffLifecycleExecution';
-import { resolveBuffModifierNumber } from './buffModifierNumberSource';
 
 const BUFF_LIFETIME_EPSILON = 0.00001;
 const BUFF_PRIORITY_EPSILON = 0.00001;
@@ -235,15 +227,29 @@ export interface CombatBuffDefinition<Key extends string> {
   readonly waitFirstTriggerInterval?: boolean;
   readonly maxTriggerCount?: BuffTriggerCount;
   readonly blackboard?: Readonly<Record<string, ActionBlackboardValue>>;
-  readonly damageModifiers?: readonly (DamageModifierDefinition & {
-    /** 装配层提供的已编译条件宿主；每个 Buff 实例独立创建，不进入游戏数据协议。 */
-    readonly createConditionProgram?: (
+  readonly damageModifiers?: readonly (Omit<DamageModifierDefinition, 'condition'> & {
+    readonly createCondition?: (
       buff: CombatBuff<Key>,
-    ) => import('../damage/damageModifiers').DamageModifierConditionProgram;
+      state?: import('../state/actionState').ActionSequenceState,
+    ) => import('../damage/damageModifiers').DamageModifierConditionRuntime;
+  })[];
+  readonly healModifiers?: readonly (Omit<HealModifierDefinition, 'condition'> & {
+    readonly createCondition?: (
+      buff: CombatBuff<Key>,
+      state?: import('../state/actionState').ActionSequenceState,
+    ) => import('../actions/modifierConditionRuntime').ModifierConditionRuntime<
+      import('../heal/healModifiers').HealModifierConditionInput
+    >;
+  })[];
+  readonly poiseModifiers?: readonly (Omit<PoiseModifierDefinition, 'condition'> & {
+    readonly createCondition?: (
+      buff: CombatBuff<Key>,
+      state?: import('../state/actionState').ActionSequenceState,
+    ) => import('../actions/modifierConditionRuntime').ModifierConditionRuntime<
+      import('../damage/poiseModifiers').PoiseModifierConditionInput
+    >;
   })[];
   readonly keywordEnhancements?: readonly BuffKeywordEnhancementDefinition[];
-  readonly healModifiers?: readonly HealModifierDefinition[];
-  readonly poiseModifiers?: readonly PoiseModifierDefinition[];
   readonly attributeModifiers?: readonly BuffAttributeModifierDefinition<Key>[];
   /**
    * 共享 SP 修正属于战斗级状态，但其注册生命周期归当前 Buff 实例所有。
@@ -366,12 +372,9 @@ export class CombatBuff<Key extends string> {
     this.#childBindings.clear();
   }
   readonly damageModifiers: readonly DamageModifier[];
-  get healModifiers(): readonly HealModifier[] {
-    return this.#state.healModifiers;
-  }
-  get poiseModifiers(): readonly PoiseModifier[] {
-    return this.#state.poiseModifiers;
-  }
+  readonly healModifiers: readonly HealModifier[];
+  readonly poiseModifiers: readonly PoiseModifier[];
+
   readonly blackboard: ActionBlackboard;
   get priority(): number {
     return this.#state.priority;
@@ -461,11 +464,33 @@ export class CombatBuff<Key extends string> {
             owner.ownerId,
             modifier,
             restoredState.damageModifiers[index]!.numberSource,
-            restoredState.damageModifiers[index]!.sourceSkillCastId,
-            modifier.createConditionProgram?.(this),
+            modifier.createCondition?.(
+              this,
+              restoredState.damageModifiers[index]!.condition ?? undefined,
+            ),
             restoredState.damageModifiers[index],
           ),
       );
+      this.healModifiers = (definition.healModifiers ?? []).map((modifier, index) => {
+        const saved = restoredState.healModifiers[index]!;
+        return new HealModifier(
+          owner.ownerId,
+          modifier,
+          saved.numberSource,
+          modifier.createCondition?.(this, saved.condition ?? undefined),
+          saved,
+        );
+      });
+      this.poiseModifiers = (definition.poiseModifiers ?? []).map((modifier, index) => {
+        const saved = restoredState.poiseModifiers[index]!;
+        return new PoiseModifier(
+          owner.ownerId,
+          modifier,
+          saved.numberSource,
+          modifier.createCondition?.(this, saved.condition ?? undefined),
+          saved,
+        );
+      });
       this.#duringEnableAction = definition.actions?.duringEnable?.createRuntimeInstance() ?? null;
       const shieldDefinitions = definition.shields ?? [];
       if (shieldDefinitions.length !== restoredState.shields.length) {
@@ -559,23 +584,30 @@ export class CombatBuff<Key extends string> {
           owner.ownerId,
           modifier,
           { buffId: definition.id, blackboard: this.#state.blackboard },
-          this.skillCastInfo?.skillCastId ?? null,
-          modifier.createConditionProgram?.(this),
+          modifier.createCondition?.(this),
         ),
     );
     this.#state.damageModifiers = this.damageModifiers.map(modifier => modifier.runtimeState);
-    this.#state.healModifiers = (definition.healModifiers ?? []).map(modifier =>
-      createHealModifier(owner.ownerId, modifier, {
-        buffId: definition.id,
-        blackboard: this.#state.blackboard,
-      }),
+    this.healModifiers = (definition.healModifiers ?? []).map(
+      modifier =>
+        new HealModifier(
+          owner.ownerId,
+          modifier,
+          { buffId: definition.id, blackboard: this.#state.blackboard },
+          modifier.createCondition?.(this),
+        ),
     );
-    this.#state.poiseModifiers = (definition.poiseModifiers ?? []).map(modifier =>
-      createPoiseModifier(owner.ownerId, modifier, {
-        buffId: definition.id,
-        blackboard: this.#state.blackboard,
-      }),
+    this.#state.healModifiers = this.healModifiers.map(modifier => modifier.runtimeState);
+    this.poiseModifiers = (definition.poiseModifiers ?? []).map(
+      modifier =>
+        new PoiseModifier(
+          owner.ownerId,
+          modifier,
+          { buffId: definition.id, blackboard: this.#state.blackboard },
+          modifier.createCondition?.(this),
+        ),
     );
+    this.#state.poiseModifiers = this.poiseModifiers.map(modifier => modifier.runtimeState);
     this.#state.attributes.modifiers = this.createAttributeModifiers();
     this.#state.sharedSpGainModifiers = (definition.sharedSpGainModifiers ?? []).map(modifier =>
       createSharedSpGainModifier(
@@ -1189,6 +1221,8 @@ export class CombatBuffContainer<Key extends string> {
   get runtimeState(): BuffContainerState<Key> {
     return this.#state;
   }
+  readonly #healBindings = new WeakMap<HealModifierState, HealModifier>();
+  readonly #poiseBindings = new WeakMap<PoiseModifierState, PoiseModifier>();
   readonly #damageBindings = new WeakMap<DamageModifierState, DamageModifier>();
   readonly #stackingGroups = new Map<string, BuffStackingGroup<Key>>();
   readonly #shieldBindings = new WeakMap<BuffShieldState, CombatShield<Key>>();
@@ -1326,6 +1360,10 @@ export class CombatBuffContainer<Key extends string> {
         );
       }
       this.#memberBindings.set(instanceId, buff);
+      for (const modifier of buff.healModifiers)
+        this.#healBindings.set(modifier.runtimeState, modifier);
+      for (const modifier of buff.poiseModifiers)
+        this.#poiseBindings.set(modifier.runtimeState, modifier);
       for (const modifier of buff.damageModifiers)
         this.#damageBindings.set(modifier.runtimeState, modifier);
       for (const shield of buff.shields) this.#shieldBindings.set(shield.runtimeState, shield);
@@ -1345,6 +1383,14 @@ export class CombatBuffContainer<Key extends string> {
     for (const state of this.#state.damageModifiers) {
       if (this.#damageBindings.get(state) === undefined)
         throw new Error('restored active damage modifier has no Buff binding');
+    }
+    for (const state of this.#state.healModifiers) {
+      if (this.#healBindings.get(state) === undefined)
+        throw new Error('restored active heal modifier has no Buff binding');
+    }
+    for (const state of this.#state.poiseModifiers) {
+      if (this.#poiseBindings.get(state) === undefined)
+        throw new Error('restored active poise modifier has no Buff binding');
     }
     for (const state of this.#state.activeShields) {
       if (this.#shieldBindings.get(state) === undefined)
@@ -1858,12 +1904,11 @@ export class CombatBuffContainer<Key extends string> {
     timing: DamageProcessTiming,
     side: DamageModifierSide,
     context: PlayerDamageContext,
-    evaluateCondition?: DamageModifierConditionEvaluator,
   ): void {
     for (const state of this.#state.damageModifiers) {
       const modifier = this.#damageBindings.get(state);
       if (modifier === undefined) throw new Error('active damage modifier binding is missing');
-      modifier.apply(timing, side, context, evaluateCondition, (side, result) => {
+      modifier.apply(timing, side, context, (side, result) => {
         if (result.kind === 'damageScale' && result.addition === 0) return;
         // 修正器与所属 Buff 已有对象关系，按身份查询，不另建来源目录。
         const buff = [...this.#memberBindings.values()].find(buff =>
@@ -1925,15 +1970,11 @@ export class CombatBuffContainer<Key extends string> {
     side: HealModifierSide,
     context: HealCalculationContext,
   ): void {
-    for (const modifier of this.#state.healModifiers)
-      applyHealModifier(
-        modifier.ownerId,
-        modifier.definition,
-        value => resolveBuffModifierNumber(modifier.numberSource, value, 'heal'),
-        timing,
-        side,
-        context,
-      );
+    for (const saved of this.#state.healModifiers) {
+      const modifier = this.#healBindings.get(saved);
+      if (!modifier) throw new Error('active heal modifier binding is missing');
+      modifier.apply(timing, side, context);
+    }
   }
 
   applyPoiseModifiers(
@@ -1941,15 +1982,11 @@ export class CombatBuffContainer<Key extends string> {
     side: PoiseModifierSide,
     context: PoiseCalculationContext,
   ): void {
-    for (const modifier of this.#state.poiseModifiers)
-      applyPoiseModifier(
-        modifier.ownerId,
-        modifier.definition,
-        value => resolveBuffModifierNumber(modifier.numberSource, value, 'poise'),
-        timing,
-        side,
-        context,
-      );
+    for (const saved of this.#state.poiseModifiers) {
+      const modifier = this.#poiseBindings.get(saved);
+      if (!modifier) throw new Error('active poise modifier binding is missing');
+      modifier.apply(timing, side, context);
+    }
   }
 
   tick(deltaTime: number | BuffTickDeltas): void {
@@ -2006,23 +2043,29 @@ export class CombatBuffContainer<Key extends string> {
   }
 
   registerHealModifiers(modifiers: readonly HealModifier[]): void {
-    this.#state.healModifiers.push(...modifiers);
+    for (const modifier of modifiers) {
+      this.#healBindings.set(modifier.runtimeState, modifier);
+      this.#state.healModifiers.push(modifier.runtimeState);
+    }
   }
 
   unregisterHealModifiers(modifiers: readonly HealModifier[]): void {
     for (const modifier of modifiers) {
-      const index = this.#state.healModifiers.indexOf(modifier);
+      const index = this.#state.healModifiers.indexOf(modifier.runtimeState);
       if (index >= 0) this.#state.healModifiers.splice(index, 1);
     }
   }
 
   registerPoiseModifiers(modifiers: readonly PoiseModifier[]): void {
-    this.#state.poiseModifiers.push(...modifiers);
+    for (const modifier of modifiers) {
+      this.#poiseBindings.set(modifier.runtimeState, modifier);
+      this.#state.poiseModifiers.push(modifier.runtimeState);
+    }
   }
 
   unregisterPoiseModifiers(modifiers: readonly PoiseModifier[]): void {
     for (const modifier of modifiers) {
-      const index = this.#state.poiseModifiers.indexOf(modifier);
+      const index = this.#state.poiseModifiers.indexOf(modifier.runtimeState);
       if (index >= 0) this.#state.poiseModifiers.splice(index, 1);
     }
   }

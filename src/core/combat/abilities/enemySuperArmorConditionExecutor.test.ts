@@ -1,3 +1,4 @@
+import { numberInput } from '../../../test/compiledGraphInputs';
 import { describe, expect, it, vi } from 'vitest';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { EnemySuperArmorConditionExecutor } from './targetConditionExecutors';
@@ -16,7 +17,7 @@ describe('EnemySuperArmorConditionExecutor', () => {
         {
           kind: 'enemySuperArmorCompare',
           operator: 'greaterOrEqual',
-          value: { kind: 'blackboard', key: 'limit' },
+          value: numberInput({ kind: 'blackboard', key: 'limit' }),
         },
         { blackboard: new ActionBlackboard({ limit: 30 }) },
       ),

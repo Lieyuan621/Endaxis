@@ -65,15 +65,7 @@ const definition = {
             conditional_2: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'buffIdStackCompare',
-                    target: 'caster',
-                    buffIds: ['buff_wpn_funnel_0020_intensityup'],
-                    operator: 'greaterOrEqual',
-                    value: { kind: 'constant', value: 4 },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
@@ -109,16 +101,7 @@ const definition = {
             conditional_5: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'not',
-                    condition: {
-                      kind: 'timedMarkerPresent',
-                      target: 'caster',
-                      markerId: 'sk_wpn_funnel_0020',
-                    },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 whenTrue: { $sequence: 'applyBuff_4' },
               },
               next: null,
@@ -138,19 +121,47 @@ const definition = {
               action: {
                 kind: 'conditional',
                 parameters: {
-                  condition: {
-                    kind: 'buffIdStackCompare',
-                    target: 'caster',
-                    buffIds: ['buff_wpn_funnel_0020_intensityup'],
-                    operator: 'greaterOrEqual',
-                    value: { kind: 'constant', value: 4 },
-                  },
+                  condition: { kind: 'conditionNode', nodeId: 'data_4' },
                   alwaysNext: true,
                 },
                 whenTrue: { $sequence: null },
                 whenFalse: { $sequence: 'finishBuffsById_6' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: {
+                kind: 'buffIdStackCompare',
+                target: 'caster',
+                buffIds: ['buff_wpn_funnel_0020_intensityup'],
+                operator: 'greaterOrEqual',
+                value: { kind: 'constant', value: 4 },
+              },
+            },
+            data_2: {
+              type: 'boolean',
+              expression: {
+                kind: 'timedMarkerPresent',
+                target: 'caster',
+                markerId: 'sk_wpn_funnel_0020',
+              },
+            },
+            data_3: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+            },
+            data_4: {
+              type: 'boolean',
+              expression: {
+                kind: 'buffIdStackCompare',
+                target: 'caster',
+                buffIds: ['buff_wpn_funnel_0020_intensityup'],
+                operator: 'greaterOrEqual',
+                value: { kind: 'constant', value: 4 },
+              },
             },
           },
         },

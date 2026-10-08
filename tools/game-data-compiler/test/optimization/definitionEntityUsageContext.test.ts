@@ -1,3 +1,4 @@
+import { extractDefinitionDataNodes } from '../../src/compiler/extractGraphDataNodes.ts';
 import { skillFixture } from '../../../../src/test/skillFixture';
 /** 跨定义的实体黑板用途汇总；全部夹具为图形态，序列入口与节点表成对给出。 */
 import { describe, expect, it } from 'vitest';
@@ -5,11 +6,11 @@ import type {
   ActionGraphNode,
   ActionGraphReference,
   ActionGraphStep,
-} from '../../../../packages/game-data-contract/src/actionGraph.ts';
-import type { CombatStepForKind } from '../../../../packages/game-data-contract/src/actions.ts';
-import type { OperatorDefinition } from '../../../../packages/game-data-contract/src/operators.ts';
-import type { SkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
-import type { AbilityEntityDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
+} from '../../src/compiler/intermediateDefinitions.ts';
+import type { CombatStepForKind } from '../../src/compiler/intermediateDefinitions.ts';
+import type { OperatorDefinition } from '../../src/compiler/intermediateDefinitions.ts';
+import type { SkillDefinition } from '../../src/compiler/intermediateDefinitions.ts';
+import type { AbilityEntityDefinition } from '../../src/compiler/intermediateDefinitions.ts';
 import { compileGraphSequence } from '../support/graphSequence.ts';
 import { ActionBlackboardOperationExecutor } from '../../../../src/core/combat/actions/actionBlackboardOperationExecutor.ts';
 import { AbilityEntityOperationExecutor } from '../../../../src/core/combat/abilities/abilityEntityOperationExecutor.ts';
@@ -34,7 +35,7 @@ import {
   type GraphSharedEntityValueUsageInput,
 } from '../../src/compiler/optimization/graphValueOptimization.ts';
 import { pruneUnusedGraphSkillValues } from '../../src/compiler/optimization/graphValueOptimization.ts';
-import { optimizeOperatorDefinitionPrograms } from '../../src/compiler/optimization/definitionProgramOptimization.ts';
+import { finalizeOperatorDefinition } from '../../src/compiler/finalizeDefinitions.ts';
 
 const board = (key: string) => ({ kind: 'blackboard' as const, key });
 const childSkillRuntime = {
@@ -83,13 +84,19 @@ function skill(
   blackboard: SkillDefinition['blackboard'],
 ): SkillDefinition {
   const nodes: Record<string, ActionGraphNode> = {};
-  return skillFixture({
+  return {
+    ...skillFixture({
+      key: 'fixture',
+      timelineBlockFrames: 30,
+      scheduledSequences: [],
+      actionGraph: { main: { nodes: {} }, macros: {} },
+    }),
     key: 'fixture',
     timelineBlockFrames: 10,
     blackboard,
     scheduledSequences: [{ startFrame: 0, sequence: chain(nodes, 'main', steps) }],
     actionGraph: { main: { nodes }, macros: {} },
-  });
+  };
 }
 
 /** 子技能持有自己的图；模板不持有图。 */
@@ -783,17 +790,34 @@ describe('跨技能黑板用途', () => {
 
   it('Buff 属性以外的伤害条件、护盾和治疗也可能读宿主板', () => {
     const usage = analyzeGraphBuffDefinitionUsage({
+      actionGraph: {
+        main: {
+          nodes: {
+            guard: {
+              action: {
+                kind: 'conditional',
+                parameters: {
+                  condition: {
+                    kind: 'actionValueCompare',
+                    left: { kind: 'blackboard', key: 'gate' },
+                    operator: 'greater',
+                    right: { kind: 'constant', value: 0 },
+                  },
+                },
+                whenTrue: { $sequence: null },
+              },
+              next: null,
+            },
+          },
+        },
+        macros: {},
+      },
       stackingType: 'unlimited',
       durationSeconds: { blackboardKey: 'duration' },
       damageModifiers: [
         {
           enabledSide: 'attacker',
-          condition: {
-            kind: 'buffBlackboardCompare',
-            left: { blackboardKey: 'gate' },
-            right: 0,
-            operator: 'greater',
-          },
+          condition: { $sequence: 'guard' },
           processors: [
             {
               kind: 'instantAttribute',
@@ -834,7 +858,7 @@ describe('跨技能黑板用途', () => {
     expect(usage.reads).toEqual(new Set(['duration', 'gate', 'attack', 'healing', 'shield']));
   });
 
-  it('生成适配器仅在完整上下文下裁剪，report 和 off 返回原对象', () => {
+  it('生成适配器仅在完整上下文下裁剪，report 和 off 保留定义内容', () => {
     const value = skill([spawn('entity')], { value: 7, unused: 99 });
     const operator = fixtureOperator(value, {
       entity: {
@@ -844,13 +868,15 @@ describe('跨技能黑板用途', () => {
     });
     const usage = collectGraphSharedEntityValueUsage(input({ operators: [operator] }));
     expect(
-      optimizeOperatorDefinitionPrograms(operator, 'apply').report.skillValues[0]?.retainedReason,
+      finalizeOperatorDefinition(operator, 'apply').report.skillValues[0]?.retainedReason,
     ).toBe('unresolved-blackboard-access');
-    const result = optimizeOperatorDefinitionPrograms(operator, 'apply', usage);
+    const result = finalizeOperatorDefinition(operator, 'apply', usage);
     expect(result.report.skillValues[0]?.removedInitialKeys).toEqual(['unused']);
-    const report = optimizeOperatorDefinitionPrograms(operator, 'report', usage);
-    expect(report.operator).toBe(operator);
+    const report = finalizeOperatorDefinition(operator, 'report', usage);
+    expect(report.operator).toEqual(extractDefinitionDataNodes(operator));
     expect(report.report.skillValues).toEqual(result.report.skillValues);
-    expect(optimizeOperatorDefinitionPrograms(operator, 'off', usage).operator).toBe(operator);
+    expect(finalizeOperatorDefinition(operator, 'off', usage).operator).toEqual(
+      extractDefinitionDataNodes(operator),
+    );
   });
 });

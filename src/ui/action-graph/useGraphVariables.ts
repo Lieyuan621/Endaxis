@@ -3,11 +3,11 @@ import {
   globalBuffDraftContext,
   isGlobalBuffDefinitionPath,
 } from '../../application/editor/globalBuffFieldContext';
-import { createGraphDataResolver } from '../../core/action-graph/actionGraphData';
+import { graphDataExpression } from '../../core/action-graph/actionGraphData';
 import { assertFiniteFieldValue } from '../../core/editor/resolveDefinitionSchema';
-import { validMappingValue, validMappingSources } from '../field-editor/blackboardMapping';
+import { validNumericReadSource } from '../field-editor/blackboardMapping';
 import { computed } from 'vue';
-import { validStringOperandDraft } from '../field-editor/stringOperandDraft';
+import { validStringReadSource } from '../field-editor/stringOperandDraft';
 import type { ActionGraphDefinition } from '../../../packages/game-data-contract/src/actionGraph';
 import {
   analyzeGraphBlackboard,
@@ -124,20 +124,16 @@ export function useGraphVariables(context: {
     const input = targetInput(graph, owner, id, path);
     if (!input) throw new Error('数据输入不存在');
     // Open runtime boards still contain reliable incompatible/out-of-scope evidence.
-    // Unknown string sources remain permitted by the same inline operand policy.
+    // 字符串节点仍可读取运行时提供的外部变量。
     if (!board.closed && input.type !== 'string') return;
     assertFiniteFieldValue(graph);
-    const value = createGraphDataResolver(graph).node(source, input.type);
+    const value = graphDataExpression(graph, source, input.type);
     assertFiniteFieldValue(value);
     if (input.type === 'string') {
-      if (!validStringOperandDraft(value, undefined, undefined, board))
-        throw new Error('字符串读取不兼容其实际调用黑板。');
+      if (!validStringReadSource(value, board)) throw new Error('字符串读取不兼容其实际调用黑板。');
       return;
     }
-    if (
-      !validMappingValue(value, 'operand') ||
-      !validMappingSources([{ key: 'value', value }], undefined, 'operand', board)
-    )
+    if (!validNumericReadSource(value, board))
       throw new Error('GlobalBuff 数值读取不兼容其实际局部黑板。');
   }
   function resolve(identity: string) {

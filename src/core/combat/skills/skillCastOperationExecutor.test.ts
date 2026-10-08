@@ -1,3 +1,4 @@
+import { stringInput } from '../../../test/compiledGraphInputs';
 import { describe, expect, it, vi } from 'vitest';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 import { ActionBlackboard } from '../actions/actionBlackboard';
@@ -164,7 +165,7 @@ describe('SkillCastOperationExecutor', () => {
       {
         kind: 'castSkillDuringAction',
         parameters: {
-          skillId: { blackboardKey: 'dodgeSkillId' },
+          skillId: stringInput('dodgeSkillId'),
           target: 'enemy',
           skipApplyCost: true,
           inheritSourceSkillCastInfo: false,
@@ -193,7 +194,7 @@ describe('SkillCastOperationExecutor', () => {
         {
           kind: 'castSkillDuringAction',
           parameters: {
-            skillId: { blackboardKey: 'dodgeSkillId' },
+            skillId: stringInput('dodgeSkillId'),
             target: 'enemy',
             skipApplyCost: true,
             inheritSourceSkillCastInfo: false,

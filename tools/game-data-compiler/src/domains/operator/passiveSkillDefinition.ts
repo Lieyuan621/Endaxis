@@ -4,7 +4,7 @@ import type {
   OperatorEntityBlackboardInitializerDefinition,
   SkillLevelSource,
   UpgradeModifierDefinition,
-} from '../../../../../packages/game-data-contract/src/index.ts';
+} from '../../compiler/intermediateDefinitions.ts';
 import type { CompiledPassiveSkillDefinitionSource } from '../../compiler/skills/passiveSkillBatch.ts';
 import type { PassiveSkillCompileRequestSource } from '../../compiler/skills/passiveSkillRequest.ts';
 import {

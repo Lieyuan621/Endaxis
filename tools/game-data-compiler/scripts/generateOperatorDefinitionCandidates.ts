@@ -6,8 +6,11 @@ import {
   type RenderedDefinitionFileSource,
 } from '../src/compiler/publication/writeGeneratedDefinitionFiles.ts';
 import { requireArray, requireNonEmptyString, requireRecord } from '../src/source/primitives.ts';
-import { planOperatorDefinition, renderOperatorDefinitionFiles } from './planOperatorDefinition.ts';
-import { optimizeOperatorDefinitionPrograms } from '../src/compiler/optimization/definitionProgramOptimization.ts';
+import {
+  projectOperatorDefinition,
+  renderOperatorDefinitionFiles,
+} from './planOperatorDefinition.ts';
+import { finalizeOperatorDefinition } from '../src/compiler/finalizeDefinitions.ts';
 import {
   createGraphSharedEntityValueUsageCollector,
   type GraphSharedEntityValueUsage,
@@ -18,7 +21,7 @@ import {
   renderCollectedCommonBuffDefinitions,
 } from './generateCommonBuffDefinitions.ts';
 
-type PlanArguments = Parameters<typeof planOperatorDefinition>[0];
+type PlanArguments = Parameters<typeof projectOperatorDefinition>[0];
 
 export interface OperatorDefinitionCandidateArguments extends Omit<
   PlanArguments,
@@ -113,17 +116,16 @@ export async function renderOperatorDefinitionBatch(
   const summaries = [];
   const prepared: {
     readonly slug: string;
-    readonly operator: ReturnType<typeof planOperatorDefinition>['operator'];
+    readonly operator: ReturnType<typeof projectOperatorDefinition>['operator'];
     readonly audit: string;
   }[] = [];
   const commonBuffs = args.includeCommonBuffs ? createCommonBuffCollector() : undefined;
   for (const slug of slugs) {
-    const plan = planOperatorDefinition({
+    const plan = projectOperatorDefinition({
       ...args,
       sources,
       slug,
       // 全部消费者收齐后再优化，只保留最终定义和审计文本，不保留原始动作图等完整计划。
-      optimization: 'off',
       // 单技能规划仍用这两个路径生成稳定相对文件名；整批成功后由调用方选择写入目标。
       output: args.outputRoot,
       auditOutput: `${args.auditRoot}/${slug}`,
@@ -155,7 +157,7 @@ export async function renderOperatorDefinitionBatch(
   while (prepared.length > 0) {
     const item = prepared.shift()!;
     if (args.selectedSlug !== undefined && item.slug !== args.selectedSlug) continue;
-    const optimized = optimizeOperatorDefinitionPrograms(
+    const optimized = finalizeOperatorDefinition(
       item.operator,
       args.optimization ?? 'apply',
       sharedEntityUsage,

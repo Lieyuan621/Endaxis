@@ -1,6 +1,8 @@
+import { valueInputExpression, valueInputBlackboardKey } from '../../compiler/compiledGraphData';
+import type { CompiledValueInput } from '../../compiler/compiledGraphData.ts';
 /** 黑板的读取、赋值与子作用域创建。只操作传入数据，不持有运行实例或隐藏缓存。 */
 import type { ActionBlackboardValue } from '../../../../packages/game-data-contract/src/primitives.ts';
-import type { ActionValueOperand } from '../../game-data/operatorDefinition';
+
 import { createActionBlackboardState, type ActionBlackboardState } from '../state/foundationState';
 
 export function readActionBlackboard(
@@ -54,7 +56,7 @@ export function assignDynamicBlackboardUnconditionally(
 }
 
 export function resolveBlackboardOperand(
-  operand: ActionValueOperand,
+  operand: CompiledValueInput,
   state: ActionBlackboardState,
 ): number {
   return resolveActionOperand(operand, key => readActionBlackboard(state, key));
@@ -62,18 +64,18 @@ export function resolveBlackboardOperand(
 
 /** 共用的缺键与回退规则；读取端口只在本次解析中使用。 */
 export function resolveActionOperand(
-  operand: ActionValueOperand,
+  operand: CompiledValueInput,
   read: (key: string) => ActionBlackboardValue | undefined,
 ): number {
-  if (operand.kind === 'constant') return operand.value;
-  if (operand.kind === 'valueNode') throw new Error(`unbound data node '${operand.nodeId}'`);
+  const expression = valueInputExpression(operand);
+  if (expression.kind === 'constant') return expression.value;
   // 参数操作数由宏调用宿主在消费前代入；到达这里说明定义越过了校验。
-  if (operand.kind === 'parameter')
-    throw new Error(`macro parameter '${operand.parameter}' outside a macro call host`);
-  const value = read(operand.key);
+  if (expression.kind === 'parameter')
+    throw new Error(`macro parameter '${expression.parameter}' outside a macro call host`);
+  const value = read(expression.key);
   if (typeof value === 'number') return value;
-  if (operand.fallback !== undefined) return operand.fallback;
-  throw new Error(`action blackboard value '${operand.key}' is missing`);
+  if (expression.fallback !== undefined) return expression.fallback;
+  throw new Error(`action blackboard value '${expression.key}' is missing`);
 }
 
 export function createLocalBlackboardState(
@@ -81,8 +83,8 @@ export function createLocalBlackboardState(
   initialValues: Readonly<Record<string, ActionBlackboardValue>>,
   inheritDirect: boolean,
   entityInitialValues?: Readonly<Record<string, ActionBlackboardValue>>,
-  entityAssignments?: Readonly<Record<string, ActionValueOperand>>,
-  resolveOperand: (operand: ActionValueOperand) => number = operand =>
+  entityAssignments?: Readonly<Record<string, CompiledValueInput>>,
+  resolveOperand: (operand: CompiledValueInput) => number = operand =>
     resolveBlackboardOperand(operand, parent),
 ): ActionBlackboardState {
   const assigned =
@@ -103,11 +105,12 @@ export function createLocalBlackboardState(
     result.valueCalculations = new Map(parent.valueCalculations);
   if (assigned && result.entity) {
     for (const [key, operand] of Object.entries(entityAssignments ?? {})) {
-      if (operand.kind !== 'blackboard') continue;
-      const source = parent.values.has(operand.key) ? parent : parent.entity;
-      const factor = source?.artsIntensityFactors?.get(operand.key);
+      const sourceKey = valueInputBlackboardKey(operand);
+      if (sourceKey === undefined) continue;
+      const source = parent.values.has(sourceKey) ? parent : parent.entity;
+      const factor = source?.artsIntensityFactors?.get(sourceKey);
       if (factor !== undefined) (result.entity.artsIntensityFactors ??= new Map()).set(key, factor);
-      const calculation = source?.valueCalculations?.get(operand.key);
+      const calculation = source?.valueCalculations?.get(sourceKey);
       if (calculation !== undefined)
         (result.entity.valueCalculations ??= new Map()).set(key, calculation);
     }

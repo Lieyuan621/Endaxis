@@ -1,9 +1,11 @@
-import type { ActionStringOperand } from '../../../../packages/game-data-contract/src/primitives';
+import { stringInputExpression } from '../../compiler/compiledGraphData';
+import type { CompiledStringInput, CompiledCondition } from '../../compiler/compiledGraphData.ts';
+
 import type {
   ResolvedCombatOperationStep,
   ResolvedCombatStepForKind,
 } from '../../compiler/combatProgram';
-import type { CombatCondition } from '../../game-data/operatorDefinition';
+
 import type { CombatSkillCastInfo } from '../state/foundationState';
 import type { CombatOperationContext, CombatOperationExecutor } from './skillRuntime';
 import { operationProducer } from '../receipt/combatObjectIdentity';
@@ -42,7 +44,7 @@ export class SkillCastOperationExecutor implements CombatOperationExecutor {
     this.dependencies.delegate.end?.(step, context);
   }
 
-  evaluate(condition: CombatCondition, context?: CombatOperationContext): boolean {
+  evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     return this.dependencies.delegate.evaluate(condition, context);
   }
 
@@ -86,14 +88,14 @@ export class SkillCastOperationExecutor implements CombatOperationExecutor {
 }
 
 function resolveNativeSkillId(
-  operand: ActionStringOperand,
+  operand: CompiledStringInput,
   context: CombatOperationContext | undefined,
 ): string {
-  if (typeof operand === 'string') return operand;
-  if ('kind' in operand) throw new Error(`unbound string data node: ${operand.nodeId}`);
-  const value = context?.blackboard.getString(operand.blackboardKey);
+  const expression = stringInputExpression(operand);
+  if (typeof expression === 'string') return expression;
+  const value = context?.blackboard.getString(expression.blackboardKey);
   if (value === undefined || value.length === 0) {
-    throw new Error(`deferred skill id blackboard '${operand.blackboardKey}' is missing`);
+    throw new Error(`deferred skill id blackboard '${expression.blackboardKey}' is missing`);
   }
   return value;
 }

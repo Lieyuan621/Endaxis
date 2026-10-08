@@ -1,3 +1,4 @@
+import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
 import { rootActionSteps } from '../../compiler/actionProgramInspection';
 /**
  * 在启动模拟前检查编译产物是否完全落在标准玩家生命伤害环境的能力边界内。
@@ -8,7 +9,7 @@ import type {
   ResolvedActionSequence,
   ResolvedSkillBuffDefinition,
 } from '../../compiler/combatProgram';
-import type { CombatCondition } from '../../game-data/operatorDefinition';
+
 import type { ScheduledSkillInput } from '../state/environmentState';
 import type { CombatOperatorProgram } from './combatRuntimeAssembly';
 
@@ -75,12 +76,15 @@ function report(
 }
 
 function inspectCondition(
-  condition: CombatCondition,
+  condition: CompiledCondition,
   path: string,
   collect: IssueCollector,
   flags: CompatibilityFlags,
 ): void {
   switch (condition.kind) {
+    case 'conditionNode':
+      inspectCondition(condition.node.expression, path, collect, flags);
+      return;
     case 'constant':
     case 'combatActive':
     case 'singleEnemyPresent':
@@ -582,17 +586,18 @@ function inspectBuffDefinition(
       source,
     ),
   );
-  definition.damageModifiers?.forEach((modifier, index) => {
-    if (modifier.conditionProgram !== undefined) {
-      inspectSequence(
-        modifier.conditionProgram,
-        `${path}.damageModifiers[${index}].conditionProgram`,
-        collect,
-        flags,
-        source,
-      );
-    }
-  });
+  for (const kind of ['damageModifiers', 'healModifiers', 'poiseModifiers'] as const) {
+    definition[kind]?.forEach((modifier, index) => {
+      if (modifier.condition !== undefined)
+        inspectSequence(
+          modifier.condition,
+          `${path}.${kind}[${index}].condition`,
+          collect,
+          flags,
+          source,
+        );
+    });
+  }
 }
 
 function inspectProgram(

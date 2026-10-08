@@ -207,13 +207,14 @@ it('a declared string target constrains an unknown runtime key without granting 
           kind: 'applyBuff',
           parameters: {
             target: 'caster',
-            buffId: { blackboardKey: 'providedAtRuntime' },
+            buffId: { kind: 'stringNode', nodeId: 'buffId' },
             count: { kind: 'constant', value: 1 },
           },
         },
         next: null,
       },
     },
+    dataNodes: { buffId: { type: 'string', expression: { blackboardKey: 'providedAtRuntime' } } },
   };
   const variables = useGraphVariables({
     graph: () => graph,

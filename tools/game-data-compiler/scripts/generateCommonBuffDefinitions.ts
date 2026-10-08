@@ -19,9 +19,9 @@ import { OperatorPlanningSources } from './operatorPlanningSources.ts';
 import { compileStandardStumpBuffClosure } from '../src/compiler/buffs/standardStumpBuffClosure.ts';
 import { GameplayTagRegistry } from '../src/source/nativeGameplayTags.ts';
 import { readGameplayTagPaths } from './generateOperatorActiveSkillRuntime.ts';
-import type { OperatorBuffDefinitions } from '../../../packages/game-data-contract/src/buffs.ts';
+import type { OperatorBuffDefinitions } from '../src/compiler/intermediateDefinitions.ts';
 import type { DefinitionOptimizationMode } from '../src/compiler/optimization/definitionOptimization.ts';
-import { optimizeCommonBuffDefinitions } from '../src/compiler/optimization/equipmentDefinitionOptimization.ts';
+import { finalizeCommonBuffDefinitions } from '../src/compiler/finalizeDefinitions.ts';
 import { readGeneratedTimeDilationPriorities } from '../src/compiler/catalogs/generatedTimeDilationCatalog.ts';
 
 interface Arguments {
@@ -139,7 +139,7 @@ export async function renderCollectedCommonBuffDefinitions(
   const blocked = systemClosure.diagnostics.filter(item => item.status === 'blocked');
   if (blocked.length) throw new Error(`system Buff roots are blocked: ${JSON.stringify(blocked)}`);
   collector.add('<system>', systemClosure.definitions);
-  const optimized = optimizeCommonBuffDefinitions(
+  const optimized = finalizeCommonBuffDefinitions(
     collector.definitions,
     args.optimization ?? 'apply',
   );

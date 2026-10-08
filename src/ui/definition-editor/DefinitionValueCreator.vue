@@ -2,11 +2,9 @@
 import { writeNodeField } from '../action-graph/nodeFieldValues';
 import { globalBuffBlackboardContext } from '../../application/editor/globalBuffFieldContext';
 import { blackboardFieldContextKey } from '../field-editor/blackboardFieldContext';
-import { isInlineCombatCondition } from '../../core/editor/inlineCombatCondition';
 import { useBlackboardFieldContext } from '../field-editor/blackboardFieldContext';
 import { structuredFieldContextKey } from '../field-editor/structuredFieldContext';
 import { validateStructuredValue } from '../field-editor/structuredValue';
-import { inlineConditionDraftKey } from '../field-editor/inlineConditionContext';
 import { auditDefinitionSchema } from '../../core/editor/auditDefinitionSchema';
 import { useSchemaReferences } from './schemaReferenceContext';
 import { resolveDefinitionSchema } from '../../core/editor/resolveDefinitionSchema';
@@ -68,7 +66,6 @@ const value = shallowRef<unknown>(
       )
     : undefined,
 );
-const inlineDraft = inject(inlineConditionDraftKey, undefined);
 const blackboard = useBlackboardFieldContext();
 const structuredContext =
   inheritedStructuredContext &&
@@ -104,11 +101,6 @@ if (structuredContext) {
     }),
   );
 }
-if (inlineDraft)
-  provide(
-    inlineConditionDraftKey,
-    computed(() => value.value),
-  );
 watch(
   () => props.schema,
   () => {
@@ -122,26 +114,17 @@ watch(
       : undefined;
   },
 );
-const completionSchema = computed(() =>
-  selected.value && schema.value && isInlineCombatCondition(schema.value)
-    ? {
-        ...selected.value,
-        inlineCondition: schema.value.inlineCondition,
-        semantics: schema.value.semantics,
-      }
-    : selected.value,
-);
 const complete = computed(() => {
   const graphOperands = structuredContext?.value.graphOperands;
   if (
     (graphOperands ||
       structuredContext?.value.graphBoundaries ||
       structuredContext?.value.ownedResources) &&
-    completionSchema.value
+    selected.value
   ) {
     try {
       validateStructuredValue(
-        { ...completionSchema.value, references: references.value },
+        { ...selected.value, references: references.value },
         undefined,
         value.value,
         {
@@ -162,21 +145,21 @@ const complete = computed(() => {
     }
   }
   return (
-    completionSchema.value &&
+    selected.value &&
     isCompleteDefinitionValue(
-      completionSchema.value,
+      selected.value,
       value.value,
       props.editingContext,
       references.value,
     ) &&
     validReferenceDraft(
-      completionSchema.value,
+      selected.value,
       value.value,
       props.referenceChoices,
       props.referenceKind,
       undefined,
       undefined,
-      inlineDraft ? blackboard.value : undefined,
+      undefined,
       curveCatalog.value,
       references.value,
     )

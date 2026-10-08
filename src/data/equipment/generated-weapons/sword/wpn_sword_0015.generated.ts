@@ -80,16 +80,7 @@ const definition = {
             conditional_3: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'not',
-                    condition: {
-                      kind: 'timedMarkerPresent',
-                      target: 'caster',
-                      markerId: 'sk_wpn_sword_0015',
-                    },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                 whenTrue: { $sequence: 'applyBuff_2' },
               },
               next: null,
@@ -97,9 +88,7 @@ const definition = {
             conditional_4: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: { kind: 'eventPhysicalInflictionTypeIn', types: ['airborne'] },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 whenTrue: { $sequence: 'conditional_3' },
               },
               next: null,
@@ -123,8 +112,8 @@ const definition = {
                 parameters: {
                   key: 'phy_dmg',
                   operation: 'multiply',
-                  left: { kind: 'blackboard', key: 'phy_dmg_up' },
-                  right: { kind: 'blackboard', key: 'count' },
+                  left: { kind: 'valueNode', nodeId: 'data_4' },
+                  right: { kind: 'valueNode', nodeId: 'data_5' },
                 },
               },
               next: 'applyBuff_5',
@@ -143,10 +132,34 @@ const definition = {
             conditional_8: {
               action: {
                 kind: 'conditional',
-                parameters: { condition: { kind: 'eventSkillTypeIn', skillTypes: ['ultimate'] } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
                 whenTrue: { $sequence: 'readBuffStackCount_7' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: {
+                kind: 'timedMarkerPresent',
+                target: 'caster',
+                markerId: 'sk_wpn_sword_0015',
+              },
+            },
+            data_2: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+            },
+            data_3: {
+              type: 'boolean',
+              expression: { kind: 'eventPhysicalInflictionTypeIn', types: ['airborne'] },
+            },
+            data_4: { type: 'number', expression: { kind: 'blackboard', key: 'phy_dmg_up' } },
+            data_5: { type: 'number', expression: { kind: 'blackboard', key: 'count' } },
+            data_6: {
+              type: 'boolean',
+              expression: { kind: 'eventSkillTypeIn', skillTypes: ['ultimate'] },
             },
           },
         },

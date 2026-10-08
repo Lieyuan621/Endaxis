@@ -1607,7 +1607,31 @@ const snowshineBuff6: SkillBuffDefinition = {
 };
 
 const snowshineBuff7ActionGraph = {
-  main: { nodes: {} },
+  main: {
+    nodes: {
+      conditional_1: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          whenTrue: { $sequence: null },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'rate' } },
+      data_2: {
+        type: 'boolean',
+        expression: {
+          kind: 'healthCompare',
+          target: 'currentTarget',
+          valueType: 'ratio',
+          operator: 'lessOrEqual',
+          value: { kind: 'valueNode', nodeId: 'data_1' },
+        },
+      },
+    },
+  },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
@@ -1622,12 +1646,7 @@ const snowshineBuff7: SkillBuffDefinition = {
   healModifiers: [
     {
       enabledSide: 'healer',
-      condition: {
-        kind: 'targetHealthCompare',
-        valueType: 'ratio',
-        operator: 'lessOrEqual',
-        value: { blackboardKey: 'rate' },
-      },
+      condition: { $sequence: 'conditional_1' },
       processors: [
         {
           kind: 'modifyCalculationResult',
@@ -1979,7 +1998,7 @@ export const snowshine: OperatorDefinition = {
                   kind: 'applyBuff',
                   parameters: {
                     buffId: 'buff_chr_0014_aurora_combo_skill_heal',
-                    target: 'partyExceptCaster',
+                    target: 'party',
                     finishByAction: true,
                     inheritSourceSkillCastInfo: true,
                     blackboardAssignments: {
@@ -1995,7 +2014,7 @@ export const snowshine: OperatorDefinition = {
                   kind: 'applyBuff',
                   parameters: {
                     buffId: 'buff_chr_0014_aurora_combo_skill_heal_loop',
-                    target: 'partyExceptCaster',
+                    target: 'party',
                     finishByAction: true,
                     inheritSourceSkillCastInfo: true,
                     blackboardAssignments: {

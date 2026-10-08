@@ -66,9 +66,7 @@ const definition = {
             conditional_2: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: { kind: 'eventSpGainMatch', sources: ['skill'], gainKinds: ['gain'] },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
@@ -89,7 +87,7 @@ const definition = {
             conditional_4: {
               action: {
                 kind: 'conditional',
-                parameters: { condition: { kind: 'eventInflictionElementIn', elements: ['heat'] } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                 whenTrue: { $sequence: 'applyBuff_3' },
               },
               next: null,
@@ -97,15 +95,27 @@ const definition = {
             conditional_5: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'originSkillTypeIn',
-                    skillTypes: ['battleSkill', 'comboSkill', 'ultimate'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 whenTrue: { $sequence: 'conditional_4' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: { kind: 'eventSpGainMatch', sources: ['skill'], gainKinds: ['gain'] },
+            },
+            data_2: {
+              type: 'boolean',
+              expression: { kind: 'eventInflictionElementIn', elements: ['heat'] },
+            },
+            data_3: {
+              type: 'boolean',
+              expression: {
+                kind: 'originSkillTypeIn',
+                skillTypes: ['battleSkill', 'comboSkill', 'ultimate'],
+              },
             },
           },
         },

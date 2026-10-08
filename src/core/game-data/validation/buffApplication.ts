@@ -287,29 +287,20 @@ export function validateBuffDefinition(
         actionGraph,
         ...runtimeDefinition
       } = definition;
-      const runtimeDamageModifiers = Array.isArray(runtimeDefinition.damageModifiers)
-        ? runtimeDefinition.damageModifiers.map((value, index) => {
-            const modifierPath = `${path}.damageModifiers[${index}]`;
-            const modifier = asRecord(value, modifierPath, out);
-            if (modifier === null || modifier.conditionProgram === undefined) return value;
-            if (modifier.condition !== undefined) {
-              out.push({
-                path: modifierPath,
-                message: 'cannot define both condition and conditionProgram',
-              });
-            }
-            sequences.action(modifier.conditionProgram, `${modifierPath}.conditionProgram`, out);
-            const { conditionProgram: _, ...staticModifier } = modifier;
-            return staticModifier;
-          })
-        : runtimeDefinition.damageModifiers;
+      for (const kind of ['damageModifiers', 'healModifiers', 'poiseModifiers'] as const) {
+        const modifiers = runtimeDefinition[kind];
+        if (!Array.isArray(modifiers)) continue;
+        modifiers.forEach((value, index) => {
+          const modifierPath = `${path}.${kind}[${index}]`;
+          const modifier = asRecord(value, modifierPath, out);
+          if (modifier?.condition !== undefined)
+            sequences.action(modifier.condition, `${modifierPath}.condition`, out);
+        });
+      }
       parseCombatBuffDefinitionEntry(
         {
           id: buffId,
           ...runtimeDefinition,
-          ...(runtimeDamageModifiers === undefined
-            ? {}
-            : { damageModifiers: runtimeDamageModifiers }),
           ...(typeof maxStackCount === 'number' ? { maxStackCount } : {}),
         },
         `${path}`,

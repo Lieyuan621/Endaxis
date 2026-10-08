@@ -95,6 +95,7 @@ const children = computed(() =>
           root
           :expand-depth="2"
           @change="(path, value) => emit('change', path, value)"
+          @open-graph="emit('graph')"
         />
       </div>
     </section>

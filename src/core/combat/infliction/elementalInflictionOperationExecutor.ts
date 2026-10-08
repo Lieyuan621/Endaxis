@@ -1,5 +1,6 @@
+import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
-import type { CombatCondition } from '../../game-data/operatorDefinition';
+
 /**
  * 元素附着步骤与目标 Buff 容器、关卡事件之间的装配点。
  * 必须在操作序列给定的位置同步执行，不能由投影层根据伤害结果事后补算。
@@ -199,7 +200,7 @@ export class ElementalInflictionOperationExecutor implements CombatOperationExec
     this.dependencies.delegate.end?.(step, context);
   }
 
-  evaluate(condition: CombatCondition, context?: CombatOperationContext): boolean {
+  evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     return context === undefined
       ? this.dependencies.delegate.evaluate(condition)
       : this.dependencies.delegate.evaluate(condition, context);

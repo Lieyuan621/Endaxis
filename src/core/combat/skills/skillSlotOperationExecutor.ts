@@ -1,4 +1,5 @@
-import type { CombatCondition } from '../../game-data/operatorDefinition';
+import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
+
 import type { CombatOperationContext } from './skillRuntime';
 /** 切换原生技能槽后续选择的技能；当前释放已经持有的 SkillRuntime 引用不会改变。 */
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
@@ -143,7 +144,7 @@ export class SkillSlotOperationExecutor implements CombatOperationExecutor {
     this.options.delegate.end?.(step, context);
   }
 
-  evaluate(condition: CombatCondition, context?: CombatOperationContext): boolean {
+  evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     return context === undefined
       ? this.options.delegate.evaluate(condition)
       : this.options.delegate.evaluate(condition, context);

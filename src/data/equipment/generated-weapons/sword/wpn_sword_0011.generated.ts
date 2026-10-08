@@ -47,12 +47,19 @@ const definition = {
                   buffId: 'buff_wpn_sword_0011',
                   target: 'caster',
                   blackboardAssignments: {
-                    dmg_up: { kind: 'blackboard', key: 'install_0_dmg_up' },
-                    phy_dmg_up: { kind: 'blackboard', key: 'install_0_phy_dmg_up' },
+                    dmg_up: { kind: 'valueNode', nodeId: 'data_1' },
+                    phy_dmg_up: { kind: 'valueNode', nodeId: 'data_2' },
                   },
                 },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'install_0_dmg_up' } },
+            data_2: {
+              type: 'number',
+              expression: { kind: 'blackboard', key: 'install_0_phy_dmg_up' },
             },
           },
         },
@@ -105,17 +112,7 @@ const definition = {
       damageModifiers: [
         {
           enabledSide: 'attacker',
-          condition: {
-            kind: 'all',
-            conditions: [
-              {
-                kind: 'eventDamageTagsMatch',
-                match: 'hasAny',
-                tags: ['normalSkill', 'ultimateSkill'],
-              },
-              { kind: 'eventDamageTypesMatch', damageTypes: ['physical'] },
-            ],
-          },
+          condition: { $sequence: 'conditional_2' },
           processors: [
             {
               kind: 'damageScale',
@@ -127,13 +124,7 @@ const definition = {
         },
         {
           enabledSide: 'attacker',
-          condition: {
-            kind: 'targetPoiseCompare',
-            target: 'enemy',
-            returnValueIfMissing: false,
-            operator: 'lessOrEqual',
-            value: 0,
-          },
+          condition: { $sequence: 'conditional_3' },
           processors: [
             {
               kind: 'damageScale',
@@ -144,7 +135,61 @@ const definition = {
           ],
         },
       ],
-      actionGraph: { main: { nodes: {} }, macros: {} },
+      actionGraph: {
+        main: {
+          nodes: {
+            conditional_1: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+                whenTrue: { $sequence: null },
+              },
+              next: null,
+            },
+            conditional_2: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+                whenTrue: { $sequence: 'conditional_1' },
+              },
+              next: null,
+            },
+            conditional_3: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+                whenTrue: { $sequence: null },
+              },
+              next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: { kind: 'eventDamageTypeIn', damageTypes: ['physical'] },
+            },
+            data_2: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventDamageTagsMatch',
+                match: 'hasAny',
+                tags: ['normalSkill', 'ultimateSkill'],
+              },
+            },
+            data_3: {
+              type: 'boolean',
+              expression: {
+                kind: 'poiseCompare',
+                target: 'currentTarget',
+                returnValueIfMissing: false,
+                operator: 'lessOrEqual',
+                value: { kind: 'constant', value: 0 },
+              },
+            },
+          },
+        },
+        macros: {},
+      },
     },
   },
 } as const satisfies WeaponDefinition;

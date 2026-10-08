@@ -15,6 +15,7 @@ import type { AbilityEventPayloadMap } from '../events/combatAbilityEvent';
 const chainSequence = (
   revision: string,
   actions: readonly ActionGraphStep[],
+  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
 ): CompiledOperatorUpgradeEventProgram['sequence'] => {
   const nodes: Record<string, ActionGraphNode> = {};
   actions.forEach((action, index) => {
@@ -24,7 +25,7 @@ const chainSequence = (
     };
   });
   return {
-    graph: createActionGraphCompilation({ nodes }, 1, revision).compileAll(),
+    graph: createActionGraphCompilation({ nodes, dataNodes }, 1, revision).compileAll(),
     entry: actions.length === 0 ? null : 'step-0',
     callSite: revision,
   };
@@ -170,17 +171,21 @@ describe('OperatorUpgradeEventRuntime', () => {
       key: 'talent:consumed-infliction:0',
       event: { kind: 'elementalAttachmentConsumed' },
       initialBlackboard: { crystal_up: 0.04 },
-      sequence: chainSequence('talent:consumed-infliction:0', [
-        {
-          kind: 'calculateActionValue',
-          parameters: {
-            key: 'result',
-            operation: 'multiply',
-            left: { kind: 'blackboard', key: 'infliction_num' },
-            right: { kind: 'constant', value: 0.04 },
+      sequence: chainSequence(
+        'talent:consumed-infliction:0',
+        [
+          {
+            kind: 'calculateActionValue',
+            parameters: {
+              key: 'result',
+              operation: 'multiply',
+              left: { kind: 'valueNode', nodeId: 'input_1' },
+              right: { kind: 'constant', value: 0.04 },
+            },
           },
-        },
-      ]),
+        ],
+        { input_1: { type: 'number', expression: { kind: 'blackboard', key: 'infliction_num' } } },
+      ),
     };
     new OperatorUpgradeEventRuntime(events, 'operator:last-rite', [program], () => ({
       execute: (_step, context) => {
@@ -209,16 +214,20 @@ describe('OperatorUpgradeEventRuntime', () => {
       key: 'talent:no-guard-consumed:0',
       event: { kind: 'buffConsumed', buffIds: ['buff_physical_no_guard'] },
       initialBlackboard: { dmg_up: 0.06 },
-      sequence: chainSequence('talent:no-guard-consumed:0', [
-        {
-          kind: 'applyBuff',
-          parameters: {
-            buffId: 'physical-up',
-            target: 'caster',
-            count: { kind: 'blackboard', key: 'consumedLayer' },
+      sequence: chainSequence(
+        'talent:no-guard-consumed:0',
+        [
+          {
+            kind: 'applyBuff',
+            parameters: {
+              buffId: 'physical-up',
+              target: 'caster',
+              count: { kind: 'valueNode', nodeId: 'input_1' },
+            },
           },
-        },
-      ]),
+        ],
+        { input_1: { type: 'number', expression: { kind: 'blackboard', key: 'consumedLayer' } } },
+      ),
     };
     new OperatorUpgradeEventRuntime(events, 'operator:dapan', [program], () => ({
       execute: (_step, context) => {

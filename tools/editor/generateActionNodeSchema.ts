@@ -270,7 +270,7 @@ export function generateActionNodeSchemas(
   }
   const checker = program.getTypeChecker();
   if (dataSchemas) {
-    for (const name of ['CombatCondition', 'ActionValueOperand']) {
+    for (const name of ['CombatConditionExpression', 'ActionValueExpression']) {
       const type = exportedType(
         program,
         checker,
@@ -282,7 +282,9 @@ export function generateActionNodeSchemas(
         const kind = properties.find(p => p.name === 'kind');
         const literal = kind?.variants[0]?.type;
         if (!literal?.isStringLiteral()) continue;
-        dataSchemas[`${name === 'CombatCondition' ? 'boolean' : 'number'}:${literal.value}`] = {
+        dataSchemas[
+          `${name === 'CombatConditionExpression' ? 'boolean' : 'number'}:${literal.value}`
+        ] = {
           fields: properties.filter(p => p.name !== 'kind').map(p => fieldSchema(p, [], checker)),
         };
       }

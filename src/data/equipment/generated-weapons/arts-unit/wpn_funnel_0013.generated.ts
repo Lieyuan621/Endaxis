@@ -70,13 +70,7 @@ const definition = {
             conditional_2: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventConsumedBuffLayerCompare',
-                    operator: 'greaterOrEqual',
-                    value: { kind: 'constant', value: 1 },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
@@ -84,16 +78,28 @@ const definition = {
             conditional_3: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/SpellStatus/Corrupt'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                 whenTrue: { $sequence: 'conditional_2' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventConsumedBuffLayerCompare',
+                operator: 'greaterOrEqual',
+                value: { kind: 'constant', value: 1 },
+              },
+            },
+            data_2: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/SpellStatus/Corrupt'],
+              },
             },
           },
         },
@@ -155,10 +161,7 @@ const definition = {
       damageModifiers: [
         {
           enabledSide: 'defender',
-          condition: {
-            kind: 'eventDamageTypesMatch',
-            damageTypes: ['heat', 'electric', 'cryo', 'nature'],
-          },
+          condition: { $sequence: 'conditional_1' },
           processors: [
             {
               kind: 'damageScale',
@@ -169,7 +172,30 @@ const definition = {
           ],
         },
       ],
-      actionGraph: { main: { nodes: {} }, macros: {} },
+      actionGraph: {
+        main: {
+          nodes: {
+            conditional_1: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+                whenTrue: { $sequence: null },
+              },
+              next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventDamageTypeIn',
+                damageTypes: ['heat', 'electric', 'cryo', 'nature'],
+              },
+            },
+          },
+        },
+        macros: {},
+      },
     },
   },
 } as const satisfies WeaponDefinition;

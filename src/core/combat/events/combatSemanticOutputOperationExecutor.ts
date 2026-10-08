@@ -1,4 +1,5 @@
-import type { CombatCondition, CombatTarget } from '../../game-data/operatorDefinition';
+import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
+import type { CombatTarget } from '../../game-data/operatorDefinition';
 import type { AbilityPhysicalInflictionPayload } from './combatAbilityEvent';
 /** 将主动技能动作产生的语义事实同步发布到同一战斗事件总线。 */
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
@@ -79,7 +80,7 @@ export class CombatSemanticOutputOperationExecutor implements CombatOperationExe
     this.options.delegate.end?.(step, context);
   }
 
-  evaluate(condition: CombatCondition, context?: CombatOperationContext): boolean {
+  evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     return context === undefined
       ? this.options.delegate.evaluate(condition)
       : this.options.delegate.evaluate(condition, context);

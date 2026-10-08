@@ -3,7 +3,7 @@ import type {
   ActionGraphDefinition,
   ActionGraphReference,
   ActionGraphResourceDefinition,
-} from '../../../../packages/game-data-contract/src/actionGraph.ts';
+} from '../../src/compiler/intermediateDefinitions.ts';
 import { readActionGraphChain } from '../../src/compiler/actions/actionGraphBuilder.ts';
 
 /** 只读取指定入口的同层节点；分支仍是图引用，不展开成树。缺失入口不是空入口。 */

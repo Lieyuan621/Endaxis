@@ -3,7 +3,7 @@ import type {
   ActionGraphReference,
   ActionGraphResourceDefinition,
 } from '../../../packages/game-data-contract/src/actionGraph.ts';
-import { resolveGraphData } from './actionGraphData.ts';
+import { validateGraphDataReferences, graphDataExpression } from './actionGraphData.ts';
 
 /**
  * 图结构校验由生成器、编辑器和编译器共用。只读取引用，不展开程序。
@@ -13,7 +13,7 @@ export function validateActionGraph(
   graph: ActionGraphDefinition,
   entries: readonly ActionGraphReference[] = [],
 ): ReadonlyMap<string, readonly (string | null)[]> {
-  graph = resolveGraphData(graph);
+  validateGraphDataReferences(graph);
   const edges = new Map<string, readonly (string | null)[]>();
   function reference(value: unknown, path: string): string | null {
     if (value !== null && (typeof value !== 'string' || !value))
@@ -96,15 +96,6 @@ function collectParameterOperands(
 
 /** 分别校验主图和每张宏图；跨图只允许通过宏调用，宏调用不能递归。 */
 export function validateActionGraphResource(resource: ActionGraphResourceDefinition): void {
-  resource = {
-    main: resolveGraphData(resource.main),
-    macros: Object.fromEntries(
-      Object.entries(resource.macros).map(([id, macro]) => [
-        id,
-        { ...macro, graph: resolveGraphData(macro.graph) },
-      ]),
-    ),
-  };
   validateActionGraph(resource.main);
   const dependencies = new Map<string, Set<string>>();
   const inspect = (graph: ActionGraphDefinition, owner: string): Set<string> => {
@@ -144,7 +135,13 @@ export function validateActionGraphResource(resource: ActionGraphResourceDefinit
         if (!declared.includes(name))
           throw new Error(`${owner}.${id}: unexpected argument '${name}' for macro '${target}'`);
         const nested: { path: string; parameter: string }[] = [];
-        collectParameterOperands(operand, `${owner}.${id}.arguments.${name}`, nested);
+        collectParameterOperands(
+          operand.kind === 'valueNode'
+            ? graphDataExpression(graph, operand.nodeId, 'number')
+            : operand,
+          `${owner}.${id}.arguments.${name}`,
+          nested,
+        );
         if (nested.length > 0)
           throw new Error(
             `${nested[0]!.path}: macro arguments must not pass through parameter operands`,
@@ -156,6 +153,8 @@ export function validateActionGraphResource(resource: ActionGraphResourceDefinit
   const mainParameters: { path: string; parameter: string }[] = [];
   for (const [id, node] of Object.entries(resource.main.nodes))
     collectParameterOperands(node.action, `main.${id}.action`, mainParameters);
+  for (const [id, node] of Object.entries(resource.main.dataNodes ?? {}))
+    collectParameterOperands(node.expression, `main.dataNodes.${id}`, mainParameters);
   if (mainParameters.length > 0)
     throw new Error(
       `${mainParameters[0]!.path}: parameter operand is only allowed inside a macro that declares it`,
@@ -174,6 +173,8 @@ export function validateActionGraphResource(resource: ActionGraphResourceDefinit
     const used: { path: string; parameter: string }[] = [];
     for (const [nodeId, node] of Object.entries(macro.graph.nodes))
       collectParameterOperands(node.action, `macro.${id}.${nodeId}.action`, used);
+    for (const [nodeId, node] of Object.entries(macro.graph.dataNodes ?? {}))
+      collectParameterOperands(node.expression, `macro.${id}.dataNodes.${nodeId}`, used);
     for (const use of used)
       if (!seen.has(use.parameter))
         throw new Error(`${use.path}: undeclared macro parameter '${use.parameter}'`);

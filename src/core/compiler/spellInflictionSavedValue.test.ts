@@ -1,3 +1,4 @@
+import { extractGraphDataNodes } from '../../../tools/game-data-compiler/src/compiler/extractGraphDataNodes';
 import { describe, expect, it, vi } from 'vitest';
 import { parseConditionLeafSource } from '../../../tools/game-data-compiler/src/source/condition.ts';
 import { parseKnownNativeActionSequenceSource } from '../../../tools/game-data-compiler/src/source/actionLeaf.ts';
@@ -60,7 +61,7 @@ function compile(actions: unknown[]) {
 }
 function compileProjected(projected: ReturnType<typeof compile>): ResolvedActionSequence {
   return new ActionGraphDefinitionRepository()
-    .compile(projected.graph, 1)
+    .compile(extractGraphDataNodes(projected.graph), 1)
     .compileEntry(projected.sequence, 'spell-infliction-saved-value');
 }
 function runtime(
@@ -162,15 +163,22 @@ describe('原生元素条件从公共编译到运行写回', () => {
               action: {
                 kind: 'conditional',
                 parameters: {
-                  condition: {
-                    kind: 'eventInflictionElementIn',
-                    elements: ['nature'],
-                    outputKey,
-                  },
+                  condition: { kind: 'conditionNode', nodeId: 'test_data_1' },
                 },
                 whenTrue: { $sequence: null },
               },
               next: null,
+            },
+          },
+
+          dataNodes: {
+            test_data_1: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventInflictionElementIn',
+                elements: ['nature'],
+                outputKey,
+              },
             },
           },
         },

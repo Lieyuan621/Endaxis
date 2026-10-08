@@ -1,3 +1,4 @@
+import { numberInput } from '../../../test/compiledGraphInputs';
 import { rootActionSteps } from '../../compiler/actionProgramInspection';
 import { createTestBuffReference } from './buffTestFixtures';
 import type { GameplayTag } from '../../../../packages/game-data-contract/src/gameplayTags';
@@ -615,13 +616,13 @@ describe('BuffOperationExecutor', () => {
           buffId: 'carrier',
           target: 'caster',
           blackboardAssignments: {
-            rate: { kind: 'blackboard', key: 'base_rate' },
+            rate: numberInput({ kind: 'blackboard', key: 'base_rate' }),
           },
           keywordEnhancements: [
             {
               triggerBuffIds: ['trigger'],
               operation: 'add',
-              value: { kind: 'blackboard', key: 'bonus' },
+              value: numberInput({ kind: 'blackboard', key: 'bonus' }),
             },
           ],
         },
@@ -805,7 +806,7 @@ describe('BuffOperationExecutor', () => {
           tagQueryType: 'hasAny',
           buffTags: [tag],
           operator: 'greaterOrEqual',
-          value: { kind: 'blackboard', key: 'required' },
+          value: numberInput({ kind: 'blackboard', key: 'required' }),
         },
         context,
       ),
@@ -818,7 +819,7 @@ describe('BuffOperationExecutor', () => {
           tagQueryType: 'hasAny',
           buffTags: [tag],
           operator: 'greaterOrEqual',
-          value: { kind: 'blackboard', key: 'required' },
+          value: numberInput({ kind: 'blackboard', key: 'required' }),
         },
         context,
       ),
@@ -1003,7 +1004,7 @@ describe('BuffOperationExecutor', () => {
             noGuardDefinition: { stackingType: 'enhanceAndRefresh' },
             crushedBuffId: 'buff_physical_crushed',
             crushedDefinition: { stackingType: 'stack', stackingKey: 'physical' },
-            damageMultiplier: { kind: 'blackboard', key: 'crush_multi' },
+            damageMultiplier: numberInput({ kind: 'blackboard', key: 'crush_multi' }),
             ignoreHitEffect: true,
           },
         },
@@ -1583,7 +1584,7 @@ describe('BuffOperationExecutor', () => {
             target: 'caster',
             buffIds: ['preparation'],
             reason: 'other',
-            count: { kind: 'blackboard', key: 'layers' },
+            count: numberInput({ kind: 'blackboard', key: 'layers' }),
           },
         },
         { blackboard },
@@ -1842,7 +1843,7 @@ describe('BuffOperationExecutor', () => {
             target: 'caster',
             blackboardAssignments: {
               duration: { kind: 'constant', value: 25 },
-              comboRate: { kind: 'blackboard', key: 'rate' },
+              comboRate: numberInput({ kind: 'blackboard', key: 'rate' }),
             },
             stringBlackboardAssignments: {
               child_buff_id: 'buff:icon',
@@ -2400,7 +2401,7 @@ describe('BuffOperationExecutor', () => {
           parameters: {
             buffId: 'stack-marker',
             target: 'enemy',
-            count: { kind: 'blackboard', key: 'count' },
+            count: numberInput({ kind: 'blackboard', key: 'count' }),
           },
         },
         { blackboard },
@@ -2543,7 +2544,10 @@ describe('BuffOperationExecutor', () => {
 
     expect(executor.evaluate(condition, context)).toBe(true);
     expect(
-      executor.evaluate({ ...condition, value: { kind: 'blackboard', key: 'threshold' } }, context),
+      executor.evaluate(
+        { ...condition, value: numberInput({ kind: 'blackboard', key: 'threshold' }) },
+        context,
+      ),
     ).toBe(false);
   });
 
@@ -2863,7 +2867,7 @@ describe('BuffOperationExecutor', () => {
           target: 'caster',
           buffIds: ['sword-trigger'],
           operator: 'equal',
-          value: { kind: 'blackboard', key: 'expectedStacks' },
+          value: numberInput({ kind: 'blackboard', key: 'expectedStacks' }),
         },
         { blackboard: new ActionBlackboard({ expectedStacks: 2 }) },
       ),

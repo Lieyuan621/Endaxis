@@ -62,7 +62,7 @@ const definition = {
                 parameters: {
                   target: 'caster',
                   markerId: 'buff_wpn_claym_0007_valid',
-                  durationSeconds: { kind: 'blackboard', key: 'cd' },
+                  durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
                 },
               },
               next: 'applyBuff_1',
@@ -75,7 +75,7 @@ const definition = {
                   stage: 'armedNonConverted',
                   useFloor: false,
                   divisor: { kind: 'constant', value: 1 },
-                  multiplier: { kind: 'blackboard', key: 'hp_ratio' },
+                  multiplier: { kind: 'valueNode', nodeId: 'data_2' },
                   base: { kind: 'constant', value: 0 },
                   targetKey: 'shield_valid',
                 },
@@ -85,16 +85,7 @@ const definition = {
             conditional_4: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'not',
-                    condition: {
-                      kind: 'globalCooldownPresent',
-                      target: 'caster',
-                      markerId: 'buff_wpn_claym_0007_valid',
-                    },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
                 whenTrue: { $sequence: 'storeSourceAttributeValue_3' },
               },
               next: null,
@@ -102,16 +93,34 @@ const definition = {
             conditional_5: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventHealTagsMatch',
-                    match: 'hasAny',
-                    tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
                 whenTrue: { $sequence: 'conditional_4' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'cd' } },
+            data_2: { type: 'number', expression: { kind: 'blackboard', key: 'hp_ratio' } },
+            data_3: {
+              type: 'boolean',
+              expression: {
+                kind: 'globalCooldownPresent',
+                target: 'caster',
+                markerId: 'buff_wpn_claym_0007_valid',
+              },
+            },
+            data_4: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+            },
+            data_5: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventHealTagsMatch',
+                match: 'hasAny',
+                tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
+              },
             },
           },
         },

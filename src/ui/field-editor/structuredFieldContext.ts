@@ -16,6 +16,8 @@ export const structuredFieldContextKey: InjectionKey<
     readonly items?: unknown;
     readonly globalBuff?: GlobalBuffDraftContext;
     readonly graph?: ActionGraphDefinition;
+    /** 区分不同资产内的同名资源，防止字段草稿跨资源复用。 */
+    readonly identity?: string;
     readonly kind: string;
     readonly path: readonly (string | number)[];
   }>

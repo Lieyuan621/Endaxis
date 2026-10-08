@@ -52,7 +52,7 @@ const definition = {
                 parameters: {
                   target: 'caster',
                   markerId: 'wpn_sword_0017',
-                  durationSeconds: { kind: 'blackboard', key: 'cd' },
+                  durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
                   autoFinishByAction: false,
                 },
               },
@@ -74,16 +74,7 @@ const definition = {
             conditional_3: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'not',
-                    condition: {
-                      kind: 'timedMarkerPresent',
-                      target: 'caster',
-                      markerId: 'wpn_sword_0017',
-                    },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 whenTrue: { $sequence: 'applyBuff_2' },
               },
               next: null,
@@ -91,12 +82,7 @@ const definition = {
             conditional_4: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'originSkillTypeIn',
-                    skillTypes: ['battleSkill', 'comboSkill', 'ultimate'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
                 whenTrue: { $sequence: 'conditional_3' },
               },
               next: null,
@@ -104,13 +90,7 @@ const definition = {
             conditional_5: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/NoGuard'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
                 whenTrue: { $sequence: 'conditional_4' },
               },
               next: null,
@@ -134,8 +114,8 @@ const definition = {
                 parameters: {
                   key: 'dmg_up_final',
                   operation: 'multiply',
-                  left: { kind: 'blackboard', key: 'dmg_up' },
-                  right: { kind: 'blackboard', key: 'count' },
+                  left: { kind: 'valueNode', nodeId: 'data_6' },
+                  right: { kind: 'valueNode', nodeId: 'data_7' },
                 },
               },
               next: 'applyBuff_6',
@@ -154,15 +134,7 @@ const definition = {
             conditional_9: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'buffIdStackCompare',
-                    target: 'caster',
-                    buffIds: ['buff_wpn_sword_0017_exist'],
-                    operator: 'greaterOrEqual',
-                    value: { kind: 'constant', value: 1 },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
                 whenTrue: { $sequence: 'readBuffStackCount_8' },
               },
               next: null,
@@ -170,10 +142,56 @@ const definition = {
             conditional_10: {
               action: {
                 kind: 'conditional',
-                parameters: { condition: { kind: 'eventSkillTypeIn', skillTypes: ['ultimate'] } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
                 whenTrue: { $sequence: 'conditional_9' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'cd' } },
+            data_2: {
+              type: 'boolean',
+              expression: {
+                kind: 'timedMarkerPresent',
+                target: 'caster',
+                markerId: 'wpn_sword_0017',
+              },
+            },
+            data_3: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+            },
+            data_4: {
+              type: 'boolean',
+              expression: {
+                kind: 'originSkillTypeIn',
+                skillTypes: ['battleSkill', 'comboSkill', 'ultimate'],
+              },
+            },
+            data_5: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/NoGuard'],
+              },
+            },
+            data_6: { type: 'number', expression: { kind: 'blackboard', key: 'dmg_up' } },
+            data_7: { type: 'number', expression: { kind: 'blackboard', key: 'count' } },
+            data_8: {
+              type: 'boolean',
+              expression: {
+                kind: 'buffIdStackCompare',
+                target: 'caster',
+                buffIds: ['buff_wpn_sword_0017_exist'],
+                operator: 'greaterOrEqual',
+                value: { kind: 'constant', value: 1 },
+              },
+            },
+            data_9: {
+              type: 'boolean',
+              expression: { kind: 'eventSkillTypeIn', skillTypes: ['ultimate'] },
             },
           },
         },

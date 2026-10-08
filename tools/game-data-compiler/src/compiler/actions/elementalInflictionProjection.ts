@@ -1,4 +1,4 @@
-import type { CombatStepParameters } from '../../../../../packages/game-data-contract/src/actions.ts';
+import type { CombatStepParameters } from '../intermediateDefinitions.ts';
 import { projectNativeDamageElement } from '../../source/damageElement.ts';
 import type { ElementalInflictionActionSource } from '../../source/elementalInflictionActions.ts';
 import type { CombatActionProjectionContextSource } from '../combatProjectionCommon.ts';

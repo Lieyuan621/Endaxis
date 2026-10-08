@@ -1,3 +1,4 @@
+import type { ActionGraphResourceDefinition } from '../../../packages/game-data-contract/src/actionGraph';
 import type {
   CombatBuffDefinitionEntry,
   CombatBuffDefinitionAction,
@@ -139,7 +140,7 @@ const BASE_ELEMENTAL_DEFINITIONS = (Object.keys(ELEMENTS) as InflictionElement[]
 const CONDUCT_DAMAGE_TYPES = ['heat', 'electric', 'cryo', 'nature'] as const;
 const CONDUCT_DAMAGE_MODIFIERS = CONDUCT_DAMAGE_TYPES.map(damageType => ({
   enabledSide: 'defender',
-  condition: { kind: 'eventDamageTypesMatch', damageTypes: [damageType] },
+  condition: { $sequence: damageType },
   processors: [
     {
       kind: 'damageScale',
@@ -149,6 +150,36 @@ const CONDUCT_DAMAGE_MODIFIERS = CONDUCT_DAMAGE_TYPES.map(damageType => ({
     },
   ],
 })) satisfies readonly CombatBuffDefinitionDamageModifier[];
+
+function conductConditionGraph(): ActionGraphResourceDefinition {
+  return {
+    main: {
+      nodes: Object.fromEntries(
+        CONDUCT_DAMAGE_TYPES.map(damageType => [
+          damageType,
+          {
+            action: {
+              kind: 'conditional',
+              parameters: { condition: { kind: 'conditionNode', nodeId: damageType } },
+              whenTrue: { $sequence: null },
+            },
+            next: null,
+          },
+        ]),
+      ),
+      dataNodes: Object.fromEntries(
+        CONDUCT_DAMAGE_TYPES.map(damageType => [
+          damageType,
+          {
+            type: 'boolean',
+            expression: { kind: 'eventDamageTypeIn', damageTypes: [damageType] },
+          },
+        ]),
+      ),
+    },
+    macros: {},
+  };
+}
 
 function conductStatus(
   id: string,
@@ -188,6 +219,7 @@ function conductStatus(
       final_spell_resistance_decrease: 0,
       spell_resistance_decrease: 0,
     },
+    actionGraph: conductConditionGraph(),
     damageModifiers: CONDUCT_DAMAGE_MODIFIERS,
     role: { kind: 'compoundStatus', consumedElement, incomingElement: 'electric' },
     actions: {

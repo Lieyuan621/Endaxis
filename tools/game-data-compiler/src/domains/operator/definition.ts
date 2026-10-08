@@ -14,7 +14,7 @@ import type {
   OperatorPlayerActionModeDefinition,
   NativeSkillType,
   SkillPresentationVariantDefinition,
-} from '../../../../../packages/game-data-contract/src/index.ts';
+} from '../../compiler/intermediateDefinitions.ts';
 import type { compileOperatorFoundationSource } from './sourceClosure.ts';
 import { readActionGraphChain } from '../../compiler/actions/actionGraphBuilder.ts';
 import { compileOperatorDefinitionHeaderSource } from './definitionHeader.ts';

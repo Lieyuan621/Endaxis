@@ -1,6 +1,3 @@
-import { validMappingValue, validMappingSources } from './blackboardMapping';
-import { hasSemanticAlias } from '../../core/editor/fieldSemantics.ts';
-import { unknownBlackboardContext } from '../../application/editor/blackboardFieldContext';
 import { timeScaleCurveDefinitions } from '../../data/combat/timeDilationConfig';
 import { assertTimeScaleCurveSelection, type TimeScaleCurveCatalog } from './timeScaleCurveValue';
 import { stringCollectionDescriptor } from './stringCollectionSchema';
@@ -46,26 +43,12 @@ function checkReferenceDraft(
     }
   }
   const editor = resolveFieldEditor(schema, { referenceKind, name, references });
-  if (editor.control === 'inlineOperand') {
-    const mode = hasSemanticAlias(schema.semantics, 'LevelValues') ? 'levelsOrOperand' : 'operand';
-    return (
-      validMappingValue(value, mode) &&
-      validMappingSources(
-        [{ key: 'value', value }],
-        undefined,
-        mode,
-        blackboard ?? unknownBlackboardContext(),
-        false,
-      )
-    );
-  }
   const family = editor.referenceKind;
   const collection = stringCollectionDescriptor(schema, name, family);
   if (collection) return validStringCollection(value, previous, collection.kind, family, choices);
   if (editor.control === 'gameplayTag') return validCollectionEntry(value, 'gameplayTag');
   const shape = fieldSchemaForValue(schema, value, name, references);
-  if (editor.control === 'stringOperand')
-    return validStringOperandDraft(value, family, choices, blackboard);
+  if (editor.control === 'stringOperand') return validStringOperandDraft(value, family, choices);
   if (schema.kind === 'union')
     return checkReferenceDraft(
       shape,

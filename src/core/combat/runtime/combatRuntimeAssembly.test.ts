@@ -26,10 +26,8 @@ import { createIndependentAbilityEntityImportResolver } from '../../compiler/com
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { CombatAttributeSet } from '../attributes/combatAttributes';
 import { BuffDefinitionOperationTarget } from '../buffs/buffDefinitionOperationTarget';
-import {
-  CompiledCombatBuffDefinitions,
-  type CombatBuffDefinitionEntry,
-} from '../buffs/combatBuffDefinitions';
+import { CompiledCombatBuffDefinitions } from '../buffs/combatBuffDefinitions';
+import { type CombatBuffDefinitionEntry } from '../../../../packages/game-data-contract/src/buffs';
 import { CombatBuffContainer } from '../buffs/combatBuffs';
 import { createNativeEventFixture } from '../events/nativeEventTestFixture';
 import { CombatReceiptCollector } from '../receipt/combatReceipt';
@@ -71,8 +69,9 @@ const compileGraphEntry = (
   revision: string,
   entry: string | null,
   nodes: Record<string, ActionGraphNode>,
+  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => ({
-  graph: createActionGraphCompilation({ nodes }, 1, revision).compileAll(),
+  graph: createActionGraphCompilation({ nodes, dataNodes }, 1, revision).compileAll(),
   entry,
   callSite: revision,
 });
@@ -80,6 +79,7 @@ const compileGraphEntry = (
 const chainEntry = (
   revision: string,
   actions: readonly ActionGraphStep[],
+  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => {
   const nodes: Record<string, ActionGraphNode> = {};
   actions.forEach((action, index) => {
@@ -88,7 +88,7 @@ const chainEntry = (
       next: index + 1 < actions.length ? `step-${index + 1}` : null,
     };
   });
-  return compileGraphEntry(revision, actions.length === 0 ? null : 'step-0', nodes);
+  return compileGraphEntry(revision, actions.length === 0 ? null : 'step-0', nodes, dataNodes);
 };
 
 const testEnemy: CombatEnemyProgram = {
@@ -166,17 +166,23 @@ it('被动写入EntityBB由同角色主动技能读取，而非留在被动局�
     timelineActions: [
       {
         startFrame: 0,
-        sequence: chainEntry('passive-entitybb-writer', [
-          {
-            kind: 'changeResourceByActionValue',
-            parameters: {
-              resource: 'ultimateEnergy',
-              recipient: 'caster',
-              amount: { kind: 'blackboard', key: 'EntityBB_value' },
-              coefficient: { kind: 'constant', value: 1 },
+        sequence: chainEntry(
+          'passive-entitybb-writer',
+          [
+            {
+              kind: 'changeResourceByActionValue',
+              parameters: {
+                resource: 'ultimateEnergy',
+                recipient: 'caster',
+                amount: { kind: 'valueNode', nodeId: 'input_1' },
+                coefficient: { kind: 'constant', value: 1 },
+              },
             },
+          ],
+          {
+            input_1: { type: 'number', expression: { kind: 'blackboard', key: 'EntityBB_value' } },
           },
-        ]),
+        ),
       },
     ],
   });
@@ -1172,11 +1178,7 @@ describe('CombatRuntimeAssembly', () => {
           action: {
             kind: 'conditional',
             parameters: {
-              condition: {
-                kind: 'contextTargetObjectTypeMatch',
-                contextKey: 'source',
-                objectTypes: [objectType],
-              },
+              condition: { kind: 'conditionNode', nodeId: `${prefix}-type` },
             },
             whenTrue: { $sequence: `${prefix}-emit` },
           },
@@ -1195,7 +1197,20 @@ describe('CombatRuntimeAssembly', () => {
           next: null,
         },
       };
-      return { nodes, entry: `${prefix}-merge` };
+      return {
+        nodes,
+        entry: `${prefix}-merge`,
+        dataNodes: {
+          [`${prefix}-type`]: {
+            type: 'boolean' as const,
+            expression: {
+              kind: 'contextTargetObjectTypeMatch' as const,
+              contextKey: 'source',
+              objectTypes: [objectType],
+            },
+          },
+        },
+      };
     };
     const callbackStep = (
       probes: readonly ReturnType<typeof sourceProbeNodes>[],
@@ -1207,7 +1222,10 @@ describe('CombatRuntimeAssembly', () => {
           { startFrame: 0, endFrame: 0, sequence: { $sequence: probes[0]!.entry } },
         ],
         actionGraph: {
-          main: { nodes: Object.assign({}, ...probes.map(probe => probe.nodes)) },
+          main: {
+            nodes: Object.assign({}, ...probes.map(probe => probe.nodes)),
+            dataNodes: Object.assign({}, ...probes.map(probe => probe.dataNodes)),
+          },
           macros: {},
         },
       };
@@ -3506,16 +3524,22 @@ describe('CombatRuntimeAssembly', () => {
                   key: 'gain-sp',
                   event: { kind: 'damageTagHit', tag: 'normalSkill', scope: 'operator' },
                   condition: { kind: 'combatActive' },
-                  sequence: chainEntry('equipment-gain-sp', [
-                    {
-                      kind: 'changeResourceByActionValue',
-                      parameters: {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'gain' },
-                        recipient: 'team',
+                  sequence: chainEntry(
+                    'equipment-gain-sp',
+                    [
+                      {
+                        kind: 'changeResourceByActionValue',
+                        parameters: {
+                          resource: 'sp',
+                          amount: { kind: 'valueNode', nodeId: 'input_1' },
+                          recipient: 'team',
+                        },
                       },
+                    ],
+                    {
+                      input_1: { type: 'number', expression: { kind: 'blackboard', key: 'gain' } },
                     },
-                  ]),
+                  ),
                 },
               ],
               blackboard: { gain: 1 },
@@ -3659,16 +3683,28 @@ describe('CombatRuntimeAssembly', () => {
                     failure === 'initialization' && operatorId === 'second' ? 99 : 0,
                   ...(failure === 'enable' && operatorId === 'second'
                     ? {
-                        enableSequence: chainEntry('equipment-missing-enable-value', [
+                        enableSequence: chainEntry(
+                          'equipment-missing-enable-value',
+                          [
+                            {
+                              kind: 'modifyActionValue' as const,
+                              parameters: {
+                                key: 'result',
+                                operation: 'assign' as const,
+                                value: { kind: 'valueNode', nodeId: 'input_1' },
+                              },
+                            },
+                          ],
                           {
-                            kind: 'modifyActionValue' as const,
-                            parameters: {
-                              key: 'result',
-                              operation: 'assign' as const,
-                              value: { kind: 'blackboard' as const, key: 'missing-enable-value' },
+                            input_1: {
+                              type: 'number',
+                              expression: {
+                                kind: 'blackboard' as const,
+                                key: 'missing-enable-value',
+                              },
                             },
                           },
-                        ]),
+                        ),
                       }
                     : {}),
                   sequence: chainEntry('equipment-cleanup-initialization', []),
@@ -3832,45 +3868,55 @@ describe('CombatRuntimeAssembly', () => {
         {
           startFrame: 0,
           endFrame: 2,
-          sequence: compileGraphEntry('buff-application-listener', 'step-0', {
-            'step-0': {
-              action: {
-                kind: 'listenForCombatEvents',
-                parameters: {
-                  responses: [
-                    {
-                      key: 'on-added-buff',
-                      event: { kind: 'buffApplied' },
-                      condition: { kind: 'eventBuffIdMatch', buffIds: ['watched-buff'] },
-                      sequence: { $sequence: 'respond-added-buff' },
-                    },
-                  ],
+          sequence: compileGraphEntry(
+            'buff-application-listener',
+            'step-0',
+            {
+              'step-0': {
+                action: {
+                  kind: 'listenForCombatEvents',
+                  parameters: {
+                    responses: [
+                      {
+                        key: 'on-added-buff',
+                        event: { kind: 'buffApplied' },
+                        condition: { kind: 'conditionNode', nodeId: 'input_1' },
+                        sequence: { $sequence: 'respond-added-buff' },
+                      },
+                    ],
+                  },
                 },
+                next: 'step-1',
               },
-              next: 'step-1',
-            },
-            'step-1': {
-              action: {
-                kind: 'applyBuff',
-                parameters: {
-                  buffId: 'watched-buff',
-                  target: 'caster',
+              'step-1': {
+                action: {
+                  kind: 'applyBuff',
+                  parameters: {
+                    buffId: 'watched-buff',
+                    target: 'caster',
+                  },
                 },
+                next: null,
               },
-              next: null,
-            },
-            'respond-added-buff': {
-              action: {
-                kind: 'changeResource',
-                parameters: {
-                  resource: 'sp',
-                  amount: 7,
-                  recipient: 'team',
+              'respond-added-buff': {
+                action: {
+                  kind: 'changeResource',
+                  parameters: {
+                    resource: 'sp',
+                    amount: 7,
+                    recipient: 'team',
+                  },
                 },
+                next: null,
               },
-              next: null,
             },
-          }),
+            {
+              input_1: {
+                type: 'boolean',
+                expression: { kind: 'eventBuffIdMatch', buffIds: ['watched-buff'] },
+              },
+            },
+          ),
         },
       ],
     });
@@ -4330,19 +4376,28 @@ describe('CombatRuntimeAssembly', () => {
             {
               key: 'talent-aura',
               initialBlackboard: { attackIncrease: 0.2 },
-              enableSequence: chainEntry('talent-aura-enable', [
-                {
-                  kind: 'applyBuff',
-                  parameters: {
-                    buffId: 'talent-aura',
-                    target: 'caster',
-                    asChildBuff: true,
-                    blackboardAssignments: {
-                      attackIncrease: { kind: 'blackboard', key: 'attackIncrease' },
+              enableSequence: chainEntry(
+                'talent-aura-enable',
+                [
+                  {
+                    kind: 'applyBuff',
+                    parameters: {
+                      buffId: 'talent-aura',
+                      target: 'caster',
+                      asChildBuff: true,
+                      blackboardAssignments: {
+                        attackIncrease: { kind: 'valueNode', nodeId: 'input_1' },
+                      },
                     },
                   },
+                ],
+                {
+                  input_1: {
+                    type: 'number',
+                    expression: { kind: 'blackboard', key: 'attackIncrease' },
+                  },
                 },
-              ]),
+              ),
             },
           ],
         },
@@ -4769,31 +4824,41 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: compileGraphEntry('health-compare-vitals', 'step-0', {
-            'step-0': {
-              action: {
-                kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'healthCompare',
-                    target: 'enemy',
-                    valueType: 'ratio',
-                    operator: 'less',
-                    value: { kind: 'constant', value: 0.5 },
+          sequence: compileGraphEntry(
+            'health-compare-vitals',
+            'step-0',
+            {
+              'step-0': {
+                action: {
+                  kind: 'conditional',
+                  parameters: {
+                    condition: { kind: 'conditionNode', nodeId: 'input_1' },
                   },
+                  whenTrue: { $sequence: 'grant-sp' },
                 },
-                whenTrue: { $sequence: 'grant-sp' },
+                next: null,
               },
-              next: null,
-            },
-            'grant-sp': {
-              action: {
-                kind: 'changeResource',
-                parameters: { resource: 'sp', amount: 20, recipient: 'team' },
+              'grant-sp': {
+                action: {
+                  kind: 'changeResource',
+                  parameters: { resource: 'sp', amount: 20, recipient: 'team' },
+                },
+                next: null,
               },
-              next: null,
             },
-          }),
+            {
+              input_1: {
+                type: 'boolean',
+                expression: {
+                  kind: 'healthCompare',
+                  target: 'enemy',
+                  valueType: 'ratio',
+                  operator: 'less',
+                  value: { kind: 'constant', value: 0.5 },
+                },
+              },
+            },
+          ),
         },
       ],
     });
@@ -4812,23 +4877,33 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: compileGraphEntry('enemy-rank-condition', 'step-0', {
-            'step-0': {
-              action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'enemyRankIn', ranks: ['elite', 'boss'] } },
-                whenTrue: { $sequence: 'rank-grant' },
+          sequence: compileGraphEntry(
+            'enemy-rank-condition',
+            'step-0',
+            {
+              'step-0': {
+                action: {
+                  kind: 'conditional',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'input_1' } },
+                  whenTrue: { $sequence: 'rank-grant' },
+                },
+                next: null,
               },
-              next: null,
-            },
-            'rank-grant': {
-              action: {
-                kind: 'changeResource',
-                parameters: { resource: 'sp', amount: 20, recipient: 'team' },
+              'rank-grant': {
+                action: {
+                  kind: 'changeResource',
+                  parameters: { resource: 'sp', amount: 20, recipient: 'team' },
+                },
+                next: null,
               },
-              next: null,
             },
-          }),
+            {
+              input_1: {
+                type: 'boolean',
+                expression: { kind: 'enemyRankIn', ranks: ['elite', 'boss'] },
+              },
+            },
+          ),
         },
       ],
     });
@@ -4852,36 +4927,46 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: compileGraphEntry('status-owner-routing', 'step-0', {
-            'step-0': {
-              action: {
-                kind: 'applyStatus',
-                parameters: { statusKey: 'ready', target: 'caster' },
-              },
-              next: 'step-1',
-            },
-            'step-1': {
-              action: {
-                kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'statusActive',
-                    statusKey: 'ready',
-                    target: 'caster',
-                  },
+          sequence: compileGraphEntry(
+            'status-owner-routing',
+            'step-0',
+            {
+              'step-0': {
+                action: {
+                  kind: 'applyStatus',
+                  parameters: { statusKey: 'ready', target: 'caster' },
                 },
-                whenTrue: { $sequence: 'status-grant' },
+                next: 'step-1',
               },
-              next: null,
-            },
-            'status-grant': {
-              action: {
-                kind: 'changeResource',
-                parameters: { resource: 'sp', amount: 1, recipient: 'team' },
+              'step-1': {
+                action: {
+                  kind: 'conditional',
+                  parameters: {
+                    condition: { kind: 'conditionNode', nodeId: 'input_1' },
+                  },
+                  whenTrue: { $sequence: 'status-grant' },
+                },
+                next: null,
               },
-              next: null,
+              'status-grant': {
+                action: {
+                  kind: 'changeResource',
+                  parameters: { resource: 'sp', amount: 1, recipient: 'team' },
+                },
+                next: null,
+              },
             },
-          }),
+            {
+              input_1: {
+                type: 'boolean',
+                expression: {
+                  kind: 'statusActive',
+                  statusKey: 'ready',
+                  target: 'caster',
+                },
+              },
+            },
+          ),
         },
       ],
     });
@@ -4935,23 +5020,28 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 1,
-          sequence: compileGraphEntry('caster-controlled-condition', 'step-0', {
-            'step-0': {
-              action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'casterControlled' } },
-                whenTrue: { $sequence: 'control-grant' },
+          sequence: compileGraphEntry(
+            'caster-controlled-condition',
+            'step-0',
+            {
+              'step-0': {
+                action: {
+                  kind: 'conditional',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'input_1' } },
+                  whenTrue: { $sequence: 'control-grant' },
+                },
+                next: null,
               },
-              next: null,
-            },
-            'control-grant': {
-              action: {
-                kind: 'changeResource',
-                parameters: { resource: 'sp', amount: 20, recipient: 'team' },
+              'control-grant': {
+                action: {
+                  kind: 'changeResource',
+                  parameters: { resource: 'sp', amount: 20, recipient: 'team' },
+                },
+                next: null,
               },
-              next: null,
             },
-          }),
+            { input_1: { type: 'boolean', expression: { kind: 'casterControlled' } } },
+          ),
         },
       ],
     });
@@ -4969,16 +5059,21 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 1,
-          sequence: compileGraphEntry('caster-controlled-requires-state', 'step-0', {
-            'step-0': {
-              action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'casterControlled' } },
-                whenTrue: { $sequence: null },
+          sequence: compileGraphEntry(
+            'caster-controlled-requires-state',
+            'step-0',
+            {
+              'step-0': {
+                action: {
+                  kind: 'conditional',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'input_1' } },
+                  whenTrue: { $sequence: null },
+                },
+                next: null,
               },
-              next: null,
             },
-          }),
+            { input_1: { type: 'boolean', expression: { kind: 'casterControlled' } } },
+          ),
         },
       ],
     });
@@ -5140,30 +5235,41 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: compileGraphEntry('action-value-compare-branch', 'step-0', {
-            'step-0': {
-              action: {
-                kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'actionValueCompare',
-                    left: { kind: 'blackboard', key: 'swordCount' },
-                    operator: 'greaterOrEqual',
-                    right: { kind: 'constant', value: 3 },
+          sequence: compileGraphEntry(
+            'action-value-compare-branch',
+            'step-0',
+            {
+              'step-0': {
+                action: {
+                  kind: 'conditional',
+                  parameters: {
+                    condition: { kind: 'conditionNode', nodeId: 'input_2' },
                   },
+                  whenTrue: { $sequence: 'mark-reached' },
                 },
-                whenTrue: { $sequence: 'mark-reached' },
+                next: null,
               },
-              next: null,
-            },
-            'mark-reached': {
-              action: {
-                kind: 'setContextFlag',
-                parameters: { flag: 'reached', value: true, target: 'caster' },
+              'mark-reached': {
+                action: {
+                  kind: 'setContextFlag',
+                  parameters: { flag: 'reached', value: true, target: 'caster' },
+                },
+                next: null,
               },
-              next: null,
             },
-          }),
+            {
+              input_1: { type: 'number', expression: { kind: 'blackboard', key: 'swordCount' } },
+              input_2: {
+                type: 'boolean',
+                expression: {
+                  kind: 'actionValueCompare',
+                  left: { kind: 'valueNode', nodeId: 'input_1' },
+                  operator: 'greaterOrEqual',
+                  right: { kind: 'constant', value: 3 },
+                },
+              },
+            },
+          ),
         },
       ],
     });
@@ -5233,30 +5339,44 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: compileGraphEntry('entity-sword-reader', 'step-0', {
-            'step-0': {
-              action: {
-                kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'actionValueCompare',
-                    left: { kind: 'blackboard', key: 'EntityBB_SwordNum' },
-                    operator: 'greaterOrEqual',
-                    right: { kind: 'constant', value: 1 },
+          sequence: compileGraphEntry(
+            'entity-sword-reader',
+            'step-0',
+            {
+              'step-0': {
+                action: {
+                  kind: 'conditional',
+                  parameters: {
+                    condition: { kind: 'conditionNode', nodeId: 'input_2' },
                   },
+                  whenTrue: { $sequence: 'reader-reached' },
                 },
-                whenTrue: { $sequence: 'reader-reached' },
+                next: null,
               },
-              next: null,
-            },
-            'reader-reached': {
-              action: {
-                kind: 'setContextFlag',
-                parameters: { flag: 'reached', value: true, target: 'caster' },
+              'reader-reached': {
+                action: {
+                  kind: 'setContextFlag',
+                  parameters: { flag: 'reached', value: true, target: 'caster' },
+                },
+                next: null,
               },
-              next: null,
             },
-          }),
+            {
+              input_1: {
+                type: 'number',
+                expression: { kind: 'blackboard', key: 'EntityBB_SwordNum' },
+              },
+              input_2: {
+                type: 'boolean',
+                expression: {
+                  kind: 'actionValueCompare',
+                  left: { kind: 'valueNode', nodeId: 'input_1' },
+                  operator: 'greaterOrEqual',
+                  right: { kind: 'constant', value: 1 },
+                },
+              },
+            },
+          ),
         },
       ],
     });
@@ -5308,30 +5428,44 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: compileGraphEntry('buff-runtime-entity-blackboard', 'step-0', {
-            'step-0': {
-              action: {
-                kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'actionValueCompare',
-                    left: { kind: 'blackboard', key: 'EntityBB_SwordNum' },
-                    operator: 'equal',
-                    right: { kind: 'constant', value: 4 },
+          sequence: compileGraphEntry(
+            'buff-runtime-entity-blackboard',
+            'step-0',
+            {
+              'step-0': {
+                action: {
+                  kind: 'conditional',
+                  parameters: {
+                    condition: { kind: 'conditionNode', nodeId: 'input_2' },
                   },
+                  whenTrue: { $sequence: 'buff-board-reached' },
                 },
-                whenTrue: { $sequence: 'buff-board-reached' },
+                next: null,
               },
-              next: null,
-            },
-            'buff-board-reached': {
-              action: {
-                kind: 'setContextFlag',
-                parameters: { flag: 'reached', value: true, target: 'caster' },
+              'buff-board-reached': {
+                action: {
+                  kind: 'setContextFlag',
+                  parameters: { flag: 'reached', value: true, target: 'caster' },
+                },
+                next: null,
               },
-              next: null,
             },
-          }),
+            {
+              input_1: {
+                type: 'number',
+                expression: { kind: 'blackboard', key: 'EntityBB_SwordNum' },
+              },
+              input_2: {
+                type: 'boolean',
+                expression: {
+                  kind: 'actionValueCompare',
+                  left: { kind: 'valueNode', nodeId: 'input_1' },
+                  operator: 'equal',
+                  right: { kind: 'constant', value: 4 },
+                },
+              },
+            },
+          ),
         },
       ],
     });
@@ -5568,35 +5702,45 @@ describe('CombatRuntimeAssembly', () => {
       timelineActions: [
         {
           startFrame: 0,
-          sequence: compileGraphEntry('caster-buff-identity-operations', 'step-0', {
-            'step-0': {
-              action: {
-                kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'buffIdStackCompare',
+          sequence: compileGraphEntry(
+            'caster-buff-identity-operations',
+            'step-0',
+            {
+              'step-0': {
+                action: {
+                  kind: 'conditional',
+                  parameters: {
+                    condition: { kind: 'conditionNode', nodeId: 'input_1' },
+                  },
+                  whenTrue: { $sequence: 'finish-sword-trigger' },
+                },
+                next: null,
+              },
+              'finish-sword-trigger': {
+                action: {
+                  kind: 'finishBuffsById',
+                  parameters: {
                     target: 'caster',
                     buffIds: ['sword-trigger'],
-                    operator: 'greaterOrEqual',
-                    value: 1,
+                    reason: 'other',
                   },
                 },
-                whenTrue: { $sequence: 'finish-sword-trigger' },
+                next: null,
               },
-              next: null,
             },
-            'finish-sword-trigger': {
-              action: {
-                kind: 'finishBuffsById',
-                parameters: {
+            {
+              input_1: {
+                type: 'boolean',
+                expression: {
+                  kind: 'buffIdStackCompare',
                   target: 'caster',
                   buffIds: ['sword-trigger'],
-                  reason: 'other',
+                  operator: 'greaterOrEqual',
+                  value: 1,
                 },
               },
-              next: null,
             },
-          }),
+          ),
         },
       ],
     });

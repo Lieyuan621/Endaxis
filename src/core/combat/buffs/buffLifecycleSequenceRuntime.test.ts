@@ -39,8 +39,9 @@ const compileGraphEntry = (
   revision: string,
   entry: string | null,
   nodes: Record<string, ActionGraphNode>,
+  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => ({
-  graph: createActionGraphCompilation({ nodes }, 1, revision).compileAll(),
+  graph: createActionGraphCompilation({ nodes, dataNodes }, 1, revision).compileAll(),
   entry,
   callSite: revision,
 });
@@ -48,6 +49,7 @@ const compileGraphEntry = (
 const chainEntry = (
   revision: string,
   actions: readonly ActionGraphNode['action'][],
+  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => {
   const nodes: Record<string, ActionGraphNode> = {};
   actions.forEach((action, index) => {
@@ -56,7 +58,7 @@ const chainEntry = (
       next: index + 1 < actions.length ? `step-${index + 1}` : null,
     };
   });
-  return compileGraphEntry(revision, actions.length === 0 ? null : 'step-0', nodes);
+  return compileGraphEntry(revision, actions.length === 0 ? null : 'step-0', nodes, dataNodes);
 };
 
 describe('attachBuffLifecycleSequences', () => {
@@ -107,7 +109,7 @@ describe('attachBuffLifecycleSequences', () => {
         [],
         [],
         undefined,
-        [{ graph, entry: null, callSite: 'damageModifier.condition' }],
+        { damage: [{ graph, entry: null, callSite: 'damageModifier.condition' }] },
       );
     };
     const original = new CombatBuffContainer<never>('owner', new CombatAttributeSet<never>());
@@ -294,7 +296,7 @@ describe('attachBuffLifecycleSequences', () => {
         [],
         [],
         undefined,
-        [],
+        {},
         (event, callback) => dispatcher.registerCallback(event, callback),
         callback => {
           request = callback;
@@ -403,7 +405,7 @@ describe('attachBuffLifecycleSequences', () => {
         [],
         [],
         undefined,
-        [],
+        {},
         (event, callback, subscriptions) =>
           subscriptions === undefined
             ? dispatcher.registerCallback(event, callback)
@@ -811,7 +813,7 @@ describe('attachBuffLifecycleSequences', () => {
         [],
         [],
         undefined,
-        [],
+        {},
         (event, callback) => {
           expect([
             'beforeCastSkill',
@@ -1049,36 +1051,46 @@ describe('attachBuffLifecycleSequences', () => {
         {
           event: 'beforeCastSkill',
           priority: 0,
-          sequence: compileGraphEntry('limited-provenance', 'guard', {
-            guard: {
-              action: {
-                kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'buffIdStackCompare',
-                    target: 'buffOwner',
-                    buffIds: ['seal'],
-                    sameSourceSkillCast: true,
-                    operator: 'equal',
-                    value: { kind: 'constant', value: 1 },
+          sequence: compileGraphEntry(
+            'limited-provenance',
+            'guard',
+            {
+              guard: {
+                action: {
+                  kind: 'conditional',
+                  parameters: {
+                    condition: { kind: 'conditionNode', nodeId: 'input_1' },
+                  },
+                  whenTrue: { $sequence: 'matched' },
+                },
+                next: null,
+              },
+              matched: {
+                action: {
+                  kind: 'setContextFlag',
+                  parameters: {
+                    flag: 'matched',
+                    value: true,
+                    target: 'caster',
                   },
                 },
-                whenTrue: { $sequence: 'matched' },
+                next: null,
               },
-              next: null,
             },
-            matched: {
-              action: {
-                kind: 'setContextFlag',
-                parameters: {
-                  flag: 'matched',
-                  value: true,
-                  target: 'caster',
+            {
+              input_1: {
+                type: 'boolean',
+                expression: {
+                  kind: 'buffIdStackCompare',
+                  target: 'buffOwner',
+                  buffIds: ['seal'],
+                  sameSourceSkillCast: true,
+                  operator: 'equal',
+                  value: { kind: 'constant', value: 1 },
                 },
               },
-              next: null,
             },
-          }),
+          ),
         },
       ],
       (_event, _priority, callback) => {
@@ -1602,37 +1614,48 @@ describe('attachBuffLifecycleSequences', () => {
         {
           event: 'beforeTakeDamage',
           priority: 7,
-          sequence: compileGraphEntry('damage-listener-response', 'tags', {
-            tags: {
-              action: {
-                kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventDamageTagsMatch',
-                    match: 'hasAll',
-                    tags: ['normalSkill'],
+          sequence: compileGraphEntry(
+            'damage-listener-response',
+            'tags',
+            {
+              tags: {
+                action: {
+                  kind: 'conditional',
+                  parameters: {
+                    condition: { kind: 'conditionNode', nodeId: 'input_1' },
                   },
+                  whenTrue: { $sequence: 'source' },
                 },
-                whenTrue: { $sequence: 'source' },
+                next: null,
               },
-              next: null,
-            },
-            source: {
-              action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'eventSourceMatchesBuffSource' } },
-                whenTrue: { $sequence: 'matched' },
+              source: {
+                action: {
+                  kind: 'conditional',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'input_2' } },
+                  whenTrue: { $sequence: 'matched' },
+                },
+                next: null,
               },
-              next: null,
-            },
-            matched: {
-              action: {
-                kind: 'setContextFlag',
-                parameters: { flag: 'matched', value: true, target: 'caster' },
+              matched: {
+                action: {
+                  kind: 'setContextFlag',
+                  parameters: { flag: 'matched', value: true, target: 'caster' },
+                },
+                next: null,
               },
-              next: null,
             },
-          }),
+            {
+              input_1: {
+                type: 'boolean',
+                expression: {
+                  kind: 'eventDamageTagsMatch',
+                  match: 'hasAll',
+                  tags: ['normalSkill'],
+                },
+              },
+              input_2: { type: 'boolean', expression: { kind: 'eventSourceMatchesBuffSource' } },
+            },
+          ),
         },
       ],
       (event, priority, handle) => {
@@ -1699,23 +1722,28 @@ describe('attachBuffLifecycleSequences', () => {
         {
           event: 'poiseZero',
           priority: 0,
-          sequence: compileGraphEntry('poise-listener-response', 'guard', {
-            guard: {
-              action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'eventSourceControlled' } },
-                whenTrue: { $sequence: 'broken' },
+          sequence: compileGraphEntry(
+            'poise-listener-response',
+            'guard',
+            {
+              guard: {
+                action: {
+                  kind: 'conditional',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'input_1' } },
+                  whenTrue: { $sequence: 'broken' },
+                },
+                next: null,
               },
-              next: null,
-            },
-            broken: {
-              action: {
-                kind: 'setContextFlag',
-                parameters: { flag: 'broken', value: true, target: 'caster' },
+              broken: {
+                action: {
+                  kind: 'setContextFlag',
+                  parameters: { flag: 'broken', value: true, target: 'caster' },
+                },
+                next: null,
               },
-              next: null,
             },
-          }),
+            { input_1: { type: 'boolean', expression: { kind: 'eventSourceControlled' } } },
+          ),
         },
       ],
       (event, priority, handle) => {
@@ -1941,42 +1969,62 @@ describe('attachBuffLifecycleSequences', () => {
         {
           event: 'beforeCastSkill',
           priority: 0,
-          sequence: compileGraphEntry('combo-timer-pause', 'guard', {
-            guard: {
-              action: {
-                kind: 'conditional',
-                parameters: {
-                  condition: { kind: 'eventSkillIdIn', skillIds: ['native-power-attack'] },
+          sequence: compileGraphEntry(
+            'combo-timer-pause',
+            'guard',
+            {
+              guard: {
+                action: {
+                  kind: 'conditional',
+                  parameters: {
+                    condition: { kind: 'conditionNode', nodeId: 'input_1' },
+                  },
+                  whenTrue: { $sequence: 'pause' },
                 },
-                whenTrue: { $sequence: 'pause' },
+                next: null,
               },
-              next: null,
+              pause: {
+                action: { kind: 'setCurrentBuffTimePaused', parameters: { paused: true } },
+                next: null,
+              },
             },
-            pause: {
-              action: { kind: 'setCurrentBuffTimePaused', parameters: { paused: true } },
-              next: null,
+            {
+              input_1: {
+                type: 'boolean',
+                expression: { kind: 'eventSkillIdIn', skillIds: ['native-power-attack'] },
+              },
             },
-          }),
+          ),
         },
         {
           event: 'finishedBuff',
           priority: 0,
-          sequence: compileGraphEntry('combo-timer-resume', 'guard', {
-            guard: {
-              action: {
-                kind: 'conditional',
-                parameters: {
-                  condition: { kind: 'eventBuffIdMatch', buffIds: ['resume-marker'] },
+          sequence: compileGraphEntry(
+            'combo-timer-resume',
+            'guard',
+            {
+              guard: {
+                action: {
+                  kind: 'conditional',
+                  parameters: {
+                    condition: { kind: 'conditionNode', nodeId: 'input_1' },
+                  },
+                  whenTrue: { $sequence: 'resume' },
                 },
-                whenTrue: { $sequence: 'resume' },
+                next: null,
               },
-              next: null,
+              resume: {
+                action: { kind: 'setCurrentBuffTimePaused', parameters: { paused: false } },
+                next: null,
+              },
             },
-            resume: {
-              action: { kind: 'setCurrentBuffTimePaused', parameters: { paused: false } },
-              next: null,
+            {
+              input_1: {
+                type: 'boolean',
+                expression: { kind: 'eventBuffIdMatch', buffIds: ['resume-marker'] },
+              },
             },
-          }),
+          ),
         },
       ],
       (event, priority, handle) => {
@@ -2046,23 +2094,28 @@ describe('attachBuffLifecycleSequences', () => {
         {
           event: 'addedBuff',
           priority: 0,
-          sequence: compileGraphEntry('same-priority-first', 'guard', {
-            guard: {
-              action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'casterControlled' } },
-                whenTrue: { $sequence: 'flag' },
+          sequence: compileGraphEntry(
+            'same-priority-first',
+            'guard',
+            {
+              guard: {
+                action: {
+                  kind: 'conditional',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'input_1' } },
+                  whenTrue: { $sequence: 'flag' },
+                },
+                next: null,
               },
-              next: null,
-            },
-            flag: {
-              action: {
-                kind: 'setContextFlag',
-                parameters: { flag: 'first', value: true, target: 'caster' },
+              flag: {
+                action: {
+                  kind: 'setContextFlag',
+                  parameters: { flag: 'first', value: true, target: 'caster' },
+                },
+                next: null,
               },
-              next: null,
             },
-          }),
+            { input_1: { type: 'boolean', expression: { kind: 'casterControlled' } } },
+          ),
         },
         {
           event: 'addedBuff',
@@ -2146,35 +2199,45 @@ describe('attachBuffLifecycleSequences', () => {
         ['first', 'second'].map(flag => ({
           event: 'addedBuff' as const,
           priority: 0,
-          sequence: compileGraphEntry(`finish-during-dispatch-${flag}`, 'set', {
-            set: {
-              action: {
-                kind: 'setContextFlag',
-                parameters: { flag, value: true, target: 'caster' },
-              },
-              next: 'guard',
-            },
-            guard: {
-              action: {
-                kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'probability',
-                    probability: { kind: 'constant', value: 1 },
-                  },
+          sequence: compileGraphEntry(
+            `finish-during-dispatch-${flag}`,
+            'set',
+            {
+              set: {
+                action: {
+                  kind: 'setContextFlag',
+                  parameters: { flag, value: true, target: 'caster' },
                 },
-                whenTrue: { $sequence: 'nested' },
+                next: 'guard',
               },
-              next: null,
-            },
-            nested: {
-              action: {
-                kind: 'setContextFlag',
-                parameters: { flag: 'nested-later', value: true, target: 'caster' },
+              guard: {
+                action: {
+                  kind: 'conditional',
+                  parameters: {
+                    condition: { kind: 'conditionNode', nodeId: 'input_1' },
+                  },
+                  whenTrue: { $sequence: 'nested' },
+                },
+                next: null,
               },
-              next: null,
+              nested: {
+                action: {
+                  kind: 'setContextFlag',
+                  parameters: { flag: 'nested-later', value: true, target: 'caster' },
+                },
+                next: null,
+              },
             },
-          }),
+            {
+              input_1: {
+                type: 'boolean',
+                expression: {
+                  kind: 'probability',
+                  probability: { kind: 'constant', value: 1 },
+                },
+              },
+            },
+          ),
         })),
         (event, priority, handle) =>
           dispatcher.registerAction(event, priority, published => handle(published)),

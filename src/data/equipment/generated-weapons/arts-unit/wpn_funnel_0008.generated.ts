@@ -119,10 +119,7 @@ const definition = {
       damageModifiers: [
         {
           enabledSide: 'defender',
-          condition: {
-            kind: 'eventDamageTypesMatch',
-            damageTypes: ['heat', 'electric', 'cryo', 'nature'],
-          },
+          condition: { $sequence: 'conditional_1' },
           processors: [
             {
               kind: 'damageScale',
@@ -133,7 +130,30 @@ const definition = {
           ],
         },
       ],
-      actionGraph: { main: { nodes: {} }, macros: {} },
+      actionGraph: {
+        main: {
+          nodes: {
+            conditional_1: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+                whenTrue: { $sequence: null },
+              },
+              next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventDamageTypeIn',
+                damageTypes: ['heat', 'electric', 'cryo', 'nature'],
+              },
+            },
+          },
+        },
+        macros: {},
+      },
     },
   },
 } as const satisfies WeaponDefinition;

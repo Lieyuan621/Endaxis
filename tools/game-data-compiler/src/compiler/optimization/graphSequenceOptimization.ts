@@ -9,14 +9,14 @@
  * 原 id 对同一签名唯一时保留原 id，新节点按 `${kind}_optN` 确定性命名；最后从入口做可达性收集，
  * 剔除不再被任何入口或引用到达的节点。next 成环的链保守保留不改写。
  */
-import type { CombatStepDefinition } from '../../../../../packages/game-data-contract/src/actions.ts';
-import type { CombatCondition } from '../../../../../packages/game-data-contract/src/conditions.ts';
+import type { CombatStepDefinition } from '../intermediateDefinitions.ts';
+import type { CombatCondition } from '../intermediateDefinitions.ts';
 import type {
   ActionGraphDefinition,
   ActionGraphNode,
   ActionGraphReference,
   ActionGraphStep,
-} from '../../../../../packages/game-data-contract/src/actionGraph.ts';
+} from '../intermediateDefinitions.ts';
 import {
   analyzeConditionUsage,
   analyzeStepUsage,

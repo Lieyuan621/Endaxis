@@ -60,8 +60,8 @@ const definition = {
                 parameters: {
                   key: 'phy_dmg_up',
                   operation: 'multiply',
-                  left: { kind: 'blackboard', key: 'phy_dmg_up_mult' },
-                  right: { kind: 'blackboard', key: 'count' },
+                  left: { kind: 'valueNode', nodeId: 'data_1' },
+                  right: { kind: 'valueNode', nodeId: 'data_2' },
                 },
               },
               next: 'applyBuff_1',
@@ -69,14 +69,7 @@ const definition = {
             conditional_3: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventConsumedBuffLayerCompare',
-                    operator: 'greaterOrEqual',
-                    value: { kind: 'constant', value: 1 },
-                    outputKey: 'count',
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 whenTrue: { $sequence: 'calculateActionValue_2' },
               },
               next: null,
@@ -84,16 +77,31 @@ const definition = {
             conditional_4: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/NoGuard'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
                 whenTrue: { $sequence: 'conditional_3' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'phy_dmg_up_mult' } },
+            data_2: { type: 'number', expression: { kind: 'blackboard', key: 'count' } },
+            data_3: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventConsumedBuffLayerCompare',
+                operator: 'greaterOrEqual',
+                value: { kind: 'constant', value: 1 },
+                outputKey: 'count',
+              },
+            },
+            data_4: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/NoGuard'],
+              },
             },
           },
         },

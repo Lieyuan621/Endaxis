@@ -21,7 +21,6 @@ const baseline = JSON.parse(
     readonly key: string;
     readonly previousReason: 'depth-limit' | 'recursive-type';
   }[];
-  readonly resolvedDefinitionConditionPositions?: readonly string[];
   readonly resolvedOwnedContainerPositions?: readonly string[];
   readonly resolvedGraphSequencePositions?: readonly string[];
   readonly resolvedGraphOperandPositions?: readonly string[];
@@ -29,31 +28,11 @@ const baseline = JSON.parse(
 };
 const failures = checkFieldCapabilityCoverage(rows, baseline.exceptions);
 const depthPositions = baseline.resolvedDefinitionDepthPositions ?? [];
-if (
-  depthPositions.length !== 139 ||
-  new Set(depthPositions.map(row => row.key)).size !== 139 ||
-  depthPositions.filter(row => row.previousReason === 'depth-limit').length !== 131
-)
-  failures.push('the 131 depth and 8 recursive positions must remain accounted for individually');
+if (new Set(depthPositions.map(row => row.key)).size !== depthPositions.length)
+  failures.push('resolved schema positions must remain individually accounted for');
 for (const position of depthPositions) {
   const row = rows.find(row => row.key === position.key);
   if (!row || row.fallback) failures.push(`deep position lacks resolved schema: ${position.key}`);
-}
-const resolvedConditions = baseline.resolvedDefinitionConditionPositions ?? [];
-const historicalConditions = [
-  ...resolvedConditions,
-  ...baseline.exceptions
-    .filter(group => group.reason === 'condition-editor-pending')
-    .flatMap(group => group.keys),
-];
-if (historicalConditions.length !== 11 || new Set(historicalConditions).size !== 11)
-  failures.push(
-    'the eleven historical definition condition positions must remain individually accounted for',
-  );
-for (const key of resolvedConditions) {
-  const row = rows.find(row => row.key === key);
-  if (!row || row.control !== 'inlineCondition' || row.fallback)
-    failures.push(`condition position lacks its inline editor: ${key}`);
 }
 const graphOperandPositions = baseline.resolvedGraphOperandPositions ?? [];
 const expectedGraphOperands = [

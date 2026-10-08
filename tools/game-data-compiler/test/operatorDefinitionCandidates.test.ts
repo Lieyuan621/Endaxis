@@ -6,12 +6,12 @@ import type { OperatorDefinition } from '../../../packages/game-data-contract/sr
 
 import { avywenna } from '../../../src/data/operators/avywenna.generated.ts';
 
-const { planOperatorDefinition, renderOperatorDefinitionFiles } = vi.hoisted(() => ({
-  planOperatorDefinition: vi.fn(),
+const { projectOperatorDefinition, renderOperatorDefinitionFiles } = vi.hoisted(() => ({
+  projectOperatorDefinition: vi.fn(),
   renderOperatorDefinitionFiles: vi.fn(),
 }));
 vi.mock('../scripts/planOperatorDefinition.ts', () => ({
-  planOperatorDefinition,
+  projectOperatorDefinition,
   renderOperatorDefinitionFiles,
 }));
 
@@ -21,7 +21,7 @@ const roots: string[] = [];
 
 beforeEach(() => {
   vi.resetAllMocks();
-  planOperatorDefinition.mockImplementation(({ slug }: { slug: string }) => ({
+  projectOperatorDefinition.mockImplementation(({ slug }: { slug: string }) => ({
     activeSkills: [{ key: `${slug}-skill` }],
     operator: {
       ...avywenna,
@@ -90,7 +90,7 @@ describe('整批干员候选写入', () => {
           check: false,
         }),
       ).rejects.toThrow('must not overlap');
-      expect(planOperatorDefinition).not.toHaveBeenCalled();
+      expect(projectOperatorDefinition).not.toHaveBeenCalled();
     },
   );
 
@@ -112,7 +112,7 @@ describe('整批干员候选写入', () => {
     const render = renderOperatorDefinitionFiles.getMockImplementation()!;
     renderOperatorDefinitionFiles.mockImplementation(async (...args) => {
       // 渲染阶段只保留最终定义，来源缓存此前已经释放，累计读取次数仍可供审计。
-      for (const [plan] of planOperatorDefinition.mock.calls) {
+      for (const [plan] of projectOperatorDefinition.mock.calls) {
         const statistics = plan.sources.statistics();
         expect(statistics.shared.retainedSourceBytes).toBe(0);
         expect(statistics.shared.fileReads).toBeGreaterThan(0);
@@ -132,12 +132,6 @@ describe('整批干员候选写入', () => {
     await expect(
       generateOperatorDefinitionCandidates({ ...input, check: true }),
     ).resolves.toMatchObject({ operatorCount: 2 });
-    expect(planOperatorDefinition.mock.calls.map(([args]) => args.optimization)).toEqual([
-      'off',
-      'off',
-      'off',
-      'off',
-    ]);
   });
 
   it('中途渲染失败时不碰上一份候选或审计目录', async () => {
@@ -171,6 +165,6 @@ describe('整批干员候选写入', () => {
     await expect(
       generateOperatorDefinitionCandidates({ ...sourceArguments, ...paths, check: false }),
     ).rejects.toThrow('duplicate slugs');
-    expect(planOperatorDefinition).not.toHaveBeenCalled();
+    expect(projectOperatorDefinition).not.toHaveBeenCalled();
   });
 });

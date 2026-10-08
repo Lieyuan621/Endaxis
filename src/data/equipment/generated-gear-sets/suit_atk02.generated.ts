@@ -5,6 +5,28 @@ const definition = {
   slug: 'suit_atk02',
   iconPath: '/equipment/atk02/item_equip_t4_suit_atk02_edc_04.webp',
   modifiers: [{ kind: 'panelStat', stat: 'attackPercent', value: 0.15 }],
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffId: 'buff_equipsuit_atk_02',
+              target: 'caster',
+              blackboardAssignments: {
+                atk_up: { kind: 'constant', value: 0.15 },
+                dmg_up: { kind: 'constant', value: 0.2 },
+                max_stack: { kind: 'constant', value: 3 },
+              },
+            },
+          },
+          next: null,
+        },
+      },
+    },
+    macros: {},
+  },
   skillId: 'passive_equipsuit_atk_02',
   buffDefinitions: {
     buff_equipsuit_atk_02: {
@@ -31,13 +53,17 @@ const definition = {
                   source: 'buffOwner',
                   finishByAction: true,
                   blackboardAssignments: {
-                    dmg_up: { kind: 'blackboard', key: 'dmg_up' },
-                    max_stack: { kind: 'blackboard', key: 'max_stack' },
+                    dmg_up: { kind: 'valueNode', nodeId: 'data_1' },
+                    max_stack: { kind: 'valueNode', nodeId: 'data_2' },
                   },
                 },
               },
               next: null,
             },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'dmg_up' } },
+            data_2: { type: 'number', expression: { kind: 'blackboard', key: 'max_stack' } },
           },
         },
         macros: {},
@@ -112,7 +138,7 @@ const definition = {
                 parameters: {
                   key: 'dmg_up',
                   operation: 'multiply',
-                  value: { kind: 'blackboard', key: 'stack' },
+                  value: { kind: 'valueNode', nodeId: 'data_1' },
                 },
               },
               next: 'applyBuff_2',
@@ -131,10 +157,17 @@ const definition = {
             conditional_5: {
               action: {
                 kind: 'conditional',
-                parameters: { condition: { kind: 'eventSkillTypeIn', skillTypes: ['comboSkill'] } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                 whenTrue: { $sequence: 'readBuffStackCount_4' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'stack' } },
+            data_2: {
+              type: 'boolean',
+              expression: { kind: 'eventSkillTypeIn', skillTypes: ['comboSkill'] },
             },
           },
         },
@@ -155,13 +188,7 @@ const definition = {
       damageModifiers: [
         {
           enabledSide: 'attacker',
-          condition: {
-            kind: 'all',
-            conditions: [
-              { kind: 'sourceSkillCastMatch' },
-              { kind: 'eventDamageTagsMatch', match: 'hasAll', tags: ['comboSkill'] },
-            ],
-          },
+          condition: { $sequence: 'conditional_3' },
           processors: [
             {
               kind: 'damageScale',
@@ -175,7 +202,32 @@ const definition = {
       lifecycleSequences: { enable: { $sequence: 'skillAffix_1' } },
       actionGraph: {
         main: {
-          nodes: { skillAffix_1: { action: { kind: 'skillAffix', parameters: {} }, next: null } },
+          nodes: {
+            skillAffix_1: { action: { kind: 'skillAffix', parameters: {} }, next: null },
+            conditional_2: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+                whenTrue: { $sequence: null },
+              },
+              next: null,
+            },
+            conditional_3: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+                whenTrue: { $sequence: 'conditional_2' },
+              },
+              next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: { kind: 'eventDamageTagsMatch', match: 'hasAll', tags: ['comboSkill'] },
+            },
+            data_2: { type: 'boolean', expression: { kind: 'eventSkillCastMatchesBuffSource' } },
+          },
         },
         macros: {},
       },
@@ -213,12 +265,16 @@ const definition = {
             conditional_2: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: { kind: 'eventSkillTypeIn', skillTypes: ['battleSkill'] },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: { kind: 'eventSkillTypeIn', skillTypes: ['battleSkill'] },
             },
           },
         },
@@ -227,28 +283,6 @@ const definition = {
     },
   },
   enableSequence: { $sequence: 'applyBuff_1' },
-  actionGraph: {
-    main: {
-      nodes: {
-        applyBuff_1: {
-          action: {
-            kind: 'applyBuff',
-            parameters: {
-              buffId: 'buff_equipsuit_atk_02',
-              target: 'caster',
-              blackboardAssignments: {
-                atk_up: { kind: 'constant', value: 0.15 },
-                dmg_up: { kind: 'constant', value: 0.2 },
-                max_stack: { kind: 'constant', value: 3 },
-              },
-            },
-          },
-          next: null,
-        },
-      },
-    },
-    macros: {},
-  },
 } as const satisfies GearSetDefinition;
 
 export default definition;

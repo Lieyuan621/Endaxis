@@ -1,8 +1,8 @@
 import { skillFixture } from '../../../../src/test/skillFixture';
 /** 验证黑板裁剪的真实读取、缺键错误、跨入口保留和序列生命周期。 */
 import { describe, expect, it } from 'vitest';
-import type { CombatStepForKind } from '../../../../packages/game-data-contract/src/actions.ts';
-import type { SkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
+import type { CombatStepForKind } from '../../src/compiler/intermediateDefinitions.ts';
+import type { SkillDefinition } from '../../src/compiler/intermediateDefinitions.ts';
 import { pruneUnusedGraphSkillValues } from '../../src/compiler/optimization/graphValueOptimization.ts';
 import { compileGraphSequence } from '../support/graphSequence.ts';
 import { CombatActionSequenceRuntime } from '../../../../src/core/combat/actions/combatActionSequenceRuntime.ts';
@@ -15,7 +15,7 @@ import type {
   ActionGraphNode,
   ActionGraphReference,
   ActionGraphStep,
-} from '../../../../packages/game-data-contract/src/actionGraph.ts';
+} from '../../src/compiler/intermediateDefinitions.ts';
 
 const literal = (value: number) => ({ kind: 'constant' as const, value });
 const board = (key: string) => ({ kind: 'blackboard' as const, key });
@@ -73,13 +73,19 @@ function skill(
 ): SkillDefinition {
   const nodes: Record<string, ActionGraphNode> = {};
   const scheduledSequences = build(nodes);
-  return skillFixture({
+  return {
+    ...skillFixture({
+      key: 'fixture',
+      timelineBlockFrames: 30,
+      scheduledSequences: [],
+      actionGraph: { main: { nodes: {} }, macros: {} },
+    }),
     key: 'skill',
     timelineBlockFrames: 30,
     blackboard,
     scheduledSequences,
     actionGraph: { main: { nodes }, macros: {} },
-  });
+  };
 }
 const single = (actions: readonly ActionGraphStep[]) =>
   skill(nodes => [{ startFrame: 0, sequence: chain(nodes, 'main', actions) }], undefined);

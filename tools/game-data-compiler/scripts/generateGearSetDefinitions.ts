@@ -9,7 +9,7 @@ import { parseItemIdentitySource } from '../src/source/itemIdentity.ts';
 import { projectEquipmentIconPath } from '../src/domains/equipment/formalDefinition.ts';
 import type { CompiledEquipmentSuitRuntimeBatchSource } from '../src/domains/equipment/suitRuntimeDefinition.ts';
 import type { DefinitionOptimizationMode } from '../src/compiler/optimization/definitionOptimization.ts';
-import { optimizeGearSetDefinitionPrograms } from '../src/compiler/optimization/equipmentDefinitionOptimization.ts';
+import { finalizeGearSetDefinition } from '../src/compiler/finalizeDefinitions.ts';
 
 import {
   checkEquipmentDefinitionFiles,
@@ -96,7 +96,7 @@ export async function renderGearSetDefinitionsFromCompiled(
   assertNoBlockedDiagnostics(batch);
   const prettierConfig = (await resolveConfig(resolve('.prettierrc.json'))) ?? {};
   const optimized = batch.definitions.map(definition =>
-    optimizeGearSetDefinitionPrograms(definition, optimization),
+    finalizeGearSetDefinition(definition, optimization),
   );
   const files = await Promise.all(
     renderEquipmentSuitDefinitionFiles({

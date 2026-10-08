@@ -46,33 +46,33 @@ export function createProgramDefinitionCompiler(
       abilityEventResponses,
       igniteEventResponses,
       damageModifiers,
+      healModifiers,
+      poiseModifiers,
       ...fields
     } = definition;
+    const compileModifiers = <T extends { readonly condition?: ActionGraphReference }>(
+      modifiers: readonly T[],
+      name: string,
+    ) =>
+      modifiers.map(({ condition, ...fields }, index) => ({
+        ...fields,
+        ...(condition === undefined
+          ? {}
+          : {
+              condition: compileBuffEntry(condition, `${path}.${name}[${index}].condition`),
+            }),
+      }));
     return {
       ...fields,
       ...(damageModifiers === undefined
         ? {}
-        : {
-            damageModifiers: damageModifiers.map((modifier, index) => {
-              const { conditionProgram, ...fields } = modifier;
-              if (conditionProgram !== undefined && modifier.condition !== undefined) {
-                throw new Error(
-                  `${path}.damageModifiers[${index}] cannot define both condition and conditionProgram`,
-                );
-              }
-              return {
-                ...fields,
-                ...(conditionProgram === undefined
-                  ? {}
-                  : {
-                      conditionProgram: compileBuffEntry(
-                        conditionProgram,
-                        `${path}.damageModifiers[${index}].conditionProgram`,
-                      ),
-                    }),
-              };
-            }),
-          }),
+        : { damageModifiers: compileModifiers(damageModifiers, 'damageModifiers') }),
+      ...(healModifiers === undefined
+        ? {}
+        : { healModifiers: compileModifiers(healModifiers, 'healModifiers') }),
+      ...(poiseModifiers === undefined
+        ? {}
+        : { poiseModifiers: compileModifiers(poiseModifiers, 'poiseModifiers') }),
       ...(scheduledSequences === undefined
         ? {}
         : {

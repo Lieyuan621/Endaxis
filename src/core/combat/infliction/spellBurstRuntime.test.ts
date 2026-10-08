@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { CombatBuffSpellBurstDefinition } from '../buffs/combatBuffDefinitions';
+import type { CombatBuffSpellBurstDefinition } from '../../../../packages/game-data-contract/src/buffs';
 import type { PlayerDamageDefenderSnapshot } from '../damage/playerActiveDamageInput';
 import { createSkillSettingSource, type SkillSettingsDocument } from './skillSettings';
 import { CombatReceiptCollector } from '../receipt/combatReceipt';

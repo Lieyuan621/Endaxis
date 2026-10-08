@@ -15,7 +15,6 @@ import {
 } from './primitives.ts';
 import {
   type AttributeModifierSlot,
-  type DamageModifierCondition,
   type DamageModifierDefinition,
   type DamageScaleProcessorDefinition,
   type InstantAttributeProcessorDefinition,
@@ -136,7 +135,7 @@ type SkillBuffProperties = Omit<BuffDefinitionProperties, 'damageModifiers'> & {
   /** 有动作入口的 Buff 保存自己的图；纯数值 Buff 可以省略。 */
   readonly actionGraph?: ActionGraphResourceDefinition;
   /** Buff 启用期间参与伤害计算的条件和数值处理器。 */
-  readonly damageModifiers?: readonly SkillBuffDefinitionDamageModifier[];
+  readonly damageModifiers?: readonly CombatBuffDefinitionDamageModifier[];
   /** 可在施加时从该 Buff 已合并的实例黑板解析。 */
   maxStackCount?: BuffMaxStackCount;
   /** Buff 启用期间按实例局部时钟执行的相对帧时间线。 */
@@ -162,6 +161,8 @@ export type StaticBuffDefinition = Omit<
   | 'abilityEventResponses'
   | 'igniteEventResponses'
   | 'damageModifiers'
+  | 'healModifiers'
+  | 'poiseModifiers'
 > & {
   readonly actionGraph?: never;
   readonly scheduledSequences?: never;
@@ -169,9 +170,17 @@ export type StaticBuffDefinition = Omit<
   readonly abilityEventResponses?: never;
   readonly igniteEventResponses?: never;
   readonly damageModifiers?: readonly (Omit<
-    SkillBuffDefinitionDamageModifier,
-    'conditionProgram'
-  > & { readonly conditionProgram?: never })[];
+    NonNullable<SkillBuffProperties['damageModifiers']>[number],
+    'condition'
+  > & { readonly condition?: never })[];
+  readonly healModifiers?: readonly (Omit<
+    NonNullable<SkillBuffProperties['healModifiers']>[number],
+    'condition'
+  > & { readonly condition?: never })[];
+  readonly poiseModifiers?: readonly (Omit<
+    NonNullable<SkillBuffProperties['poiseModifiers']>[number],
+    'condition'
+  > & { readonly condition?: never })[];
 };
 
 /** 有动作入口就必须带图；纯数值 Buff 不创建空图。 */
@@ -642,19 +651,15 @@ export interface CombatBuffDefinitionDamageModifier {
   /** 修正安装在攻击方还是防御方时启用。 */
   readonly enabledSide: DamageModifierDefinition['enabledSide'];
   /** 启用处理器前检查的条件。 */
-  readonly condition?: DamageModifierCondition;
+  readonly condition?: ActionGraphReference;
   /** 条件成立时按顺序执行的伤害处理器。 */
   readonly processors: readonly CombatBuffDefinitionDamageProcessor[];
 }
 
-/** 干员内联 Buff 使用的伤害修正，可用动作序列计算较复杂的实例条件。 */
-export type SkillBuffDefinitionDamageModifier = CombatBuffDefinitionDamageModifier & {
-  /** 以动作序列的最终结果决定是否启用处理器；不能与 `condition` 同时填写。 */
-  readonly conditionProgram?: ActionGraphReference;
-};
-
 /** 外部 Buff 文档中的一项完整 Buff 定义。 */
 export interface CombatBuffDefinitionEntry extends BuffDefinitionProperties {
+  /** 此 Buff 的修正条件动作图；条件入口只能引用本资源中的动作。 */
+  readonly actionGraph?: ActionGraphResourceDefinition;
   /** Buff 的全局唯一 ID。 */
   readonly id: string;
   /** 允许的最大强化层数或叠加实例数。 */

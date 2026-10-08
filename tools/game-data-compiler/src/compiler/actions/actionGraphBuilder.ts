@@ -1,9 +1,6 @@
 /** 单个原生资源的图构建器。子程序先构建为入口引用，再交给父节点；不接受动作树。 */
 import { createHash } from 'node:crypto';
-import type {
-  ActionGraphReference,
-  ActionGraphStep,
-} from '../../../../../packages/game-data-contract/src/actionGraph.ts';
+import type { ActionGraphReference, ActionGraphStep } from '../intermediateDefinitions.ts';
 
 export interface BuiltActionGraph<Action> {
   readonly nodes: Readonly<

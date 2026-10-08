@@ -1339,7 +1339,30 @@ const perlicaBuff2: SkillBuffDefinition = {
 };
 
 const perlicaBuff3ActionGraph = {
-  main: { nodes: {} },
+  main: {
+    nodes: {
+      conditional_1: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+          whenTrue: { $sequence: null },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: {
+          kind: 'poiseCompare',
+          target: 'currentTarget',
+          returnValueIfMissing: false,
+          operator: 'equal',
+          value: { kind: 'constant', value: 0 },
+        },
+      },
+    },
+  },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
@@ -1354,13 +1377,7 @@ const perlicaBuff3: SkillBuffDefinition = {
   damageModifiers: [
     {
       enabledSide: 'attacker',
-      condition: {
-        kind: 'targetPoiseCompare',
-        target: 'enemy',
-        returnValueIfMissing: false,
-        operator: 'equal',
-        value: 0,
-      },
+      condition: { $sequence: 'conditional_1' },
       processors: [
         {
           kind: 'damageScale',

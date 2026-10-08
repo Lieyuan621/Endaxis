@@ -2,7 +2,7 @@ import { expectTypeOf } from 'vitest';
 import type {
   BuildModifierDefinition,
   BuildModifierDefinitionMap,
-} from '../../../packages/game-data-contract/src/index.ts';
+} from '../src/compiler/intermediateDefinitions.ts';
 import type { CompiledBuildModifierDefinitionSource } from '../src/compiler/build/formalBuildDefinition.ts';
 import type {
   ActionGraphReference,
@@ -23,18 +23,20 @@ import type {
   GearSetDefinition,
   SkillDefinition,
   ScheduledSequenceDefinition,
-} from '../../../packages/game-data-contract/src/index.ts';
+} from '../src/compiler/intermediateDefinitions.ts';
 import type {
   CompiledBuffAttributeModifierSource,
-  CompiledBuffConditionSource,
   CompiledBuffDamageModifierSource,
   CompiledBuffDefinitionSource,
   CompiledBuffHealModifierSource,
   CompiledBuffPoiseModifierSource,
   CompiledBuffPresentationSource,
+} from '../src/compiler/buffs/buffProjectionTypes.ts';
+import type {
+  CompiledBuffConditionSource,
   CompiledBuffSequenceSource,
   CompiledBuffStepSource,
-} from '../src/compiler/buffs/buffRuntimeProjection.ts';
+} from '../src/compiler/actions/combatActionProjectionTypes.ts';
 import type {
   CompiledWeaponEventHandlerSource,
   CompiledWeaponRuntimeDefinitionSource,
@@ -55,7 +57,7 @@ import type {
 } from '../src/domains/operator/skillGroups.ts';
 import type { CompiledOperatorProgressionEntrySource } from '../src/domains/operator/progressionEffects.ts';
 
-/** 公共投影中实际携带 parameters 的动作种类；callMacro/callResource 是图引用节点，不属于契约动作参数域。 */
+/** 中间投影中实际携带 parameters 的动作种类；callMacro/callResource 是图引用节点，不属于契约动作参数域。 */
 type ProjectedCombatKind = Extract<
   CompiledBuffStepSource,
   { readonly parameters: unknown }
@@ -111,7 +113,7 @@ expectTypeOf<{
   attributes: readonly ['main'];
 }>().not.toExtend<CompiledTrustAttributeBonusSource>();
 
-// 套装阶段输出符合正式契约但不自动纳入未支持事件
+// 套装阶段输出符合中间定义但不自动纳入未支持事件
 type Runtime = CompiledEquipmentSuitRuntimeBatchSource['definitions'][number];
 expectTypeOf<CompiledGearSetStaticDefinitionSource>().toExtend<GearSetDefinition>();
 expectTypeOf<Runtime>().toExtend<GearSetDefinition>();
@@ -128,8 +130,7 @@ expectTypeOf<{}>().not.toExtend<Pick<Active, 'blackboard' | 'key' | 'costFrame'>
 expectTypeOf<Extract<keyof Active, 'eventHandlers' | 'availability'>>().toBeNever();
 
 // 由 type-check:game-data 真正检查，Vitest 执行本身不能替代类型门禁。
-// 方向必须是“所有公共投影输出均能交给契约”，不只是某份 JSON 恰巧通过 validator。
-// 公共 Buff、动作与武器装配输出是独立契约的子集
+// 投影输出遵守由正式契约派生的中间定义；发布时另行完成数据节点提取。
 expectTypeOf<CompiledBuffStepSource>().not.toBeNever();
 expectTypeOf<IncompatibleParameters>().toEqualTypeOf<never>();
 expectTypeOf<CompiledBuffPresentationSource>().toExtend<CombatBuffPresentation>();
@@ -158,7 +159,7 @@ expectTypeOf<{}>().not.toExtend<ProjectedParameters<'heal'>>();
 type UnknownProjection = ProjectedParameters<'unknownProjection'>;
 expectTypeOf<UnknownProjection>();
 
-// 武器与装备阶段输出符合契约并保留必需字段
+// 武器与装备阶段输出符合中间定义并保留必需字段
 expectTypeOf<CompiledWeaponStaticDefinitionSource>().toExtend<WeaponDefinition>();
 expectTypeOf<CompiledGearDefinitionSource>().toExtend<GearDefinition>();
 expectTypeOf<{}>().not.toExtend<Pick<CompiledGearDefinitionSource, 'assetSlug'>>();
@@ -178,7 +179,7 @@ expectTypeOf<SemanticEvent>().toBeNever();
 expectTypeOf<Extract<keyof CompiledWeaponEventHandlerSource, 'event' | 'blackboard'>>().toBeNever();
 expectTypeOf<{}>().not.toExtend<Pick<CompiledWeaponEventHandlerSource, 'priority'>>();
 expectTypeOf<{}>().not.toExtend<Pick<CompiledWeaponEventHandlerSource, 'abilityEvent'>>();
-// 完整公共契约仍保留兼容入口的互斥约束；生成器不再生成该入口。
+// 中间定义保留事件入口的互斥约束；生成器不再生成该入口。
 expectTypeOf<{
   key: string;
   priority: number;

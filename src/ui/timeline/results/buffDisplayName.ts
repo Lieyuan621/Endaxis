@@ -244,9 +244,18 @@ export function resolveBuffEffectSummary(
       : effect.multiplier !== undefined
         ? `${formatSigned((effect.multiplier - 1) * 100)}%`
         : `${plainDamage ? '' : `${zone} `}${formatSigned(effect.addition * 100)}%`;
+    const requirements =
+      effect.conditionSummary?.requirements.map(requirement =>
+        i18n.t(`buffEffects.requirements.${requirement}`),
+      ) ?? [];
+    if (effect.conditionSummary?.partial && requirements.length)
+      requirements.push(i18n.t('buffEffects.requirements.additional'));
+    const conditionText = requirements.length
+      ? requirements.join('；')
+      : i18n.t('buffEffects.conditional');
     if (value)
       lines.push(
-        `${side}${effect.attributeEffect || (!plainDamage && effect.multiplier === undefined) ? ' · ' : ' '}${value}${effect.conditional ? `（${i18n.t('buffEffects.conditional')}）` : ''}`,
+        `${side}${effect.attributeEffect || (!plainDamage && effect.multiplier === undefined) ? ' · ' : ' '}${value}${effect.conditional ? `（${conditionText}）` : ''}`,
       );
   }
   return lines.length ? lines.join('\n') : undefined;

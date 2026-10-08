@@ -1,3 +1,4 @@
+import type { CompiledInputs } from './compiledGraphData';
 /** 技能元数据的唯一编译规则；动作入口由程序编译器绑定。 */
 import type { SkillDefinition, SkillType } from '../game-data/operatorDefinition';
 import type { CompiledSkillProgram } from './combatProgram';
@@ -25,6 +26,7 @@ export function compileSkillCosts(skill: Pick<SkillDefinition, 'costs'>, skillLe
 export function compileSkillProgram(
   input: CompileSkillProgramInput,
   compileEntry: (entry: ActionGraphReference, path: string) => CompiledGraphEntry,
+  compileInputs: <T>(value: T) => CompiledInputs<T>,
 ): CompiledSkillProgram {
   const definitions = createProgramDefinitionCompiler(input.skillLevel, compileEntry);
   if (!Number.isInteger(input.skillLevel) || input.skillLevel <= 0) {
@@ -136,7 +138,7 @@ export function compileSkillProgram(
                 }),
             ...(input.skill.switchToBuffCast.condition === undefined
               ? {}
-              : { condition: input.skill.switchToBuffCast.condition }),
+              : { condition: compileInputs(input.skill.switchToBuffCast.condition) }),
             asSkillCast: input.skill.switchToBuffCast.asSkillCast === true,
             sequence: compileEntry(
               input.skill.switchToBuffCast.sequence,

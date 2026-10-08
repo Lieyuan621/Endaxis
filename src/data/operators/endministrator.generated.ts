@@ -2951,7 +2951,42 @@ const endministratorBuff5: SkillBuffDefinition = {
 };
 
 const endministratorBuff6ActionGraph = {
-  main: { nodes: {} },
+  main: {
+    nodes: {
+      conditional_1: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+          whenTrue: { $sequence: null },
+        },
+        next: null,
+      },
+      conditional_2: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          whenTrue: { $sequence: 'conditional_1' },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'eventDamageTypeIn', damageTypes: ['physical'] },
+      },
+      data_2: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: 'actionInputTarget',
+          buffIds: ['buff_common_originum_frozen'],
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+        },
+      },
+    },
+  },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
@@ -2966,19 +3001,7 @@ const endministratorBuff6: SkillBuffDefinition = {
   damageModifiers: [
     {
       enabledSide: 'attacker',
-      condition: {
-        kind: 'all',
-        conditions: [
-          {
-            kind: 'buffIdCountCompare',
-            target: 'enemy',
-            buffIds: ['buff_common_originum_frozen'],
-            operator: 'greaterOrEqual',
-            value: 1,
-          },
-          { kind: 'eventDamageTypesMatch', damageTypes: ['physical'] },
-        ],
-      },
+      condition: { $sequence: 'conditional_2' },
       processors: [
         {
           kind: 'damageScale',

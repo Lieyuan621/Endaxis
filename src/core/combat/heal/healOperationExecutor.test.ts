@@ -1,3 +1,4 @@
+import { numberInput } from '../../../test/compiledGraphInputs';
 import { describe, expect, it } from 'vitest';
 import { CombatReceiptCollector } from '../receipt/combatReceipt';
 import { ActionBlackboard } from '../actions/actionBlackboard';
@@ -59,7 +60,7 @@ describe('HealOperationExecutor', () => {
             source: 'buffOwner',
             attribute: 'maxHealth',
             attributeSource: 'target',
-            multiplier: { kind: 'blackboard', key: 'eny_heal_ratio' },
+            multiplier: numberInput({ kind: 'blackboard', key: 'eny_heal_ratio' }),
             addition: 0,
             tags: [],
           },
@@ -171,7 +172,7 @@ describe('HealOperationExecutor', () => {
           parameters: {
             target: 'controlledOperator',
             attribute: 'will',
-            multiplier: { kind: 'blackboard', key: 'scale' },
+            multiplier: numberInput({ kind: 'blackboard', key: 'scale' }),
             addition: 10,
             tags: ['Test/TagNegative1'],
           },
@@ -250,7 +251,7 @@ describe('HealOperationExecutor', () => {
         parameters: {
           target: 'caster',
           attribute: 'maxHealth',
-          multiplier: { kind: 'blackboard', key: 'heal' },
+          multiplier: numberInput({ kind: 'blackboard', key: 'heal' }),
           addition: 0,
           tags: [],
         },
@@ -403,7 +404,7 @@ describe('HealOperationExecutor', () => {
         kind: 'heal',
         parameters: {
           target: 'controlledOperator',
-          amount: { kind: 'blackboard', key: 'final_heal_value' },
+          amount: numberInput({ kind: 'blackboard', key: 'final_heal_value' }),
           tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
         },
       },

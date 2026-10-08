@@ -20,6 +20,7 @@ import type { FieldFallbackReason, FieldSemanticAlias } from './fieldSemantics';
 export interface FieldEditorContext {
   readonly nodeKind?: string;
   readonly graphOperand?: boolean;
+  readonly resourceGraph?: boolean;
   readonly references?: DefinitionSchemaReferences;
   readonly name?: string;
   /** An explicit family inherited by an array/record value or selected union branch. */
@@ -40,8 +41,6 @@ export interface FieldEditorResolution {
     | 'stringCollection'
     | 'gameplayTag'
     | 'structuredValue'
-    | 'inlineCondition'
-    | 'inlineOperand'
     | 'graphOperand'
     | 'skillSettingValues';
   readonly semantic:
@@ -132,43 +131,37 @@ export function resolveFieldEditor(
       graphSequenceBoundaries(schema, context.nodeKind, input.path, references),
       spawnDefinitionResources(schema, context.nodeKind, input.path),
     );
-  const inlineCondition = !node && schema.inlineCondition && semantic === 'combatCondition';
-  const inlineOperand = !node && schema.inlineCondition && semantic === 'valueOperand';
   const graphOperand = !node && context.graphOperand && semantic === 'valueOperand';
-  const contextlessOperand =
-    !node && semantic === 'valueOperand' && !inlineOperand && !graphOperand;
+  const graphCondition = !node && context.resourceGraph && baseControl === 'condition';
+  const contextlessOperand = !node && semantic === 'valueOperand' && !graphOperand;
   const skillSettingValues = !node && isSkillSettingValuesSchema(schema);
   const control = skillSettingValues
     ? 'skillSettingValues'
     : graphOperand
       ? 'graphOperand'
-      : inlineCondition
-        ? 'inlineCondition'
-        : inlineOperand
-          ? 'inlineOperand'
-          : contextlessOperand
-            ? 'operand'
-            : curve
-              ? 'timeScaleCurve'
-              : collection && !boundary
-                ? 'stringCollection'
-                : semantic === 'gameplayTag' && baseControl === 'string'
-                  ? 'gameplayTag'
-                  : conditionList && !boundary
-                    ? 'conditionList'
-                    : mapping && !boundary
-                      ? 'blackboardMapping'
-                      : semantic === 'stringOperand' && !boundary && baseControl !== 'opaque'
-                        ? 'stringOperand'
-                        : baseControl === 'string' && referenceKind && !context.protectedIdentity
-                          ? 'reference'
-                          : structured
-                            ? 'structuredValue'
-                            : semantic === 'levelValues' &&
-                                !node &&
-                                supportsStructuredValue(schema, references)
-                              ? 'levelValues'
-                              : baseControl;
+      : contextlessOperand
+        ? 'operand'
+        : curve
+          ? 'timeScaleCurve'
+          : collection && !boundary
+            ? 'stringCollection'
+            : semantic === 'gameplayTag' && baseControl === 'string'
+              ? 'gameplayTag'
+              : conditionList && !boundary
+                ? 'conditionList'
+                : mapping && !boundary
+                  ? 'blackboardMapping'
+                  : semantic === 'stringOperand' && !boundary && baseControl !== 'opaque'
+                    ? 'stringOperand'
+                    : baseControl === 'string' && referenceKind && !context.protectedIdentity
+                      ? 'reference'
+                      : structured
+                        ? 'structuredValue'
+                        : semantic === 'levelValues' &&
+                            !node &&
+                            supportsStructuredValue(schema, references)
+                          ? 'levelValues'
+                          : baseControl;
   const container =
     curve ||
     control === 'structuredValue' ||
@@ -177,15 +170,13 @@ export function resolveFieldEditor(
   const intrinsicallyReadonly =
     contextlessOperand ||
     boundary ||
-    (!graphOperand && ['opaque', 'condition', 'null'].includes(baseControl));
+    (!graphOperand && !graphCondition && ['opaque', 'condition', 'null'].includes(baseControl));
   const readonly =
     context.editable === false ||
     Boolean(context.protectedIdentity) ||
     (!node && isReadonlyDefinitionSlot(schema)) ||
     intrinsicallyReadonly;
   const specialized = [
-    'inlineCondition',
-    'inlineOperand',
     'graphOperand',
     'skillSettingValues',
     'timeScaleCurve',
@@ -196,24 +187,25 @@ export function resolveFieldEditor(
     'gameplayTag',
     'structuredValue',
   ].includes(control);
-  const fallback = specialized
-    ? undefined
-    : contextlessOperand
-      ? 'structured-editor-pending'
-      : (schema.fallback?.reason ??
-        (baseControl === 'opaque'
-          ? tuple
-            ? 'tuple-editor-pending'
-            : 'unsupported-type'
-          : baseControl === 'condition'
-            ? 'condition-editor-pending'
-            : baseControl === 'json'
-              ? 'structured-editor-pending'
-              : boundary
-                ? baseControl === 'resource'
-                  ? 'owned-resource-boundary'
-                  : 'graph-reference-boundary'
-                : undefined));
+  const fallback =
+    specialized || graphCondition
+      ? undefined
+      : contextlessOperand
+        ? 'structured-editor-pending'
+        : (schema.fallback?.reason ??
+          (baseControl === 'opaque'
+            ? tuple
+              ? 'tuple-editor-pending'
+              : 'unsupported-type'
+            : baseControl === 'condition'
+              ? 'graph-reference-boundary'
+              : baseControl === 'json'
+                ? 'structured-editor-pending'
+                : boundary
+                  ? baseControl === 'resource'
+                    ? 'owned-resource-boundary'
+                    : 'graph-reference-boundary'
+                  : undefined));
   return {
     control,
     semantic,

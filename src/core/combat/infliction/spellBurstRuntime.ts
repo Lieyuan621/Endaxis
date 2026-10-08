@@ -5,7 +5,7 @@
  * 倍率 = 定义值 × 增强公式(来源附着增强属性)。之后走标准玩家伤害公式
  * （防御、抗性、暴击），最后写入敌人生命账本。数据缺失时明确报错，不假装打出伤害。
  */
-import type { CombatBuffSpellBurstDefinition } from '../buffs/combatBuffDefinitions';
+import type { CombatBuffSpellBurstDefinition } from '../../../../packages/game-data-contract/src/buffs';
 import type { CompoundStatusSkillSettingSource } from './skillSettings';
 import type { CombatReceiptEntry } from '../receipt/combatReceipt';
 import type { DamageTag } from '../../game-data/operatorDefinition';

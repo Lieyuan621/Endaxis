@@ -1,3 +1,4 @@
+import { actionNodeSchemas } from '../action-graph/actionNodeSchemas.generated';
 import { createSSRApp, h } from 'vue';
 import { ID_INJECTION_KEY, ZINDEX_INJECTION_KEY } from 'element-plus';
 import { renderToString } from 'vue/server-renderer';
@@ -165,17 +166,11 @@ it('renders source, owner and read-only navigation without exposing a duplicate 
   expect(invisible).not.toContain('reference-field__navigate');
 });
 
-it('renders string literal/read branches through the same control in node and definition surfaces', async () => {
-  const semantics = { aliases: ['ActionStringOperand'] as const };
-  const schema: DefinitionFieldSchema = {
-    kind: 'union',
-    variants: [
-      { kind: 'string' },
-      { kind: 'object', fields: { blackboardKey: { kind: 'string' } } },
-    ],
-    semantics,
-  };
-  for (const value of ['known', { blackboardKey: 'runtimeBuff' }]) {
+it('renders string literal/node-reference branches through the same control in node and definition surfaces', async () => {
+  const schema = actionNodeSchemas.applyBuff.fields.find(
+    f => f.path.at(-1) === 'buffId',
+  )!.valueSchema;
+  for (const value of ['known', { kind: 'stringNode', nodeId: 'runtimeBuff' }]) {
     const html = await render(DefinitionField, {
       name: 'buffId',
       path: ['buffId'],
@@ -187,7 +182,7 @@ it('renders string literal/read branches through the same control in node and de
     });
     expect(html).toContain('data-field-control="stringOperand"');
     expect(html).toContain(
-      `data-string-operand-mode="${typeof value === 'string' ? 'literal' : 'blackboard'}"`,
+      `data-string-operand-mode="${typeof value === 'string' ? 'literal' : 'graph'}"`,
     );
     expect(html).not.toContain('definition-field__variant');
     expect(html).toContain(typeof value === 'string' ? 'known' : 'runtimeBuff');

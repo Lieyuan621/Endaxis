@@ -13,10 +13,10 @@ import type {
   WeaponDefinition,
 } from '../../../../packages/game-data-contract/src/equipment.ts';
 import {
-  optimizeCommonBuffDefinitions,
-  optimizeGearSetDefinitionPrograms,
-  optimizeWeaponDefinitionPrograms,
-} from '../../src/compiler/optimization/equipmentDefinitionOptimization.ts';
+  finalizeCommonBuffDefinitions,
+  finalizeGearSetDefinition,
+  finalizeWeaponDefinition,
+} from '../../src/compiler/finalizeDefinitions.ts';
 import { renderWeaponDefinitionFiles } from '../../src/domains/weapon/renderRuntimeDefinitions.ts';
 import { renderEquipmentSuitDefinitionFiles } from '../../src/domains/equipment/renderSuitDefinitions.ts';
 import {
@@ -93,8 +93,7 @@ function expectContributionOptimized(
     { key: 'event', priority: 3, abilityEvent: 'enterFight', sequence: bodyReference },
   ]);
   expect(result.blackboard).toEqual({ output: 0 });
-  // 当前因优化管线重建定义对象而丢失未触碰黑板的引用身份（已记录为生产缺陷）。
-  expect(result.buffDefinitions?.buff_fixture?.blackboard).toBe(buff.blackboard);
+  expect(result.buffDefinitions?.buff_fixture?.blackboard).toEqual(buff.blackboard);
   expect(result.buffDefinitions?.buff_fixture?.lifecycleSequences).toEqual({
     enable: bodyReference,
     disable: bodyReference,
@@ -105,11 +104,11 @@ function expectContributionOptimized(
 }
 
 describe('公共 Buff 和装备定义的优化入口', () => {
-  it('显式报告模式保持原对象和正式模块内容，关闭模式不报告改动', () => {
-    const weaponResult = optimizeWeaponDefinitionPrograms(weapon, 'report');
-    const suitResult = optimizeGearSetDefinitionPrograms(gearSet, 'report');
-    expect(weaponResult.definition).toBe(weapon);
-    expect(suitResult.definition).toBe(gearSet);
+  it('显式报告模式保持定义内容和正式模块内容，关闭模式不报告改动', () => {
+    const weaponResult = finalizeWeaponDefinition(weapon, 'report');
+    const suitResult = finalizeGearSetDefinition(gearSet, 'report');
+    expect(weaponResult.definition).toEqual(weapon);
+    expect(suitResult.definition).toEqual(gearSet);
     expect(weaponResult.report.before.steps).toBe(14);
     expect(weaponResult.report.after.steps).toBe(7);
     expect(suitResult.report.after.steps).toBe(7);
@@ -119,18 +118,18 @@ describe('公共 Buff 和装备定义的优化入口', () => {
     expect(
       renderEquipmentSuitDefinitionFiles({ definitions: [suitResult.definition], diagnostics: [] }),
     ).toEqual(renderEquipmentSuitDefinitionFiles({ definitions: [gearSet], diagnostics: [] }));
-    const off = optimizeWeaponDefinitionPrograms(weapon, 'off');
-    expect(off.definition).toBe(weapon);
+    const off = finalizeWeaponDefinition(weapon, 'off');
+    expect(off.definition).toEqual(weapon);
     expect(off.report.after).toEqual(off.report.before);
     expect(off.report.programs.flatMap(program => program.changes)).toEqual([]);
   });
 
   it('默认实际应用优化，访问装备安装、事件与私有 Buff，保留黑板和注册元数据', () => {
     const original = structuredClone(weapon);
-    const appliedWeapon = optimizeWeaponDefinitionPrograms(weapon);
-    const appliedSuit = optimizeGearSetDefinitionPrograms(gearSet);
-    expect(appliedWeapon).toEqual(optimizeWeaponDefinitionPrograms(weapon, 'apply'));
-    expect(appliedSuit).toEqual(optimizeGearSetDefinitionPrograms(gearSet, 'apply'));
+    const appliedWeapon = finalizeWeaponDefinition(weapon);
+    const appliedSuit = finalizeGearSetDefinition(gearSet);
+    expect(appliedWeapon).toEqual(finalizeWeaponDefinition(weapon, 'apply'));
+    expect(appliedSuit).toEqual(finalizeGearSetDefinition(gearSet, 'apply'));
     expect(appliedWeapon.report.mode).toBe('apply');
     expect(appliedSuit.report.mode).toBe('apply');
     expectContributionOptimized({
@@ -142,7 +141,7 @@ describe('公共 Buff 和装备定义的优化入口', () => {
     expect(appliedSuit.report.skillValues).toEqual([]);
     expect(weapon).toEqual(original);
     expect(
-      optimizeWeaponDefinitionPrograms(appliedWeapon.definition, 'apply').report.programs.flatMap(
+      finalizeWeaponDefinition(appliedWeapon.definition, 'apply').report.programs.flatMap(
         program => program.changes,
       ),
     ).toEqual([]);
@@ -154,15 +153,13 @@ describe('公共 Buff 和装备定义的优化入口', () => {
 
   it('公共 Buff 保留全部身份、黑板初值和点燃结束标记，不按引用次数裁剪目录', () => {
     const definitions = { shared_a: buff, shared_b: { stackingType: 'unlimited' as const } };
-    // 当前 report/off 模式不再原样返回输入对象（已记录为生产缺陷）。
-    expect(optimizeCommonBuffDefinitions(definitions, 'report').definitions).toBe(definitions);
-    expect(optimizeCommonBuffDefinitions(definitions, 'off').definitions).toBe(definitions);
-    const applied = optimizeCommonBuffDefinitions(definitions);
-    expect(applied).toEqual(optimizeCommonBuffDefinitions(definitions, 'apply'));
+    expect(finalizeCommonBuffDefinitions(definitions, 'report').definitions).toEqual(definitions);
+    expect(finalizeCommonBuffDefinitions(definitions, 'off').definitions).toEqual(definitions);
+    const applied = finalizeCommonBuffDefinitions(definitions);
+    expect(applied).toEqual(finalizeCommonBuffDefinitions(definitions, 'apply'));
     expect(applied.report.mode).toBe('apply');
     expect(Object.keys(applied.definitions)).toEqual(['shared_a', 'shared_b']);
-    // 同上：引用身份未保留（已记录为生产缺陷）。
-    expect(applied.definitions.shared_a?.blackboard).toBe(buff.blackboard);
+    expect(applied.definitions.shared_a?.blackboard).toEqual(buff.blackboard);
     expect(applied.definitions.shared_a?.igniteEventResponses).toEqual([
       { igniteType: 'fixture', finishAfterIgnited: true, sequence: bodyReference },
     ]);
@@ -172,7 +169,7 @@ describe('公共 Buff 和装备定义的优化入口', () => {
   });
 
   it('武器既有审计文件携带优化报告，正式 TS 文件不受报告字段影响', () => {
-    const result = optimizeWeaponDefinitionPrograms(weapon);
+    const result = finalizeWeaponDefinition(weapon);
     const baseline = renderWeaponDefinitionFiles({
       definitions: [result.definition],
       diagnostics: [],
@@ -213,12 +210,11 @@ describe('公共 Buff 和装备定义的优化入口', () => {
       ],
     };
     const original = structuredClone(input);
-    const result = optimizeWeaponDefinitionPrograms(input);
+    const result = finalizeWeaponDefinition(input);
     expect(result.definition.traits[0]?.blackboard).toEqual({ output: 0 });
     for (const trait of result.definition.traits.slice(1)) {
-      // 当前因 prune 以 undefined 重写 blackboard 键而失败（已记录为生产缺陷）。
       expect(Object.hasOwn(trait, 'blackboard')).toBe(false);
-      expect(trait.modifiers).toBe(staticContribution.modifiers);
+      expect(trait.modifiers).toEqual(staticContribution.modifiers);
       expect(trait).not.toHaveProperty('buffDefinitions');
       expect(result.definition.buffDefinitions?.shared_definition).toEqual(
         staticContribution.buffDefinitions?.shared_definition,
@@ -258,7 +254,7 @@ describe('公共 Buff 和装备定义的优化入口', () => {
     }
     expect(input).toEqual(original);
     expect(
-      optimizeWeaponDefinitionPrograms(result.definition).report.equipmentValues.flatMap(
+      finalizeWeaponDefinition(result.definition).report.equipmentValues.flatMap(
         item => item.removedInitialKeys,
       ),
     ).toEqual([]);
@@ -271,26 +267,25 @@ describe('公共 Buff 和装备定义的优化入口', () => {
       modifiers: [{ kind: 'panelStat', stat: 'attackFlat', value: 5 }],
       blackboard: { obsolete: 5 },
     };
-    const report = optimizeGearSetDefinitionPrograms(input, 'report');
-    expect(report.definition).toBe(input);
+    const report = finalizeGearSetDefinition(input, 'report');
+    expect(report.definition).toEqual(input);
     expect(report.report.equipmentValues).toEqual([
       { definitionId: input.slug, path: 'contribution', removedInitialKeys: ['obsolete'] },
     ]);
-    const off = optimizeGearSetDefinitionPrograms(input, 'off');
-    expect(off.definition).toBe(input);
+    const off = finalizeGearSetDefinition(input, 'off');
+    expect(off.definition).toEqual(input);
     expect(off.report.equipmentValues[0]).toMatchObject({
       removedInitialKeys: [],
       retainedReason: 'optimization-disabled',
     });
-    const applied = optimizeGearSetDefinitionPrograms(input);
-    // 同上 prune 缺陷。
+    const applied = finalizeGearSetDefinition(input);
     expect(Object.hasOwn(applied.definition, 'blackboard')).toBe(false);
     expect(applied.definition).toEqual({
       slug: input.slug,
       displayName: input.displayName,
       modifiers: input.modifiers,
     });
-    expect(optimizeCommonBuffDefinitions({}).report.equipmentValues).toEqual([]);
+    expect(finalizeCommonBuffDefinitions({}).report.equipmentValues).toEqual([]);
   });
 
   it('空入口的无用初值也删除，但仍创建装备宿主并保留注册行为', () => {
@@ -311,8 +306,7 @@ describe('公共 Buff 和装备定义的优化入口', () => {
         ...entry,
         blackboard: { possiblyRead: 7 },
       };
-      const result = optimizeGearSetDefinitionPrograms(input);
-      // 同上 prune 缺陷。
+      const result = finalizeGearSetDefinition(input);
       expect(Object.hasOwn(result.definition, 'blackboard')).toBe(false);
       expect(result.definition.enableSequence).toEqual(input.enableSequence);
       expect(result.definition.initializationSequence).toEqual(input.initializationSequence);

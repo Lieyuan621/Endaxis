@@ -1,3 +1,4 @@
+import { numberInput } from '../../../test/compiledGraphInputs';
 /** 验证整图复制保留实体板共享关系，同时隔离兄弟分支和独立子作用域。 */
 import { describe, expect, it } from 'vitest';
 import { ActionBlackboard } from '../actions/actionBlackboard';
@@ -24,7 +25,7 @@ describe('blackboard data graph', () => {
       false,
       {},
       {
-        EntityBB_value: { kind: 'blackboard', key: 'value' },
+        EntityBB_value: numberInput({ kind: 'blackboard', key: 'value' }),
       },
     );
     expect(reads).toEqual(['value']);
@@ -66,7 +67,7 @@ describe('blackboard data graph', () => {
       false,
       {},
       {
-        EntityBB_value: { kind: 'blackboard', key: 'EntityBB_value' },
+        EntityBB_value: numberInput({ kind: 'blackboard', key: 'EntityBB_value' }),
       },
     );
     expect(readActionBlackboard(shared, 'local')).toBe(7);

@@ -43,15 +43,6 @@ export function isActionValueOperand(value: unknown): boolean {
   switch (value.kind) {
     case 'constant':
       return typeof value.value === 'number' && Number.isFinite(value.value);
-    case 'blackboard':
-      return (
-        typeof value.key === 'string' &&
-        value.key.trim() !== '' &&
-        (value.fallback === undefined ||
-          (typeof value.fallback === 'number' && Number.isFinite(value.fallback)))
-      );
-    case 'parameter':
-      return typeof value.parameter === 'string' && value.parameter.trim() !== '';
     case 'valueNode':
       return typeof value.nodeId === 'string' && value.nodeId.trim() !== '';
     default:
@@ -104,47 +95,41 @@ export function mappingFromRows(rows: readonly BlackboardMappingRow[]): Record<s
   return Object.fromEntries(rows.map(row => [row.key, row.value]));
 }
 
-/** Recheck source types/scopes at the transaction boundary, including a changed context. */
+/** 检查数据节点读取的变量是否适用于目标作用域。 */
+export function validNumericReadSource(value: unknown, context: BlackboardFieldContext): boolean {
+  if (!isMappingRecord(value)) return true;
+  if (value.kind === 'blackboard')
+    return resolveBlackboardKey(context, typeof value.key === 'string' ? value.key : '', {
+      mode: 'read',
+      valueType: 'number',
+      ...(typeof value.fallback === 'number' ? { fallback: value.fallback } : {}),
+    }).valid;
+  if (value.kind === 'parameter')
+    return resolveBlackboardKey(
+      context,
+      typeof value.parameter === 'string' ? value.parameter : '',
+      {
+        mode: 'parameter',
+        valueType: 'number',
+      },
+    ).valid;
+  return true;
+}
+
+/** 复制映射直接引用变量名；数值映射的节点连接由图编辑事务检查。 */
 export function validMappingSources(
   rows: readonly BlackboardMappingRow[],
   original: unknown,
   mode: BlackboardMappingValue,
   context: BlackboardFieldContext,
-  allowsParameters = true,
 ): boolean {
-  return rows.every(row => {
-    if (unchangedMappingRow(row, original)) return true;
-    const value = row.value;
-    const key =
-      mode === 'copy'
-        ? value
-        : isMappingRecord(value) && value.kind === 'blackboard'
-          ? value.key
-          : undefined;
-
-    if (
-      typeof key === 'string' &&
-      !resolveBlackboardKey(context, key, {
-        mode: 'read',
-        valueType: mode === 'copy' ? 'any' : 'number',
-        ...(isMappingRecord(value) &&
-        value.kind === 'blackboard' &&
-        typeof value.fallback === 'number'
-          ? { fallback: value.fallback }
-          : {}),
-      }).valid
-    )
-      return false;
-    if (isMappingRecord(value) && value.kind === 'parameter')
-      return (
-        allowsParameters &&
-        resolveBlackboardKey(context, typeof value.parameter === 'string' ? value.parameter : '', {
-          mode: 'parameter',
-          valueType: 'number',
-        }).valid
-      );
-    return true;
-  });
+  if (mode !== 'copy') return true;
+  return rows.every(
+    row =>
+      unchangedMappingRow(row, original) ||
+      (typeof row.value === 'string' &&
+        resolveBlackboardKey(context, row.value, { mode: 'read', valueType: 'any' }).valid),
+  );
 }
 
 /** Shared host-level guard for a retry after a rejected command or scope/catalog update. */
@@ -158,12 +143,6 @@ export function validMappingDraft(
   const rows = createMappingRows(value);
   return (
     mappingValidationError(rows, previous, descriptor.value) === undefined &&
-    validMappingSources(
-      rows,
-      previous,
-      descriptor.value,
-      context,
-      descriptor.allowsParameters !== false,
-    )
+    validMappingSources(rows, previous, descriptor.value, context)
   );
 }

@@ -7635,6 +7635,22 @@ const rossiBuff9ActionGraph = {
         },
         next: null,
       },
+      conditional_7: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+          whenTrue: { $sequence: null },
+        },
+        next: null,
+      },
+      conditional_8: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+          whenTrue: { $sequence: null },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
@@ -7664,6 +7680,11 @@ const rossiBuff9ActionGraph = {
           right: { kind: 'constant', value: 0.5 },
         },
       },
+      data_6: {
+        type: 'boolean',
+        expression: { kind: 'eventDamageTypeIn', damageTypes: ['physical'] },
+      },
+      data_7: { type: 'boolean', expression: { kind: 'eventDamageTypeIn', damageTypes: ['heat'] } },
     },
   },
   macros: {},
@@ -7719,7 +7740,7 @@ const rossiBuff9: SkillBuffDefinition = {
   damageModifiers: [
     {
       enabledSide: 'defender',
-      condition: { kind: 'eventDamageTypesMatch', damageTypes: ['physical'] },
+      condition: { $sequence: 'conditional_7' },
       processors: [
         {
           kind: 'damageScale',
@@ -7731,7 +7752,7 @@ const rossiBuff9: SkillBuffDefinition = {
     },
     {
       enabledSide: 'defender',
-      condition: { kind: 'eventDamageTypesMatch', damageTypes: ['heat'] },
+      condition: { $sequence: 'conditional_8' },
       processors: [
         {
           kind: 'damageScale',
@@ -8158,7 +8179,24 @@ const rossiBuff22: SkillBuffDefinition = {
 };
 
 const rossiBuff23ActionGraph = {
-  main: { nodes: {} },
+  main: {
+    nodes: {
+      conditional_1: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+          whenTrue: { $sequence: null },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'eventDamageTagsMatch', match: 'hasAll', tags: ['ultimateSkill'] },
+      },
+    },
+  },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
@@ -8174,7 +8212,7 @@ const rossiBuff23: SkillBuffDefinition = {
   damageModifiers: [
     {
       enabledSide: 'attacker',
-      condition: { kind: 'eventDamageTagsMatch', match: 'hasAll', tags: ['ultimateSkill'] },
+      condition: { $sequence: 'conditional_1' },
       processors: [
         {
           kind: 'instantAttribute',
@@ -8314,42 +8352,42 @@ export const rossi: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0028_wulfa_normal_skill',
           blackboardKey: 'talent_1_1',
           operation: 'assign',
           value: 1,
           minimumUpgradeLevel: 1,
           maximumUpgradeLevel: 1,
-          skillKey: 'chr_0028_wulfa_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0028_wulfa_normal_skill',
           blackboardKey: 'talent_1_2',
           operation: 'assign',
           value: 1,
           minimumUpgradeLevel: 2,
           maximumUpgradeLevel: 2,
-          skillKey: 'chr_0028_wulfa_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0028_wulfa_normal_skill',
           blackboardKey: 'atk_scale_bleed',
           operation: 'assign',
           value: [0.25, 0.3],
-          skillKey: 'chr_0028_wulfa_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0028_wulfa_normal_skill',
           blackboardKey: 'duration_bleed',
           operation: 'assign',
           value: [15, 25],
-          skillKey: 'chr_0028_wulfa_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0028_wulfa_normal_skill',
           blackboardKey: 'damage_up',
           operation: 'assign',
           value: [0.06, 0.12],
-          skillKey: 'chr_0028_wulfa_normal_skill',
         },
       ],
     },
@@ -8358,49 +8396,49 @@ export const rossi: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0028_wulfa_normal_skill',
           blackboardKey: 'talent_2_1',
           operation: 'assign',
           value: 1,
           minimumUpgradeLevel: 1,
           maximumUpgradeLevel: 1,
-          skillKey: 'chr_0028_wulfa_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0028_wulfa_normal_skill',
           blackboardKey: 'talent_2_2',
           operation: 'assign',
           value: 1,
           minimumUpgradeLevel: 2,
           maximumUpgradeLevel: 2,
-          skillKey: 'chr_0028_wulfa_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0028_wulfa_normal_skill',
           blackboardKey: 'bleed_critical_damage_scale',
           operation: 'assign',
           value: [0.12, 0.24],
-          skillKey: 'chr_0028_wulfa_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0028_wulfa_normal_skill',
           blackboardKey: 'bleed_critical_damage_interval',
           operation: 'assign',
           value: [1, 1],
-          skillKey: 'chr_0028_wulfa_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0028_wulfa_normal_skill',
           blackboardKey: 'heal_scale',
           operation: 'assign',
           value: [0.04, 0.08],
-          skillKey: 'chr_0028_wulfa_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0028_wulfa_normal_skill',
           blackboardKey: 'talent2_burning_damage_scale',
           operation: 'assign',
           value: [1.5, 1.5],
-          skillKey: 'chr_0028_wulfa_normal_skill',
         },
       ],
     },
@@ -8411,24 +8449,24 @@ export const rossi: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0028_wulfa_normal_skill',
           blackboardKey: 'potential_upgrade',
           operation: 'assign',
           value: 1,
-          skillKey: 'chr_0028_wulfa_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0028_wulfa_normal_skill',
           blackboardKey: 'atk_scale_1',
           operation: 'multiply',
           value: 1.15,
-          skillKey: 'chr_0028_wulfa_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0028_wulfa_normal_skill',
           blackboardKey: 'atk_scale_3',
           operation: 'multiply',
           value: 1.15,
-          skillKey: 'chr_0028_wulfa_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
@@ -8460,10 +8498,10 @@ export const rossi: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0028_wulfa_normal_skill',
           blackboardKey: 'atb_return',
           operation: 'assign',
           value: 10,
-          skillKey: 'chr_0028_wulfa_normal_skill',
         },
       ],
     },
@@ -8479,24 +8517,24 @@ export const rossi: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0028_wulfa_normal_skill',
           blackboardKey: 'bleed_critical_damage_scale',
           operation: 'add',
           value: 0.08,
-          skillKey: 'chr_0028_wulfa_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0028_wulfa_normal_skill',
           blackboardKey: 'bleed_critical_damage_interval',
           operation: 'add',
           value: -0.5,
-          skillKey: 'chr_0028_wulfa_normal_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0028_wulfa_normal_skill',
           blackboardKey: 'heal_scale',
           operation: 'add',
           value: 0.04,
-          skillKey: 'chr_0028_wulfa_normal_skill',
         },
       ],
     },
@@ -8505,9 +8543,9 @@ export const rossi: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
+          skillKey: 'chr_0028_wulfa_ultimate_skill',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
-          skillKey: 'chr_0028_wulfa_ultimate_skill',
         },
       ],
     },
@@ -8516,24 +8554,24 @@ export const rossi: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0028_wulfa_ultimate_skill',
           blackboardKey: 'potential_5_damage_scale',
           operation: 'assign',
           value: 1.1,
-          skillKey: 'chr_0028_wulfa_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0028_wulfa_ultimate_skill',
           blackboardKey: 'potential_5',
           operation: 'assign',
           value: 1,
-          skillKey: 'chr_0028_wulfa_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0028_wulfa_ultimate_skill',
           blackboardKey: 'potential_5_critical_damage',
           operation: 'assign',
           value: 0.3,
-          skillKey: 'chr_0028_wulfa_ultimate_skill',
         },
       ],
     },

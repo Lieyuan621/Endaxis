@@ -2,10 +2,10 @@ import { expect, it } from 'vitest';
 import type { CombatCondition } from '../../../packages/game-data-contract/src/conditions';
 import { appendCondition, moveCondition, removeCondition } from './conditionList';
 
-it('appends only an explicitly chosen boolean and never changes existing nested expressions', () => {
+it('appends only an explicitly chosen boolean and never changes existing node references', () => {
   const expression = Object.freeze({
-    kind: 'not' as const,
-    condition: Object.freeze({ kind: 'constant' as const, value: true }),
+    kind: 'conditionNode' as const,
+    nodeId: 'negation',
   });
   const original = Object.freeze([expression]);
   const next = appendCondition(original, false);
@@ -19,8 +19,8 @@ it('appends only an explicitly chosen boolean and never changes existing nested 
 it('only explicitly reorders selected slots, retaining duplicates and source reference identities', () => {
   const source = Object.freeze({ kind: 'conditionNode' as const, nodeId: 'shared' });
   const effect = Object.freeze({
-    kind: 'probability' as const,
-    probability: Object.freeze({ kind: 'constant' as const, value: 0.5 }),
+    kind: 'conditionNode' as const,
+    nodeId: 'probability',
   });
   const original: readonly CombatCondition[] = Object.freeze([source, effect, source]);
   const moved = moveCondition(original, 1, 0);

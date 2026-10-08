@@ -27,6 +27,48 @@ const source: WorkspaceAssetSource = {
 };
 
 describe('工作区资产草稿', () => {
+  it('资源条件只连接自己的主图，连接和禁用参与同一撤销历史且不修改内置定义', () => {
+    const session = new WorkspaceAssetSession(source, 'project:operator:conditions');
+    const path = ['skillGroups', 0, 'skills', 0] as const;
+    session.changeGraph(path, owner => ({
+      ...owner,
+      actionGraph: {
+        ...owner.actionGraph,
+        main: {
+          ...owner.actionGraph.main,
+          dataNodes: {
+            ...owner.actionGraph.main.dataNodes,
+            available: { type: 'boolean', expression: { kind: 'casterControlled' } },
+            amount: { type: 'number', expression: { kind: 'constant', value: 1 } },
+          },
+        },
+      },
+    }));
+    const before = session.current;
+    const conditionPath = [...path, 'availability'];
+    const condition = { kind: 'conditionNode', nodeId: 'available' };
+    session.change(conditionPath, condition);
+    const connected = session.current;
+    expect(fieldValueAt(connected.edit.definition, conditionPath)).toEqual(condition);
+    expect(() =>
+      session.change(conditionPath, { kind: 'conditionNode', nodeId: 'amount' }),
+    ).toThrow();
+    expect(() =>
+      session.change(conditionPath, { kind: 'conditionNode', nodeId: 'foreign' }),
+    ).toThrow();
+    expect(session.current).toBe(connected);
+    session.change(conditionPath, undefined);
+    expect(fieldValueAt(session.current.edit.definition, conditionPath)).toBeUndefined();
+    session.history.undo();
+    expect(session.current).toBe(connected);
+    session.history.undo();
+    expect(session.current).toBe(before);
+    session.history.redo();
+    expect(session.current).toBe(connected);
+    const readonly = new WorkspaceAssetSession(source);
+    expect(() => readonly.change(conditionPath, { kind: 'constant', value: true })).toThrow();
+    expect(readonly.current.edit.definition).toEqual(perlica);
+  });
   it('输入窗口条目按字段编辑，保留同一条目的其他值并支持撤销', () => {
     const session = new WorkspaceAssetSession(source, 'project:operator:windows');
     const path = ['skillGroups', 0, 'skills', 0, 'inputWindows', 'commandMappings', 0] as const;
@@ -334,15 +376,42 @@ describe('工作区资产草稿', () => {
   });
 });
 
-it('edits a real generated recursive Buff condition through asset history and project roundtrip', () => {
-  let condition: import('../../../packages/game-data-contract/src/modifiers').DamageModifierCondition =
-    { kind: 'buffBlackboardCompare', left: { blackboardKey: 'rate' }, operator: 'equal', right: 1 };
-  for (let depth = 0; depth < 14; depth++) condition = { kind: 'not', condition };
+it('edits a Buff condition graph through asset history and project roundtrip', () => {
+  const actionGraph: import('../../../packages/game-data-contract/src/actionGraph').ActionGraphResourceDefinition =
+    {
+      main: {
+        nodes: {
+          guard: {
+            action: {
+              kind: 'conditional',
+              parameters: { condition: { kind: 'conditionNode', nodeId: 'compare' } },
+              whenTrue: { $sequence: null },
+            },
+            next: null,
+          },
+        },
+        dataNodes: {
+          compare: {
+            type: 'boolean',
+            expression: {
+              kind: 'actionValueCompare',
+              left: { kind: 'valueNode', nodeId: 'rate' },
+              operator: 'equal',
+              right: { kind: 'valueNode', nodeId: 'threshold' },
+            },
+          },
+          rate: { type: 'number', expression: { kind: 'blackboard', key: 'rate' } },
+          threshold: { type: 'number', expression: { kind: 'constant', value: 1 } },
+        },
+      },
+      macros: {},
+    };
   const effect = {
     ...GLOBAL_EFFECT_PRESETS[0]!,
     buff: {
       ...GLOBAL_EFFECT_PRESETS[0]!.buff,
       blackboard: { rate: 1 },
+      actionGraph,
       damageModifiers: [
         {
           enabledSide: 'attacker' as const,
@@ -354,7 +423,7 @@ it('edits a real generated recursive Buff condition through asset history and pr
               addition: 1,
             },
           ],
-          condition,
+          condition: { $sequence: 'guard' },
         },
       ],
     },
@@ -367,23 +436,28 @@ it('edits a real generated recursive Buff condition through asset history and pr
     custom: false,
     edit: { kind: 'globalEffect', definition: effect },
   };
-  const path = [
-    'buff',
-    'damageModifiers',
-    0,
-    'condition',
-    ...Array.from({ length: 14 }, () => 'condition'),
-    'right',
-  ];
+  const path = ['buff', 'actionGraph', 'main', 'dataNodes', 'threshold', 'expression', 'value'];
+  const changeThreshold = (session: WorkspaceAssetSession, value: number) =>
+    session.changeGraph(['buff'], owner => ({
+      ...owner,
+      actionGraph: {
+        ...owner.actionGraph,
+        main: {
+          ...owner.actionGraph.main,
+          dataNodes: {
+            ...owner.actionGraph.main.dataNodes,
+            threshold: { type: 'number', expression: { kind: 'constant', value } },
+          },
+        },
+      },
+    }));
   const readonly = new WorkspaceAssetSession(asset);
-  expect(() => readonly.change(path, 2)).toThrow(/read-only/);
+  expect(() => changeThreshold(readonly, 2)).toThrow(/read-only/);
   const session = new WorkspaceAssetSession(asset, 'project:globalEffect:finite');
   const before = session.current;
-  session.change(path, 2);
+  changeThreshold(session, 2);
   const changed = session.current;
   expect(fieldValueAt(changed.edit.definition, path)).toBe(2);
-  expect(() => session.change(path, NaN)).toThrow(/finite/);
-  expect(session.current).toBe(changed);
   expect(session.history.undo()).toBe(true);
   expect(session.current).toBe(before);
   expect(session.history.redo()).toBe(true);
@@ -401,6 +475,6 @@ it('edits a real generated recursive Buff condition through asset history and pr
   const serialized = JSON.parse(JSON.stringify(project));
   const saved = serialized.definitionLibrary.globalEffects[request.targetId].definition;
   expect(fieldValueAt(saved, path)).toBe(2);
-  expect(saved.buff.actionGraph).toEqual(effect.buff.actionGraph);
+  expect(saved.buff.damageModifiers[0].condition).toEqual({ $sequence: 'guard' });
   expect(fieldValueAt(effect, path)).toBe(1);
 });

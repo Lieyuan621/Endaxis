@@ -1,5 +1,4 @@
 export type {
-  InlineConditionScope,
   FieldSemanticAlias,
   FieldSemantics,
   FieldFallbackReason,

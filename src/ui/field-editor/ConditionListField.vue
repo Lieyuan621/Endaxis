@@ -4,7 +4,6 @@ import { useI18n } from 'vue-i18n';
 import { EaButton, EaSelect } from '@/design-system';
 import type { CombatCondition } from '../../../packages/game-data-contract/src/conditions';
 import { appendCondition, moveCondition, removeCondition } from './conditionList';
-import { nodeName } from '../action-graph/editorNodeText';
 
 const props = defineProps<{ value: unknown; editable: boolean; label: string }>();
 const emit = defineEmits<{ change: [value: readonly CombatCondition[]]; discard: [] }>();
@@ -88,7 +87,7 @@ function summary(condition: CombatCondition): string {
   if (condition?.kind === 'constant') return String(condition.value);
   if (condition?.kind === 'conditionNode')
     return `${t('conditionList.source')}: ${condition.nodeId}`;
-  return condition?.kind ? nodeName(condition.kind) : t('conditionList.invalid');
+  return t('conditionList.invalid');
 }
 // Accepted commits, undo/redo and external edits invalidate index-addressed local drafts.
 watch(() => [props.value, props.editable], reset);

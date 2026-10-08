@@ -129,15 +129,7 @@ const definition = {
             conditional_2: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'buffIdStackCompare',
-                    target: 'buffOwner',
-                    buffIds: ['buff_equipsuit_critsuitatk_01'],
-                    operator: 'greaterOrEqual',
-                    value: { kind: 'blackboard', key: 'max_stack' },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
@@ -152,6 +144,19 @@ const definition = {
                 },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'max_stack' } },
+            data_2: {
+              type: 'boolean',
+              expression: {
+                kind: 'buffIdStackCompare',
+                target: 'buffOwner',
+                buffIds: ['buff_equipsuit_critsuitatk_01'],
+                operator: 'greaterOrEqual',
+                value: { kind: 'valueNode', nodeId: 'data_1' },
+              },
             },
           },
         },

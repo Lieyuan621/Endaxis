@@ -1,10 +1,10 @@
 import { expect, it } from 'vitest';
-import type { SkillGlobalBuffDefinition } from '../../../game-data/operatorDefinition';
+import type { CompiledGlobalBuffDefinition } from '../../../compiler/combatProgram';
 import { LogicalAbilityEntityRuntime } from '../../abilities/logicalAbilityEntityRuntime';
 import { ActionBlackboard } from '../../actions/actionBlackboard';
 import { CombatAttributeSet } from '../../attributes/combatAttributes';
 import { BuffDefinitionOperationTarget } from '../../buffs/buffDefinitionOperationTarget';
-import type { CombatBuffDefinitionEntry } from '../../buffs/combatBuffDefinitions';
+import type { CombatBuffDefinitionEntry } from '../../../../../packages/game-data-contract/src/buffs';
 import { CombatBuffContainer, type CombatBuffDefinition } from '../../buffs/combatBuffs';
 import { GlobalBuffRuntime } from '../../buffs/globalBuffRuntime';
 import type { BuffContainerState } from '../../state/instanceState';
@@ -139,7 +139,7 @@ it('普通实例完成后接回全局父实例，结束父层只清理恢复分�
     compile,
   });
   const childDefinition = { stackingType: 'unlimited' } as const;
-  const globalDefinition: SkillGlobalBuffDefinition = {
+  const globalDefinition: CompiledGlobalBuffDefinition = {
     stackingType: 'unlimited',
     durationSeconds: 10,
     blackboard: {},

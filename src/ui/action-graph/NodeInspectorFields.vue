@@ -336,12 +336,7 @@ function apply(): boolean {
       if (
         editor.control === 'stringOperand' &&
         !(parsed === undefined && field.valueSchema.optional) &&
-        !validStringOperandDraft(
-          parsed,
-          editor.referenceKind,
-          props.referenceChoices,
-          fieldContext(field),
-        )
+        !validStringOperandDraft(parsed, editor.referenceKind, props.referenceChoices)
       ) {
         error.value = t('fieldReference.invalid');
         return false;
@@ -527,7 +522,6 @@ defineExpose({ apply });
         :required="!field.valueSchema.optional"
         :reference-kind="fieldEditor(field).referenceKind"
         :reference-choices="referenceChoices"
-        :blackboard-context="fieldContext(field)"
         @change="changeStructured(field, $event)"
         @discard="discardStructured(field)"
       />

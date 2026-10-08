@@ -1,14 +1,12 @@
+import type { CompiledGlobalBuffDefinition } from '../../compiler/combatProgram.ts';
+import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
 import type {
   ResolvedCombatOperationStep,
   ResolvedCombatStepForKind,
   ResolvedSkillBuffDefinition,
 } from '../../compiler/combatProgram';
 import { logicalAbilityEntityRuntimeId } from '../../game-data/logicalAbilityEntity';
-import type {
-  BuffApplicationSource,
-  CombatCondition,
-  SkillGlobalBuffDefinition,
-} from '../../game-data/operatorDefinition';
+import type { BuffApplicationSource } from '../../game-data/operatorDefinition';
 import { ActionBlackboard, resolveActionValueOperand } from '../actions/actionBlackboard';
 import { CombatOperationPrograms } from '../actions/combatOperationPrograms';
 import { abilityEventSourceId } from '../events/combatAbilityEvent';
@@ -37,7 +35,7 @@ type CreateStep = ResolvedCombatStepForKind<'createGlobalBuff'>;
 interface GlobalBuffInstance {
   readonly runtimeState: GlobalBuffInstanceState;
   readonly id: string;
-  readonly definition: SkillGlobalBuffDefinition;
+  readonly definition: CompiledGlobalBuffDefinition;
   readonly children: BuffApplicationHandle[];
   readonly sharedSpGainModifiers: readonly SharedSpGainModifier[];
   readonly sharedSpRecoveryModifiers: readonly SharedSpRecoveryModifier[];
@@ -93,7 +91,7 @@ export class GlobalBuffRuntime {
       sourceActionOwnerId: string | undefined,
       sourceActionId: string | undefined,
       definitionProgramId: number | null,
-    ) => SkillGlobalBuffDefinition | undefined;
+    ) => CompiledGlobalBuffDefinition | undefined;
     readonly resolveChild: (
       reference: import('../state/foundationState').BuffReference,
     ) => BuffApplicationHandle | undefined;
@@ -132,7 +130,7 @@ export class GlobalBuffRuntime {
   add(input: {
     readonly producedBy?: import('../receipt/combatReceipt').CombatObjectRef;
     readonly id: string;
-    readonly definition: SkillGlobalBuffDefinition;
+    readonly definition: CompiledGlobalBuffDefinition;
     readonly definitionProgramId?: number;
     readonly sourceId: string;
     /** 执行 CreateGlobalBuff 的 AbilitySystem；battle 归因本身不是动作/定义所有者。 */
@@ -245,7 +243,7 @@ export class GlobalBuffRuntime {
 
   #bindInstance(
     state: GlobalBuffInstanceState,
-    definition: SkillGlobalBuffDefinition,
+    definition: CompiledGlobalBuffDefinition,
     childBindings: Map<string, BuffApplicationHandle>,
   ): GlobalBuffInstance {
     if (!state.finished) {
@@ -335,7 +333,7 @@ export class GlobalBuffRuntime {
 
 function resolveGlobalDuration(
   id: string,
-  definition: SkillGlobalBuffDefinition,
+  definition: CompiledGlobalBuffDefinition,
   blackboard: ActionBlackboard,
 ): number | null {
   const duration = definition.durationSeconds;
@@ -445,7 +443,7 @@ export class GlobalBuffOperationExecutor implements CombatOperationExecutor {
     this.dependencies.delegate.end?.(step, context);
   }
 
-  evaluate(condition: CombatCondition, context?: CombatOperationContext): boolean {
+  evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     return this.dependencies.delegate.evaluate(condition, context);
   }
 }

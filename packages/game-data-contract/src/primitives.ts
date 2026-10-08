@@ -55,18 +55,11 @@ export type CombatObjectTypeSelection = readonly CombatObjectType[] | 'all';
 /** 干员养成、面板和条件判断共同使用的四维属性身份。 */
 export type OperatorAttribute = (typeof OPERATOR_ATTRIBUTES)[number];
 
-/** 动作使用的字符串常量、当前动作黑板读取，或本图中共享的字符串表达式。 */
-export type ActionStringOperand =
-  | string
-  | {
-      /** 读取字符串的当前动作黑板键。 */
-      readonly blackboardKey: string;
-    }
-  | {
-      /** 绑定本图字符串表达式；各使用点仍读取各自当前动作上下文。 */
-      readonly kind: 'stringNode';
-      readonly nodeId: string;
-    };
+/** 字符串输入：固定文本或本图字符串节点的引用。 */
+export type ActionStringOperand = string | { readonly kind: 'stringNode'; readonly nodeId: string };
+
+/** 字符串数据节点的操作。变量在当前调用的作用域中读取。 */
+export type ActionStringExpression = ActionStringOperand | { readonly blackboardKey: string };
 
 /** HealAction 的 MultiplyAttributeCalculation 可读取的已支持来源属性。 */
 export type HealCalculationAttribute = OperatorAttribute | 'maxHealth';

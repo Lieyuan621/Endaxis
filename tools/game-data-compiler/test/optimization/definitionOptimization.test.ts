@@ -4,7 +4,7 @@
  * optimization/definitionUsageAnalysis.test.ts。本文件保留仍存在的公共条件简化与条件用途分析覆盖。
  */
 import { describe, expect, it } from 'vitest';
-import type { CombatCondition } from '../../../../packages/game-data-contract/src/conditions.ts';
+import type { CombatCondition } from '../../src/compiler/intermediateDefinitions.ts';
 import { simplifyDefinitionCondition } from '../../src/compiler/optimization/definitionOptimization.ts';
 import { analyzeConditionUsage } from '../../src/compiler/optimization/definitionUsageAnalysis.ts';
 

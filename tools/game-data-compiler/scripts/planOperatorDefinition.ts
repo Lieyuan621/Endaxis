@@ -11,7 +11,7 @@ import {
 } from '../src/domains/operator/activeSkills.ts';
 import { assembleOperatorDefinition } from '../src/domains/operator/definition.ts';
 import { renderOperatorDefinitionSource } from '../src/domains/operator/definitionSourceRenderer.ts';
-import { optimizeOperatorDefinitionPrograms } from '../src/compiler/optimization/definitionProgramOptimization.ts';
+import { finalizeOperatorDefinition } from '../src/compiler/finalizeDefinitions.ts';
 import type { DefinitionOptimizationMode } from '../src/compiler/optimization/definitionOptimization.ts';
 import { compileAbilityEntityTemplateCatalogSource } from '../src/compiler/abilities/abilityEntityCatalog.ts';
 import {
@@ -49,14 +49,14 @@ import type {
   PlayerSkillInput,
   OperatorDefinition,
   SkillPresentationVariantDefinition,
-} from '../../../packages/game-data-contract/src/index.ts';
+} from '../src/compiler/intermediateDefinitions.ts';
 
 /**
  * 整名候选规划：只读原始资源，不写正式目录、不载入旧生成 Operator。
  * 沿用主动批量入口的资源参数；tableRoot 指包含五张角色/养成表的目录。
  * 此阶段用于对象差分和正式模拟门禁，不提供绕过门禁的零散写文件 CLI。
  */
-export function planOperatorDefinition(
+export function projectOperatorDefinition(
   input: Omit<
     OperatorActiveSkillRuntimeArguments,
     'key' | 'skillType' | 'sourceFile' | 'supplementalBuffIds' | 'check'
@@ -380,15 +380,17 @@ export function planOperatorDefinition(
       };
     },
   });
-  const optimized = optimizeOperatorDefinitionPrograms(
-    candidate.operator,
-    args.optimization ?? 'apply',
-  );
+  return { ...candidate, activeSkills };
+}
+
+/** 独立规划在原始投影上完成优化，最后一次性转换为正式节点定义。 */
+export function planOperatorDefinition(input: Parameters<typeof projectOperatorDefinition>[0]) {
+  const candidate = projectOperatorDefinition(input);
+  const optimized = finalizeOperatorDefinition(candidate.operator, input.optimization ?? 'apply');
   return {
     ...candidate,
     operator: optimized.operator,
     audit: { ...candidate.audit, optimization: optimized.report },
-    activeSkills,
   };
 }
 

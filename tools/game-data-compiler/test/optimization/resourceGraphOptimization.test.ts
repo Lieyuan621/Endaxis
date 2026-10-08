@@ -1,13 +1,14 @@
+import { extractResourceDataNodes } from '../../src/compiler/extractGraphDataNodes.ts';
 import { skillFixture } from '../../../../src/test/skillFixture';
 import { describe, expect, it } from 'vitest';
 import { createActionGraphBuilder } from '../../src/compiler/actions/actionGraphBuilder.ts';
 import { optimizeResourceGraphs } from '../../src/compiler/optimization/resourceGraphOptimization.ts';
-import { optimizeDefinitionResources } from '../../src/compiler/optimization/definitionProgramOptimization.ts';
+import { finalizeDefinitionResources } from '../../src/compiler/finalizeDefinitions.ts';
 import { validateActionGraphOwner } from '../../../../src/core/action-graph/actionGraphValidation.ts';
 import { pruneUnusedGraphSkillValues } from '../../src/compiler/optimization/graphValueOptimization.ts';
-import type { SkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
-import type { ActionGraphStep } from '../../../../packages/game-data-contract/src/actionGraph.ts';
-import type { ActionGraphResourceDefinition } from '../../../../packages/game-data-contract/src/actionGraph.ts';
+import type { SkillDefinition } from '../../src/compiler/intermediateDefinitions.ts';
+import type { ActionGraphStep } from '../../src/compiler/intermediateDefinitions.ts';
+import type { ActionGraphResourceDefinition } from '../../src/compiler/intermediateDefinitions.ts';
 import { createActionGraphCompilation } from '../../../../src/core/compiler/compileActionGraph.ts';
 import { CombatActionSequenceRuntime } from '../../../../src/core/combat/actions/combatActionSequenceRuntime.ts';
 import {
@@ -78,9 +79,9 @@ describe('独立资源图构建与优化', () => {
       },
     };
     const definition = { entry: { $sequence: 'call' }, actionGraph };
-    const result = optimizeDefinitionResources(definition, 'apply');
+    const result = finalizeDefinitionResources(definition, 'apply');
     expect(result.value).toEqual(definition);
-    expect(result.value.actionGraph.macros.middle).toBe(actionGraph.macros.middle);
+    expect(result.value.actionGraph.macros.middle).toEqual(actionGraph.macros.middle);
   });
 
   it('提取后用真实黑板执行，每次调用仍按原节点顺序读取当前值', () => {
@@ -123,7 +124,10 @@ describe('独立资源图构建与优化', () => {
         },
       });
       const runtime = new CombatActionSequenceRuntime(executor, { blackboard: board });
-      const compiler = createActionGraphCompilation(definition.actionGraph, 1);
+      const compiler = createActionGraphCompilation(
+        extractResourceDataNodes(definition.actionGraph),
+        1,
+      );
       const programs = definition.entries.map((entry, index) =>
         runtime.createSequence(compiler.compileEntry(entry, `call-${index}`)),
       );
@@ -142,14 +146,20 @@ describe('独立资源图构建与优化', () => {
 
   it.each(['apply', 'report'] as const)('%s 在提取宏前裁掉无用写入并重新去重', mode => {
     const resource = repeatedMiddleResource();
-    const definition: SkillDefinition = skillFixture({
+    const definition: SkillDefinition = {
+      ...skillFixture({
+        key: 'fixture',
+        timelineBlockFrames: 30,
+        scheduledSequences: [],
+        actionGraph: { main: { nodes: {} }, macros: {} },
+      }),
       key: 'skill',
       timelineBlockFrames: 30,
       scheduledSequences: resource.entries.map(sequence => ({ startFrame: 0, sequence })),
       actionGraph: resource.actionGraph,
-    });
+    };
     let removedWrites = 0;
-    const result = optimizeDefinitionResources(definition, mode, simplified => {
+    const result = finalizeDefinitionResources(definition, mode, simplified => {
       expect(Object.keys(simplified.actionGraph.macros)).toHaveLength(0);
       const pruned = pruneUnusedGraphSkillValues(simplified);
       removedWrites = pruned.report.removedWrites.length;
@@ -162,12 +172,12 @@ describe('独立资源图构建与优化', () => {
       expect(result.value.scheduledSequences[0]!.sequence).toEqual(
         result.value.scheduledSequences[1]!.sequence,
       );
-    } else expect(result.value).toBe(definition);
+    } else expect(result.value).toEqual(definition);
     expect(
-      optimizeDefinitionResources(definition, 'off', () => {
+      finalizeDefinitionResources(definition, 'off', () => {
         throw new Error('关闭优化时不应裁剪');
       }).value,
-    ).toBe(definition);
+    ).toEqual(definition);
   });
 
   it('先去重再提取中间段，报告不替换输入，重复优化保留原调用位置绑定', () => {
@@ -176,18 +186,18 @@ describe('独立资源图构建与优化', () => {
     const off = optimizeResourceGraphs(definition, 'off');
     const report = optimizeResourceGraphs(definition, 'report');
     const applied = optimizeResourceGraphs(definition, 'apply');
-    expect(off.value).toBe(definition);
-    expect(report.value).toBe(definition);
+    expect(off.value).toEqual(definition);
+    expect(report.value).toEqual(definition);
     expect(definition).toEqual(original);
     expect(report.reports.flatMap(item => item.macroCandidates ?? [])).toEqual(
       applied.reports.flatMap(item => item.macroCandidates ?? []),
     );
     expect(Object.keys(applied.value.actionGraph.macros)).toHaveLength(1);
     expect(applied.value.entries).toEqual(definition.entries);
-    expect(() => validateActionGraphOwner(applied.value, 'skill')).not.toThrow();
+    expect(() => validateFinalOwner(applied.value, 'skill')).not.toThrow();
     const again = optimizeResourceGraphs(applied.value, 'apply');
     expect(again.value).toEqual(applied.value);
-    expect(() => validateActionGraphOwner(again.value, 'skill')).not.toThrow();
+    expect(() => validateFinalOwner(again.value, 'skill')).not.toThrow();
   });
 
   it('多个资源的重复中间段分别提取，各宏只能使用自己的局部节点', () => {
@@ -198,8 +208,8 @@ describe('独立资源图构建与优化', () => {
     expect(Object.keys(result.first.actionGraph.macros)).toHaveLength(1);
     expect(Object.keys(result.second.actionGraph.macros)).toHaveLength(1);
     expect(result.first.actionGraph.macros).not.toBe(result.second.actionGraph.macros);
-    expect(() => validateActionGraphOwner(result.first, 'first')).not.toThrow();
-    expect(() => validateActionGraphOwner(result.second, 'second')).not.toThrow();
+    expect(() => validateFinalOwner(result.first, 'first')).not.toThrow();
+    expect(() => validateFinalOwner(result.second, 'second')).not.toThrow();
   });
 
   it('自动生成的图路径身份不会阻止重复分支合并，且不生成宏', () => {
@@ -224,14 +234,14 @@ describe('独立资源图构建与优化', () => {
       scheduledSequences: [{ sequence: first }, { sequence: second }],
       actionGraph: { main: graph.finish(), macros: {} },
     };
-    const result = optimizeDefinitionResources(definition, 'apply').value;
+    const result = finalizeDefinitionResources(definition, 'apply').value;
     expect(Object.values(result.actionGraph.macros)).toHaveLength(0);
     expect(result.scheduledSequences[0]!.sequence).toEqual(result.scheduledSequences[1]!.sequence);
     expect(Object.values(result.actionGraph.main.nodes).map(node => node.action.kind)).toEqual([
       'finishTimeline',
       'dealDamage',
     ]);
-    expect(() => validateActionGraphOwner(result, 'skill')).not.toThrow();
+    expect(() => validateFinalOwner(result, 'skill')).not.toThrow();
   });
   it('优化外部调用不会重写外部资源的同名入口或丢失内部节点', () => {
     const child = createActionGraphBuilder();
@@ -256,7 +266,7 @@ describe('独立资源图构建与优化', () => {
       { entry, actionGraph: { main: parent.finish(), macros: {} } },
       'apply',
     ).value;
-    expect(() => validateActionGraphOwner(result, 'parent')).not.toThrow();
+    expect(() => validateFinalOwner(result, 'parent')).not.toThrow();
     const call = result.actionGraph.main.nodes[result.entry.$sequence!]!.action;
     expect(call.kind).toBe('callResource');
     if (call.kind !== 'callResource') throw new Error('missing resource call');
@@ -291,7 +301,7 @@ describe('独立资源图构建与优化', () => {
       actionGraph: { main: graph.finish(), macros: {} },
     };
     const result = optimizeResourceGraphs(definition, 'apply').value;
-    expect(() => validateActionGraphOwner(result, 'skill')).not.toThrow();
+    expect(() => validateFinalOwner(result, 'skill')).not.toThrow();
     const keys = Object.values(result.actionGraph.main.nodes).flatMap(node =>
       node.action.kind === 'modifyActionValue' ? [node.action.parameters.key] : [],
     );
@@ -311,8 +321,8 @@ describe('独立资源图构建与优化', () => {
     };
     const result = optimizeResourceGraphs({ first: make(), second: make() }, 'apply').value;
     expect(result.first.actionGraph.main).not.toBe(result.second.actionGraph.main);
-    expect(() => validateActionGraphOwner(result.first, 'first')).not.toThrow();
-    expect(() => validateActionGraphOwner(result.second, 'second')).not.toThrow();
+    expect(() => validateFinalOwner(result.first, 'first')).not.toThrow();
+    expect(() => validateFinalOwner(result.second, 'second')).not.toThrow();
   });
 
   it('领域动作树直接失败，不进入转图兜底', () => {
@@ -330,3 +340,10 @@ describe('独立资源图构建与优化', () => {
     expect(graph.equivalent(first, second)).toBe(true);
   });
 });
+
+function validateFinalOwner(value: { actionGraph: ActionGraphResourceDefinition }, label: string) {
+  validateActionGraphOwner(
+    { ...value, actionGraph: extractResourceDataNodes(value.actionGraph) },
+    label,
+  );
+}

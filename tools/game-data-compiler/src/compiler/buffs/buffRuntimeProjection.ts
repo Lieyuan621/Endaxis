@@ -3,13 +3,9 @@ import {
   buffPresentationNames,
   buffPresentationIcons,
 } from '../../../config/buffPresentationNames.ts';
-import {
-  createActionGraphBuilder,
-  type ActionGraphBuilder,
-} from '../actions/actionGraphBuilder.ts';
+import { createActionGraphBuilder } from '../actions/actionGraphBuilder.ts';
 import { mergeIndependentActionSequencesSource } from '../actions/independentActionSequences.ts';
 import { buffHasNoAffixIdentityWriter } from './buffCastIdentityProof.ts';
-import { projectPureDamageModifierCondition } from '../conditions/damageModifierConditionProjection.ts';
 import {
   compileResolvedAttributeModifierSource,
   isCombatRuntimeAttributeRelevant,
@@ -64,7 +60,6 @@ import {
   scalarOperand,
   actionValueOperand,
   DAMAGE_TYPES,
-  COMPARISON_OPERATORS,
   isPlainOwnerTarget,
 } from '../combatProjectionCommon.ts';
 import { compileBuffLeafNode } from '../actions/combatEntityAndTimeProjection.ts';
@@ -82,26 +77,6 @@ import {
   propagateGuaranteedSingletonZeroSpaceFacts,
 } from '../optimization/targetGroupCardinalityAnalysis.ts';
 
-export { collectBuffRuntimeClosure } from './buffReferenceClosure.ts';
-// 兼容已有公共入口；类型的唯一声明不再夹在投影实现中。
-export type {
-  CompiledBuffNumberSource,
-  CompiledBuffPresentationSource,
-  CompiledBuffAttributeModifierSource,
-  CompiledBuffDamageModifierSource,
-  CompiledBuffHealModifierSource,
-  CompiledBuffPoiseModifierSource,
-  CompiledBuffDefinitionSource,
-} from './buffProjectionTypes.ts';
-export type {
-  CompiledBuffConditionSource,
-  CompiledBuffSequenceSource,
-  CompiledBuffStepSource,
-} from '../actions/combatActionProjectionTypes.ts';
-export type {
-  CombatActionProjectionContextSource,
-  CombatActionProjectionExtensionsSource,
-} from '../combatProjectionCommon.ts';
 // Start/Enable 没有外部能力事件，Source 是创建者，Target/InputTarget 是持有者。
 // 生命周期执行器以 Buff 来源绑定 caster；不能从不存在的 event 中读取来源或目标。
 const BUFF_LIFECYCLE_CONTEXT: Omit<CombatActionProjectionContextSource, 'graph'> = {
@@ -833,7 +808,7 @@ export function compileBuffRuntimeDefinitionSource(
     }),
     ...compileBuffDamageModifiers(source, projectionContextOverrides),
     ...compileBuffHealModifiers(source, projectionContextOverrides),
-    ...compileBuffPoiseModifiers(source),
+    ...compileBuffPoiseModifiers(source, projectionContextOverrides),
     ...compileBuffShields(source),
     ...(scheduledSequences.length === 0 ? {} : { scheduledSequences }),
     ...(startSequences.length === 0 &&
@@ -925,15 +900,10 @@ function compileBuffDamageModifiers(
         `damageModifier[${index}]: unsupported enabled side ${JSON.stringify(modifier.enabledSide)}`,
       );
     }
-    const conditionSource = compileDamageModifierCondition(
-      modifier.condition,
-      index,
-      context,
-      enabledSide,
-    );
-    // 原生先执行条件再遍历处理器。只有公共序列已证明无副作用，空列表才可省略。
-    if (modifier.processors.length === 0 && conditionSource.conditionProgram === undefined)
-      return [];
+    const condition = compileModifierCondition(modifier.condition, context, 'damage');
+    const conditionSource = condition === undefined ? {} : { condition };
+    // 原生先执行条件再遍历处理器；只有空条件和空处理器同时成立才可省略。
+    if (modifier.processors.length === 0 && conditionSource.condition === undefined) return [];
     const processors = modifier.processors.flatMap<
       CompiledBuffDamageModifierSource['processors'][number]
     >((processor, processorIndex) => {
@@ -975,7 +945,7 @@ function compileBuffDamageModifiers(
         },
       ];
     });
-    if (processors.length === 0 && conditionSource.conditionProgram === undefined) return [];
+    if (processors.length === 0 && conditionSource.condition === undefined) return [];
     return [{ enabledSide, ...conditionSource, processors }];
   });
   return modifiers.length === 0 ? {} : { damageModifiers: modifiers };
@@ -983,7 +953,7 @@ function compileBuffDamageModifiers(
 
 function compileBuffHealModifiers(
   source: BuffRuntimeSource,
-  context: Pick<CombatActionProjectionContextSource, 'gameplayTagRegistry'>,
+  context: Pick<CombatActionProjectionContextSource, 'gameplayTagRegistry' | 'graph'>,
 ): {
   readonly healModifiers?: readonly CompiledBuffHealModifierSource[];
 } {
@@ -999,16 +969,7 @@ function compileBuffHealModifiers(
         `healModifier[${modifierIndex}]: unsupported enabled side ${JSON.stringify(modifier.enabledSide)}`,
       );
     }
-    const nodes = modifier.condition.actions.filter(node => node.metadata.enabled);
-    if (
-      modifier.condition.onlyExecuteWhenSourceIsMainCharacter ||
-      modifier.condition.onlyExecuteWhenSourceIsGuard ||
-      nodes.length > 1
-    ) {
-      throw new Error(`healModifier[${modifierIndex}]: unsupported condition sequence`);
-    }
-    const condition =
-      nodes.length === 0 ? undefined : compileHealModifierCondition(nodes[0]!, context);
+    const condition = compileModifierCondition(modifier.condition, context, 'heal');
     const processors = modifier.processors.map((processor, processorIndex) => {
       if (processor.kind === 'modifyCalculationResult') {
         return {
@@ -1043,59 +1004,15 @@ function compileBuffHealModifiers(
         addition: scalarOperand(processor.modifier.parameter),
       };
     });
-    if (processors.length === 0) {
-      throw new Error(`healModifier[${modifierIndex}]: expected at least one processor`);
-    }
     return { enabledSide, ...(condition === undefined ? {} : { condition }), processors };
   });
   return modifiers.length === 0 ? {} : { healModifiers: modifiers };
 }
 
-function compileHealModifierCondition(
-  node: NativeActionNodeSource<KnownNativeActionLeafSource>,
-  context: Pick<CombatActionProjectionContextSource, 'gameplayTagRegistry'>,
-): NonNullable<CompiledBuffHealModifierSource['condition']> {
-  if (node.body.kind !== 'leaf' || node.body.value.family !== 'condition') {
-    throw new Error(`${node.sourcePath}: expected a heal modifier condition`);
-  }
-  const condition = node.body.value.action;
-  if (condition.kind === 'health') {
-    if (
-      condition.targetSource !== 'Target' ||
-      condition.targetGroupKey !== '' ||
-      condition.characterTeamSelection !== null
-    ) {
-      throw new Error(`${node.sourcePath}: unsupported heal target health condition`);
-    }
-    const operator = COMPARISON_OPERATORS[condition.comparison];
-    if (operator === undefined)
-      throw new Error(`${node.sourcePath}: unsupported health comparison`);
-    return {
-      kind: 'targetHealthCompare',
-      valueType: condition.isRatio ? 'ratio' : 'current',
-      operator,
-      value: scalarOperand(condition.value),
-    };
-  }
-  if (condition.kind !== 'healTag')
-    throw new Error(`${node.sourcePath}: unsupported heal modifier condition ${condition.kind}`);
-  const match =
-    condition.queryType === 'hasAny'
-      ? 'hasAny'
-      : condition.queryType === 'hasAll'
-        ? 'hasAll'
-        : null;
-  if (match === null) {
-    throw new Error(`${node.sourcePath}: unsupported heal tag query ${condition.queryType}`);
-  }
-  return {
-    kind: 'healTagsMatch',
-    match,
-    tags: projectGameplayTags(condition.tagIds, context, node.sourcePath),
-  };
-}
-
-function compileBuffPoiseModifiers(source: BuffRuntimeSource): {
+function compileBuffPoiseModifiers(
+  source: BuffRuntimeSource,
+  context: Pick<CombatActionProjectionContextSource, 'gameplayTagRegistry' | 'graph'>,
+): {
   readonly poiseModifiers?: readonly CompiledBuffPoiseModifierSource[];
 } {
   const modifiers = source.poiseModifiers.map((modifier, modifierIndex) => {
@@ -1110,7 +1027,7 @@ function compileBuffPoiseModifiers(source: BuffRuntimeSource): {
         `poiseModifier[${modifierIndex}]: unsupported enabled side ${JSON.stringify(modifier.enabledSide)}`,
       );
     }
-    const condition = compilePoiseModifierCondition(modifier.condition, modifierIndex);
+    const condition = compileModifierCondition(modifier.condition, context, 'poise');
     const processors = modifier.processors.map((processor, processorIndex) => {
       const side =
         processor.modifyTargetSide === 'Attacker'
@@ -1137,51 +1054,9 @@ function compileBuffPoiseModifiers(source: BuffRuntimeSource): {
         addition: scalarOperand(processor.modifier.parameter),
       };
     });
-    if (processors.length === 0) {
-      throw new Error(`poiseModifier[${modifierIndex}]: expected at least one processor`);
-    }
     return { enabledSide, ...(condition === undefined ? {} : { condition }), processors };
   });
   return modifiers.length === 0 ? {} : { poiseModifiers: modifiers };
-}
-
-function compilePoiseModifierCondition(
-  source: NativeSequenceSource<KnownNativeActionLeafSource>,
-  modifierIndex: number,
-): CompiledBuffPoiseModifierSource['condition'] | undefined {
-  if (source.onlyExecuteWhenSourceIsMainCharacter || source.onlyExecuteWhenSourceIsGuard) {
-    throw new Error(`poiseModifier[${modifierIndex}]: root condition filters are unsupported`);
-  }
-  const conditions = source.actions
-    .filter(node => node.metadata.enabled)
-    .map(node => {
-      if (node.body.kind !== 'leaf' || node.body.value.family !== 'condition') {
-        throw new Error(`${node.sourcePath}: expected a poise modifier condition`);
-      }
-      const condition = node.body.value.action;
-      if (condition.kind === 'mainOperator') {
-        if (condition.targetSource !== 'Source' || condition.targetGroupKey !== '') {
-          throw new Error(`${node.sourcePath}: unsupported poise main-character target`);
-        }
-        return { kind: 'casterControlled' as const };
-      }
-      if (condition.kind === 'damageDecorateMask') {
-        if (
-          (condition.checkType !== 'HasAny' && condition.checkType !== 'HasAll') ||
-          condition.mask !== 2097152
-        ) {
-          throw new Error(`${node.sourcePath}: unsupported poise decorate mask ${condition.mask}`);
-        }
-        return {
-          kind: 'eventDamageTagsMatch' as const,
-          match: condition.checkType === 'HasAny' ? ('hasAny' as const) : ('hasAll' as const),
-          tags: ['normalAttackLastCombo'] as const,
-        };
-      }
-      throw new Error(`${node.sourcePath}: unsupported poise modifier condition ${condition.kind}`);
-    });
-  if (conditions.length === 0) return undefined;
-  return conditions.length === 1 ? conditions[0] : { kind: 'all', conditions };
 }
 
 function compileBuffShields(source: BuffRuntimeSource): {
@@ -1250,64 +1125,20 @@ function compileBuffShields(source: BuffRuntimeSource): {
   return shields.length === 0 ? {} : { shields };
 }
 
-function compileDamageModifierCondition(
+function compileModifierCondition(
   source: NativeSequenceSource<KnownNativeActionLeafSource>,
-  modifierIndex: number,
-  context: Pick<
-    CombatActionProjectionContextSource,
-    'gameplayTagRegistry' | 'fixedBuffOwnerTarget' | 'fixedBuffSourceTarget' | 'graph'
-  >,
-  side: DamageModifierSide,
-): Pick<CompiledBuffDamageModifierSource, 'condition' | 'conditionProgram'> {
+  context: Pick<CombatActionProjectionContextSource, 'gameplayTagRegistry' | 'graph'>,
+  kind: NonNullable<CombatActionProjectionContextSource['modifierContext']>,
+): CompiledBuffSequenceSource | undefined {
   const program = compileCombatConditionSequenceSource(source, {
     ...context,
     actionOwnerTarget: 'buffOwner',
     actionSourceTarget: 'caster',
-    // 原生 Target 是处理侧的对侧，不得把防御方修正的 Target 也当作敌人。
-    actionTargetTarget: side === 'attacker' ? 'enemy' : 'caster',
-    damageModifierContext: true,
+    actionTargetTarget: 'actionInputTarget',
+    modifierContext: kind,
   });
-  const path = `damageModifier[${modifierIndex}].condition`;
-  try {
-    const condition = projectPureDamageModifierCondition(context.graph.finish(), program, path);
-    return condition === undefined ? {} : { condition };
-  } catch (error) {
-    assertSynchronousDamageModifierConditionProgram(context.graph, program, path, error);
-    return { conditionProgram: program };
-  }
-}
-
-function assertSynchronousDamageModifierConditionProgram(
-  graph: ActionGraphBuilder<CompiledBuffStepSource>,
-  sequence: CompiledBuffSequenceSource,
-  path: string,
-  originalError: unknown,
-): void {
-  for (const [index, step] of graph.actions(sequence).entries()) {
-    const stepPath = `${path}.steps[${index}]`;
-    if (step.kind === 'conditional') {
-      assertSynchronousDamageModifierConditionProgram(
-        graph,
-        step.whenTrue,
-        `${stepPath}.whenTrue`,
-        originalError,
-      );
-      if (step.whenFalse !== undefined)
-        assertSynchronousDamageModifierConditionProgram(
-          graph,
-          step.whenFalse,
-          `${stepPath}.whenFalse`,
-          originalError,
-        );
-      continue;
-    }
-    if (
-      step.kind !== 'modifyActionValue' &&
-      step.kind !== 'calculateActionValue' &&
-      step.kind !== 'readBuffStackCount'
-    )
-      throw originalError;
-  }
+  if (program.$sequence === null) return undefined;
+  return program;
 }
 
 /** 主动命中切片、被动技能、Buff、武器与装备共享的 Action/Condition 序列投影入口。 */

@@ -2136,7 +2136,21 @@ const xaihiBuff8: SkillBuffDefinition = {
 };
 
 const xaihiBuff9ActionGraph = {
-  main: { nodes: {} },
+  main: {
+    nodes: {
+      conditional_1: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+          whenTrue: { $sequence: null },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'boolean', expression: { kind: 'eventDamageTypeIn', damageTypes: ['cryo'] } },
+    },
+  },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
@@ -2174,7 +2188,7 @@ const xaihiBuff9: SkillBuffDefinition = {
   damageModifiers: [
     {
       enabledSide: 'defender',
-      condition: { kind: 'eventDamageTypesMatch', damageTypes: ['cryo'] },
+      condition: { $sequence: 'conditional_1' },
       processors: [
         {
           kind: 'damageScale',

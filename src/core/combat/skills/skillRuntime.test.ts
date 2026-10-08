@@ -52,6 +52,7 @@ interface ScheduledFixture {
 
 // 手写图节点构建技能夹具：每个调度项与旁路序列都是 main 图内的一条链。
 function defineSkillFixture(options: {
+  readonly dataNodes?: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'];
   readonly key: string;
   readonly skillType?: SkillDefinition['skillType'];
   readonly nativeSkillType?: SkillDefinition['nativeSkillType'];
@@ -122,7 +123,7 @@ function defineSkillFixture(options: {
       sequence: { $sequence: chain(`s${index}`, item.steps) },
     })),
     ...(switchToBuffCast === undefined ? {} : { switchToBuffCast }),
-    actionGraph: { main: { nodes }, macros: {} },
+    actionGraph: { main: { nodes, dataNodes: options.dataNodes }, macros: {} },
   });
 }
 
@@ -1212,13 +1213,17 @@ describe('SkillRuntime', () => {
                 kind: 'dealDamage',
                 parameters: {
                   damageType: 'nature',
-                  attackScale: { kind: 'blackboard', key: 'local' },
+                  attackScale: { kind: 'valueNode', nodeId: 'test_data_1' },
                   tags: ['normalSkill'],
                 },
               },
             ],
           },
         ],
+
+        dataNodes: {
+          test_data_1: { type: 'number', expression: { kind: 'blackboard', key: 'local' } },
+        },
       }),
     );
     const observed: number[] = [];
@@ -1904,7 +1909,7 @@ describe('SkillRuntime', () => {
                     {
                       key: 'normal-skill-hit',
                       event: { kind: 'damageTagHit', tag: 'normalSkill', scope: 'operator' },
-                      condition: { kind: 'combatActive' },
+                      condition: { kind: 'conditionNode', nodeId: 'test_data_1' },
                       sequence: { $sequence: 'respond-0' },
                     },
                   ],
@@ -1929,6 +1934,8 @@ describe('SkillRuntime', () => {
             next: null,
           },
         },
+
+        dataNodes: { test_data_1: { type: 'boolean', expression: { kind: 'combatActive' } } },
       }),
     );
     const emit = () =>
@@ -2002,13 +2009,7 @@ describe('SkillRuntime', () => {
             action: {
               kind: 'conditional',
               parameters: {
-                condition: {
-                  kind: 'buffIdStackCompare',
-                  target: 'caster',
-                  buffIds: ['buff.skill.end'],
-                  operator: 'greaterOrEqual',
-                  value: { kind: 'constant', value: 1 },
-                },
+                condition: { kind: 'conditionNode', nodeId: 'test_data_1' },
               },
               whenTrue: { $sequence: 'jump-on-buff-jump' },
             },
@@ -2017,6 +2018,19 @@ describe('SkillRuntime', () => {
           'jump-on-buff-jump': {
             action: { kind: 'jumpTimeline', parameters: { destinationFrame: 6 } },
             next: null,
+          },
+        },
+
+        dataNodes: {
+          test_data_1: {
+            type: 'boolean',
+            expression: {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff.skill.end'],
+              operator: 'greaterOrEqual',
+              value: { kind: 'constant', value: 1 },
+            },
           },
         },
       }),

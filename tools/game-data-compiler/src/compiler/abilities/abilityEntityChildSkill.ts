@@ -2,7 +2,7 @@ import type { GameplayTagRegistry } from '../../source/nativeGameplayTags.ts';
 import type {
   AbilityEntityChildSkillDefinition,
   NativeSkillType,
-} from '../../../../../packages/game-data-contract/src/index.ts';
+} from '../intermediateDefinitions.ts';
 import { projectSkillCastResourceDefinitionSource } from '../../source/skillCost.ts';
 import { requireArray, requireRecord } from '../../source/primitives.ts';
 import { parseSkillCastResourceMetadataSource } from '../../source/activeSkill.ts';

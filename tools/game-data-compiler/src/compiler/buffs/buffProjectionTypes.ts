@@ -9,10 +9,8 @@ import type {
   SkillBuffIgniteEventResponse,
   SkillBuffDefinition,
   SkillBuffLifecycleSequences,
-} from '../../../../../packages/game-data-contract/src/buffs.ts';
+} from '../intermediateDefinitions.ts';
 import type {
-  DamageModifierCondition,
-  HealModifierCondition,
   HealModifierDefinition,
   PoiseModifierDefinition,
 } from '../../../../../packages/game-data-contract/src/modifiers.ts';
@@ -36,8 +34,7 @@ export interface CompiledBuffDamageModifierSource extends Pick<
   CombatBuffDefinitionDamageModifier,
   'enabledSide'
 > {
-  readonly condition?: DamageModifierCondition;
-  readonly conditionProgram?: CompiledBuffSequenceSource;
+  readonly condition?: CompiledBuffSequenceSource;
   readonly processors: CombatBuffDefinitionDamageModifier['processors'];
 }
 
@@ -45,11 +42,11 @@ export interface CompiledBuffHealModifierSource extends Pick<
   HealModifierDefinition,
   'enabledSide'
 > {
-  readonly condition?: HealModifierCondition;
+  readonly condition?: CompiledBuffSequenceSource;
   readonly processors: HealModifierDefinition['processors'];
 }
 
-/** 条件已是正式契约结构；原生条件准入由 compilePoiseModifierCondition 校验。 */
+/** 失衡条件同样引用所属 Buff 的动作序列。 */
 export type CompiledBuffPoiseModifierSource = PoiseModifierDefinition;
 
 /** 根字段和生命周期字段均来自契约，只保留当前公共投影能够产生的部分。 */
@@ -64,7 +61,7 @@ export type CompiledBuffDefinitionSource = Pick<
   | 'affixSkillCastIdentity'
 > &
   Required<Pick<SkillBuffDefinition, 'maxStackCount' | 'applyTags' | 'extendTags'>> & {
-    readonly actionGraph: import('../../../../../packages/game-data-contract/src/actionGraph.ts').ActionGraphResourceDefinition;
+    readonly actionGraph: import('../intermediateDefinitions.ts').ActionGraphResourceDefinition;
     readonly priority: BuffPriority;
     /** 默认时钟由省略字段表达；开启时间膨胀时才输出 global/self。 */
     readonly timeClock?: Extract<SkillBuffDefinition['timeClock'], 'global' | 'self'>;

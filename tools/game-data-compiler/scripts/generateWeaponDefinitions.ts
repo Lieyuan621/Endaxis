@@ -21,8 +21,8 @@ import {
 import { writeWeaponDefinitionFiles } from '../src/domains/weapon/writeRuntimeDefinitions.ts';
 import type { BuildDefinitionDiagnosticSource } from '../src/compiler/build/formalBuildDefinition.ts';
 import type { DefinitionOptimizationMode } from '../src/compiler/optimization/definitionOptimization.ts';
-import type { DefinitionProgramOptimizationReport } from '../src/compiler/optimization/definitionProgramOptimization.ts';
-import { optimizeWeaponDefinitionPrograms } from '../src/compiler/optimization/equipmentDefinitionOptimization.ts';
+import type { DefinitionProgramOptimizationReport } from '../src/compiler/finalizeDefinitions.ts';
+import { finalizeWeaponDefinition } from '../src/compiler/finalizeDefinitions.ts';
 
 export interface WeaponDefinitionSourceArguments {
   readonly tables: string;
@@ -149,7 +149,7 @@ export function renderWeaponDefinitionsFromCompiled(
 ) {
   assertNoBlockedDiagnostics(compiled.diagnostics);
   const optimized = compiled.definitions.map(definition =>
-    optimizeWeaponDefinitionPrograms(definition, optimization),
+    finalizeWeaponDefinition(definition, optimization),
   );
   const batch = {
     definitions: optimized.map(result => result.definition),

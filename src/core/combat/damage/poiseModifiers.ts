@@ -1,22 +1,14 @@
+/** 单次失衡计算包，以及 Buff 实例持有的失衡修正器。 */
+import type { ModifierConditionRuntime } from '../actions/modifierConditionRuntime';
+import { resolveBuffModifierNumber } from '../buffs/buffModifierNumberSource';
+import { applyPoiseModifier } from './poiseModifierExecution';
 import {
   type PoiseModifierDefinition,
   type PoiseModifierSide,
 } from '../../../../packages/game-data-contract/src/modifiers.ts';
-import { type PoiseModifier } from '../state/foundationState';
-// 纯数据契约由独立包唯一声明；此路径保留兼容导出。
-export {
-  type ModifyPoiseScalarProcessorDefinition,
-  type PoiseModifierCondition,
-  type PoiseModifierDefinition,
-  type PoiseModifierNumber,
-  type PoiseModifierSide,
-  type PoiseProcessTiming,
-} from '../../../../packages/game-data-contract/src/modifiers.ts';
-/**
- * Buff 对单次失衡包的声明式修正。
- * 该模型属于通用 Buff 运行时；武器、装备和干员只负责生成相同的定义。
- */
-import type { DamageTag } from '../../game-data/operatorDefinition';
+import { type PoiseModifier as PoiseModifierState } from '../state/foundationState';
+
+import type { DamageFeature, DamageTag } from '../../game-data/operatorDefinition';
 import type { BuffModifierNumberSource } from '../state/foundationState';
 
 /** 同一次失衡计算持有的可变倍率快照。 */
@@ -25,7 +17,7 @@ export class PoiseCalculationContext {
     readonly attackerId: string,
     readonly defenderId: string,
     readonly tags: readonly DamageTag[],
-    readonly isAttackerControlled: boolean,
+    readonly features: readonly DamageFeature[],
     public outputMultiplier: number,
     public takenMultiplier: number,
   ) {}
@@ -35,10 +27,45 @@ export class PoiseCalculationContext {
   }
 }
 
-export function createPoiseModifier(
-  ownerId: string,
-  definition: PoiseModifierDefinition,
-  numberSource: BuffModifierNumberSource,
-): PoiseModifier {
-  return { ownerId, definition, numberSource };
+/** 本次失衡计算的只读条件输入；不保存可变结算包。 */
+export interface PoiseModifierConditionInput {
+  readonly side: PoiseModifierSide;
+  readonly attackerId: string;
+  readonly defenderId: string;
+  readonly tags: readonly DamageTag[];
+  readonly features: readonly DamageFeature[];
+}
+export class PoiseModifier {
+  readonly runtimeState: PoiseModifierState;
+  constructor(
+    readonly ownerId: string,
+    readonly definition: Omit<PoiseModifierDefinition, 'condition'>,
+    readonly numberSource: BuffModifierNumberSource,
+    readonly condition?: ModifierConditionRuntime<PoiseModifierConditionInput>,
+    restoredState?: PoiseModifierState,
+  ) {
+    this.runtimeState = restoredState ?? {
+      ownerId,
+      definition: { enabledSide: definition.enabledSide, processors: definition.processors },
+      numberSource,
+      condition: condition?.runtimeState ?? null,
+    };
+    if (restoredState && restoredState.condition !== (condition?.runtimeState ?? null))
+      throw new Error('restored poise modifier condition is not bound to its saved state');
+  }
+  apply(
+    timing: import('../../../../packages/game-data-contract/src/modifiers').PoiseProcessTiming,
+    side: PoiseModifierSide,
+    context: PoiseCalculationContext,
+  ): void {
+    applyPoiseModifier(
+      this.ownerId,
+      this.definition,
+      value => resolveBuffModifierNumber(this.numberSource, value, 'poise'),
+      timing,
+      side,
+      context,
+      this.condition,
+    );
+  }
 }

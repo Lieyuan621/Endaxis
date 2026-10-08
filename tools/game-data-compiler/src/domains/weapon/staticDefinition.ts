@@ -4,7 +4,7 @@ import {
   type WeaponRarity,
   type WeaponDefinition,
   type WeaponTraitDefinition,
-} from '../../../../../packages/game-data-contract/src/equipment.ts';
+} from '../../compiler/intermediateDefinitions.ts';
 import { compileCardSkillBuildModifiers } from '../../compiler/build/cardSkillBuildModifiers.ts';
 import { compilePassiveSkillRequestBatch } from '../../compiler/skills/passiveSkillBatch.ts';
 import {

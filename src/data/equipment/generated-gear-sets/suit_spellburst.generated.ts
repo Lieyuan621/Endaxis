@@ -83,9 +83,7 @@ const definition = {
             conditional_3: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: { kind: 'eventInflictionElementIn', elements: ['cryo', 'nature'] },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
                 whenTrue: { $sequence: 'applyBuff_2' },
               },
               next: null,
@@ -93,19 +91,28 @@ const definition = {
             conditional_4: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'not',
-                    condition: {
-                      kind: 'globalCooldownPresent',
-                      target: 'buffOwner',
-                      markerId: 'buff_equipsuit_spellburst_01',
-                    },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 whenTrue: { $sequence: 'conditional_3' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: { kind: 'eventInflictionElementIn', elements: ['cryo', 'nature'] },
+            },
+            data_2: {
+              type: 'boolean',
+              expression: {
+                kind: 'globalCooldownPresent',
+                target: 'buffOwner',
+                markerId: 'buff_equipsuit_spellburst_01',
+              },
+            },
+            data_3: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_2' } },
             },
           },
         },

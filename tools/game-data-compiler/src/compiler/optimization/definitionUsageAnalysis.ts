@@ -6,16 +6,13 @@ import type {
   CombatStepDefinition,
   CombatStepForKind,
   CombatStepParameters,
-} from '../../../../../packages/game-data-contract/src/actions.ts';
+} from '../intermediateDefinitions.ts';
 import type {
   ActionValueOperand,
   BuffConditionTarget,
   CombatCondition,
-} from '../../../../../packages/game-data-contract/src/conditions.ts';
-import type {
-  ActionStringOperand,
-  LevelValues,
-} from '../../../../../packages/game-data-contract/src/primitives.ts';
+} from '../intermediateDefinitions.ts';
+import type { ActionStringOperand, LevelValues } from '../intermediateDefinitions.ts';
 
 /**
  * 经对象查询读取的黑板键。记录原有目标选择条件，不把同名键并入当前技能的 direct 板。

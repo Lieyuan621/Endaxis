@@ -1,3 +1,4 @@
+import { extractGraphDataNodes } from '../src/compiler/extractGraphDataNodes.ts';
 import { describe, expect, it } from 'vitest';
 
 import { renderEquipmentSuitDefinitionFiles } from '../src/index.ts';
@@ -26,7 +27,7 @@ describe('装备套装运行时定义渲染', () => {
               attributeModifiers: [],
             },
           },
-          actionGraph: { main: graph.finish(), macros: {} },
+          actionGraph: { main: extractGraphDataNodes(graph.finish()), macros: {} },
           initializationSequence,
         },
       ],

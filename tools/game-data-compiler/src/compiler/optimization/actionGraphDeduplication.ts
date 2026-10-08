@@ -3,7 +3,7 @@ import type {
   ActionGraphDefinition,
   ActionGraphNode,
   ActionGraphReference,
-} from '../../../../../packages/game-data-contract/src/actionGraph.ts';
+} from '../intermediateDefinitions.ts';
 
 export function deduplicateActionGraph(
   graph: ActionGraphDefinition,

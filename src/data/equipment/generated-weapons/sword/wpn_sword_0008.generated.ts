@@ -59,16 +59,16 @@ const definition = {
             conditional_2: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventDamageTagsMatch',
-                    match: 'hasAll',
-                    tags: ['normalSkill'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: { kind: 'eventDamageTagsMatch', match: 'hasAll', tags: ['normalSkill'] },
             },
           },
         },

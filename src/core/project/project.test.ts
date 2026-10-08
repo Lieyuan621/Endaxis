@@ -464,12 +464,7 @@ describe('current project document', () => {
                 action: {
                   kind: 'conditional',
                   parameters: {
-                    condition: {
-                      kind: 'deckAttributeCompare',
-                      left: 'intellect',
-                      operator: 'greaterOrEqual',
-                      right: 'will',
-                    },
+                    condition: { kind: 'conditionNode', nodeId: 'test_data_1' },
                   },
                   whenTrue: { $sequence: 'call' },
                   whenFalse: { $sequence: null },
@@ -477,6 +472,18 @@ describe('current project document', () => {
                 next: null,
               },
               call: { action: { kind: 'callMacro', macroId: 'flag' }, next: null },
+            },
+
+            dataNodes: {
+              test_data_1: {
+                type: 'boolean',
+                expression: {
+                  kind: 'deckAttributeCompare',
+                  left: 'intellect',
+                  operator: 'greaterOrEqual',
+                  right: 'will',
+                },
+              },
             },
           },
           macros: {

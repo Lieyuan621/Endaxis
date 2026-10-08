@@ -166,7 +166,7 @@ const definition = {
                   target: 'buffOwner',
                   alwaysNext: true,
                   tags: [],
-                  amount: { kind: 'blackboard', key: 'hp_up' },
+                  amount: { kind: 'valueNode', nodeId: 'data_1' },
                 },
               },
               next: 'createTimedMarker_1',
@@ -174,19 +174,25 @@ const definition = {
             conditional_3: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'not',
-                    condition: {
-                      kind: 'timedMarkerPresent',
-                      target: 'buffOwner',
-                      markerId: 'wpn_sword_0026_heal',
-                    },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 whenTrue: { $sequence: 'heal_2' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'hp_up' } },
+            data_2: {
+              type: 'boolean',
+              expression: {
+                kind: 'timedMarkerPresent',
+                target: 'buffOwner',
+                markerId: 'wpn_sword_0026_heal',
+              },
+            },
+            data_3: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_2' } },
             },
           },
         },

@@ -79,15 +79,7 @@ const definition = {
             conditional_3: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'buffIdStackCompare',
-                    target: 'caster',
-                    buffIds: ['buff_wpn_claym_0004_cd'],
-                    operator: 'lessOrEqual',
-                    value: { kind: 'constant', value: 0 },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
                 whenTrue: { $sequence: 'applyBuff_2' },
               },
               next: null,
@@ -95,16 +87,30 @@ const definition = {
             conditional_4: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventDamageTagsMatch',
-                    match: 'hasAny',
-                    tags: ['normalSkill', 'ultimateSkill'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                 whenTrue: { $sequence: 'conditional_3' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: {
+                kind: 'buffIdStackCompare',
+                target: 'caster',
+                buffIds: ['buff_wpn_claym_0004_cd'],
+                operator: 'lessOrEqual',
+                value: { kind: 'constant', value: 0 },
+              },
+            },
+            data_2: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventDamageTagsMatch',
+                match: 'hasAny',
+                tags: ['normalSkill', 'ultimateSkill'],
+              },
             },
           },
         },

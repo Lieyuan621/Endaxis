@@ -21,8 +21,23 @@ const compileGraphEntry = (
   revision: string,
   entry: string | null,
   nodes: ActionGraphDefinition['nodes'],
+  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => ({
-  graph: createActionGraphCompilation({ nodes }, 1, revision).compileAll(),
+  graph: createActionGraphCompilation(
+    {
+      nodes,
+      dataNodes: {
+        launchValue: { type: 'number', expression: { kind: 'blackboard', key: 'launchValue' } },
+        source: {
+          type: 'number',
+          expression: { kind: 'blackboard', key: 'EntityBB_source', fallback: 0 },
+        },
+        ...dataNodes,
+      },
+    },
+    1,
+    revision,
+  ).compileAll(),
   entry,
   callSite: revision,
 });
@@ -99,8 +114,8 @@ const delayedProbeNodes = (): ActionGraphDefinition['nodes'] => ({
         inheritParent: true,
         entityInitialValues: { EntityBB_seed: 4 },
         entityAssignments: {
-          EntityBB_snapshot: { kind: 'blackboard', key: 'launchValue' },
-          EntityBB_sourceSnapshot: { kind: 'blackboard', key: 'EntityBB_source', fallback: 0 },
+          EntityBB_snapshot: { kind: 'valueNode', nodeId: 'launchValue' },
+          EntityBB_sourceSnapshot: { kind: 'valueNode', nodeId: 'source' },
         },
       },
       body: { $sequence: 'schedule' },
@@ -584,19 +599,29 @@ describe('projectile callback action lifecycle', () => {
       undefined,
       'source',
     );
-    const branched: ResolvedActionSequence = compileGraphEntry('branched-callback', 'branch', {
-      ...delayedProbeNodes(),
-      branch: {
-        action: {
-          kind: 'conditional',
-          parameters: {
-            condition: { kind: 'probability', probability: { kind: 'constant', value: 1 } },
+    const branched: ResolvedActionSequence = compileGraphEntry(
+      'branched-callback',
+      'branch',
+      {
+        ...delayedProbeNodes(),
+        branch: {
+          action: {
+            kind: 'conditional',
+            parameters: {
+              condition: { kind: 'conditionNode', nodeId: 'input_1' },
+            },
+            whenTrue: { $sequence: 'launch' },
           },
-          whenTrue: { $sequence: 'launch' },
+          next: null,
         },
-        next: null,
       },
-    });
+      {
+        input_1: {
+          type: 'boolean',
+          expression: { kind: 'probability', probability: { kind: 'constant', value: 1 } },
+        },
+      },
+    );
 
     runtime.createSequence(branched).executeInstant({});
     expect(scheduler.activeCount).toBe(0);

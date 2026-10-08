@@ -4,10 +4,7 @@ const schema_4107b248d073 = { unionVariants: [{}, {}] } as const;
 const schema_f27fc5f4f63d = { aliases: ['LevelValues'] } as const;
 const schema_0027e97043bf = { unionVariants: [{}, {}, {}] } as const;
 const schema_36938d66df11 = { unionVariants: [{}, {}, {}, {}] } as const;
-const schema_4a3eec17c103 = { aliases: ['CombatCondition'] } as const;
 const schema_18ab763e1525 = { unionVariants: [{}, {}, {}, {}, {}] } as const;
-const schema_2362f19158a2 = { aliases: ['ActionValueOperand'] } as const;
-const schema_b6a4de5f58ad = ['heat', 'cryo', 'electric', 'nature'] as const;
 const schema_6675b27ea82d = { aliases: ['ActionGraphReference'] } as const;
 const schema_43d88f577f05 = { unionVariants: [{}, {}, {}, {}, {}, {}] } as const;
 const schema_41f65db75420 = { reason: 'graph-reference-boundary' } as const;
@@ -20,44 +17,14 @@ const schema_140af2d9bf58 = { arrayElement: schema_4107b248d073 } as const;
 const schema_6951f167ae16 = { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}] } as const;
 const schema_3a45612f7fc2 = { recordValue: schema_f27fc5f4f63d } as const;
 const schema_bbff0d28079e = { kind: 'number', readonlyDeclaration: true } as const;
-const schema_486b69c68471 = { arrayElement: { aliases: ['GameplayTag'] } } as const;
-const schema_a927a7defa54 = { kind: 'string', description: '动作环境中的目标组名称。' } as const;
-const schema_b56381dc690f = { arrayElement: schema_36938d66df11 } as const;
-const schema_a98553855713 = { arrayElement: schema_4a3eec17c103 } as const;
 const schema_85be103572e6 = {
   kind: 'number',
   description: '同一事件有多项响应时的执行优先级。',
-} as const;
-const schema_f9916af23e83 = ['hasAny', 'hasAll', 'exceptAny', 'exceptAll', 'exact'] as const;
-const schema_d09e9bd69613 = { kind: 'string', semantics: { aliases: ['GameplayTag'] } } as const;
-const schema_5e03e05acaad = { arrayElement: schema_bc6e5aef9dfe } as const;
-const schema_9ac59cf48632 = {
-  kind: 'enum',
-  options: ['not'],
-  description: '对一个子条件的结果取反。',
-} as const;
-const schema_3dd6bd618c41 = {
-  kind: 'enum',
-  options: ['any'],
-  description: '任一子条件成立时返回真。',
-} as const;
-const schema_d6f75ef1ccac = {
-  kind: 'enum',
-  options: ['all'],
-  description: '所有子条件都成立时返回真。',
 } as const;
 const schema_1f21df9328c5 = {
   kind: 'opaque',
   fallback: { reason: 'owned-resource-boundary' },
 } as const;
-const schema_233480cbfdbf = [
-  'equal',
-  'notEqual',
-  'greater',
-  'greaterOrEqual',
-  'less',
-  'lessOrEqual',
-] as const;
 const schema_cb135381615b = {
   kind: 'opaque',
   fallback: { reason: 'no-present-type' },
@@ -78,30 +45,14 @@ const schema_82e7efa7b3e1 = {
   element: { kind: 'number' },
   semantics: { arrayElement: {} },
 } as const;
-const schema_2907d52a9d37 = { unionVariants: [schema_6951f167ae16, {}, {}, {}, {}, {}] } as const;
-const schema_130d586eb2e7 = {
-  kind: 'boolean',
-  optional: true,
-  description: '是否只统计和当前 Buff 来自同一次技能施放的实例。',
-} as const;
 const schema_28e83f505977 = {
   kind: 'string',
   description: '原生 SkillData.skillId，也是干员定义和时间轴引用此技能时使用的唯一 ID。',
-} as const;
-const schema_4d46ac0875b2 = {
-  kind: 'string',
-  blackboardOrigin: 'contract',
-  description: '从找到的 Buff 黑板读取的键。',
 } as const;
 const schema_d4e3ff1ae98a = {
   kind: 'graph',
   optional: true,
   description: '当前武器词条或套装效果自己的程序图；不按原生 ID 跨对象共享。',
-} as const;
-const schema_fd40fb441705 = {
-  kind: 'string',
-  blackboardOrigin: 'contract',
-  description: '把读到的值同步写入当前动作黑板的键。',
 } as const;
 const schema_7e5b67c1428e = {
   kind: 'number',
@@ -145,7 +96,6 @@ const schema_f5e87a023be7 = {
   optional: true,
   description: '原生 `CastData.startCdFrame`；配置消耗时编译器要求此字段存在。',
 } as const;
-const schema_453b6f59ce2c = { arrayElement: schema_2907d52a9d37 } as const;
 const schema_1235728272b5 = [{ kind: 'number' }, schema_82e7efa7b3e1] as const;
 const schema_09fb5d26cbd4 = {
   kind: 'enum',
@@ -157,10 +107,6 @@ const schema_9ca14269e3d0 = {
   kind: 'union',
   variants: [{ kind: 'string' }, { kind: 'number' }],
   semantics: schema_4107b248d073,
-} as const;
-const schema_8ad260f002b0 = {
-  kind: 'object',
-  fields: { kind: { kind: 'enum', options: ['combatActive'], description: '条件种类判别值。' } },
 } as const;
 const schema_fd02775f055d = {
   elements: [
@@ -175,68 +121,14 @@ const schema_d2d610731e8e = {
   optional: true,
   description: '块宽的接续参照技能；覆盖默认接续目标，仅影响显示，不执行该技能。',
 } as const;
-const schema_da2be92d4c93 = {
-  kind: 'enum',
-  options: ['enemy', 'caster'],
-  semantics: schema_4107b248d073,
-  description: '要检查的对象。',
-} as const;
-const schema_b703678ebd22 = {
-  kind: 'object',
-  fields: {
-    kind: { kind: 'enum', options: ['casterControlled'], description: '条件种类判别值。' },
-  },
-} as const;
-const schema_4d613f676cbf = {
-  kind: 'object',
-  fields: {
-    kind: { kind: 'enum', options: ['singleEnemyPresent'], description: '条件种类判别值。' },
-  },
-} as const;
-const schema_c84fc1bd34db = {
-  kind: 'object',
-  fields: {
-    kind: { kind: 'enum', options: ['eventBuffEndedEarly'], description: '条件种类判别值。' },
-  },
-} as const;
-const schema_b42994af2b4b = {
-  kind: 'enum',
-  options: ['enemy', 'caster'],
-  semantics: schema_4107b248d073,
-  description: '要检查的施法者或敌人。',
-} as const;
-const schema_9558b15dfd38 = {
-  kind: 'object',
-  fields: {
-    kind: { kind: 'enum', options: ['sourceSkillCastMatch'], description: '条件种类判别值。' },
-  },
-} as const;
-const schema_e93d58ad67a0 = {
-  kind: 'enum',
-  options: ['equal', 'notEqual'],
-  semantics: schema_4107b248d073,
-  description: '判断两者相同或不同。',
-} as const;
-const schema_aecf1d4ea62f = {
-  kind: 'object',
-  fields: {
-    kind: { kind: 'enum', options: ['eventSourceControlled'], description: '条件种类判别值。' },
-  },
-} as const;
-const schema_feedd95bec2f = {
-  kind: 'enum',
-  options: ['hasAny', 'hasAll'],
-  semantics: schema_4107b248d073,
-  description: '匹配任一标签或全部标签。',
+const schema_5f503bc75d0e = {
+  kind: 'condition',
+  semantics: { aliases: ['CombatCondition'] },
+  optional: true,
+  description: '事件发生后还需满足的条件。',
 } as const;
 const schema_11661fe69962 =
   '原生 `SkillData.durationFrame` 的运行时自然结束周期，已按原生 getter 钳制为至少 1 帧。\n它不决定技能块宽度，也不能用 `exclusiveFrame` 或最后一个可见战斗动作代替。';
-const schema_d1b45514137a = {
-  kind: 'object',
-  fields: {
-    kind: { kind: 'enum', options: ['buffSourceMatchesOwner'], description: '条件种类判别值。' },
-  },
-} as const;
 const schema_31987bebd7ba = {
   kind: 'enum',
   options: ['team', 'operator'],
@@ -249,11 +141,6 @@ const schema_531a9457dae3 = {
   semantics: schema_4107b248d073,
   description: '要消耗的战斗资源。',
 } as const;
-const schema_3f35e4400603 = {
-  kind: 'enum',
-  options: ['crush', 'airborne', 'knockDown', 'fracture'],
-  semantics: schema_36938d66df11,
-} as const;
 const schema_e458b6c303c5 = [
   { kind: 'number' },
   {
@@ -261,26 +148,11 @@ const schema_e458b6c303c5 = [
     fields: { blackboardKey: { kind: 'string', description: '读取数值的 Buff 黑板键。' } },
   },
 ] as const;
-const schema_4472287efdef = {
+const schema_4589467e4874 = {
   kind: 'enum',
-  options: ['current', 'ratio'],
+  options: ['healer', 'receiver'],
   semantics: schema_4107b248d073,
-  description: '比较当前生命值还是当前生命比例。',
-} as const;
-const schema_cdfab488dd1e = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventSourceMatchesBuffSource'],
-      description: '条件种类判别值。',
-    },
-  },
-} as const;
-const schema_b1aeccc3ce43 = {
-  kind: 'enum',
-  options: ['physical', 'heat', 'cryo', 'electric', 'nature'],
-  semantics: schema_18ab763e1525,
+  description: '只有此修正安装在指定一方时才启用。',
 } as const;
 const schema_1a1ced796366 = {
   kind: 'enum',
@@ -288,27 +160,17 @@ const schema_1a1ced796366 = {
   semantics: schema_4107b248d073,
   description: '目标元素反应。',
 } as const;
+const schema_0695876eae6b = {
+  kind: 'enum',
+  options: ['defender', 'attacker'],
+  semantics: schema_4107b248d073,
+  description: '只有此修正安装在指定一方时才启用。',
+} as const;
 const schema_bec9f789392d = {
   kind: 'enum',
   options: ['defender', 'attacker'],
   semantics: schema_4107b248d073,
   description: '修正安装在攻击方还是防御方时启用。',
-} as const;
-const schema_c0c397c08cb9 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventSkillCastMatchesBuffSource'],
-      description: '条件种类判别值。',
-    },
-  },
-} as const;
-const schema_2c3bc5f33dd7 = {
-  kind: 'enum',
-  options: ['caster', 'buffOwner'],
-  semantics: schema_4107b248d073,
-  description: '检查施法者还是当前 Buff 持有者。',
 } as const;
 const schema_ceffc9c43558 = {
   kind: 'enum',
@@ -340,16 +202,6 @@ const schema_719183594cc7 = {
   semantics: schema_0027e97043bf,
   description: '对原值执行加算、乘算或直接赋值。',
 } as const;
-const schema_a26695b5947f = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventSourceMatchesBuffSourceEntitySource'],
-      description: '条件种类判别值。',
-    },
-  },
-} as const;
 const schema_9f9a48979ad6 = [
   'addition',
   'multiplier',
@@ -360,22 +212,6 @@ const schema_9f9a48979ad6 = [
   'baseFinalAddition',
   'baseFinalMultiplier',
 ] as const;
-const schema_8cf4ee6e32ef = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['casterComboPending'],
-      description: '施放者的原生连携候选列表非空；不检查冷却、队首、当前技能或可释放性。',
-    },
-  },
-} as const;
-const schema_0b8b60342004 = {
-  kind: 'enum',
-  options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll'],
-  semantics: schema_36938d66df11,
-  description: '标签集合匹配方式。',
-} as const;
 const schema_b6bff737c6f5 = {
   kind: 'opaque',
   fallback: schema_41f65db75420,
@@ -401,42 +237,12 @@ const schema_040e2b54cd31 = [
     },
   },
 ] as const;
-const schema_4fb5f2d9938b = {
-  kind: 'object',
-  fields: {
-    kind: { kind: 'enum', options: ['constant'], description: '直接返回固定真假值。' },
-    value: { kind: 'boolean', description: '条件结果。' },
-  },
-} as const;
-const schema_c94260b84704 = {
-  kind: 'enum',
-  options: schema_f9916af23e83,
-  semantics: schema_18ab763e1525,
-  description: '标签集合匹配方式。',
-} as const;
-const schema_4a52a7af1875 = [
-  'enemy',
-  'caster',
-  'eventTarget',
-  'buffOwner',
-  'buffSource',
-  'controlledOperator',
-  'currentAbilityEntity',
-  'eventSource',
-  'currentTarget',
-  'actionInputTarget',
-] as const;
 const schema_2555d4e0ba1c = {
   kind: 'string',
   referenceKind: 'buff',
   optional: true,
   description:
     '该次释放所创建的强化状态 Buff 身份。时间轴只按实际 Buff 回执投影生命周期；\n省略表示没有已取证的强化状态，不能把任意自身 Buff 猜成强化条。',
-} as const;
-const schema_7bbe9a286926 = {
-  kind: 'enum',
-  options: schema_51a143c4b9a7,
-  semantics: schema_6951f167ae16,
 } as const;
 const schema_dfe7358daaf2 = {
   kind: 'enum',
@@ -445,92 +251,22 @@ const schema_dfe7358daaf2 = {
   optional: true,
   description: '计算持续时间和触发间隔所用的时钟；不填时随全局时间缩放。',
 } as const;
-const schema_1d5a10a8508d = {
-  kind: 'array',
-  element: schema_d056c7fa0b76,
-  semantics: { arrayElement: {} },
-  referenceKind: 'buff',
-  description: '任一匹配即可选中的 Buff ID。',
-} as const;
-const schema_7461d481b291 = {
-  kind: 'array',
-  element: schema_d056c7fa0b76,
-  semantics: { arrayElement: {} },
-  referenceKind: 'buff',
-  description: '任一匹配即可计入的 Buff ID。',
-} as const;
-const schema_8df80300599e = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventComboRingQteSucceeded'],
-      description: '当前 beforeCastSkill 对应的连携输入命中了 ShowComboRingQte 有效阶段。',
-    },
-  },
+const schema_b05d7d181f20 = {
+  kind: 'condition',
+  semantics: { aliases: ['CombatCondition'] },
+  optional: true,
+  description:
+    '技能释放条件只生成合法性诊断；不成立也不会阻止技能进入模拟。\n模拟层将用户排入时间轴的动作视为已经成功释放，不得改写或跳过。',
 } as const;
 const schema_813faccfbcb3 = {
   kind: 'union',
   variants: schema_1235728272b5,
   semantics: schema_f27fc5f4f63d,
 } as const;
-const schema_4377f76e7d02 = {
-  kind: 'enum',
-  options: schema_233480cbfdbf,
-  semantics: schema_43d88f577f05,
-  description: '角度比较符。',
-} as const;
-const schema_c8336a933635 = {
-  kind: 'enum',
-  options: schema_233480cbfdbf,
-  semantics: schema_43d88f577f05,
-  description: '数量比较符。',
-} as const;
-const schema_39ead5437fec = {
-  kind: 'enum',
-  options: schema_233480cbfdbf,
-  semantics: schema_43d88f577f05,
-  description: '数值比较符。',
-} as const;
-const schema_dbc943e95086 = {
-  kind: 'enum',
-  options: schema_233480cbfdbf,
-  semantics: schema_43d88f577f05,
-  description: '层数比较符。',
-} as const;
 const schema_6ad6215ba3f7 = {
   kind: 'enum',
   options: schema_a7c632da5929,
   semantics: schema_bc6e5aef9dfe,
-} as const;
-const schema_f525b93b7173 = {
-  kind: 'array',
-  element: schema_d09e9bd69613,
-  semantics: schema_486b69c68471,
-  description: '参与匹配的治疗标签。',
-} as const;
-const schema_0db41efec5dc = {
-  kind: 'array',
-  element: schema_d09e9bd69613,
-  semantics: schema_486b69c68471,
-  description: '参与匹配的实体标签。',
-} as const;
-const schema_ce07c9b40cc8 = {
-  kind: 'array',
-  element: schema_d09e9bd69613,
-  semantics: schema_486b69c68471,
-  description: '用于查找 Buff 的标签。',
-} as const;
-const schema_ddf58c50db1b = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['skillBranchEnabled'],
-      description: '检查构筑是否启用了一个技能动作分支。',
-    },
-    branchKey: { kind: 'string', description: '要检查的分支键。' },
-  },
 } as const;
 const schema_72850bb1ad5f = {
   kind: 'enum',
@@ -538,6 +274,13 @@ const schema_72850bb1ad5f = {
   semantics: schema_0027e97043bf,
   optional: true,
   description: '零距离木桩下 StoreSmartTarget 的归约结果；省略表示原技能不执行智能目标存储。',
+} as const;
+const schema_40c2917eb344 = {
+  kind: 'opaque',
+  fallback: schema_41f65db75420,
+  semantics: schema_6675b27ea82d,
+  optional: true,
+  description: '所属 Buff 图中的条件动作入口；序列返回真后才执行处理器。',
 } as const;
 const schema_fc434466b7ee = {
   kind: 'string',
@@ -591,8 +334,8 @@ const schema_a361791fb8fc = {
 } as const;
 const schema_863b2cb8a77f = {
   kind: 'array',
-  element: schema_d09e9bd69613,
-  semantics: schema_486b69c68471,
+  element: { kind: 'string', semantics: { aliases: ['GameplayTag'] } },
+  semantics: { arrayElement: { aliases: ['GameplayTag'] } },
   optional: true,
   description: 'Buff 到期但被延长逻辑暂时阻止结束时，临时挂到所属实体的标签。',
 } as const;
@@ -605,32 +348,10 @@ const schema_261fb5fd5774 = {
 } as const;
 const schema_8b88c642c1c1 = {
   kind: 'array',
-  element: schema_d09e9bd69613,
-  semantics: schema_486b69c68471,
+  element: { kind: 'string', semantics: { aliases: ['GameplayTag'] } },
+  semantics: { arrayElement: { aliases: ['GameplayTag'] } },
   optional: true,
   description: 'Buff 的分类标签；启用时同时挂到所属实体，并用于按标签查找、计数和结束 Buff。',
-} as const;
-const schema_e7782624aef5 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['targetStaggered'],
-      description: '检查目标当前是否处于失衡状态。',
-    },
-    target: schema_b42994af2b4b,
-  },
-} as const;
-const schema_f83d797f6abb = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventProjectilePerfectDodgeCooldownEquals'],
-      description: '检查当前命中角色的投射物是否处于完美闪避冷却。',
-    },
-    value: { kind: 'boolean', description: '原生 CheckProjectileInPerfectDodgeCd.isInCd。' },
-  },
 } as const;
 const schema_ed6a823b7734 = {
   kind: 'union',
@@ -645,49 +366,6 @@ const schema_ed6a823b7734 = {
   optional: true,
   description: '可在施加时从该 Buff 已合并的实例黑板解析。',
 } as const;
-const schema_a60e4a6d7679 = {
-  kind: 'condition',
-  fallback: { reason: 'condition-editor-pending' },
-  semantics: schema_4a3eec17c103,
-  deferredCondition: 'availability',
-  optional: true,
-  description:
-    '技能释放条件只生成合法性诊断；不成立也不会阻止技能进入模拟。\n模拟层将用户排入时间轴的动作视为已经成功释放，不得改写或跳过。',
-} as const;
-const schema_38251673ef5e = [
-  'normalAttack',
-  'normalAttackLastCombo',
-  'powerAttack',
-  'normalSkill',
-  'comboSkill',
-  'ultimateSkill',
-  'plungingAttack',
-  'dashAttack',
-  'fireBurst',
-  'electricBurst',
-  'cryoBurst',
-  'natureBurst',
-  'fireAbnormal',
-  'electricAbnormal',
-  'cryoAbnormal',
-  'natureAbnormal',
-] as const;
-const schema_e87a460eface = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventSourceTargetMatch'],
-      description: '比较治疗事件的来源与目标身份。',
-    },
-    operator: {
-      kind: 'enum',
-      options: ['equal', 'notEqual'],
-      semantics: schema_4107b248d073,
-      description: '判断事件来源与目标相同或不同。',
-    },
-  },
-} as const;
 const schema_7c5ce6c644b5 = {
   kind: 'union',
   variants: [
@@ -700,34 +378,6 @@ const schema_7c5ce6c644b5 = {
   semantics: schema_4107b248d073,
   optional: true,
   description: 'trigger 生命周期动作最多执行的次数；0 表示不触发，负数表示不限制次数。',
-} as const;
-const schema_a7866bf8e73c = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventActionOwnerTargetMatch'],
-      description: '比较当前动作宿主与事件目标，不把宿主身份猜成事件来源。',
-    },
-    operator: {
-      kind: 'enum',
-      options: ['equal', 'notEqual'],
-      semantics: schema_4107b248d073,
-      description: '判断动作宿主与事件目标相同或不同。',
-    },
-  },
-} as const;
-const schema_bb31ce1427c3 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['contextTargetContains'],
-      description: '当前 Context 目标组是否包含事件目标。',
-    },
-    parentContextKey: { kind: 'string', description: '要检查的动作目标组。' },
-    child: { kind: 'enum', options: ['eventTarget'], description: '当前只支持检查事件目标。' },
-  },
 } as const;
 const schema_392f51ba723b = {
   kind: 'record',
@@ -753,35 +403,12 @@ const schema_d7eeb3cea02e = {
   semantics: { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}] },
   description: '`_InitSkills` 创建实例时得到的原生初值；之后可由 ChangeSkillType 改写。',
 } as const;
-const schema_a9d26e673a3e = {
-  kind: 'array',
-  element: schema_7bbe9a286926,
-  semantics: { arrayElement: schema_6951f167ae16 },
-  description: '任一匹配即可成立的伤害类型。',
-} as const;
 const schema_766ffb12ccde = {
   kind: 'union',
   variants: schema_040e2b54cd31,
   semantics: schema_4107b248d073,
   optional: true,
   description: '在创建/叠层前登记的同 ID 添加冷却；后续被叠层策略拒绝也不撤销，使用普通战斗时间。',
-} as const;
-const schema_499c949c859c = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventSkillIdIn'],
-      description: '匹配触发 Buff 响应的待施放技能稳定身份。',
-    },
-    skillIds: {
-      kind: 'array',
-      element: schema_eb26b72c4713,
-      semantics: { arrayElement: {} },
-      referenceKind: 'skill',
-      description: '任一匹配即可成立的原生技能 ID。',
-    },
-  },
 } as const;
 const schema_1646c027f760 = {
   kind: 'union',
@@ -790,18 +417,6 @@ const schema_1646c027f760 = {
   optional: true,
   description: '普通 Buff 的持续秒数；不填表示无限持续。定时成长型 Buff 用它表示自动加层周期。',
 } as const;
-const schema_ef40f86af2df = {
-  kind: 'enum',
-  options: schema_4a52a7af1875,
-  semantics: { unionVariants: [{ unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}] }, {}] },
-  description: '要统计 Buff 的对象。',
-} as const;
-const schema_2ec6a61c3418 = {
-  kind: 'enum',
-  options: schema_4a52a7af1875,
-  semantics: { unionVariants: [{ unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}] }, {}] },
-  description: '要查找 Buff 的对象。',
-} as const;
 const schema_dcc3197d8b15 = {
   kind: 'record',
   value: schema_813faccfbcb3,
@@ -809,74 +424,12 @@ const schema_dcc3197d8b15 = {
   optional: true,
   description: '创建时按技能等级解析的动作黑板默认值。',
 } as const;
-const schema_2882129d0726 = {
-  kind: 'enum',
-  options: [
-    'enemy',
-    'caster',
-    'buffOwner',
-    'buffSource',
-    'controlledOperator',
-    'currentTarget',
-    'actionInputTarget',
-    'lowestHealthRatioOperator',
-    'lowestHealthRatioOperatorExceptControlled',
-    'contextTarget',
-  ],
-  semantics: { unionVariants: [schema_4107b248d073, {}] },
-  description: '要检查的对象。',
-} as const;
-const schema_e531afc81c9c = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventCustomAbilityNameMatch'],
-      description: '精确匹配当前 OnCustomAbilityEvent 的命名载荷。',
-    },
-    eventName: { kind: 'string', description: '要匹配的自定义事件名称。' },
-    outputKey: {
-      kind: 'string',
-      optional: true,
-      description: '名称匹配后把事件 float 参数写入当前动作黑板；对应原生 savedParamKey。',
-    },
-  },
-} as const;
 const schema_e4e214b79007 = {
   kind: 'record',
   value: schema_813faccfbcb3,
   semantics: schema_3a45612f7fc2,
   optional: true,
   description: '配装能力的初始黑板，按词条等级解析；初始化与全部事件响应共享同一实例。',
-} as const;
-const schema_a796753dc666 = {
-  kind: 'object',
-  fields: {
-    kind: { kind: 'enum', options: ['enemyRankIn'], description: '条件种类判别值。' },
-    ranks: {
-      kind: 'array',
-      element: { kind: 'enum', options: ['mob', 'elite', 'boss'], semantics: schema_0027e97043bf },
-      semantics: { arrayElement: schema_0027e97043bf },
-      description: '任一匹配即可成立的敌人强度分级。',
-    },
-  },
-} as const;
-const schema_afc88289d891 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['globalCooldownPresent'],
-      description: '查询角色的战斗级冷却；与能力系统上的同名普通标记相互隔离。',
-    },
-    target: {
-      kind: 'enum',
-      options: ['caster', 'buffOwner', 'buffSource'],
-      semantics: schema_0027e97043bf,
-      description: '全局冷却所属对象。',
-    },
-    markerId: { kind: 'string', description: '全局冷却标记 ID。' },
-  },
 } as const;
 const schema_625761b25948 = {
   kind: 'union',
@@ -893,43 +446,6 @@ const schema_625761b25948 = {
   semantics: schema_4107b248d073,
   optional: true,
   description: '仅两种高优先级模式读取此值决定启用顺序；Stack 使用剩余寿命与实例编号选择替换项。',
-} as const;
-const schema_1436c0611e9b = {
-  kind: 'array',
-  element: {
-    kind: 'enum',
-    options: [
-      'canBreakWeakness',
-      'crush',
-      'airborne',
-      'knockDown',
-      'shatter',
-      'dot',
-      'remainArea',
-      'talentDamage',
-      'physicalInfliction',
-    ],
-    semantics: { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}] },
-  },
-  semantics: { arrayElement: { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}] } },
-  description: '参与匹配的伤害特征。',
-} as const;
-const schema_d4fd5d3bb198 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['elementalReactionActive'],
-      description: '检查指定复合元素反应是否生效。',
-    },
-    reaction: {
-      kind: 'enum',
-      options: ['electrification', 'corrosion'],
-      semantics: schema_4107b248d073,
-      description: '要检查的元素反应。',
-    },
-    minimumLevel: { kind: 'number', optional: true, description: '反应至少需要达到的等级。' },
-  },
 } as const;
 const schema_ff2061aceb44 = {
   kind: 'enum',
@@ -951,103 +467,6 @@ const schema_ff2061aceb44 = {
   semantics: { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}] },
   description: '再次施加同一叠加组的 Buff 时，决定新建实例、加层、刷新时长或拒绝施加。',
 } as const;
-const schema_07e6871f617a = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['statusActive'],
-      description: '检查兼容状态是否处于激活状态。',
-    },
-    statusKey: { kind: 'string', description: '状态键。' },
-    target: schema_da2be92d4c93,
-    minimumStacks: { kind: 'number', optional: true, description: '状态至少需要达到的层数。' },
-  },
-} as const;
-const schema_87219eef64f9 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventOverheal'],
-      description: '原生 CheckOverHeal；非空键会在判断前接收对应事件值。',
-    },
-    overHealKey: { kind: 'string', optional: true, description: '保存过量治疗值的动作黑板键。' },
-    finalHealKey: { kind: 'string', optional: true, description: '保存最终治疗值的动作黑板键。' },
-    realHealKey: {
-      kind: 'string',
-      optional: true,
-      description: '保存实际恢复生命值的动作黑板键。',
-    },
-  },
-} as const;
-const schema_bd23e3917dc5 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['contextFlagEquals'],
-      description: '比较动作环境中的一个标志值。',
-    },
-    flag: { kind: 'string', description: '要读取的标志名称。' },
-    value: {
-      kind: 'union',
-      variants: [
-        { kind: 'string' },
-        { kind: 'number' },
-        { kind: 'enum', options: [false] },
-        { kind: 'enum', options: [true] },
-      ],
-      semantics: schema_0027e97043bf,
-      description: '期望的值。',
-    },
-  },
-} as const;
-const schema_fcc7711f9c5e = {
-  kind: 'union',
-  variants: [
-    { kind: 'string' },
-    {
-      kind: 'object',
-      fields: { blackboardKey: { kind: 'string', description: '读取字符串的当前动作黑板键。' } },
-    },
-    {
-      kind: 'object',
-      fields: {
-        kind: {
-          kind: 'enum',
-          options: ['stringNode'],
-          description: '绑定本图字符串表达式；各使用点仍读取各自当前动作上下文。',
-        },
-        nodeId: { kind: 'string' },
-      },
-    },
-  ],
-  semantics: { aliases: ['ActionStringOperand'] },
-  description: '标记 ID 或动作黑板中的标记 ID。',
-} as const;
-const schema_6036f5ea6aea = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventBuffIdMatch'],
-      description: '匹配触发当前响应的新施加 Buff 身份。',
-    },
-    buffIds: {
-      kind: 'array',
-      element: schema_d056c7fa0b76,
-      semantics: { arrayElement: {} },
-      referenceKind: 'buff',
-      description: '任一匹配即可成立的新 Buff ID。',
-    },
-    buffIdOutputKey: {
-      kind: 'string',
-      optional: true,
-      description: '条件命中后把事件 Buff ID 写入当前动作黑板。',
-    },
-  },
-} as const;
 const schema_f29775915ce0 = {
   kind: {
     kind: 'enum',
@@ -1065,61 +484,6 @@ const schema_f29775915ce0 = {
     kind: 'enum',
     options: ['sequence'],
     description: '推测失败时按技能组声明顺序放置。',
-  },
-} as const;
-const schema_737e4d48bd48 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventDamageTypesMatch'],
-      description: '检查本次伤害的伤害类型。',
-    },
-    damageTypes: schema_a9d26e673a3e,
-  },
-} as const;
-const schema_73dbad8fbf7f = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventProjectileIgnoreImmuneLevelCompare'],
-      description: '比较当前命中角色的投射物免疫忽略等级。',
-    },
-    operator: {
-      kind: 'enum',
-      options: schema_233480cbfdbf,
-      semantics: schema_43d88f577f05,
-      description: '原生 CheckProjectileIgnoreImmuneLevel.checkType。',
-    },
-    value: { kind: 'number', description: '原生免疫忽略等级枚举的整数值。' },
-  },
-} as const;
-const schema_b5914c41639e = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventSkillTypeIn'],
-      description: '匹配触发 Buff 响应的待施放技能类型。',
-    },
-    skillTypes: {
-      kind: 'array',
-      element: schema_6ad6215ba3f7,
-      semantics: schema_5e03e05acaad,
-      description: '任一匹配即可成立的技能分类。',
-    },
-  },
-} as const;
-const schema_86cf15cc6c06 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventDamageTypeIn'],
-      description: '匹配触发当前响应的伤害类型；未声明类型的外部事实不会命中。',
-    },
-    damageTypes: schema_a9d26e673a3e,
   },
 } as const;
 const schema_3c8414c0c980 = {
@@ -1144,72 +508,6 @@ const schema_3c8414c0c980 = {
   semantics: { arrayElement: {} },
   description: '按技能局部帧安排的动作序列。',
 } as const;
-const schema_bf16f2eda743 = [
-  {
-    kind: 'object',
-    fields: {
-      kind: { kind: 'enum', options: ['blackboard'], description: '从当前动作黑板读取。' },
-      key: { kind: 'string', blackboardOrigin: 'contract', description: '要读取的黑板键。' },
-      fallback: {
-        kind: 'number',
-        optional: true,
-        description: '仅在原生调用点明确使用 GetValueOrDefault 时携带；缺省仍严格报错。',
-      },
-    },
-  },
-  {
-    kind: 'object',
-    fields: {
-      kind: { kind: 'enum', options: ['constant'], description: '直接使用固定数值。' },
-      value: { kind: 'number', description: '固定数值。' },
-    },
-  },
-] as const;
-const schema_615f8a0b957e = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventHealTagsMatch'],
-      description: '匹配当前治疗事件携带的原生治疗标签。',
-    },
-    match: schema_0b8b60342004,
-    tags: schema_f525b93b7173,
-  },
-} as const;
-const schema_9659501cec8f = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['actionInputTargetIdentityMatch'],
-      description: '比较原生事件动作 InputTarget 与 ActionSource/ActionOwner/当前主控身份。',
-    },
-    other: {
-      kind: 'enum',
-      options: ['controlledOperator', 'actionSource', 'actionOwner'],
-      semantics: schema_0027e97043bf,
-      description: '与输入目标比较的另一个对象身份。',
-    },
-    operator: schema_e93d58ad67a0,
-  },
-} as const;
-const schema_f9592d247023 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['originSkillTypeIn'],
-      description: '匹配当前事件的来源施法类型；按原生载荷类型读取，不回退到监听 Buff 的来源。',
-    },
-    skillTypes: {
-      kind: 'array',
-      element: schema_6ad6215ba3f7,
-      semantics: schema_5e03e05acaad,
-      description: '任一匹配即可成立的来源技能分类。',
-    },
-  },
-} as const;
 const schema_123ad80e4366 = {
   kind: 'array',
   element: {
@@ -1219,199 +517,6 @@ const schema_123ad80e4366 = {
   semantics: { arrayElement: {} },
   optional: true,
   description: '技能释放时消耗的资源。',
-} as const;
-const schema_0fd14cf912ee = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventInflictionElementIn'],
-      description: '匹配触发当前响应的元素附着类型。',
-    },
-    elements: {
-      kind: 'array',
-      element: { kind: 'enum', options: schema_b6a4de5f58ad, semantics: schema_36938d66df11 },
-      semantics: schema_b56381dc690f,
-      description: '任一匹配即可成立的元素附着类型。',
-    },
-    outputKey: {
-      kind: 'string',
-      optional: true,
-      description: '命中后把原生元素编号写入已声明键；缺键报错，EntityBB_ 写入共享实体板。',
-    },
-  },
-} as const;
-const schema_2f7aabdfe305 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['ownerSpawnedAbilityEntityPresent'],
-      description: '当前施术者生成的活动能力实体中是否存在匹配模板（零空间不再做距离裁剪）。',
-    },
-    abilityEntityIds: {
-      kind: 'array',
-      element: { kind: 'string', referenceKind: 'abilityEntity' },
-      semantics: { arrayElement: {} },
-      referenceKind: 'abilityEntity',
-      optional: true,
-      description: '只匹配这些能力实体 ID；省略时接受任意 ID。',
-    },
-    sameSourceSkillCast: {
-      kind: 'boolean',
-      optional: true,
-      description: '是否只接受和当前 Buff 来自同一次技能施放的实体。',
-    },
-  },
-} as const;
-const schema_5460bbd951e6 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventPhysicalInflictionTypeIn'],
-      description: '匹配来源 AbilitySystem 即将输出的物理异常类型。',
-    },
-    types: {
-      kind: 'array',
-      element: schema_3f35e4400603,
-      semantics: schema_b56381dc690f,
-      description: '任一匹配即可成立的物理异常类型。',
-    },
-    outputKey: {
-      kind: 'string',
-      optional: true,
-      description: '命中后把原生物理异常编号写入已声明键；规则与元素 savedKey 相同。',
-    },
-  },
-} as const;
-const schema_b2e74f617798 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['contextTargetIdentityMatch'],
-      description: '比较命名 Context 中首个目标与动作身份；连携的 trigger 也走同一目标组协议。',
-    },
-    contextKey: schema_a927a7defa54,
-    other: {
-      kind: 'enum',
-      options: ['controlledOperator', 'actionSource', 'actionOwner'],
-      semantics: schema_0027e97043bf,
-      description: '与组内首个目标比较的对象身份。',
-    },
-    operator: schema_e93d58ad67a0,
-  },
-} as const;
-const schema_eb7e7f443bec = {
-  kind: 'object',
-  fields: {
-    kind: { kind: 'enum', options: ['characterTypeIn'], description: '条件种类判别值。' },
-    target: schema_2c3bc5f33dd7,
-    characterTypes: {
-      kind: 'array',
-      element: schema_b1aeccc3ce43,
-      semantics: { arrayElement: schema_18ab763e1525 },
-      description: '任一匹配即可成立的角色元素类型。',
-    },
-  },
-} as const;
-const schema_55e90d6fa7e5 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventDamageGameplayTagsMatch'],
-      description: '匹配伤害包 DamageUnit.damageTags 的原生 GameplayTag。',
-    },
-    match: schema_c94260b84704,
-    tags: {
-      kind: 'array',
-      element: schema_d09e9bd69613,
-      semantics: schema_486b69c68471,
-      description: '参与匹配的原生伤害 GameplayTag。',
-    },
-  },
-} as const;
-const schema_a53d58605435 = {
-  kind: 'array',
-  element: {
-    kind: 'enum',
-    options: schema_38251673ef5e,
-    semantics: { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}] },
-  },
-  semantics: {
-    arrayElement: {
-      unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}],
-    },
-  },
-  description: '参与匹配的伤害标签。',
-} as const;
-const schema_c5c879975ede = {
-  kind: 'union',
-  variants: [
-    schema_b1aeccc3ce43,
-    {
-      kind: 'array',
-      element: schema_b1aeccc3ce43,
-      semantics: { arrayElement: schema_18ab763e1525 },
-    },
-  ],
-  semantics: { unionVariants: [schema_18ab763e1525, { arrayElement: schema_18ab763e1525 }] },
-  description: '任一匹配即可成立的元素。',
-} as const;
-const schema_ec963313055c = {
-  kind: 'object',
-  fields: {
-    kind: { kind: 'enum', options: ['operatorRoleIn'], description: '条件种类判别值。' },
-    target: {
-      kind: 'enum',
-      options: ['caster', 'eventTarget', 'buffOwner'],
-      semantics: schema_0027e97043bf,
-      description: '要检查的干员身份。',
-    },
-    roles: {
-      kind: 'array',
-      element: {
-        kind: 'enum',
-        options: ['guard', 'caster', 'defender', 'vanguard', 'supporter', 'striker'],
-        semantics: schema_43d88f577f05,
-      },
-      semantics: { arrayElement: schema_43d88f577f05 },
-      description: '任一匹配即可成立的职业。',
-    },
-  },
-} as const;
-const schema_cabd03b00032 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['contextTargetCountCompare'],
-      description: '比较本次释放 Context 中已查询目标组的实例数量。',
-    },
-    contextKey: schema_a927a7defa54,
-    operator: schema_c8336a933635,
-    value: { kind: 'number', description: '与实际目标数量比较的值。' },
-    outputKey: {
-      kind: 'string',
-      optional: true,
-      description: '原生 CheckEntityNum.storeKey：判断时同步保存实际数量。',
-    },
-  },
-} as const;
-const schema_bd8340072fb7 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['contextTargetEntityTagMatch'],
-      description: '查询命名 Context 首个实体当前持有的 GameplayTag。',
-    },
-    contextKey: schema_a927a7defa54,
-    tagQueryType: schema_0b8b60342004,
-    tags: schema_0db41efec5dc,
-  },
 } as const;
 const schema_1ff0b8a1d665 = {
   kind: 'array',
@@ -1455,7 +560,12 @@ const schema_8b37c2981f22 = {
     semantics: schema_36938d66df11,
     description: '左侧属性。',
   },
-  operator: schema_39ead5437fec,
+  operator: {
+    kind: 'enum',
+    options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+    semantics: schema_43d88f577f05,
+    description: '数值比较符。',
+  },
   right: {
     kind: 'enum',
     options: schema_ebe2ee1f84c5,
@@ -1463,214 +573,33 @@ const schema_8b37c2981f22 = {
     description: '右侧属性。',
   },
 } as const;
-const schema_f4db3327a4a1 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventBuffTagsMatch'],
-      description: '匹配触发当前响应的新施加 Buff 原生标签。',
-    },
-    match: schema_0b8b60342004,
-    buffTags: {
-      kind: 'array',
-      element: schema_d09e9bd69613,
-      semantics: schema_486b69c68471,
-      description: '参与匹配的新 Buff 标签。',
-    },
-    buffIdOutputKey: {
-      kind: 'string',
-      optional: true,
-      description: 'Advanced 条件命中后把事件 Buff ID 写入当前动作黑板。',
-    },
-  },
-} as const;
-const schema_be4656435205 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['entityTagMatch'],
-      description: '检查来源方或目标方的 GameplayTag。',
-    },
-    target: schema_da2be92d4c93,
-    tagQueryType: {
-      kind: 'enum',
-      options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll'],
-      semantics: schema_36938d66df11,
-      description: '标签集合的匹配方式。',
-    },
-    tags: {
-      kind: 'array',
-      element: schema_d09e9bd69613,
-      semantics: schema_486b69c68471,
-      description: '参与匹配的标签。',
-    },
-  },
-} as const;
-const schema_68a37a3df81f = {
-  kind: 'union',
-  variants: schema_bf16f2eda743,
-  semantics: schema_2362f19158a2,
-  inlineCondition: 'equipment',
-  description: '与累计强化层数比较的值。',
-} as const;
-const schema_9f18a2e3e968 = {
-  kind: 'union',
-  variants: schema_bf16f2eda743,
-  semantics: schema_2362f19158a2,
-  inlineCondition: 'skillSwitch',
-  description: '与累计强化层数比较的值。',
-} as const;
-const schema_d4abb6ff12c1 = { kind: 'object', fields: schema_8b37c2981f22 } as const;
-const schema_344869fc33ab = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['currentSkillTypeIn'],
-      description: '查询目标 AbilitySystem 当前仍在施放的技能类型；不读取事件载荷。',
-    },
-    target: schema_2c3bc5f33dd7,
-    skillTypes: {
-      kind: 'array',
-      element: schema_6ad6215ba3f7,
-      semantics: schema_5e03e05acaad,
-      description: '任一匹配即可成立的当前技能分类。',
-    },
-  },
-} as const;
-const schema_2f8f1e2bdff8 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventDamageFeaturesMatch'],
-      description: '检查本次伤害携带的特征。',
-    },
-    match: {
-      kind: 'enum',
-      options: schema_f9916af23e83,
-      semantics: schema_18ab763e1525,
-      description: '特征集合的匹配方式。',
-    },
-    features: schema_1436c0611e9b,
-  },
-} as const;
-const schema_81ff36189eef = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventSpGainMatch'],
-      description: '匹配 OnObtainAtb 事件携带的来源与获得方式。',
-    },
-    sources: {
-      kind: 'array',
-      element: {
+const schema_cfeca66fd8de = {
+  kind: 'array',
+  element: {
+    kind: 'object',
+    fields: {
+      kind: { kind: 'enum', options: ['modifyPoiseScalar'], description: '处理器种类判别值。' },
+      timing: {
         kind: 'enum',
-        options: ['normalAttack', 'powerAttack', 'default', 'skill'],
-        semantics: schema_36938d66df11,
+        options: ['beforeCalculation'],
+        description: '此处理器固定在失衡伤害计算前执行。',
       },
-      semantics: schema_b56381dc690f,
-      optional: true,
-      description: '允许的技力来源；省略时不筛选来源。',
-    },
-    gainKinds: {
-      kind: 'array',
-      element: { kind: 'enum', options: ['gain', 'refund'], semantics: schema_4107b248d073 },
-      semantics: schema_140af2d9bf58,
-      optional: true,
-      description: '允许的正常获取或返还类型；省略时不筛选类型。',
-    },
-  },
-} as const;
-const schema_ed1003a39e60 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['abilityEntityTimedMarkerPresent'],
-      description: '检查当前能力实体或 Context 能力实体集合中仍有效的定时标记。',
-    },
-    markerId: schema_fcc7711f9c5e,
-    contextKey: {
-      kind: 'string',
-      optional: true,
-      description: '指定时检查该动作目标组中的能力实体；省略时检查当前能力实体。',
-    },
-  },
-} as const;
-const schema_4ab40ed51844 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventDamageFeaturesMatch'],
-      description: '匹配触发当前响应的伤害行为特征；普通技能步骤没有事件上下文。',
-    },
-    match: {
-      kind: 'enum',
-      options: schema_f9916af23e83,
-      semantics: schema_18ab763e1525,
-      description: '特征集合匹配方式。',
-    },
-    features: schema_1436c0611e9b,
-  },
-} as const;
-const schema_56aec4a2145b = {
-  kind: 'union',
-  variants: [
-    { kind: 'enum', options: ['all'], semantics: { unionVariants: [{}] } },
-    {
-      kind: 'array',
-      element: {
+      side: {
         kind: 'enum',
-        options: [
-          'invalid',
-          'character',
-          'enemy',
-          'interactive',
-          'projectile',
-          'factoryRegion',
-          'npc',
-          'abilityEntity',
-          'cinematicEntity',
-          'remoteFactoryEntity',
-          'creature',
-          'godEntity',
-          'enemyPart',
-          'socialBuilding',
-        ],
-        semantics: { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}] },
+        options: ['defender', 'attacker'],
+        semantics: schema_4107b248d073,
+        description: '修改攻击方还是目标方的倍率。',
       },
-      semantics: {
-        arrayElement: { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}] },
+      addition: {
+        kind: 'union',
+        variants: schema_e458b6c303c5,
+        semantics: schema_4107b248d073,
+        description: '加入对应倍率区的数值。',
       },
     },
-  ],
-  semantics: {
-    unionVariants: [
-      { arrayElement: { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}] } },
-      {},
-    ],
   },
-  description: '允许匹配的对象类型。',
-} as const;
-const schema_7e14cbcef8ee = {
-  kind: 'object',
-  fields: {
-    kind: { kind: 'enum', options: ['targetPoiseCompare'], description: '比较敌人的当前失衡值。' },
-    target: { kind: 'enum', options: ['enemy'], description: '当前只支持伤害目标。' },
-    returnValueIfMissing: { kind: 'boolean', description: '目标没有失衡条时直接采用的判断结果。' },
-    operator: schema_39ead5437fec,
-    value: {
-      kind: 'union',
-      variants: schema_e458b6c303c5,
-      semantics: schema_4107b248d073,
-      description: '与目标失衡值比较的值。',
-    },
-  },
+  semantics: { arrayElement: {} },
+  description: '按顺序执行的失衡伤害处理器。',
 } as const;
 const schema_83b511d451cd = {
   kind: 'object',
@@ -1694,116 +623,6 @@ const schema_83b511d451cd = {
   },
   optional: true,
   description: '元素爆发 Buff 触发伤害时使用的爆发类型、伤害类型和倍率来源。',
-} as const;
-const schema_9d95582424f9 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['timedMarkerPresent'],
-      description: '检查目标能力系统中是否存在仍有效的原生定时标记。',
-    },
-    target: {
-      kind: 'enum',
-      options: ['enemy', 'caster', 'eventTarget', 'buffOwner', 'buffSource'],
-      semantics: schema_18ab763e1525,
-      description: '定时标记所属对象。',
-    },
-    markerId: schema_fcc7711f9c5e,
-  },
-} as const;
-const schema_9313aa28f9a1 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['targetHealthCompare'],
-      description: '比较敌人的当前生命或生命比例。',
-    },
-    target: { kind: 'enum', options: ['enemy'], description: '当前只支持伤害目标。' },
-    valueType: {
-      kind: 'enum',
-      options: ['current', 'ratio'],
-      semantics: schema_4107b248d073,
-      description: '比较生命数值还是生命比例。',
-    },
-    operator: schema_39ead5437fec,
-    value: {
-      kind: 'union',
-      variants: schema_e458b6c303c5,
-      semantics: schema_4107b248d073,
-      description: '与目标生命比较的值。',
-    },
-  },
-} as const;
-const schema_7930e87017bc = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['probability'],
-      description: '以原生 RandomUtil.Dice(float) 对动作黑板或常量概率取样。',
-    },
-    probability: {
-      kind: 'union',
-      variants: schema_bf16f2eda743,
-      semantics: schema_2362f19158a2,
-      inlineCondition: 'equipment',
-      description: '0 到 1 的命中概率。',
-    },
-  },
-} as const;
-const schema_86525eb7f9d0 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['probability'],
-      description: '以原生 RandomUtil.Dice(float) 对动作黑板或常量概率取样。',
-    },
-    probability: {
-      kind: 'union',
-      variants: schema_bf16f2eda743,
-      semantics: schema_2362f19158a2,
-      inlineCondition: 'skillSwitch',
-      description: '0 到 1 的命中概率。',
-    },
-  },
-} as const;
-const schema_0f2a20562860 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['elementalInflictionPresent'],
-      description: '检查敌人身上是否存在指定元素附着。',
-    },
-    elements: schema_c5c879975ede,
-    minimumStacks: { kind: 'number', optional: true, description: '至少需要达到的附着层数。' },
-  },
-} as const;
-const schema_c0d4b3f7ae9f = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['buffBlackboardCompare'],
-      description: '比较同一 Buff 黑板中的两个动态值或常量。',
-    },
-    left: {
-      kind: 'union',
-      variants: schema_e458b6c303c5,
-      semantics: schema_4107b248d073,
-      description: '左操作数。',
-    },
-    operator: schema_39ead5437fec,
-    right: {
-      kind: 'union',
-      variants: schema_e458b6c303c5,
-      semantics: schema_4107b248d073,
-      description: '右操作数。',
-    },
-  },
 } as const;
 const schema_741e6ba26ed9 = {
   kind: 'object',
@@ -1829,248 +648,6 @@ const schema_741e6ba26ed9 = {
   },
   optional: true,
   description: 'Buff 启用期间提供的霸体值和抗冲击值，可作用于持有者或 Buff 来源。',
-} as const;
-const schema_c44209e4f3e9 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['entityTagMatch'],
-      description: '查询目标实体当前持有的 GameplayTag；它与 Buff 身份、数量和层数无关。',
-    },
-    target: {
-      kind: 'enum',
-      options: schema_4a52a7af1875,
-      semantics: {
-        unionVariants: [{ unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}] }, {}],
-      },
-      description: '要检查的对象。',
-    },
-    tagQueryType: schema_0b8b60342004,
-    tags: schema_0db41efec5dc,
-  },
-} as const;
-const schema_0a60d1253325 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventDamageTagsMatch'],
-      description: '检查本次伤害携带的伤害标签。',
-    },
-    match: {
-      kind: 'enum',
-      options: schema_f9916af23e83,
-      semantics: schema_18ab763e1525,
-      description: '标签集合的匹配方式。',
-    },
-    tags: schema_a53d58605435,
-  },
-} as const;
-const schema_833b6ec9572d = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventDamageTagsMatch'],
-      description: '匹配触发当前响应的伤害事件标签；普通技能步骤没有事件上下文。',
-    },
-    match: schema_c94260b84704,
-    tags: schema_a53d58605435,
-  },
-} as const;
-const schema_8da448e12326 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['buffIdCountCompare'],
-      description: '比较指定对象身上若干 Buff 的实例总数。',
-    },
-    target: {
-      kind: 'enum',
-      options: ['enemy', 'caster'],
-      semantics: schema_4107b248d073,
-      description: '要统计 Buff 的对象。',
-    },
-    buffIds: {
-      kind: 'array',
-      element: schema_d056c7fa0b76,
-      semantics: { arrayElement: {} },
-      referenceKind: 'buff',
-      description: '计入统计的 Buff ID。',
-    },
-    operator: {
-      kind: 'enum',
-      options: schema_233480cbfdbf,
-      semantics: schema_43d88f577f05,
-      description: '计数比较符。',
-    },
-    value: {
-      kind: 'union',
-      variants: schema_e458b6c303c5,
-      semantics: schema_4107b248d073,
-      description: '与实例总数比较的值。',
-    },
-  },
-} as const;
-const schema_ff7b81746a97 = {
-  kind: 'union',
-  variants: [
-    {
-      kind: 'object',
-      fields: {
-        kind: { kind: 'enum', options: ['id'], description: '按 Buff ID 查找。' },
-        buffIds: schema_1d5a10a8508d,
-      },
-    },
-    {
-      kind: 'object',
-      fields: {
-        kind: { kind: 'enum', options: ['tag'], description: '按 Buff 标签查找。' },
-        tagQueryType: schema_0b8b60342004,
-        buffTags: {
-          kind: 'array',
-          element: schema_d09e9bd69613,
-          semantics: schema_486b69c68471,
-          description: '参与匹配的 Buff 标签。',
-        },
-      },
-    },
-  ],
-  semantics: schema_4107b248d073,
-  description: '按 Buff ID 或 Buff 标签查找。',
-} as const;
-const schema_e7200173f887 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['actionInputTargetObjectTypeMatch'],
-      description: '原生事件动作的 InputTarget 对象类型；与物理 eventTarget 方向可能相反。',
-    },
-    objectTypes: schema_56aec4a2145b,
-  },
-} as const;
-const schema_a65cc2805db1 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['contextTargetObjectTypeMatch'],
-      description: '命名组中任一对象匹配可读类型集合；enemy 同时接受 enemyPart。',
-    },
-    contextKey: schema_a927a7defa54,
-    objectTypes: schema_56aec4a2145b,
-  },
-} as const;
-const schema_dce12ab1c753 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['enemySuperArmorCompare'],
-      description: '比较当前单敌人的原生整数超级护甲值。',
-    },
-    operator: schema_39ead5437fec,
-    value: {
-      kind: 'union',
-      variants: schema_bf16f2eda743,
-      semantics: schema_2362f19158a2,
-      inlineCondition: 'equipment',
-      description: '与敌人超级护甲比较的值。',
-    },
-  },
-} as const;
-const schema_6eaf7fef7f9d = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['enemySuperArmorCompare'],
-      description: '比较当前单敌人的原生整数超级护甲值。',
-    },
-    operator: schema_39ead5437fec,
-    value: {
-      kind: 'union',
-      variants: schema_bf16f2eda743,
-      semantics: schema_2362f19158a2,
-      inlineCondition: 'skillSwitch',
-      description: '与敌人超级护甲比较的值。',
-    },
-  },
-} as const;
-const schema_eb58a5b37ce5 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['cameraToTargetAngleCompare'],
-      description: '比较镜头前向到施法者→目标方向、绕世界上轴的有符号角度。',
-    },
-    operator: schema_4377f76e7d02,
-    value: {
-      kind: 'union',
-      variants: schema_bf16f2eda743,
-      semantics: schema_2362f19158a2,
-      inlineCondition: 'equipment',
-      description: '与有符号角度比较的度数。',
-    },
-  },
-} as const;
-const schema_a15968218ae5 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['cameraToTargetAngleCompare'],
-      description: '比较镜头前向到施法者→目标方向、绕世界上轴的有符号角度。',
-    },
-    operator: schema_4377f76e7d02,
-    value: {
-      kind: 'union',
-      variants: schema_bf16f2eda743,
-      semantics: schema_2362f19158a2,
-      inlineCondition: 'skillSwitch',
-      description: '与有符号角度比较的度数。',
-    },
-  },
-} as const;
-const schema_c477292cb55a = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['currentBuffStackCompare'],
-      description: 'Environment 查询只读取执行中 Buff 的增强层数，不查询任何目标容器。',
-    },
-    operator: schema_dbc943e95086,
-    value: {
-      kind: 'union',
-      variants: schema_bf16f2eda743,
-      semantics: schema_2362f19158a2,
-      inlineCondition: 'equipment',
-      description: '与当前 Buff 强化层数比较的值。',
-    },
-  },
-} as const;
-const schema_d494fe1a392e = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['currentBuffStackCompare'],
-      description: 'Environment 查询只读取执行中 Buff 的增强层数，不查询任何目标容器。',
-    },
-    operator: schema_dbc943e95086,
-    value: {
-      kind: 'union',
-      variants: schema_bf16f2eda743,
-      semantics: schema_2362f19158a2,
-      inlineCondition: 'skillSwitch',
-      description: '与当前 Buff 强化层数比较的值。',
-    },
-  },
 } as const;
 const schema_0dfab30a4bb5 = {
   kind: 'union',
@@ -2126,51 +703,38 @@ const schema_0dfab30a4bb5 = {
   semantics: schema_4107b248d073,
   optional: true,
 } as const;
-const schema_c73f8dd99f46 = {
+const schema_e5c0475d6e2a = {
   kind: 'object',
   fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventConsumedBuffLayerCompare'],
-      description: '比较 OnConsumeBuff 事件快照中的实际消费层数；命中后可写入动作黑板。',
-    },
-    operator: schema_dbc943e95086,
-    value: {
-      kind: 'union',
-      variants: schema_bf16f2eda743,
-      semantics: schema_2362f19158a2,
-      inlineCondition: 'equipment',
-      description: '与实际消费层数比较的值。',
-    },
-    outputKey: {
-      kind: 'string',
+    currentSkillTypes: {
+      kind: 'array',
+      element: schema_6ad6215ba3f7,
+      semantics: { arrayElement: schema_bc6e5aef9dfe },
       optional: true,
-      description: '条件命中后保存实际消费层数的动作黑板键。',
+      description: '只在当前技能属于这些分类时启用旁路。',
+    },
+    requiresCurrentSkillNotInterruptible: {
+      kind: 'boolean',
+      optional: true,
+      description: '是否要求当前技能仍处于不可中断阶段。',
+    },
+    condition: {
+      kind: 'condition',
+      semantics: { aliases: ['CombatCondition'] },
+      optional: true,
+      description: '候选技能自身需要满足的条件。',
+    },
+    asSkillCast: { kind: 'boolean', optional: true, description: '是否仍发布完整的技能施放事件。' },
+    sequence: {
+      kind: 'opaque',
+      fallback: schema_41f65db75420,
+      semantics: schema_6675b27ea82d,
+      description: '命中旁路后直接执行的动作序列。',
     },
   },
-} as const;
-const schema_5e730a9a2720 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventConsumedBuffLayerCompare'],
-      description: '比较 OnConsumeBuff 事件快照中的实际消费层数；命中后可写入动作黑板。',
-    },
-    operator: schema_dbc943e95086,
-    value: {
-      kind: 'union',
-      variants: schema_bf16f2eda743,
-      semantics: schema_2362f19158a2,
-      inlineCondition: 'skillSwitch',
-      description: '与实际消费层数比较的值。',
-    },
-    outputKey: {
-      kind: 'string',
-      optional: true,
-      description: '条件命中后保存实际消费层数的动作黑板键。',
-    },
-  },
+  optional: true,
+  description:
+    '原生 SwitchToAddBuff 的施放前旁路；命中时不启动或中断普通技能时间轴。\n`currentSkillTypes` 表达依赖上一技能身份的结束技路径；`condition` 表达候选技能自身的\n普通条件路径。两者同时存在时均须成立。`asSkillCast` 保留原生是否发布完整施法事件。',
 } as const;
 const schema_69a4fde8bf05 = {
   kind: 'union',
@@ -2181,7 +745,7 @@ const schema_69a4fde8bf05 = {
         kind: { kind: 'enum', options: ['elementalAttachment'], description: '语义角色判别值。' },
         element: {
           kind: 'enum',
-          options: schema_b6a4de5f58ad,
+          options: ['heat', 'cryo', 'electric', 'nature'],
           semantics: schema_36938d66df11,
           description: '附着元素。',
         },
@@ -2193,7 +757,7 @@ const schema_69a4fde8bf05 = {
         kind: { kind: 'enum', options: ['elementalBurst'], description: '语义角色判别值。' },
         element: {
           kind: 'enum',
-          options: schema_b6a4de5f58ad,
+          options: ['heat', 'cryo', 'electric', 'nature'],
           semantics: schema_36938d66df11,
           description: '爆发元素。',
         },
@@ -2209,13 +773,13 @@ const schema_69a4fde8bf05 = {
         },
         consumedElement: {
           kind: 'enum',
-          options: schema_b6a4de5f58ad,
+          options: ['heat', 'cryo', 'electric', 'nature'],
           semantics: schema_36938d66df11,
           description: '被消耗的已有附着元素。',
         },
         incomingElement: {
           kind: 'enum',
-          options: schema_b6a4de5f58ad,
+          options: ['heat', 'cryo', 'electric', 'nature'],
           semantics: schema_36938d66df11,
           description: '本次新加入的元素。',
         },
@@ -2263,74 +827,6 @@ const schema_37edd074d3b3 = {
   optional: true,
   description:
     '指定的其他 Buff 成功加入同一持有者时，对当前 Buff 的关键词倍率执行赋值、加法或乘法。',
-} as const;
-const schema_4302a0f4e933 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['poiseCompare'],
-      description: '比较目标当前失衡值；目标没有失衡系统时返回原生配置值。',
-    },
-    target: schema_b42994af2b4b,
-    returnValueIfMissing: { kind: 'boolean', description: '目标没有失衡系统时直接采用的结果。' },
-    operator: schema_39ead5437fec,
-    value: {
-      kind: 'union',
-      variants: schema_bf16f2eda743,
-      semantics: schema_2362f19158a2,
-      inlineCondition: 'equipment',
-      description: '与当前失衡值比较的值。',
-    },
-  },
-} as const;
-const schema_6a9018b649ec = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['poiseCompare'],
-      description: '比较目标当前失衡值；目标没有失衡系统时返回原生配置值。',
-    },
-    target: schema_b42994af2b4b,
-    returnValueIfMissing: { kind: 'boolean', description: '目标没有失衡系统时直接采用的结果。' },
-    operator: schema_39ead5437fec,
-    value: {
-      kind: 'union',
-      variants: schema_bf16f2eda743,
-      semantics: schema_2362f19158a2,
-      inlineCondition: 'skillSwitch',
-      description: '与当前失衡值比较的值。',
-    },
-  },
-} as const;
-const schema_5b9859601d2e = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['contextTargetBuffIdStackCompare'],
-      description: 'CheckBuffStackNumAdvanced(Id) 的命名组首目标增强层数；空组直接 false。',
-    },
-    contextKey: schema_a927a7defa54,
-    buffIds: schema_1d5a10a8508d,
-    operator: schema_dbc943e95086,
-    value: schema_68a37a3df81f,
-  },
-} as const;
-const schema_4156d7099862 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['contextTargetBuffIdStackCompare'],
-      description: 'CheckBuffStackNumAdvanced(Id) 的命名组首目标增强层数；空组直接 false。',
-    },
-    contextKey: schema_a927a7defa54,
-    buffIds: schema_1d5a10a8508d,
-    operator: schema_dbc943e95086,
-    value: schema_9f18a2e3e968,
-  },
 } as const;
 const schema_78c333188111 = {
   kind: 'array',
@@ -2419,46 +915,6 @@ const schema_59ae2ded5e63 = {
     description: '此形态包含的单个技能或有序技能链。',
   },
 } as const;
-const schema_fb68e816ba9e = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventTargetBuffCountCompare'],
-      description: '按当前事件真实目标统计匹配标签的 Buff 实例数；不累计 Buff 增强层数。',
-    },
-    tagQueryType: schema_0b8b60342004,
-    buffTags: schema_ce07c9b40cc8,
-    operator: schema_c8336a933635,
-    value: {
-      kind: 'union',
-      variants: schema_bf16f2eda743,
-      semantics: schema_2362f19158a2,
-      inlineCondition: 'equipment',
-      description: '与 Buff 实例数比较的值。',
-    },
-  },
-} as const;
-const schema_bc95a20b4e2e = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['eventTargetBuffCountCompare'],
-      description: '按当前事件真实目标统计匹配标签的 Buff 实例数；不累计 Buff 增强层数。',
-    },
-    tagQueryType: schema_0b8b60342004,
-    buffTags: schema_ce07c9b40cc8,
-    operator: schema_c8336a933635,
-    value: {
-      kind: 'union',
-      variants: schema_bf16f2eda743,
-      semantics: schema_2362f19158a2,
-      inlineCondition: 'skillSwitch',
-      description: '与 Buff 实例数比较的值。',
-    },
-  },
-} as const;
 const schema_72e7e1b50ca4 = {
   kind: 'object',
   fields: {
@@ -2513,293 +969,70 @@ const schema_72e7e1b50ca4 = {
   description:
     '从原生顶层直连输入 Action 保留的操作解析证据。两类窗口职责不同：\ncommandMappings 选择该操作当前指向的技能，allowedNextSkills 只决定能否提前中断。',
 } as const;
-const schema_9817b4bbd9bf = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['contextTargetBuffStackCompare'],
-      description: 'CheckBuffStackNumByTag 的首目标增强层数；空组直接 false，不读取阈值。',
-    },
-    contextKey: schema_a927a7defa54,
-    tagQueryType: schema_0b8b60342004,
-    buffTags: schema_ce07c9b40cc8,
-    operator: schema_dbc943e95086,
-    value: schema_68a37a3df81f,
-  },
-} as const;
-const schema_c33d478c6e00 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['contextTargetBuffStackCompare'],
-      description: 'CheckBuffStackNumByTag 的首目标增强层数；空组直接 false，不读取阈值。',
-    },
-    contextKey: schema_a927a7defa54,
-    tagQueryType: schema_0b8b60342004,
-    buffTags: schema_ce07c9b40cc8,
-    operator: schema_dbc943e95086,
-    value: schema_9f18a2e3e968,
-  },
-} as const;
-const schema_381f7117d6fc = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['healthCompare'],
-      description: '比较目标当前生命值或当前/最大生命比例。',
-    },
-    target: schema_2882129d0726,
-    contextKey: {
-      kind: 'string',
-      optional: true,
-      description: 'target=contextTarget 时读取动作目标组中的唯一干员实例。',
-    },
-    valueType: schema_4472287efdef,
-    operator: schema_39ead5437fec,
-    value: {
-      kind: 'union',
-      variants: schema_bf16f2eda743,
-      semantics: schema_2362f19158a2,
-      inlineCondition: 'equipment',
-      description: '与生命值或比例比较的值。',
-    },
-  },
-} as const;
-const schema_c6c82b22477e = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['healthCompare'],
-      description: '比较目标当前生命值或当前/最大生命比例。',
-    },
-    target: schema_2882129d0726,
-    contextKey: {
-      kind: 'string',
-      optional: true,
-      description: 'target=contextTarget 时读取动作目标组中的唯一干员实例。',
-    },
-    valueType: schema_4472287efdef,
-    operator: schema_39ead5437fec,
-    value: {
-      kind: 'union',
-      variants: schema_bf16f2eda743,
-      semantics: schema_2362f19158a2,
-      inlineCondition: 'skillSwitch',
-      description: '与生命值或比例比较的值。',
-    },
-  },
-} as const;
-const schema_734ad3d39529 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['actionValueCompare'],
-      description: '比较同一技能实例动作黑板中的动态值与常量，或比较两个动态值。',
-    },
-    left: {
-      kind: 'union',
-      variants: schema_bf16f2eda743,
-      semantics: schema_2362f19158a2,
-      inlineCondition: 'equipment',
-      description: '比较左值。',
-    },
-    operator: schema_39ead5437fec,
-    right: {
-      kind: 'union',
-      variants: schema_bf16f2eda743,
-      semantics: schema_2362f19158a2,
-      inlineCondition: 'equipment',
-      description: '比较右值。',
-    },
-  },
-} as const;
-const schema_31d423d62163 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['actionValueCompare'],
-      description: '比较同一技能实例动作黑板中的动态值与常量，或比较两个动态值。',
-    },
-    left: {
-      kind: 'union',
-      variants: schema_bf16f2eda743,
-      semantics: schema_2362f19158a2,
-      inlineCondition: 'skillSwitch',
-      description: '比较左值。',
-    },
-    operator: schema_39ead5437fec,
-    right: {
-      kind: 'union',
-      variants: schema_bf16f2eda743,
-      semantics: schema_2362f19158a2,
-      inlineCondition: 'skillSwitch',
-      description: '比较右值。',
-    },
-  },
-} as const;
-const schema_94c637769b64 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['buffIdStackCompare'],
-      description: '按Buff 定义 身份查询累计强化层数；ID 列表按“任一匹配”处理。',
-    },
-    target: schema_ef40f86af2df,
-    buffIds: schema_7461d481b291,
-    sameSourceSkillCast: schema_130d586eb2e7,
-    operator: schema_dbc943e95086,
-    value: {
-      kind: 'union',
-      variants: [
-        { kind: 'number' },
-        {
-          kind: 'object',
-          fields: {
-            kind: { kind: 'enum', options: ['blackboard'], description: '从当前动作黑板读取。' },
-            key: { kind: 'string', blackboardOrigin: 'contract', description: '要读取的黑板键。' },
-            fallback: {
-              kind: 'number',
-              optional: true,
-              description: '仅在原生调用点明确使用 GetValueOrDefault 时携带；缺省仍严格报错。',
-            },
+const schema_f15fd9ff6614 = {
+  kind: 'array',
+  element: {
+    kind: 'union',
+    variants: [
+      {
+        kind: 'object',
+        fields: {
+          kind: {
+            kind: 'enum',
+            options: ['modifyCalculationResult'],
+            description: '处理器种类判别值。',
+          },
+          timing: {
+            kind: 'enum',
+            options: ['afterCalculation'],
+            description: '此处理器固定在基础计算完成后执行。',
+          },
+          baseMultiplier: {
+            kind: 'union',
+            variants: schema_e458b6c303c5,
+            semantics: schema_4107b248d073,
+            description: '每次乘算使用的基础倍率。',
+          },
+          multiplierCount: {
+            kind: 'union',
+            variants: schema_e458b6c303c5,
+            semantics: schema_4107b248d073,
+            description: '重复应用基础倍率的次数。',
           },
         },
-        {
-          kind: 'object',
-          fields: {
-            kind: { kind: 'enum', options: ['constant'], description: '直接使用固定数值。' },
-            value: { kind: 'number', description: '固定数值。' },
+      },
+      {
+        kind: 'object',
+        fields: {
+          kind: {
+            kind: 'enum',
+            options: ['modifyHealingIncrease'],
+            description: '处理器种类判别值。',
+          },
+          timing: {
+            kind: 'enum',
+            options: ['beforeCalculation'],
+            description: '此处理器固定在治疗计算前执行。',
+          },
+          side: {
+            kind: 'enum',
+            options: ['healer', 'receiver'],
+            semantics: schema_4107b248d073,
+            description: '修改治疗者的输出加成或受治疗者的承疗加成。',
+          },
+          addition: {
+            kind: 'union',
+            variants: schema_e458b6c303c5,
+            semantics: schema_4107b248d073,
+            description: '加入对应治疗加成区的数值。',
           },
         },
-      ],
-      semantics: { unionVariants: [{}, schema_2362f19158a2] },
-      inlineCondition: 'equipment',
-      description: '与累计强化层数比较的值。',
-    },
+      },
+    ],
+    semantics: schema_4107b248d073,
   },
-} as const;
-const schema_34983e7dcc15 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['buffIdStackCompare'],
-      description: '按Buff 定义 身份查询累计强化层数；ID 列表按“任一匹配”处理。',
-    },
-    target: schema_ef40f86af2df,
-    buffIds: schema_7461d481b291,
-    sameSourceSkillCast: schema_130d586eb2e7,
-    operator: schema_dbc943e95086,
-    value: {
-      kind: 'union',
-      variants: [
-        { kind: 'number' },
-        {
-          kind: 'object',
-          fields: {
-            kind: { kind: 'enum', options: ['blackboard'], description: '从当前动作黑板读取。' },
-            key: { kind: 'string', blackboardOrigin: 'contract', description: '要读取的黑板键。' },
-            fallback: {
-              kind: 'number',
-              optional: true,
-              description: '仅在原生调用点明确使用 GetValueOrDefault 时携带；缺省仍严格报错。',
-            },
-          },
-        },
-        {
-          kind: 'object',
-          fields: {
-            kind: { kind: 'enum', options: ['constant'], description: '直接使用固定数值。' },
-            value: { kind: 'number', description: '固定数值。' },
-          },
-        },
-      ],
-      semantics: { unionVariants: [{}, schema_2362f19158a2] },
-      inlineCondition: 'skillSwitch',
-      description: '与累计强化层数比较的值。',
-    },
-  },
-} as const;
-const schema_6ba00b7dd305 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['buffTagIdCountCompare'],
-      description: '按原生 Buff 标签查询未结束 Buff 的不同定义 ID 数，不累计实例数或强化层数。',
-    },
-    target: schema_ef40f86af2df,
-    tagQueryType: schema_0b8b60342004,
-    buffTags: schema_ce07c9b40cc8,
-    operator: schema_c8336a933635,
-    value: {
-      kind: 'union',
-      variants: schema_bf16f2eda743,
-      semantics: schema_2362f19158a2,
-      inlineCondition: 'equipment',
-      description: '与不同 Buff ID 数量比较的值。',
-    },
-  },
-} as const;
-const schema_f5d84fbd8139 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['buffTagIdCountCompare'],
-      description: '按原生 Buff 标签查询未结束 Buff 的不同定义 ID 数，不累计实例数或强化层数。',
-    },
-    target: schema_ef40f86af2df,
-    tagQueryType: schema_0b8b60342004,
-    buffTags: schema_ce07c9b40cc8,
-    operator: schema_c8336a933635,
-    value: {
-      kind: 'union',
-      variants: schema_bf16f2eda743,
-      semantics: schema_2362f19158a2,
-      inlineCondition: 'skillSwitch',
-      description: '与不同 Buff ID 数量比较的值。',
-    },
-  },
-} as const;
-const schema_8af1fef1a45a = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['buffStackCompare'],
-      description: '按原生 Buff 标签查询累计强化层数，并使用原生容差比较。',
-    },
-    target: schema_ef40f86af2df,
-    tagQueryType: schema_0b8b60342004,
-    buffTags: schema_ce07c9b40cc8,
-    sameSourceSkillCast: schema_130d586eb2e7,
-    operator: schema_dbc943e95086,
-    value: schema_68a37a3df81f,
-  },
-} as const;
-const schema_aa5b4a2aa103 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['buffStackCompare'],
-      description: '按原生 Buff 标签查询累计强化层数，并使用原生容差比较。',
-    },
-    target: schema_ef40f86af2df,
-    tagQueryType: schema_0b8b60342004,
-    buffTags: schema_ce07c9b40cc8,
-    sameSourceSkillCast: schema_130d586eb2e7,
-    operator: schema_dbc943e95086,
-    value: schema_9f18a2e3e968,
-  },
+  semantics: schema_140af2d9bf58,
+  description: '按顺序执行的治疗处理器。',
 } as const;
 const schema_84f4eaf6ec0e = {
   nameKey: {
@@ -2894,52 +1127,6 @@ const schema_66813ff77e4f = {
   fields: schema_84f4eaf6ec0e,
   optional: true,
   description: 'Buff 自身的图标、颜色、排序位置和进度条等显示设置。\n不参与战斗计算的显示信息。',
-} as const;
-const schema_3ef3d4dec0b9 = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['buffBlackboardValueCompare'],
-      description:
-        'GetTargetBuffBBAdvanced + CompareFloat：找不到 Buff 时为 false，找到时先写动作黑板。',
-    },
-    target: schema_2ec6a61c3418,
-    query: schema_ff7b81746a97,
-    desiredKey: schema_4d46ac0875b2,
-    outputKey: schema_fd40fb441705,
-    operator: schema_39ead5437fec,
-    value: {
-      kind: 'union',
-      variants: schema_bf16f2eda743,
-      semantics: schema_2362f19158a2,
-      inlineCondition: 'equipment',
-      description: '与 Buff 黑板值比较的值。',
-    },
-  },
-} as const;
-const schema_3a275265dc5b = {
-  kind: 'object',
-  fields: {
-    kind: {
-      kind: 'enum',
-      options: ['buffBlackboardValueCompare'],
-      description:
-        'GetTargetBuffBBAdvanced + CompareFloat：找不到 Buff 时为 false，找到时先写动作黑板。',
-    },
-    target: schema_2ec6a61c3418,
-    query: schema_ff7b81746a97,
-    desiredKey: schema_4d46ac0875b2,
-    outputKey: schema_fd40fb441705,
-    operator: schema_39ead5437fec,
-    value: {
-      kind: 'union',
-      variants: schema_bf16f2eda743,
-      semantics: schema_2362f19158a2,
-      inlineCondition: 'skillSwitch',
-      description: '与 Buff 黑板值比较的值。',
-    },
-  },
 } as const;
 const schema_a2f7c7d1976f = {
   kind: 'array',
@@ -3186,8 +1373,8 @@ const schema_d8c018e8d611 = {
   },
   bornTags: {
     kind: 'array',
-    element: schema_d09e9bd69613,
-    semantics: schema_486b69c68471,
+    element: { kind: 'string', semantics: { aliases: ['GameplayTag'] } },
+    semantics: { arrayElement: { aliases: ['GameplayTag'] } },
     optional: true,
     description:
       'AbilityEntityTemplateData.bornTags；实体创建时立即成为其 AbilitySystem 自身标签。',
@@ -3294,239 +1481,6 @@ const schema_d8c018e8d611 = {
     description: '能力实体启用期间安装的被动技能。',
   },
 } as const;
-const schema_bc54829e4166 = {
-  kind: 'array',
-  element: {
-    kind: 'object',
-    fields: {
-      enabledSide: {
-        kind: 'enum',
-        options: ['defender', 'attacker'],
-        semantics: schema_4107b248d073,
-        description: '只有此修正安装在指定一方时才启用。',
-      },
-      condition: {
-        kind: 'union',
-        variants: [
-          schema_b703678ebd22,
-          {
-            kind: 'object',
-            fields: {
-              kind: {
-                kind: 'enum',
-                options: ['eventDamageTagsMatch'],
-                description: '检查本次伤害携带的标签。',
-              },
-              match: schema_feedd95bec2f,
-              tags: schema_a53d58605435,
-            },
-          },
-          {
-            kind: 'object',
-            fields: {
-              kind: schema_d6f75ef1ccac,
-              conditions: {
-                kind: 'array',
-                element: {
-                  kind: 'union',
-                  variants: [
-                    schema_b703678ebd22,
-                    {
-                      kind: 'object',
-                      fields: {
-                        kind: {
-                          kind: 'enum',
-                          options: ['eventDamageTagsMatch'],
-                          description: '检查本次伤害携带的标签。',
-                        },
-                        match: schema_feedd95bec2f,
-                        tags: schema_a53d58605435,
-                      },
-                    },
-                    {
-                      kind: 'object',
-                      fields: {
-                        kind: schema_d6f75ef1ccac,
-                        conditions: {
-                          kind: 'ref',
-                          ref: 'field_6ace4e0268dcfae8b6cd',
-                          semantics: { arrayElement: schema_0027e97043bf },
-                          description: '需要同时成立的条件。',
-                        },
-                      },
-                    },
-                  ],
-                  semantics: schema_0027e97043bf,
-                },
-                semantics: { arrayElement: schema_0027e97043bf },
-                description: '需要同时成立的条件。',
-              },
-            },
-          },
-        ],
-        semantics: schema_0027e97043bf,
-        optional: true,
-        description: '启用处理器前必须满足的条件。',
-      },
-      processors: {
-        kind: 'array',
-        element: {
-          kind: 'object',
-          fields: {
-            kind: {
-              kind: 'enum',
-              options: ['modifyPoiseScalar'],
-              description: '处理器种类判别值。',
-            },
-            timing: {
-              kind: 'enum',
-              options: ['beforeCalculation'],
-              description: '此处理器固定在失衡伤害计算前执行。',
-            },
-            side: {
-              kind: 'enum',
-              options: ['defender', 'attacker'],
-              semantics: schema_4107b248d073,
-              description: '修改攻击方还是目标方的倍率。',
-            },
-            addition: {
-              kind: 'union',
-              variants: schema_e458b6c303c5,
-              semantics: schema_4107b248d073,
-              description: '加入对应倍率区的数值。',
-            },
-          },
-        },
-        semantics: { arrayElement: {} },
-        description: '按顺序执行的失衡伤害处理器。',
-      },
-    },
-  },
-  semantics: { arrayElement: {} },
-  optional: true,
-  description: 'Buff 启用期间参与失衡伤害计算的条件和数值处理器。',
-} as const;
-const schema_c3d0fdfbf35b = {
-  kind: 'array',
-  element: {
-    kind: 'object',
-    fields: {
-      enabledSide: {
-        kind: 'enum',
-        options: ['healer', 'receiver'],
-        semantics: schema_4107b248d073,
-        description: '只有此修正安装在指定一方时才启用。',
-      },
-      condition: {
-        kind: 'union',
-        variants: [
-          {
-            kind: 'object',
-            fields: {
-              kind: {
-                kind: 'enum',
-                options: ['targetHealthCompare'],
-                description: '比较受治疗者的当前生命值或生命比例。',
-              },
-              valueType: schema_4472287efdef,
-              operator: schema_39ead5437fec,
-              value: {
-                kind: 'union',
-                variants: schema_e458b6c303c5,
-                semantics: schema_4107b248d073,
-                description: '与生命值或比例比较的值。',
-              },
-            },
-          },
-          schema_c0d4b3f7ae9f,
-          {
-            kind: 'object',
-            fields: {
-              kind: {
-                kind: 'enum',
-                options: ['healTagsMatch'],
-                description: '检查本次治疗携带的标签。',
-              },
-              match: schema_feedd95bec2f,
-              tags: schema_f525b93b7173,
-            },
-          },
-        ],
-        semantics: schema_0027e97043bf,
-        optional: true,
-        description: '启用处理器前必须满足的条件。',
-      },
-      processors: {
-        kind: 'array',
-        element: {
-          kind: 'union',
-          variants: [
-            {
-              kind: 'object',
-              fields: {
-                kind: {
-                  kind: 'enum',
-                  options: ['modifyCalculationResult'],
-                  description: '处理器种类判别值。',
-                },
-                timing: {
-                  kind: 'enum',
-                  options: ['afterCalculation'],
-                  description: '此处理器固定在基础计算完成后执行。',
-                },
-                baseMultiplier: {
-                  kind: 'union',
-                  variants: schema_e458b6c303c5,
-                  semantics: schema_4107b248d073,
-                  description: '每次乘算使用的基础倍率。',
-                },
-                multiplierCount: {
-                  kind: 'union',
-                  variants: schema_e458b6c303c5,
-                  semantics: schema_4107b248d073,
-                  description: '重复应用基础倍率的次数。',
-                },
-              },
-            },
-            {
-              kind: 'object',
-              fields: {
-                kind: {
-                  kind: 'enum',
-                  options: ['modifyHealingIncrease'],
-                  description: '处理器种类判别值。',
-                },
-                timing: {
-                  kind: 'enum',
-                  options: ['beforeCalculation'],
-                  description: '此处理器固定在治疗计算前执行。',
-                },
-                side: {
-                  kind: 'enum',
-                  options: ['healer', 'receiver'],
-                  semantics: schema_4107b248d073,
-                  description: '修改治疗者的输出加成或受治疗者的承疗加成。',
-                },
-                addition: {
-                  kind: 'union',
-                  variants: schema_e458b6c303c5,
-                  semantics: schema_4107b248d073,
-                  description: '加入对应治疗加成区的数值。',
-                },
-              },
-            },
-          ],
-          semantics: schema_4107b248d073,
-        },
-        semantics: schema_140af2d9bf58,
-        description: '按顺序执行的治疗处理器。',
-      },
-    },
-  },
-  semantics: { arrayElement: {} },
-  optional: true,
-  description: 'Buff 启用期间参与治疗计算的条件和数值处理器。',
-} as const;
 const schema_721d75a98ce3 = [
   {
     kind: 'object',
@@ -3617,7 +1571,24 @@ const schema_721d75a98ce3 = [
       kind: { kind: 'enum', options: ['damageTagHit'], description: '触发器种类判别值。' },
       tag: {
         kind: 'enum',
-        options: schema_38251673ef5e,
+        options: [
+          'normalAttack',
+          'normalAttackLastCombo',
+          'powerAttack',
+          'normalSkill',
+          'comboSkill',
+          'ultimateSkill',
+          'plungingAttack',
+          'dashAttack',
+          'fireBurst',
+          'electricBurst',
+          'cryoBurst',
+          'natureBurst',
+          'fireAbnormal',
+          'electricAbnormal',
+          'cryoAbnormal',
+          'natureAbnormal',
+        ],
         semantics: {
           unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}],
         },
@@ -3634,7 +1605,27 @@ const schema_721d75a98ce3 = [
         options: ['elementalInflictionApplied'],
         description: '指定范围内成功施加一种元素附着。',
       },
-      elements: schema_c5c879975ede,
+      elements: {
+        kind: 'union',
+        variants: [
+          {
+            kind: 'enum',
+            options: ['physical', 'heat', 'cryo', 'electric', 'nature'],
+            semantics: schema_18ab763e1525,
+          },
+          {
+            kind: 'array',
+            element: {
+              kind: 'enum',
+              options: ['physical', 'heat', 'cryo', 'electric', 'nature'],
+              semantics: schema_18ab763e1525,
+            },
+            semantics: { arrayElement: schema_18ab763e1525 },
+          },
+        ],
+        semantics: { unionVariants: [schema_18ab763e1525, { arrayElement: schema_18ab763e1525 }] },
+        description: '任一匹配即可成立的元素。',
+      },
       scope: schema_31987bebd7ba,
     },
   },
@@ -3649,10 +1640,22 @@ const schema_721d75a98ce3 = [
       types: {
         kind: 'union',
         variants: [
-          schema_3f35e4400603,
-          { kind: 'array', element: schema_3f35e4400603, semantics: schema_b56381dc690f },
+          {
+            kind: 'enum',
+            options: ['crush', 'airborne', 'knockDown', 'fracture'],
+            semantics: schema_36938d66df11,
+          },
+          {
+            kind: 'array',
+            element: {
+              kind: 'enum',
+              options: ['crush', 'airborne', 'knockDown', 'fracture'],
+              semantics: schema_36938d66df11,
+            },
+            semantics: { arrayElement: schema_36938d66df11 },
+          },
         ],
-        semantics: { unionVariants: [schema_36938d66df11, schema_b56381dc690f] },
+        semantics: { unionVariants: [schema_36938d66df11, { arrayElement: schema_36938d66df11 }] },
         description: '任一匹配即可成立的物理异常。',
       },
       scope: schema_31987bebd7ba,
@@ -3727,10 +1730,10 @@ const schema_66b09fabca46 = [
       damageTypes: {
         kind: 'union',
         variants: [
-          schema_7bbe9a286926,
+          { kind: 'enum', options: schema_51a143c4b9a7, semantics: schema_6951f167ae16 },
           {
             kind: 'array',
-            element: schema_7bbe9a286926,
+            element: { kind: 'enum', options: schema_51a143c4b9a7, semantics: schema_6951f167ae16 },
             semantics: { arrayElement: schema_6951f167ae16 },
           },
         ],
@@ -3741,9 +1744,13 @@ const schema_66b09fabca46 = [
         kind: 'union',
         variants: [
           schema_6ad6215ba3f7,
-          { kind: 'array', element: schema_6ad6215ba3f7, semantics: schema_5e03e05acaad },
+          {
+            kind: 'array',
+            element: schema_6ad6215ba3f7,
+            semantics: { arrayElement: schema_bc6e5aef9dfe },
+          },
         ],
-        semantics: { unionVariants: [schema_bc6e5aef9dfe, schema_5e03e05acaad] },
+        semantics: { unionVariants: [schema_bc6e5aef9dfe, { arrayElement: schema_bc6e5aef9dfe }] },
         optional: true,
         description: '进一步限制此加成覆盖的技能类型；省略时不按技能类型筛选。',
       },
@@ -3808,9 +1815,13 @@ const schema_66b09fabca46 = [
         kind: 'union',
         variants: [
           schema_6ad6215ba3f7,
-          { kind: 'array', element: schema_6ad6215ba3f7, semantics: schema_5e03e05acaad },
+          {
+            kind: 'array',
+            element: schema_6ad6215ba3f7,
+            semantics: { arrayElement: schema_bc6e5aef9dfe },
+          },
         ],
-        semantics: { unionVariants: [schema_bc6e5aef9dfe, schema_5e03e05acaad] },
+        semantics: { unionVariants: [schema_bc6e5aef9dfe, { arrayElement: schema_bc6e5aef9dfe }] },
         description: '此倍率覆盖的技能类型。',
       },
       value: {
@@ -3829,7 +1840,7 @@ const schema_4e057aa3baa4 = {
   optional: true,
   description: '构筑阶段持续生效的属性修正。',
 } as const;
-const schema_92a080443be8 = {
+const schema_191bca465db9 = {
   kind: 'array',
   element: {
     kind: 'object',
@@ -3841,14 +1852,7 @@ const schema_92a080443be8 = {
         semantics: { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}] },
         description: '要监听的战斗事件及其筛选参数。',
       },
-      condition: {
-        kind: 'condition',
-        fallback: { reason: 'condition-editor-pending' },
-        semantics: schema_4a3eec17c103,
-        deferredCondition: 'legacyHandler',
-        optional: true,
-        description: '事件发生后还需满足的条件。',
-      },
+      condition: schema_5f503bc75d0e,
       scheduledSequences: {
         kind: 'array',
         element: {
@@ -3981,6 +1985,87 @@ const schema_ca850f7fdf79 = {
     description: '同一稳定技能组的 UI 变体，不会产生独立的释放身份。',
   },
 } as const;
+const schema_b0fdd4672083 = {
+  kind: 'array',
+  element: {
+    kind: 'union',
+    variants: [
+      {
+        kind: 'object',
+        fields: {
+          key: { kind: 'string', description: '响应在同一装备定义中的唯一名称。' },
+          priority: {
+            kind: 'number',
+            optional: true,
+            description: '原生数据动作优先级；同级按定义中的注册顺序执行。',
+          },
+          condition: schema_5f503bc75d0e,
+          sequence: schema_b6bff737c6f5,
+          event: {
+            kind: 'union',
+            variants: schema_721d75a98ce3,
+            semantics: { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}] },
+            description: '监听一项语义战斗事件。',
+          },
+          abilityEvent: {
+            kind: 'opaque',
+            fallback: { reason: 'no-present-type' },
+            optional: true,
+            description: '使用语义战斗事件时不能同时监听能力事件。',
+          },
+        },
+      },
+      {
+        kind: 'object',
+        fields: {
+          key: { kind: 'string', description: '响应在同一装备定义中的唯一名称。' },
+          priority: {
+            kind: 'number',
+            optional: true,
+            description: '原生数据动作优先级；同级按定义中的注册顺序执行。',
+          },
+          condition: schema_5f503bc75d0e,
+          sequence: schema_b6bff737c6f5,
+          event: {
+            kind: 'opaque',
+            fallback: { reason: 'no-present-type' },
+            optional: true,
+            description: '使用能力事件时不能同时监听语义战斗事件。',
+          },
+          abilityEvent: {
+            kind: 'enum',
+            options: [
+              'enterFight',
+              'beforeOutputDamage',
+              'beforeOutputPhysicalInfliction',
+              'afterOutputPhysicalInfliction',
+              'beforeOutputInfliction',
+              'beforeOutputSpellBurst',
+              'outputCriticalDamage',
+              'outputHeal',
+              'beforeCastSkill',
+              'afterSkillApplyCost',
+              'beforeOutputBuff',
+              'outputBuff',
+              'addedBuff',
+              'buffEnhanceChanged',
+              'buffConsumed',
+              'skillSpGained',
+            ],
+            semantics: {
+              unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}],
+            },
+            description: '直接监听的一项原生能力事件。',
+          },
+        },
+      },
+    ],
+    semantics: schema_4107b248d073,
+  },
+  semantics: schema_140af2d9bf58,
+  optional: true,
+  description: '装备能力注册的战斗事件响应。',
+} as const;
 const schema_7377908c39c8 = {
   key: { kind: 'string', description: '词条在该装备中的唯一名称。' },
   levelCount: { kind: 'number', description: '这条词条可以解析的精锻等级数量。' },
@@ -4032,1446 +2117,6 @@ const schema_7377908c39c8 = {
     semantics: schema_4107b248d073,
     description: '每条原生装备词条都有且只有一份 displayAttrModifiers 展示定义。',
   },
-} as const;
-const schema_1aaa1b9ee0e2 = [
-  schema_be4656435205,
-  schema_b703678ebd22,
-  schema_8da448e12326,
-  schema_0a60d1253325,
-  schema_2f8f1e2bdff8,
-  schema_737e4d48bd48,
-  schema_9313aa28f9a1,
-  schema_7e14cbcef8ee,
-  schema_9558b15dfd38,
-  schema_c0d4b3f7ae9f,
-  {
-    kind: 'object',
-    fields: {
-      kind: { kind: 'enum', options: ['not'], description: '对一个子条件取反。' },
-      condition: {
-        kind: 'ref',
-        ref: 'field_7e887055b537429c2a06',
-        semantics: schema_2907d52a9d37,
-        description: '要取反的条件。',
-      },
-    },
-  },
-  {
-    kind: 'object',
-    fields: {
-      kind: schema_d6f75ef1ccac,
-      conditions: {
-        kind: 'array',
-        element: {
-          kind: 'union',
-          variants: [
-            schema_be4656435205,
-            schema_b703678ebd22,
-            schema_8da448e12326,
-            schema_0a60d1253325,
-            schema_2f8f1e2bdff8,
-            schema_737e4d48bd48,
-            schema_9313aa28f9a1,
-            schema_7e14cbcef8ee,
-            schema_9558b15dfd38,
-            schema_c0d4b3f7ae9f,
-            {
-              kind: 'object',
-              fields: {
-                kind: { kind: 'enum', options: ['not'], description: '对一个子条件取反。' },
-                condition: {
-                  kind: 'ref',
-                  ref: 'field_7e887055b537429c2a06',
-                  semantics: schema_2907d52a9d37,
-                  description: '要取反的条件。',
-                },
-              },
-            },
-            {
-              kind: 'object',
-              fields: {
-                kind: schema_d6f75ef1ccac,
-                conditions: {
-                  kind: 'ref',
-                  ref: 'field_13a5b93a0e59414e04d0',
-                  semantics: schema_453b6f59ce2c,
-                  description: '需要同时成立的条件。',
-                },
-              },
-            },
-            {
-              kind: 'object',
-              fields: {
-                kind: schema_3dd6bd618c41,
-                conditions: {
-                  kind: 'array',
-                  element: {
-                    kind: 'union',
-                    variants: [
-                      schema_be4656435205,
-                      schema_b703678ebd22,
-                      schema_8da448e12326,
-                      schema_0a60d1253325,
-                      schema_2f8f1e2bdff8,
-                      schema_737e4d48bd48,
-                      schema_9313aa28f9a1,
-                      schema_7e14cbcef8ee,
-                      schema_9558b15dfd38,
-                      schema_c0d4b3f7ae9f,
-                      {
-                        kind: 'object',
-                        fields: {
-                          kind: {
-                            kind: 'enum',
-                            options: ['not'],
-                            description: '对一个子条件取反。',
-                          },
-                          condition: {
-                            kind: 'ref',
-                            ref: 'field_7e887055b537429c2a06',
-                            semantics: schema_2907d52a9d37,
-                            description: '要取反的条件。',
-                          },
-                        },
-                      },
-                      {
-                        kind: 'object',
-                        fields: {
-                          kind: schema_d6f75ef1ccac,
-                          conditions: {
-                            kind: 'ref',
-                            ref: 'field_13a5b93a0e59414e04d0',
-                            semantics: schema_453b6f59ce2c,
-                            description: '需要同时成立的条件。',
-                          },
-                        },
-                      },
-                      {
-                        kind: 'object',
-                        fields: {
-                          kind: schema_3dd6bd618c41,
-                          conditions: {
-                            kind: 'ref',
-                            ref: 'field_8753a95244305b96d773',
-                            semantics: schema_453b6f59ce2c,
-                            description: '只需其中一项成立的条件。',
-                          },
-                        },
-                      },
-                    ],
-                    semantics: schema_2907d52a9d37,
-                  },
-                  semantics: schema_453b6f59ce2c,
-                  description: '只需其中一项成立的条件。',
-                },
-              },
-            },
-          ],
-          semantics: schema_2907d52a9d37,
-        },
-        semantics: schema_453b6f59ce2c,
-        description: '需要同时成立的条件。',
-      },
-    },
-  },
-  {
-    kind: 'object',
-    fields: {
-      kind: schema_3dd6bd618c41,
-      conditions: {
-        kind: 'array',
-        element: {
-          kind: 'union',
-          variants: [
-            schema_be4656435205,
-            schema_b703678ebd22,
-            schema_8da448e12326,
-            schema_0a60d1253325,
-            schema_2f8f1e2bdff8,
-            schema_737e4d48bd48,
-            schema_9313aa28f9a1,
-            schema_7e14cbcef8ee,
-            schema_9558b15dfd38,
-            schema_c0d4b3f7ae9f,
-            {
-              kind: 'object',
-              fields: {
-                kind: { kind: 'enum', options: ['not'], description: '对一个子条件取反。' },
-                condition: {
-                  kind: 'ref',
-                  ref: 'field_7e887055b537429c2a06',
-                  semantics: schema_2907d52a9d37,
-                  description: '要取反的条件。',
-                },
-              },
-            },
-            {
-              kind: 'object',
-              fields: {
-                kind: schema_d6f75ef1ccac,
-                conditions: {
-                  kind: 'ref',
-                  ref: 'field_13a5b93a0e59414e04d0',
-                  semantics: schema_453b6f59ce2c,
-                  description: '需要同时成立的条件。',
-                },
-              },
-            },
-            {
-              kind: 'object',
-              fields: {
-                kind: schema_3dd6bd618c41,
-                conditions: {
-                  kind: 'ref',
-                  ref: 'field_8753a95244305b96d773',
-                  semantics: schema_453b6f59ce2c,
-                  description: '只需其中一项成立的条件。',
-                },
-              },
-            },
-          ],
-          semantics: schema_2907d52a9d37,
-        },
-        semantics: schema_453b6f59ce2c,
-        description: '只需其中一项成立的条件。',
-      },
-    },
-  },
-] as const;
-const schema_1a0ed726aa13 = {
-  kind: 'union',
-  variants: [
-    schema_4fb5f2d9938b,
-    schema_8ad260f002b0,
-    schema_4d613f676cbf,
-    schema_b703678ebd22,
-    schema_eb7e7f443bec,
-    schema_ec963313055c,
-    schema_a796753dc666,
-    schema_dce12ab1c753,
-    schema_eb58a5b37ce5,
-    schema_ddf58c50db1b,
-    schema_e7782624aef5,
-    schema_381f7117d6fc,
-    schema_4302a0f4e933,
-    schema_bd23e3917dc5,
-    schema_734ad3d39529,
-    schema_3ef3d4dec0b9,
-    schema_7930e87017bc,
-    schema_f83d797f6abb,
-    schema_73dbad8fbf7f,
-    schema_cabd03b00032,
-    schema_a65cc2805db1,
-    schema_e7200173f887,
-    schema_9659501cec8f,
-    schema_b2e74f617798,
-    schema_bd8340072fb7,
-    schema_9817b4bbd9bf,
-    schema_5b9859601d2e,
-    schema_07e6871f617a,
-    schema_c477292cb55a,
-    schema_8af1fef1a45a,
-    schema_6ba00b7dd305,
-    schema_c44209e4f3e9,
-    schema_94c637769b64,
-    schema_afc88289d891,
-    schema_8cf4ee6e32ef,
-    schema_8df80300599e,
-    schema_9d95582424f9,
-    schema_ed1003a39e60,
-    schema_833b6ec9572d,
-    schema_55e90d6fa7e5,
-    schema_4ab40ed51844,
-    schema_86cf15cc6c06,
-    schema_0fd14cf912ee,
-    schema_5460bbd951e6,
-    schema_b5914c41639e,
-    schema_e531afc81c9c,
-    schema_344869fc33ab,
-    schema_f9592d247023,
-    schema_bb31ce1427c3,
-    schema_499c949c859c,
-    schema_c0c397c08cb9,
-    schema_6036f5ea6aea,
-    schema_c84fc1bd34db,
-    schema_f4db3327a4a1,
-    schema_fb68e816ba9e,
-    schema_615f8a0b957e,
-    schema_81ff36189eef,
-    schema_c73f8dd99f46,
-    schema_e87a460eface,
-    schema_a7866bf8e73c,
-    schema_87219eef64f9,
-    schema_cdfab488dd1e,
-    schema_a26695b5947f,
-    schema_aecf1d4ea62f,
-    schema_d1b45514137a,
-    schema_2f7aabdfe305,
-    schema_0f2a20562860,
-    schema_d4fd5d3bb198,
-    {
-      kind: 'object',
-      fields: {
-        kind: schema_9ac59cf48632,
-        condition: {
-          kind: 'ref',
-          ref: 'field_b0b79bf0999fd8fb4644',
-          semantics: schema_4a3eec17c103,
-          inlineCondition: 'equipment',
-          description: '要取反的条件。',
-        },
-      },
-    },
-    {
-      kind: 'object',
-      fields: {
-        kind: schema_d6f75ef1ccac,
-        conditions: {
-          kind: 'ref',
-          ref: 'field_80ecfd8e4d3486bc23a5',
-          semantics: schema_a98553855713,
-          description: '需要同时成立的条件。',
-        },
-      },
-    },
-    {
-      kind: 'object',
-      fields: {
-        kind: schema_3dd6bd618c41,
-        conditions: {
-          kind: 'ref',
-          ref: 'field_415c770e31f6e677cafc',
-          semantics: schema_a98553855713,
-          description: '只需其中一项成立的条件。',
-        },
-      },
-    },
-    schema_d4abb6ff12c1,
-  ],
-  semantics: schema_4a3eec17c103,
-  inlineCondition: 'equipment',
-} as const;
-const schema_8ba9d5d8633b = {
-  kind: 'union',
-  variants: [
-    schema_4fb5f2d9938b,
-    schema_8ad260f002b0,
-    schema_4d613f676cbf,
-    schema_b703678ebd22,
-    schema_eb7e7f443bec,
-    schema_ec963313055c,
-    schema_a796753dc666,
-    schema_6eaf7fef7f9d,
-    schema_a15968218ae5,
-    schema_ddf58c50db1b,
-    schema_e7782624aef5,
-    schema_c6c82b22477e,
-    schema_6a9018b649ec,
-    schema_bd23e3917dc5,
-    schema_31d423d62163,
-    schema_3a275265dc5b,
-    schema_86525eb7f9d0,
-    schema_f83d797f6abb,
-    schema_73dbad8fbf7f,
-    schema_cabd03b00032,
-    schema_a65cc2805db1,
-    schema_e7200173f887,
-    schema_9659501cec8f,
-    schema_b2e74f617798,
-    schema_bd8340072fb7,
-    schema_c33d478c6e00,
-    schema_4156d7099862,
-    schema_07e6871f617a,
-    schema_d494fe1a392e,
-    schema_aa5b4a2aa103,
-    schema_f5d84fbd8139,
-    schema_c44209e4f3e9,
-    schema_34983e7dcc15,
-    schema_afc88289d891,
-    schema_8cf4ee6e32ef,
-    schema_8df80300599e,
-    schema_9d95582424f9,
-    schema_ed1003a39e60,
-    schema_833b6ec9572d,
-    schema_55e90d6fa7e5,
-    schema_4ab40ed51844,
-    schema_86cf15cc6c06,
-    schema_0fd14cf912ee,
-    schema_5460bbd951e6,
-    schema_b5914c41639e,
-    schema_e531afc81c9c,
-    schema_344869fc33ab,
-    schema_f9592d247023,
-    schema_bb31ce1427c3,
-    schema_499c949c859c,
-    schema_c0c397c08cb9,
-    schema_6036f5ea6aea,
-    schema_c84fc1bd34db,
-    schema_f4db3327a4a1,
-    schema_bc95a20b4e2e,
-    schema_615f8a0b957e,
-    schema_81ff36189eef,
-    schema_5e730a9a2720,
-    schema_e87a460eface,
-    schema_a7866bf8e73c,
-    schema_87219eef64f9,
-    schema_cdfab488dd1e,
-    schema_a26695b5947f,
-    schema_aecf1d4ea62f,
-    schema_d1b45514137a,
-    schema_2f7aabdfe305,
-    schema_0f2a20562860,
-    schema_d4fd5d3bb198,
-    {
-      kind: 'object',
-      fields: {
-        kind: schema_9ac59cf48632,
-        condition: {
-          kind: 'ref',
-          ref: 'field_b0a08a7d593a995b94ee',
-          semantics: schema_4a3eec17c103,
-          inlineCondition: 'skillSwitch',
-          description: '要取反的条件。',
-        },
-      },
-    },
-    {
-      kind: 'object',
-      fields: {
-        kind: schema_d6f75ef1ccac,
-        conditions: {
-          kind: 'ref',
-          ref: 'field_7cf3d7b7ffc7fcbf85d8',
-          semantics: schema_a98553855713,
-          description: '需要同时成立的条件。',
-        },
-      },
-    },
-    {
-      kind: 'object',
-      fields: {
-        kind: schema_3dd6bd618c41,
-        conditions: {
-          kind: 'ref',
-          ref: 'field_58143731e2c4cb710392',
-          semantics: schema_a98553855713,
-          description: '只需其中一项成立的条件。',
-        },
-      },
-    },
-    schema_d4abb6ff12c1,
-  ],
-  semantics: schema_4a3eec17c103,
-  inlineCondition: 'skillSwitch',
-} as const;
-const schema_c8428fd0ad4e = {
-  kind: 'union',
-  variants: [
-    schema_be4656435205,
-    schema_b703678ebd22,
-    schema_8da448e12326,
-    schema_0a60d1253325,
-    schema_2f8f1e2bdff8,
-    schema_737e4d48bd48,
-    schema_9313aa28f9a1,
-    schema_7e14cbcef8ee,
-    schema_9558b15dfd38,
-    schema_c0d4b3f7ae9f,
-    {
-      kind: 'object',
-      fields: {
-        kind: { kind: 'enum', options: ['not'], description: '对一个子条件取反。' },
-        condition: {
-          kind: 'union',
-          variants: schema_1aaa1b9ee0e2,
-          semantics: schema_2907d52a9d37,
-          description: '要取反的条件。',
-        },
-      },
-    },
-    {
-      kind: 'object',
-      fields: {
-        kind: schema_d6f75ef1ccac,
-        conditions: {
-          kind: 'array',
-          element: {
-            kind: 'union',
-            variants: [
-              schema_be4656435205,
-              schema_b703678ebd22,
-              schema_8da448e12326,
-              schema_0a60d1253325,
-              schema_2f8f1e2bdff8,
-              schema_737e4d48bd48,
-              schema_9313aa28f9a1,
-              schema_7e14cbcef8ee,
-              schema_9558b15dfd38,
-              schema_c0d4b3f7ae9f,
-              {
-                kind: 'object',
-                fields: {
-                  kind: { kind: 'enum', options: ['not'], description: '对一个子条件取反。' },
-                  condition: {
-                    kind: 'ref',
-                    ref: 'field_7e887055b537429c2a06',
-                    semantics: schema_2907d52a9d37,
-                    description: '要取反的条件。',
-                  },
-                },
-              },
-              {
-                kind: 'object',
-                fields: {
-                  kind: schema_d6f75ef1ccac,
-                  conditions: {
-                    kind: 'ref',
-                    ref: 'field_13a5b93a0e59414e04d0',
-                    semantics: schema_453b6f59ce2c,
-                    description: '需要同时成立的条件。',
-                  },
-                },
-              },
-              {
-                kind: 'object',
-                fields: {
-                  kind: schema_3dd6bd618c41,
-                  conditions: {
-                    kind: 'array',
-                    element: {
-                      kind: 'union',
-                      variants: [
-                        schema_be4656435205,
-                        schema_b703678ebd22,
-                        schema_8da448e12326,
-                        schema_0a60d1253325,
-                        schema_2f8f1e2bdff8,
-                        schema_737e4d48bd48,
-                        schema_9313aa28f9a1,
-                        schema_7e14cbcef8ee,
-                        schema_9558b15dfd38,
-                        schema_c0d4b3f7ae9f,
-                        {
-                          kind: 'object',
-                          fields: {
-                            kind: {
-                              kind: 'enum',
-                              options: ['not'],
-                              description: '对一个子条件取反。',
-                            },
-                            condition: {
-                              kind: 'ref',
-                              ref: 'field_7e887055b537429c2a06',
-                              semantics: schema_2907d52a9d37,
-                              description: '要取反的条件。',
-                            },
-                          },
-                        },
-                        {
-                          kind: 'object',
-                          fields: {
-                            kind: schema_d6f75ef1ccac,
-                            conditions: {
-                              kind: 'ref',
-                              ref: 'field_13a5b93a0e59414e04d0',
-                              semantics: schema_453b6f59ce2c,
-                              description: '需要同时成立的条件。',
-                            },
-                          },
-                        },
-                        {
-                          kind: 'object',
-                          fields: {
-                            kind: schema_3dd6bd618c41,
-                            conditions: {
-                              kind: 'ref',
-                              ref: 'field_8753a95244305b96d773',
-                              semantics: schema_453b6f59ce2c,
-                              description: '只需其中一项成立的条件。',
-                            },
-                          },
-                        },
-                      ],
-                      semantics: schema_2907d52a9d37,
-                    },
-                    semantics: schema_453b6f59ce2c,
-                    description: '只需其中一项成立的条件。',
-                  },
-                },
-              },
-            ],
-            semantics: schema_2907d52a9d37,
-          },
-          semantics: schema_453b6f59ce2c,
-          description: '需要同时成立的条件。',
-        },
-      },
-    },
-    {
-      kind: 'object',
-      fields: {
-        kind: schema_3dd6bd618c41,
-        conditions: {
-          kind: 'array',
-          element: {
-            kind: 'union',
-            variants: [
-              schema_be4656435205,
-              schema_b703678ebd22,
-              schema_8da448e12326,
-              schema_0a60d1253325,
-              schema_2f8f1e2bdff8,
-              schema_737e4d48bd48,
-              schema_9313aa28f9a1,
-              schema_7e14cbcef8ee,
-              schema_9558b15dfd38,
-              schema_c0d4b3f7ae9f,
-              {
-                kind: 'object',
-                fields: {
-                  kind: { kind: 'enum', options: ['not'], description: '对一个子条件取反。' },
-                  condition: {
-                    kind: 'ref',
-                    ref: 'field_7e887055b537429c2a06',
-                    semantics: schema_2907d52a9d37,
-                    description: '要取反的条件。',
-                  },
-                },
-              },
-              {
-                kind: 'object',
-                fields: {
-                  kind: schema_d6f75ef1ccac,
-                  conditions: {
-                    kind: 'ref',
-                    ref: 'field_13a5b93a0e59414e04d0',
-                    semantics: schema_453b6f59ce2c,
-                    description: '需要同时成立的条件。',
-                  },
-                },
-              },
-              {
-                kind: 'object',
-                fields: {
-                  kind: schema_3dd6bd618c41,
-                  conditions: {
-                    kind: 'ref',
-                    ref: 'field_8753a95244305b96d773',
-                    semantics: schema_453b6f59ce2c,
-                    description: '只需其中一项成立的条件。',
-                  },
-                },
-              },
-            ],
-            semantics: schema_2907d52a9d37,
-          },
-          semantics: schema_453b6f59ce2c,
-          description: '只需其中一项成立的条件。',
-        },
-      },
-    },
-  ],
-  semantics: schema_2907d52a9d37,
-  optional: true,
-  description: '启用处理器前检查的条件。',
-} as const;
-const schema_c783bf1426f6 = {
-  kind: 'union',
-  variants: [
-    schema_4fb5f2d9938b,
-    schema_8ad260f002b0,
-    schema_4d613f676cbf,
-    schema_b703678ebd22,
-    schema_eb7e7f443bec,
-    schema_ec963313055c,
-    schema_a796753dc666,
-    schema_dce12ab1c753,
-    schema_eb58a5b37ce5,
-    schema_ddf58c50db1b,
-    schema_e7782624aef5,
-    schema_381f7117d6fc,
-    schema_4302a0f4e933,
-    schema_bd23e3917dc5,
-    schema_734ad3d39529,
-    schema_3ef3d4dec0b9,
-    schema_7930e87017bc,
-    schema_f83d797f6abb,
-    schema_73dbad8fbf7f,
-    schema_cabd03b00032,
-    schema_a65cc2805db1,
-    schema_e7200173f887,
-    schema_9659501cec8f,
-    schema_b2e74f617798,
-    schema_bd8340072fb7,
-    schema_9817b4bbd9bf,
-    schema_5b9859601d2e,
-    schema_07e6871f617a,
-    schema_c477292cb55a,
-    schema_8af1fef1a45a,
-    schema_6ba00b7dd305,
-    schema_c44209e4f3e9,
-    schema_94c637769b64,
-    schema_afc88289d891,
-    schema_8cf4ee6e32ef,
-    schema_8df80300599e,
-    schema_9d95582424f9,
-    schema_ed1003a39e60,
-    schema_833b6ec9572d,
-    schema_55e90d6fa7e5,
-    schema_4ab40ed51844,
-    schema_86cf15cc6c06,
-    schema_0fd14cf912ee,
-    schema_5460bbd951e6,
-    schema_b5914c41639e,
-    schema_e531afc81c9c,
-    schema_344869fc33ab,
-    schema_f9592d247023,
-    schema_bb31ce1427c3,
-    schema_499c949c859c,
-    schema_c0c397c08cb9,
-    schema_6036f5ea6aea,
-    schema_c84fc1bd34db,
-    schema_f4db3327a4a1,
-    schema_fb68e816ba9e,
-    schema_615f8a0b957e,
-    schema_81ff36189eef,
-    schema_c73f8dd99f46,
-    schema_e87a460eface,
-    schema_a7866bf8e73c,
-    schema_87219eef64f9,
-    schema_cdfab488dd1e,
-    schema_a26695b5947f,
-    schema_aecf1d4ea62f,
-    schema_d1b45514137a,
-    schema_2f7aabdfe305,
-    schema_0f2a20562860,
-    schema_d4fd5d3bb198,
-    {
-      kind: 'object',
-      fields: {
-        kind: schema_9ac59cf48632,
-        condition: {
-          kind: 'ref',
-          ref: 'field_b0b79bf0999fd8fb4644',
-          semantics: schema_4a3eec17c103,
-          inlineCondition: 'equipment',
-          description: '要取反的条件。',
-        },
-      },
-    },
-    {
-      kind: 'object',
-      fields: {
-        kind: schema_d6f75ef1ccac,
-        conditions: {
-          kind: 'ref',
-          ref: 'field_80ecfd8e4d3486bc23a5',
-          semantics: schema_a98553855713,
-          description: '需要同时成立的条件。',
-        },
-      },
-    },
-    {
-      kind: 'object',
-      fields: {
-        kind: schema_3dd6bd618c41,
-        conditions: {
-          kind: 'array',
-          element: schema_1a0ed726aa13,
-          semantics: schema_a98553855713,
-          description: '只需其中一项成立的条件。',
-        },
-      },
-    },
-    schema_d4abb6ff12c1,
-  ],
-  semantics: schema_4a3eec17c103,
-  inlineCondition: 'equipment',
-} as const;
-const schema_9e5923e81038 = {
-  kind: 'union',
-  variants: [
-    schema_4fb5f2d9938b,
-    schema_8ad260f002b0,
-    schema_4d613f676cbf,
-    schema_b703678ebd22,
-    schema_eb7e7f443bec,
-    schema_ec963313055c,
-    schema_a796753dc666,
-    schema_6eaf7fef7f9d,
-    schema_a15968218ae5,
-    schema_ddf58c50db1b,
-    schema_e7782624aef5,
-    schema_c6c82b22477e,
-    schema_6a9018b649ec,
-    schema_bd23e3917dc5,
-    schema_31d423d62163,
-    schema_3a275265dc5b,
-    schema_86525eb7f9d0,
-    schema_f83d797f6abb,
-    schema_73dbad8fbf7f,
-    schema_cabd03b00032,
-    schema_a65cc2805db1,
-    schema_e7200173f887,
-    schema_9659501cec8f,
-    schema_b2e74f617798,
-    schema_bd8340072fb7,
-    schema_c33d478c6e00,
-    schema_4156d7099862,
-    schema_07e6871f617a,
-    schema_d494fe1a392e,
-    schema_aa5b4a2aa103,
-    schema_f5d84fbd8139,
-    schema_c44209e4f3e9,
-    schema_34983e7dcc15,
-    schema_afc88289d891,
-    schema_8cf4ee6e32ef,
-    schema_8df80300599e,
-    schema_9d95582424f9,
-    schema_ed1003a39e60,
-    schema_833b6ec9572d,
-    schema_55e90d6fa7e5,
-    schema_4ab40ed51844,
-    schema_86cf15cc6c06,
-    schema_0fd14cf912ee,
-    schema_5460bbd951e6,
-    schema_b5914c41639e,
-    schema_e531afc81c9c,
-    schema_344869fc33ab,
-    schema_f9592d247023,
-    schema_bb31ce1427c3,
-    schema_499c949c859c,
-    schema_c0c397c08cb9,
-    schema_6036f5ea6aea,
-    schema_c84fc1bd34db,
-    schema_f4db3327a4a1,
-    schema_bc95a20b4e2e,
-    schema_615f8a0b957e,
-    schema_81ff36189eef,
-    schema_5e730a9a2720,
-    schema_e87a460eface,
-    schema_a7866bf8e73c,
-    schema_87219eef64f9,
-    schema_cdfab488dd1e,
-    schema_a26695b5947f,
-    schema_aecf1d4ea62f,
-    schema_d1b45514137a,
-    schema_2f7aabdfe305,
-    schema_0f2a20562860,
-    schema_d4fd5d3bb198,
-    {
-      kind: 'object',
-      fields: {
-        kind: schema_9ac59cf48632,
-        condition: {
-          kind: 'ref',
-          ref: 'field_b0a08a7d593a995b94ee',
-          semantics: schema_4a3eec17c103,
-          inlineCondition: 'skillSwitch',
-          description: '要取反的条件。',
-        },
-      },
-    },
-    {
-      kind: 'object',
-      fields: {
-        kind: schema_d6f75ef1ccac,
-        conditions: {
-          kind: 'ref',
-          ref: 'field_7cf3d7b7ffc7fcbf85d8',
-          semantics: schema_a98553855713,
-          description: '需要同时成立的条件。',
-        },
-      },
-    },
-    {
-      kind: 'object',
-      fields: {
-        kind: schema_3dd6bd618c41,
-        conditions: {
-          kind: 'array',
-          element: schema_8ba9d5d8633b,
-          semantics: schema_a98553855713,
-          description: '只需其中一项成立的条件。',
-        },
-      },
-    },
-    schema_d4abb6ff12c1,
-  ],
-  semantics: schema_4a3eec17c103,
-  inlineCondition: 'skillSwitch',
-} as const;
-const schema_9a9d59203725 = [
-  schema_4fb5f2d9938b,
-  schema_8ad260f002b0,
-  schema_4d613f676cbf,
-  schema_b703678ebd22,
-  schema_eb7e7f443bec,
-  schema_ec963313055c,
-  schema_a796753dc666,
-  schema_dce12ab1c753,
-  schema_eb58a5b37ce5,
-  schema_ddf58c50db1b,
-  schema_e7782624aef5,
-  schema_381f7117d6fc,
-  schema_4302a0f4e933,
-  schema_bd23e3917dc5,
-  schema_734ad3d39529,
-  schema_3ef3d4dec0b9,
-  schema_7930e87017bc,
-  schema_f83d797f6abb,
-  schema_73dbad8fbf7f,
-  schema_cabd03b00032,
-  schema_a65cc2805db1,
-  schema_e7200173f887,
-  schema_9659501cec8f,
-  schema_b2e74f617798,
-  schema_bd8340072fb7,
-  schema_9817b4bbd9bf,
-  schema_5b9859601d2e,
-  schema_07e6871f617a,
-  schema_c477292cb55a,
-  schema_8af1fef1a45a,
-  schema_6ba00b7dd305,
-  schema_c44209e4f3e9,
-  schema_94c637769b64,
-  schema_afc88289d891,
-  schema_8cf4ee6e32ef,
-  schema_8df80300599e,
-  schema_9d95582424f9,
-  schema_ed1003a39e60,
-  schema_833b6ec9572d,
-  schema_55e90d6fa7e5,
-  schema_4ab40ed51844,
-  schema_86cf15cc6c06,
-  schema_0fd14cf912ee,
-  schema_5460bbd951e6,
-  schema_b5914c41639e,
-  schema_e531afc81c9c,
-  schema_344869fc33ab,
-  schema_f9592d247023,
-  schema_bb31ce1427c3,
-  schema_499c949c859c,
-  schema_c0c397c08cb9,
-  schema_6036f5ea6aea,
-  schema_c84fc1bd34db,
-  schema_f4db3327a4a1,
-  schema_fb68e816ba9e,
-  schema_615f8a0b957e,
-  schema_81ff36189eef,
-  schema_c73f8dd99f46,
-  schema_e87a460eface,
-  schema_a7866bf8e73c,
-  schema_87219eef64f9,
-  schema_cdfab488dd1e,
-  schema_a26695b5947f,
-  schema_aecf1d4ea62f,
-  schema_d1b45514137a,
-  schema_2f7aabdfe305,
-  schema_0f2a20562860,
-  schema_d4fd5d3bb198,
-  {
-    kind: 'object',
-    fields: {
-      kind: schema_9ac59cf48632,
-      condition: {
-        kind: 'ref',
-        ref: 'field_b0b79bf0999fd8fb4644',
-        semantics: schema_4a3eec17c103,
-        inlineCondition: 'equipment',
-        description: '要取反的条件。',
-      },
-    },
-  },
-  {
-    kind: 'object',
-    fields: {
-      kind: schema_d6f75ef1ccac,
-      conditions: {
-        kind: 'array',
-        element: schema_c783bf1426f6,
-        semantics: schema_a98553855713,
-        description: '需要同时成立的条件。',
-      },
-    },
-  },
-  {
-    kind: 'object',
-    fields: {
-      kind: schema_3dd6bd618c41,
-      conditions: {
-        kind: 'array',
-        element: schema_1a0ed726aa13,
-        semantics: schema_a98553855713,
-        description: '只需其中一项成立的条件。',
-      },
-    },
-  },
-  schema_d4abb6ff12c1,
-] as const;
-const schema_1eb7a7e45754 = [
-  schema_4fb5f2d9938b,
-  schema_8ad260f002b0,
-  schema_4d613f676cbf,
-  schema_b703678ebd22,
-  schema_eb7e7f443bec,
-  schema_ec963313055c,
-  schema_a796753dc666,
-  schema_6eaf7fef7f9d,
-  schema_a15968218ae5,
-  schema_ddf58c50db1b,
-  schema_e7782624aef5,
-  schema_c6c82b22477e,
-  schema_6a9018b649ec,
-  schema_bd23e3917dc5,
-  schema_31d423d62163,
-  schema_3a275265dc5b,
-  schema_86525eb7f9d0,
-  schema_f83d797f6abb,
-  schema_73dbad8fbf7f,
-  schema_cabd03b00032,
-  schema_a65cc2805db1,
-  schema_e7200173f887,
-  schema_9659501cec8f,
-  schema_b2e74f617798,
-  schema_bd8340072fb7,
-  schema_c33d478c6e00,
-  schema_4156d7099862,
-  schema_07e6871f617a,
-  schema_d494fe1a392e,
-  schema_aa5b4a2aa103,
-  schema_f5d84fbd8139,
-  schema_c44209e4f3e9,
-  schema_34983e7dcc15,
-  schema_afc88289d891,
-  schema_8cf4ee6e32ef,
-  schema_8df80300599e,
-  schema_9d95582424f9,
-  schema_ed1003a39e60,
-  schema_833b6ec9572d,
-  schema_55e90d6fa7e5,
-  schema_4ab40ed51844,
-  schema_86cf15cc6c06,
-  schema_0fd14cf912ee,
-  schema_5460bbd951e6,
-  schema_b5914c41639e,
-  schema_e531afc81c9c,
-  schema_344869fc33ab,
-  schema_f9592d247023,
-  schema_bb31ce1427c3,
-  schema_499c949c859c,
-  schema_c0c397c08cb9,
-  schema_6036f5ea6aea,
-  schema_c84fc1bd34db,
-  schema_f4db3327a4a1,
-  schema_bc95a20b4e2e,
-  schema_615f8a0b957e,
-  schema_81ff36189eef,
-  schema_5e730a9a2720,
-  schema_e87a460eface,
-  schema_a7866bf8e73c,
-  schema_87219eef64f9,
-  schema_cdfab488dd1e,
-  schema_a26695b5947f,
-  schema_aecf1d4ea62f,
-  schema_d1b45514137a,
-  schema_2f7aabdfe305,
-  schema_0f2a20562860,
-  schema_d4fd5d3bb198,
-  {
-    kind: 'object',
-    fields: {
-      kind: schema_9ac59cf48632,
-      condition: {
-        kind: 'ref',
-        ref: 'field_b0a08a7d593a995b94ee',
-        semantics: schema_4a3eec17c103,
-        inlineCondition: 'skillSwitch',
-        description: '要取反的条件。',
-      },
-    },
-  },
-  {
-    kind: 'object',
-    fields: {
-      kind: schema_d6f75ef1ccac,
-      conditions: {
-        kind: 'array',
-        element: schema_9e5923e81038,
-        semantics: schema_a98553855713,
-        description: '需要同时成立的条件。',
-      },
-    },
-  },
-  {
-    kind: 'object',
-    fields: {
-      kind: schema_3dd6bd618c41,
-      conditions: {
-        kind: 'array',
-        element: schema_8ba9d5d8633b,
-        semantics: schema_a98553855713,
-        description: '只需其中一项成立的条件。',
-      },
-    },
-  },
-  schema_d4abb6ff12c1,
-] as const;
-const schema_b80e945f9c38 = {
-  field_415c770e31f6e677cafc: {
-    kind: 'array',
-    element: schema_1a0ed726aa13,
-    semantics: schema_a98553855713,
-  },
-  field_80ecfd8e4d3486bc23a5: {
-    kind: 'array',
-    element: schema_c783bf1426f6,
-    semantics: schema_a98553855713,
-  },
-  field_b0b79bf0999fd8fb4644: {
-    kind: 'union',
-    variants: schema_9a9d59203725,
-    semantics: schema_4a3eec17c103,
-    inlineCondition: 'equipment',
-  },
-} as const;
-const schema_5be487e5f9fc = {
-  kind: 'union',
-  variants: [
-    schema_4fb5f2d9938b,
-    schema_8ad260f002b0,
-    schema_4d613f676cbf,
-    schema_b703678ebd22,
-    schema_eb7e7f443bec,
-    schema_ec963313055c,
-    schema_a796753dc666,
-    schema_dce12ab1c753,
-    schema_eb58a5b37ce5,
-    schema_ddf58c50db1b,
-    schema_e7782624aef5,
-    schema_381f7117d6fc,
-    schema_4302a0f4e933,
-    schema_bd23e3917dc5,
-    schema_734ad3d39529,
-    schema_3ef3d4dec0b9,
-    schema_7930e87017bc,
-    schema_f83d797f6abb,
-    schema_73dbad8fbf7f,
-    schema_cabd03b00032,
-    schema_a65cc2805db1,
-    schema_e7200173f887,
-    schema_9659501cec8f,
-    schema_b2e74f617798,
-    schema_bd8340072fb7,
-    schema_9817b4bbd9bf,
-    schema_5b9859601d2e,
-    schema_07e6871f617a,
-    schema_c477292cb55a,
-    schema_8af1fef1a45a,
-    schema_6ba00b7dd305,
-    schema_c44209e4f3e9,
-    schema_94c637769b64,
-    schema_afc88289d891,
-    schema_8cf4ee6e32ef,
-    schema_8df80300599e,
-    schema_9d95582424f9,
-    schema_ed1003a39e60,
-    schema_833b6ec9572d,
-    schema_55e90d6fa7e5,
-    schema_4ab40ed51844,
-    schema_86cf15cc6c06,
-    schema_0fd14cf912ee,
-    schema_5460bbd951e6,
-    schema_b5914c41639e,
-    schema_e531afc81c9c,
-    schema_344869fc33ab,
-    schema_f9592d247023,
-    schema_bb31ce1427c3,
-    schema_499c949c859c,
-    schema_c0c397c08cb9,
-    schema_6036f5ea6aea,
-    schema_c84fc1bd34db,
-    schema_f4db3327a4a1,
-    schema_fb68e816ba9e,
-    schema_615f8a0b957e,
-    schema_81ff36189eef,
-    schema_c73f8dd99f46,
-    schema_e87a460eface,
-    schema_a7866bf8e73c,
-    schema_87219eef64f9,
-    schema_cdfab488dd1e,
-    schema_a26695b5947f,
-    schema_aecf1d4ea62f,
-    schema_d1b45514137a,
-    schema_2f7aabdfe305,
-    schema_0f2a20562860,
-    schema_d4fd5d3bb198,
-    {
-      kind: 'object',
-      fields: {
-        kind: schema_9ac59cf48632,
-        condition: {
-          kind: 'union',
-          variants: schema_9a9d59203725,
-          semantics: schema_4a3eec17c103,
-          inlineCondition: 'equipment',
-          description: '要取反的条件。',
-        },
-      },
-    },
-    {
-      kind: 'object',
-      fields: {
-        kind: schema_d6f75ef1ccac,
-        conditions: {
-          kind: 'array',
-          element: schema_c783bf1426f6,
-          semantics: schema_a98553855713,
-          description: '需要同时成立的条件。',
-        },
-      },
-    },
-    {
-      kind: 'object',
-      fields: {
-        kind: schema_3dd6bd618c41,
-        conditions: {
-          kind: 'array',
-          element: schema_1a0ed726aa13,
-          semantics: schema_a98553855713,
-          description: '只需其中一项成立的条件。',
-        },
-      },
-    },
-    schema_d4abb6ff12c1,
-  ],
-  semantics: schema_4a3eec17c103,
-  inlineCondition: 'equipment',
-  optional: true,
-  description: '事件发生后还需满足的条件。',
-} as const;
-const schema_92db6c94096c = {
-  kind: 'object',
-  fields: {
-    currentSkillTypes: {
-      kind: 'array',
-      element: schema_6ad6215ba3f7,
-      semantics: schema_5e03e05acaad,
-      optional: true,
-      description: '只在当前技能属于这些分类时启用旁路。',
-    },
-    requiresCurrentSkillNotInterruptible: {
-      kind: 'boolean',
-      optional: true,
-      description: '是否要求当前技能仍处于不可中断阶段。',
-    },
-    condition: {
-      kind: 'union',
-      variants: [
-        schema_4fb5f2d9938b,
-        schema_8ad260f002b0,
-        schema_4d613f676cbf,
-        schema_b703678ebd22,
-        schema_eb7e7f443bec,
-        schema_ec963313055c,
-        schema_a796753dc666,
-        schema_6eaf7fef7f9d,
-        schema_a15968218ae5,
-        schema_ddf58c50db1b,
-        schema_e7782624aef5,
-        schema_c6c82b22477e,
-        schema_6a9018b649ec,
-        schema_bd23e3917dc5,
-        schema_31d423d62163,
-        schema_3a275265dc5b,
-        schema_86525eb7f9d0,
-        schema_f83d797f6abb,
-        schema_73dbad8fbf7f,
-        schema_cabd03b00032,
-        schema_a65cc2805db1,
-        schema_e7200173f887,
-        schema_9659501cec8f,
-        schema_b2e74f617798,
-        schema_bd8340072fb7,
-        schema_c33d478c6e00,
-        schema_4156d7099862,
-        schema_07e6871f617a,
-        schema_d494fe1a392e,
-        schema_aa5b4a2aa103,
-        schema_f5d84fbd8139,
-        schema_c44209e4f3e9,
-        schema_34983e7dcc15,
-        schema_afc88289d891,
-        schema_8cf4ee6e32ef,
-        schema_8df80300599e,
-        schema_9d95582424f9,
-        schema_ed1003a39e60,
-        schema_833b6ec9572d,
-        schema_55e90d6fa7e5,
-        schema_4ab40ed51844,
-        schema_86cf15cc6c06,
-        schema_0fd14cf912ee,
-        schema_5460bbd951e6,
-        schema_b5914c41639e,
-        schema_e531afc81c9c,
-        schema_344869fc33ab,
-        schema_f9592d247023,
-        schema_bb31ce1427c3,
-        schema_499c949c859c,
-        schema_c0c397c08cb9,
-        schema_6036f5ea6aea,
-        schema_c84fc1bd34db,
-        schema_f4db3327a4a1,
-        schema_bc95a20b4e2e,
-        schema_615f8a0b957e,
-        schema_81ff36189eef,
-        schema_5e730a9a2720,
-        schema_e87a460eface,
-        schema_a7866bf8e73c,
-        schema_87219eef64f9,
-        schema_cdfab488dd1e,
-        schema_a26695b5947f,
-        schema_aecf1d4ea62f,
-        schema_d1b45514137a,
-        schema_2f7aabdfe305,
-        schema_0f2a20562860,
-        schema_d4fd5d3bb198,
-        {
-          kind: 'object',
-          fields: {
-            kind: schema_9ac59cf48632,
-            condition: {
-              kind: 'union',
-              variants: schema_1eb7a7e45754,
-              semantics: schema_4a3eec17c103,
-              inlineCondition: 'skillSwitch',
-              description: '要取反的条件。',
-            },
-          },
-        },
-        {
-          kind: 'object',
-          fields: {
-            kind: schema_d6f75ef1ccac,
-            conditions: {
-              kind: 'array',
-              element: schema_9e5923e81038,
-              semantics: schema_a98553855713,
-              description: '需要同时成立的条件。',
-            },
-          },
-        },
-        {
-          kind: 'object',
-          fields: {
-            kind: schema_3dd6bd618c41,
-            conditions: {
-              kind: 'array',
-              element: schema_8ba9d5d8633b,
-              semantics: schema_a98553855713,
-              description: '只需其中一项成立的条件。',
-            },
-          },
-        },
-        schema_d4abb6ff12c1,
-      ],
-      semantics: schema_4a3eec17c103,
-      inlineCondition: 'skillSwitch',
-      optional: true,
-      description: '候选技能自身需要满足的条件。',
-    },
-    asSkillCast: { kind: 'boolean', optional: true, description: '是否仍发布完整的技能施放事件。' },
-    sequence: {
-      kind: 'opaque',
-      fallback: schema_41f65db75420,
-      semantics: schema_6675b27ea82d,
-      description: '命中旁路后直接执行的动作序列。',
-    },
-  },
-  optional: true,
-  description:
-    '原生 SwitchToAddBuff 的施放前旁路；命中时不启动或中断普通技能时间轴。\n`currentSkillTypes` 表达依赖上一技能身份的结束技路径；`condition` 表达候选技能自身的\n普通条件路径。两者同时存在时均须成立。`asSkillCast` 保留原生是否发布完整施法事件。',
-} as const;
-const schema_06d926674dc5 = {
-  kind: 'array',
-  element: {
-    kind: 'union',
-    variants: [
-      {
-        kind: 'object',
-        fields: {
-          key: { kind: 'string', description: '响应在同一装备定义中的唯一名称。' },
-          priority: {
-            kind: 'number',
-            optional: true,
-            description: '原生数据动作优先级；同级按定义中的注册顺序执行。',
-          },
-          condition: schema_5be487e5f9fc,
-          sequence: schema_b6bff737c6f5,
-          event: {
-            kind: 'union',
-            variants: schema_721d75a98ce3,
-            semantics: { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}] },
-            description: '监听一项语义战斗事件。',
-          },
-          abilityEvent: {
-            kind: 'opaque',
-            fallback: { reason: 'no-present-type' },
-            optional: true,
-            description: '使用语义战斗事件时不能同时监听能力事件。',
-          },
-        },
-      },
-      {
-        kind: 'object',
-        fields: {
-          key: { kind: 'string', description: '响应在同一装备定义中的唯一名称。' },
-          priority: {
-            kind: 'number',
-            optional: true,
-            description: '原生数据动作优先级；同级按定义中的注册顺序执行。',
-          },
-          condition: schema_5be487e5f9fc,
-          sequence: schema_b6bff737c6f5,
-          event: {
-            kind: 'opaque',
-            fallback: { reason: 'no-present-type' },
-            optional: true,
-            description: '使用能力事件时不能同时监听语义战斗事件。',
-          },
-          abilityEvent: {
-            kind: 'enum',
-            options: [
-              'enterFight',
-              'beforeOutputDamage',
-              'beforeOutputPhysicalInfliction',
-              'afterOutputPhysicalInfliction',
-              'beforeOutputInfliction',
-              'beforeOutputSpellBurst',
-              'outputCriticalDamage',
-              'outputHeal',
-              'beforeCastSkill',
-              'afterSkillApplyCost',
-              'beforeOutputBuff',
-              'outputBuff',
-              'addedBuff',
-              'buffEnhanceChanged',
-              'buffConsumed',
-              'skillSpGained',
-            ],
-            semantics: {
-              unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}],
-            },
-            description: '直接监听的一项原生能力事件。',
-          },
-        },
-      },
-    ],
-    semantics: schema_4107b248d073,
-  },
-  semantics: schema_140af2d9bf58,
-  optional: true,
-  description: '装备能力注册的战斗事件响应。',
 } as const;
 export const definitionSchemas = {
   operator: {
@@ -6069,12 +2714,11 @@ export const definitionSchemas = {
       },
       actionGraph: schema_d4e3ff1ae98a,
       modifiers: schema_4e057aa3baa4,
-      eventHandlers: schema_06d926674dc5,
+      eventHandlers: schema_b0fdd4672083,
       blackboard: schema_e4e214b79007,
       enableSequence: schema_3d1bf8fec70a,
       initializationSequence: schema_5721ad030ce6,
     },
-    references: schema_b80e945f9c38,
   },
   consumable: {
     kind: 'object',
@@ -6229,12 +2873,12 @@ export const definitionSchemas = {
           exclusiveFrame: schema_4d4ef7cf5451,
           offsetRecordFrame: schema_7e5b67c1428e,
           inputWindows: schema_72e7e1b50ca4,
-          availability: schema_a60e4a6d7679,
+          availability: schema_b05d7d181f20,
           cooldownFrames: schema_261fb5fd5774,
           costs: schema_123ad80e4366,
           costFrame: schema_f5e87a023be7,
-          switchToBuffCast: schema_92db6c94096c,
-          eventHandlers: schema_92a080443be8,
+          switchToBuffCast: schema_e5c0475d6e2a,
+          eventHandlers: schema_191bca465db9,
           blackboard: schema_dcc3197d8b15,
           scheduledSequences: schema_3c8414c0c980,
           skillType: {
@@ -6279,12 +2923,12 @@ export const definitionSchemas = {
           exclusiveFrame: schema_4d4ef7cf5451,
           offsetRecordFrame: schema_7e5b67c1428e,
           inputWindows: schema_72e7e1b50ca4,
-          availability: schema_a60e4a6d7679,
+          availability: schema_b05d7d181f20,
           cooldownFrames: schema_261fb5fd5774,
           costs: schema_123ad80e4366,
           costFrame: schema_f5e87a023be7,
-          switchToBuffCast: schema_92db6c94096c,
-          eventHandlers: schema_92a080443be8,
+          switchToBuffCast: schema_e5c0475d6e2a,
+          eventHandlers: schema_191bca465db9,
           blackboard: schema_dcc3197d8b15,
           scheduledSequences: schema_3c8414c0c980,
           skillType: { kind: 'enum', options: ['dodge'] },
@@ -6293,24 +2937,6 @@ export const definitionSchemas = {
       },
     ],
     semantics: schema_4107b248d073,
-    references: {
-      field_58143731e2c4cb710392: {
-        kind: 'array',
-        element: schema_8ba9d5d8633b,
-        semantics: schema_a98553855713,
-      },
-      field_7cf3d7b7ffc7fcbf85d8: {
-        kind: 'array',
-        element: schema_9e5923e81038,
-        semantics: schema_a98553855713,
-      },
-      field_b0a08a7d593a995b94ee: {
-        kind: 'union',
-        variants: schema_1eb7a7e45754,
-        semantics: schema_4a3eec17c103,
-        inlineCondition: 'skillSwitch',
-      },
-    },
   },
   skillGroup: { kind: 'object', fields: schema_ca850f7fdf79 },
   skillGroupVariant: { kind: 'object', fields: schema_59ae2ded5e63 },
@@ -6342,8 +2968,6 @@ export const definitionSchemas = {
           maxTriggerCount: schema_7c5ce6c644b5,
           attributeModifiers: schema_78c333188111,
           keywordEnhancements: schema_37edd074d3b3,
-          healModifiers: schema_c3d0fdfbf35b,
-          poiseModifiers: schema_bc54829e4166,
           shields: schema_72ecafe1082d,
           sustainedProtection: schema_741e6ba26ed9,
           role: schema_69a4fde8bf05,
@@ -6361,9 +2985,34 @@ export const definitionSchemas = {
               kind: 'object',
               fields: {
                 enabledSide: schema_bec9f789392d,
-                condition: schema_c8428fd0ad4e,
                 processors: schema_a2f7c7d1976f,
-                conditionProgram: schema_cb135381615b,
+                condition: schema_cb135381615b,
+              },
+            },
+            semantics: { arrayElement: {} },
+            optional: true,
+          },
+          healModifiers: {
+            kind: 'array',
+            element: {
+              kind: 'object',
+              fields: {
+                enabledSide: schema_4589467e4874,
+                processors: schema_f15fd9ff6614,
+                condition: schema_cb135381615b,
+              },
+            },
+            semantics: { arrayElement: {} },
+            optional: true,
+          },
+          poiseModifiers: {
+            kind: 'array',
+            element: {
+              kind: 'object',
+              fields: {
+                enabledSide: schema_0695876eae6b,
+                processors: schema_cfeca66fd8de,
+                condition: schema_cb135381615b,
               },
             },
             semantics: { arrayElement: {} },
@@ -6396,8 +3045,34 @@ export const definitionSchemas = {
           maxTriggerCount: schema_7c5ce6c644b5,
           attributeModifiers: schema_78c333188111,
           keywordEnhancements: schema_37edd074d3b3,
-          healModifiers: schema_c3d0fdfbf35b,
-          poiseModifiers: schema_bc54829e4166,
+          healModifiers: {
+            kind: 'array',
+            element: {
+              kind: 'object',
+              fields: {
+                enabledSide: schema_4589467e4874,
+                condition: schema_40c2917eb344,
+                processors: schema_f15fd9ff6614,
+              },
+            },
+            semantics: { arrayElement: {} },
+            optional: true,
+            description: 'Buff 启用期间参与治疗计算的条件和数值处理器。',
+          },
+          poiseModifiers: {
+            kind: 'array',
+            element: {
+              kind: 'object',
+              fields: {
+                enabledSide: schema_0695876eae6b,
+                condition: schema_40c2917eb344,
+                processors: schema_cfeca66fd8de,
+              },
+            },
+            semantics: { arrayElement: {} },
+            optional: true,
+            description: 'Buff 启用期间参与失衡伤害计算的条件和数值处理器。',
+          },
           shields: schema_72ecafe1082d,
           sustainedProtection: schema_741e6ba26ed9,
           role: schema_69a4fde8bf05,
@@ -6412,16 +3087,14 @@ export const definitionSchemas = {
               kind: 'object',
               fields: {
                 enabledSide: schema_bec9f789392d,
-                condition: schema_c8428fd0ad4e,
-                processors: schema_a2f7c7d1976f,
-                conditionProgram: {
+                condition: {
                   kind: 'opaque',
                   fallback: schema_41f65db75420,
                   semantics: schema_6675b27ea82d,
                   optional: true,
-                  description:
-                    '以动作序列的最终结果决定是否启用处理器；不能与 `condition` 同时填写。',
+                  description: '启用处理器前检查的条件。',
                 },
+                processors: schema_a2f7c7d1976f,
               },
             },
             semantics: { arrayElement: {} },
@@ -6655,215 +3328,6 @@ export const definitionSchemas = {
       },
     ],
     semantics: schema_4107b248d073,
-    references: {
-      field_6ace4e0268dcfae8b6cd: {
-        kind: 'array',
-        element: {
-          kind: 'union',
-          variants: [
-            schema_b703678ebd22,
-            {
-              kind: 'object',
-              fields: {
-                kind: {
-                  kind: 'enum',
-                  options: ['eventDamageTagsMatch'],
-                  description: '检查本次伤害携带的标签。',
-                },
-                match: schema_feedd95bec2f,
-                tags: schema_a53d58605435,
-              },
-            },
-            {
-              kind: 'object',
-              fields: {
-                kind: schema_d6f75ef1ccac,
-                conditions: {
-                  kind: 'ref',
-                  ref: 'field_6ace4e0268dcfae8b6cd',
-                  semantics: { arrayElement: schema_0027e97043bf },
-                  description: '需要同时成立的条件。',
-                },
-              },
-            },
-          ],
-          semantics: schema_0027e97043bf,
-        },
-        semantics: { arrayElement: schema_0027e97043bf },
-      },
-      field_8753a95244305b96d773: {
-        kind: 'array',
-        element: {
-          kind: 'union',
-          variants: [
-            schema_be4656435205,
-            schema_b703678ebd22,
-            schema_8da448e12326,
-            schema_0a60d1253325,
-            schema_2f8f1e2bdff8,
-            schema_737e4d48bd48,
-            schema_9313aa28f9a1,
-            schema_7e14cbcef8ee,
-            schema_9558b15dfd38,
-            schema_c0d4b3f7ae9f,
-            {
-              kind: 'object',
-              fields: {
-                kind: { kind: 'enum', options: ['not'], description: '对一个子条件取反。' },
-                condition: {
-                  kind: 'ref',
-                  ref: 'field_7e887055b537429c2a06',
-                  semantics: schema_2907d52a9d37,
-                  description: '要取反的条件。',
-                },
-              },
-            },
-            {
-              kind: 'object',
-              fields: {
-                kind: schema_d6f75ef1ccac,
-                conditions: {
-                  kind: 'ref',
-                  ref: 'field_13a5b93a0e59414e04d0',
-                  semantics: schema_453b6f59ce2c,
-                  description: '需要同时成立的条件。',
-                },
-              },
-            },
-            {
-              kind: 'object',
-              fields: {
-                kind: schema_3dd6bd618c41,
-                conditions: {
-                  kind: 'ref',
-                  ref: 'field_8753a95244305b96d773',
-                  semantics: schema_453b6f59ce2c,
-                  description: '只需其中一项成立的条件。',
-                },
-              },
-            },
-          ],
-          semantics: schema_2907d52a9d37,
-        },
-        semantics: schema_453b6f59ce2c,
-      },
-      field_13a5b93a0e59414e04d0: {
-        kind: 'array',
-        element: {
-          kind: 'union',
-          variants: [
-            schema_be4656435205,
-            schema_b703678ebd22,
-            schema_8da448e12326,
-            schema_0a60d1253325,
-            schema_2f8f1e2bdff8,
-            schema_737e4d48bd48,
-            schema_9313aa28f9a1,
-            schema_7e14cbcef8ee,
-            schema_9558b15dfd38,
-            schema_c0d4b3f7ae9f,
-            {
-              kind: 'object',
-              fields: {
-                kind: { kind: 'enum', options: ['not'], description: '对一个子条件取反。' },
-                condition: {
-                  kind: 'ref',
-                  ref: 'field_7e887055b537429c2a06',
-                  semantics: schema_2907d52a9d37,
-                  description: '要取反的条件。',
-                },
-              },
-            },
-            {
-              kind: 'object',
-              fields: {
-                kind: schema_d6f75ef1ccac,
-                conditions: {
-                  kind: 'ref',
-                  ref: 'field_13a5b93a0e59414e04d0',
-                  semantics: schema_453b6f59ce2c,
-                  description: '需要同时成立的条件。',
-                },
-              },
-            },
-            {
-              kind: 'object',
-              fields: {
-                kind: schema_3dd6bd618c41,
-                conditions: {
-                  kind: 'array',
-                  element: {
-                    kind: 'union',
-                    variants: [
-                      schema_be4656435205,
-                      schema_b703678ebd22,
-                      schema_8da448e12326,
-                      schema_0a60d1253325,
-                      schema_2f8f1e2bdff8,
-                      schema_737e4d48bd48,
-                      schema_9313aa28f9a1,
-                      schema_7e14cbcef8ee,
-                      schema_9558b15dfd38,
-                      schema_c0d4b3f7ae9f,
-                      {
-                        kind: 'object',
-                        fields: {
-                          kind: {
-                            kind: 'enum',
-                            options: ['not'],
-                            description: '对一个子条件取反。',
-                          },
-                          condition: {
-                            kind: 'ref',
-                            ref: 'field_7e887055b537429c2a06',
-                            semantics: schema_2907d52a9d37,
-                            description: '要取反的条件。',
-                          },
-                        },
-                      },
-                      {
-                        kind: 'object',
-                        fields: {
-                          kind: schema_d6f75ef1ccac,
-                          conditions: {
-                            kind: 'ref',
-                            ref: 'field_13a5b93a0e59414e04d0',
-                            semantics: schema_453b6f59ce2c,
-                            description: '需要同时成立的条件。',
-                          },
-                        },
-                      },
-                      {
-                        kind: 'object',
-                        fields: {
-                          kind: schema_3dd6bd618c41,
-                          conditions: {
-                            kind: 'ref',
-                            ref: 'field_8753a95244305b96d773',
-                            semantics: schema_453b6f59ce2c,
-                            description: '只需其中一项成立的条件。',
-                          },
-                        },
-                      },
-                    ],
-                    semantics: schema_2907d52a9d37,
-                  },
-                  semantics: schema_453b6f59ce2c,
-                  description: '只需其中一项成立的条件。',
-                },
-              },
-            },
-          ],
-          semantics: schema_2907d52a9d37,
-        },
-        semantics: schema_453b6f59ce2c,
-      },
-      field_7e887055b537429c2a06: {
-        kind: 'union',
-        variants: schema_1aaa1b9ee0e2,
-        semantics: schema_2907d52a9d37,
-      },
-    },
   },
   abilityEntity: { kind: 'object', fields: schema_d8c018e8d611 },
   abilityEntityChildSkill: {
@@ -7032,28 +3496,20 @@ export const definitionSchemas = {
                   description: '满足条件时增加伤害。',
                 },
                 condition: {
-                  kind: 'union',
-                  variants: [
-                    {
-                      kind: 'object',
-                      fields: {
-                        kind: {
-                          kind: 'enum',
-                          options: ['targetStaggered'],
-                          description: '检查目标当前是否处于失衡状态。',
-                        },
-                        target: {
-                          kind: 'enum',
-                          options: ['enemy'],
-                          semantics: schema_4107b248d073,
-                          description: '要检查的施法者或敌人。',
-                        },
-                      },
+                  kind: 'object',
+                  fields: {
+                    kind: {
+                      kind: 'enum',
+                      options: ['targetStaggered'],
+                      description: '检查目标当前是否处于失衡状态。',
                     },
-                  ],
-                  semantics: schema_4a3eec17c103,
-                  inlineCondition: 'enemyStaggered',
-                  description: '增伤生效条件。',
+                    target: {
+                      kind: 'enum',
+                      options: ['enemy'],
+                      description: '要检查的施法者或敌人。',
+                    },
+                  },
+                  description: '此修正只支持伤害快照中的敌人失衡状态，不执行动作图条件。',
                 },
                 values: {
                   kind: 'union',
@@ -7294,7 +3750,7 @@ export const definitionSchemas = {
                     options: schema_ebe2ee1f84c5,
                     semantics: schema_36938d66df11,
                   },
-                  semantics: schema_b56381dc690f,
+                  semantics: { arrayElement: schema_36938d66df11 },
                   description: '要增加的四维属性。',
                 },
                 value: { kind: 'number', description: '每项属性增加的数值。' },
@@ -7510,12 +3966,11 @@ export const definitionSchemas = {
       levelCount: { kind: 'number', description: '这条词条可以解析的等级数量。' },
       actionGraph: schema_d4e3ff1ae98a,
       modifiers: schema_4e057aa3baa4,
-      eventHandlers: schema_06d926674dc5,
+      eventHandlers: schema_b0fdd4672083,
       blackboard: schema_e4e214b79007,
       enableSequence: schema_3d1bf8fec70a,
       initializationSequence: schema_5721ad030ce6,
     },
-    references: schema_b80e945f9c38,
   },
   gearTrait: { kind: 'object', fields: schema_7377908c39c8 },
 } as const satisfies DefinitionSchemaCatalog;

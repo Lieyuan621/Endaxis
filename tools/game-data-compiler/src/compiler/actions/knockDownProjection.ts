@@ -1,4 +1,4 @@
-import type { CombatStepParameters } from '../../../../../packages/game-data-contract/src/actions.ts';
+import type { CombatStepParameters } from '../intermediateDefinitions.ts';
 import type { KnockDownActionSource } from '../../source/physicalInflictionActions.ts';
 import {
   actionValueOperand,

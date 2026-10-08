@@ -57,13 +57,24 @@ const definition = {
                   buffId: 'buff_wpn_pistol_0005',
                   target: 'caster',
                   blackboardAssignments: {
-                    crit_up2: { kind: 'blackboard', key: 'install_0_crit_up2' },
-                    dmg_up: { kind: 'blackboard', key: 'install_0_dmg_up' },
-                    duration: { kind: 'blackboard', key: 'install_0_duration' },
+                    crit_up2: { kind: 'valueNode', nodeId: 'data_1' },
+                    dmg_up: { kind: 'valueNode', nodeId: 'data_2' },
+                    duration: { kind: 'valueNode', nodeId: 'data_3' },
                   },
                 },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'number',
+              expression: { kind: 'blackboard', key: 'install_0_crit_up2' },
+            },
+            data_2: { type: 'number', expression: { kind: 'blackboard', key: 'install_0_dmg_up' } },
+            data_3: {
+              type: 'number',
+              expression: { kind: 'blackboard', key: 'install_0_duration' },
             },
           },
         },
@@ -105,14 +116,19 @@ const definition = {
                   finishByAction: true,
                   inheritSourceSkillCastInfo: true,
                   blackboardAssignments: {
-                    dmg_up: { kind: 'blackboard', key: 'dmg_up' },
-                    duration: { kind: 'blackboard', key: 'duration' },
-                    crit_up2: { kind: 'blackboard', key: 'crit_up2' },
+                    dmg_up: { kind: 'valueNode', nodeId: 'data_1' },
+                    duration: { kind: 'valueNode', nodeId: 'data_2' },
+                    crit_up2: { kind: 'valueNode', nodeId: 'data_3' },
                   },
                 },
               },
               next: null,
             },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'dmg_up' } },
+            data_2: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
+            data_3: { type: 'number', expression: { kind: 'blackboard', key: 'crit_up2' } },
           },
         },
         macros: {},
@@ -166,8 +182,8 @@ const definition = {
                 parameters: {
                   key: 'crit_up2_dynamic',
                   operation: 'multiply',
-                  left: { kind: 'blackboard', key: 'crit_up2' },
-                  right: { kind: 'blackboard', key: 'multi' },
+                  left: { kind: 'valueNode', nodeId: 'data_1' },
+                  right: { kind: 'valueNode', nodeId: 'data_2' },
                 },
               },
               next: 'applyBuff_1',
@@ -178,8 +194,8 @@ const definition = {
                 parameters: {
                   key: 'dmg_up_dynamic',
                   operation: 'multiply',
-                  left: { kind: 'blackboard', key: 'dmg_up' },
-                  right: { kind: 'blackboard', key: 'multi' },
+                  left: { kind: 'valueNode', nodeId: 'data_3' },
+                  right: { kind: 'valueNode', nodeId: 'data_4' },
                 },
               },
               next: 'calculateActionValue_2',
@@ -187,13 +203,7 @@ const definition = {
             conditional_4: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'actionInputTargetIdentityMatch',
-                    other: 'actionSource',
-                    operator: 'equal',
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
                 whenTrue: { $sequence: 'calculateActionValue_3' },
               },
               next: null,
@@ -201,16 +211,7 @@ const definition = {
             conditional_5: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: [
-                      'Skill/Character/Common/SpellStatus/Frozen',
-                      'Skill/Character/Common/SpellStatus/Corrupt',
-                    ],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
                 whenTrue: { $sequence: 'conditional_4' },
               },
               next: null,
@@ -235,16 +236,7 @@ const definition = {
             conditional_7: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'not',
-                    condition: {
-                      kind: 'actionInputTargetIdentityMatch',
-                      other: 'actionSource',
-                      operator: 'equal',
-                    },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
                 whenTrue: { $sequence: 'applyBuff_6' },
               },
               next: null,
@@ -252,19 +244,58 @@ const definition = {
             conditional_8: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: [
-                      'Skill/Character/Common/SpellStatus/Frozen',
-                      'Skill/Character/Common/SpellStatus/Corrupt',
-                    ],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
                 whenTrue: { $sequence: 'conditional_7' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'crit_up2' } },
+            data_2: { type: 'number', expression: { kind: 'blackboard', key: 'multi' } },
+            data_3: { type: 'number', expression: { kind: 'blackboard', key: 'dmg_up' } },
+            data_4: { type: 'number', expression: { kind: 'blackboard', key: 'multi' } },
+            data_5: {
+              type: 'boolean',
+              expression: {
+                kind: 'actionInputTargetIdentityMatch',
+                other: 'actionSource',
+                operator: 'equal',
+              },
+            },
+            data_6: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: [
+                  'Skill/Character/Common/SpellStatus/Frozen',
+                  'Skill/Character/Common/SpellStatus/Corrupt',
+                ],
+              },
+            },
+            data_7: {
+              type: 'boolean',
+              expression: {
+                kind: 'actionInputTargetIdentityMatch',
+                other: 'actionSource',
+                operator: 'equal',
+              },
+            },
+            data_8: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+            },
+            data_9: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: [
+                  'Skill/Character/Common/SpellStatus/Frozen',
+                  'Skill/Character/Common/SpellStatus/Corrupt',
+                ],
+              },
             },
           },
         },

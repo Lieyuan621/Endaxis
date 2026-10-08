@@ -33,7 +33,7 @@ import type {
   BuffOperationTarget,
   BuffQueryResult,
 } from './buffOperationExecutor';
-import type { CombatBuffDefinitionEntry } from './combatBuffDefinitions';
+import type { CombatBuffDefinitionEntry } from '../../../../packages/game-data-contract/src/buffs';
 import {
   CombatBuffContainer,
   type CombatBuff,
@@ -275,6 +275,15 @@ export class BuffDefinitionOperationTarget<Key extends string>
     this.#resolveLifecycleOperations = resolveOperations;
   }
 
+  /** 内置语义 Buff 和资源 Buff 共用装配层提供的操作链。 */
+  resolveLifecycleOperations(source: BuffLifecycleOperationSource): CombatOperationExecutor {
+    if (this.#resolveLifecycleOperations === null)
+      throw new Error(
+        `combat Buff runtime '${this.ownerId}' lifecycle operations are not configured`,
+      );
+    return this.#resolveLifecycleOperations(source);
+  }
+
   #compileInlineDefinition(
     id: string,
     source: ResolvedSkillBuffDefinition,
@@ -289,23 +298,27 @@ export class BuffDefinitionOperationTarget<Key extends string>
       igniteEventResponses,
       skillSlotReplacements,
       damageModifiers,
+      healModifiers,
+      poiseModifiers,
       ...runtimeDefinition
     } = source;
-    const damageModifierConditionPrograms = damageModifiers?.map(
-      modifier => modifier.conditionProgram,
+    const modifierConditions = {
+      damage: damageModifiers?.map(modifier => modifier.condition),
+      heal: healModifiers?.map(modifier => modifier.condition),
+      poise: poiseModifiers?.map(modifier => modifier.condition),
+    };
+    const staticModifiers = <T extends { readonly condition?: unknown }>(modifiers: readonly T[]) =>
+      modifiers.map(({ condition: _, ...fields }) => fields);
+    const hasModifierConditions = Object.values(modifierConditions).some(list =>
+      list?.some(condition => condition !== undefined),
     );
-    const staticDamageModifiers = damageModifiers?.map(
-      ({ conditionProgram: _, ...modifier }) => modifier,
-    );
-    const hasDamageModifierConditionPrograms =
-      damageModifierConditionPrograms?.some(program => program !== undefined) === true;
     if (
       (scheduledSequences !== undefined ||
         lifecycleSequences !== undefined ||
         abilityEventResponses !== undefined ||
         igniteEventResponses !== undefined ||
         skillSlotReplacements !== undefined ||
-        hasDamageModifierConditionPrograms) &&
+        hasModifierConditions) &&
       this.#resolveLifecycleOperations === null
     ) {
       throw new Error(
@@ -318,7 +331,7 @@ export class BuffDefinitionOperationTarget<Key extends string>
       abilityEventResponses === undefined &&
       igniteEventResponses === undefined &&
       skillSlotReplacements === undefined &&
-      !hasDamageModifierConditionPrograms &&
+      !hasModifierConditions &&
       this.definitions.compile === undefined
     ) {
       throw new Error(
@@ -334,7 +347,12 @@ export class BuffDefinitionOperationTarget<Key extends string>
     const entry: CombatBuffDefinitionEntry = {
       id,
       ...staticRuntimeDefinition,
-      ...(staticDamageModifiers === undefined ? {} : { damageModifiers: staticDamageModifiers }),
+      ...(damageModifiers === undefined
+        ? {}
+        : { damageModifiers: staticModifiers(damageModifiers) }),
+      ...(healModifiers === undefined ? {} : { healModifiers: staticModifiers(healModifiers) }),
+      ...(poiseModifiers === undefined ? {} : { poiseModifiers: staticModifiers(poiseModifiers) }),
+
       ...(typeof maxStackCount === 'number' ? { maxStackCount } : {}),
     };
     const compiledBaseDefinition = this.definitions.compile(entry);
@@ -352,7 +370,7 @@ export class BuffDefinitionOperationTarget<Key extends string>
       abilityEventResponses === undefined &&
       igniteEventResponses === undefined &&
       skillSlotReplacements === undefined &&
-      !hasDamageModifierConditionPrograms
+      !hasModifierConditions
         ? baseDefinition
         : attachBuffLifecycleSequences(
             baseDefinition,
@@ -378,7 +396,7 @@ export class BuffDefinitionOperationTarget<Key extends string>
             igniteEventResponses,
             skillSlotReplacements,
             this.#registerSemanticEventAction ?? undefined,
-            damageModifierConditionPrograms,
+            modifierConditions,
             this.registerAbilityEventCallback,
             this.registerPostSkillCastRequest,
             this.resolveProjectileRuntimeDependencies,

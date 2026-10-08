@@ -1,3 +1,8 @@
+import type { ActionGraphStep } from '../src/compiler/intermediateDefinitions.ts';
+import {
+  extractResourceDataNodes,
+  extractDefinitionDataNodes,
+} from '../src/compiler/extractGraphDataNodes.ts';
 import { renderCommonBuffDefinitionsSource } from '../src/domains/operator/definitionSourceRenderer.ts';
 import { createActionGraphBuilder } from '../src/compiler/actions/actionGraphBuilder.ts';
 import { validateActionGraphOwner } from '../../../src/core/action-graph/actionGraphValidation.ts';
@@ -11,7 +16,6 @@ import { format, resolveConfig } from 'prettier';
 import type {
   ActionGraphReference,
   ActionGraphResourceDefinition,
-  ActionGraphStep,
 } from '../../../packages/game-data-contract/src/actionGraph.ts';
 import type { CompiledBuffDefinitionSource } from '../src/compiler/buffs/buffProjectionTypes.ts';
 import { compileGlobalBuffTemplate } from '../src/compiler/buffs/globalBuffProjection.ts';
@@ -69,7 +73,7 @@ export interface ContingencyContractEnemyMaxHealthPlan {
 /** 来源校验和行为闭包完成后的结果；可先收集黑板用途，再直接渲染这一批内容。 */
 export interface CompiledContingencyContractDefinitions {
   readonly tags: ReturnType<typeof compileContingencyContractTagDefinitions>;
-  readonly buffDefinitions: Readonly<Record<string, CompiledBuffDefinitionSource>>;
+  readonly buffDefinitions: import('../../../packages/game-data-contract/src/buffs.ts').OperatorBuffDefinitions;
   readonly initializationPlans: readonly ContingencyContractInitializationPlan[];
   readonly enemyMaxHealthPlans: readonly ContingencyContractEnemyMaxHealthPlan[];
   readonly scope: ContingencyContractSimulationScope;
@@ -272,11 +276,18 @@ export function compileContingencyContractDefinitionsFromFiles(
       );
     }
     const sequence = graph.sequence(steps);
-    plans.push({ tagId: tag.tagId, sequence, actionGraph: { main: graph.finish(), macros: {} } });
+    plans.push({
+      tagId: tag.tagId,
+      sequence,
+      actionGraph: extractResourceDataNodes({ main: graph.finish(), macros: {} }),
+    });
   }
 
   return {
-    buffDefinitions: definitions,
+    buffDefinitions:
+      extractDefinitionDataNodes<
+        import('../../../packages/game-data-contract/src/buffs.ts').OperatorBuffDefinitions
+      >(definitions),
     tags: compileContingencyContractTagDefinitions(catalog),
     initializationPlans: plans,
     enemyMaxHealthPlans,

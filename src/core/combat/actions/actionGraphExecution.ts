@@ -1,3 +1,8 @@
+import type {
+  CompiledGraphStepForKind,
+  CompiledCondition,
+  CompiledValueInput,
+} from '../../compiler/compiledGraphData.ts';
 /** 图程序保持共享；控制节点的子调用仅在执行、重置或恢复时绑定。 */
 import type { CompiledActionGraph } from '../../compiler/compileActionGraph';
 import { deriveAnonymousDamageStepKey } from '../timeline/deriveHitId';
@@ -7,13 +12,10 @@ import type { CompiledGraphOperation } from '../../compiler/compileActionGraph';
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
 import type { ActionBlackboardState } from '../state/foundationState';
 import type { RuntimeTargetRef, RuntimeTargetGroup } from '../../game-data/logicalAbilityEntity';
-import type {
-  ActionGraphReference,
-  ActionGraphStepForKind,
-} from '../../../../packages/game-data-contract/src/actionGraph';
+import type { ActionGraphReference } from '../../../../packages/game-data-contract/src/actionGraph';
 import type { CombatEventListenerState } from '../state/actionState';
 import type { EventResponseExecution } from './combatActionEventListener';
-import type { CombatCondition, ActionValueOperand } from '../../game-data/operatorDefinition';
+
 import {
   type ActionGraphExecutionState,
   type ActionGraphNodeData,
@@ -64,7 +66,7 @@ export interface ActionGraphExecutionHost {
     execute: () => T,
   ) => T;
   listener(
-    responses: ActionGraphStepForKind<'listenForCombatEvents'>['parameters']['responses'],
+    responses: CompiledGraphStepForKind<'listenForCombatEvents'>['parameters']['responses'],
     state: CombatEventListenerState<ActionGraphExecutionState>,
     create: (
       reference: ActionGraphReference,
@@ -81,8 +83,8 @@ export interface ActionGraphExecutionHost {
     action: CompiledGraphOperation,
   ): CombatStep & { readonly executionData: GraphLeafStepData };
   canExecute(): boolean;
-  evaluate(condition: CombatCondition): boolean;
-  value(operand: ActionValueOperand): number;
+  evaluate(condition: CompiledCondition): boolean;
+  value(operand: CompiledValueInput): number;
   once(key: string, execute: () => void): boolean;
   scope(
     parameters: ResolvedCombatStepForKind<'withActionBlackboardScope'>['parameters'],
@@ -112,17 +114,21 @@ interface GraphNodeBinding {
  */
 function wrapMacroHost(
   host: ActionGraphExecutionHost,
-  args: Readonly<Record<string, ActionValueOperand>>,
+  args: Readonly<Record<string, CompiledValueInput>>,
 ): ActionGraphExecutionHost {
   const memo = new WeakMap<object, unknown>();
   const substitute = <T>(value: T): T => {
     if (!value || typeof value !== 'object') return value;
+    // 独立资源及其编译入口属于另一个参数作用域，不替换内部节点。
+    if ('actionGraph' in value || ('graph' in value && 'entry' in value && 'callSite' in value))
+      return value;
+    const cached = memo.get(value);
+    if (cached !== undefined) return cached as T;
     if (Array.isArray(value)) {
-      const cached = memo.get(value);
-      if (cached !== undefined) return cached as T;
-      const copy: unknown[] = value.map(item => substitute(item));
-      memo.set(value, copy);
-      return copy as T;
+      const items = value.map(item => substitute(item));
+      const result = items.some((item, index) => item !== value[index]) ? items : value;
+      memo.set(value, result);
+      return result as T;
     }
     const record = value as Record<string, unknown>;
     if (record.kind === 'parameter') {
@@ -131,13 +137,12 @@ function wrapMacroHost(
         throw new Error(`macro parameter '${String(name)}' has no argument at this call site`);
       return args[name] as T;
     }
-    const cached = memo.get(value);
-    if (cached !== undefined) return cached as T;
-    const copy = Object.fromEntries(
-      Object.entries(record).map(([key, item]) => [key, substitute(item)]),
-    );
-    memo.set(value, copy);
-    return copy as T;
+    const entries = Object.entries(record).map(([key, item]) => [key, substitute(item)] as const);
+    const result = entries.some(([key, item]) => item !== record[key])
+      ? Object.fromEntries(entries)
+      : value;
+    memo.set(value, result);
+    return result as T;
   };
   return {
     ...(host.trace === undefined ? {} : { trace: host.trace }),
@@ -717,19 +722,17 @@ export class ActionGraphExecution extends CombatStep {
     };
   }
 
-  tryExecute(context: CombatExecutionContext): boolean {
+  tryExecute(context: CombatExecutionContext, resetAfterExecute = false): boolean {
     return executeActionSequence(
       { entries: { entries: () => this.#entries(true, true) } },
       context,
       this.#executionHost(context),
+      resetAfterExecute,
     );
   }
 
   executeInstant(context: CombatExecutionContext): boolean {
-    const result = this.tryExecute(context);
-    this.end(context);
-    this.reset(context);
-    return result;
+    return this.tryExecute(context, true);
   }
   execute(context: CombatExecutionContext): void {
     this.tryExecute(context);

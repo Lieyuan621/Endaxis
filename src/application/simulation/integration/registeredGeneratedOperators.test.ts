@@ -1913,9 +1913,9 @@ describe('registered generated operators', () => {
           entry.event === 'SpChanged' &&
           entry.sourceId === 'track:camille' &&
           entry.data?.skillId === 'chr_0033_camille_normal_skill_2' &&
-          entry.data?.requestedValue === -40,
+          Number(entry.data?.requestedValue) < 0,
       ),
-    ).toBe(true);
+    ).toBe(false);
     const camilleDamage = result.receiptEntries.filter(
       entry => entry.event === 'DamageApplied' && entry.sourceId === 'track:camille',
     );

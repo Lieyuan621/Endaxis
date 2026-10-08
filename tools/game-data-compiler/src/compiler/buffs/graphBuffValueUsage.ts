@@ -1,21 +1,15 @@
-import type { SkillBuffDefinition } from '../../../../../packages/game-data-contract/src/buffs.ts';
+import type { SkillBuffDefinition } from '../intermediateDefinitions.ts';
 /**
- * analyzeBuffDefinitionUsage 的图侧对应：属性、伤害、治疗、护盾、寿命与叠层参数的判断与树版
- * 完全相同；动作入口（scheduledSequences、lifecycleSequences、事件响应、伤害条件程序）改为
- * 沿 Buff 自己的 actionGraph 主图遍历。静态 Buff（StaticBuffDefinition）没有程序字段，只汇总
- * 非程序部分。程序字段存在却找不到图时保守标成未知访问，不静默当成无用途。
+ * 汇总 Buff 属性、修正器、护盾和生命周期读取的变量，供生成阶段裁剪无用初值。
+ * 此时数据输入尚未提取为节点，动作入口沿 Buff 自己的主图遍历；没有图的静态 Buff 只汇总
+ * 处理器参数。存在动作入口却缺少图时保守保留变量，不能误判为没有读取。
  */
 import type {
   ActionGraphReference,
   ActionGraphResourceDefinition,
-} from '../../../../../packages/game-data-contract/src/actionGraph.ts';
-import type { StaticBuffDefinition } from '../../../../../packages/game-data-contract/src/buffs.ts';
-import type {
-  DamageModifierCondition,
-  DamageModifierNumber,
-  HealModifierCondition,
-  PoiseModifierCondition,
-} from '../../../../../packages/game-data-contract/src/modifiers.ts';
+} from '../intermediateDefinitions.ts';
+import type { StaticBuffDefinition } from '../intermediateDefinitions.ts';
+import type { DamageModifierNumber } from '../../../../../packages/game-data-contract/src/modifiers.ts';
 import {
   mergeDefinitionValueUsage,
   type DefinitionUsageContext,
@@ -39,58 +33,6 @@ const unknown = (_value: never): DefinitionValueUsage => ({
   observable: true,
 });
 
-/** 与 buffValueUsage.ts 的伤害条件分支一一对应；条件本身不含动作程序。 */
-function damageCondition(value: DamageModifierCondition): DefinitionValueUsage {
-  switch (value.kind) {
-    case 'not':
-      return damageCondition(value.condition);
-    case 'all':
-    case 'any':
-      return mergeDefinitionValueUsage(value.conditions.map(damageCondition));
-    case 'buffBlackboardCompare':
-      return keys(value.left, value.right);
-    case 'buffIdCountCompare':
-    case 'targetHealthCompare':
-    case 'targetPoiseCompare':
-      return keys(value.value);
-    case 'entityTagMatch':
-    case 'casterControlled':
-    case 'eventDamageTagsMatch':
-    case 'eventDamageFeaturesMatch':
-    case 'eventDamageTypesMatch':
-    case 'sourceSkillCastMatch':
-      return empty();
-    default:
-      return unknown(value);
-  }
-}
-
-function healCondition(value: HealModifierCondition): DefinitionValueUsage {
-  switch (value.kind) {
-    case 'targetHealthCompare':
-      return keys(value.value);
-    case 'buffBlackboardCompare':
-      return keys(value.left, value.right);
-    case 'healTagsMatch':
-      return empty();
-    default:
-      return unknown(value);
-  }
-}
-
-function poiseCondition(value: PoiseModifierCondition): DefinitionValueUsage {
-  switch (value.kind) {
-    case 'all':
-      return mergeDefinitionValueUsage(value.conditions.map(poiseCondition));
-    case 'casterControlled':
-    case 'eventDamageTagsMatch':
-      return empty();
-    default:
-      return unknown(value);
-  }
-}
-
-/** 覆盖动作以外的属性、伤害、治疗、护盾、寿命与叠层参数，动作入口沿本 Buff 的主图遍历。 */
 export function analyzeGraphBuffDefinitionUsage(
   value: SkillBuffDefinition | StaticBuffDefinition,
   context?: DefinitionUsageContext,
@@ -113,8 +55,7 @@ export function analyzeGraphBuffDefinitionUsage(
   ];
   for (const modifier of value.attributeModifiers ?? []) usages.push(keys(modifier.value));
   for (const modifier of value.damageModifiers ?? []) {
-    if (modifier.condition !== undefined) usages.push(damageCondition(modifier.condition));
-    if (modifier.conditionProgram !== undefined) usages.push(program(modifier.conditionProgram));
+    if (modifier.condition !== undefined) usages.push(program(modifier.condition));
     for (const processor of modifier.processors) {
       switch (processor.kind) {
         case 'damageScale':
@@ -129,7 +70,7 @@ export function analyzeGraphBuffDefinitionUsage(
     }
   }
   for (const modifier of value.healModifiers ?? []) {
-    if (modifier.condition !== undefined) usages.push(healCondition(modifier.condition));
+    if (modifier.condition !== undefined) usages.push(program(modifier.condition));
     for (const processor of modifier.processors) {
       switch (processor.kind) {
         case 'modifyCalculationResult':
@@ -144,7 +85,7 @@ export function analyzeGraphBuffDefinitionUsage(
     }
   }
   for (const modifier of value.poiseModifiers ?? []) {
-    if (modifier.condition !== undefined) usages.push(poiseCondition(modifier.condition));
+    if (modifier.condition !== undefined) usages.push(program(modifier.condition));
     for (const processor of modifier.processors) {
       switch (processor.kind) {
         case 'modifyPoiseScalar':
@@ -191,9 +132,11 @@ export function graphBuffPrograms(value: SkillBuffDefinition | StaticBuffDefinit
       ),
       ...(value.abilityEventResponses ?? []).map(response => response.sequence),
       ...(value.igniteEventResponses ?? []).map(response => response.sequence),
-      ...(value.damageModifiers ?? []).flatMap(modifier =>
-        modifier.conditionProgram === undefined ? [] : [modifier.conditionProgram],
-      ),
+      ...[
+        ...(value.damageModifiers ?? []),
+        ...(value.healModifiers ?? []),
+        ...(value.poiseModifiers ?? []),
+      ].flatMap(modifier => (modifier.condition === undefined ? [] : [modifier.condition])),
     ],
   };
 }

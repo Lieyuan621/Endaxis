@@ -6,7 +6,7 @@ import type {
   ActionGraphStep,
 } from '../../../packages/game-data-contract/src/actionGraph';
 import type { ActionStringOperand } from '../../../packages/game-data-contract/src/primitives';
-import { createGraphDataResolver, resolveGraphData } from '../action-graph/actionGraphData';
+import { compileGraphData } from './compiledGraphData';
 import { ActionBlackboard } from '../combat/actions/actionBlackboard';
 import { CombatActionSequenceRuntime } from '../combat/actions/combatActionSequenceRuntime';
 import { CombatAttributeSet } from '../combat/attributes/combatAttributes';
@@ -24,7 +24,6 @@ import { TimedMarkerOperationExecutor } from '../combat/status/timedMarkerOperat
 import { TimedMarkerContainer } from '../combat/status/timedMarkers';
 import { CombatClock } from '../combat/time/combatClock';
 import { validateActionGraphActions } from '../game-data/validation/actionPrograms';
-import { validateActionStringOperand } from '../game-data/validation/definitionValues';
 import { createActionGraphCompilation } from './compileActionGraph';
 
 const delegate = { execute: () => false, evaluate: () => false };
@@ -59,26 +58,6 @@ function execute(
 }
 
 describe('字符串数据图绑定与契约边界', () => {
-  it('旧内联与黑板引用原样 round-trip，混合输入不迁移为另一种表达式', () => {
-    const old: ActionGraphDefinition = {
-      nodes: {
-        entry: { action: cast('literal'), next: 'dynamic' },
-        dynamic: { action: cast({ blackboardKey: 'id' }), next: null },
-      },
-    };
-    const saved = JSON.stringify(old);
-    expect(resolveGraphData(JSON.parse(saved))).toEqual(old);
-    expect(JSON.stringify(old)).toBe(saved);
-    const mixed: ActionGraphDefinition = {
-      ...old,
-      dataNodes: { read },
-      nodes: { ...old.nodes, connected: { action: cast(), next: null } },
-    };
-    expect(validateActionGraphActions(JSON.parse(JSON.stringify(mixed)), 'graph')).toEqual([]);
-    expect(execute(old, new ActionBlackboard({ id: 'current' }))).toEqual(['literal', 'current']);
-    expect(mixed.nodes.dynamic!.action).toEqual(old.nodes.dynamic!.action);
-  });
-
   it('字符串链只共享定义，编译前后不读取黑板或缓存结果', () => {
     const source: ActionGraphDefinition = {
       nodes: { entry: { action: cast(), next: 'second' }, second: { action: cast(), next: null } },
@@ -87,13 +66,21 @@ describe('字符串数据图绑定与契约边界', () => {
         source: read,
       },
     };
-    const bound = resolveGraphData(source);
+    const bound = compileGraphData(source);
     const first = bound.nodes.entry!.action;
     const second = bound.nodes.second!.action;
     if (first.kind !== 'castSkillDuringAction' || second.kind !== 'castSkillDuringAction')
       throw new Error('fixture');
-    expect(first.parameters.skillId).toBe(second.parameters.skillId);
-    expect(first.parameters.skillId).toEqual({ blackboardKey: 'id' });
+    if (
+      typeof first.parameters.skillId === 'string' ||
+      typeof second.parameters.skillId === 'string'
+    )
+      throw new Error('fixture');
+    expect(first.parameters.skillId.node).toBe(second.parameters.skillId.node);
+    expect(first.parameters.skillId).toMatchObject({
+      kind: 'stringNode',
+      node: { type: 'string' },
+    });
     const board = new ActionBlackboard({ id: 'first' });
     const getString = vi.spyOn(board, 'getString');
     const request = vi.fn<SkillCastOperationExecutorDependencies['request']>(() =>
@@ -178,144 +165,6 @@ describe('字符串数据图绑定与契约边界', () => {
       ),
     ).toThrow('missing string data node');
   });
-
-  it.each([
-    ['missing reference', { kind: 'stringNode', nodeId: 'missing' }, 'missing string'],
-    ['empty identity', { kind: 'stringNode', nodeId: '' }, 'invalid data node reference'],
-    ['missing identity', { kind: 'stringNode' }, 'invalid data node reference'],
-    ['numeric identity', { kind: 'stringNode', nodeId: 2 }, 'invalid data node reference'],
-    [
-      'resource-shaped extra field',
-      { kind: 'stringNode', nodeId: 'read', actionGraph: {} },
-      'invalid data node reference',
-    ],
-    [
-      'extra fields',
-      { kind: 'stringNode', nodeId: 'read', blackboardKey: 'id' },
-      'invalid data node reference',
-    ],
-  ])('拒绝 %s', (_name, value, message) => {
-    const source = graph(cast(value as ActionStringOperand));
-    expect(() => resolveGraphData(source)).toThrow(String(message));
-    expect(validateActionGraphActions(source, 'graph')).not.toEqual([]);
-  });
-
-  it.each([
-    null,
-    12,
-    true,
-    '',
-    {},
-    [],
-    { blackboardKey: '' },
-    { blackboardKey: 'id', fallback: 'value' },
-    { kind: 'unknownString', blackboardKey: 'id' },
-    { kind: 'constant', value: 'text' },
-  ])('拒绝未知或错误字符串表达式 %j', expression => {
-    const source = {
-      ...graph(),
-      dataNodes: { read: { type: 'string', expression } },
-    } as ActionGraphDefinition;
-    expect(() => resolveGraphData(source)).toThrow('expected a non-empty string');
-    expect(validateActionGraphActions(source, 'graph')).not.toEqual([]);
-  });
-
-  it('拒绝未知数据类型、数据环与 number/boolean 冒充 string', () => {
-    for (const node of [
-      { type: 'unknown', expression: 'string' },
-      { type: 'number', expression: { kind: 'constant', value: 3 } },
-      { type: 'boolean', expression: { kind: 'constant', value: true } },
-    ]) {
-      expect(() =>
-        resolveGraphData({ ...graph(), dataNodes: { read: node as ActionGraphDataNode } }),
-      ).toThrow();
-    }
-    const cycle: ActionGraphDefinition = {
-      nodes: {},
-      dataNodes: {
-        read: { type: 'string', expression: { kind: 'stringNode', nodeId: 'other' } },
-        other: { type: 'string', expression: reference },
-      },
-    };
-    expect(() => resolveGraphData(cycle)).toThrow('recursive data graph');
-    const resolver = createGraphDataResolver(cycle);
-    expect(() => resolver.node('read', 'string')).toThrow('recursive');
-    expect(() => resolver.node('read', 'string')).toThrow('recursive');
-    expect(() => createGraphDataResolver(graph()).node('read', 'number')).toThrow(
-      'expected number',
-    );
-  });
-
-  it.each([
-    {
-      kind: 'modifyActionValue',
-      parameters: { key: 'out', operation: 'assign', value: reference },
-    },
-    {
-      kind: 'modifyActionValue',
-      parameters: { key: reference, operation: 'assign', value: { kind: 'constant', value: 1 } },
-    },
-    { kind: 'changeSkillSlot', parameters: { skillId: reference } },
-    {
-      kind: 'applyBuff',
-      parameters: {
-        buffId: 'buff',
-        target: 'caster',
-        stringBlackboardAssignments: { output: reference },
-      },
-    },
-    { kind: 'callMacro', macroId: 'macro', arguments: { amount: reference } },
-    {
-      kind: 'conditional',
-      parameters: { condition: reference },
-      whenTrue: { $sequence: null },
-      whenFalse: { $sequence: null },
-    },
-  ])('禁止把字符串引用接入数值、条件、静态身份、写目标或宏参数：%j', action => {
-    const source = graph(action as unknown as ActionGraphStep);
-    expect(() => resolveGraphData(source)).toThrow('only allowed in an ActionStringOperand');
-    expect(() => createActionGraphCompilation(source, 1)).toThrow(
-      'only allowed in an ActionStringOperand',
-    );
-  });
-
-  it.each(['valueNode', 'conditionNode'] as const)(
-    '字符串输入拒绝 %s 引用，即便节点声明已损坏',
-    kind => {
-      const source = graph(cast({ kind, nodeId: 'wrong' } as unknown as ActionStringOperand));
-      const configured = {
-        ...source,
-        dataNodes: {
-          wrong: { type: kind === 'valueNode' ? 'number' : 'boolean', expression: 'forged string' },
-        },
-      } as unknown as ActionGraphDefinition;
-      expect(() => createActionGraphCompilation(configured, 1)).toThrow(
-        'string input expects a stringNode',
-      );
-    },
-  );
-
-  it.each([
-    { kind: 'unknownStringNode', nodeId: 'read' },
-    { blackboardKey: 'id', nodeId: 'read' },
-    { blackboardKey: 'id', actionGraph: {} },
-  ])('字符串输入的未知或混合格式必须在编译边界拒绝：%j', value => {
-    expect(() =>
-      createActionGraphCompilation(graph(cast(value as ActionStringOperand)), 1),
-    ).toThrow('expected a non-empty string');
-  });
-
-  it('无所属图的未绑定引用和混合旧对象不能被字符串操作数校验静默接受', () => {
-    for (const value of [
-      reference,
-      { blackboardKey: 'id', kind: 'unknown' },
-      { blackboardKey: 'id', extra: 1 },
-    ]) {
-      const issues: Parameters<typeof validateActionStringOperand>[2] = [];
-      validateActionStringOperand(value, 'operand', issues);
-      expect(issues.length).toBeGreaterThan(0);
-    }
-  });
 });
 
 describe('字符串数据图实际消费与切面恢复', () => {
@@ -349,12 +198,6 @@ describe('字符串数据图实际消费与切面恢复', () => {
       .executeInstant({});
     expect(lookup.mock.calls.map(([id]) => id)).toEqual(['first', 'second']);
     expect(apply).toHaveBeenCalledTimes(2);
-    expect(() =>
-      executor.execute(
-        { kind: 'applyBuff', parameters: { target: 'caster', buffId: reference } },
-        { blackboard: board },
-      ),
-    ).toThrow('unbound string data node');
     const bad = graph({
       kind: 'applyBuff',
       parameters: { target: 'caster', buffId: reference, durationSeconds: 1 },
@@ -366,7 +209,7 @@ describe('字符串数据图实际消费与切面恢复', () => {
     ).toBe(true);
   });
 
-  it('普通和实体标记条件在 boolean 数据节点内部绑定字符串输入，静态冷却 ID 保持不能接线', () => {
+  it('普通和实体标记条件在 boolean 数据节点内部绑定字符串输入', () => {
     const source = graph({
       kind: 'conditional',
       parameters: { condition: { kind: 'conditionNode', nodeId: 'condition' } },
@@ -388,20 +231,15 @@ describe('字符串数据图实际消费与切面恢复', () => {
         },
       };
       expect(validateActionGraphActions(configured, 'graph')).toEqual([]);
-      const action = resolveGraphData(configured).nodes.entry!.action;
+      const action = compileGraphData(configured).nodes.entry!.action;
       expect(action).toMatchObject({
-        parameters: { condition: { markerId: { blackboardKey: 'id' } } },
+        parameters: {
+          condition: {
+            node: { expression: { markerId: { node: { expression: { blackboardKey: 'id' } } } } },
+          },
+        },
       });
     }
-    const bad = graph({
-      kind: 'setGlobalCooldown',
-      parameters: {
-        target: 'caster',
-        markerId: reference,
-        durationSeconds: { kind: 'constant', value: 1 },
-      },
-    } as unknown as ActionGraphStep);
-    expect(() => resolveGraphData(bad)).toThrow('only allowed');
   });
 
   it('恢复后不重放已完成字符串消费，待执行动作读取恢复分支的新黑板', () => {

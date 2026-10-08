@@ -51,16 +51,7 @@ const definition = {
             conditional_2: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'buffStackCompare',
-                    target: 'actionInputTarget',
-                    tagQueryType: 'hasAny',
-                    buffTags: ['Skill/Character/Common/SpellInflict/FireInflict'],
-                    operator: 'greaterOrEqual',
-                    value: { kind: 'blackboard', key: 'stack_cond' },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
@@ -68,13 +59,7 @@ const definition = {
             conditional_3: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/SpellInflict/FireInflict'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 whenTrue: { $sequence: 'conditional_2' },
               },
               next: null,
@@ -82,16 +67,7 @@ const definition = {
             conditional_5: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'buffStackCompare',
-                    target: 'actionInputTarget',
-                    tagQueryType: 'hasAny',
-                    buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
-                    operator: 'greaterOrEqual',
-                    value: { kind: 'blackboard', key: 'stack_cond' },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
@@ -99,13 +75,7 @@ const definition = {
             conditional_6: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
                 whenTrue: { $sequence: 'conditional_5' },
               },
               next: null,
@@ -113,16 +83,7 @@ const definition = {
             conditional_8: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'buffStackCompare',
-                    target: 'actionInputTarget',
-                    tagQueryType: 'hasAny',
-                    buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
-                    operator: 'greaterOrEqual',
-                    value: { kind: 'blackboard', key: 'stack_cond' },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
@@ -130,13 +91,7 @@ const definition = {
             conditional_9: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
                 whenTrue: { $sequence: 'conditional_8' },
               },
               next: null,
@@ -144,16 +99,7 @@ const definition = {
             conditional_11: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'buffStackCompare',
-                    target: 'actionInputTarget',
-                    tagQueryType: 'hasAny',
-                    buffTags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
-                    operator: 'greaterOrEqual',
-                    value: { kind: 'blackboard', key: 'stack_cond' },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
@@ -161,16 +107,92 @@ const definition = {
             conditional_12: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
                 whenTrue: { $sequence: 'conditional_11' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'stack_cond' } },
+            data_2: {
+              type: 'boolean',
+              expression: {
+                kind: 'buffStackCompare',
+                target: 'actionInputTarget',
+                tagQueryType: 'hasAny',
+                buffTags: ['Skill/Character/Common/SpellInflict/FireInflict'],
+                operator: 'greaterOrEqual',
+                value: { kind: 'valueNode', nodeId: 'data_1' },
+              },
+            },
+            data_3: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/SpellInflict/FireInflict'],
+              },
+            },
+            data_4: { type: 'number', expression: { kind: 'blackboard', key: 'stack_cond' } },
+            data_5: {
+              type: 'boolean',
+              expression: {
+                kind: 'buffStackCompare',
+                target: 'actionInputTarget',
+                tagQueryType: 'hasAny',
+                buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
+                operator: 'greaterOrEqual',
+                value: { kind: 'valueNode', nodeId: 'data_4' },
+              },
+            },
+            data_6: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
+              },
+            },
+            data_7: { type: 'number', expression: { kind: 'blackboard', key: 'stack_cond' } },
+            data_8: {
+              type: 'boolean',
+              expression: {
+                kind: 'buffStackCompare',
+                target: 'actionInputTarget',
+                tagQueryType: 'hasAny',
+                buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
+                operator: 'greaterOrEqual',
+                value: { kind: 'valueNode', nodeId: 'data_7' },
+              },
+            },
+            data_9: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
+              },
+            },
+            data_10: { type: 'number', expression: { kind: 'blackboard', key: 'stack_cond' } },
+            data_11: {
+              type: 'boolean',
+              expression: {
+                kind: 'buffStackCompare',
+                target: 'actionInputTarget',
+                tagQueryType: 'hasAny',
+                buffTags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
+                operator: 'greaterOrEqual',
+                value: { kind: 'valueNode', nodeId: 'data_10' },
+              },
+            },
+            data_12: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
+              },
             },
           },
         },

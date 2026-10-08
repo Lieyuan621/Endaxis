@@ -74,7 +74,6 @@ export function collectFieldCapabilities(
     inheritedRestriction?: FieldCapability['restriction'],
     references: DefinitionSchemaReferences = schema.references ?? EMPTY_SCHEMA_REFERENCES,
     pendingReferences = new Set<string>(),
-    inheritedInline = false,
   ) {
     const reference = schema.kind === 'ref' ? schema.ref : undefined;
     if (reference) pendingReferences.add(reference);
@@ -86,9 +85,10 @@ export function collectFieldCapabilities(
         schema.fallback?.reason ?? '',
       );
     const valuePath = path.filter(part => !/^<\d+>$/.test(part));
-    const inline = inheritedInline || !!schema.inlineCondition;
-    const protectedIdentity =
-      !inline && isProtectedDefinitionIdentity(valuePath.at(-1) ?? '', valuePath.length === 1);
+    const protectedIdentity = isProtectedDefinitionIdentity(
+      valuePath.at(-1) ?? '',
+      valuePath.length === 1,
+    );
     const restriction =
       inheritedRestriction ??
       (isReadonlyDefinitionSlot(schema)
@@ -101,20 +101,14 @@ export function collectFieldCapabilities(
       surface: 'definition',
       root,
       path: path.join('.'),
-      control: reference
-        ? 'ref'
-        : schema.inlineCondition && aliases.includes('CombatCondition')
-          ? 'inlineCondition'
-          : schema.inlineCondition && aliases.includes('ActionValueOperand')
-            ? 'inlineOperand'
-            : schema.kind,
+      control: reference ? 'ref' : schema.kind,
       ...(reference ? { schemaReference: reference } : {}),
       aliases,
       semantics: schema.semantics,
       view:
         schema.kind === 'graph'
           ? 'navigation'
-          : schema.kind === 'opaque' || schema.kind === 'condition'
+          : schema.kind === 'opaque'
             ? 'readonly'
             : ['object', 'array', 'tuple', 'record', 'union', 'timeScaleCurve'].includes(
                   schema.kind,
@@ -122,49 +116,23 @@ export function collectFieldCapabilities(
               ? 'structure'
               : 'value',
       edit:
-        restriction || boundary || schema.kind === 'opaque' || schema.kind === 'condition'
+        restriction || boundary || schema.kind === 'opaque'
           ? 'none'
-          : schema.inlineCondition
-            ? 'field'
-            : ['object', 'array', 'tuple', 'record', 'union'].includes(schema.kind)
-              ? 'recursive'
-              : 'field',
-      connection: 'none',
+          : ['object', 'array', 'tuple', 'record', 'union'].includes(schema.kind)
+            ? 'recursive'
+            : 'field',
+      connection: schema.kind === 'condition' ? 'condition-context' : 'none',
       ...(restriction ? { restriction } : {}),
       ...(schema.fallback ? { fallback: schema.fallback.reason } : {}),
     });
     if (reference) return;
     if (schema.kind === 'object')
       for (const [name, child] of Object.entries(schema.fields))
-        definition(
-          child,
-          root,
-          [...path, name],
-          restriction,
-          references,
-          pendingReferences,
-          inline,
-        );
+        definition(child, root, [...path, name], restriction, references, pendingReferences);
     if (schema.kind === 'array')
-      definition(
-        schema.element,
-        root,
-        [...path, '[]'],
-        restriction,
-        references,
-        pendingReferences,
-        inline,
-      );
+      definition(schema.element, root, [...path, '[]'], restriction, references, pendingReferences);
     if (schema.kind === 'record')
-      definition(
-        schema.value,
-        root,
-        [...path, '{}'],
-        restriction,
-        references,
-        pendingReferences,
-        inline,
-      );
+      definition(schema.value, root, [...path, '{}'], restriction, references, pendingReferences);
     if (schema.kind === 'tuple')
       schema.elements.forEach((child, index) =>
         definition(
@@ -174,7 +142,6 @@ export function collectFieldCapabilities(
           restriction,
           references,
           pendingReferences,
-          inline,
         ),
       );
     if (schema.kind === 'union')
@@ -186,7 +153,6 @@ export function collectFieldCapabilities(
           restriction,
           references,
           pendingReferences,
-          inline,
         ),
       );
   }
@@ -338,7 +304,11 @@ export function checkFieldCapabilityCoverage(
   for (const row of rows) {
     if (seen.has(row.key)) failures.push(`duplicate schema position: ${row.key}`);
     seen.add(row.key);
-    if (['json', 'opaque', 'condition'].includes(row.control) && !row.fallback)
+    if (
+      ['json', 'opaque', 'condition'].includes(row.control) &&
+      !row.fallback &&
+      row.connection === 'none'
+    )
       failures.push(`unexplained fallback: ${row.key}`);
     const exception = expected.get(row.key);
     if (row.fallback && !exception)

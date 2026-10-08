@@ -138,7 +138,7 @@ const definition = {
                 parameters: {
                   target: 'caster',
                   markerId: 'buff_wpn_pistol_0009_cd',
-                  durationSeconds: { kind: 'blackboard', key: 'cd' },
+                  durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
                 },
               },
               next: null,
@@ -174,16 +174,7 @@ const definition = {
             conditional_4: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'not',
-                    condition: {
-                      kind: 'globalCooldownPresent',
-                      target: 'caster',
-                      markerId: 'buff_wpn_pistol_0009_cd',
-                    },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 whenTrue: { $sequence: 'applyBuff_3' },
               },
               next: null,
@@ -191,13 +182,7 @@ const definition = {
             conditional_5: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/SpellStatus/Burning'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
                 whenTrue: { $sequence: 'conditional_4' },
               },
               next: null,
@@ -233,16 +218,7 @@ const definition = {
             conditional_9: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'not',
-                    condition: {
-                      kind: 'globalCooldownPresent',
-                      target: 'caster',
-                      markerId: 'buff_wpn_pistol_0009_cd',
-                    },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
                 whenTrue: { $sequence: 'applyBuff_8' },
               },
               next: null,
@@ -250,13 +226,7 @@ const definition = {
             conditional_10: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/SpellStatus/Conduct'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
                 whenTrue: { $sequence: 'conditional_9' },
               },
               next: null,
@@ -292,16 +262,7 @@ const definition = {
             conditional_14: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'not',
-                    condition: {
-                      kind: 'globalCooldownPresent',
-                      target: 'caster',
-                      markerId: 'buff_wpn_pistol_0009_cd',
-                    },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
                 whenTrue: { $sequence: 'applyBuff_13' },
               },
               next: null,
@@ -309,13 +270,7 @@ const definition = {
             conditional_15: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/SpellStatus/Frozen'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
                 whenTrue: { $sequence: 'conditional_14' },
               },
               next: null,
@@ -351,16 +306,7 @@ const definition = {
             conditional_19: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'not',
-                    condition: {
-                      kind: 'globalCooldownPresent',
-                      target: 'caster',
-                      markerId: 'buff_wpn_pistol_0009_cd',
-                    },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
                 whenTrue: { $sequence: 'applyBuff_18' },
               },
               next: null,
@@ -368,16 +314,93 @@ const definition = {
             conditional_20: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/SpellStatus/Corrupt'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' } },
                 whenTrue: { $sequence: 'conditional_19' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'cd' } },
+            data_2: {
+              type: 'boolean',
+              expression: {
+                kind: 'globalCooldownPresent',
+                target: 'caster',
+                markerId: 'buff_wpn_pistol_0009_cd',
+              },
+            },
+            data_3: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+            },
+            data_4: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/SpellStatus/Burning'],
+              },
+            },
+            data_5: {
+              type: 'boolean',
+              expression: {
+                kind: 'globalCooldownPresent',
+                target: 'caster',
+                markerId: 'buff_wpn_pistol_0009_cd',
+              },
+            },
+            data_6: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+            },
+            data_7: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/SpellStatus/Conduct'],
+              },
+            },
+            data_8: {
+              type: 'boolean',
+              expression: {
+                kind: 'globalCooldownPresent',
+                target: 'caster',
+                markerId: 'buff_wpn_pistol_0009_cd',
+              },
+            },
+            data_9: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+            },
+            data_10: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/SpellStatus/Frozen'],
+              },
+            },
+            data_11: {
+              type: 'boolean',
+              expression: {
+                kind: 'globalCooldownPresent',
+                target: 'caster',
+                markerId: 'buff_wpn_pistol_0009_cd',
+              },
+            },
+            data_12: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_11' } },
+            },
+            data_13: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/SpellStatus/Corrupt'],
+              },
             },
           },
         },
@@ -445,7 +468,7 @@ const definition = {
       damageModifiers: [
         {
           enabledSide: 'defender',
-          condition: { kind: 'eventDamageTypesMatch', damageTypes: ['cryo'] },
+          condition: { $sequence: 'conditional_1' },
           processors: [
             {
               kind: 'damageScale',
@@ -456,7 +479,27 @@ const definition = {
           ],
         },
       ],
-      actionGraph: { main: { nodes: {} }, macros: {} },
+      actionGraph: {
+        main: {
+          nodes: {
+            conditional_1: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+                whenTrue: { $sequence: null },
+              },
+              next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: { kind: 'eventDamageTypeIn', damageTypes: ['cryo'] },
+            },
+          },
+        },
+        macros: {},
+      },
     },
     buff_wpn_pistol_0009_dmg_taken_up_f: {
       stackingType: 'highPriority',
@@ -495,7 +538,7 @@ const definition = {
       damageModifiers: [
         {
           enabledSide: 'defender',
-          condition: { kind: 'eventDamageTypesMatch', damageTypes: ['heat'] },
+          condition: { $sequence: 'conditional_1' },
           processors: [
             {
               kind: 'damageScale',
@@ -506,7 +549,27 @@ const definition = {
           ],
         },
       ],
-      actionGraph: { main: { nodes: {} }, macros: {} },
+      actionGraph: {
+        main: {
+          nodes: {
+            conditional_1: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+                whenTrue: { $sequence: null },
+              },
+              next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: { kind: 'eventDamageTypeIn', damageTypes: ['heat'] },
+            },
+          },
+        },
+        macros: {},
+      },
     },
     buff_wpn_pistol_0009_dmg_taken_up_n: {
       stackingType: 'highPriority',
@@ -545,7 +608,7 @@ const definition = {
       damageModifiers: [
         {
           enabledSide: 'defender',
-          condition: { kind: 'eventDamageTypesMatch', damageTypes: ['nature'] },
+          condition: { $sequence: 'conditional_1' },
           processors: [
             {
               kind: 'damageScale',
@@ -556,7 +619,27 @@ const definition = {
           ],
         },
       ],
-      actionGraph: { main: { nodes: {} }, macros: {} },
+      actionGraph: {
+        main: {
+          nodes: {
+            conditional_1: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+                whenTrue: { $sequence: null },
+              },
+              next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: { kind: 'eventDamageTypeIn', damageTypes: ['nature'] },
+            },
+          },
+        },
+        macros: {},
+      },
     },
     buff_wpn_pistol_0009_dmg_taken_up_p: {
       stackingType: 'highPriority',
@@ -595,7 +678,7 @@ const definition = {
       damageModifiers: [
         {
           enabledSide: 'defender',
-          condition: { kind: 'eventDamageTypesMatch', damageTypes: ['electric'] },
+          condition: { $sequence: 'conditional_1' },
           processors: [
             {
               kind: 'damageScale',
@@ -606,7 +689,27 @@ const definition = {
           ],
         },
       ],
-      actionGraph: { main: { nodes: {} }, macros: {} },
+      actionGraph: {
+        main: {
+          nodes: {
+            conditional_1: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+                whenTrue: { $sequence: null },
+              },
+              next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: { kind: 'eventDamageTypeIn', damageTypes: ['electric'] },
+            },
+          },
+        },
+        macros: {},
+      },
     },
   },
 } as const satisfies WeaponDefinition;

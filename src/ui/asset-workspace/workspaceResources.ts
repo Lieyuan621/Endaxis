@@ -10,8 +10,7 @@ import type {
   ActionGraphStep,
 } from '../../../packages/game-data-contract/src/actionGraph';
 import { fieldValueAt } from '../definition-editor/definitionFieldRuntime';
-import type { CombatCondition } from '../../../packages/game-data-contract/src/conditions';
-import { listDataInputs } from '../../core/action-graph/actionGraphDataNodes';
+import type { CombatConditionExpression } from '../../../packages/game-data-contract/src/conditions';
 
 export type WorkspaceDefinitionResource = Omit<DefinitionResource, 'kind'> & {
   readonly kind: DefinitionResource['kind'] | 'consumable' | 'enemy' | 'globalEffect' | 'contract';
@@ -65,12 +64,7 @@ export function workspaceActionReferences(
       ...Object.values(owner.actionGraph.macros).map(macro => macro.graph),
     ]) {
       const graphReferences = [
-        ...Object.values(graph.nodes).flatMap(node => [
-          ...actionReferences(node.action),
-          ...listDataInputs(node.action).flatMap(input =>
-            input.type === 'boolean' ? conditionReferences(input.value as CombatCondition) : [],
-          ),
-        ]),
+        ...Object.values(graph.nodes).flatMap(node => actionReferences(node.action)),
         ...Object.values(graph.dataNodes ?? {}).flatMap(node =>
           node.type === 'boolean' ? conditionReferences(node.expression) : [],
         ),
@@ -100,13 +94,10 @@ export function workspaceActionReferences(
   return [...result.values()];
 }
 
-function conditionReferences(condition: CombatCondition): readonly { kind: string; id: string }[] {
+function conditionReferences(
+  condition: CombatConditionExpression,
+): readonly { kind: string; id: string }[] {
   switch (condition.kind) {
-    case 'not':
-      return conditionReferences(condition.condition);
-    case 'all':
-    case 'any':
-      return condition.conditions.flatMap(conditionReferences);
     case 'buffIdStackCompare':
     case 'contextTargetBuffIdStackCompare':
     case 'eventBuffIdMatch':

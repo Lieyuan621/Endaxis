@@ -50,7 +50,7 @@ const definition = {
                 parameters: {
                   target: 'caster',
                   markerId: 'wpn_lance_0012_2',
-                  durationSeconds: { kind: 'blackboard', key: 'cd' },
+                  durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
                   autoFinishByAction: false,
                 },
               },
@@ -75,16 +75,7 @@ const definition = {
             conditional_3: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'not',
-                    condition: {
-                      kind: 'timedMarkerPresent',
-                      target: 'caster',
-                      markerId: 'wpn_lance_0012_2',
-                    },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 whenTrue: { $sequence: 'applyBuff_2' },
               },
               next: null,
@@ -92,9 +83,7 @@ const definition = {
             conditional_4: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: { kind: 'originSkillTypeIn', skillTypes: ['battleSkill'] },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
                 whenTrue: { $sequence: 'conditional_3' },
               },
               next: null,
@@ -102,13 +91,7 @@ const definition = {
             conditional_5: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerablePhysic'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
                 whenTrue: { $sequence: 'conditional_4' },
               },
               next: null,
@@ -119,7 +102,7 @@ const definition = {
                 parameters: {
                   target: 'caster',
                   markerId: 'wpn_lance_0012',
-                  durationSeconds: { kind: 'blackboard', key: 'cd' },
+                  durationSeconds: { kind: 'valueNode', nodeId: 'data_6' },
                   autoFinishByAction: false,
                 },
               },
@@ -141,16 +124,7 @@ const definition = {
             conditional_8: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'not',
-                    condition: {
-                      kind: 'timedMarkerPresent',
-                      target: 'caster',
-                      markerId: 'wpn_lance_0012',
-                    },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
                 whenTrue: { $sequence: 'applyBuff_7' },
               },
               next: null,
@@ -158,9 +132,7 @@ const definition = {
             conditional_9: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: { kind: 'originSkillTypeIn', skillTypes: ['battleSkill'] },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
                 whenTrue: { $sequence: 'conditional_8' },
               },
               next: null,
@@ -168,13 +140,7 @@ const definition = {
             conditional_10: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: ['Skill/Character/Common/NoGuard'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
                 whenTrue: { $sequence: 'conditional_9' },
               },
               next: null,
@@ -185,12 +151,66 @@ const definition = {
                 parameters: {
                   buffId: 'buff_wpn_lance_0012_noguard',
                   target: 'caster',
-                  blackboardAssignments: {
-                    dmg_up: { kind: 'blackboard', key: 'install_0_dmg_up' },
-                  },
+                  blackboardAssignments: { dmg_up: { kind: 'valueNode', nodeId: 'data_11' } },
                 },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'cd' } },
+            data_2: {
+              type: 'boolean',
+              expression: {
+                kind: 'timedMarkerPresent',
+                target: 'caster',
+                markerId: 'wpn_lance_0012_2',
+              },
+            },
+            data_3: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+            },
+            data_4: {
+              type: 'boolean',
+              expression: { kind: 'originSkillTypeIn', skillTypes: ['battleSkill'] },
+            },
+            data_5: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerablePhysic'],
+              },
+            },
+            data_6: { type: 'number', expression: { kind: 'blackboard', key: 'cd' } },
+            data_7: {
+              type: 'boolean',
+              expression: {
+                kind: 'timedMarkerPresent',
+                target: 'caster',
+                markerId: 'wpn_lance_0012',
+              },
+            },
+            data_8: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+            },
+            data_9: {
+              type: 'boolean',
+              expression: { kind: 'originSkillTypeIn', skillTypes: ['battleSkill'] },
+            },
+            data_10: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/NoGuard'],
+              },
+            },
+            data_11: {
+              type: 'number',
+              expression: { kind: 'blackboard', key: 'install_0_dmg_up' },
             },
           },
         },
@@ -315,13 +335,7 @@ const definition = {
       damageModifiers: [
         {
           enabledSide: 'attacker',
-          condition: {
-            kind: 'buffIdCountCompare',
-            target: 'enemy',
-            buffIds: ['buff_physical_no_guard'],
-            operator: 'greaterOrEqual',
-            value: 1,
-          },
+          condition: { $sequence: 'conditional_1' },
           processors: [
             {
               kind: 'damageScale',
@@ -332,7 +346,33 @@ const definition = {
           ],
         },
       ],
-      actionGraph: { main: { nodes: {} }, macros: {} },
+      actionGraph: {
+        main: {
+          nodes: {
+            conditional_1: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+                whenTrue: { $sequence: null },
+              },
+              next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: {
+                kind: 'buffIdStackCompare',
+                target: 'actionInputTarget',
+                buffIds: ['buff_physical_no_guard'],
+                operator: 'greaterOrEqual',
+                value: { kind: 'constant', value: 1 },
+              },
+            },
+          },
+        },
+        macros: {},
+      },
     },
   },
 } as const satisfies WeaponDefinition;

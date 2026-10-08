@@ -1,4 +1,4 @@
-import type { SkillDefinition } from '../../../../../packages/game-data-contract/src/skills.ts';
+import type { SkillDefinition } from '../intermediateDefinitions.ts';
 /**
  * 三块树分析/优化的图侧对应，与 graphSequenceOptimization.ts 并列：
  *
@@ -25,25 +25,25 @@ import type {
   ActionGraphNode,
   ActionGraphReference,
   ActionGraphStep,
-} from '../../../../../packages/game-data-contract/src/actionGraph.ts';
-import type { CombatStepDefinition } from '../../../../../packages/game-data-contract/src/actions.ts';
-import type { OperatorBuffDefinitions } from '../../../../../packages/game-data-contract/src/buffs.ts';
+} from '../intermediateDefinitions.ts';
+import type { CombatStepDefinition } from '../intermediateDefinitions.ts';
+import type { OperatorBuffDefinitions } from '../intermediateDefinitions.ts';
 import { NATIVE_SKILL_HAS_HIT_BLACKBOARD_KEY } from '../../../../../packages/game-data-contract/src/conditions.ts';
 import type {
   EquipmentContributionDefinition,
   GearDefinition,
   GearSetDefinition,
   WeaponDefinition,
-} from '../../../../../packages/game-data-contract/src/equipment.ts';
+} from '../intermediateDefinitions.ts';
 import type {
   OperatorDefinition,
   OperatorPassiveSkillDefinition,
   OperatorUpgradeDefinition,
-} from '../../../../../packages/game-data-contract/src/operators.ts';
+} from '../intermediateDefinitions.ts';
 import type {
   AbilityEntityDefinition,
   OperatorAbilityEntityDefinitions,
-} from '../../../../../packages/game-data-contract/src/skills.ts';
+} from '../intermediateDefinitions.ts';
 
 import {
   actionValueUsage,

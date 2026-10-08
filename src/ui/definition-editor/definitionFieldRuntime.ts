@@ -1,12 +1,9 @@
+import type { ActionGraphDefinition } from '../../../packages/game-data-contract/src/actionGraph';
 import { hasSemanticAlias } from '../../core/editor/fieldSemantics.ts';
 import {
   isEmptyGraphSequence,
   type GraphContainerBoundaries,
 } from '../field-editor/graphSequenceContainerSchema';
-import {
-  assertInlineCombatCondition,
-  isInlineCombatCondition,
-} from '../../core/editor/inlineCombatCondition.ts';
 import { selectDefinitionSchema } from '../../core/editor/selectDefinitionSchema.ts';
 import {
   assertTimeScaleCurveValue,
@@ -206,6 +203,7 @@ export function assertEditableDefinitionField(
   next: unknown,
   context: DefinitionEditingContext = 'definition',
   references: DefinitionSchemaReferences = declared.references ?? EMPTY_SCHEMA_REFERENCES,
+  resourceGraph?: ActionGraphDefinition,
 ): void {
   const work = createFieldTraversalWork();
   assertFiniteFieldValue(root);
@@ -217,12 +215,7 @@ export function assertEditableDefinitionField(
   let value = root;
   for (const [index, key] of path.entries()) {
     const declaredScope = resolveDefinitionSchema(schema, references);
-    if (context === 'definition' && isInlineCombatCondition(declaredScope))
-      throw new Error('inline conditions must be changed atomically');
-    if (
-      hasSemanticAlias(declaredScope.semantics, 'ActionValueOperand') &&
-      !declaredScope.inlineCondition
-    )
+    if (hasSemanticAlias(declaredScope.semantics, 'ActionValueOperand'))
       throw new Error('numeric operands require their graph input controls');
     if (isGraphInputReference(value))
       throw new Error('graph input references require their graph connection controls');
@@ -239,15 +232,6 @@ export function assertEditableDefinitionField(
       )
         throw new Error('this field cannot be changed in a field control');
       const child = schema.fields[key]!;
-      if (
-        context === 'definition' &&
-        next === undefined &&
-        index === path.length - 1 &&
-        child.inlineCondition === 'skillSwitch' &&
-        key === 'condition' &&
-        (!value || typeof value !== 'object' || !('currentSkillTypes' in value))
-      )
-        throw new Error('switchToBuffCast requires condition or currentSkillTypes');
       schema = child;
       value =
         value && typeof value === 'object' ? (value as Record<string, unknown>)[key] : undefined;
@@ -274,6 +258,21 @@ export function assertEditableDefinitionField(
       value = value[key];
     } else throw new Error(`field path crosses unsupported value at ${index}`);
   }
+  const targetSchema = resolveDefinitionSchema(schema, references);
+  if (targetSchema.kind === 'condition' && resourceGraph) {
+    if (next === undefined && targetSchema.optional) return;
+    if (!next || typeof next !== 'object' || !('kind' in next))
+      throw new Error('expected a condition input');
+    if (next.kind === 'constant' && 'value' in next && typeof next.value === 'boolean') return;
+    if (
+      next.kind === 'conditionNode' &&
+      'nodeId' in next &&
+      typeof next.nodeId === 'string' &&
+      resourceGraph.dataNodes?.[next.nodeId]?.type === 'boolean'
+    )
+      return;
+    throw new Error('condition input must reference a boolean node in its resource main graph');
+  }
   assertValue(schema, value, next, context, references, work);
 }
 
@@ -295,7 +294,6 @@ export function assertEditableValue(
     context,
     references,
     createFieldTraversalWork(),
-    false,
     graphOperands,
     graphBoundaries,
   );
@@ -308,7 +306,6 @@ function assertValue(
   context: DefinitionEditingContext,
   references: DefinitionSchemaReferences,
   work: FieldTraversalWork,
-  inlineValidated = false,
   graphOperands?: ReadonlySet<DefinitionFieldSchema>,
   graphBoundaries?: GraphContainerBoundaries,
 ): void {
@@ -324,23 +321,8 @@ function assertValue(
     if (previous === undefined && next === undefined && schema.optional) return;
     throw new Error('graph conditions require their graph input controls');
   }
-  if (isInlineCombatCondition(schema)) {
-    if (!inlineValidated) assertInlineCombatCondition(schema, next, references);
-    inlineValidated = true;
-    context = 'value';
-  }
-  if (hasSemanticAlias(schema.semantics, 'ActionValueOperand')) {
-    if (!schema.inlineCondition && !graphOperands?.has(schema))
-      throw new Error('numeric operands require their graph input controls');
-    if (
-      schema.inlineCondition &&
-      next &&
-      typeof next === 'object' &&
-      'kind' in next &&
-      ['parameter', 'valueNode'].includes(String(next.kind))
-    )
-      throw new Error('inline conditions cannot bind graph or macro inputs');
-  }
+  if (hasSemanticAlias(schema.semantics, 'ActionValueOperand') && !graphOperands?.has(schema))
+    throw new Error('numeric operands require their graph input controls');
   if ([previous, next].some(isGraphInputReference))
     throw new Error('graph input references require their graph connection controls');
   if (
@@ -402,7 +384,6 @@ function assertValue(
           context,
           references,
           work,
-          inlineValidated,
           graphOperands,
           graphBoundaries,
         ),
@@ -472,7 +453,6 @@ function assertValue(
           context,
           references,
           work,
-          inlineValidated,
           graphOperands,
           graphBoundaries,
         );
@@ -483,13 +463,6 @@ function assertValue(
     case 'object': {
       if (next === null || typeof next !== 'object' || Array.isArray(next))
         throw new Error(shape.kind === 'record' ? 'expected keyed entries' : 'expected an object');
-      if (
-        shape.kind === 'object' &&
-        shape.fields.condition?.inlineCondition === 'skillSwitch' &&
-        !('condition' in next) &&
-        !('currentSkillTypes' in next)
-      )
-        throw new Error('switchToBuffCast requires condition or currentSkillTypes');
       const entries = Object.entries(next);
       const before =
         previous && typeof previous === 'object' && !Array.isArray(previous)
@@ -540,26 +513,7 @@ function assertValue(
           !Object.is(before[key], entry)
         )
           throw new Error('this field cannot be changed in a field control');
-        let prior = before[key];
-        if (
-          inlineValidated &&
-          schema.kind === 'union' &&
-          before.kind !== (next as Record<string, unknown>).kind &&
-          previousShape.kind === 'object' &&
-          previousShape.fields[key] &&
-          Object.hasOwn(before, key)
-        ) {
-          // A validated inline branch may reuse a field name with a different type.
-          // Its old declared value is removed, never treated as the new slot's imported value.
-          assertNoBoundaryRemoval(
-            previousShape.fields[key]!,
-            prior,
-            references,
-            work,
-            graphBoundaries,
-          );
-          prior = undefined;
-        }
+        const prior = before[key];
         assertValue(
           shape.kind === 'object' ? shape.fields[key]! : shape.value,
           prior,
@@ -567,7 +521,6 @@ function assertValue(
           context,
           references,
           work,
-          inlineValidated,
           graphOperands,
           graphBoundaries,
         );
@@ -698,8 +651,7 @@ function graphRowValues(
   return [];
 }
 
-/** A graph condition stays atomic in row forms, while its actual pins still protect
- * row deletion/reorder. Inline conditions without pins can leave with an unlinked row. */
+/** 行表单不展开条件节点；删除或重排行时保留已连接的输入，常量不占用连线。 */
 function graphConditionBoundaries(value: unknown, work: FieldTraversalWork): unknown[] {
   work.visit();
   if (!value || typeof value !== 'object') return [];

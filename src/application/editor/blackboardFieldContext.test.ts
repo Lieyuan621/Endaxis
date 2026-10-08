@@ -153,7 +153,7 @@ it('records string operand reads and copied-source reads without fabricating dyn
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: { blackboardKey: 'buffName' },
+            buffId: { kind: 'stringNode', nodeId: 'buffId' },
             target: 'caster',
             copiedBlackboardAssignments: { targetKey: 'sourceKey' },
           },
@@ -161,10 +161,16 @@ it('records string operand reads and copied-source reads without fabricating dyn
         next: null,
       },
     },
+    dataNodes: { buffId: { type: 'string', expression: { blackboardKey: 'buffName' } } },
   };
   const analysis = analyzeGraphBlackboard(graph, ['apply']);
-  expect(analysis.variables.map(variable => variable.key)).toEqual(['buffName', 'sourceKey']);
-  expect(analysis.variables[0]?.readSites).toEqual([{ id: 'apply', owner: 'action' }]);
+  expect(analysis.variables.map(variable => variable.key).sort()).toEqual([
+    'buffName',
+    'sourceKey',
+  ]);
+  expect(analysis.variables.find(variable => variable.key === 'buffName')?.readSites).toEqual([
+    { id: 'buffId', owner: 'data' },
+  ]);
   const context = createBlackboardFieldContext(analysis, new Set(['current']));
   expect(resolveBlackboardKey(context, 'buffName', stringRead).state).toBe('external');
 });

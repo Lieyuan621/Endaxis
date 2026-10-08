@@ -4,7 +4,7 @@ import type {
   SkillDefinition,
   SkillGroupPlacementPolicy,
   SkillGroupVariantDefinition,
-} from '../../../../../packages/game-data-contract/src/skills.ts';
+} from '../../compiler/intermediateDefinitions.ts';
 import {
   requireArray,
   requireExactFields,

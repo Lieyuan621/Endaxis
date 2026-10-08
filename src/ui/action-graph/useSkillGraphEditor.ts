@@ -28,11 +28,7 @@ import {
 import ActionGraphCanvas from './ActionGraphCanvas.vue';
 import ActionNodeInspector from './ActionNodeInspector.vue';
 import { actionNodeTitle } from './nodePresentation';
-import {
-  extractResourceDataNodes,
-  listDataInputs,
-  dataNodeInputs,
-} from '../../core/action-graph/actionGraphDataNodes';
+import { listDataInputs, dataNodeInputs } from '../../core/action-graph/actionGraphDataNodes';
 import { updateSkillGraph } from '../../application/editor/skillGraphCommands';
 import { actionTypedInputs, dataTypedInputs } from './typedGraphInputs';
 import { setGraphDataInput } from '../../application/editor/graphDataInputEditing';
@@ -63,10 +59,7 @@ export interface SkillGraphDocument {
 }
 export function useSkillGraphEditor(document: SkillGraphDocument) {
   const { t } = useI18n();
-  const draft = computed(() => {
-    const definition = document.definition();
-    return { ...definition, actionGraph: extractResourceDataNodes(definition.actionGraph) };
-  });
+  const draft = computed(document.definition);
   const editable = computed(document.editable);
   const automaticPresentation = shallowRef<SkillGraphPresentation>({});
   const presentation = computed(() => ({

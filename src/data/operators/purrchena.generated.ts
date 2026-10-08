@@ -7670,10 +7670,10 @@ export const purrchena: OperatorDefinition = {
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0038_purrche_ultimate_skill',
           blackboardKey: 'talent1_prob_up',
           operation: 'assign',
           value: [0.1, 0.1],
-          skillKey: 'chr_0038_purrche_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
@@ -7692,10 +7692,10 @@ export const purrchena: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0038_purrche_ultimate_skill',
           blackboardKey: 'prob',
           operation: 'multiply',
           value: 1.5,
-          skillKey: 'chr_0038_purrche_ultimate_skill',
         },
       ],
     },
@@ -7711,38 +7711,38 @@ export const purrchena: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0038_purrche_combo_skill',
           blackboardKey: 'potential_3',
           operation: 'assign',
           value: 1,
-          skillKey: 'chr_0038_purrche_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0038_purrche_combo_skill',
           blackboardKey: 'heal_static_value_fish',
           operation: 'multiply',
           value: 1.2,
-          skillKey: 'chr_0038_purrche_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0038_purrche_combo_skill',
           blackboardKey: 'heal_scale_fish',
           operation: 'multiply',
           value: 1.2,
-          skillKey: 'chr_0038_purrche_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0038_purrche_combo_skill',
           blackboardKey: 'atk_scale_boom',
           operation: 'multiply',
           value: 1.2,
-          skillKey: 'chr_0038_purrche_combo_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0038_purrche_combo_skill',
           blackboardKey: 'radiusadd_display',
           operation: 'multiply',
           value: 0.2,
-          skillKey: 'chr_0038_purrche_combo_skill',
         },
       ],
     },
@@ -7751,9 +7751,9 @@ export const purrchena: OperatorDefinition = {
       modifiers: [
         {
           kind: 'multiplySkillCost',
+          skillKey: 'chr_0038_purrche_ultimate_skill',
           resource: 'ultimateEnergy',
           multiplier: 0.85,
-          skillKey: 'chr_0038_purrche_ultimate_skill',
         },
       ],
     },
@@ -7762,17 +7762,17 @@ export const purrchena: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0038_purrche_ultimate_skill',
           blackboardKey: 'atk_scale_ult',
           operation: 'multiply',
           value: 1.2,
-          skillKey: 'chr_0038_purrche_ultimate_skill',
         },
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0038_purrche_ultimate_skill',
           blackboardKey: 'rate_vul',
           operation: 'multiply',
           value: 1.2,
-          skillKey: 'chr_0038_purrche_ultimate_skill',
         },
       ],
     },

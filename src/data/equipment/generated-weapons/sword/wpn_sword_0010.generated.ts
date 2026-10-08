@@ -57,13 +57,24 @@ const definition = {
                   buffId: 'buff_wpn_sword_0010',
                   target: 'caster',
                   blackboardAssignments: {
-                    dmg_up: { kind: 'blackboard', key: 'install_0_dmg_up' },
-                    duration: { kind: 'blackboard', key: 'install_0_duration' },
-                    max_stack: { kind: 'blackboard', key: 'install_0_max_stack' },
+                    dmg_up: { kind: 'valueNode', nodeId: 'data_1' },
+                    duration: { kind: 'valueNode', nodeId: 'data_2' },
+                    max_stack: { kind: 'valueNode', nodeId: 'data_3' },
                   },
                 },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'install_0_dmg_up' } },
+            data_2: {
+              type: 'number',
+              expression: { kind: 'blackboard', key: 'install_0_duration' },
+            },
+            data_3: {
+              type: 'number',
+              expression: { kind: 'blackboard', key: 'install_0_max_stack' },
             },
           },
         },
@@ -105,14 +116,19 @@ const definition = {
                   finishByAction: true,
                   inheritSourceSkillCastInfo: true,
                   blackboardAssignments: {
-                    dmg_up: { kind: 'blackboard', key: 'dmg_up' },
-                    max_stack: { kind: 'blackboard', key: 'max_stack' },
-                    duration: { kind: 'blackboard', key: 'duration' },
+                    dmg_up: { kind: 'valueNode', nodeId: 'data_1' },
+                    max_stack: { kind: 'valueNode', nodeId: 'data_2' },
+                    duration: { kind: 'valueNode', nodeId: 'data_3' },
                   },
                 },
               },
               next: null,
             },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'dmg_up' } },
+            data_2: { type: 'number', expression: { kind: 'blackboard', key: 'max_stack' } },
+            data_3: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
           },
         },
         macros: {},
@@ -167,16 +183,7 @@ const definition = {
             conditional_3: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'not',
-                    condition: {
-                      kind: 'timedMarkerPresent',
-                      target: 'buffSource',
-                      markerId: 'wpn_sword_0010',
-                    },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                 whenTrue: { $sequence: 'applyBuff_2' },
               },
               next: null,
@@ -184,19 +191,35 @@ const definition = {
             conditional_4: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: [
-                      'Skill/Character/Common/SpellStatus/Burning',
-                      'Skill/Character/Common/SpellStatus/Corrupt',
-                    ],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 whenTrue: { $sequence: 'conditional_3' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: {
+                kind: 'timedMarkerPresent',
+                target: 'buffSource',
+                markerId: 'wpn_sword_0010',
+              },
+            },
+            data_2: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+            },
+            data_3: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: [
+                  'Skill/Character/Common/SpellStatus/Burning',
+                  'Skill/Character/Common/SpellStatus/Corrupt',
+                ],
+              },
             },
           },
         },

@@ -2,7 +2,7 @@
  * 定义技能、Buff、装备和事件响应共用的条件表达式。
  *
  * 每个条件只保存判断所需的数据，不执行代码。模拟器根据 `kind` 读取当前动作、事件、角色、
- * 敌人或 Buff 状态并返回真假；条件还可以通过 `not`、`all` 和 `any` 组合成条件树。
+ * 敌人或 Buff 状态并返回真假；条件通过 `not`、`all` 和 `any` 节点的输入连线组合。
  */
 import type { GameplayTag, GameplayTagMatchType, GameplayTagQueryType } from './gameplayTags.ts';
 import {
@@ -38,22 +38,16 @@ export type BuffConditionTarget = BuffSingleTarget | 'actionInputTarget';
 export const NATIVE_SKILL_HAS_HIT_BLACKBOARD_KEY = '__endaxis_native_skill_has_hit';
 
 /**
- * 技能可用性、条件动作、Buff 修正和事件响应可以使用的完整条件联合。
- * 每一项的 `kind` 决定模拟器读取哪些字段以及检查哪一种战斗状态。
+ * 技能可用性、条件动作、Buff 修正和事件响应使用的布尔输入。
+ * 固定真假直接保存；其余判断通过本图的布尔数据节点连接。
  */
 export type CombatCondition =
-  | {
-      /** 从当前资源图的数据节点读取条件；编译时绑定，不缓存判断结果。 */
-      kind: 'conditionNode';
-      nodeId: string;
-    }
-  /** 原生显式返回动作的布尔结果；用于控制流，不代表战斗状态。 */
-  | {
-      /** 直接返回固定真假值。 */
-      kind: 'constant';
-      /** 条件结果。 */
-      value: boolean;
-    }
+  | { readonly kind: 'constant'; readonly value: boolean }
+  | { readonly kind: 'conditionNode'; readonly nodeId: string };
+
+/** 布尔数据节点的操作。子条件通过输入引用连接，不能内嵌另一个条件操作。 */
+export type CombatConditionExpression =
+  | CombatCondition
   /** 时间轴模拟始终处于战斗阶段，用于承接原生的队伍战斗状态检查。 */
   | {
       /** 条件种类判别值。 */
@@ -139,8 +133,8 @@ export type CombatCondition =
   | {
       /** 比较目标当前失衡值；目标没有失衡系统时返回原生配置值。 */
       kind: 'poiseCompare';
-      /** 要检查的施法者或敌人。 */
-      target: CombatTarget;
+      /** 要检查的对象；currentTarget 读取当前动作输入目标。 */
+      target: CombatTarget | 'currentTarget';
       /** 目标没有失衡系统时直接采用的结果。 */
       returnValueIfMissing: boolean;
       /** 数值比较符。 */
@@ -659,7 +653,7 @@ export type CombatCondition =
       right: OperatorAttribute;
     };
 
-/** `CombatCondition` 中全部条件种类，供校验和条件分派使用。 */
+/** 布尔数据节点的全部操作种类。 */
 export const COMBAT_CONDITION_KINDS = [
   'constant',
   'combatActive',
@@ -734,37 +728,30 @@ export const COMBAT_CONDITION_KINDS = [
   'all',
   'any',
   'deckAttributeCompare',
-] as const satisfies readonly CombatCondition['kind'][];
+] as const satisfies readonly CombatConditionExpression['kind'][];
 
 /** 一种战斗条件的 `kind` 值。 */
 export type CombatConditionKind = (typeof COMBAT_CONDITION_KINDS)[number];
 
-/** 条件和动作使用的数值常量或当前动作黑板引用。 */
+/** 条件与动作的数值输入：固定值或本图数值节点的引用。 */
 export type ActionValueOperand =
+  | { readonly kind: 'constant'; readonly value: number }
+  | { readonly kind: 'valueNode'; readonly nodeId: string };
+
+/** 数值数据节点的操作；读取发生在消费输入时，不缓存战斗中的数值。 */
+export type ActionValueExpression =
+  | ActionValueOperand
   | {
-      /** 从当前资源图读取数值表达式，在使用点按当前作用域求值。 */
-      kind: 'valueNode';
-      nodeId: string;
+      readonly kind: 'blackboard';
+      /** 在当前调用的变量作用域中读取。 */
+      readonly key: string;
+      /** 仅在原生调用明确提供缺省值时设置。 */
+      readonly fallback?: number;
     }
   | {
-      /** 从当前动作黑板读取。 */
-      kind: 'blackboard';
-      /** 要读取的黑板键。 */
-      key: string;
-      /** 仅在原生调用点明确使用 GetValueOrDefault 时携带；缺省仍严格报错。 */
-      fallback?: number;
-    }
-  | {
-      /** 直接使用固定数值。 */
-      kind: 'constant';
-      /** 固定数值。 */
-      value: number;
-    }
-  | {
-      /** 引用宏调用参数；只允许出现在声明了同名参数的宏图内。 */
-      kind: 'parameter';
-      /** 形参名；在使用点求值，不做调用时快照。 */
-      parameter: string;
+      readonly kind: 'parameter';
+      /** 宏形参名称；实参仍在消费输入时求值。 */
+      readonly parameter: string;
     };
 
 /** 时间倍率曲线中的一个关键点。 */
@@ -829,7 +816,7 @@ export type ActionValueCalculationOperation = (typeof ACTION_VALUE_CALCULATION_O
 
 /** 只依赖养成面板、可在战斗开始前决定的条件子集。 */
 export type BuildCondition = Extract<
-  CombatCondition,
+  CombatConditionExpression,
   {
     /** 构筑条件目前只比较最终面板中的两项四维。 */
     kind: 'deckAttributeCompare';

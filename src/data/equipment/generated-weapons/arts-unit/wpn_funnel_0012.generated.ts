@@ -56,7 +56,7 @@ const definition = {
                 parameters: {
                   target: 'caster',
                   markerId: 'buff_wpn_funnel_0012',
-                  durationSeconds: { kind: 'blackboard', key: 'cd' },
+                  durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
                 },
               },
               next: null,
@@ -69,8 +69,8 @@ const definition = {
                   alwaysNext: true,
                   tags: ['Skill/Character/Common/Heal/WeaponHeal'],
                   attribute: 'will',
-                  multiplier: { kind: 'blackboard', key: 'hp_will_mult' },
-                  addition: { kind: 'blackboard', key: 'hp_will_add' },
+                  multiplier: { kind: 'valueNode', nodeId: 'data_2' },
+                  addition: { kind: 'valueNode', nodeId: 'data_3' },
                 },
               },
               next: 'setGlobalCooldown_1',
@@ -78,16 +78,7 @@ const definition = {
             conditional_3: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'not',
-                    condition: {
-                      kind: 'globalCooldownPresent',
-                      target: 'caster',
-                      markerId: 'buff_wpn_funnel_0012',
-                    },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
                 whenTrue: { $sequence: 'heal_2' },
               },
               next: null,
@@ -95,15 +86,7 @@ const definition = {
             conditional_4: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'healthCompare',
-                    target: 'controlledOperator',
-                    valueType: 'ratio',
-                    operator: 'less',
-                    value: { kind: 'constant', value: 0.99 },
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
                 whenTrue: { $sequence: 'conditional_3' },
               },
               next: null,
@@ -111,16 +94,45 @@ const definition = {
             conditional_5: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventHealTagsMatch',
-                    match: 'hasAny',
-                    tags: ['Skill/Character/Common/Heal/NormalSkillHeal'],
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
                 whenTrue: { $sequence: 'conditional_4' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'cd' } },
+            data_2: { type: 'number', expression: { kind: 'blackboard', key: 'hp_will_mult' } },
+            data_3: { type: 'number', expression: { kind: 'blackboard', key: 'hp_will_add' } },
+            data_4: {
+              type: 'boolean',
+              expression: {
+                kind: 'globalCooldownPresent',
+                target: 'caster',
+                markerId: 'buff_wpn_funnel_0012',
+              },
+            },
+            data_5: {
+              type: 'boolean',
+              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+            },
+            data_6: {
+              type: 'boolean',
+              expression: {
+                kind: 'healthCompare',
+                target: 'controlledOperator',
+                valueType: 'ratio',
+                operator: 'less',
+                value: { kind: 'constant', value: 0.99 },
+              },
+            },
+            data_7: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventHealTagsMatch',
+                match: 'hasAny',
+                tags: ['Skill/Character/Common/Heal/NormalSkillHeal'],
+              },
             },
           },
         },

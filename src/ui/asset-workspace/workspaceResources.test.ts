@@ -43,14 +43,28 @@ describe('资产内部资源导航', () => {
       workspaceActionReferences(definition, [root], [shared, { ...shared, assetId: 'duplicate' }]),
     ).toEqual([]);
   });
-  it.each(['inline', 'dataNode'])(
-    '识别%s中的组合条件引用，不把标签当成 Buff 身份',
-    representation => {
-      const condition = {
-        kind: 'all',
-        conditions: [
-          { kind: 'not', condition: { kind: 'eventBuffIdMatch', buffIds: ['buff'] } },
-          {
+  it('识别条件节点中的资源引用，不把标签当成 Buff 身份', () => {
+    const graph = {
+      nodes: {},
+      dataNodes: {
+        check: {
+          type: 'boolean',
+          expression: {
+            kind: 'all',
+            conditions: [
+              { kind: 'conditionNode', nodeId: 'not' },
+              { kind: 'conditionNode', nodeId: 'tag' },
+            ],
+          },
+        },
+        not: {
+          type: 'boolean',
+          expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'match' } },
+        },
+        match: { type: 'boolean', expression: { kind: 'eventBuffIdMatch', buffIds: ['buff'] } },
+        tag: {
+          type: 'boolean',
+          expression: {
             kind: 'buffBlackboardValueCompare',
             query: { kind: 'tag', buffTags: ['tag'] },
             desiredKey: 'value',
@@ -59,24 +73,20 @@ describe('资产内部资源导航', () => {
             value: 0,
             target: 'caster',
           },
-        ],
-      };
-      const graph =
-        representation === 'inline'
-          ? { nodes: { branch: { action: { kind: 'conditional', parameters: { condition } } } } }
-          : { nodes: {}, dataNodes: { check: { type: 'boolean', expression: condition } } };
-      const definition = { skill: { actionGraph: { main: graph, macros: {} } }, buff: {}, tag: {} };
-      const resources: WorkspaceResource[] = ['skill', 'buff', 'tag'].map(id => ({
-        id,
-        name: id,
-        kind: id === 'skill' ? 'skill' : 'buff',
-        definitionResource: { kind: id === 'skill' ? 'skill' : 'buff', path: [id], identity: id },
-      }));
-      expect(workspaceActionReferences(definition, resources)).toEqual([
-        { from: 'skill', to: 'buff', kind: 'uses' },
-      ]);
-    },
-  );
+        },
+      },
+    };
+    const definition = { skill: { actionGraph: { main: graph, macros: {} } }, buff: {}, tag: {} };
+    const resources: WorkspaceResource[] = ['skill', 'buff', 'tag'].map(id => ({
+      id,
+      name: id,
+      kind: id === 'skill' ? 'skill' : 'buff',
+      definitionResource: { kind: id === 'skill' ? 'skill' : 'buff', path: [id], identity: id },
+    }));
+    expect(workspaceActionReferences(definition, resources)).toEqual([
+      { from: 'skill', to: 'buff', kind: 'uses' },
+    ]);
+  });
   it('静态引用去重，动态身份和普通变量字符串不会被当成资源引用', () => {
     const apply = (buffId: unknown) => ({
       action: { kind: 'applyBuff', parameters: { buffId, target: 'caster' } },

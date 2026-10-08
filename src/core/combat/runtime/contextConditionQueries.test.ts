@@ -1,3 +1,4 @@
+import { numberInput } from '../../../test/compiledGraphInputs';
 import { describe, expect, it, vi } from 'vitest';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { RuntimeTargetContext } from '../abilities/runtimeTargetContext';
@@ -163,7 +164,7 @@ describe('Context 条件查询', () => {
       tagQueryType: 'hasAny' as const,
       buffTags: [tag],
       operator: 'equal' as const,
-      value: { kind: 'blackboard' as const, key: 'threshold' },
+      value: numberInput({ kind: 'blackboard' as const, key: 'threshold' }),
     };
     expect(executor.evaluate(condition, context)).toBe(false);
     expect(resolve).not.toHaveBeenCalled();

@@ -1,8 +1,9 @@
+import { numberInput } from '../../../test/compiledGraphInputs';
 import type { ActionGraphResourceDefinition } from '../../../../packages/game-data-contract/src/actionGraph';
 import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
 import { CombatActionSequenceRuntime } from '../actions/combatActionSequenceRuntime';
 import { describe, expect, it } from 'vitest';
-import type { SkillGlobalBuffDefinition } from '../../game-data/operatorDefinition';
+import type { CompiledGlobalBuffDefinition } from '../../compiler/combatProgram';
 import type { ResolvedSkillBuffDefinition } from '../../compiler/combatProgram';
 import type { BuffApplicationRequest, BuffOperationTarget } from './buffOperationExecutor';
 import { GlobalBuffOperationExecutor, GlobalBuffRuntime } from './globalBuffRuntime';
@@ -15,7 +16,7 @@ import {
 } from '../resources/sharedSpGainModifiers';
 
 const childDefinition: ResolvedSkillBuffDefinition = { stackingType: 'unlimited' };
-const definition: SkillGlobalBuffDefinition = {
+const definition: CompiledGlobalBuffDefinition = {
   stackingType: 'stack',
   maxStackCount: 2,
   durationSeconds: { blackboardKey: 'duration' },
@@ -23,7 +24,7 @@ const definition: SkillGlobalBuffDefinition = {
   children: [
     {
       buffId: 'child',
-      blackboardAssignments: { imbue: { kind: 'blackboard', key: 'scale' } },
+      blackboardAssignments: { imbue: numberInput({ kind: 'blackboard', key: 'scale' }) },
     },
   ],
 };
@@ -221,7 +222,7 @@ describe('GlobalBuffRuntime', () => {
           {
             attribute: 'spRecovery',
             operation: 'multiplier',
-            value: { kind: 'blackboard', key: 'scale' },
+            value: numberInput({ kind: 'blackboard', key: 'scale' }),
             applyToReturnSpGain: true,
           },
           {
@@ -258,7 +259,7 @@ describe('GlobalBuffRuntime', () => {
       gainModifiers,
       recoveryModifiers,
     );
-    const restorableDefinition: SkillGlobalBuffDefinition = {
+    const restorableDefinition: CompiledGlobalBuffDefinition = {
       ...definition,
       durationSeconds: 1 / 30,
       sharedSpModifiers: [
@@ -430,7 +431,7 @@ describe('GlobalBuffRuntime', () => {
             globalBuffId: 'recovery-stop',
             source: 'battle',
             blackboardAssignments: {
-              ratio: { kind: 'blackboard', key: 'ratio' },
+              ratio: numberInput({ kind: 'blackboard', key: 'ratio' }),
             },
             definition: {
               stackingType: 'unlimited',
@@ -439,7 +440,7 @@ describe('GlobalBuffRuntime', () => {
                 {
                   attribute: 'spRecovery',
                   operation: 'multiplier',
-                  value: { kind: 'blackboard', key: 'ratio' },
+                  value: numberInput({ kind: 'blackboard', key: 'ratio' }),
                   applyToReturnSpGain: true,
                 },
               ],
@@ -488,12 +489,15 @@ it.each([false, true])(
             action: {
               kind: 'callMacro',
               macroId: 'make',
-              arguments: { amount: { kind: 'blackboard', key: 'ratio' } },
+              arguments: { amount: { kind: 'valueNode', nodeId: 'amount' } },
             },
             next: null,
           },
         },
-        dataNodes: { shared: { type: 'boolean', expression: { kind: 'constant', value: true } } },
+        dataNodes: {
+          shared: { type: 'boolean', expression: { kind: 'constant', value: true } },
+          amount: { type: 'number', expression: { kind: 'blackboard', key: 'ratio' } },
+        },
       },
       macros: {
         make: {
@@ -510,7 +514,7 @@ it.each([false, true])(
                     ...(override
                       ? {
                           blackboardAssignments: {
-                            ratio: { kind: 'parameter' as const, parameter: 'amount' },
+                            ratio: { kind: 'valueNode' as const, nodeId: 'argument' },
                           },
                         }
                       : {}),
@@ -530,9 +534,9 @@ it.each([false, true])(
                         {
                           buffId: 'child',
                           blackboardAssignments: {
-                            parameterValue: { kind: 'parameter', parameter: 'amount' },
+                            parameterValue: { kind: 'valueNode', nodeId: 'argument' },
                             sameNode: { kind: 'valueNode', nodeId: 'shared' },
-                            fallback: { kind: 'blackboard', key: 'creatorOnly', fallback: 5 },
+                            fallback: { kind: 'valueNode', nodeId: 'fallback' },
                           },
                         },
                       ],
@@ -544,6 +548,11 @@ it.each([false, true])(
             },
             dataNodes: {
               shared: { type: 'number', expression: { kind: 'blackboard', key: 'ratio' } },
+              argument: { type: 'number', expression: { kind: 'parameter', parameter: 'amount' } },
+              fallback: {
+                type: 'number',
+                expression: { kind: 'blackboard', key: 'creatorOnly', fallback: 5 },
+              },
             },
           },
         },

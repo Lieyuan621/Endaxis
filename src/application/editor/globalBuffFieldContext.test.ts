@@ -52,7 +52,7 @@ function fixture(): ActionGraphDefinition {
               children: [{ buffId: 'child', blackboardAssignments: { output: pin } }],
             },
             blackboardAssignments: {
-              same: { kind: 'blackboard', key: 'creatorOnly' },
+              same: { kind: 'valueNode', nodeId: 'test_data_1' },
               extra: { kind: 'constant', value: 4 },
             },
           },
@@ -60,7 +60,10 @@ function fixture(): ActionGraphDefinition {
         next: null,
       },
     },
-    dataNodes: { shared: { type: 'number', expression: { kind: 'blackboard', key: 'same' } } },
+    dataNodes: {
+      shared: { type: 'number', expression: { kind: 'blackboard', key: 'same' } },
+      test_data_1: { type: 'number', expression: { kind: 'blackboard', key: 'creatorOnly' } },
+    },
   };
 }
 const initial = { same: 7, creatorOnly: 8, EntityBB_creator: 10 };

@@ -2,11 +2,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { CombatAttributeSet } from '../attributes/combatAttributes';
 import { CombatBuffContainer } from './combatBuffs';
 import { GameplayTagRegistry } from '../tags/gameplayTags';
+import { compileCombatBuffDefinitions } from './combatBuffDefinitions';
 import {
   COMBAT_BUFF_DEFINITIONS_SCHEMA_VERSION,
-  compileCombatBuffDefinitions,
   type CombatBuffDefinitionsDocument,
-} from './combatBuffDefinitions';
+} from '../../../../packages/game-data-contract/src/buffs';
 
 type Attribute = 'attack';
 
@@ -300,165 +300,6 @@ describe('compileCombatBuffDefinitions', () => {
     container.add(definition, 'operator');
 
     expect(attributes.get('attack')).toBe(150);
-  });
-
-  it('parses and compiles conditional blackboard-backed damage modifiers', () => {
-    const slowTagId = 'Skill/Character/Common/Affixes/Slow';
-    const document = defineDocument({
-      schemaVersion: COMBAT_BUFF_DEFINITIONS_SCHEMA_VERSION,
-      revision: 'test-damage-modifier',
-      buffs: [
-        {
-          id: 'buff.fluorite.talent-1',
-          stackingType: 'unique',
-          blackboard: { dmg_up: 0.2 },
-          damageModifiers: [
-            {
-              enabledSide: 'attacker',
-              condition: {
-                kind: 'entityTagMatch',
-                target: 'enemy',
-                tagQueryType: 'hasAny',
-                tags: [slowTagId],
-              },
-              processors: [
-                {
-                  kind: 'damageScale',
-                  side: 'attacker',
-                  zone: 'normal',
-                  addition: { blackboardKey: 'dmg_up' },
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    });
-    const index = compileCombatBuffDefinitions<Attribute>(document, {
-      emitElementalInflictionStarted: vi.fn(),
-    });
-    const definition = index.get('buff.fluorite.talent-1');
-    if (definition === undefined) throw new Error('compiled test buff is missing');
-
-    expect(definition.damageModifiers).toEqual([
-      {
-        enabledSide: 'attacker',
-        condition: {
-          kind: 'entityTagMatch',
-          target: 'enemy',
-          tagQueryType: 'hasAny',
-          tags: [slowTagId],
-        },
-        processors: [
-          {
-            kind: 'damageScale',
-            side: 'attacker',
-            zone: 'normal',
-            addition: { blackboardKey: 'dmg_up' },
-          },
-        ],
-      },
-    ]);
-  });
-
-  it('parses composite damage-event and Buff-blackboard modifier conditions', () => {
-    const document = defineDocument({
-      schemaVersion: COMBAT_BUFF_DEFINITIONS_SCHEMA_VERSION,
-      revision: 'test-composite-damage-modifier',
-      buffs: [
-        {
-          id: 'buff.last-rite.skill',
-          stackingType: 'unique',
-          blackboard: { potential_1: 1, atk_up: 0.2 },
-          damageModifiers: [
-            {
-              enabledSide: 'attacker',
-              condition: {
-                kind: 'all',
-                conditions: [
-                  { kind: 'casterControlled' },
-                  {
-                    kind: 'eventDamageTagsMatch',
-                    match: 'hasAny',
-                    tags: ['normalAttackLastCombo'],
-                  },
-                  {
-                    kind: 'buffBlackboardCompare',
-                    left: { blackboardKey: 'potential_1' },
-                    operator: 'equal',
-                    right: 1,
-                  },
-                ],
-              },
-              processors: [
-                {
-                  kind: 'damageScale',
-                  side: 'attacker',
-                  zone: 'normal',
-                  addition: { blackboardKey: 'atk_up' },
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    });
-
-    expect(document.buffs[0]?.damageModifiers?.[0]?.condition).toMatchObject({
-      kind: 'all',
-      conditions: [
-        { kind: 'casterControlled' },
-        { kind: 'eventDamageTagsMatch', tags: ['normalAttackLastCombo'] },
-        { kind: 'buffBlackboardCompare', operator: 'equal' },
-      ],
-    });
-  });
-
-  it('parses a dynamic instant attribute damage processor', () => {
-    const document = defineDocument({
-      schemaVersion: COMBAT_BUFF_DEFINITIONS_SCHEMA_VERSION,
-      revision: 'test-instant-damage-attribute',
-      buffs: [
-        {
-          id: 'buff.rossi.ultimate-critical-damage',
-          stackingType: 'refresh',
-          blackboard: { critical_damage_up_to_bleed: 0.2 },
-          damageModifiers: [
-            {
-              enabledSide: 'attacker',
-              condition: {
-                kind: 'eventDamageTagsMatch',
-                match: 'hasAll',
-                tags: ['ultimateSkill'],
-              },
-              processors: [
-                {
-                  kind: 'instantAttribute',
-                  targetSide: 'attacker',
-                  attribute: 'criticalDamageIncrease',
-                  values: {
-                    slot: 'baseAddition',
-                    value: { blackboardKey: 'critical_damage_up_to_bleed' },
-                  },
-                  attributeTiming: 'runtime',
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    });
-
-    expect(document.buffs[0]?.damageModifiers?.[0]?.processors[0]).toEqual({
-      kind: 'instantAttribute',
-      targetSide: 'attacker',
-      attribute: 'criticalDamageIncrease',
-      values: {
-        slot: 'baseAddition',
-        value: { blackboardKey: 'critical_damage_up_to_bleed' },
-      },
-      attributeTiming: 'runtime',
-    });
   });
 
   it('refreshes registered attribute modifiers from the current buff blackboard on trigger', () => {

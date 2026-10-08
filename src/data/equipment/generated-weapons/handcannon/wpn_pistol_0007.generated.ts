@@ -70,10 +70,16 @@ const definition = {
             conditional_2: {
               action: {
                 kind: 'conditional',
-                parameters: { condition: { kind: 'eventSkillTypeIn', skillTypes: ['comboSkill'] } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: { kind: 'eventSkillTypeIn', skillTypes: ['comboSkill'] },
             },
           },
         },
@@ -135,13 +141,7 @@ const definition = {
       damageModifiers: [
         {
           enabledSide: 'attacker',
-          condition: {
-            kind: 'all',
-            conditions: [
-              { kind: 'eventDamageTypesMatch', damageTypes: ['cryo', 'nature'] },
-              { kind: 'eventDamageTagsMatch', match: 'hasAny', tags: ['normalSkill'] },
-            ],
-          },
+          condition: { $sequence: 'conditional_2' },
           processors: [
             {
               kind: 'damageScale',
@@ -152,7 +152,39 @@ const definition = {
           ],
         },
       ],
-      actionGraph: { main: { nodes: {} }, macros: {} },
+      actionGraph: {
+        main: {
+          nodes: {
+            conditional_1: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+                whenTrue: { $sequence: null },
+              },
+              next: null,
+            },
+            conditional_2: {
+              action: {
+                kind: 'conditional',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+                whenTrue: { $sequence: 'conditional_1' },
+              },
+              next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: { kind: 'eventDamageTagsMatch', match: 'hasAny', tags: ['normalSkill'] },
+            },
+            data_2: {
+              type: 'boolean',
+              expression: { kind: 'eventDamageTypeIn', damageTypes: ['cryo', 'nature'] },
+            },
+          },
+        },
+        macros: {},
+      },
     },
   },
 } as const satisfies WeaponDefinition;

@@ -1,16 +1,16 @@
+import type { CompiledGraphStepForKind, CompiledValueInput } from './compiledGraphData.ts';
 /** 每个节点只编译一次；控制出口与嵌套宿主保留程序引用，不构造序列树。 */
 import type {
   ActionGraphDefinition,
   ActionGraphReference,
   ActionGraphResourceDefinition,
-  ActionGraphStepForKind,
 } from '../../../packages/game-data-contract/src/actionGraph';
 import {
   validateActionGraph,
   validateActionGraphResource,
 } from '../action-graph/actionGraphValidation';
-import type { ActionValueOperand } from '../../../packages/game-data-contract/src/conditions';
-import { resolveGraphData } from '../action-graph/actionGraphData';
+
+import { compileGraphData, type CompiledDataNode, type CompiledInputs } from './compiledGraphData';
 import { compileLeafAction, isLeafCombatStep, type ResolvedLeafAction } from './compileLeafAction';
 import { compileActionScopeParameters } from './compileActionValues';
 import { compileNestedAction, isNestedAction, type NestedActionKind } from './compileNestedAction';
@@ -23,7 +23,7 @@ import type {
 import { createProgramDefinitionCompiler } from './compileProgramDefinitions';
 
 export type CompiledGraphScope = Omit<
-  ActionGraphStepForKind<'withActionBlackboardScope'>,
+  CompiledGraphStepForKind<'withActionBlackboardScope'>,
   'parameters'
 > & {
   readonly parameters: ReturnType<typeof compileActionScopeParameters>;
@@ -36,7 +36,7 @@ export interface CompiledGraphMacroCall {
   readonly kind: 'callMacro';
   readonly entry: string | null;
   /** 调用点实参随编译节点照传；代入在使用点求值，不进入运行状态。 */
-  readonly arguments?: Readonly<Record<string, ActionValueOperand>>;
+  readonly arguments?: Readonly<Record<string, CompiledValueInput>>;
   /** 宏图限定节点 ID → 调用方图限定原节点 ID；保留提取前的动作身份。 */
   readonly nodeBindings?: Readonly<Record<string, string>>;
   readonly key?: never;
@@ -48,7 +48,7 @@ export interface CompiledActionGraphNode {
     | { readonly kind: 'callResource'; readonly entry: CompiledGraphEntry; readonly key?: never }
     | CompiledGraphOperation
     | CompiledGraphMacroCall
-    | ActionGraphStepForKind<
+    | CompiledGraphStepForKind<
         | 'conditional'
         | 'switch'
         | 'once'
@@ -66,6 +66,7 @@ export interface CompiledActionGraph {
   /** 由定义仓库提供的修订身份；修改程序后必须更换，不能只用技能名称。 */
   readonly revision: string;
   readonly nodes: ReadonlyMap<string, CompiledActionGraphNode>;
+  readonly dataNodes: Readonly<Record<string, CompiledDataNode>>;
   /** 调用位置的操作身份目录，随编译程序共享；不进入战斗切面，不保存执行状态。 */
   readonly operationBindings: Map<string, Map<string, CompiledGraphOperation>>;
   readonly abilityEntityDefinitions: Readonly<Record<string, ResolvedAbilityEntityDefinition>>;
@@ -93,6 +94,7 @@ export function getCompiledGraphLocation(program: CompiledActionGraph, nodeId: s
 
 export interface ActionGraphCompilation {
   readonly program: CompiledActionGraph;
+  compileInputs<T>(value: T): CompiledInputs<T>;
   compileEntry(entry: ActionGraphReference, callSite: string): CompiledGraphEntry;
   bindEntityDefinition(
     id: string,
@@ -118,13 +120,21 @@ function bindResourceGraphs(resource: ActionGraphResourceDefinition) {
     return entry === null ? null : key(macroId, entry);
   };
   const nodes: Record<string, ActionGraphDefinition['nodes'][string]> = {};
+  const dataNodes: Record<string, NonNullable<ActionGraphDefinition['dataNodes']>[string]> = {};
   const add = (graphId: string | null, graph: ActionGraphDefinition) => {
-    graph = resolveGraphData(graph);
     const reference = (value: unknown): unknown => {
       if (Array.isArray(value)) return value.map(reference);
       if (value === null || typeof value !== 'object') return value;
       // 独立资源的入口和节点属于其自己的命名空间。
       if ('actionGraph' in value) return value;
+      if (
+        'kind' in value &&
+        'nodeId' in value &&
+        (value.kind === 'valueNode' ||
+          value.kind === 'conditionNode' ||
+          value.kind === 'stringNode')
+      )
+        return { ...value, nodeId: key(graphId, String(value.nodeId)) };
       if (Object.hasOwn(value, '$sequence')) {
         const entry = (value as ActionGraphReference).$sequence;
         return { $sequence: entry === null ? null : key(graphId, entry) };
@@ -138,6 +148,8 @@ function bindResourceGraphs(resource: ActionGraphResourceDefinition) {
         ]),
       );
     };
+    for (const [id, node] of Object.entries(graph.dataNodes ?? {}))
+      dataNodes[key(graphId, id)] = reference(node) as typeof node;
     for (const [id, node] of Object.entries(graph.nodes)) {
       const action = reference(node.action) as typeof node.action;
       nodes[key(graphId, id)] = {
@@ -160,7 +172,7 @@ function bindResourceGraphs(resource: ActionGraphResourceDefinition) {
   add(null, resource.main);
   for (const [id, macro] of Object.entries(resource.macros)) add(id, macro.graph);
   return {
-    graph: { nodes } as ActionGraphDefinition,
+    graph: { nodes, dataNodes } satisfies ActionGraphDefinition,
     entry: (entry: string | null) => (entry === null ? null : key(null, entry)),
     macroEntry,
     macroParameters: (macroId: string): readonly string[] =>
@@ -173,8 +185,16 @@ export function prepareActionGraphDefinition(
   definition: ActionGraphDefinition | ActionGraphResourceDefinition,
 ) {
   const resource = 'main' in definition ? bindResourceGraphs(definition) : undefined;
-  const graph = resource?.graph ?? resolveGraphData(definition as ActionGraphDefinition);
-  return { resource, graph, dependencies: validateActionGraph(graph) };
+  const graph = resource?.graph ?? (definition as ActionGraphDefinition);
+  const dependencies = validateActionGraph(graph);
+  const compiled = compileGraphData(graph);
+  return {
+    resource,
+    graph: compiled,
+    dependencies,
+    bindInputs: <T>(value: T) =>
+      compiled.bind(value, resource ? id => JSON.stringify([null, id]) : undefined),
+  };
 }
 
 /** 同一来源图与等级的一份编译目录；入口按需加入，共享节点只解析一次。 */
@@ -190,7 +210,7 @@ export function createActionGraphCompilation(
   if (!revision) throw new Error('action graph requires a revision');
   if (!Number.isInteger(skillLevel) || skillLevel < 0)
     throw new Error('action graph requires a non-negative integer skill level');
-  const { resource, graph, dependencies } = prepare(definition);
+  const { resource, graph, dependencies, bindInputs } = prepare(definition);
   const pending = new Set<string>();
   const nodes = new Map<string, CompiledActionGraphNode>();
   const entities: Record<string, ResolvedAbilityEntityDefinition> = {};
@@ -198,6 +218,7 @@ export function createActionGraphCompilation(
     skillLevel,
     revision: JSON.stringify([revision, skillLevel]),
     nodes,
+    dataNodes: graph.dataNodes,
     operationBindings: new Map(),
     abilityEntityDefinitions: entities,
   };
@@ -350,6 +371,7 @@ export function createActionGraphCompilation(
   };
   return {
     program,
+    compileInputs: bindInputs,
     compileEntry(entry, callSite) {
       const bound = bindEntry(entry, callSite);
       flush();

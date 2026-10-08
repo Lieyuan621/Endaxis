@@ -1,3 +1,5 @@
+import { numberInput } from '../../../test/compiledGraphInputs';
+import { extractResourceDataNodes } from '../../../../tools/game-data-compiler/src/compiler/extractGraphDataNodes';
 import bedazzlingNightDebut from '../../../data/equipment/generated-weapons/polearm/wpn_lance_0014.generated';
 import {
   projectBuffTimelineViz,
@@ -636,7 +638,7 @@ import {
 } from '../attributes/combatAttributes';
 import { BuffDefinitionOperationTarget } from '../buffs/buffDefinitionOperationTarget';
 import { BuffOperationExecutor } from '../buffs/buffOperationExecutor';
-import type { CombatBuffDefinitionsDocument } from '../buffs/combatBuffDefinitions';
+import type { CombatBuffDefinitionsDocument } from '../../../../packages/game-data-contract/src/buffs';
 import { POISE_BREAK_BUFF_ID, FINISHER_ELIGIBILITY_BUFF_ID } from '../buffs/poiseBreakBuffRuntime';
 import { CombatSemanticEventRuntime } from '../events/combatSemanticEventRuntime';
 import { EventContextConditionExecutor } from '../events/eventContextConditionExecutor';
@@ -660,8 +662,9 @@ const compileGraphEntry = (
   revision: string,
   entry: string | null,
   nodes: Record<string, ActionGraphNode>,
+  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => ({
-  graph: createActionGraphCompilation({ nodes }, 1, revision).compileAll(),
+  graph: createActionGraphCompilation({ nodes, dataNodes }, 1, revision).compileAll(),
   entry,
   callSite: revision,
 });
@@ -669,6 +672,7 @@ const compileGraphEntry = (
 const chainEntry = (
   revision: string,
   actions: readonly ActionGraphStep[],
+  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => {
   const nodes: Record<string, ActionGraphNode> = {};
   actions.forEach((action, index) => {
@@ -677,7 +681,7 @@ const chainEntry = (
       next: index + 1 < actions.length ? `step-${index + 1}` : null,
     };
   });
-  return compileGraphEntry(revision, actions.length === 0 ? null : 'step-0', nodes);
+  return compileGraphEntry(revision, actions.length === 0 ? null : 'step-0', nodes, dataNodes);
 };
 
 /** 工具编译器直接输出图定义和入口引用；测试编译同一资源图，不自写转换。 */
@@ -685,7 +689,11 @@ const compileDomainSequence = (
   revision: string,
   compiled: ReturnType<typeof compilePendingComboConditionSource>,
 ): ResolvedActionSequence => {
-  const compilation = createActionGraphCompilation(compiled.actionGraph, 1, revision);
+  const compilation = createActionGraphCompilation(
+    extractResourceDataNodes(compiled.actionGraph),
+    1,
+    revision,
+  );
   const entry = compilation.compileEntry(compiled.sequence, revision);
   compilation.compileAll();
   return entry;
@@ -1486,23 +1494,27 @@ it('技能编译保留即时 Atk 修正，只影响当前命中且每次读取�
   const environment = createEnvironment();
   const executor = environment.runtimeOptions.createOperationExecutor(context);
   const blackboard = new ActionBlackboard({ bonus: 0.5 });
-  const compiled = chainEntry('instant-atk-modifier', [
-    {
-      kind: 'dealDamage',
-      parameters: {
-        ...damageStep.parameters,
-        instantAttributeModifiers: [
-          {
-            targetSide: 'attacker',
-            attribute: 'Atk',
-            slot: 'baseMultiplier',
-            value: { kind: 'blackboard', key: 'bonus' },
-            attributeTiming: 'runtime',
-          },
-        ],
+  const compiled = chainEntry(
+    'instant-atk-modifier',
+    [
+      {
+        kind: 'dealDamage',
+        parameters: {
+          ...damageStep.parameters,
+          instantAttributeModifiers: [
+            {
+              targetSide: 'attacker',
+              attribute: 'Atk',
+              slot: 'baseMultiplier',
+              value: { kind: 'valueNode', nodeId: 'input_1' },
+              attributeTiming: 'runtime',
+            },
+          ],
+        },
       },
-    },
-  ]);
+    ],
+    { input_1: { type: 'number', expression: { kind: 'blackboard', key: 'bonus' } } },
+  );
   const runtime = new CombatActionSequenceRuntime(executor, { blackboard });
   const sequence = runtime.createSequence(compiled);
   sequence.executeInstant({});
@@ -1917,22 +1929,32 @@ describe('StandardPlayerDamageEnvironment', () => {
         entityBlackboard: entity,
         initialValues: {},
         operations,
-        sequence: compileGraphEntry('infliction-phase-combo', 'step-0', {
-          'step-0': {
-            action: {
-              kind: 'conditional',
-              parameters: {
-                condition: {
-                  kind: 'eventInflictionElementIn',
-                  elements: [element],
-                  outputKey: 'EntityBB_type',
+        sequence: compileGraphEntry(
+          'infliction-phase-combo',
+          'step-0',
+          {
+            'step-0': {
+              action: {
+                kind: 'conditional',
+                parameters: {
+                  condition: { kind: 'conditionNode', nodeId: 'input_1' },
                 },
+                whenTrue: { $sequence: null },
               },
-              whenTrue: { $sequence: null },
+              next: null,
             },
-            next: null,
           },
-        }),
+          {
+            input_1: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventInflictionElementIn',
+                elements: [element],
+                outputKey: 'EntityBB_type',
+              },
+            },
+          },
+        ),
         isOwnerAlive: () => true,
         isOwnerSilenced: () => false,
         currentComboCooldown: () => ({ oneReady: true, maxPassedTime: 0, startCdFrame: 0 }),
@@ -2095,8 +2117,8 @@ describe('StandardPlayerDamageEnvironment', () => {
       attribute: { kind: 'secondary' },
       stage: 'finalNonConverted',
       useFloor: false,
-      divisor: { kind: 'blackboard', key: 'unused-divisor' },
-      multiplier: { kind: 'blackboard', key: 'sub_ratio' },
+      divisor: numberInput({ kind: 'blackboard', key: 'unused-divisor' }),
+      multiplier: numberInput({ kind: 'blackboard', key: 'sub_ratio' }),
       base: { kind: 'constant', value: 1 },
       targetKey: 'atb_up',
     } as const;
@@ -2128,6 +2150,7 @@ describe('StandardPlayerDamageEnvironment', () => {
   it('applies a Buff blackboard damage bonus only while the target entity tag matches', () => {
     const environment = createEnvironment();
     const context = createContext();
+    bindBattleWithoutProjectiles(environment, context);
     const executor = environment.runtimeOptions.createOperationExecutor(context);
     const operatorBuffs = environment.runtimeOptions.createOperatorBuffRuntime?.(
       'operator',
@@ -2136,6 +2159,15 @@ describe('StandardPlayerDamageEnvironment', () => {
     if (!(operatorBuffs instanceof BuffDefinitionOperationTarget)) {
       throw new Error('operator Buff runtime is unavailable');
     }
+    operatorBuffs.configureLifecycleOperations(
+      () =>
+        new BuffOperationExecutor({
+          sourceId: 'operator',
+          resolveTarget: target =>
+            target === 'enemy' ? environment.runtimeOptions.enemyBuffRuntime! : operatorBuffs,
+          delegate: executor,
+        }),
+    );
     operatorBuffs.apply({
       buffId: 'buff.fluorite.talent-1',
       sourceId: 'operator',
@@ -2146,12 +2178,31 @@ describe('StandardPlayerDamageEnvironment', () => {
         damageModifiers: [
           {
             enabledSide: 'attacker',
-            condition: {
-              kind: 'entityTagMatch',
-              target: 'enemy',
-              tagQueryType: 'hasAny',
-              tags: ['Skill/Character/Common/Affixes/Slow'],
-            },
+            condition: compileGraphEntry(
+              'modifier-tag',
+              'guard',
+              {
+                guard: {
+                  action: {
+                    kind: 'conditional',
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'check' } },
+                    whenTrue: { $sequence: null },
+                  },
+                  next: null,
+                },
+              },
+              {
+                check: {
+                  type: 'boolean',
+                  expression: {
+                    kind: 'entityTagMatch',
+                    target: 'enemy',
+                    tagQueryType: 'hasAny',
+                    tags: ['Skill/Character/Common/Affixes/Slow'],
+                  },
+                },
+              },
+            ),
             processors: [
               {
                 kind: 'damageScale',
@@ -2216,28 +2267,39 @@ describe('StandardPlayerDamageEnvironment', () => {
         damageModifiers: [
           {
             enabledSide: 'attacker',
-            conditionProgram: compileGraphEntry('affixed-modifier-condition', 'step-0', {
-              'step-0': {
-                action: {
-                  kind: 'conditional',
-                  parameters: { condition: { kind: 'eventSkillCastMatchesBuffSource' } },
-                  whenTrue: { $sequence: 'scale-imbue' },
-                },
-                next: null,
-              },
-              'scale-imbue': {
-                action: {
-                  kind: 'calculateActionValue',
-                  parameters: {
-                    key: 'real_imbue_scale',
-                    operation: 'multiply',
-                    left: { kind: 'blackboard', key: 'imbue_scale' },
-                    right: { kind: 'constant', value: 1.5 },
+            condition: compileGraphEntry(
+              'affixed-modifier-condition',
+              'step-0',
+              {
+                'step-0': {
+                  action: {
+                    kind: 'conditional',
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'input_1' } },
+                    whenTrue: { $sequence: 'scale-imbue' },
                   },
+                  next: null,
                 },
-                next: null,
+                'scale-imbue': {
+                  action: {
+                    kind: 'calculateActionValue',
+                    parameters: {
+                      key: 'real_imbue_scale',
+                      operation: 'multiply',
+                      left: { kind: 'valueNode', nodeId: 'input_2' },
+                      right: { kind: 'constant', value: 1.5 },
+                    },
+                  },
+                  next: null,
+                },
               },
-            }),
+              {
+                input_1: {
+                  type: 'boolean',
+                  expression: { kind: 'eventSkillCastMatchesBuffSource' },
+                },
+                input_2: { type: 'number', expression: { kind: 'blackboard', key: 'imbue_scale' } },
+              },
+            ),
             processors: [
               {
                 kind: 'damageScale',
@@ -2270,11 +2332,13 @@ describe('StandardPlayerDamageEnvironment', () => {
   it('filters defender vulnerability by the current damage type', () => {
     const environment = createEnvironment();
     const context = createContext();
+    bindBattleWithoutProjectiles(environment, context);
     const executor = environment.runtimeOptions.createOperationExecutor(context);
     const enemyBuffs = environment.runtimeOptions.enemyBuffRuntime;
     if (!(enemyBuffs instanceof BuffDefinitionOperationTarget)) {
       throw new Error('enemy Buff runtime is unavailable');
     }
+    enemyBuffs.configureLifecycleOperations(() => new EventContextConditionExecutor(executor));
     enemyBuffs.apply({
       buffId: 'buff.spell-vulnerable',
       sourceId: 'operator',
@@ -2284,7 +2348,26 @@ describe('StandardPlayerDamageEnvironment', () => {
         damageModifiers: [
           {
             enabledSide: 'defender',
-            condition: { kind: 'eventDamageTypesMatch', damageTypes: ['electric'] },
+            condition: compileGraphEntry(
+              'modifier-type',
+              'guard',
+              {
+                guard: {
+                  action: {
+                    kind: 'conditional',
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'check' } },
+                    whenTrue: { $sequence: null },
+                  },
+                  next: null,
+                },
+              },
+              {
+                check: {
+                  type: 'boolean',
+                  expression: { kind: 'eventDamageTypeIn', damageTypes: ['electric'] },
+                },
+              },
+            ),
             processors: [
               { kind: 'damageScale', side: 'defender', zone: 'vulnerable', addition: 0.3 },
             ],
@@ -2317,6 +2400,7 @@ describe('StandardPlayerDamageEnvironment', () => {
   it('evaluates attached-Buff damage bonuses against the enemy current health ratio', () => {
     const environment = createEnvironment();
     const context = createContext();
+    bindBattleWithoutProjectiles(environment, context);
     const executor = environment.runtimeOptions.createOperationExecutor(context);
     const operatorBuffs = environment.runtimeOptions.createOperatorBuffRuntime?.(
       'operator',
@@ -2325,6 +2409,13 @@ describe('StandardPlayerDamageEnvironment', () => {
     if (!(operatorBuffs instanceof BuffDefinitionOperationTarget)) {
       throw new Error('operator Buff runtime is unavailable');
     }
+    operatorBuffs.configureLifecycleOperations(
+      () =>
+        new CombatVitalsConditionExecutor({
+          resolveTarget: target => environment.runtimeOptions.resolveVitals!(target, 'operator'),
+          delegate: executor,
+        }),
+    );
     operatorBuffs.apply({
       buffId: 'buff.chen.potential-1',
       sourceId: 'operator',
@@ -2335,13 +2426,33 @@ describe('StandardPlayerDamageEnvironment', () => {
         damageModifiers: [
           {
             enabledSide: 'attacker',
-            condition: {
-              kind: 'targetHealthCompare',
-              target: 'enemy',
-              valueType: 'ratio',
-              operator: 'less',
-              value: { blackboardKey: 'hp_remain' },
-            },
+            condition: compileGraphEntry(
+              'modifier-health',
+              'guard',
+              {
+                guard: {
+                  action: {
+                    kind: 'conditional',
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'check' } },
+                    whenTrue: { $sequence: null },
+                  },
+                  next: null,
+                },
+              },
+              {
+                check: {
+                  type: 'boolean',
+                  expression: {
+                    kind: 'healthCompare',
+                    target: 'enemy',
+                    valueType: 'ratio',
+                    operator: 'less',
+                    value: { kind: 'valueNode', nodeId: 'threshold' },
+                  },
+                },
+                threshold: { type: 'number', expression: { kind: 'blackboard', key: 'hp_remain' } },
+              },
+            ),
             processors: [
               {
                 kind: 'damageScale',
@@ -3603,22 +3714,32 @@ describe('StandardPlayerDamageEnvironment', () => {
       sourceId: 'operator',
       entityBlackboard: new ActionBlackboard(),
       initialValues: null,
-      sequence: compileGraphEntry('take-damage-combo', 'step-0', {
-        'step-0': {
-          action: {
-            kind: 'conditional',
-            parameters: {
-              condition: {
-                kind: 'eventDamageTagsMatch',
-                match: 'hasAny',
-                tags: ['cryoBurst'],
+      sequence: compileGraphEntry(
+        'take-damage-combo',
+        'step-0',
+        {
+          'step-0': {
+            action: {
+              kind: 'conditional',
+              parameters: {
+                condition: { kind: 'conditionNode', nodeId: 'input_1' },
               },
+              whenTrue: { $sequence: null },
             },
-            whenTrue: { $sequence: null },
+            next: null,
           },
-          next: null,
         },
-      }),
+        {
+          input_1: {
+            type: 'boolean',
+            expression: {
+              kind: 'eventDamageTagsMatch',
+              match: 'hasAny',
+              tags: ['cryoBurst'],
+            },
+          },
+        },
+      ),
       operations: new EventContextConditionExecutor({
         execute: () => {
           throw new Error('unexpected combo condition operation');
@@ -3659,16 +3780,21 @@ describe('StandardPlayerDamageEnvironment', () => {
       sourceId: 'operator',
       entityBlackboard: new ActionBlackboard(),
       initialValues: null,
-      sequence: compileGraphEntry('before-take-damage-combo', 'step-0', {
-        'step-0': {
-          action: {
-            kind: 'conditional',
-            parameters: { condition: { kind: 'eventSourceControlled' } },
-            whenTrue: { $sequence: null },
+      sequence: compileGraphEntry(
+        'before-take-damage-combo',
+        'step-0',
+        {
+          'step-0': {
+            action: {
+              kind: 'conditional',
+              parameters: { condition: { kind: 'conditionNode', nodeId: 'input_1' } },
+              whenTrue: { $sequence: null },
+            },
+            next: null,
           },
-          next: null,
         },
-      }),
+        { input_1: { type: 'boolean', expression: { kind: 'eventSourceControlled' } } },
+      ),
       operations: new EventContextConditionExecutor(
         {
           execute: () => {
@@ -3719,22 +3845,32 @@ describe('StandardPlayerDamageEnvironment', () => {
       sourceId: 'operator',
       entityBlackboard: new ActionBlackboard(),
       initialValues: null,
-      sequence: compileGraphEntry('added-buff-combo', 'step-0', {
-        'step-0': {
-          action: {
-            kind: 'conditional',
-            parameters: {
-              condition: {
-                kind: 'eventBuffTagsMatch',
-                match: 'hasAny',
-                buffTags: ['Skill/Character/Common/SpellBurst'],
+      sequence: compileGraphEntry(
+        'added-buff-combo',
+        'step-0',
+        {
+          'step-0': {
+            action: {
+              kind: 'conditional',
+              parameters: {
+                condition: { kind: 'conditionNode', nodeId: 'input_1' },
               },
+              whenTrue: { $sequence: null },
             },
-            whenTrue: { $sequence: null },
+            next: null,
           },
-          next: null,
         },
-      }),
+        {
+          input_1: {
+            type: 'boolean',
+            expression: {
+              kind: 'eventBuffTagsMatch',
+              match: 'hasAny',
+              buffTags: ['Skill/Character/Common/SpellBurst'],
+            },
+          },
+        },
+      ),
       operations: new EventContextConditionExecutor({
         execute: () => {
           throw new Error('unexpected combo condition operation');

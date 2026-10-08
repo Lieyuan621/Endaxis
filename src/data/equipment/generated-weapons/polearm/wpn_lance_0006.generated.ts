@@ -67,7 +67,7 @@ const definition = {
             conditional_2: {
               action: {
                 kind: 'conditional',
-                parameters: { condition: { kind: 'eventSkillTypeIn', skillTypes: ['comboSkill'] } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
                 whenTrue: { $sequence: 'applyBuff_1' },
               },
               next: null,
@@ -91,8 +91,8 @@ const definition = {
                 parameters: {
                   key: 'pulse_dmg',
                   operation: 'multiply',
-                  left: { kind: 'blackboard', key: 'pulse_dmg_up' },
-                  right: { kind: 'blackboard', key: 'count' },
+                  left: { kind: 'valueNode', nodeId: 'data_2' },
+                  right: { kind: 'valueNode', nodeId: 'data_3' },
                 },
               },
               next: 'applyBuff_3',
@@ -111,12 +111,22 @@ const definition = {
             conditional_6: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: { kind: 'eventSkillTypeIn', skillTypes: ['battleSkill'] },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
                 whenTrue: { $sequence: 'readBuffStackCount_5' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: { kind: 'eventSkillTypeIn', skillTypes: ['comboSkill'] },
+            },
+            data_2: { type: 'number', expression: { kind: 'blackboard', key: 'pulse_dmg_up' } },
+            data_3: { type: 'number', expression: { kind: 'blackboard', key: 'count' } },
+            data_4: {
+              type: 'boolean',
+              expression: { kind: 'eventSkillTypeIn', skillTypes: ['battleSkill'] },
             },
           },
         },

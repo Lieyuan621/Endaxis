@@ -172,7 +172,9 @@ export function validateActionValueOperand(
   const record = asRecord(value, path, out);
   if (record === null) return;
   const kind = requireString(record, 'kind', path, out);
-  if (kind === 'blackboard') {
+  if (kind === 'valueNode') {
+    requireString(record, 'nodeId', path, out);
+  } else if (kind === 'blackboard') {
     requireString(record, 'key', path, out);
     if (record.fallback !== undefined) requireFiniteNumber(record, 'fallback', path, out);
   } else if (kind === 'constant') {
@@ -196,7 +198,11 @@ export function validateActionStringOperand(
   }
   const record = asRecord(value, path, out);
   if (record === null) return;
-  // 图引用必须先由所属图绑定；直接出现于无图上下文的操作数不能静默接受。
+  if (record.kind === 'stringNode') {
+    requireString(record, 'nodeId', path, out);
+    return;
+  }
+  // 字符串数据节点中的变量读取。
   requireString(record, 'blackboardKey', path, out);
   for (const field of Object.keys(record))
     if (field !== 'blackboardKey') push(out, `${path}.${field}`, 'unexpected field');

@@ -1,3 +1,5 @@
+import { conditionInputExpression } from '../../compiler/compiledGraphData';
+import type { CompiledCondition } from '../../compiler/compiledGraphData';
 import { CombatActionEventListener } from './combatActionEventListener';
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
 import type {
@@ -64,10 +66,7 @@ abstract class StatelessCombatStep extends CombatStep {
 
 export interface CombatActionSequenceRuntimeHooks {
   readonly stepReached?: (step: ResolvedCombatStep) => void;
-  readonly conditionEvaluated?: (
-    condition: ResolvedCombatStepForKind<'conditional'>['parameters']['condition'],
-    passed: boolean,
-  ) => void;
+  readonly conditionEvaluated?: (condition: CompiledCondition, passed: boolean) => void;
 }
 
 class OperationStep extends StatelessCombatStep {
@@ -471,7 +470,8 @@ export class CombatActionSequenceRuntime {
       targets: parameters => this.resolveLoopTargets(parameters, operationContext),
       bindOperation: action => this.#createLeafStep(action, operationContext),
       canExecute: () => operationContext.canExecuteAction?.() !== false,
-      evaluate: condition => {
+      evaluate: input => {
+        const condition = conditionInputExpression(input);
         const passed = this.operations.evaluate(condition, operationContext);
         trace?.recorder.observe('condition', condition, passed);
         this.hooks.conditionEvaluated?.(condition, passed);

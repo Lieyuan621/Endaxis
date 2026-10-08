@@ -1,3 +1,4 @@
+import { EventContextConditionExecutor } from '../core/combat/events/eventContextConditionExecutor';
 /**
  * 把当前版本的严格元素 Buff 定义装配成单敌人运行时。
  * 仅供元素 Buff 和伤害集成测试装配夹具；正式模拟通过标准战斗环境装配。
@@ -45,6 +46,15 @@ export function createEnemyElementalBuffRuntime<Key extends string>(
   options: CreateEnemyElementalBuffRuntimeOptions<Key>,
 ): ElementalBuffRuntime<Key> {
   const index = compileCombatBuffDefinitions<Key>(elementalAttachments, {
+    resolveConditionOperations: () =>
+      new EventContextConditionExecutor({
+        execute: () => {
+          throw new Error('unexpected action');
+        },
+        evaluate: () => {
+          throw new Error('unexpected condition');
+        },
+      }),
     emitElementalInflictionStarted: payload => options.emitElementalInflictionStarted(payload),
     ...(options.onSpellBurstTriggered === undefined
       ? {}

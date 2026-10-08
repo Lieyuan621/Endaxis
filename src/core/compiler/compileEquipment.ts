@@ -1,3 +1,5 @@
+import type { CombatCondition } from '../../../packages/game-data-contract/src/conditions';
+import type { CompiledCondition } from './compiledGraphData.ts';
 /**
  * 武器词条、装备词条与套装贡献进入面板/战斗装配层前的编译边界。
  * 这里只解析等级值并保留来源，不负责计算面板，也不把贡献装进可变战斗状态。
@@ -19,7 +21,6 @@ import type {
 } from '../../../packages/game-data-contract/src/actionGraph';
 import type { ActionGraphDefinitionRepository } from './actionGraphDefinitionRepository';
 import type {
-  CombatCondition,
   CombatEventTrigger,
   DamageType,
   OperatorBuffDefinitions,
@@ -72,7 +73,7 @@ interface CompiledEquipmentEventHandlerBase {
   readonly key: string;
   /** 编译器始终写入；可选只为兼容外部测试/装配端口的旧记录。 */
   readonly priority?: number;
-  readonly condition?: CombatCondition;
+  readonly condition?: CompiledCondition;
   readonly sequence: ResolvedActionSequence;
 }
 
@@ -123,6 +124,10 @@ function graphPrograms(
   repository: ActionGraphDefinitionRepository,
 ) {
   return {
+    condition: (condition: CombatCondition, level: number) => {
+      if (graph === undefined) throw new Error('equipment condition has no owned action graph');
+      return repository.compile(graph, level).compileInputs(condition);
+    },
     sequence: (entry: ActionGraphReference, level: number, path: string) => {
       if (graph === undefined)
         throw new Error(`${path}: equipment program has no owned action graph`);
@@ -197,7 +202,9 @@ function compileEventHandler(
       ? { abilityEvent: handler.abilityEvent }
       : { event: handler.event }),
     priority,
-    ...(handler.condition === undefined ? {} : { condition: handler.condition }),
+    ...(handler.condition === undefined
+      ? {}
+      : { condition: programs.condition(handler.condition, level) }),
     sequence: programs.sequence(handler.sequence, level, `${path}.sequence`),
   };
 }

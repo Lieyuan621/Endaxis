@@ -1,10 +1,12 @@
+import { valueInputBlackboardKey } from '../../compiler/compiledGraphData';
+import type { CompiledValueInput } from '../../compiler/compiledGraphData.ts';
 /**
  * 将现有黑板对象调用接到纯数据黑板算法。共享实体板在数据中保持同一引用。
  * 此绑定不提供整场恢复入口；对象身份缓存仍需随技能宿主迁移。
  */
 export { type ActionBlackboardValue } from '../../../../packages/game-data-contract/src/primitives.ts';
 import type { ActionBlackboardValue } from '../../../../packages/game-data-contract/src/primitives.ts';
-import type { ActionValueOperand } from '../../game-data/operatorDefinition';
+
 import { createActionBlackboardState, type ActionBlackboardState } from '../state/foundationState';
 import {
   assignActionBlackboard,
@@ -160,7 +162,7 @@ export class ActionBlackboard {
     initialValues: Readonly<Record<string, ActionBlackboardValue>>,
     inheritDirect: boolean,
     entityInitialValues?: Readonly<Record<string, ActionBlackboardValue>>,
-    entityAssignments?: Readonly<Record<string, ActionValueOperand>>,
+    entityAssignments?: Readonly<Record<string, CompiledValueInput>>,
   ): ActionBlackboard {
     return ActionBlackboard.#bind(
       createLocalBlackboardState(
@@ -205,7 +207,7 @@ export function limitValueCalculation(
 
 /** 缺键严格报错，只有操作数显式声明 fallback 时允许回退。 */
 export function resolveActionValueOperand(
-  operand: ActionValueOperand,
+  operand: CompiledValueInput,
   blackboard: ActionBlackboard,
 ): number {
   return resolveActionOperand(operand, key => blackboard.getNumber(key));
@@ -213,21 +215,19 @@ export function resolveActionValueOperand(
 
 /** 只拆分已明确记录的乘数，不用命中时的属性反推先前读取的值。 */
 export function resolveArtsIntensityFactor(
-  operand: ActionValueOperand | number,
+  operand: CompiledValueInput | number,
   blackboard: ActionBlackboard,
 ): number | undefined {
-  return typeof operand !== 'number' && operand.kind === 'blackboard'
-    ? blackboard.getArtsIntensityFactor(operand.key)
-    : undefined;
+  const key = valueInputBlackboardKey(operand);
+  return key !== undefined ? blackboard.getArtsIntensityFactor(key) : undefined;
 }
 
 export function resolveArtsIntensityValue(
-  operand: ActionValueOperand | number,
+  operand: CompiledValueInput | number,
   blackboard: ActionBlackboard,
 ): number | undefined {
-  return typeof operand !== 'number' && operand.kind === 'blackboard'
-    ? blackboard.getArtsIntensityDetail(operand.key)?.intensity
-    : undefined;
+  const key = valueInputBlackboardKey(operand);
+  return key !== undefined ? blackboard.getArtsIntensityDetail(key)?.intensity : undefined;
 }
 
 /** 记录技能表基础值之后实际执行的乘除；不从运算结果反推基础值。 */
@@ -256,10 +256,16 @@ export function combineSkillSettingFactors(
 }
 
 export function resolveSkillSettingFactor(
-  operand: ActionValueOperand | number,
+  operand: CompiledValueInput | number,
   blackboard: ActionBlackboard,
 ): import('../state/foundationState').ArtsIntensityFactor | undefined {
-  return typeof operand !== 'number' && operand.kind === 'blackboard'
-    ? blackboard.getArtsIntensityDetail(operand.key)
-    : undefined;
+  const key = valueInputBlackboardKey(operand);
+  return key !== undefined ? blackboard.getArtsIntensityDetail(key) : undefined;
+}
+
+/** 原生要求变量已声明的直接读取；不经过图输入构造临时节点。 */
+export function readRequiredActionNumber(blackboard: ActionBlackboard, key: string): number {
+  const value = blackboard.getNumber(key);
+  if (value === undefined) throw new Error(`action blackboard value '${key}' is missing`);
+  return value;
 }

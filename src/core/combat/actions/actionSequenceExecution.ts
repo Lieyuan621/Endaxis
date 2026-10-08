@@ -23,6 +23,7 @@ export function executeActionSequence<Key>(
   state: ActionExecutionEntries<Key>,
   context: CombatExecutionContext,
   host: ActionSequenceExecutionHost<Key>,
+  resetAfterExecute = false,
 ): boolean {
   for (const [index, entry] of state.entries.entries()) {
     if (entry.state === COMBAT_STEP_STATE.ended) continue;
@@ -34,13 +35,31 @@ export function executeActionSequence<Key>(
     entry.executionPermitted = host.canExecute() !== false;
     // 原生在进入 OnExecute 前写入状态 1；同步事件可在动作尚未返回时 End。
     entry.state = COMBAT_STEP_STATE.started;
-    let result = entry.executionPermitted ? host.execute(index) : false;
-    if (resultMode === STEP_RESULT_MODE.invertNextResult) {
-      context.sequence!.resultMode = STEP_RESULT_MODE.normal;
-      result = !result;
+    let result: boolean;
+    try {
+      result = entry.executionPermitted ? host.execute(index) : false;
+      if (resultMode === STEP_RESULT_MODE.invertNextResult) {
+        context.sequence!.resultMode = STEP_RESULT_MODE.normal;
+        result = !result;
+      }
+      entry.executeResult = result;
+    } finally {
+      // 原生同步条件逐项 End/Reset，已完成的前缀可再次执行；
+      // 重入遇到仍在执行的项则在上方返回，不能结束外层正在执行的动作。
+      if (resetAfterExecute) {
+        if (
+          (entry.state === COMBAT_STEP_STATE.started ||
+            entry.state === COMBAT_STEP_STATE.ticking) &&
+          entry.executionPermitted
+        )
+          host.end(index);
+        entry.state = COMBAT_STEP_STATE.ended;
+        host.reset(index);
+        entry.state = COMBAT_STEP_STATE.pending;
+        entry.executeResult = false;
+        entry.executionPermitted = false;
+      }
     }
-
-    entry.executeResult = result;
     if (!result) return false;
   }
   return true;

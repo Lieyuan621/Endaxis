@@ -4426,7 +4426,30 @@ const zhuangFangyiBuff7: SkillBuffDefinition = {
 };
 
 const zhuangFangyiBuff8ActionGraph = {
-  main: { nodes: {} },
+  main: {
+    nodes: {
+      conditional_1: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+          whenTrue: { $sequence: null },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: 'caster',
+          buffIds: ['buff_chr_0030_zhuangfy_ult_base'],
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+        },
+      },
+    },
+  },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
@@ -4441,13 +4464,7 @@ const zhuangFangyiBuff8: SkillBuffDefinition = {
   damageModifiers: [
     {
       enabledSide: 'attacker',
-      condition: {
-        kind: 'buffIdCountCompare',
-        target: 'caster',
-        buffIds: ['buff_chr_0030_zhuangfy_ult_base'],
-        operator: 'greaterOrEqual',
-        value: 1,
-      },
+      condition: { $sequence: 'conditional_1' },
       processors: [
         {
           kind: 'instantAttribute',
@@ -5673,7 +5690,7 @@ export const zhuangFangyi: OperatorDefinition = {
                     kind: 'createTimedMarker',
                     parameters: {
                       target: 'enemy',
-                      markerId: { blackboardKey: 'EntityBB_hitedMark' },
+                      markerId: { kind: 'stringNode', nodeId: 'data_1' },
                       durationSeconds: { kind: 'constant', value: 0.4 },
                       autoFinishByAction: false,
                     },
@@ -5685,7 +5702,7 @@ export const zhuangFangyi: OperatorDefinition = {
                     kind: 'dealDamage',
                     parameters: {
                       damageType: 'electric',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+                      attackScale: { kind: 'valueNode', nodeId: 'data_2' },
                       tags: ['normalAttack'],
                     },
                     key: 'abilityentity_chr_0030_zhuangfy_attack_ult:chr_0030_zhuangfy_attack1_ult_1_abilityrange|chr_0030_zhuangfy_attack1_ult_2_abilityrange|chr_0030_zhuangfy_attack1_ult_3_abilityrange|chr_0030_zhuangfy_attack1_ult_4_abilityrange:/childSkills/chr_0030_zhuangfy_attack1_ult_1_abilityrange/actionGraph/main/nodes/dealDamage_2/action',
@@ -5695,7 +5712,7 @@ export const zhuangFangyi: OperatorDefinition = {
                 conditional_3: {
                   action: {
                     kind: 'conditional',
-                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
                     whenTrue: { $sequence: 'dealDamage_2' },
                   },
                   next: null,
@@ -5714,20 +5731,22 @@ export const zhuangFangyi: OperatorDefinition = {
                 },
               },
               dataNodes: {
-                data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-                data_2: {
+                data_1: { type: 'string', expression: { blackboardKey: 'EntityBB_hitedMark' } },
+                data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+                data_3: { type: 'string', expression: { blackboardKey: 'EntityBB_hitedMark' } },
+                data_4: {
                   type: 'boolean',
                   expression: {
                     kind: 'timedMarkerPresent',
                     target: 'enemy',
-                    markerId: { blackboardKey: 'EntityBB_hitedMark' },
+                    markerId: { kind: 'stringNode', nodeId: 'data_3' },
                   },
                 },
-                data_3: {
+                data_5: {
                   type: 'boolean',
                   expression: {
                     kind: 'not',
-                    condition: { kind: 'conditionNode', nodeId: 'data_2' },
+                    condition: { kind: 'conditionNode', nodeId: 'data_4' },
                   },
                 },
               },
@@ -5762,7 +5781,7 @@ export const zhuangFangyi: OperatorDefinition = {
                     kind: 'createTimedMarker',
                     parameters: {
                       target: 'enemy',
-                      markerId: { blackboardKey: 'EntityBB_hitedMark' },
+                      markerId: { kind: 'stringNode', nodeId: 'data_1' },
                       durationSeconds: { kind: 'constant', value: 0.4 },
                       autoFinishByAction: false,
                     },
@@ -5774,7 +5793,7 @@ export const zhuangFangyi: OperatorDefinition = {
                     kind: 'dealDamage',
                     parameters: {
                       damageType: 'electric',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+                      attackScale: { kind: 'valueNode', nodeId: 'data_2' },
                       tags: ['normalAttack'],
                     },
                     key: 'abilityentity_chr_0030_zhuangfy_attack_ult:chr_0030_zhuangfy_attack1_ult_1_abilityrange|chr_0030_zhuangfy_attack1_ult_2_abilityrange|chr_0030_zhuangfy_attack1_ult_3_abilityrange|chr_0030_zhuangfy_attack1_ult_4_abilityrange:/childSkills/chr_0030_zhuangfy_attack1_ult_2_abilityrange/actionGraph/main/nodes/dealDamage_2/action',
@@ -5784,7 +5803,7 @@ export const zhuangFangyi: OperatorDefinition = {
                 conditional_3: {
                   action: {
                     kind: 'conditional',
-                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
                     whenTrue: { $sequence: 'dealDamage_2' },
                   },
                   next: null,
@@ -5803,20 +5822,22 @@ export const zhuangFangyi: OperatorDefinition = {
                 },
               },
               dataNodes: {
-                data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-                data_2: {
+                data_1: { type: 'string', expression: { blackboardKey: 'EntityBB_hitedMark' } },
+                data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+                data_3: { type: 'string', expression: { blackboardKey: 'EntityBB_hitedMark' } },
+                data_4: {
                   type: 'boolean',
                   expression: {
                     kind: 'timedMarkerPresent',
                     target: 'enemy',
-                    markerId: { blackboardKey: 'EntityBB_hitedMark' },
+                    markerId: { kind: 'stringNode', nodeId: 'data_3' },
                   },
                 },
-                data_3: {
+                data_5: {
                   type: 'boolean',
                   expression: {
                     kind: 'not',
-                    condition: { kind: 'conditionNode', nodeId: 'data_2' },
+                    condition: { kind: 'conditionNode', nodeId: 'data_4' },
                   },
                 },
               },
@@ -5851,7 +5872,7 @@ export const zhuangFangyi: OperatorDefinition = {
                     kind: 'createTimedMarker',
                     parameters: {
                       target: 'enemy',
-                      markerId: { blackboardKey: 'EntityBB_hitedMark' },
+                      markerId: { kind: 'stringNode', nodeId: 'data_1' },
                       durationSeconds: { kind: 'constant', value: 0.4 },
                       autoFinishByAction: false,
                     },
@@ -5863,7 +5884,7 @@ export const zhuangFangyi: OperatorDefinition = {
                     kind: 'dealDamage',
                     parameters: {
                       damageType: 'electric',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+                      attackScale: { kind: 'valueNode', nodeId: 'data_2' },
                       tags: ['normalAttack'],
                     },
                     key: 'abilityentity_chr_0030_zhuangfy_attack_ult:chr_0030_zhuangfy_attack1_ult_1_abilityrange|chr_0030_zhuangfy_attack1_ult_2_abilityrange|chr_0030_zhuangfy_attack1_ult_3_abilityrange|chr_0030_zhuangfy_attack1_ult_4_abilityrange:/childSkills/chr_0030_zhuangfy_attack1_ult_3_abilityrange/actionGraph/main/nodes/dealDamage_2/action',
@@ -5873,7 +5894,7 @@ export const zhuangFangyi: OperatorDefinition = {
                 conditional_3: {
                   action: {
                     kind: 'conditional',
-                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
                     whenTrue: { $sequence: 'dealDamage_2' },
                   },
                   next: null,
@@ -5892,20 +5913,22 @@ export const zhuangFangyi: OperatorDefinition = {
                 },
               },
               dataNodes: {
-                data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-                data_2: {
+                data_1: { type: 'string', expression: { blackboardKey: 'EntityBB_hitedMark' } },
+                data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+                data_3: { type: 'string', expression: { blackboardKey: 'EntityBB_hitedMark' } },
+                data_4: {
                   type: 'boolean',
                   expression: {
                     kind: 'timedMarkerPresent',
                     target: 'enemy',
-                    markerId: { blackboardKey: 'EntityBB_hitedMark' },
+                    markerId: { kind: 'stringNode', nodeId: 'data_3' },
                   },
                 },
-                data_3: {
+                data_5: {
                   type: 'boolean',
                   expression: {
                     kind: 'not',
-                    condition: { kind: 'conditionNode', nodeId: 'data_2' },
+                    condition: { kind: 'conditionNode', nodeId: 'data_4' },
                   },
                 },
               },
@@ -5940,7 +5963,7 @@ export const zhuangFangyi: OperatorDefinition = {
                     kind: 'createTimedMarker',
                     parameters: {
                       target: 'enemy',
-                      markerId: { blackboardKey: 'EntityBB_hitedMark' },
+                      markerId: { kind: 'stringNode', nodeId: 'data_1' },
                       durationSeconds: { kind: 'constant', value: 0.4 },
                       autoFinishByAction: false,
                     },
@@ -5952,7 +5975,7 @@ export const zhuangFangyi: OperatorDefinition = {
                     kind: 'dealDamage',
                     parameters: {
                       damageType: 'electric',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+                      attackScale: { kind: 'valueNode', nodeId: 'data_2' },
                       tags: ['normalAttack'],
                     },
                     key: 'abilityentity_chr_0030_zhuangfy_attack_ult:chr_0030_zhuangfy_attack1_ult_1_abilityrange|chr_0030_zhuangfy_attack1_ult_2_abilityrange|chr_0030_zhuangfy_attack1_ult_3_abilityrange|chr_0030_zhuangfy_attack1_ult_4_abilityrange:/childSkills/chr_0030_zhuangfy_attack1_ult_4_abilityrange/actionGraph/main/nodes/dealDamage_2/action',
@@ -5962,7 +5985,7 @@ export const zhuangFangyi: OperatorDefinition = {
                 conditional_3: {
                   action: {
                     kind: 'conditional',
-                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
                     whenTrue: { $sequence: 'dealDamage_2' },
                   },
                   next: null,
@@ -5981,20 +6004,22 @@ export const zhuangFangyi: OperatorDefinition = {
                 },
               },
               dataNodes: {
-                data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-                data_2: {
+                data_1: { type: 'string', expression: { blackboardKey: 'EntityBB_hitedMark' } },
+                data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+                data_3: { type: 'string', expression: { blackboardKey: 'EntityBB_hitedMark' } },
+                data_4: {
                   type: 'boolean',
                   expression: {
                     kind: 'timedMarkerPresent',
                     target: 'enemy',
-                    markerId: { blackboardKey: 'EntityBB_hitedMark' },
+                    markerId: { kind: 'stringNode', nodeId: 'data_3' },
                   },
                 },
-                data_3: {
+                data_5: {
                   type: 'boolean',
                   expression: {
                     kind: 'not',
-                    condition: { kind: 'conditionNode', nodeId: 'data_2' },
+                    condition: { kind: 'conditionNode', nodeId: 'data_4' },
                   },
                 },
               },

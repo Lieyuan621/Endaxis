@@ -2,7 +2,7 @@ import type {
   LevelValues,
   SkillDefinition,
   SkillCostDefinition,
-} from '../../../../../packages/game-data-contract/src/index.ts';
+} from '../../compiler/intermediateDefinitions.ts';
 import type { OperatorActiveSkillTypeSource } from './activeSkills.ts';
 import type { SkillPatchSource } from '../../source/skillPatch.ts';
 import { requireNonNegativeInteger, requireRecord } from '../../source/primitives.ts';
@@ -41,7 +41,7 @@ export type CompiledOperatorActiveSkillRuntimeDefinitionSource = Readonly<
       >
     >
 > & {
-  readonly actionGraph: import('../../../../../packages/game-data-contract/src/actionGraph.ts').ActionGraphResourceDefinition;
+  readonly actionGraph: import('../../compiler/intermediateDefinitions.ts').ActionGraphResourceDefinition;
   /** 仅供整名技能组装配；生成最终 OperatorDefinition 前必须移除。 */
   readonly allowNextSkillTransitions: CompiledActiveSkillRuntimeProjectionSource['allowNextSkillTransitions'];
   readonly inputWindows?: SkillDefinition['inputWindows'];

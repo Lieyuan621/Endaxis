@@ -55,14 +55,15 @@ function projectGraphSequences(sequences: readonly FixtureSequence[]): {
 function graphFixtureSkill(
   fixture: Omit<SkillFixtureProperties, 'scheduledSequences' | 'actionGraph'> & {
     readonly sequences: readonly FixtureSequence[];
+    readonly dataNodes?: import('../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'];
   },
 ): SkillDefinition {
-  const { sequences, ...fields } = fixture;
+  const { sequences, dataNodes, ...fields } = fixture;
   const projected = projectGraphSequences(sequences);
   return skillFixture({
     ...fields,
     scheduledSequences: projected.scheduledSequences,
-    actionGraph: { main: { nodes: projected.nodes }, macros: {} },
+    actionGraph: { main: { nodes: projected.nodes, dataNodes }, macros: {} },
   });
 }
 
@@ -270,12 +271,7 @@ describe('标准入口普通倒地装配', () => {
                   {
                     kind: 'conditional' as const,
                     parameters: {
-                      condition: {
-                        kind: 'entityTagMatch' as const,
-                        target: 'enemy' as const,
-                        tagQueryType: 'hasAny' as const,
-                        tags: ['Status/Immobilized/Getup'],
-                      },
+                      condition: { kind: 'conditionNode' as const, nodeId: 'test_data_1' },
                     },
                     whenTrue: { $sequence: null },
                   },
@@ -284,6 +280,18 @@ describe('标准入口普通倒地装配', () => {
           ],
         },
       ],
+
+      dataNodes: {
+        test_data_1: {
+          type: 'boolean',
+          expression: {
+            kind: 'entityTagMatch' as const,
+            target: 'enemy' as const,
+            tagQueryType: 'hasAny' as const,
+            tags: ['Status/Immobilized/Getup'],
+          },
+        },
+      },
     });
     const definition: OperatorDefinition = {
       ...perlica,

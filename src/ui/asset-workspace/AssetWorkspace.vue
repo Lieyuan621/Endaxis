@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { structuredFieldContextKey } from '../field-editor/structuredFieldContext';
 import { editorPanelWidth } from '../action-graph/editorPanelGeometry';
 import { ownedActionResourceNavigationKey } from '../field-editor/ownedResourceNavigation';
 import { ownedActionResourceLink } from './ownedActionResourceNavigation';
@@ -25,8 +26,6 @@ import {
 import InputRegionBoundary from '../keyboard/InputRegionBoundary.vue';
 import { useSchemaReferences } from '../definition-editor/schemaReferenceContext';
 import DefinitionField from '../definition-editor/DefinitionField.vue';
-import { definitionConditionContextKey } from '../field-editor/inlineConditionContext';
-import { inlineConditionBlackboardContext } from '../../application/editor/inlineConditionContext';
 import EditorInspector from '../editor/EditorInspector.vue';
 import WeaponGrowthFields from '../editor/WeaponGrowthFields.vue';
 import { resourceEditorSelection } from '../editor/resourceEditorView';
@@ -284,12 +283,6 @@ const selectedValue = computed(
     >,
 );
 useSchemaReferences(() => definitionSchemas[selected.value.definitionResource.kind]);
-provide(
-  definitionConditionContextKey,
-  computed(() =>
-    inlineConditionBlackboardContext(selected.value.definitionResource.kind, selectedValue.value),
-  ),
-);
 const selectedResolution = computed(() => {
   try {
     return {
@@ -397,6 +390,15 @@ const graphOwner = computed(() =>
   !resourceDiscovery.value.error && selectedValue.value.actionGraph
     ? (selectedValue.value as unknown as ActionGraphResourceOwner)
     : undefined,
+);
+provide(
+  structuredFieldContextKey,
+  computed(() => ({
+    kind: selected.value.definitionResource.kind,
+    path: selected.value.definitionResource.path,
+    graph: graphOwner.value?.actionGraph.main,
+    identity: `${active.value.key}:${selected.value.id}`,
+  })),
 );
 const graphSkill = computed(() =>
   selected.value.definitionResource.kind === 'skill'
@@ -536,9 +538,15 @@ async function setPage(page: string) {
   applyPage(page);
   recordNavigation();
 }
-function openGraph() {
-  if (!graphOwner.value) return;
+function openGraph(path?: readonly (string | number)[]) {
+  if (!graphOwner.value || !canLeaveGraphFields()) return;
+  const value = Array.isArray(path) ? fieldValueAt(draft.value.edit.definition, path) : undefined;
+  const entry =
+    value && typeof value === 'object' && '$sequence' in value ? value.$sequence : undefined;
+  const editor = graphSkill.value ? graphEditor.skill : graphEditor.resource;
+  if (typeof entry === 'string') editor.changeGraph({ kind: 'main' });
   graphOpen.value = true;
+  if (typeof entry === 'string') void editor.focusNode(entry);
   recordNavigation();
 }
 function restoreLocation(entry: WorkspaceLocation) {

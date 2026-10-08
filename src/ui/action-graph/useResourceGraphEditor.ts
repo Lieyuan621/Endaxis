@@ -19,11 +19,7 @@ import {
   type ActionGraphResourceOwner,
 } from '../../application/editor/actionGraphResourceEditing';
 import { listGraphPorts } from '../../application/editor/actionGraphPorts';
-import {
-  listDataInputs,
-  dataNodeInputs,
-  extractResourceDataNodes,
-} from '../../core/action-graph/actionGraphDataNodes';
+import { listDataInputs, dataNodeInputs } from '../../core/action-graph/actionGraphDataNodes';
 import { useGraphVariables } from './useGraphVariables';
 import { blackboardScopeWarnings } from '../../application/editor/graphBlackboard';
 import {
@@ -55,10 +51,7 @@ export interface ResourceGraphDocument {
 
 export function useResourceGraphEditor(document: ResourceGraphDocument) {
   const { t } = useI18n({ useScope: 'global' });
-  const draft = computed(() => {
-    const owner = document.owner();
-    return { ...owner, actionGraph: extractResourceDataNodes(owner.actionGraph) };
-  });
+  const draft = computed(document.owner);
   const automaticPresentation = shallowRef<SkillGraphPresentation>({});
   const presentation = computed(() => ({
     ...automaticPresentation.value,

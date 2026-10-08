@@ -218,22 +218,23 @@ export function createCombatAttributeState<Key extends string>(): CombatAttribut
 
 export interface DamageModifierState {
   readonly ownerId: string;
-  readonly definition: DamageModifierDefinition;
+  readonly definition: Omit<DamageModifierDefinition, 'condition'>;
   readonly numberSource: BuffModifierNumberSource | undefined;
-  readonly sourceSkillCastId: number | null;
-  readonly hasConditionProgram: boolean;
+  readonly condition: import('./actionState').ActionSequenceState | null;
 }
 
 export interface HealModifier {
+  readonly condition: import('./actionState').ActionSequenceState | null;
   readonly ownerId: string;
-  readonly definition: HealModifierDefinition;
+  readonly definition: Omit<HealModifierDefinition, 'condition'>;
   readonly numberSource: BuffModifierNumberSource;
 }
 
 /** 由一个已启用 Buff 实例持有的失衡修正器。 */
 export interface PoiseModifier {
+  readonly condition: import('./actionState').ActionSequenceState | null;
   readonly ownerId: string;
-  readonly definition: PoiseModifierDefinition;
+  readonly definition: Omit<PoiseModifierDefinition, 'condition'>;
   readonly numberSource: BuffModifierNumberSource;
 }
 

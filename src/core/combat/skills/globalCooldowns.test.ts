@@ -1,3 +1,4 @@
+import { numberInput } from '../../../test/compiledGraphInputs';
 import { describe, expect, it } from 'vitest';
 import { GlobalCooldowns } from './globalCooldowns';
 import { TimedMarkerContainer } from '../status/timedMarkers';
@@ -89,7 +90,7 @@ describe('战斗级全局冷却', () => {
         parameters: {
           target,
           markerId: 'x',
-          durationSeconds: { kind: 'blackboard', key: 'cd' },
+          durationSeconds: numberInput({ kind: 'blackboard', key: 'cd' }),
         },
       };
       executor.execute(step, context);

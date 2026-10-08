@@ -2,11 +2,9 @@
 import ts from 'typescript';
 import { createHash } from 'node:crypto';
 import { schemaSourceLocation } from './schemaSourceLocation.ts';
-import type { FieldSemantics } from '../../src/ui/field-editor/fieldSemantics.ts';
 import type { DefinitionFieldSchema } from '../../src/ui/definition-editor/fieldSchema.ts';
 import { createFieldSemanticExtractor, type FieldTypeContext } from './fieldSemantics.ts';
 import type {
-  InlineConditionScope,
   FieldFallbackReason,
   FieldSemanticMetadata,
 } from '../../src/ui/field-editor/fieldSemantics.ts';
@@ -42,69 +40,12 @@ export function describeDefinitionType(
   let count = 0;
   const fallback = (reason: FieldFallbackReason): FieldSemanticMetadata['fallback'] => ({ reason });
 
-  function discriminator(value: ts.Type): string | undefined {
-    const kind = typeChecker.getPropertyOfType(value, 'kind');
-    const type = kind && typeChecker.getTypeOfSymbol(kind);
-    return type?.isStringLiteral() ? type.value : undefined;
-  }
-  function inlineHost(input: FieldTypeContext): InlineConditionScope | undefined {
-    for (const origin of input.origins) {
-      const property = origin.node.parent;
-      if (!ts.isPropertySignature(property) || property.name.getText() !== 'condition') continue;
-      if (
-        input.source.some(source =>
-          /^packages\/game-data-contract\/src\/equipment\.ts:/.test(source),
-        )
-      )
-        return 'equipment';
-      if (
-        input.source.some(source =>
-          /^packages\/game-data-contract\/src\/operators\.ts:/.test(source),
-        ) &&
-        ts.isTypeLiteralNode(property.parent) &&
-        property.parent.members.some(
-          member =>
-            ts.isPropertySignature(member) &&
-            member.name.getText() === 'kind' &&
-            member.type?.getText() === "'addConditionalDamage'",
-        )
-      )
-        return 'enemyStaggered';
-      if (
-        input.source.some(source => /^packages\/game-data-contract\/src\/skills\.ts:/.test(source))
-      ) {
-        for (
-          let parent: ts.Node | undefined = property.parent;
-          parent && !ts.isInterfaceDeclaration(parent) && !ts.isTypeAliasDeclaration(parent);
-          parent = parent.parent
-        )
-          if (ts.isPropertySignature(parent) && parent.name.getText() === 'switchToBuffCast')
-            return 'skillSwitch';
-      }
-    }
-    return undefined;
-  }
-
-  function describe(
-    input: FieldTypeContext,
-    depth: number,
-    inheritedCondition?: InlineConditionScope,
-  ): DefinitionFieldSchema {
+  function describe(input: FieldTypeContext, depth: number): DefinitionFieldSchema {
     const { type } = input;
     const metadata = extractor.metadata(input);
     const condition = /^(CombatCondition)(?: \| (?:undefined|null))*$/.test(
       typeChecker.typeToString(type),
     );
-    const conditionScope =
-      inheritedCondition ?? (options.definitionRoot && condition ? inlineHost(input) : undefined);
-    const aliases = (value: FieldSemantics | undefined): readonly string[] => [
-      ...(value?.aliases ?? []),
-      ...(value?.unionVariants ?? []).flatMap(aliases),
-    ];
-    const semanticAliases = aliases(metadata.semantics);
-    const operand = semanticAliases.includes('ActionValueOperand');
-    const inlineMetadata =
-      conditionScope && (condition || operand) ? { inlineCondition: conditionScope } : {};
     const nullable = branches(type).filter(
       part => (part.flags & (ts.TypeFlags.Undefined | ts.TypeFlags.Never)) === 0,
     );
@@ -112,14 +53,12 @@ export function describeDefinitionType(
     const field = (shape: DefinitionFieldSchema): DefinitionFieldSchema => ({
       ...shape,
       ...metadata,
-      ...inlineMetadata,
       ...(optional ? { optional: true } : {}),
     });
     if (metadata.semantics?.aliases?.includes('TimeScaleCurveDefinition'))
       return field({ kind: 'timeScaleCurve' });
-    // 条件是独立表达式，不把分支当作普通下拉框；从声明追踪可选 alias。
-    if (condition && !conditionScope)
-      return field({ kind: 'condition', fallback: fallback('condition-editor-pending') });
+    // 条件输入使用常量或所属图的布尔节点，不展开节点操作。
+    if (condition) return field({ kind: 'condition' });
     if (!nullable.length) return field({ kind: 'opaque', fallback: fallback('no-present-type') });
     // Checker identity prevents aliases/generic instantiations with equal display names from
     // collapsing. Declaration origins and root ownership remain part of the context identity.
@@ -130,7 +69,6 @@ export function describeDefinitionType(
       origins: extractor.identity(input),
       semantics: metadata.semantics,
       owned: !(options.definitionRoot && depth === 0),
-      conditionScope,
     });
     let contexts = interned.get(type);
     if (!contexts) interned.set(type, (contexts = new Map()));
@@ -160,17 +98,7 @@ export function describeDefinitionType(
           return field({ kind: 'enum', options: literals.map(literalValue) });
         if (nullable.every(part => (part.flags & ts.TypeFlags.BooleanLike) !== 0))
           return field({ kind: 'boolean' });
-        const others = nullable.filter(part => {
-          if (literals.includes(part)) return false;
-          const kind = discriminator(part);
-          if (conditionScope && operand && ['valueNode', 'parameter'].includes(kind ?? ''))
-            return false;
-          if (conditionScope && condition) {
-            if (conditionScope === 'enemyStaggered') return kind === 'targetStaggered';
-            return !['conditionNode', 'abilityEntityRemainingDurationCompare'].includes(kind ?? '');
-          }
-          return true;
-        });
+        const others = nullable.filter(part => !literals.includes(part));
         return field({
           kind: 'union',
           variants: [
@@ -188,7 +116,7 @@ export function describeDefinitionType(
                   },
                 ]
               : []),
-            ...others.map(part => describe(extractor.branch(input, part), depth, conditionScope)),
+            ...others.map(part => describe(extractor.branch(input, part), depth)),
           ],
         });
       }
@@ -234,7 +162,7 @@ export function describeDefinitionType(
         return field({
           kind: 'tuple',
           elements: elements.map((element, index) =>
-            describe(extractor.element(input, element, index), depth, conditionScope),
+            describe(extractor.element(input, element, index), depth),
           ),
           minLength: tuple.target.minLength,
         });
@@ -244,7 +172,7 @@ export function describeDefinitionType(
         return field({
           kind: 'array',
           element: element
-            ? describe(extractor.element(input, element), depth, conditionScope)
+            ? describe(extractor.element(input, element), depth)
             : {
                 kind: 'opaque',
                 ...metadata,
@@ -256,7 +184,7 @@ export function describeDefinitionType(
       if (index)
         return field({
           kind: 'record',
-          value: describe(extractor.recordValue(input, index), depth + 1, conditionScope),
+          value: describe(extractor.recordValue(input, index), depth + 1),
         });
 
       const fields: Record<string, DefinitionFieldSchema> = {};
@@ -270,19 +198,13 @@ export function describeDefinitionType(
             part => (part.flags & (ts.TypeFlags.Undefined | ts.TypeFlags.Never)) === 0,
           )
             ? { kind: 'graph' as const, ...extractor.metadata(childContext) }
-            : describe(childContext, depth + 1, conditionScope);
+            : describe(childContext, depth + 1);
         const description = ts
           .displayPartsToString(property.getDocumentationComment(typeChecker))
           .replaceAll('\r\n', '\n')
           .trim();
-        const scopedChild: DefinitionFieldSchema =
-          conditionScope === 'enemyStaggered' &&
-          property.name === 'target' &&
-          discriminator(current) === 'targetStaggered'
-            ? { ...child, kind: 'enum', options: ['enemy'] }
-            : child;
         fields[property.name] = {
-          ...scopedChild,
+          ...child,
           ...(property.flags & ts.SymbolFlags.Optional ? { optional: true } : {}),
           ...(description ? { description } : {}),
         };
@@ -312,12 +234,10 @@ function composeShapes(values: readonly DefinitionFieldSchema[]): DefinitionFiel
     declaration: value.declaration,
     referenceKind: value.referenceKind,
     readonlyDeclaration: value.readonlyDeclaration,
-    deferredCondition: value.deferredCondition,
     nativeId: value.nativeId,
     blackboardOrigin: value.blackboardOrigin,
     semantics: value.semantics ?? {},
     fallback: value.fallback,
-    inlineCondition: value.inlineCondition,
     ...(value.kind === 'enum' ? { options: value.options } : {}),
     ...(value.kind === 'object'
       ? {

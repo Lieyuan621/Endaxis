@@ -53,7 +53,7 @@ const definition = {
                   buffId: 'buff_equipsuit_expend_spelldamage',
                   target: 'buffOwner',
                   source: 'buffOwner',
-                  count: { kind: 'blackboard', key: 'addstack' },
+                  count: { kind: 'valueNode', nodeId: 'data_1' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
                   copiedBlackboardAssignments: {
@@ -75,20 +75,25 @@ const definition = {
             conditional_3: {
               action: {
                 kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'eventBuffTagsMatch',
-                    match: 'hasAny',
-                    buffTags: [
-                      'Skill/Character/Common/SpellStatus/Conduct',
-                      'Skill/Character/Common/SpellStatus/Corrupt',
-                    ],
-                    buffIdOutputKey: 'buffid',
-                  },
-                },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                 whenTrue: { $sequence: 'readEventBuffBlackboard_2' },
               },
               next: null,
+            },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'addstack' } },
+            data_2: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: [
+                  'Skill/Character/Common/SpellStatus/Conduct',
+                  'Skill/Character/Common/SpellStatus/Corrupt',
+                ],
+                buffIdOutputKey: 'buffid',
+              },
             },
           },
         },

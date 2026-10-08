@@ -13,7 +13,7 @@ import { IncrementalScenarioSimulation } from './incrementalScenarioSimulation';
  * 跑完会把资源曲线、敌人生命、失衡、技能警告都算好再返回。
  * 完整结果由调用方持有，服务不缓存；请求调度与过期结果处理由页面调度层负责。
  */
-import type { CombatBuffDefinitionsDocument } from '../../core/combat/buffs/combatBuffDefinitions';
+import type { CombatBuffDefinitionsDocument } from '../../../packages/game-data-contract/src/buffs';
 import type { PlayerDamageNonRandomRuntimeSnapshot } from '../../core/combat/damage/playerActiveDamageInput';
 import type { CompoundStatusFactoriesDocument } from '../../core/combat/infliction/compoundStatusFactories';
 import type { SkillSettingsDocument } from '../../core/combat/infliction/skillSettings';

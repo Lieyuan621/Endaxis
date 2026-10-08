@@ -9897,8 +9897,22 @@ const typhoeusBuff5ActionGraph = {
         },
         next: null,
       },
+      conditional_2: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          whenTrue: { $sequence: null },
+        },
+        next: null,
+      },
     },
-    dataNodes: { data_1: { type: 'number', expression: { kind: 'blackboard', key: 'slow_down' } } },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'slow_down' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'eventDamageTagsMatch', match: 'hasAll', tags: ['natureBurst'] },
+      },
+    },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
@@ -9914,7 +9928,7 @@ const typhoeusBuff5: SkillBuffDefinition = {
   damageModifiers: [
     {
       enabledSide: 'defender',
-      condition: { kind: 'eventDamageTagsMatch', match: 'hasAll', tags: ['natureBurst'] },
+      condition: { $sequence: 'conditional_2' },
       processors: [
         {
           kind: 'damageScale',
@@ -10190,66 +10204,6 @@ const typhoeusBuff11ActionGraph = {
         },
         next: null,
       },
-      withActionBlackboardScope_22: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            scopeKey: 'native-buff-callback:3',
-            lifetime: 'execution',
-            alwaysNext: true,
-            shareParentBlackboard: true,
-            initialValues: {},
-            inheritParent: true,
-          },
-          body: { $sequence: 'conditional_7' },
-        },
-        next: null,
-      },
-      withActionBlackboardScope_23: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            scopeKey: 'native-buff-callback:2',
-            lifetime: 'execution',
-            alwaysNext: true,
-            shareParentBlackboard: true,
-            initialValues: {},
-            inheritParent: true,
-          },
-          body: { $sequence: 'conditional_5' },
-        },
-        next: 'withActionBlackboardScope_22',
-      },
-      withActionBlackboardScope_24: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            scopeKey: 'native-buff-callback:1',
-            lifetime: 'execution',
-            alwaysNext: true,
-            shareParentBlackboard: true,
-            initialValues: {},
-            inheritParent: true,
-          },
-          body: { $sequence: 'inheritSkillCastInfoForBasicAttack_3' },
-        },
-        next: 'withActionBlackboardScope_23',
-      },
-      withActionBlackboardScope_25: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            scopeKey: 'native-buff-callback:0',
-            lifetime: 'execution',
-            alwaysNext: true,
-            shareParentBlackboard: true,
-            initialValues: {},
-            inheritParent: true,
-          },
-          body: { $sequence: 'changePlayerActionMode_2' },
-        },
-        next: 'withActionBlackboardScope_24',
-      },
       finishBuffsById_8: {
         action: {
           kind: 'finishBuffsById',
@@ -10314,51 +10268,6 @@ const typhoeusBuff11ActionGraph = {
         },
         next: null,
       },
-      withActionBlackboardScope_26: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            scopeKey: 'native-buff-callback:2',
-            lifetime: 'execution',
-            alwaysNext: true,
-            shareParentBlackboard: true,
-            initialValues: {},
-            inheritParent: true,
-          },
-          body: { $sequence: 'finishBuffsById_14' },
-        },
-        next: null,
-      },
-      withActionBlackboardScope_27: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            scopeKey: 'native-buff-callback:1',
-            lifetime: 'execution',
-            alwaysNext: true,
-            shareParentBlackboard: true,
-            initialValues: {},
-            inheritParent: true,
-          },
-          body: { $sequence: 'findOwnerSpawnedAbilityEntities_13' },
-        },
-        next: 'withActionBlackboardScope_26',
-      },
-      withActionBlackboardScope_28: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            scopeKey: 'native-buff-callback:0',
-            lifetime: 'execution',
-            alwaysNext: true,
-            shareParentBlackboard: true,
-            initialValues: {},
-            inheritParent: true,
-          },
-          body: { $sequence: 'applyBuff_9' },
-        },
-        next: 'withActionBlackboardScope_27',
-      },
       finishBuffsById_15: {
         action: {
           kind: 'finishBuffsById',
@@ -10421,6 +10330,119 @@ const typhoeusBuff11ActionGraph = {
         },
         next: null,
       },
+      conditional_21: {
+        action: {
+          kind: 'conditional',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+          whenTrue: { $sequence: null },
+        },
+        next: null,
+      },
+      withActionBlackboardScope_22: {
+        action: {
+          kind: 'withActionBlackboardScope',
+          parameters: {
+            scopeKey: 'native-buff-callback:3',
+            lifetime: 'execution',
+            alwaysNext: true,
+            shareParentBlackboard: true,
+            initialValues: {},
+            inheritParent: true,
+          },
+          body: { $sequence: 'conditional_7' },
+        },
+        next: null,
+      },
+      withActionBlackboardScope_23: {
+        action: {
+          kind: 'withActionBlackboardScope',
+          parameters: {
+            scopeKey: 'native-buff-callback:2',
+            lifetime: 'execution',
+            alwaysNext: true,
+            shareParentBlackboard: true,
+            initialValues: {},
+            inheritParent: true,
+          },
+          body: { $sequence: 'conditional_5' },
+        },
+        next: 'withActionBlackboardScope_22',
+      },
+      withActionBlackboardScope_24: {
+        action: {
+          kind: 'withActionBlackboardScope',
+          parameters: {
+            scopeKey: 'native-buff-callback:1',
+            lifetime: 'execution',
+            alwaysNext: true,
+            shareParentBlackboard: true,
+            initialValues: {},
+            inheritParent: true,
+          },
+          body: { $sequence: 'inheritSkillCastInfoForBasicAttack_3' },
+        },
+        next: 'withActionBlackboardScope_23',
+      },
+      withActionBlackboardScope_25: {
+        action: {
+          kind: 'withActionBlackboardScope',
+          parameters: {
+            scopeKey: 'native-buff-callback:0',
+            lifetime: 'execution',
+            alwaysNext: true,
+            shareParentBlackboard: true,
+            initialValues: {},
+            inheritParent: true,
+          },
+          body: { $sequence: 'changePlayerActionMode_2' },
+        },
+        next: 'withActionBlackboardScope_24',
+      },
+      withActionBlackboardScope_26: {
+        action: {
+          kind: 'withActionBlackboardScope',
+          parameters: {
+            scopeKey: 'native-buff-callback:2',
+            lifetime: 'execution',
+            alwaysNext: true,
+            shareParentBlackboard: true,
+            initialValues: {},
+            inheritParent: true,
+          },
+          body: { $sequence: 'finishBuffsById_14' },
+        },
+        next: null,
+      },
+      withActionBlackboardScope_27: {
+        action: {
+          kind: 'withActionBlackboardScope',
+          parameters: {
+            scopeKey: 'native-buff-callback:1',
+            lifetime: 'execution',
+            alwaysNext: true,
+            shareParentBlackboard: true,
+            initialValues: {},
+            inheritParent: true,
+          },
+          body: { $sequence: 'findOwnerSpawnedAbilityEntities_13' },
+        },
+        next: 'withActionBlackboardScope_26',
+      },
+      withActionBlackboardScope_28: {
+        action: {
+          kind: 'withActionBlackboardScope',
+          parameters: {
+            scopeKey: 'native-buff-callback:0',
+            lifetime: 'execution',
+            alwaysNext: true,
+            shareParentBlackboard: true,
+            initialValues: {},
+            inheritParent: true,
+          },
+          body: { $sequence: 'applyBuff_9' },
+        },
+        next: 'withActionBlackboardScope_27',
+      },
     },
     dataNodes: {
       data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
@@ -10464,6 +10486,10 @@ const typhoeusBuff11ActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
+      data_7: {
+        type: 'boolean',
+        expression: { kind: 'eventDamageFeaturesMatch', match: 'hasAll', features: ['remainArea'] },
+      },
     },
   },
   macros: {},
@@ -10490,7 +10516,7 @@ const typhoeusBuff11: SkillBuffDefinition = {
   damageModifiers: [
     {
       enabledSide: 'defender',
-      condition: { kind: 'eventDamageFeaturesMatch', match: 'hasAll', features: ['remainArea'] },
+      condition: { $sequence: 'conditional_21' },
       processors: [{ kind: 'damageScale', side: 'defender', zone: 'product', addition: -1 }],
     },
   ],
@@ -10503,6 +10529,7 @@ const typhoeusBuff11: SkillBuffDefinition = {
     { event: 'addedBuff', priority: 0, sequence: { $sequence: 'conditional_16' } },
     { event: 'takeDamage', priority: 0, sequence: { $sequence: 'conditional_20' } },
   ],
+  actionGraph: typhoeusBuff11ActionGraph,
   skillSlotReplacements: [
     {
       skillSlotKey: 'comboSkill',
@@ -10511,7 +10538,6 @@ const typhoeusBuff11: SkillBuffDefinition = {
       inheritOriginSkillCooldownProgress: false,
     },
   ],
-  actionGraph: typhoeusBuff11ActionGraph,
 };
 
 const typhoeusBuff12ActionGraph = {
