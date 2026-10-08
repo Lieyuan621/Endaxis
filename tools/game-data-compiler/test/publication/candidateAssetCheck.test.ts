@@ -16,15 +16,15 @@ async function setup(source: string, createAsset: boolean) {
   await fs.mkdir(candidate, { recursive: true });
   await fs.writeFile(path.join(candidate, 'definition.ts'), source);
   if (createAsset) {
-    await fs.mkdir(path.join(root, 'public/weapons/arts-unit'), { recursive: true });
-    await fs.writeFile(path.join(root, 'public/weapons/arts-unit/new.webp'), 'fixture');
+    await fs.mkdir(path.join(root, 'public/weapons/funnel'), { recursive: true });
+    await fs.writeFile(path.join(root, 'public/weapons/funnel/new.webp'), 'fixture');
   }
   return root;
 }
 
 describe('候选游戏资源闭包', () => {
   it('通过已存在的候选字面图片引用', async () => {
-    const root = await setup("export const icon = '/weapons/arts-unit/new.webp';", true);
+    const root = await setup("export const icon = '/weapons/funnel/new.webp';", true);
     await expect(
       checkCandidateGameAssets({
         projectRoot: root,

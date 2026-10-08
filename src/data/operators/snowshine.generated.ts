@@ -1797,7 +1797,7 @@ export const snowshine: OperatorDefinition = {
   slug: 'snowshine',
   gameId: 'SNOWSHINE',
   rarity: 5,
-  weaponType: 'greatsword',
+  weaponType: 'claym',
   element: 'cryo',
   role: 'defender',
   mainAttribute: 'strength',

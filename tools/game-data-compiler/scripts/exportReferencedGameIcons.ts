@@ -32,12 +32,6 @@ const TMP_ROOT = path.join(PROJECT_ROOT, 'tmp', 'referenced-game-icons');
 const RICH_TEXT_SOURCE_MANIFEST = path.join(TMP_ROOT, 'rich-text-icon-sources.json');
 const REPORT_PATH = path.join(TMP_ROOT, 'audit.json');
 const TEXT_EXTENSIONS = new Set(['.css', '.html', '.js', '.json', '.scss', '.ts', '.tsx', '.vue']);
-const WEAPON_OUTPUT_TO_NATIVE_PREFIX = new Map([
-  ['wpn_greatsword_', 'wpn_claym_'],
-  ['wpn_polearm_', 'wpn_lance_'],
-  ['wpn_handcannon_', 'wpn_pistol_'],
-  ['wpn_artsunit_', 'wpn_funnel_'],
-]);
 const PUBLIC_ICON_SOURCE_ALIASES = new Map<
   string,
   { readonly sourceName: string; readonly preferredPathSegment: string }
@@ -401,13 +395,6 @@ export async function addOperatorImpliedReferences(
   return overrides;
 }
 
-function reverseWeaponIdentity(outputStem: string): string {
-  for (const [outputPrefix, nativePrefix] of WEAPON_OUTPUT_TO_NATIVE_PREFIX) {
-    if (outputStem.startsWith(outputPrefix)) return outputStem.replace(outputPrefix, nativePrefix);
-  }
-  return outputStem;
-}
-
 export async function addEquipmentConfiguredReferences(
   references: Map<string, Set<string>>,
   configPath = path.join(PROJECT_ROOT, 'tools/game-data-compiler/config/equipmentAssets.json'),
@@ -478,7 +465,7 @@ function sourcePlanForReference(
   }
   if (publicPath.startsWith('/weapons/')) {
     return {
-      sourceNames: [`${reverseWeaponIdentity(stem)}.png`],
+      sourceNames: [`${stem}.png`],
       preferredPathSegments: ['/itemicon/'],
     };
   }

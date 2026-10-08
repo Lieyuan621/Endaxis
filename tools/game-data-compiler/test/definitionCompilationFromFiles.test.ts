@@ -134,7 +134,7 @@ describe('从原始文件独立编译定义', () => {
     expect(batch.definitions).toHaveLength(1);
     expect(batch.definitions[0]).toMatchObject({
       slug: weaponId,
-      weaponType: 'polearm',
+      weaponType: 'lance',
       traits: [{ key: 'skill1' }],
     });
     expect(fs.readdirSync(root, { recursive: true })).toEqual(before);

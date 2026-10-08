@@ -3,10 +3,10 @@ import type { OperatorWeaponType } from '../../../../../packages/game-data-contr
 
 const PROJECTED_WEAPON_TYPES: Readonly<Partial<Record<WeaponTypeSource, OperatorWeaponType>>> = {
   Sword: 'sword',
-  Wand: 'arts-unit',
-  Claymores: 'greatsword',
-  Lance: 'polearm',
-  Pistol: 'handcannon',
+  Wand: 'funnel',
+  Claymores: 'claym',
+  Lance: 'lance',
+  Pistol: 'pistol',
 };
 
 /**

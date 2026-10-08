@@ -49,12 +49,6 @@ GENERATED_STRING_FIELD_RE = re.compile(
     r'\b(?P<field>slug|assetSlug)\s*:\s*[\'\"](?P<value>[^\'\"]+)[\'\"]'
     r'|[\'\"](?P<quoted_field>slug|assetSlug)[\'\"]\s*:\s*[\'\"](?P<quoted_value>[^\'\"]+)[\'\"]'
 )
-WEAPON_PREFIX_ALIASES = [
-    ('wpn_claym_', 'wpn_greatsword_'),
-    ('wpn_lance_', 'wpn_polearm_'),
-    ('wpn_pistol_', 'wpn_handcannon_'),
-    ('wpn_funnel_', 'wpn_artsunit_'),
-]
 SKILL_CONDITION_FIELD_RE = re.compile(
     r'^condition(Desc|DescInactive|Icon|Id|Name|PostDesc)([1-9][0-9]*)$'
 )
@@ -1118,18 +1112,8 @@ def build_existing_gear_set_slug_map(repo_root):
     return suit_slug_map
 
 
-def expand_weapon_id_aliases(weapon_id):
-    raw = str(weapon_id or '').strip().lower()
-    if not raw:
-        return []
-
-    aliases = {raw}
-    for left, right in WEAPON_PREFIX_ALIASES:
-        if raw.startswith(left):
-            aliases.add(raw.replace(left, right, 1))
-        if raw.startswith(right):
-            aliases.add(raw.replace(right, left, 1))
-    return sorted(aliases)
+def normalize_weapon_id(weapon_id):
+    return str(weapon_id or '').strip().lower()
 
 
 def build_existing_weapon_icon_slug_map(repo_root):
@@ -1150,14 +1134,14 @@ def build_existing_weapon_icon_slug_map(repo_root):
             if not icon_match:
                 continue
             slug = filename[:-3]
-            for icon_id in expand_weapon_id_aliases(icon_match.group(1)):
-                existing = icon_slug_map.get(icon_id)
-                if existing and existing != slug:
-                    data_error(
-                        f'weapon slug map {path}',
-                        f'conflicting weapon icon slug for {icon_id}: {existing!r} vs {slug!r}',
-                    )
-                icon_slug_map[icon_id] = slug
+            icon_id = normalize_weapon_id(icon_match.group(1))
+            existing = icon_slug_map.get(icon_id)
+            if existing and existing != slug:
+                data_error(
+                    f'weapon slug map {path}',
+                    f'conflicting weapon icon slug for {icon_id}: {existing!r} vs {slug!r}',
+                )
+            icon_slug_map[icon_id] = slug
 
     return icon_slug_map
 
@@ -1178,19 +1162,9 @@ def build_existing_weapon_slug_map(repo_root, item_table=None):
             if not isinstance(item_id, str) or not isinstance(item_data, dict):
                 continue
             icon_id = item_data.get('iconId')
-            matching_slugs = {
-                icon_slug_map[alias]
-                for alias in expand_weapon_id_aliases(icon_id)
-                if alias in icon_slug_map
-            }
-            if not matching_slugs:
-                continue
-            if len(matching_slugs) > 1:
-                data_error(
-                    f'weapon slug map ItemTable {item_id}',
-                    f'iconId {icon_id!r} matches multiple Endaxis slugs: {sorted(matching_slugs)!r}',
-                )
-            weapon_slug_map[item_id] = next(iter(matching_slugs))
+            slug = icon_slug_map.get(normalize_weapon_id(icon_id))
+            if slug:
+                weapon_slug_map[item_id] = slug
 
     for icon_id, slug in icon_slug_map.items():
         weapon_slug_map.setdefault(icon_id, slug)

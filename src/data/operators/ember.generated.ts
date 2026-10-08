@@ -1965,7 +1965,7 @@ export const ember: OperatorDefinition = {
   slug: 'ember',
   gameId: 'EMBER',
   rarity: 6,
-  weaponType: 'greatsword',
+  weaponType: 'claym',
   element: 'heat',
   role: 'defender',
   mainAttribute: 'strength',

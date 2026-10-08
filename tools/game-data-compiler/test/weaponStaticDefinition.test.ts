@@ -19,7 +19,7 @@ describe('武器静态定义', () => {
       {
         slug: 'wpn_lance_fixture',
         rarity: 6,
-        weaponType: 'polearm',
+        weaponType: 'lance',
         baseAttackAtLevelNodes: [51, 146, 247, 348, 449, 500],
         traits: [
           {

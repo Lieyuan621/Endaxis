@@ -7041,7 +7041,7 @@ export const yvonne: OperatorDefinition = {
   slug: 'yvonne',
   gameId: 'YVONNE',
   rarity: 6,
-  weaponType: 'handcannon',
+  weaponType: 'pistol',
   element: 'cryo',
   role: 'striker',
   mainAttribute: 'intellect',

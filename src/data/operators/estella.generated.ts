@@ -2802,7 +2802,7 @@ export const estella: OperatorDefinition = {
   slug: 'estella',
   gameId: 'ESTELLA',
   rarity: 4,
-  weaponType: 'polearm',
+  weaponType: 'lance',
   element: 'cryo',
   role: 'guard',
   mainAttribute: 'will',

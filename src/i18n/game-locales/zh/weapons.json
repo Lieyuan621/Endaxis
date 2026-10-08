@@ -1,5 +1,5 @@
 {
-  "wpn_greatsword_0003": {
+  "wpn_claym_0003": {
     "name": "工业零点一",
     "skill1": {
       "name": "力量提升·小",
@@ -17,7 +17,7 @@
       "values": [12, 14.4, 16.8, 19.2, 21.6, 24, 26.4, 28.8, 33.6]
     }
   },
-  "wpn_greatsword_0004": {
+  "wpn_claym_0004": {
     "name": "典范",
     "skill1": {
       "name": "主能力提升·大",
@@ -45,7 +45,7 @@
       ]
     }
   },
-  "wpn_greatsword_0006": {
+  "wpn_claym_0006": {
     "name": "昔日精品",
     "skill1": {
       "name": "意志提升·大",
@@ -73,7 +73,7 @@
       ]
     }
   },
-  "wpn_greatsword_0007": {
+  "wpn_claym_0007": {
     "name": "大雷斑",
     "skill1": {
       "name": "力量提升·大",
@@ -101,7 +101,7 @@
       ]
     }
   },
-  "wpn_greatsword_0008": {
+  "wpn_claym_0008": {
     "name": "破碎君王",
     "skill1": {
       "name": "力量提升·大",
@@ -129,7 +129,7 @@
       ]
     }
   },
-  "wpn_greatsword_0009": {
+  "wpn_claym_0009": {
     "name": "淬火者",
     "skill1": {
       "name": "意志提升·小",
@@ -147,7 +147,7 @@
       "values": [12, 14.4, 16.8, 19.2, 21.6, 24, 26.4, 28.8, 33.6]
     }
   },
-  "wpn_greatsword_0010": {
+  "wpn_claym_0010": {
     "name": "达尔霍夫7",
     "skill1": {
       "name": "主能力提升·小",
@@ -160,7 +160,7 @@
       "values": [12, 14, 17, 19, 22, 24, 26, 29, 34]
     }
   },
-  "wpn_greatsword_0011": {
+  "wpn_claym_0011": {
     "name": "探骊",
     "skill1": {
       "name": "力量提升·中",
@@ -188,7 +188,7 @@
       ]
     }
   },
-  "wpn_greatsword_0012": {
+  "wpn_claym_0012": {
     "name": "终点之声",
     "skill1": {
       "name": "力量提升·中",
@@ -216,7 +216,7 @@
       ]
     }
   },
-  "wpn_greatsword_0013": {
+  "wpn_claym_0013": {
     "name": "赫拉芬格",
     "skill1": {
       "name": "力量提升·大",
@@ -244,7 +244,7 @@
       ]
     }
   },
-  "wpn_greatsword_0014": {
+  "wpn_claym_0014": {
     "name": "古渠",
     "skill1": {
       "name": "力量提升·中",
@@ -272,7 +272,7 @@
       ]
     }
   },
-  "wpn_greatsword_0015": {
+  "wpn_claym_0015": {
     "name": "O.B.J.重荷",
     "skill1": {
       "name": "力量提升·中",
@@ -300,7 +300,7 @@
       ]
     }
   },
-  "wpn_greatsword_0016": {
+  "wpn_claym_0016": {
     "name": "幻想苦痛",
     "skill1": {
       "name": "力量提升·大",
@@ -328,7 +328,7 @@
       ]
     }
   },
-  "wpn_greatsword_0017": {
+  "wpn_claym_0017": {
     "name": "赤缨",
     "skill1": {
       "name": "力量提升·大",
@@ -356,7 +356,7 @@
       ]
     }
   },
-  "wpn_artsunit_0001": {
+  "wpn_funnel_0001": {
     "name": "全自动骇新星",
     "skill1": {
       "name": "智识提升·小",
@@ -374,7 +374,7 @@
       "values": [15, 18, 21, 24, 27, 30, 33, 36, 42]
     }
   },
-  "wpn_artsunit_0002": {
+  "wpn_funnel_0002": {
     "name": "吉米尼12",
     "skill1": {
       "name": "主能力提升·小",
@@ -387,7 +387,7 @@
       "values": [12, 14, 17, 19, 22, 24, 26, 29, 34]
     }
   },
-  "wpn_artsunit_0003": {
+  "wpn_funnel_0003": {
     "name": "荧光雷羽",
     "skill1": {
       "name": "意志提升·小",
@@ -405,7 +405,7 @@
       "values": [12, 14.4, 16.8, 19.2, 21.6, 24, 26.4, 28.8, 33.6]
     }
   },
-  "wpn_artsunit_0004": {
+  "wpn_funnel_0004": {
     "name": "迷失荒野",
     "skill1": {
       "name": "智识提升·中",
@@ -433,7 +433,7 @@
       ]
     }
   },
-  "wpn_artsunit_0005": {
+  "wpn_funnel_0005": {
     "name": "悼亡诗",
     "skill1": {
       "name": "智识提升·中",
@@ -461,7 +461,7 @@
       ]
     }
   },
-  "wpn_artsunit_0006": {
+  "wpn_funnel_0006": {
     "name": "作品：蚀迹",
     "skill1": {
       "name": "意志提升·大",
@@ -489,7 +489,7 @@
       ]
     }
   },
-  "wpn_artsunit_0007": {
+  "wpn_funnel_0007": {
     "name": "莫奈何",
     "skill1": {
       "name": "意志提升·中",
@@ -517,7 +517,7 @@
       ]
     }
   },
-  "wpn_artsunit_0010": {
+  "wpn_funnel_0010": {
     "name": "爆破单元",
     "skill1": {
       "name": "主能力提升·大",
@@ -545,7 +545,7 @@
       ]
     }
   },
-  "wpn_artsunit_0009": {
+  "wpn_funnel_0009": {
     "name": "遗忘",
     "skill1": {
       "name": "智识提升·大",
@@ -573,7 +573,7 @@
       ]
     }
   },
-  "wpn_artsunit_0008": {
+  "wpn_funnel_0008": {
     "name": "骑士精神",
     "skill1": {
       "name": "意志提升·大",
@@ -601,7 +601,7 @@
       ]
     }
   },
-  "wpn_artsunit_0011": {
+  "wpn_funnel_0011": {
     "name": "使命必达",
     "skill1": {
       "name": "意志提升·大",
@@ -629,7 +629,7 @@
       ]
     }
   },
-  "wpn_artsunit_0012": {
+  "wpn_funnel_0012": {
     "name": "布道自由",
     "skill1": {
       "name": "意志提升·中",
@@ -657,7 +657,7 @@
       ]
     }
   },
-  "wpn_artsunit_0013": {
+  "wpn_funnel_0013": {
     "name": "沧溟星梦",
     "skill1": {
       "name": "智识提升·大",
@@ -685,7 +685,7 @@
       ]
     }
   },
-  "wpn_artsunit_0014": {
+  "wpn_funnel_0014": {
     "name": "O.B.J.术识",
     "skill1": {
       "name": "智识提升·中",
@@ -713,7 +713,7 @@
       ]
     }
   },
-  "wpn_artsunit_0015": {
+  "wpn_funnel_0015": {
     "name": "孤舟",
     "skill1": {
       "name": "意志提升·大",
@@ -741,7 +741,7 @@
       ]
     }
   },
-  "wpn_artsunit_0016": {
+  "wpn_funnel_0016": {
     "name": "四二式·肃阵",
     "skill1": {
       "name": "智识提升·大",
@@ -769,7 +769,7 @@
       ]
     }
   },
-  "wpn_artsunit_0017": {
+  "wpn_funnel_0017": {
     "name": "雾中微光",
     "skill1": {
       "name": "意志提升·大",
@@ -797,7 +797,7 @@
       ]
     }
   },
-  "wpn_artsunit_0018": {
+  "wpn_funnel_0018": {
     "name": "联结点",
     "skill1": {
       "name": "智识提升·大",
@@ -825,7 +825,7 @@
       ]
     }
   },
-  "wpn_artsunit_0019": {
+  "wpn_funnel_0019": {
     "name": "寒夜幽影",
     "skill1": {
       "name": "敏捷提升·大",
@@ -853,7 +853,7 @@
       ]
     }
   },
-  "wpn_artsunit_0020": {
+  "wpn_funnel_0020": {
     "name": "苦难的尽头",
     "skill1": {
       "name": "敏捷提升·大",
@@ -881,7 +881,7 @@
       ]
     }
   },
-  "wpn_polearm_0003": {
+  "wpn_lance_0003": {
     "name": "寻路者道标",
     "skill1": {
       "name": "敏捷提升·小",
@@ -899,7 +899,7 @@
       "values": [15, 18, 21, 24, 27, 30, 33, 36, 42]
     }
   },
-  "wpn_polearm_0004": {
+  "wpn_lance_0004": {
     "name": "嵌合正义",
     "skill1": {
       "name": "力量提升·中",
@@ -927,7 +927,7 @@
       ]
     }
   },
-  "wpn_polearm_0006": {
+  "wpn_lance_0006": {
     "name": "向心之引",
     "skill1": {
       "name": "意志提升·中",
@@ -955,7 +955,7 @@
       ]
     }
   },
-  "wpn_polearm_0007": {
+  "wpn_lance_0007": {
     "name": "灯火使命",
     "skill1": {
       "name": "敏捷提升·大",
@@ -983,7 +983,7 @@
       ]
     }
   },
-  "wpn_polearm_0008": {
+  "wpn_lance_0008": {
     "name": "天使杀手",
     "skill1": {
       "name": "意志提升·小",
@@ -1001,7 +1001,7 @@
       "values": [12, 14.4, 16.8, 19.2, 21.6, 24, 26.4, 28.8, 33.6]
     }
   },
-  "wpn_polearm_0009": {
+  "wpn_lance_0009": {
     "name": "奥佩罗77",
     "skill1": {
       "name": "主能力提升·小",
@@ -1014,7 +1014,7 @@
       "values": [12, 14, 17, 19, 22, 24, 26, 29, 34]
     }
   },
-  "wpn_polearm_0010": {
+  "wpn_lance_0010": {
     "name": "骁勇",
     "skill1": {
       "name": "敏捷提升·大",
@@ -1042,7 +1042,7 @@
       ]
     }
   },
-  "wpn_polearm_0011": {
+  "wpn_lance_0011": {
     "name": "J.E.T.",
     "skill1": {
       "name": "主能力提升·大",
@@ -1070,7 +1070,7 @@
       ]
     }
   },
-  "wpn_polearm_0012": {
+  "wpn_lance_0012": {
     "name": "负山",
     "skill1": {
       "name": "敏捷提升·大",
@@ -1098,7 +1098,7 @@
       ]
     }
   },
-  "wpn_polearm_0013": {
+  "wpn_lance_0013": {
     "name": "O.B.J.尖峰",
     "skill1": {
       "name": "意志提升·中",
@@ -1126,7 +1126,7 @@
       ]
     }
   },
-  "wpn_polearm_0014": {
+  "wpn_lance_0014": {
     "name": "曜夜的首演",
     "skill1": {
       "name": "意志提升·大",
@@ -1154,7 +1154,7 @@
       ]
     }
   },
-  "wpn_polearm_0015": {
+  "wpn_lance_0015": {
     "name": "镀红祝福",
     "skill1": {
       "name": "敏捷提升·大",
@@ -1182,7 +1182,7 @@
       ]
     }
   },
-  "wpn_polearm_0016": {
+  "wpn_lance_0016": {
     "name": "黄金时代",
     "skill1": {
       "name": "意志提升·大",
@@ -1210,7 +1210,7 @@
       ]
     }
   },
-  "wpn_handcannon_0001": {
+  "wpn_pistol_0001": {
     "name": "佩科5",
     "skill1": {
       "name": "主能力提升·小",
@@ -1223,7 +1223,7 @@
       "values": [12, 14, 17, 19, 22, 24, 26, 29, 34]
     }
   },
-  "wpn_handcannon_0002": {
+  "wpn_pistol_0002": {
     "name": "呼啸守卫",
     "skill1": {
       "name": "智识提升·小",
@@ -1241,7 +1241,7 @@
       "values": [12, 14.4, 16.8, 19.2, 21.6, 24, 26.4, 28.8, 33.6]
     }
   },
-  "wpn_handcannon_0003": {
+  "wpn_pistol_0003": {
     "name": "长路",
     "skill1": {
       "name": "力量提升·小",
@@ -1259,7 +1259,7 @@
       "values": [12, 14.4, 16.8, 19.2, 21.6, 24, 26.4, 28.8, 33.6]
     }
   },
-  "wpn_handcannon_0004": {
+  "wpn_pistol_0004": {
     "name": "理性告别",
     "skill1": {
       "name": "力量提升·中",
@@ -1287,7 +1287,7 @@
       ]
     }
   },
-  "wpn_handcannon_0005": {
+  "wpn_pistol_0005": {
     "name": "领航者",
     "skill1": {
       "name": "智识提升·大",
@@ -1315,7 +1315,7 @@
       ]
     }
   },
-  "wpn_handcannon_0006": {
+  "wpn_pistol_0006": {
     "name": "作品：众生",
     "skill1": {
       "name": "敏捷提升·中",
@@ -1343,7 +1343,7 @@
       ]
     }
   },
-  "wpn_handcannon_0007": {
+  "wpn_pistol_0007": {
     "name": "望乡",
     "skill1": {
       "name": "敏捷提升·大",
@@ -1371,7 +1371,7 @@
       ]
     }
   },
-  "wpn_handcannon_0008": {
+  "wpn_pistol_0008": {
     "name": "楔子",
     "skill1": {
       "name": "主能力提升·大",
@@ -1399,7 +1399,7 @@
       ]
     }
   },
-  "wpn_handcannon_0009": {
+  "wpn_pistol_0009": {
     "name": "同类相食",
     "skill1": {
       "name": "主能力提升·大",
@@ -1427,7 +1427,7 @@
       ]
     }
   },
-  "wpn_handcannon_0010": {
+  "wpn_pistol_0010": {
     "name": "艺术暴君",
     "skill1": {
       "name": "智识提升·大",
@@ -1455,7 +1455,7 @@
       ]
     }
   },
-  "wpn_handcannon_0011": {
+  "wpn_pistol_0011": {
     "name": "落草",
     "skill1": {
       "name": "敏捷提升·大",
@@ -1483,7 +1483,7 @@
       ]
     }
   },
-  "wpn_handcannon_0012": {
+  "wpn_pistol_0012": {
     "name": "O.B.J.迅极",
     "skill1": {
       "name": "敏捷提升·中",

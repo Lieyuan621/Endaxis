@@ -2397,7 +2397,7 @@ export const fluorite: OperatorDefinition = {
   slug: 'fluorite',
   gameId: 'FLUORITE',
   rarity: 4,
-  weaponType: 'handcannon',
+  weaponType: 'pistol',
   element: 'nature',
   role: 'caster',
   mainAttribute: 'agility',

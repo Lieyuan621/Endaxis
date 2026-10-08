@@ -227,7 +227,7 @@ async function simulate(slug: string, tier: number, sequences: readonly ProbeSeq
     slug: 'weapon-state-fixture',
     gameId: 'weapon-state-fixture',
     rarity: 6,
-    weaponType: 'greatsword',
+    weaponType: 'claym',
     element: 'physical',
     role: base.role,
     attributes: base.attributes,

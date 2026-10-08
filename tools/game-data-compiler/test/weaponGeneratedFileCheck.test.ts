@@ -4,13 +4,13 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { checkGeneratedFiles } from '../scripts/generateWeaponDefinitions.ts';
 
-const relativePath = 'arts-unit/wpn_test.generated.ts';
+const relativePath = 'funnel/wpn_test.generated.ts';
 const content = 'const definition = { rarity: 4 };\nexport default definition;\n';
 let directory: string;
 
 beforeEach(() => {
   directory = fs.mkdtempSync(path.join(os.tmpdir(), 'endaxis-weapon-check-'));
-  fs.mkdirSync(path.join(directory, 'arts-unit'));
+  fs.mkdirSync(path.join(directory, 'funnel'));
 });
 
 afterEach(() => {

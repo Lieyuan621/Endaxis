@@ -13,7 +13,7 @@ const gearDisplay = {
 
 const operator = {
   slug: 'fixture-operator',
-  weaponType: 'arts-unit',
+  weaponType: 'funnel',
   skillGroups: [
     {
       key: 'battleSkill',
@@ -65,7 +65,7 @@ const operator = {
 const weapon: WeaponDefinition = {
   slug: 'fixture-weapon',
   rarity: 6,
-  weaponType: 'arts-unit',
+  weaponType: 'funnel',
   baseAttackAtLevelNodes: [1, 2, 3, 4, 5, 6],
   traits: [
     { key: 'trait1', levelCount: 9 },
@@ -242,7 +242,7 @@ describe('validateProjectBuildDefinitionReferences', () => {
     ).toEqual([
       {
         path: '$.scenarios[0].tracks[0].weapon.weaponSlug',
-        message: "weapon type 'sword' is incompatible with operator weapon type 'arts-unit'",
+        message: "weapon type 'sword' is incompatible with operator weapon type 'funnel'",
       },
       {
         path: '$.scenarios[0].tracks[0].gears.armor.gearSlug',

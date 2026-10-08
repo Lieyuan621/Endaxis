@@ -1,5 +1,5 @@
 {
-  "wpn_greatsword_0003": {
+  "wpn_claym_0003": {
     "name": "Industry 0.1",
     "skill1": {
       "name": "Strength [S]",
@@ -17,7 +17,7 @@
       "values": [12, 14.4, 16.8, 19.2, 21.6, 24, 26.4, 28.8, 33.6]
     }
   },
-  "wpn_greatsword_0004": {
+  "wpn_claym_0004": {
     "name": "Exemplar",
     "skill1": {
       "name": "Main Attribute [L]",
@@ -45,7 +45,7 @@
       ]
     }
   },
-  "wpn_greatsword_0006": {
+  "wpn_claym_0006": {
     "name": "Former Finery",
     "skill1": {
       "name": "Will [L]",
@@ -73,7 +73,7 @@
       ]
     }
   },
-  "wpn_greatsword_0007": {
+  "wpn_claym_0007": {
     "name": "Thunderberge",
     "skill1": {
       "name": "Strength [L]",
@@ -101,7 +101,7 @@
       ]
     }
   },
-  "wpn_greatsword_0008": {
+  "wpn_claym_0008": {
     "name": "Sundered Prince",
     "skill1": {
       "name": "Strength [L]",
@@ -129,7 +129,7 @@
       ]
     }
   },
-  "wpn_greatsword_0009": {
+  "wpn_claym_0009": {
     "name": "Quencher",
     "skill1": {
       "name": "Will [S]",
@@ -147,7 +147,7 @@
       "values": [12, 14.4, 16.8, 19.2, 21.6, 24, 26.4, 28.8, 33.6]
     }
   },
-  "wpn_greatsword_0010": {
+  "wpn_claym_0010": {
     "name": "Darhoff 7",
     "skill1": {
       "name": "Main Attribute [S]",
@@ -160,7 +160,7 @@
       "values": [12, 14, 17, 19, 22, 24, 26, 29, 34]
     }
   },
-  "wpn_greatsword_0011": {
+  "wpn_claym_0011": {
     "name": "Seeker of Dark Lung",
     "skill1": {
       "name": "Strength [M]",
@@ -188,7 +188,7 @@
       ]
     }
   },
-  "wpn_greatsword_0012": {
+  "wpn_claym_0012": {
     "name": "Finishing Call",
     "skill1": {
       "name": "Strength [M]",
@@ -216,7 +216,7 @@
       ]
     }
   },
-  "wpn_greatsword_0013": {
+  "wpn_claym_0013": {
     "name": "Khravengger",
     "skill1": {
       "name": "Strength [L]",
@@ -244,7 +244,7 @@
       ]
     }
   },
-  "wpn_greatsword_0014": {
+  "wpn_claym_0014": {
     "name": "Ancient Canal",
     "skill1": {
       "name": "Strength [M]",
@@ -272,7 +272,7 @@
       ]
     }
   },
-  "wpn_greatsword_0015": {
+  "wpn_claym_0015": {
     "name": "OBJ Heavy Burden",
     "skill1": {
       "name": "Strength [M]",
@@ -300,7 +300,7 @@
       ]
     }
   },
-  "wpn_greatsword_0016": {
+  "wpn_claym_0016": {
     "name": "Phantom Pain",
     "skill1": {
       "name": "Strength [L]",
@@ -328,7 +328,7 @@
       ]
     }
   },
-  "wpn_greatsword_0017": {
+  "wpn_claym_0017": {
     "name": "Amaranthine Tassel",
     "skill1": {
       "name": "Strength [L]",
@@ -356,7 +356,7 @@
       ]
     }
   },
-  "wpn_artsunit_0001": {
+  "wpn_funnel_0001": {
     "name": "Hypernova Auto",
     "skill1": {
       "name": "Intellect [S]",
@@ -374,7 +374,7 @@
       "values": [15, 18, 21, 24, 27, 30, 33, 36, 42]
     }
   },
-  "wpn_artsunit_0002": {
+  "wpn_funnel_0002": {
     "name": "Jiminy 12",
     "skill1": {
       "name": "Main Attribute [S]",
@@ -387,7 +387,7 @@
       "values": [12, 14, 17, 19, 22, 24, 26, 29, 34]
     }
   },
-  "wpn_artsunit_0003": {
+  "wpn_funnel_0003": {
     "name": "Fluorescent Roc",
     "skill1": {
       "name": "Will [S]",
@@ -405,7 +405,7 @@
       "values": [12, 14.4, 16.8, 19.2, 21.6, 24, 26.4, 28.8, 33.6]
     }
   },
-  "wpn_artsunit_0004": {
+  "wpn_funnel_0004": {
     "name": "Wild Wanderer",
     "skill1": {
       "name": "Intellect [M]",
@@ -433,7 +433,7 @@
       ]
     }
   },
-  "wpn_artsunit_0005": {
+  "wpn_funnel_0005": {
     "name": "Stanza of Memorials",
     "skill1": {
       "name": "Intellect [M]",
@@ -461,7 +461,7 @@
       ]
     }
   },
-  "wpn_artsunit_0006": {
+  "wpn_funnel_0006": {
     "name": "Opus: Etch Figure",
     "skill1": {
       "name": "Will [L]",
@@ -489,7 +489,7 @@
       ]
     }
   },
-  "wpn_artsunit_0007": {
+  "wpn_funnel_0007": {
     "name": "Monaihe",
     "skill1": {
       "name": "Will [M]",
@@ -517,7 +517,7 @@
       ]
     }
   },
-  "wpn_artsunit_0010": {
+  "wpn_funnel_0010": {
     "name": "Detonation Unit",
     "skill1": {
       "name": "Main Attribute [L]",
@@ -545,7 +545,7 @@
       ]
     }
   },
-  "wpn_artsunit_0009": {
+  "wpn_funnel_0009": {
     "name": "Oblivion",
     "skill1": {
       "name": "Intellect [L]",
@@ -573,7 +573,7 @@
       ]
     }
   },
-  "wpn_artsunit_0008": {
+  "wpn_funnel_0008": {
     "name": "Chivalric Virtues",
     "skill1": {
       "name": "Will [L]",
@@ -601,7 +601,7 @@
       ]
     }
   },
-  "wpn_artsunit_0011": {
+  "wpn_funnel_0011": {
     "name": "Delivery Guaranteed",
     "skill1": {
       "name": "Will [L]",
@@ -629,7 +629,7 @@
       ]
     }
   },
-  "wpn_artsunit_0012": {
+  "wpn_funnel_0012": {
     "name": "Freedom to Proselytize",
     "skill1": {
       "name": "Will [M]",
@@ -657,7 +657,7 @@
       ]
     }
   },
-  "wpn_artsunit_0013": {
+  "wpn_funnel_0013": {
     "name": "Dreams of the Starry Beach",
     "skill1": {
       "name": "Intellect [L]",
@@ -685,7 +685,7 @@
       ]
     }
   },
-  "wpn_artsunit_0014": {
+  "wpn_funnel_0014": {
     "name": "OBJ Arts Identifier",
     "skill1": {
       "name": "Intellect [M]",
@@ -713,7 +713,7 @@
       ]
     }
   },
-  "wpn_artsunit_0015": {
+  "wpn_funnel_0015": {
     "name": "Lone Barge",
     "skill1": {
       "name": "Will [L]",
@@ -741,7 +741,7 @@
       ]
     }
   },
-  "wpn_artsunit_0016": {
+  "wpn_funnel_0016": {
     "name": "Type 42: Solemn Phalanx",
     "skill1": {
       "name": "Intellect [L]",
@@ -769,7 +769,7 @@
       ]
     }
   },
-  "wpn_artsunit_0017": {
+  "wpn_funnel_0017": {
     "name": "Flickers in the Mist",
     "skill1": {
       "name": "Will [L]",
@@ -797,7 +797,7 @@
       ]
     }
   },
-  "wpn_artsunit_0018": {
+  "wpn_funnel_0018": {
     "name": "Junction Point",
     "skill1": {
       "name": "Intellect [L]",
@@ -825,7 +825,7 @@
       ]
     }
   },
-  "wpn_artsunit_0019": {
+  "wpn_funnel_0019": {
     "name": "Umbra of Frigid Eventide",
     "skill1": {
       "name": "Agility [L]",
@@ -853,7 +853,7 @@
       ]
     }
   },
-  "wpn_artsunit_0020": {
+  "wpn_funnel_0020": {
     "name": "Suffering's End",
     "skill1": {
       "name": "Agility [L]",
@@ -881,7 +881,7 @@
       ]
     }
   },
-  "wpn_polearm_0003": {
+  "wpn_lance_0003": {
     "name": "Pathfinder's Beacon",
     "skill1": {
       "name": "Agility [S]",
@@ -899,7 +899,7 @@
       "values": [15, 18, 21, 24, 27, 30, 33, 36, 42]
     }
   },
-  "wpn_polearm_0004": {
+  "wpn_lance_0004": {
     "name": "Chimeric Justice",
     "skill1": {
       "name": "Strength [M]",
@@ -927,7 +927,7 @@
       ]
     }
   },
-  "wpn_polearm_0006": {
+  "wpn_lance_0006": {
     "name": "Cohesive Traction",
     "skill1": {
       "name": "Will [M]",
@@ -955,7 +955,7 @@
       ]
     }
   },
-  "wpn_polearm_0007": {
+  "wpn_lance_0007": {
     "name": "Beacon of Duty",
     "skill1": {
       "name": "Agility [L]",
@@ -983,7 +983,7 @@
       ]
     }
   },
-  "wpn_polearm_0008": {
+  "wpn_lance_0008": {
     "name": "Aggeloslayer",
     "skill1": {
       "name": "Will [S]",
@@ -1001,7 +1001,7 @@
       "values": [12, 14.4, 16.8, 19.2, 21.6, 24, 26.4, 28.8, 33.6]
     }
   },
-  "wpn_polearm_0009": {
+  "wpn_lance_0009": {
     "name": "Opero 77",
     "skill1": {
       "name": "Main Attribute [S]",
@@ -1014,7 +1014,7 @@
       "values": [12, 14, 17, 19, 22, 24, 26, 29, 34]
     }
   },
-  "wpn_polearm_0010": {
+  "wpn_lance_0010": {
     "name": "Valiant",
     "skill1": {
       "name": "Agility [L]",
@@ -1042,7 +1042,7 @@
       ]
     }
   },
-  "wpn_polearm_0011": {
+  "wpn_lance_0011": {
     "name": "JET",
     "skill1": {
       "name": "Main Attribute [L]",
@@ -1070,7 +1070,7 @@
       ]
     }
   },
-  "wpn_polearm_0012": {
+  "wpn_lance_0012": {
     "name": "Mountain Bearer",
     "skill1": {
       "name": "Agility [L]",
@@ -1098,7 +1098,7 @@
       ]
     }
   },
-  "wpn_polearm_0013": {
+  "wpn_lance_0013": {
     "name": "OBJ Razorhorn",
     "skill1": {
       "name": "Will [M]",
@@ -1126,7 +1126,7 @@
       ]
     }
   },
-  "wpn_polearm_0014": {
+  "wpn_lance_0014": {
     "name": "Bedazzling Night Debut",
     "skill1": {
       "name": "Will [L]",
@@ -1154,7 +1154,7 @@
       ]
     }
   },
-  "wpn_polearm_0015": {
+  "wpn_lance_0015": {
     "name": "Blessing of Lustrous Carmine",
     "skill1": {
       "name": "Agility [L]",
@@ -1182,7 +1182,7 @@
       ]
     }
   },
-  "wpn_polearm_0016": {
+  "wpn_lance_0016": {
     "name": "Golden Age",
     "skill1": {
       "name": "Will [L]",
@@ -1210,7 +1210,7 @@
       ]
     }
   },
-  "wpn_handcannon_0001": {
+  "wpn_pistol_0001": {
     "name": "Peco 5",
     "skill1": {
       "name": "Main Attribute [S]",
@@ -1223,7 +1223,7 @@
       "values": [12, 14, 17, 19, 22, 24, 26, 29, 34]
     }
   },
-  "wpn_handcannon_0002": {
+  "wpn_pistol_0002": {
     "name": "Howling Guard",
     "skill1": {
       "name": "Intellect [S]",
@@ -1241,7 +1241,7 @@
       "values": [12, 14.4, 16.8, 19.2, 21.6, 24, 26.4, 28.8, 33.6]
     }
   },
-  "wpn_handcannon_0003": {
+  "wpn_pistol_0003": {
     "name": "Long Road",
     "skill1": {
       "name": "Strength [S]",
@@ -1259,7 +1259,7 @@
       "values": [12, 14.4, 16.8, 19.2, 21.6, 24, 26.4, 28.8, 33.6]
     }
   },
-  "wpn_handcannon_0004": {
+  "wpn_pistol_0004": {
     "name": "Rational Farewell",
     "skill1": {
       "name": "Strength [M]",
@@ -1287,7 +1287,7 @@
       ]
     }
   },
-  "wpn_handcannon_0005": {
+  "wpn_pistol_0005": {
     "name": "Navigator",
     "skill1": {
       "name": "Intellect [L]",
@@ -1315,7 +1315,7 @@
       ]
     }
   },
-  "wpn_handcannon_0006": {
+  "wpn_pistol_0006": {
     "name": "Opus: The Living",
     "skill1": {
       "name": "Agility [M]",
@@ -1343,7 +1343,7 @@
       ]
     }
   },
-  "wpn_handcannon_0007": {
+  "wpn_pistol_0007": {
     "name": "Home Longing",
     "skill1": {
       "name": "Agility [L]",
@@ -1371,7 +1371,7 @@
       ]
     }
   },
-  "wpn_handcannon_0008": {
+  "wpn_pistol_0008": {
     "name": "Wedge",
     "skill1": {
       "name": "Main Attribute [L]",
@@ -1399,7 +1399,7 @@
       ]
     }
   },
-  "wpn_handcannon_0009": {
+  "wpn_pistol_0009": {
     "name": "Clannibal",
     "skill1": {
       "name": "Main Attribute [L]",
@@ -1427,7 +1427,7 @@
       ]
     }
   },
-  "wpn_handcannon_0010": {
+  "wpn_pistol_0010": {
     "name": "Artzy Tyrannical",
     "skill1": {
       "name": "Intellect [L]",
@@ -1455,7 +1455,7 @@
       ]
     }
   },
-  "wpn_handcannon_0011": {
+  "wpn_pistol_0011": {
     "name": "Brigand's Calling",
     "skill1": {
       "name": "Agility [L]",
@@ -1483,7 +1483,7 @@
       ]
     }
   },
-  "wpn_handcannon_0012": {
+  "wpn_pistol_0012": {
     "name": "OBJ Velocitous",
     "skill1": {
       "name": "Agility [M]",

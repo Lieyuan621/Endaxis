@@ -1,6 +1,6 @@
 import { numberInput } from '../../../test/compiledGraphInputs';
 import { extractResourceDataNodes } from '../../../../tools/game-data-compiler/src/compiler/extractGraphDataNodes';
-import bedazzlingNightDebut from '../../../data/equipment/generated-weapons/polearm/wpn_lance_0014.generated';
+import bedazzlingNightDebut from '../../../data/equipment/generated-weapons/lance/wpn_lance_0014.generated';
 import {
   projectBuffTimelineViz,
   mergeOverlappingBuffTimelineSegments,

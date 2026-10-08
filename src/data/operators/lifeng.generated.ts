@@ -1841,7 +1841,7 @@ export const lifeng: OperatorDefinition = {
   slug: 'lifeng',
   gameId: 'LIFENG',
   rarity: 6,
-  weaponType: 'polearm',
+  weaponType: 'lance',
   element: 'physical',
   role: 'guard',
   mainAttribute: 'agility',

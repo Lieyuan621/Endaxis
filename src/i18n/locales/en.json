@@ -440,10 +440,10 @@
       "electric": "Electric",
       "nature": "Nature",
       "sword": "Sword",
-      "greatsword": "Greatsword",
-      "polearm": "Polearm",
-      "handcannon": "Handcannon",
-      "arts-unit": "Arts unit",
+      "claym": "Greatsword",
+      "lance": "Polearm",
+      "pistol": "Handcannon",
+      "funnel": "Arts unit",
       "guard": "Guard",
       "caster": "Caster",
       "defender": "Defender",
@@ -5616,11 +5616,10 @@
     },
     "weaponType": {
       "sword": "Sword",
-      "greatsword": "Greatsword",
-      "polearm": "Polearm",
-      "handcannon": "Handcannon",
-      "arts-unit": "Arts Unit",
-      "artsunit": "Arts Unit"
+      "claym": "Greatsword",
+      "lance": "Polearm",
+      "pistol": "Handcannon",
+      "funnel": "Arts Unit"
     },
     "slotType": {
       "armor": "Armor",

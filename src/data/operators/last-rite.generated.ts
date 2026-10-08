@@ -2752,7 +2752,7 @@ export const lastRite: OperatorDefinition = {
   slug: 'last-rite',
   gameId: 'LASTRITE',
   rarity: 6,
-  weaponType: 'greatsword',
+  weaponType: 'claym',
   element: 'cryo',
   role: 'striker',
   mainAttribute: 'strength',

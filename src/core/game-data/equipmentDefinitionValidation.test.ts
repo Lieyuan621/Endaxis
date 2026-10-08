@@ -136,7 +136,7 @@ describe('equipmentDefinitionValidation', () => {
       validateWeaponDefinition({
         slug: 'fixture-weapon',
         rarity: 6,
-        weaponType: 'arts-unit',
+        weaponType: 'funnel',
         baseAttackAtLevelNodes: [10, 20, 30, 40, 50, 60],
         traits: [
           {
@@ -238,7 +238,7 @@ describe('equipmentDefinitionValidation', () => {
     const issues = validateWeaponDefinition({
       slug: 'fixture-weapon',
       rarity: 6,
-      weaponType: 'arts-unit',
+      weaponType: 'funnel',
       baseAttackAtLevelNodes: [10, 20, 30, 40, 50, 60],
       traits: [
         {

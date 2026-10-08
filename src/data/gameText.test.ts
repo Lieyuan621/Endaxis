@@ -21,7 +21,7 @@ describe('game text localization', () => {
     expect(getOperatorCombatSkillName('arcane', 'ultimate', 'zh-CN', 'unused')).toBe('破晦');
   });
 
-  test('zh keeps arts-unit weapons with swapped icon IDs mapped to the correct skills', () => {
+  test('zh keeps funnel weapons with swapped icon IDs mapped to the correct skills', () => {
     expect(getWeaponSkillDescription('detonation-unit', 'skill3', 'zh-CN', 1)).toContain(
       '法术爆发',
     );

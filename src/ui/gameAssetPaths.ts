@@ -33,10 +33,10 @@ const ELEMENT_ICON_PATHS: Readonly<Record<DamageElement, string>> = Object.freez
 
 const WEAPON_ACTION_ICON_PATHS: Readonly<Record<OperatorWeaponType, string>> = Object.freeze({
   sword: '/icons/icon_attack_sword.webp',
-  greatsword: '/icons/icon_attack_claym.webp',
-  polearm: '/icons/icon_attack_lance.webp',
-  handcannon: '/icons/icon_attack_pistol.webp',
-  'arts-unit': '/icons/icon_attack_funnel.webp',
+  claym: '/icons/icon_attack_claym.webp',
+  lance: '/icons/icon_attack_lance.webp',
+  pistol: '/icons/icon_attack_pistol.webp',
+  funnel: '/icons/icon_attack_funnel.webp',
 });
 
 const OPERATOR_SKILL_ICON_FILES: Partial<Record<SkillType, string>> = Object.freeze({

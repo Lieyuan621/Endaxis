@@ -2148,7 +2148,7 @@ export const definitionSchemas = {
       },
       weaponType: {
         kind: 'enum',
-        options: ['sword', 'greatsword', 'polearm', 'handcannon', 'arts-unit'],
+        options: ['sword', 'claym', 'lance', 'pistol', 'funnel'],
         semantics: schema_18ab763e1525,
         description: '干员可以装备的武器类型。',
       },
@@ -2620,7 +2620,7 @@ export const definitionSchemas = {
       },
       weaponType: {
         kind: 'enum',
-        options: ['sword', 'greatsword', 'polearm', 'handcannon', 'arts-unit'],
+        options: ['sword', 'claym', 'lance', 'pistol', 'funnel'],
         semantics: schema_18ab763e1525,
         description: '可装备这把武器的干员武器类型。',
       },

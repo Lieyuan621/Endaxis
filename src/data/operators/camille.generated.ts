@@ -3883,7 +3883,7 @@ export const camille: OperatorDefinition = {
   slug: 'camille',
   gameId: 'CAMILLE',
   rarity: 6,
-  weaponType: 'polearm',
+  weaponType: 'lance',
   element: 'heat',
   role: 'vanguard',
   mainAttribute: 'agility',

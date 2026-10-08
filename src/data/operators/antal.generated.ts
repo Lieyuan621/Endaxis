@@ -3312,7 +3312,7 @@ export const antal: OperatorDefinition = {
   slug: 'antal',
   gameId: 'ANTAL',
   rarity: 4,
-  weaponType: 'arts-unit',
+  weaponType: 'funnel',
   element: 'electric',
   role: 'supporter',
   mainAttribute: 'intellect',

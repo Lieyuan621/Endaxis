@@ -22,7 +22,7 @@ const gearDisplay = {
 const loneBarge: WeaponDefinition = {
   slug: 'lone-barge',
   rarity: 6,
-  weaponType: 'arts-unit',
+  weaponType: 'funnel',
   baseAttackAtLevelNodes: [52, 149, 252, 355, 458, 510],
   traits: [
     {
@@ -232,7 +232,7 @@ describe('compile equipment contributions', () => {
     const definition: WeaponDefinition = {
       slug: 'healing-weapon',
       rarity: 6,
-      weaponType: 'polearm',
+      weaponType: 'lance',
       baseAttackAtLevelNodes: [1, 2, 3, 4, 5, 6],
       traits: [
         {

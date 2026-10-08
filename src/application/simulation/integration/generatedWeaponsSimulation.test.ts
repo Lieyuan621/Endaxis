@@ -446,7 +446,7 @@ describe('生成武器的正式模拟门禁', () => {
     const weapon = candidates.find(item => item.slug === 'wpn_claym_0003')!;
     const operator =
       repository.getOperator('da-pan') ??
-      repository.getOperators().find(item => item.weaponType === 'greatsword')!;
+      repository.getOperators().find(item => item.weaponType === 'claym')!;
     const disabled: WeaponDefinition = {
       ...weapon,
       traits: weapon.traits.map(staticEquipmentContribution),

@@ -11920,7 +11920,7 @@ export const typhoeus: OperatorDefinition = {
   slug: 'typhoeus',
   gameId: 'TYPHOEUS',
   rarity: 6,
-  weaponType: 'arts-unit',
+  weaponType: 'funnel',
   element: 'nature',
   role: 'striker',
   mainAttribute: 'agility',

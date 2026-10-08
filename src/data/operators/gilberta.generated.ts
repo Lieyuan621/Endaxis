@@ -2452,7 +2452,7 @@ export const gilberta: OperatorDefinition = {
   slug: 'gilberta',
   gameId: 'GILBERTA',
   rarity: 6,
-  weaponType: 'arts-unit',
+  weaponType: 'funnel',
   element: 'nature',
   role: 'supporter',
   mainAttribute: 'will',

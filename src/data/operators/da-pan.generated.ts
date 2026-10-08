@@ -2801,7 +2801,7 @@ export const daPan: OperatorDefinition = {
   slug: 'da-pan',
   gameId: 'DAPAN',
   rarity: 5,
-  weaponType: 'greatsword',
+  weaponType: 'claym',
   element: 'physical',
   role: 'striker',
   mainAttribute: 'strength',

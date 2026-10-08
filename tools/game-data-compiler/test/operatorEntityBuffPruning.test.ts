@@ -120,7 +120,7 @@ function input(consumerActions: unknown[] = []): OperatorDefinitionAssemblyInput
         attributeKeyFrames: [],
         mainAttribute: 'intellect',
         secondaryAttribute: 'will',
-        weaponType: 'arts-unit',
+        weaponType: 'funnel',
         element: 'electric',
         role: 'caster',
         projectedRarity: 6,

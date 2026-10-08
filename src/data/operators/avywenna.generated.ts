@@ -2445,7 +2445,7 @@ export const avywenna: OperatorDefinition = {
   slug: 'avywenna',
   gameId: 'AVYWENNA',
   rarity: 5,
-  weaponType: 'polearm',
+  weaponType: 'lance',
   element: 'electric',
   role: 'striker',
   mainAttribute: 'will',

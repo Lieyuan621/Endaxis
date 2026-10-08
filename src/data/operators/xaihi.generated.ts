@@ -2284,7 +2284,7 @@ export const xaihi: OperatorDefinition = {
   slug: 'xaihi',
   gameId: 'XAIHI',
   rarity: 5,
-  weaponType: 'arts-unit',
+  weaponType: 'funnel',
   element: 'cryo',
   role: 'supporter',
   mainAttribute: 'will',

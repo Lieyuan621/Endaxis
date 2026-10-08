@@ -1915,7 +1915,7 @@ export const catcher: OperatorDefinition = {
   slug: 'catcher',
   gameId: 'CATCHER',
   rarity: 4,
-  weaponType: 'greatsword',
+  weaponType: 'claym',
   element: 'physical',
   role: 'defender',
   mainAttribute: 'strength',

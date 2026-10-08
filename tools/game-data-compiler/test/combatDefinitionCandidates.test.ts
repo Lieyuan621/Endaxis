@@ -91,7 +91,7 @@ function weaponBatch() {
       {
         slug: 'fixture-weapon',
         rarity: 6,
-        weaponType: 'polearm',
+        weaponType: 'lance',
         baseAttackAtLevelNodes: [1, 2, 3, 4, 5, 6],
         traits: [{ key: 'passive', levelCount: 1 }],
         buffDefinitions: { fixture: buff('weapons') },

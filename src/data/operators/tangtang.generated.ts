@@ -3818,7 +3818,7 @@ export const tangtang: OperatorDefinition = {
   slug: 'tangtang',
   gameId: 'TANGTANG',
   rarity: 6,
-  weaponType: 'handcannon',
+  weaponType: 'pistol',
   element: 'cryo',
   role: 'caster',
   mainAttribute: 'agility',

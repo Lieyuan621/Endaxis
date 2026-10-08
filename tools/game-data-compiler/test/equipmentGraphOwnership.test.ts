@@ -12,7 +12,7 @@ it('相同原生技能与 Buff ID 在不同武器中保留各自程序和黑板'
   const weapon = (slug: string, value: number): WeaponDefinition => ({
     slug,
     rarity: 5,
-    weaponType: 'arts-unit',
+    weaponType: 'funnel',
     baseAttackAtLevelNodes: [1, 1, 1, 1, 1, 1],
     traits: [
       {

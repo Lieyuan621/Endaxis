@@ -1395,7 +1395,7 @@ export const perlica: OperatorDefinition = {
   slug: 'perlica',
   gameId: 'PERLICA',
   rarity: 5,
-  weaponType: 'arts-unit',
+  weaponType: 'funnel',
   element: 'electric',
   role: 'caster',
   mainAttribute: 'intellect',

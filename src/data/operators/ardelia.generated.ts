@@ -2288,7 +2288,7 @@ export const ardelia: OperatorDefinition = {
   slug: 'ardelia',
   gameId: 'ARDELIA',
   rarity: 6,
-  weaponType: 'arts-unit',
+  weaponType: 'funnel',
   element: 'nature',
   role: 'supporter',
   mainAttribute: 'intellect',

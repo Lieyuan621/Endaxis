@@ -8283,7 +8283,7 @@ export const liino: OperatorDefinition = {
   slug: 'liino',
   gameId: 'LIINO',
   rarity: 6,
-  weaponType: 'polearm',
+  weaponType: 'lance',
   element: 'electric',
   role: 'supporter',
   mainAttribute: 'will',

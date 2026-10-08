@@ -75,13 +75,13 @@ export const OPERATOR_WEAPON_TYPES = [
   /** 单手剑。 */
   'sword',
   /** 双手剑。 */
-  'greatsword',
+  'claym',
   /** 长柄武器。 */
-  'polearm',
+  'lance',
   /** 手铳。 */
-  'handcannon',
+  'pistol',
   /** 施术单元。 */
-  'arts-unit',
+  'funnel',
 ] as const;
 
 /** 用于校验干员与武器配置兼容性的武器类型。 */

@@ -53,7 +53,7 @@ it('装备按发布时的处理器定位到具体词条', () => {
 it('captures native weapon presentation identity and custom names without retaining mutable definitions', () => {
   const weapon = {
     slug: 'wpn_funnel_0016',
-    assetSlug: 'wpn_artsunit_0016',
+    assetSlug: 'wpn_funnel_0016',
     iconPath: '/icons/weapons/funnel.webp',
   };
   const captured = capturePublishedEquipmentSources([
@@ -70,7 +70,7 @@ it('captures native weapon presentation identity and custom names without retain
     ),
   ).toEqual({
     kind: 'weapon',
-    slug: 'wpn_artsunit_0016',
+    slug: 'wpn_funnel_0016',
     iconPath: '/icons/weapons/funnel.webp',
   });
   expect(

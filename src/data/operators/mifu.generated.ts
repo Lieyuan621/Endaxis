@@ -4681,7 +4681,7 @@ export const mifu: OperatorDefinition = {
   slug: 'mifu',
   gameId: 'MIFU',
   rarity: 6,
-  weaponType: 'greatsword',
+  weaponType: 'claym',
   element: 'physical',
   role: 'guard',
   mainAttribute: 'strength',

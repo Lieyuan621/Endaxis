@@ -5121,7 +5121,7 @@ export const zhuangFangyi: OperatorDefinition = {
   slug: 'zhuang-fangyi',
   gameId: 'ZHUANGFANGYI',
   rarity: 6,
-  weaponType: 'arts-unit',
+  weaponType: 'funnel',
   element: 'electric',
   role: 'striker',
   mainAttribute: 'will',

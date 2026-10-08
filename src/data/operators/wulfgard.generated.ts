@@ -2055,7 +2055,7 @@ export const wulfgard: OperatorDefinition = {
   slug: 'wulfgard',
   gameId: 'WULFGARD',
   rarity: 5,
-  weaponType: 'handcannon',
+  weaponType: 'pistol',
   element: 'heat',
   role: 'caster',
   mainAttribute: 'strength',

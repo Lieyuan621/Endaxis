@@ -6743,7 +6743,7 @@ export const arcane: OperatorDefinition = {
   slug: 'arcane',
   gameId: 'ARCANE',
   rarity: 6,
-  weaponType: 'arts-unit',
+  weaponType: 'funnel',
   element: 'nature',
   role: 'caster',
   mainAttribute: 'intellect',

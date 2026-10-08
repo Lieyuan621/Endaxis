@@ -96,10 +96,10 @@ describe('resolveScenarioBuilds', () => {
 
   it('rejects an incompatible weapon before downstream compilation', () => {
     const source = index();
-    source.getWeapon.mockReturnValue({ ...weapon, weaponType: 'greatsword' });
+    source.getWeapon.mockReturnValue({ ...weapon, weaponType: 'claym' });
 
     expect(() => resolveScenarioBuilds(scenario(), source)).toThrow(
-      "weapon type 'greatsword' is incompatible with operator weapon type 'arts-unit'",
+      "weapon type 'claym' is incompatible with operator weapon type 'funnel'",
     );
   });
 

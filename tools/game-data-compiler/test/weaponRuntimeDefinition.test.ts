@@ -73,8 +73,8 @@ describe('weapon runtime definitions', () => {
       ),
     ).toThrow('BuffData: missing Buff definition "buff_only_created_by_event"');
   });
-  it('projects native weapon icon prefixes through the shared product asset convention', () => {
-    const native = { ...definition, slug: 'wpn_claym_0003', weaponType: 'greatsword' as const };
+  it('uses the native weapon icon ID as the asset identity', () => {
+    const native = { ...definition, slug: 'wpn_claym_0003', weaponType: 'claym' as const };
     const item = {
       ...itemFixture.itemTableEntry,
       id: native.slug,
@@ -83,8 +83,8 @@ describe('weapon runtime definitions', () => {
     };
 
     expect(attachWeaponProductIdentities([native], { [native.slug]: item })[0]).toMatchObject({
-      assetSlug: 'wpn_greatsword_0003',
-      iconPath: '/weapons/greatsword/wpn_greatsword_0003.webp',
+      assetSlug: 'wpn_claym_0003',
+      iconPath: '/weapons/claym/wpn_claym_0003.webp',
     });
   });
 

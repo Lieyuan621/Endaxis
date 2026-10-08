@@ -53,16 +53,16 @@ it('keeps reviewed entity identities resolvable in the current repository', () =
 });
 it('public sample weapon asset identities do not assume matching native ID suffixes', () => {
   for (const [slug, assetSlug] of [
-    ['detonation-unit', 'wpn_artsunit_0010'],
-    ['dreams-of-the-starry-beach', 'wpn_artsunit_0013'],
-    ['khravengger', 'wpn_greatsword_0013'],
-    ['umbra-of-frigid', 'wpn_artsunit_0019'],
-    ['sufferings-end', 'wpn_artsunit_0020'],
+    ['detonation-unit', 'wpn_funnel_0010'],
+    ['dreams-of-the-starry-beach', 'wpn_funnel_0013'],
+    ['khravengger', 'wpn_claym_0013'],
+    ['umbra-of-frigid', 'wpn_funnel_0019'],
+    ['sufferings-end', 'wpn_funnel_0020'],
   ] as const) {
     expect(gameDataRepository.getWeapon(mappings.weapons[slug])?.assetSlug).toBe(assetSlug);
   }
   expect(gameDataRepository.getWeapon(mappings.weapons['delivery-guaranteed'])?.assetSlug).toBe(
-    'wpn_artsunit_0011',
+    'wpn_funnel_0011',
   );
   expect(gameDataRepository.getWeapon(mappings.weapons['rapid-ascent'])?.assetSlug).toBe(
     'wpn_sword_0011',

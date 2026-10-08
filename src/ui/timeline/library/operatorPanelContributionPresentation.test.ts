@@ -15,7 +15,7 @@ describe('operator panel contribution presentation', () => {
 
   it('uses the published weapon display identity for both base stats and traits', () => {
     const weapons = capturePublishedEquipmentSources([
-      { slug: 'wpn_funnel_0016', assetSlug: 'wpn_artsunit_0016' },
+      { slug: 'wpn_funnel_0016', assetSlug: 'wpn_funnel_0016' },
     ]);
     const sources = [
       { kind: 'weaponBase', weaponSlug: 'wpn_funnel_0016' },
@@ -30,7 +30,7 @@ describe('operator panel contribution presentation', () => {
       );
     }
     const custom = capturePublishedEquipmentSources([
-      { slug: 'wpn_funnel_0016', assetSlug: 'wpn_artsunit_0016', displayName: '自定义武器' },
+      { slug: 'wpn_funnel_0016', assetSlug: 'wpn_funnel_0016', displayName: '自定义武器' },
     ]);
     expect(
       resolveOperatorPanelContributionSourceLabel(
