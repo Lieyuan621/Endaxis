@@ -92,6 +92,31 @@ html[data-theme='light'] .ea-number-input .el-input-number__decrease {
   color: var(--ea-fg-secondary) !important;
 }
 
+/* Match both stepper halves to the 28px small control instead of Element Plus's 22px default. */
+.ea-number-input.el-input-number.ea-number-input--sm.is-controls-right .el-input-number__increase,
+.ea-number-input.el-input-number.ea-number-input--sm.is-controls-right .el-input-number__decrease {
+  --el-input-number-controls-height: calc((var(--ea-control-height-sm) - 2px) / 2);
+  height: calc((var(--ea-control-height-sm) - 2px) / 2);
+  width: 28px;
+  border-color: var(--ea-control-border);
+  background: var(--ea-surface-row);
+  color: var(--ea-fg-secondary);
+  transition:
+    background-color var(--ea-control-transition),
+    color var(--ea-control-transition);
+}
+
+.ea-number-input--sm.is-controls-right .el-input.el-input--small .el-input__wrapper {
+  padding-left: 8px;
+  padding-right: 34px;
+}
+
+.ea-number-input--sm.is-controls-right .el-input-number__increase .el-icon,
+.ea-number-input--sm.is-controls-right .el-input-number__decrease .el-icon {
+  font-size: 12px;
+  transform: none;
+}
+
 .ea-input .el-input__count,
 .ea-textarea .el-input__count,
 .ea-input .el-input__count-inner,
@@ -248,6 +273,16 @@ html[data-theme='light'] .el-popper {
   html[data-theme='light'] .ea-number-input .el-input-number__decrease:hover {
     background: var(--ea-chip-fill-hover) !important;
     color: var(--ea-fg) !important;
+  }
+
+  html.dark
+    .ea-number-input--sm.is-controls-right
+    .el-input-number__increase:not(.is-disabled):hover,
+  html.dark
+    .ea-number-input--sm.is-controls-right
+    .el-input-number__decrease:not(.is-disabled):hover {
+    background: var(--ea-control-bg-hover);
+    color: var(--ea-gold);
   }
 
   html.dark .ea-select-popper .el-select-dropdown__item:hover {

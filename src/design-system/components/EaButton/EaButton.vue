@@ -50,7 +50,7 @@ function handleClick(event: MouseEvent) {
     :aria-pressed="pressed"
     @click="handleClick"
   >
-    <span v-if="loading" class="ea-button__spinner" aria-hidden="true" />
+    <span v-if="loading" class="ea-loading-indicator ea-loading-indicator--sm" aria-hidden="true" />
     <slot />
   </button>
 </template>

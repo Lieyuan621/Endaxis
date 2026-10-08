@@ -6,7 +6,7 @@ const { t } = useI18n({ useScope: 'global' });
 
 <template>
   <div class="timeline-async-dialog-loading" role="status" aria-live="polite">
-    <span class="timeline-async-dialog-loading__spinner" aria-hidden="true" />
+    <span class="ea-loading-indicator" aria-hidden="true" />
     <span>{{ t('timeline.loading') }}</span>
   </div>
 </template>
@@ -24,18 +24,7 @@ const { t } = useI18n({ useScope: 'global' });
   background: rgb(0 0 0 / 55%);
 }
 
-.timeline-async-dialog-loading__spinner {
-  width: 22px;
-  height: 22px;
-  border: 2px solid currentColor;
-  border-right-color: transparent;
-  border-radius: 50%;
-  animation: timeline-async-dialog-spin 0.8s linear infinite;
-}
-
-@keyframes timeline-async-dialog-spin {
-  to {
-    transform: rotate(360deg);
-  }
+.timeline-async-dialog-loading .ea-loading-indicator {
+  color: var(--ea-gold);
 }
 </style>

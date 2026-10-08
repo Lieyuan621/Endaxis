@@ -138,19 +138,21 @@ function commitRandomSeed(value: number | undefined): void {
         <div class="attribute-grid">
           <div v-if="skillDuration !== null" class="form-group">
             <span>{{ t('timeline.inspector.labels.duration') }}</span>
-            <div class="readonly-field">{{ skillDuration }}</div>
+            <div class="ea-readonly-value ea-readonly-value--compact">{{ skillDuration }}</div>
           </div>
           <div v-if="skillCooldown !== null" class="form-group">
             <span>{{ t('timeline.inspector.labels.cooldown') }}</span>
-            <div class="readonly-field">{{ skillCooldown }}</div>
+            <div class="ea-readonly-value ea-readonly-value--compact">{{ skillCooldown }}</div>
           </div>
           <div v-for="cost in skillCosts" :key="cost.index" class="form-group">
             <span>{{ cost.label }}</span>
-            <div class="readonly-field">{{ cost.amount }}</div>
+            <div class="ea-readonly-value ea-readonly-value--compact">{{ cost.amount }}</div>
           </div>
           <div v-if="cast.placement.afterCastId !== undefined" class="form-group">
             <span>{{ t('timeline.inspector.labels.startFrame') }}</span>
-            <div class="readonly-field">{{ t('timeline.continuousGroup.followsPrevious') }}</div>
+            <div class="ea-readonly-value ea-readonly-value--compact">
+              {{ t('timeline.continuousGroup.followsPrevious') }}
+            </div>
             <small class="field-help">{{
               actualStartFrame === undefined
                 ? t('timeline.continuousGroup.actualStartUnavailable')
@@ -621,27 +623,6 @@ function commitRandomSeed(value: number | undefined): void {
   gap: 5px;
   color: var(--ea-fg-muted);
   font-size: 10px;
-}
-
-.readonly-field {
-  width: 100%;
-  height: 28px;
-  box-sizing: border-box;
-  border: 1px solid var(--ea-border);
-  border-radius: 2px;
-  background: var(--ea-fill-input, #16161a);
-  color: var(--ea-fg-muted);
-  padding: 0 7px;
-  font:
-    12px/28px Consolas,
-    monospace;
-  text-align: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 4px;
 }
 
 .toggle-field {

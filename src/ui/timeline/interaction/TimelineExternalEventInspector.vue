@@ -39,13 +39,13 @@ function commitFrame(value: number | undefined): void {
         <div class="attribute-grid">
           <div class="form-group attribute-grid__wide">
             <span>{{ t('timeline.markerInspector.event') }}</span>
-            <div class="readonly-field">
+            <div class="ea-readonly-value">
               {{ t(`comboControl.${marker.event.mode}`) }}
             </div>
           </div>
           <div class="form-group attribute-grid__wide">
             <span>{{ t('timeline.markerInspector.target') }}</span>
-            <div class="readonly-field">{{ targetLabel }}</div>
+            <div class="ea-readonly-value">{{ targetLabel }}</div>
           </div>
           <label class="form-group">
             <span>{{ t('timeline.inspector.labels.startFrame') }}</span>
@@ -62,7 +62,7 @@ function commitFrame(value: number | undefined): void {
           </label>
           <div class="form-group">
             <span>{{ t('timeline.inspector.labels.actionId') }}</span>
-            <div class="readonly-field">{{ marker.id }}</div>
+            <div class="ea-readonly-value">{{ marker.id }}</div>
           </div>
         </div>
         <small class="field-help">{{ t('comboControl.hint') }}</small>
@@ -154,15 +154,6 @@ function commitFrame(value: number | undefined): void {
   gap: 5px;
   color: var(--ea-fg-secondary);
   font-size: 12px;
-}
-
-.readonly-field {
-  min-width: 0;
-  overflow-wrap: anywhere;
-  border-radius: 3px;
-  padding: 7px 8px;
-  background: var(--ea-fill-soft);
-  color: var(--ea-fg);
 }
 
 .field-help {

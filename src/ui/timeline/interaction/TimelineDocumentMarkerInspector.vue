@@ -119,7 +119,7 @@ function effectDetail(entry: CombatReceiptEntry): string {
         <div class="attribute-grid">
           <div class="form-group attribute-grid__wide">
             <span>{{ t('timeline.documentMarkerInspector.kind') }}</span>
-            <div class="readonly-field">
+            <div class="ea-readonly-value">
               {{ t(`timeline.markerLabels.${kind}`) }}
             </div>
           </div>
@@ -141,7 +141,7 @@ function effectDetail(entry: CombatReceiptEntry): string {
             class="form-group"
           >
             <span>{{ t('timeline.documentMarkerInspector.markerId') }}</span>
-            <div class="readonly-field">{{ id }}</div>
+            <div class="ea-readonly-value">{{ id }}</div>
           </div>
           <label
             v-if="kind === 'controlSwitch' || kind === 'dodge'"
@@ -210,11 +210,15 @@ function effectDetail(entry: CombatReceiptEntry): string {
           {{ t('timeline.documentMarkerInspector.simulationResult') }}
         </div>
         <div v-if="dodgeDiagnostics?.length" class="dodge-diagnostics">
-          <div v-for="(diagnostic, index) in dodgeDiagnostics" :key="index" class="readonly-field">
+          <div
+            v-for="(diagnostic, index) in dodgeDiagnostics"
+            :key="index"
+            class="ea-readonly-value"
+          >
             {{ diagnostic }}
           </div>
         </div>
-        <div v-else class="readonly-field">
+        <div v-else class="ea-readonly-value">
           {{ t('timeline.documentMarkerInspector.results.noPublishedResult') }}
         </div>
       </section>
@@ -327,15 +331,6 @@ function effectDetail(entry: CombatReceiptEntry): string {
   gap: 5px;
   color: var(--ea-fg-secondary);
   font-size: 12px;
-}
-
-.readonly-field {
-  min-width: 0;
-  overflow-wrap: anywhere;
-  border-radius: 3px;
-  padding: 7px 8px;
-  background: var(--ea-fill-soft);
-  color: var(--ea-fg);
 }
 
 .field-help {

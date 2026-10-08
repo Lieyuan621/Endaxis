@@ -2,6 +2,7 @@
 @import './tokens.css';
 @import './foundations.css';
 @import './controls.css';
+@import './loading.css';
 @import './resize-handles.css';
 @import './dialogs.css';
 @import './element-plus.css';

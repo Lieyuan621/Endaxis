@@ -26,25 +26,25 @@ const { t } = useI18n({ useScope: 'global' });
         <div class="attribute-grid">
           <div class="form-group attribute-grid__wide">
             <span>{{ t('timeline.libraryInspector.operator') }}</span>
-            <div class="readonly-field">{{ operatorName }}</div>
+            <div class="ea-readonly-value">{{ operatorName }}</div>
           </div>
           <div class="form-group">
             <span>{{ t('timeline.inspector.labels.sourceKind') }}</span>
-            <div class="readonly-field">
+            <div class="ea-readonly-value">
               {{ t('timeline.inspector.sourceKinds.operatorSkill') }}
             </div>
           </div>
           <div class="form-group">
             <span>{{ t('timeline.libraryInspector.operationType') }}</span>
-            <div class="readonly-field">{{ typeLabel }}</div>
+            <div class="ea-readonly-value">{{ typeLabel }}</div>
           </div>
           <div class="form-group attribute-grid__wide">
             <span>{{ t('timeline.libraryInspector.skillGroupId') }}</span>
-            <div class="readonly-field readonly-field--mono">{{ skillGroupKey }}</div>
+            <div class="ea-readonly-value ea-readonly-value--mono">{{ skillGroupKey }}</div>
           </div>
           <div class="form-group">
             <span>{{ t('timeline.libraryInspector.durationFrames') }}</span>
-            <div class="readonly-field">{{ durationFrames }}</div>
+            <div class="ea-readonly-value">{{ durationFrames }}</div>
           </div>
         </div>
       </section>
@@ -140,23 +140,6 @@ const { t } = useI18n({ useScope: 'global' });
   display: grid;
   gap: 5px;
   color: var(--ea-fg-muted);
-  font-size: 10px;
-}
-
-.readonly-field {
-  min-height: 28px;
-  display: flex;
-  align-items: center;
-  padding: 5px 8px;
-  box-sizing: border-box;
-  border: 1px solid var(--ea-border-soft);
-  background: var(--ea-fill-input);
-  color: var(--ea-fg-secondary);
-  overflow-wrap: anywhere;
-}
-
-.readonly-field--mono {
-  font-family: 'Roboto Mono', Consolas, monospace;
   font-size: 10px;
 }
 

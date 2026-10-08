@@ -141,15 +141,6 @@
   flex-shrink: 0;
 }
 
-.ea-button__spinner {
-  width: 1em;
-  height: 1em;
-  border: 2px solid currentColor;
-  border-right-color: transparent;
-  border-radius: 50%;
-  animation: ea-control-spin 700ms linear infinite;
-}
-
 .ea-activity-rail-button.ea-button {
   --ea-control-bg: transparent;
   --ea-control-bg-hover: transparent;
@@ -370,12 +361,6 @@ html[data-theme='light']
   }
 }
 
-@keyframes ea-control-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .ea-filter-chip {
   --ea-filter-accent: var(--ea-accent);
   display: inline-flex;
@@ -551,6 +536,38 @@ html[data-theme='light']
   --el-border-radius-base: var(--ea-control-radius);
   --el-color-primary: var(--ea-gold);
   width: 100%;
+}
+
+.ea-readonly-value {
+  min-width: 0;
+  min-height: var(--ea-control-height-sm);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding: 5px 8px;
+  border-left: 2px solid var(--ea-border-soft);
+  background: var(--ea-fill-soft);
+  color: var(--ea-fg-secondary);
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+.ea-readonly-value--compact {
+  height: var(--ea-control-height-sm);
+  display: block;
+  padding-block: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: var(--ea-control-height-sm);
+  font-family: 'Roboto Mono', Consolas, monospace;
+}
+
+.ea-readonly-value--mono {
+  font-family: 'Roboto Mono', Consolas, monospace;
+  font-size: 10px;
 }
 
 .ea-input:not(.ea-input--inline),
