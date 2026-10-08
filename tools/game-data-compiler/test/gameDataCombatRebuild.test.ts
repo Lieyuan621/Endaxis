@@ -132,7 +132,7 @@ vi.mock('../scripts/auditCandidateEquipment.ts', () => ({
 vi.mock('../src/compiler/publication/gameDataCandidatePublisher.ts', () => ({
   publishGameDataCandidate: mocks.publish,
 }));
-vi.mock('../src/compiler/publication/gameLocaleCandidate.ts', () => ({
+vi.mock('../src/domains/locales/gameLocaleCandidate.ts', () => ({
   generateGameLocaleCandidate: mocks.locales,
 }));
 

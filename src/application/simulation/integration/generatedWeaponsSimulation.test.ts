@@ -559,7 +559,6 @@ async function simulateWeapon(
     maxSp: 1000,
     initialSp: 1000,
     spRecoveryPerSecond: 100,
-    defaultSkillSpCost: 100,
   };
   const track: TrackDocument = {
     id: 'track:weapon-owner',

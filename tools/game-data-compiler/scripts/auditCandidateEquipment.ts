@@ -521,7 +521,6 @@ function configureBattle(scenario: RuntimeScenario, endFrame: number): void {
     maxSp: 1000,
     initialSp: 1000,
     spRecoveryPerSecond: 100,
-    defaultSkillSpCost: 100,
   };
 }
 

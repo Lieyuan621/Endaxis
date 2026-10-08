@@ -5174,6 +5174,7 @@
       "superArmor": "霸体值",
       "resistanceTitle": "敌人抗性",
       "initialSp": "初始技力",
+      "maxSp": "技力上限",
       "spPerSecond": "回复 / 秒"
     },
     "resistance": {

@@ -219,7 +219,7 @@ export function validateBattle(value: unknown, path: string, issues: ValidationI
   if (!isObject(value.resourceRules)) {
     issues.push({ path: `${path}.resourceRules`, message: 'expected an object' });
   } else {
-    for (const field of ['maxSp', 'initialSp', 'spRecoveryPerSecond', 'defaultSkillSpCost']) {
+    for (const field of ['maxSp', 'initialSp', 'spRecoveryPerSecond']) {
       requireFiniteNumber(value.resourceRules[field], `${path}.resourceRules.${field}`, issues);
     }
     if (

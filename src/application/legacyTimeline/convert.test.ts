@@ -390,7 +390,6 @@ function fixture() {
             maxSp: 300,
             initialSp: 300,
             spRegenRate: 8,
-            skillSpCostDefault: 100,
             enemyHp: 100000,
             def: 100,
             superArmor: 0,

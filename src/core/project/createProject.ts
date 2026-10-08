@@ -51,7 +51,6 @@ export function createEmptyScenario(id: string, name: string): ScenarioDocument 
         maxSp: 300,
         initialSp: 200,
         spRecoveryPerSecond: 8,
-        defaultSkillSpCost: 100,
       },
       cycleBoundaries: [],
       controlSwitches: [],

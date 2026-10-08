@@ -40,6 +40,8 @@ const props = defineProps<{
 
   prepExpanded: boolean;
   initialSp?: number;
+  maxSp?: number;
+  maxSpLabel?: string;
   configurationReadOnly?: boolean;
   spRecoveryPerSecond?: number;
   initialSpLabel?: string;
@@ -49,7 +51,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  updateResourceRule: [field: 'initialSp' | 'spRecoveryPerSecond', value: number];
+  updateResourceRule: [field: 'maxSp' | 'initialSp' | 'spRecoveryPerSecond', value: number];
 }>();
 
 const ROW_HEIGHT = 56;
@@ -295,6 +297,18 @@ const spWarnings = computed(() => {
           v-if="row.kind === 'sp' && initialSp !== undefined && spRecoveryPerSecond !== undefined"
         >
           <strong>{{ row.label }}</strong>
+          <label v-if="maxSp !== undefined" class="resource-control-row">
+            <span>{{ maxSpLabel }}</span>
+            <span v-if="configurationReadOnly">{{ maxSp }}</span>
+            <CustomNumberInput
+              v-else
+              :model-value="maxSp"
+              :min="0"
+              active-color="var(--ea-gold)"
+              class="standard-input"
+              @update:model-value="emit('updateResourceRule', 'maxSp', Number($event))"
+            />
+          </label>
           <label class="resource-control-row">
             <span>{{ initialSpLabel }}</span>
             <span v-if="configurationReadOnly">{{ initialSp }}</span>
@@ -302,7 +316,7 @@ const spWarnings = computed(() => {
               v-else
               :model-value="initialSp"
               :min="0"
-              :max="row.maxValue"
+              :max="maxSp ?? row.maxValue"
               active-color="var(--ea-gold)"
               class="standard-input"
               @update:model-value="emit('updateResourceRule', 'initialSp', Number($event))"
@@ -404,17 +418,25 @@ const spWarnings = computed(() => {
         </defs>
         <template v-if="row.kind === 'sp'">
           <line
-            v-for="value in [300, 200, 100]"
-            :key="value"
+            v-if="row.maxValue > 0 && row.maxValue % 100 !== 0"
             class="guide-line"
             x1="0"
-            :y1="pointY(row, value)"
+            :y1="pointY(row, row.maxValue)"
             :x2="width"
-            :y2="pointY(row, value)"
+            :y2="pointY(row, row.maxValue)"
+          />
+          <line
+            v-for="index in Math.floor(row.maxValue / 100)"
+            :key="index"
+            class="guide-line"
+            x1="0"
+            :y1="pointY(row, index * 100)"
+            :x2="width"
+            :y2="pointY(row, index * 100)"
           />
           <text
             :x="trackHeaderWidth + 5 - scrollLeft"
-            :y="pointY(row, 300) + 12"
+            :y="pointY(row, row.maxValue) + 12"
             class="guide-label"
           >
             MAX({{ formatNumber(row.maxValue) }})
@@ -597,6 +619,8 @@ const spWarnings = computed(() => {
 
 .curve-row--sp .curve-label {
   border-left: 3px solid var(--ea-gold);
+  overflow-y: auto;
+  pointer-events: auto;
   font-family:
     Inter,
     -apple-system,
@@ -645,6 +669,7 @@ const spWarnings = computed(() => {
 
 .resource-control-row {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
   gap: 8px;

@@ -263,7 +263,6 @@ function scenarioWithCast(): ScenarioDocument {
         maxSp: 300,
         initialSp: 300,
         spRecoveryPerSecond: 10,
-        defaultSkillSpCost: 100,
       },
       cycleBoundaries: [],
       controlSwitches: [],

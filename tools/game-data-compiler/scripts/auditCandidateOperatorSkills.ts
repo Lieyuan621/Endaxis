@@ -375,7 +375,6 @@ function createAuditScenario(
     maxSp: 1000,
     initialSp: 1000,
     spRecoveryPerSecond: 100,
-    defaultSkillSpCost: 100,
   };
   scenario.tracks[0] = createTrack(operator, potential, 1000);
   scenario.tracks[1] = createTrack(teammate, potential, 0, 'track:audit-teammate');

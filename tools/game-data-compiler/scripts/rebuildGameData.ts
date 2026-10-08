@@ -41,7 +41,7 @@ import { OPERATOR_DEFINITION_OUTPUTS } from './operatorDefinitionOutputs.ts';
 import {
   generateGameLocaleCandidate,
   type GameLocaleCandidateInput,
-} from '../src/compiler/publication/gameLocaleCandidate.ts';
+} from '../src/domains/locales/gameLocaleCandidate.ts';
 
 const PROJECT_ROOT = path.resolve(import.meta.dirname, '../../..');
 const GAME_LOCALE_FILES = ['zh', 'en'].flatMap(locale =>

@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { expect, it } from 'vitest';
-import { generateGameLocaleCandidate } from '../src/compiler/publication/gameLocaleCandidate.ts';
+import { generateGameLocaleCandidate } from '../src/domains/locales/gameLocaleCandidate.ts';
 import {
   compileWeaponSkillText,
   operatorLocaleIdentities,

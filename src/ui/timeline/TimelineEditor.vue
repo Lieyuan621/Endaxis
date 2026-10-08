@@ -7657,6 +7657,8 @@ function setMobileGuideFrame(frame: number | null): void {
                 :scroll-left="timelineScrollLeft"
                 :sp-label="t('resourceMonitor.modules.sp')"
                 :initial-sp="scenario.battle.resourceRules.initialSp"
+                :max-sp="scenario.battle.resourceRules.maxSp"
+                :max-sp-label="t('resourceMonitor.labels.maxSp')"
                 :configuration-read-only="configurationReadOnly"
                 :sp-recovery-per-second="scenario.battle.resourceRules.spRecoveryPerSecond"
                 :initial-sp-label="t('resourceMonitor.labels.initialSp')"

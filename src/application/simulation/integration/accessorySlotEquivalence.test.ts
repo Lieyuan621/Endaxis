@@ -23,7 +23,6 @@ it('同一饰品放入任一槽位产生相同属性和伤害', async () => {
       maxSp: 1000,
       initialSp: 1000,
       spRecoveryPerSecond: 100,
-      defaultSkillSpCost: 100,
     };
     scenario.tracks[0] = {
       id: `track:equipment:${slot}`,

@@ -5,7 +5,7 @@ import {
   compileGameLocales,
   operatorLocaleIdentities,
   type LocaleTables,
-} from '../../domains/locales/gameLocales.ts';
+} from './gameLocales.ts';
 import { requireRecord } from '../../source/primitives.ts';
 
 export interface GameLocaleCandidateInput {

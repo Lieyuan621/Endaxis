@@ -19,7 +19,6 @@ function createScenario(): ScenarioDocument {
     maxSp: 300,
     initialSp: 0,
     spRecoveryPerSecond: 30,
-    defaultSkillSpCost: 100,
   };
   return scenario;
 }

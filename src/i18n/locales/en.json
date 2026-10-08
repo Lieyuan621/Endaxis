@@ -5157,6 +5157,7 @@
       "superArmor": "Super Armor",
       "resistanceTitle": "Enemy Resistance",
       "initialSp": "Initial SP",
+      "maxSp": "Max SP",
       "spPerSecond": "SP/sec."
     },
     "resistance": {

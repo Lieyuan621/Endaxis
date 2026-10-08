@@ -76,13 +76,20 @@ describe('battle axis commands', () => {
 });
 
 describe('updateBattleResourceRule', () => {
-  it('clamps initial SP to the fixed maximum', () => {
+  it('keeps initial SP within the configured maximum when either value changes', () => {
     const original = scenario();
     original.battle.resourceRules.initialSp = 200;
 
     expect(
       updateBattleResourceRule(original, 'initialSp', 400).battle.resourceRules.initialSp,
     ).toBe(original.battle.resourceRules.maxSp);
+    const lowered = updateBattleResourceRule(original, 'maxSp', 100);
+    expect(lowered.battle.resourceRules).toMatchObject({ maxSp: 100, initialSp: 100 });
+    expect(updateBattleResourceRule(lowered, 'maxSp', 400).battle.resourceRules).toMatchObject({
+      maxSp: 400,
+      initialSp: 100,
+    });
+    expect(original.battle.resourceRules.initialSp).toBe(200);
   });
 
   it('rejects invalid values and preserves no-op identity', () => {

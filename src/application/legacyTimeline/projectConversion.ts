@@ -463,7 +463,6 @@ function migrateScenario(
         maxSp: number(constants.maxSp) ?? 300,
         initialSp: number(constants.initialSp) ?? 300,
         spRecoveryPerSecond: number(constants.spRegenRate) ?? 0,
-        defaultSkillSpCost: number(constants.skillSpCostDefault) ?? 100,
       },
       cycleBoundaries: records(source.cycleBoundaries).flatMap((boundary, index) => {
         const frame = integer(boundary.time);

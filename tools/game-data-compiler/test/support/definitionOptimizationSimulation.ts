@@ -175,7 +175,6 @@ export function optimizationSimulationScenario(
     maxSp: 1000,
     initialSp: 1000,
     spRecoveryPerSecond: 100,
-    defaultSkillSpCost: 100,
   };
   scenario.tracks[0] = {
     id: operator.slug,

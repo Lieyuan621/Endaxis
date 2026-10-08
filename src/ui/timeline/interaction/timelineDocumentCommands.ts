@@ -26,7 +26,7 @@ import {
 
 export type EditableBattleResourceRule = keyof Pick<
   BattleDocument['resourceRules'],
-  'initialSp' | 'spRecoveryPerSecond'
+  'maxSp' | 'initialSp' | 'spRecoveryPerSecond'
 >;
 
 /** 战前准备只改变现实时间轴的负向可视区，不平移以战斗帧保存的技能或标记。 */
@@ -104,6 +104,7 @@ export function updateBattleResourceRule(
     ...current,
     [field]: normalizedValue,
   };
+  next.initialSp = Math.min(next.initialSp, next.maxSp);
   if (next[field] === current[field] && next.initialSp === current.initialSp) return scenario;
   return { ...scenario, battle: { ...scenario.battle, resourceRules: next } };
 }

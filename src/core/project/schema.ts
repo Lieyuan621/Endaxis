@@ -328,7 +328,6 @@ export interface BattleDocument {
     maxSp: number;
     initialSp: number;
     spRecoveryPerSecond: number;
-    defaultSkillSpCost: number;
   };
   /** 场景随机策略；旧项目省略时使用期望模式和种子 0。 */
   random?: {
