@@ -2712,7 +2712,9 @@ function updateTimelineViewportMetrics(): void {
   timelineViewportHeight.value = viewport.clientHeight;
   timelineVerticalScrollRange.value = Math.max(0, viewport.scrollHeight - viewport.clientHeight);
   timelineVerticalScrollbarWidth.value =
-    buffLayoutMode.value === 'compact' || timelineVerticalScrollRange.value === 0 ? 0 : 8;
+    buffLayoutMode.value === 'compact' || timelineVerticalScrollRange.value === 0
+      ? 0
+      : TIMELINE_SCROLLBAR_SIZE;
   const scrollbar = timelineHorizontalScrollbar.value;
   if (scrollbar !== null) syncTimelineScroll(viewport, scrollbar);
   const verticalScrollbar = timelineVerticalScrollbar.value;
@@ -8451,10 +8453,6 @@ button:disabled {
   scrollbar-width: none;
 }
 
-.skill-sidebar::-webkit-scrollbar {
-  display: none;
-}
-
 .library-header {
   display: flex;
   flex-direction: column;
@@ -8617,10 +8615,6 @@ button:disabled {
   scrollbar-width: none;
 }
 
-.timeline-scroll::-webkit-scrollbar {
-  display: none;
-}
-
 .timeline-scroll.is-compact-buff-layout {
   overflow-y: hidden;
 }
@@ -8635,13 +8629,6 @@ button:disabled {
   height: 12px;
   overflow-x: auto;
   overflow-y: hidden;
-  opacity: 0.7;
-  transition: opacity 200ms ease;
-}
-
-.timeline-horizontal-scrollbar:hover,
-.timeline-horizontal-scrollbar:focus-visible {
-  opacity: 1;
 }
 
 .timeline-horizontal-scrollbar__spacer {
@@ -8654,16 +8641,9 @@ button:disabled {
   top: 60px;
   right: 0;
   bottom: 12px;
-  width: 8px;
+  width: 12px;
   overflow-x: hidden;
   overflow-y: auto;
-  opacity: 0.7;
-  transition: opacity 200ms ease;
-}
-
-.timeline-vertical-scrollbar:hover,
-.timeline-vertical-scrollbar:focus-visible {
-  opacity: 1;
 }
 
 .timeline-vertical-scrollbar.is-hidden {
@@ -8786,6 +8766,9 @@ button:disabled {
 
 .prep-collapsed-entry button,
 .prep-expanded-collapse button {
+  --ea-control-bg-hover: transparent;
+  --ea-control-border-hover: transparent;
+  --ea-control-fg-hover: var(--ea-gold);
   width: 18px;
   height: 18px;
   display: grid;
@@ -8808,12 +8791,6 @@ button:disabled {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--ea-gold) 35%, transparent);
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .prep-collapsed-entry button:hover,
-  .prep-expanded-collapse button:hover {
-    color: var(--ea-gold);
-  }
-}
 .prep-collapsed-entry svg,
 .prep-expanded-collapse svg {
   width: 16px;

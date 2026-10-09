@@ -135,14 +135,6 @@ html[data-theme='light'] .ea-number-input .el-input-number__decrease {
   opacity: 0.8;
 }
 
-.ea-textarea .el-textarea__inner::-webkit-scrollbar {
-  width: 4px;
-}
-
-.ea-textarea .el-textarea__inner::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--ea-gold) 20%, transparent);
-}
-
 html.dark .ea-input input::placeholder,
 html.dark .ea-textarea textarea::placeholder,
 html.dark .ea-number-input input::placeholder {

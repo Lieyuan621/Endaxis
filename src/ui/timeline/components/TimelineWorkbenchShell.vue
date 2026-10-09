@@ -615,6 +615,9 @@ watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
 }
 
 .bottom-panel-collapse {
+  --ea-control-bg-hover: transparent;
+  --ea-control-border-hover: transparent;
+  --ea-control-fg-hover: var(--ea-fg);
   position: absolute;
   z-index: 45;
   top: 0;
@@ -668,11 +671,5 @@ watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
 
 .resizer--right {
   grid-column: 5;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .bottom-panel-collapse:hover {
-    color: var(--ea-fg);
-  }
 }
 </style>

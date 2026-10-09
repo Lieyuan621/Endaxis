@@ -392,10 +392,6 @@ function commitRandomSeed(value: number | undefined): void {
   font-size: 13px;
 }
 
-.properties-panel::-webkit-scrollbar {
-  display: none;
-}
-
 .panel-header {
   min-width: 0;
   display: flex;

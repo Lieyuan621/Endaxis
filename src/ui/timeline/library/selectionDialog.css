@@ -91,10 +91,6 @@
   scrollbar-width: none;
 }
 
-.roster-scroll-container::-webkit-scrollbar {
-  display: none;
-}
-
 .rarity-header {
   position: sticky;
   top: 0;
@@ -483,12 +479,6 @@ html[data-theme='light'] .eq-affix-icon-img {
   .equipment-refine-buttons,
   .equipment-refine-btn {
     flex-shrink: 0;
-  }
-
-  .element-filters::-webkit-scrollbar,
-  .class-filters::-webkit-scrollbar,
-  .equipment-affix-filter-strip::-webkit-scrollbar {
-    display: none;
   }
 
   .roster-scroll-container {

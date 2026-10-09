@@ -741,9 +741,6 @@ function locateEntry(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): 
   padding: 10px 14px 14px;
   scrollbar-width: none;
 }
-.simlog-body::-webkit-scrollbar {
-  display: none;
-}
 .group-list {
   display: flex;
   flex-direction: column;

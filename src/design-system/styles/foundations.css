@@ -17,37 +17,10 @@ html,
   box-sizing: border-box;
 }
 
-/* 两套滚动条样式互斥：标准属性会覆盖伪元素样式，WebKit 的 thin 还可能没有可拖动滑块。 */
-@supports not selector(::-webkit-scrollbar) {
-  * {
-    scrollbar-color: var(--ea-scrollbar-thumb, #9a9a9a) transparent;
-    scrollbar-width: thin;
-  }
-}
-
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  border: 1px solid transparent;
-  border-radius: 10px;
-  background: var(--ea-scrollbar-thumb, #9a9a9a);
-  background-clip: padding-box;
-  transition: background var(--ea-control-transition);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--ea-scrollbar-thumb-hover, #7a7a7a);
-}
-
-::-webkit-scrollbar-thumb:active {
-  background: var(--ea-scrollbar-thumb-active, #5e5e5e);
+/* 统一使用平台细滚动条，保留系统提供的两端箭头。 */
+* {
+  scrollbar-color: var(--ea-scrollbar-thumb, #9a9a9a) transparent;
+  scrollbar-width: thin;
 }
 
 .hidden {

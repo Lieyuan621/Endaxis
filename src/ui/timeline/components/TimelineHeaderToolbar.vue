@@ -826,7 +826,6 @@ onBeforeUnmount(() => {
   justify-content: flex-start;
   overflow-x: auto;
   overflow-y: hidden;
-  scrollbar-width: thin;
   padding: 0 10px 0 0;
   box-sizing: border-box;
   cursor: default;
@@ -866,11 +865,6 @@ onBeforeUnmount(() => {
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.ts-tabs-group::-webkit-scrollbar {
-  display: none;
 }
 
 .ts-title-wrapper {

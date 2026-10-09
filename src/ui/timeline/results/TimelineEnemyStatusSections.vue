@@ -294,6 +294,9 @@ watch(
 }
 
 .section-toggle {
+  --ea-control-bg-hover: transparent;
+  --ea-control-border-hover: transparent;
+  --ea-control-fg-hover: var(--ea-fg, #fff);
   position: absolute;
   z-index: 40;
   top: 7px;
@@ -327,10 +330,6 @@ watch(
   border-bottom: 2px solid currentColor;
   transform: rotate(45deg);
   opacity: 0.88;
-}
-
-.section-toggle:hover {
-  color: var(--ea-fg, #fff);
 }
 
 .enemy-status-section.is-collapsed {

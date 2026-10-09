@@ -486,9 +486,6 @@ function description(tag: ContingencyContractTagPresentation): string {
   background: var(--ea-workbench-panel);
   scrollbar-width: none;
 }
-.cc-detail::-webkit-scrollbar {
-  display: none;
-}
 .cc-detail-toolbar {
   display: grid;
   grid-template-columns: auto auto;

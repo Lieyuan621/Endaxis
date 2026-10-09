@@ -95,8 +95,6 @@ html[data-theme='dark'] {
   --ea-tab-active-bg: #e0e0e0;
   --ea-tab-active-fg: #222222;
   --ea-scrollbar-thumb: rgba(255, 255, 255, 0.22);
-  --ea-scrollbar-thumb-hover: rgba(255, 255, 255, 0.36);
-  --ea-scrollbar-thumb-active: rgba(255, 255, 255, 0.5);
 }
 
 html[data-theme='light'] {
@@ -195,6 +193,4 @@ html[data-theme='light'] {
   --ea-tab-active-bg: #1a1b1e;
   --ea-tab-active-fg: #f5f5f5;
   --ea-scrollbar-thumb: #9a9a9a;
-  --ea-scrollbar-thumb-hover: #7a7a7a;
-  --ea-scrollbar-thumb-active: #5e5e5e;
 }

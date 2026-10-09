@@ -620,6 +620,7 @@ const spWarnings = computed(() => {
 .curve-row--sp .curve-label {
   border-left: 3px solid var(--ea-gold);
   overflow-y: auto;
+  scrollbar-width: none;
   pointer-events: auto;
   font-family:
     Inter,
