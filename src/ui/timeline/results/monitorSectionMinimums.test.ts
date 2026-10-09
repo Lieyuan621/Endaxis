@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DEFAULT_MONITOR_SECTION_WEIGHTS,
   enemyStatusRowSize,
   monitorSectionBodyMinimums,
   resolveMonitorSectionLayout,
@@ -18,13 +19,13 @@ describe('legacy enemy status density and dividers', () => {
     const minimums = monitorSectionBodyMinimums();
     expect(resizeMonitorSectionBodies(bodies, 'affliction', 'poise', 0, minimums)).toEqual(bodies);
     expect(resizeMonitorSectionBodies(bodies, 'affliction', 'poise', -1000, minimums)).toEqual({
-      affliction: 46,
-      poise: 196,
+      affliction: 54,
+      poise: 188,
       sp: 100,
     });
     expect(resizeMonitorSectionBodies(bodies, 'affliction', 'poise', 1000, minimums)).toEqual({
-      affliction: 216,
-      poise: 26,
+      affliction: 210,
+      poise: 32,
       sp: 100,
     });
     expect(bodies).toEqual({ affliction: 202, poise: 40, sp: 100 });
@@ -38,7 +39,7 @@ describe('legacy enemy status density and dividers', () => {
         20,
         monitorSectionBodyMinimums(),
       ),
-    ).toEqual({ affliction: 120, sp: 80 });
+    ).toEqual({ affliction: 114, sp: 86 });
   });
   it('preserves pair total when the viewport cannot fit both minimums', () => {
     const result = resizeMonitorSectionBodies(
@@ -49,46 +50,55 @@ describe('legacy enemy status density and dividers', () => {
       monitorSectionBodyMinimums(),
     );
     expect(result.poise! + result.sp!).toBeCloseTo(30);
-    expect(result.poise).toBeCloseTo(10);
-    expect(result.sp).toBeCloseTo(20);
+    expect(result.poise).toBeCloseTo((30 * 32) / (32 + 86));
+    expect(result.sp).toBeCloseTo((30 * 86) / (32 + 86));
   });
 
-  it('matches main section geometry at the default 240px monitor height', () => {
+  it('uses v3 weights while respecting the SP minimum at the default 240px height', () => {
     const layout = resolveMonitorSectionLayout(
       240,
       { affliction: false, poise: false, sp: false },
-      { affliction: 2, poise: 1, sp: 3 },
+      DEFAULT_MONITOR_SECTION_WEIGHTS,
     );
-    expect(layout.bodies).toEqual({ affliction: 66, poise: 33, sp: 99 });
+    expect(layout.bodies).toEqual({ affliction: 114, poise: 40, sp: 86 });
     expect(layout.rects).toEqual({
-      affliction: { bodyHeight: 66, stripHeight: 0, shellHeight: 80 },
-      poise: { bodyHeight: 33, stripHeight: 0, shellHeight: 47 },
-      sp: { bodyHeight: 99, stripHeight: 0, shellHeight: 113 },
+      affliction: { bodyHeight: 114, stripHeight: 0, shellHeight: 114 },
+      poise: { bodyHeight: 40, stripHeight: 0, shellHeight: 40 },
+      sp: { bodyHeight: 86, stripHeight: 0, shellHeight: 86 },
     });
+  });
+
+  it('distributes unconstrained body space 3:1:2 in v3', () => {
+    const layout = resolveMonitorSectionLayout(
+      360,
+      { affliction: false, poise: false, sp: false },
+      DEFAULT_MONITOR_SECTION_WEIGHTS,
+    );
+    expect(layout.bodies).toEqual({ affliction: 180, poise: 60, sp: 120 });
   });
 
   it('reserves collapsed strips before redistributing expanded section bodies', () => {
     const layout = resolveMonitorSectionLayout(
       180,
       { affliction: false, poise: true, sp: false },
-      { affliction: 2, poise: 1, sp: 3 },
+      DEFAULT_MONITOR_SECTION_WEIGHTS,
     );
-    expect(layout.bodies).toEqual({ affliction: 55, poise: 0, sp: 83 });
+    expect(layout.bodies).toEqual({ affliction: 80, poise: 0, sp: 86 });
     expect(layout.rects.poise).toEqual({ bodyHeight: 0, stripHeight: 14, shellHeight: 14 });
     expect(Object.values(layout.rects).reduce((sum, section) => sum + section.shellHeight, 0)).toBe(
       180,
     );
   });
 
-  it("keeps main's 96px expanded-body floor in the shortest measured viewport", () => {
+  it('keeps all three compact sections visible in the shortest measured viewport', () => {
     const layout = resolveMonitorSectionLayout(
       116,
       { affliction: false, poise: false, sp: false },
-      { affliction: 2, poise: 1, sp: 3 },
+      DEFAULT_MONITOR_SECTION_WEIGHTS,
     );
-    expect(layout.bodies).toEqual({ affliction: 35, poise: 20, sp: 41 });
+    expect(layout.bodies).toEqual({ affliction: 81, poise: 33, sp: 86 });
     expect(Object.values(layout.rects).reduce((sum, section) => sum + section.shellHeight, 0)).toBe(
-      138,
+      200,
     );
   });
 });

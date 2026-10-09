@@ -5144,7 +5144,9 @@
     },
     "modules": {
       "enemyStatus": "Enemy Status",
+      "enemyStatusCompact": "Enemy",
       "stagger": "Stagger",
+      "staggerCompact": "Stagger",
       "sp": "SP"
     },
     "labels": {

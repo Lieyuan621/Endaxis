@@ -7,12 +7,14 @@ const props = defineProps<{
   snapshot: EnemyCombatHudSnapshot;
   name: string;
   level: number;
+  compact?: boolean;
   /** 状态总览行只显示生命；失衡值由旧版布局中的独立纵向模块承载。 */
   showPoise?: boolean;
   /** 原生 UIPoiseBar 按敌人配置初始化的归一化结点阈值。 */
   poiseKnotThresholds: readonly number[];
   labels: {
     status: string;
+    compactStatus: string;
     hp: string;
     poise: string;
     recovering: string;
@@ -34,9 +36,13 @@ const poiseStateLabel = computed(() => {
 </script>
 
 <template>
-  <section class="enemy-hud-snapshot" :title="`${name} · Lv.${level}`">
+  <section
+    class="enemy-hud-snapshot"
+    :class="{ 'is-compact': compact }"
+    :title="`${name} · Lv.${level}`"
+  >
     <header>
-      <strong>{{ labels.status }}</strong>
+      <strong>{{ compact ? labels.compactStatus : labels.status }}</strong>
     </header>
     <div class="gauge gauge--hp">
       <span class="gauge__value">
@@ -172,5 +178,41 @@ header strong {
   box-shadow: 0 0 0 1px rgb(0 0 0 / 45%);
   transform: translate(-50%, -50%);
   pointer-events: none;
+}
+
+.enemy-hud-snapshot.is-compact {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: 13px 5px auto;
+  align-content: start;
+  column-gap: 4px;
+  row-gap: 4px;
+  padding: 5px 8px;
+}
+
+.is-compact header {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.is-compact .gauge--hp .gauge__value {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+}
+
+.is-compact .gauge--hp .gauge__track {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+.is-compact :slotted(.last-hit-buffs) {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  margin-top: 0;
 }
 </style>

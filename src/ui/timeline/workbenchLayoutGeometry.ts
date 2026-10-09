@@ -1,4 +1,4 @@
-import { MONITOR_MINIMUM_CONTENT_HEIGHT } from './results/monitorSectionMinimums';
+import { monitorMinimumContentHeight } from './results/monitorSectionMinimums';
 
 /** 与 main 分支一致：50px 已包含顶栏下边框。 */
 export const WORKBENCH_HEADER_HEIGHT = 50;
@@ -38,10 +38,11 @@ export function resolveWorkbenchBottomHeightBounds(
   fallbackHeight: number,
   collapsedSectionCount = 0,
 ): WorkbenchBottomHeightBounds {
+  const monitorMinimum = monitorMinimumContentHeight(collapsedSectionCount);
   const maximum =
     workbenchHeight > 0
       ? Math.max(
-          MONITOR_MINIMUM_CONTENT_HEIGHT,
+          monitorMinimum,
           workbenchHeight -
             WORKBENCH_HEADER_HEIGHT -
             WORKBENCH_TIMELINE_MIN_HEIGHT -
@@ -51,7 +52,7 @@ export function resolveWorkbenchBottomHeightBounds(
   return {
     minimum: Math.min(
       Math.max(
-        MONITOR_MINIMUM_CONTENT_HEIGHT,
+        monitorMinimum,
         WORKBENCH_BOTTOM_DEFAULT_HEIGHT *
           (1 - Math.min(2, Math.max(0, collapsedSectionCount)) * 0.25),
       ),

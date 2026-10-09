@@ -16,6 +16,10 @@ import type {
   ResolvedOperatorPanel,
 } from '../../../core/compiler/resolveOperatorPanel';
 import type { OperatorDefinition } from '../../../core/game-data/operatorDefinition';
+import {
+  MAIN_ATTRIBUTE_ATTACK_FACTOR,
+  SECONDARY_ATTRIBUTE_ATTACK_FACTOR,
+} from '../../../core/game-data/battleConstants';
 import { resolveOperatorPanelContributionSourceLabel } from './operatorPanelContributionPresentation';
 import type { PublishedBuffSource } from '../results/publishedBuffSource';
 
@@ -27,7 +31,7 @@ const props = defineProps<{
   weapons?: ReadonlyMap<string, PublishedBuffSource>;
 }>();
 
-const emit = defineEmits<{ 'update:visible': [visible: boolean] }>();
+defineEmits<{ 'update:visible': [visible: boolean] }>();
 const { t, locale } = useI18n({ useScope: 'global' });
 const expanded = ref(new Set<OperatorPanelStat>());
 
@@ -76,6 +80,16 @@ function sourceLabel(entry: OperatorPanelContributionReceipt): string {
   });
 }
 
+function attributeSourceLabel(entry: OperatorPanelContributionReceipt): string {
+  return entry.operation === 'base'
+    ? sourceLabel(entry)
+    : t('statDetail.fromSource', { name: sourceLabel(entry) });
+}
+
+function statSourceLabel(entry: OperatorPanelContributionReceipt): string {
+  return t('statDetail.fromSource', { name: sourceLabel(entry) });
+}
+
 function sourceValue(entry: OperatorPanelContributionReceipt): string {
   if (
     entry.operation === 'percent' ||
@@ -96,7 +110,16 @@ function sourcesFor(stat: OperatorPanelStat): readonly OperatorPanelContribution
   return props.panel?.receipt.filter(entry => entry.stat === stat) ?? [];
 }
 
+function hasSources(stat: OperatorPanelStat): boolean {
+  return (
+    (stat === 'attack' && props.panel?.attackDetail !== undefined) ||
+    (stat === 'health' && props.panel?.healthDetail !== undefined) ||
+    (props.panel?.receipt.some(entry => entry.stat === stat) ?? false)
+  );
+}
+
 function toggle(stat: OperatorPanelStat): void {
+  if (!hasSources(stat)) return;
   const next = new Set(expanded.value);
   if (next.has(stat)) next.delete(stat);
   else next.add(stat);
@@ -110,6 +133,69 @@ const attributeRows = computed<readonly StatRow[]>(() =>
     value: formatNumber(props.panel?.attributes[key] ?? 0),
   })),
 );
+
+const attackBreakdown = computed(() => {
+  const panel = props.panel;
+  const detail = panel?.attackDetail;
+  if (panel === null || detail === undefined) return null;
+  const baseAttackTotal = detail.operatorBaseAttack + detail.weaponBaseAttack;
+  const attributeContributions = ATTRIBUTE_KEYS.map(key => {
+    const isMain = key === panel.mainAttribute;
+    const isSub = key === panel.secondaryAttribute;
+    const coefficient =
+      (isMain ? MAIN_ATTRIBUTE_ATTACK_FACTOR : 0) + (isSub ? SECONDARY_ATTRIBUTE_ATTACK_FACTOR : 0);
+    return {
+      key,
+      isMain,
+      isSub,
+      contribution: Math.floor(panel.attributes[key]) * coefficient,
+    };
+  })
+    .filter(row => row.isMain || row.isSub)
+    .sort((left, right) => Number(right.isMain) - Number(left.isMain));
+  return {
+    ...detail,
+    baseAttackTotal,
+    basicTotal: panel.attackBeforeAttributeScalar,
+    attackBonus: baseAttackTotal * detail.attackPercent + detail.flatAttack,
+    attributeContributions,
+    attributeBonus: attributeContributions.reduce((sum, row) => sum + row.contribution, 0),
+  };
+});
+
+const attackFlatSources = computed(() =>
+  sourcesFor('attack').filter(entry => entry.operation === 'flat'),
+);
+const attackPercentSources = computed(() =>
+  sourcesFor('attack').filter(entry => entry.operation === 'percent'),
+);
+const healthBreakdown = computed(() => {
+  const panel = props.panel;
+  const detail = panel?.healthDetail;
+  // 升级与装备的生命修正分阶段应用；“其他”只表示最终净差，不把原始百分比相加。
+  return panel === null || detail === undefined
+    ? null
+    : { ...detail, otherHealth: panel.health - Math.floor(detail.baseHealthTotal) };
+});
+const healthOtherSources = computed(() =>
+  sourcesFor('health').filter(entry => entry.operation !== 'base'),
+);
+
+function ceilNumber(value: number): string {
+  return new Intl.NumberFormat(locale.value).format(Math.ceil(value));
+}
+
+function signedNumber(value: number): string {
+  return `${value >= 0 ? '+' : ''}${ceilNumber(value)}`;
+}
+
+function signedPercent(value: number): string {
+  return `${value >= 0 ? '+' : ''}${(value * 100).toFixed(1)}%`;
+}
+
+function isPrimaryStat(stat: OperatorPanelStat): boolean {
+  return stat === 'attack' || stat === 'health' || stat === 'defense';
+}
 
 const statRows = computed<readonly StatRow[]>(() => {
   const panel = props.panel;
@@ -153,38 +239,59 @@ const statRows = computed<readonly StatRow[]>(() => {
       :model-value="visible"
       :title="t('statDetail.title', { name: operatorName })"
       width="420px"
-      class="stat-detail-dialog next-panel-dialog"
       append-to-body
       @update:model-value="$emit('update:visible', $event)"
     >
-      <div v-if="panel" class="panel-content">
+      <div v-if="panel" class="ea-detail-breakdown">
         <section>
-          <h3>{{ t('statDetail.attributes') }}</h3>
-          <table>
+          <div class="section-label">{{ t('statDetail.attributes') }}</div>
+          <table class="stat-table">
             <tbody>
               <template v-for="row in attributeRows" :key="row.key">
-                <tr class="summary-row" @click="toggle(row.key)">
-                  <td>
-                    <el-icon class="expand-icon" :class="{ open: expanded.has(row.key) }">
+                <tr
+                  class="expandable-row"
+                  :class="{
+                    'is-disabled': !hasSources(row.key),
+                    'is-main': operator?.mainAttribute === row.key,
+                    'is-sub': operator?.secondaryAttribute === row.key,
+                  }"
+                  @click="toggle(row.key)"
+                >
+                  <td class="label-cell">
+                    <el-icon
+                      v-if="hasSources(row.key)"
+                      class="expand-icon"
+                      :class="{ 'is-open': expanded.has(row.key) }"
+                    >
                       <ArrowRight />
                     </el-icon>
                     {{ row.label }}
-                    <span v-if="operator?.mainAttribute === row.key" class="badge main">{{
-                      t('statDetail.main')
-                    }}</span>
-                    <span v-if="operator?.secondaryAttribute === row.key" class="badge sub">{{
-                      t('statDetail.sub')
-                    }}</span>
+                    <span
+                      v-if="operator?.mainAttribute === row.key"
+                      class="attr-badge main-badge"
+                      >{{ t('statDetail.main') }}</span
+                    >
+                    <span
+                      v-if="operator?.secondaryAttribute === row.key"
+                      class="attr-badge sub-badge"
+                      >{{ t('statDetail.sub') }}</span
+                    >
                   </td>
-                  <td>{{ row.value }}</td>
+                  <td class="value-cell">{{ row.value }}</td>
                 </tr>
                 <tr
                   v-for="(source, index) in expanded.has(row.key) ? sourcesFor(row.key) : []"
                   :key="`${row.key}:${index}`"
-                  class="source-row"
+                  class="sub-row dim"
+                  :class="{
+                    'is-main': operator?.mainAttribute === row.key,
+                    'is-sub': operator?.secondaryAttribute === row.key,
+                  }"
                 >
-                  <td>{{ sourceLabel(source) }}</td>
-                  <td>{{ sourceValue(source) }}</td>
+                  <td class="label-cell indent-1 source-label">
+                    {{ attributeSourceLabel(source) }}
+                  </td>
+                  <td class="value-cell">{{ sourceValue(source) }}</td>
                 </tr>
               </template>
             </tbody>
@@ -192,26 +299,134 @@ const statRows = computed<readonly StatRow[]>(() => {
         </section>
 
         <section>
-          <h3>{{ t('statDetail.stats') }}</h3>
-          <table>
+          <div class="section-label">{{ t('statDetail.stats') }}</div>
+          <table class="stat-table">
             <tbody>
               <template v-for="row in statRows" :key="row.key">
-                <tr class="summary-row" @click="toggle(row.key)">
-                  <td>
-                    <el-icon class="expand-icon" :class="{ open: expanded.has(row.key) }">
+                <tr
+                  class="expandable-row"
+                  :class="{ 'is-disabled': !hasSources(row.key) }"
+                  @click="toggle(row.key)"
+                >
+                  <td class="label-cell" :class="{ bold: isPrimaryStat(row.key) }">
+                    <el-icon
+                      v-if="hasSources(row.key)"
+                      class="expand-icon"
+                      :class="{ 'is-open': expanded.has(row.key) }"
+                    >
                       <ArrowRight />
                     </el-icon>
                     {{ row.label }}
                   </td>
-                  <td>{{ row.value }}</td>
+                  <td class="value-cell" :class="{ bold: isPrimaryStat(row.key) }">
+                    {{ row.value }}
+                  </td>
                 </tr>
+                <template v-if="row.key === 'attack' && expanded.has(row.key) && attackBreakdown">
+                  <tr class="sub-row">
+                    <td class="label-cell indent-1">{{ t('statDetail.basicTotal') }}</td>
+                    <td class="value-cell">{{ ceilNumber(attackBreakdown.basicTotal) }}</td>
+                  </tr>
+                  <tr class="sub-row">
+                    <td class="label-cell indent-2">{{ t('statDetail.baseAtk') }}</td>
+                    <td class="value-cell">{{ ceilNumber(attackBreakdown.baseAttackTotal) }}</td>
+                  </tr>
+                  <tr class="sub-row dim">
+                    <td class="label-cell indent-3">{{ t('statDetail.operatorAtk') }}</td>
+                    <td class="value-cell">{{ ceilNumber(attackBreakdown.operatorBaseAttack) }}</td>
+                  </tr>
+                  <tr class="sub-row dim">
+                    <td class="label-cell indent-3">{{ t('statDetail.weaponAtk') }}</td>
+                    <td class="value-cell">{{ ceilNumber(attackBreakdown.weaponBaseAttack) }}</td>
+                  </tr>
+                  <tr class="sub-row">
+                    <td class="label-cell indent-2">{{ t('statDetail.atkBonus') }}</td>
+                    <td class="value-cell">{{ signedNumber(attackBreakdown.attackBonus) }}</td>
+                  </tr>
+                  <tr class="sub-row dim">
+                    <td class="label-cell indent-3">{{ t('statDetail.flatAtk') }}</td>
+                    <td class="value-cell">{{ signedNumber(attackBreakdown.flatAttack) }}</td>
+                  </tr>
+                  <tr
+                    v-for="(source, index) in attackFlatSources"
+                    :key="`attack-flat:${index}`"
+                    class="sub-row dim"
+                  >
+                    <td class="label-cell indent-4 source-label">
+                      {{ statSourceLabel(source) }}
+                    </td>
+                    <td class="value-cell">{{ sourceValue(source) }}</td>
+                  </tr>
+                  <tr class="sub-row dim">
+                    <td class="label-cell indent-3">{{ t('statDetail.percentageAtk') }}</td>
+                    <td class="value-cell">{{ formatPercent(attackBreakdown.attackPercent) }}</td>
+                  </tr>
+                  <tr
+                    v-for="(source, index) in attackPercentSources"
+                    :key="`attack-percent:${index}`"
+                    class="sub-row dim"
+                  >
+                    <td class="label-cell indent-4 source-label">
+                      {{ statSourceLabel(source) }}
+                    </td>
+                    <td class="value-cell">{{ sourceValue(source) }}</td>
+                  </tr>
+                  <tr class="sub-row">
+                    <td class="label-cell indent-1">{{ t('statDetail.attributeBonus') }}</td>
+                    <td class="value-cell">{{ signedPercent(attackBreakdown.attributeBonus) }}</td>
+                  </tr>
+                  <tr
+                    v-for="attribute in attackBreakdown.attributeContributions"
+                    :key="attribute.key"
+                    class="sub-row dim"
+                    :class="{ 'is-main': attribute.isMain, 'is-sub': attribute.isSub }"
+                  >
+                    <td class="label-cell indent-2">
+                      {{ t('statDetail.fromSource', { name: statLabel(attribute.key) }) }}
+                    </td>
+                    <td class="value-cell">{{ signedPercent(attribute.contribution) }}</td>
+                  </tr>
+                </template>
+                <template v-if="row.key === 'health' && expanded.has(row.key) && healthBreakdown">
+                  <tr class="sub-row">
+                    <td class="label-cell indent-1">{{ t('statDetail.baseHp') }}</td>
+                    <td class="value-cell">{{ ceilNumber(healthBreakdown.baseHealthTotal) }}</td>
+                  </tr>
+                  <tr class="sub-row dim">
+                    <td class="label-cell indent-2">{{ t('statDetail.operatorHp') }}</td>
+                    <td class="value-cell">{{ ceilNumber(healthBreakdown.operatorBaseHealth) }}</td>
+                  </tr>
+                  <tr class="sub-row dim">
+                    <td class="label-cell indent-2">{{ t('statDetail.hpFromStrength') }}</td>
+                    <td class="value-cell">{{ ceilNumber(healthBreakdown.strengthHealth) }}</td>
+                  </tr>
+                  <tr
+                    v-if="healthBreakdown.otherHealth !== 0 || healthOtherSources.length > 0"
+                    class="sub-row"
+                  >
+                    <td class="label-cell indent-1">{{ t('statDetail.otherHp') }}</td>
+                    <td class="value-cell">{{ signedNumber(healthBreakdown.otherHealth) }}</td>
+                  </tr>
+                  <tr
+                    v-for="(source, index) in healthOtherSources"
+                    :key="`health-other:${index}`"
+                    class="sub-row dim"
+                  >
+                    <td class="label-cell indent-2 source-label">{{ statSourceLabel(source) }}</td>
+                    <td class="value-cell">{{ sourceValue(source) }}</td>
+                  </tr>
+                </template>
                 <tr
-                  v-for="(source, index) in expanded.has(row.key) ? sourcesFor(row.key) : []"
+                  v-for="(source, index) in expanded.has(row.key) &&
+                  (row.key !== 'attack' || attackBreakdown === null) &&
+                  (row.key !== 'health' || healthBreakdown === null)
+                    ? sourcesFor(row.key)
+                    : []"
                   :key="`${row.key}:${index}`"
-                  class="source-row"
+                  class="sub-row dim"
                 >
-                  <td>{{ sourceLabel(source) }}</td>
-                  <td>{{ sourceValue(source) }}</td>
+                  <td class="label-cell indent-1 source-label">{{ statSourceLabel(source) }}</td>
+                  <td class="value-cell">{{ sourceValue(source) }}</td>
                 </tr>
               </template>
             </tbody>
@@ -223,80 +438,39 @@ const statRows = computed<readonly StatRow[]>(() => {
 </template>
 
 <style scoped>
-.panel-content {
-  display: grid;
-  gap: 18px;
+.ea-detail-breakdown section + section {
+  margin-top: 12px;
 }
 
-h3 {
-  margin: 0 0 6px;
-  color: var(--ea-fg-muted);
-  font-size: 11px;
-  font-weight: 700;
+.source-label {
+  overflow-wrap: anywhere;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
+tr.is-main {
+  background: color-mix(in srgb, var(--ea-gold) 10%, transparent);
 }
 
-td {
-  height: 30px;
-  border-bottom: 1px solid var(--ea-border-soft);
-}
-
-td:last-child {
-  width: 84px;
-  color: var(--ea-fg);
-  font-variant-numeric: tabular-nums;
-  font-weight: 700;
-  text-align: right;
-}
-
-.summary-row {
-  cursor: pointer;
-}
-
-.summary-row:hover {
+tr.is-sub {
   background: var(--ea-fill-soft);
 }
 
-.source-row td {
-  height: 25px;
-  color: var(--ea-fg-muted);
-  font-size: 11px;
-}
-
-.source-row td:first-child {
-  padding-left: 28px;
-}
-
-.expand-icon {
-  margin-right: 6px;
-  color: var(--ea-icon-muted);
-  font-size: 11px;
-  transition: transform 0.12s ease;
-}
-
-.expand-icon.open {
-  transform: rotate(90deg);
-}
-
-.badge {
+.attr-badge {
   display: inline-block;
-  margin-left: 5px;
-  padding: 0 4px;
-  border: 1px solid currentColor;
-  font-size: 9px;
-  line-height: 14px;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 3px;
+  font-size: 10px;
+  line-height: 16px;
+  vertical-align: middle;
 }
 
-.badge.main {
+.main-badge {
+  border: 1px solid color-mix(in srgb, var(--ea-gold) 50%, transparent);
   color: var(--ea-gold);
 }
 
-.badge.sub {
-  color: #38bdf8;
+.sub-badge {
+  border: 1px solid var(--ea-border-strong);
+  color: var(--ea-fg-muted);
 }
 </style>

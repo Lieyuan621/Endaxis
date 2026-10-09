@@ -7,6 +7,7 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { EaButton } from '../../../design-system/index';
 import { useInteractionSession } from '../../interaction/interactionSessionContext';
 import {
+  DEFAULT_MONITOR_SECTION_WEIGHTS,
   MONITOR_RESIZE_HANDLE_REACH,
   monitorSectionBodyMinimums,
   resolveMonitorSectionLayout,
@@ -19,8 +20,14 @@ const resizeHandleTop = `${-MONITOR_RESIZE_HANDLE_REACH}px`;
 const resizeHandleHeight = `${MONITOR_RESIZE_HANDLE_REACH * 2}px`;
 
 const COLLAPSE_STORAGE_KEY = 'endaxis:resource-monitor-section-collapse:v1';
-const LAYOUT_STORAGE_KEY = 'endaxis:resource-monitor-sections:v1';
+// 独立于 Main 的旧权重存档；v3 首次使用 3:1:2，此后保留手动拖动结果。
+const LAYOUT_STORAGE_KEY = 'endaxis:v3-resource-monitor-sections:v1';
 const sectionKeys: readonly SectionKey[] = ['affliction', 'poise', 'sp'];
+const compactBodyThresholds: Record<SectionKey, number> = {
+  affliction: 72,
+  poise: 46,
+  sp: 108,
+};
 
 const props = defineProps<{
   labels: Record<SectionKey, string>;
@@ -47,11 +54,7 @@ watch(
   count => emit('collapsedCountChange', count),
   { immediate: true },
 );
-const sectionWeights = reactive<Record<SectionKey, number>>({
-  affliction: 2,
-  poise: 1,
-  sp: 3,
-});
+const sectionWeights = reactive<Record<SectionKey, number>>({ ...DEFAULT_MONITOR_SECTION_WEIGHTS });
 const root = ref<HTMLElement | null>(null);
 const rootHeight = ref(0);
 const activeResizeLowerKey = ref<SectionKey | null>(null);
@@ -60,6 +63,12 @@ let resizeObserver: ResizeObserver | null = null;
 
 const sectionLayout = computed(() =>
   resolveMonitorSectionLayout(rootHeight.value, collapsed, sectionWeights),
+);
+const compact = computed(() =>
+  sectionKeys.some(
+    key =>
+      !collapsed[key] && sectionLayout.value.rects[key].bodyHeight < compactBodyThresholds[key],
+  ),
 );
 
 const resizePairs = computed(() => {
@@ -179,7 +188,7 @@ onMounted(() => {
       }
     }
   } catch {
-    // Storage is optional; default 2:1:3 weights remain usable.
+    // Storage is optional; default 3:1:2 weights remain usable.
   }
 
   const updateRootHeight = () => {
@@ -225,7 +234,7 @@ watch(
 
 <template>
   <div ref="root" class="enemy-status-sections">
-    <template v-for="key in sectionKeys" :key="key">
+    <template v-for="(key, index) in sectionKeys" :key="key">
       <div
         v-if="resizePairForLower(key) !== null"
         class="section-resize-handle"
@@ -234,7 +243,13 @@ watch(
       ></div>
       <section
         class="enemy-status-section"
-        :class="[`enemy-status-section--${key}`, { 'is-collapsed': collapsed[key] }]"
+        :class="[
+          `enemy-status-section--${key}`,
+          {
+            'is-collapsed': collapsed[key],
+            'follows-collapsed': index > 0 && collapsed[sectionKeys[index - 1]!],
+          },
+        ]"
         :data-section-key="key"
         :style="{
           height: `${sectionLayout.rects[key].shellHeight}px`,
@@ -255,7 +270,7 @@ watch(
           <strong>{{ props.labels[key] }}</strong>
         </EaButton>
         <div v-show="!collapsed[key]" class="section-content">
-          <slot :name="key" />
+          <slot :name="key" :compact="compact" />
         </div>
       </section>
     </template>
@@ -298,8 +313,8 @@ watch(
   --ea-control-border-hover: transparent;
   --ea-control-fg-hover: var(--ea-fg, #fff);
   position: absolute;
-  z-index: 40;
-  top: 7px;
+  z-index: 42;
+  top: 0;
   left: calc(180px + (100% - 180px) / 2);
   transform: translate(-50%, -50%);
   display: flex;
@@ -312,6 +327,16 @@ watch(
   color: var(--ea-fg-secondary);
   background: transparent;
   cursor: pointer;
+}
+
+/* The first arrow stays inside the clipped monitor edge; collapsed strips keep a centered control. */
+.enemy-status-section:first-child .section-toggle,
+.enemy-status-section.is-collapsed .section-toggle {
+  top: 7px;
+}
+
+.enemy-status-section.follows-collapsed:not(.is-collapsed) .section-toggle {
+  top: 8px;
 }
 
 .section-toggle strong {

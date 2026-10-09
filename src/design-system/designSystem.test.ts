@@ -66,6 +66,13 @@ test('indeterminate checkbox reports a mixed state', async () => {
   expect(html).toContain('aria-checked="mixed"');
 });
 
+test('compact number input uses the shared small right-side stepper', async () => {
+  const html = await render(h(component('EaNumberInput'), { modelValue: 8, compact: true }));
+  expect(html).toContain('ea-number-input--compact');
+  expect(html).toContain('el-input-number--small');
+  expect(html).toContain('is-controls-right');
+});
+
 test('busy dialog blocks every dismissal path', async () => {
   const html = await render(
     h(component('EaDialog'), { modelValue: true, title: 'Export', busy: true }),

@@ -7,7 +7,7 @@
  * 保证曲线和上方标尺、技能块位置一一对齐。每帧自动回复不单独标点。
  */
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
-import CustomNumberInput from '../../components/CustomNumberInput.vue';
+import { EaNumberInput } from '@/design-system';
 import { poiseProgressPoints, poiseDisplayPoints, spDisplayPoints } from './resourceCurveDisplay';
 import type { SharedSpCurve } from '../../../core/projection/resourceCurves';
 import type { EnemyHealthCurve } from '../../../core/projection/enemyHealthCurves';
@@ -35,6 +35,7 @@ const props = defineProps<{
   enemyHealthLabel?: string;
   poiseLabel?: string;
   spLabel?: string;
+  compact?: boolean;
   visibleKinds?: readonly ResourceCurveRow['kind'][];
   prepEndFrame?: number;
 
@@ -54,10 +55,14 @@ const emit = defineEmits<{
   updateResourceRule: [field: 'maxSp' | 'initialSp' | 'spRecoveryPerSecond', value: number];
 }>();
 
+function updateResourceRule(
+  field: 'maxSp' | 'initialSp' | 'spRecoveryPerSecond',
+  value: number | undefined,
+): void {
+  if (value !== undefined && Number.isFinite(value)) emit('updateResourceRule', field, value);
+}
+
 const ROW_HEIGHT = 56;
-const SECTION_TOPBAR_HEIGHT = 14;
-const CHART_TOP = 0;
-const CHART_BOTTOM = 0;
 const POINT_RADIUS = 2;
 const root = ref<HTMLElement | null>(null);
 const poiseBodyHeight = ref(ROW_HEIGHT);
@@ -157,13 +162,13 @@ function clamp(value: number, minimum: number, maximum: number): number {
 }
 
 function pointY(row: ResourceCurveRow, value: number): number {
-  const chartHeight = rowHeight(row) - CHART_TOP - CHART_BOTTOM;
+  const chartHeight = rowHeight(row);
   const upperBound = row.maxValue > 0 ? row.maxValue : 1;
   const minimum = row.kind === 'sp' ? -SP_NEGATIVE_BUFFER : 0;
   const rawRatio = (value - minimum) / (upperBound - minimum);
   // 技力可低于显示下界；由 SVG 裁切，不把不同负值伪造成同一条水平线。
   const ratio = row.kind === 'sp' ? rawRatio : clamp(rawRatio, 0, 1);
-  return CHART_TOP + (1 - ratio) * chartHeight;
+  return (1 - ratio) * chartHeight;
 }
 
 function baselineY(row: ResourceCurveRow): number {
@@ -265,7 +270,7 @@ const spWarnings = computed(() => {
   <div
     ref="root"
     class="resource-curves"
-    :class="{ 'resource-curves--empty': !hasCurves }"
+    :class="{ 'resource-curves--empty': !hasCurves, 'is-compact': compact }"
     :style="{ width: `${width}px` }"
   >
     <div v-if="!hasCurves" class="empty-state">—</div>
@@ -296,45 +301,43 @@ const spWarnings = computed(() => {
         <template
           v-if="row.kind === 'sp' && initialSp !== undefined && spRecoveryPerSecond !== undefined"
         >
-          <strong>{{ row.label }}</strong>
+          <strong v-if="!compact">{{ row.label }}</strong>
           <label v-if="maxSp !== undefined" class="resource-control-row">
             <span>{{ maxSpLabel }}</span>
             <span v-if="configurationReadOnly">{{ maxSp }}</span>
-            <CustomNumberInput
+            <EaNumberInput
               v-else
               :model-value="maxSp"
               :min="0"
-              active-color="var(--ea-gold)"
+              compact
               class="standard-input"
-              @update:model-value="emit('updateResourceRule', 'maxSp', Number($event))"
+              @update:model-value="updateResourceRule('maxSp', $event)"
             />
           </label>
           <label class="resource-control-row">
             <span>{{ initialSpLabel }}</span>
             <span v-if="configurationReadOnly">{{ initialSp }}</span>
-            <CustomNumberInput
+            <EaNumberInput
               v-else
               :model-value="initialSp"
               :min="0"
               :max="maxSp ?? row.maxValue"
-              active-color="var(--ea-gold)"
+              compact
               class="standard-input"
-              @update:model-value="emit('updateResourceRule', 'initialSp', Number($event))"
+              @update:model-value="updateResourceRule('initialSp', $event)"
             />
           </label>
           <label class="resource-control-row">
             <span>{{ spRecoveryLabel }}</span>
             <span v-if="configurationReadOnly">{{ spRecoveryPerSecond }}</span>
-            <CustomNumberInput
+            <EaNumberInput
               v-else
               :model-value="spRecoveryPerSecond"
               :min="0"
               :step="0.5"
-              active-color="var(--ea-gold)"
+              compact
               class="standard-input"
-              @update:model-value="
-                emit('updateResourceRule', 'spRecoveryPerSecond', Number($event))
-              "
+              @update:model-value="updateResourceRule('spRecoveryPerSecond', $event)"
             />
           </label>
         </template>
@@ -488,7 +491,7 @@ const spWarnings = computed(() => {
           x="0"
           :y="baselineY(row)"
           :width="width"
-          :height="Math.max(0, rowHeight(row) - CHART_BOTTOM - baselineY(row))"
+          :height="Math.max(0, rowHeight(row) - baselineY(row))"
         />
         <path
           class="curve-fill"
@@ -514,7 +517,7 @@ const spWarnings = computed(() => {
         class="sp-warning-tag"
         :style="{
           left: `${pointX(warning.frame)}px`,
-          top: `${SECTION_TOPBAR_HEIGHT + warning.top}px`,
+          top: `${warning.top}px`,
         }"
       >
         <svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true">
@@ -571,7 +574,7 @@ const spWarnings = computed(() => {
 .poise-maximum-line {
   position: absolute;
   right: 0;
-  top: 14px;
+  top: 0;
   height: 1px;
   background: rgba(255, 156, 110, 0.32);
   z-index: 2;
@@ -619,6 +622,7 @@ const spWarnings = computed(() => {
 
 .curve-row--sp .curve-label {
   border-left: 3px solid var(--ea-gold);
+  justify-content: center;
   overflow-y: auto;
   scrollbar-width: none;
   pointer-events: auto;
@@ -682,18 +686,46 @@ const spWarnings = computed(() => {
 
 :deep(.standard-input) {
   width: 65px !important;
-  height: 22px !important;
-  font-size: 11px !important;
+}
+
+.resource-curves.is-compact .curve-row--poise .curve-label {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: 13px 5px;
+  align-content: start;
+  gap: 3px 4px;
+  padding: 5px 8px;
+}
+
+.is-compact .curve-row--poise .curve-label strong {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.is-compact .curve-row--poise .curve-label small {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+}
+
+.is-compact .curve-row--poise .label-readout-bar {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+.is-compact .curve-row--sp .curve-label {
+  gap: 4px;
+  padding: 5px 8px;
 }
 
 .curve-chart {
   position: absolute;
   z-index: 1;
-  top: 14px;
+  top: 0;
   right: 0;
   bottom: 0;
   left: 0;
-  height: calc(100% - 14px);
+  height: 100%;
   display: block;
   overflow: hidden;
 }

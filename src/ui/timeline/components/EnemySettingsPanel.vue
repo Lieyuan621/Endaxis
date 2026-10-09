@@ -41,6 +41,7 @@ const TIERS: readonly { value: EnemyTier; color: string }[] = [
 ];
 const CATEGORY_ALL = '__all__';
 const CATEGORY_UNCATEGORIZED = '__uncategorized__';
+const MAX_KNOT_THRESHOLD_COUNT = 99;
 const categoryByEnemyId: Readonly<Record<string, string>> = generatedEnemySelectionCategoryById;
 const hiddenEnemyIds = new Set<string>(generatedHiddenEnemyIds);
 const TIER_WEIGHT: Readonly<Record<EnemyTier, number>> = {
@@ -143,7 +144,9 @@ const showCustomEnemy = computed(
     tierFilter.value === 'all' &&
     searchQuery.value.trim() === '',
 );
-const canAddKnotThreshold = computed(() => (draft.stagger.knotThresholds.at(-1) ?? 0) < 0.99);
+const canAddKnotThreshold = computed(
+  () => draft.stagger.knotThresholds.length < MAX_KNOT_THRESHOLD_COUNT,
+);
 
 watch(
   () => props.enemy.source,
@@ -206,9 +209,17 @@ function setDuration(
 }
 
 function addKnotThreshold(): void {
-  const previous = draft.stagger.knotThresholds.at(-1) ?? 0;
-  if (previous >= 0.99) return;
-  draft.stagger.knotThresholds.push(Math.min(0.99, Math.round((previous + 0.25) * 100) / 100));
+  const thresholds = draft.stagger.knotThresholds;
+  const count = thresholds.length + 1;
+  if (count > MAX_KNOT_THRESHOLD_COUNT) return;
+  thresholds.splice(
+    0,
+    thresholds.length,
+    ...Array.from(
+      { length: count },
+      (_, index) => Math.floor(((index + 1) * 100) / (count + 1)) / 100,
+    ),
+  );
 }
 
 function removeKnotThreshold(index: number): void {
@@ -459,14 +470,6 @@ function removeKnotThreshold(index: number): void {
                 :key="index"
                 class="knot-threshold-row"
               >
-                <EaNumberInput
-                  v-model="draft.stagger.knotThresholds[index]"
-                  size="sm"
-                  controls-position="right"
-                  :min="0.01"
-                  :max="0.99"
-                  :step="0.01"
-                />
                 <EaButton
                   type="button"
                   variant="danger"
@@ -478,6 +481,14 @@ function removeKnotThreshold(index: number): void {
                 >
                   <EaDeleteIcon />
                 </EaButton>
+                <EaNumberInput
+                  v-model="draft.stagger.knotThresholds[index]"
+                  size="sm"
+                  controls-position="right"
+                  :min="0.01"
+                  :max="0.99"
+                  :step="0.01"
+                />
               </div>
               <EaButton
                 size="sm"

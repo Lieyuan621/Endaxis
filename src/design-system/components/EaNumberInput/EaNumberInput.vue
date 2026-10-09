@@ -10,6 +10,7 @@ const props = withDefaults(
   defineProps<{
     modelValue?: number;
     size?: EaControlSize;
+    compact?: boolean;
     min?: number;
     max?: number;
     step?: number;
@@ -22,6 +23,7 @@ const props = withDefaults(
   {
     modelValue: undefined,
     size: 'md',
+    compact: false,
     min: -Infinity,
     max: Infinity,
     step: 1,
@@ -46,8 +48,9 @@ const field = inject(eaFormFieldKey, undefined);
 const inputId = computed(() => String(attrs.id ?? field?.controlId.value ?? ''));
 const describedBy = computed(() => attrs['aria-describedby'] ?? field?.describedBy.value);
 const isInvalid = computed(() => props.invalid || Boolean(field?.invalid.value));
+const effectiveSize = computed(() => (props.compact ? 'sm' : props.size));
 const elementSize = computed(() =>
-  props.size === 'md' ? 'default' : props.size === 'sm' ? 'small' : 'large',
+  effectiveSize.value === 'md' ? 'default' : effectiveSize.value === 'sm' ? 'small' : 'large',
 );
 
 defineExpose({
@@ -65,7 +68,10 @@ defineExpose({
     v-bind="attrs"
     :id="inputId || undefined"
     class="ea-number-input"
-    :class="[`ea-number-input--${size}`, { 'ea-number-input--invalid': isInvalid }]"
+    :class="[
+      `ea-number-input--${effectiveSize}`,
+      { 'ea-number-input--compact': compact, 'ea-number-input--invalid': isInvalid },
+    ]"
     :model-value="modelValue"
     :size="elementSize"
     :min="min"
@@ -73,7 +79,7 @@ defineExpose({
     :step="step"
     :precision="precision"
     :controls="controls"
-    :controls-position="controlsPosition || undefined"
+    :controls-position="compact ? 'right' : controlsPosition || undefined"
     :disabled="disabled"
     :aria-describedby="describedBy"
     :aria-invalid="isInvalid || undefined"

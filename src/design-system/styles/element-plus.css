@@ -41,8 +41,8 @@ html.dark .ea-number-input .el-input__wrapper,
 html.dark .ea-select .el-select__wrapper {
   border: 0 !important;
   border-radius: var(--ea-control-radius) !important;
-  background-color: var(--ea-fill-input) !important;
-  box-shadow: 0 0 0 1px var(--ea-control-border) inset !important;
+  background-color: var(--ea-number-input-bg, var(--ea-fill-input)) !important;
+  box-shadow: 0 0 0 1px var(--ea-number-input-border, var(--ea-control-border)) inset !important;
   transition:
     background-color var(--ea-control-transition),
     box-shadow var(--ea-control-transition) !important;
@@ -52,8 +52,8 @@ html.dark .ea-input .el-input__wrapper.is-focus,
 html.dark .ea-textarea .el-textarea__inner:focus,
 html.dark .ea-number-input .el-input__wrapper.is-focus,
 html.dark .ea-select .el-select__wrapper.is-focused {
-  background-color: var(--ea-panel-elevated) !important;
-  box-shadow: 0 0 0 1px var(--ea-gold) inset !important;
+  background-color: var(--ea-number-input-focus-bg, var(--ea-panel-elevated)) !important;
+  box-shadow: 0 0 0 1px var(--ea-number-input-accent, var(--ea-gold)) inset !important;
 }
 
 html[data-theme='light'] .ea-input .el-input__wrapper,
@@ -62,9 +62,9 @@ html[data-theme='light'] .ea-number-input .el-input__wrapper,
 html[data-theme='light'] .ea-select .el-select__wrapper {
   border: 0 !important;
   border-radius: var(--ea-control-radius) !important;
-  background-color: var(--ea-fill-input) !important;
+  background-color: var(--ea-number-input-bg, var(--ea-fill-input)) !important;
   color: var(--ea-fg) !important;
-  box-shadow: 0 0 0 1px var(--ea-control-border) inset !important;
+  box-shadow: 0 0 0 1px var(--ea-number-input-border, var(--ea-control-border)) inset !important;
   transition:
     background-color var(--ea-control-transition),
     box-shadow var(--ea-control-transition) !important;
@@ -74,8 +74,8 @@ html[data-theme='light'] .ea-input .el-input__wrapper.is-focus,
 html[data-theme='light'] .ea-textarea .el-textarea__inner:focus,
 html[data-theme='light'] .ea-number-input .el-input__wrapper.is-focus,
 html[data-theme='light'] .ea-select .el-select__wrapper.is-focused {
-  background-color: var(--ea-fill-input) !important;
-  box-shadow: 0 0 0 1px var(--ea-gold) inset !important;
+  background-color: var(--ea-number-input-focus-bg, var(--ea-fill-input)) !important;
+  box-shadow: 0 0 0 1px var(--ea-number-input-accent, var(--ea-gold)) inset !important;
 }
 
 html[data-theme='light'] .ea-number-input {
@@ -88,7 +88,7 @@ html[data-theme='light'] .ea-number-input {
 html[data-theme='light'] .ea-number-input .el-input-number__increase,
 html[data-theme='light'] .ea-number-input .el-input-number__decrease {
   border-color: var(--ea-control-border) !important;
-  background: var(--ea-surface-row) !important;
+  background: transparent !important;
   color: var(--ea-fg-secondary) !important;
 }
 
@@ -99,7 +99,7 @@ html[data-theme='light'] .ea-number-input .el-input-number__decrease {
   height: calc((var(--ea-control-height-sm) - 2px) / 2);
   width: 28px;
   border-color: var(--ea-control-border);
-  background: var(--ea-surface-row);
+  background: transparent;
   color: var(--ea-fg-secondary);
   transition:
     background-color var(--ea-control-transition),
@@ -115,6 +115,37 @@ html[data-theme='light'] .ea-number-input .el-input-number__decrease {
 .ea-number-input--sm.is-controls-right .el-input-number__decrease .el-icon {
   font-size: 12px;
   transform: none;
+}
+
+/* Compact timeline controls share the regular number input's behavior and styling. */
+.ea-number-input.ea-number-input--compact {
+  --el-component-size-small: var(--ea-number-input-compact-height, 22px);
+  width: 100%;
+  min-width: 0;
+  line-height: var(--ea-number-input-compact-height, 22px);
+}
+
+.ea-number-input.el-input-number.ea-number-input--compact.is-controls-right
+  .el-input-number__increase,
+.ea-number-input.el-input-number.ea-number-input--compact.is-controls-right
+  .el-input-number__decrease {
+  --el-input-number-controls-height: calc((var(--ea-number-input-compact-height, 22px) - 2px) / 2);
+  height: var(--el-input-number-controls-height);
+  width: var(--ea-number-input-compact-controls-width, 18px);
+}
+
+.ea-number-input--compact.is-controls-right .el-input.el-input--small .el-input__wrapper {
+  padding-left: 4px;
+  padding-right: calc(var(--ea-number-input-compact-controls-width, 18px) + 5px);
+}
+
+.ea-number-input--compact .el-input__inner {
+  font-size: 11px;
+}
+
+.ea-number-input--compact.is-controls-right .el-input-number__increase .el-icon,
+.ea-number-input--compact.is-controls-right .el-input-number__decrease .el-icon {
+  font-size: 10px;
 }
 
 .ea-input .el-input__count,
@@ -263,8 +294,8 @@ html[data-theme='light'] .el-popper {
 
   html[data-theme='light'] .ea-number-input .el-input-number__increase:hover,
   html[data-theme='light'] .ea-number-input .el-input-number__decrease:hover {
-    background: var(--ea-chip-fill-hover) !important;
-    color: var(--ea-fg) !important;
+    background: var(--ea-hover-fill) !important;
+    color: var(--ea-number-input-accent, var(--ea-gold)) !important;
   }
 
   html.dark
@@ -273,8 +304,8 @@ html[data-theme='light'] .el-popper {
   html.dark
     .ea-number-input--sm.is-controls-right
     .el-input-number__decrease:not(.is-disabled):hover {
-    background: var(--ea-control-bg-hover);
-    color: var(--ea-gold);
+    background: var(--ea-hover-fill);
+    color: var(--ea-number-input-accent, var(--ea-gold));
   }
 
   html.dark .ea-select-popper .el-select-dropdown__item:hover {

@@ -7,9 +7,8 @@ import type { TimelineTrackViewModel } from '../timelineEditorViewModel';
 import type { LoadoutGearSlot } from '../library/loadoutBuildViewModel';
 import OperatorSupportNotice from '../library/OperatorSupportNotice.vue';
 import { getOperatorAvatarPath } from '../../gameAssetPaths';
-import CustomNumberInput from '../../components/CustomNumberInput.vue';
 import OperatorAvatar from '../../components/OperatorAvatar.vue';
-import { EaButton } from '@/design-system';
+import { EaButton, EaNumberInput } from '@/design-system';
 
 const props = defineProps<{
   readOnly?: boolean;
@@ -150,15 +149,13 @@ function startReorder(event: DragEvent): void {
         <span class="initial-gauge-label">{{ $t('timelineGrid.track.initialGaugeShort') }}</span>
         <span class="initial-gauge-input-wrap">
           <span v-if="readOnly">{{ track.initialUltimateEnergy }}</span>
-          <CustomNumberInput
+          <EaNumberInput
             v-else
             :model-value="track.initialUltimateEnergy"
             :min="0"
             :max="track.maxUltimateEnergy ?? 0"
             :step="1"
-            active-color="#7dd3fc"
-            border-color="#7dd3fc"
-            text-align="center"
+            compact
             @update:model-value="updateInitialUltimateEnergy"
           />
         </span>
@@ -417,37 +414,19 @@ function startReorder(event: DragEvent): void {
   height: 20px;
 }
 
-.initial-gauge-input-wrap :deep(.custom-number-input) {
-  height: 20px;
-  background: rgb(0 0 0 / 20%);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--initial-gauge-accent) 38%, transparent) inset;
+.initial-gauge-input-wrap :deep(.ea-number-input) {
+  --ea-number-input-compact-height: 20px;
+  --ea-number-input-compact-controls-width: 14px;
+  --ea-number-input-bg: rgb(0 0 0 / 20%);
+  --ea-number-input-focus-bg: color-mix(in srgb, var(--initial-gauge-accent) 12%, transparent);
+  --ea-number-input-border: color-mix(in srgb, var(--initial-gauge-accent) 38%, transparent);
+  --ea-number-input-accent: color-mix(in srgb, var(--initial-gauge-accent) 90%, transparent);
 }
 
-.initial-gauge-input-wrap :deep(.custom-number-input:focus-within) {
-  background: color-mix(in srgb, var(--initial-gauge-accent) 12%, transparent);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--initial-gauge-accent) 90%, transparent) inset;
-}
-
-.initial-gauge-input-wrap :deep(.value-display) {
-  padding: 0 2px;
+.initial-gauge-input-wrap :deep(.el-input__inner) {
   color: var(--ea-fg, #e0f2fe);
   font-size: 10px;
   font-weight: 800;
-  line-height: 20px;
-}
-
-.initial-gauge-input-wrap :deep(.controls-stack),
-.initial-gauge-input-wrap :deep(.control-btn) {
-  width: 14px;
-}
-
-.initial-gauge-input-wrap :deep(.control-btn) {
-  color: var(--ea-fg-muted, rgb(125 211 252 / 62%));
-  font-size: 9px;
-}
-
-.initial-gauge-input-wrap :deep(.control-btn:hover:not(:disabled)) {
-  color: var(--ea-fg, #e0f2fe);
 }
 
 .initial-gauge-max {
@@ -773,16 +752,11 @@ function startReorder(event: DragEvent): void {
   --initial-gauge-accent: #0b6e99;
 }
 
-:global(html[data-theme='light'] .track-header .initial-gauge-input-wrap .custom-number-input) {
-  background: var(--ea-surface-row);
-  box-shadow: 0 0 0 1px rgb(11 110 153 / 35%) inset;
-}
-
-:global(
-  html[data-theme='light'] .track-header .initial-gauge-input-wrap .custom-number-input:focus-within
-) {
-  background: #fff;
-  box-shadow: 0 0 0 1px rgb(11 110 153 / 75%) inset;
+:global(html[data-theme='light'] .track-header .initial-gauge-input-wrap .ea-number-input) {
+  --ea-number-input-bg: var(--ea-surface-row);
+  --ea-number-input-focus-bg: #fff;
+  --ea-number-input-border: rgb(11 110 153 / 35%);
+  --ea-number-input-accent: rgb(11 110 153 / 75%);
 }
 
 :global(html[data-theme='light'] .track-header .stat-detail-button) {

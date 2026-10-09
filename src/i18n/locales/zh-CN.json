@@ -5161,7 +5161,9 @@
     },
     "modules": {
       "enemyStatus": "敌人状态",
+      "enemyStatusCompact": "敌人",
       "stagger": "失衡值",
+      "staggerCompact": "失衡",
       "sp": "技力"
     },
     "labels": {

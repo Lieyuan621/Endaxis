@@ -96,6 +96,12 @@ export interface ResolvedOperatorPanel {
   readonly mainAttribute: OperatorAttribute;
   readonly secondaryAttribute: OperatorAttribute;
   readonly health: number;
+  /** 静态生命展开所需的计算输入；不参与战斗初始化。 */
+  readonly healthDetail?: {
+    readonly operatorBaseHealth: number;
+    readonly strengthHealth: number;
+    readonly baseHealthTotal: number;
+  };
   readonly defense: number;
   readonly criticalRate: number;
   readonly criticalDamage: number;
@@ -439,12 +445,10 @@ export function resolveOperatorPanel(build: ResolvedScenarioBuild): ResolvedOper
     (values.operatorBaseAttack + values.weaponBaseAttack) * (1 + values.panelStats.attackPercent) +
     values.panelStats.attackFlat;
   const attack = Math.floor(attackBeforeAttributeScalar * attributeAttackMultiplier);
+  const strengthHealth = values.attributes.strength * 5;
+  const baseHealthTotal = values.operatorBaseHealth + strengthHealth;
   const health = Math.floor(
-    resolveUpgradeBasePanelStat(
-      values.operatorBaseHealth + values.attributes.strength * 5,
-      'health',
-      values,
-    ) *
+    resolveUpgradeBasePanelStat(baseHealthTotal, 'health', values) *
       (1 + values.panelStats.healthPercent) +
       values.panelStats.healthFlat,
   );
@@ -474,6 +478,11 @@ export function resolveOperatorPanel(build: ResolvedScenarioBuild): ResolvedOper
     mainAttribute: build.operator.mainAttribute,
     secondaryAttribute: build.operator.secondaryAttribute,
     health,
+    healthDetail: {
+      operatorBaseHealth: values.operatorBaseHealth,
+      strengthHealth,
+      baseHealthTotal,
+    },
     defense,
     criticalRate:
       resolveUpgradeBasePanelStat(0.05, 'criticalRate', values) + values.panelStats.criticalRate,

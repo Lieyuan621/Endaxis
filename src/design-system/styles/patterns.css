@@ -263,3 +263,114 @@
   color: var(--ea-floating-fg) !important;
   box-shadow: var(--ea-floating-shadow) !important;
 }
+
+/* Shared section/table treatment for stat and damage breakdown dialogs. */
+.ea-detail-breakdown {
+  color: var(--ea-fg);
+  font-size: 13px;
+}
+
+.ea-detail-breakdown .section-label {
+  margin: 12px 0 6px;
+  color: var(--ea-fg-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.ea-detail-breakdown .section-label:first-child {
+  margin-top: 0;
+}
+
+.ea-detail-breakdown .stat-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ea-detail-breakdown .stat-table tr {
+  border-bottom: 1px solid var(--ea-border-soft);
+}
+
+.ea-detail-breakdown .stat-table tr:last-child {
+  border-bottom: 0;
+}
+
+.ea-detail-breakdown .stat-table td {
+  padding: 5px 4px;
+}
+
+.ea-detail-breakdown .label-cell {
+  color: var(--ea-fg-secondary);
+}
+
+.ea-detail-breakdown .value-cell {
+  color: var(--ea-fg);
+  font-family: monospace;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.ea-detail-breakdown .bold {
+  font-weight: 600;
+}
+
+.ea-detail-breakdown .dim {
+  opacity: 0.72;
+  font-size: 12px;
+}
+
+.ea-detail-breakdown .indent-1 {
+  padding-left: 16px !important;
+}
+
+.ea-detail-breakdown .indent-2 {
+  padding-left: 28px !important;
+}
+
+.ea-detail-breakdown .indent-3 {
+  padding-left: 40px !important;
+}
+
+.ea-detail-breakdown .indent-4 {
+  padding-left: 52px !important;
+}
+
+.ea-detail-breakdown .expandable-row {
+  cursor: pointer;
+}
+
+.ea-detail-breakdown .expandable-row:hover {
+  background: var(--ea-hover-fill);
+}
+
+.ea-detail-breakdown .expandable-row.is-disabled {
+  cursor: default;
+}
+
+.ea-detail-breakdown .expandable-row.is-disabled:not(.is-main):not(.is-sub):hover {
+  background: transparent;
+}
+
+.ea-detail-breakdown .expand-icon {
+  margin-right: 4px;
+  vertical-align: -2px;
+  color: var(--ea-fg-muted);
+  font-size: 12px;
+  transition:
+    transform 0.18s ease,
+    color 0.18s ease;
+}
+
+.ea-detail-breakdown .expand-icon.is-open {
+  transform: rotate(90deg);
+  color: var(--ea-fg-secondary);
+}
+
+.ea-detail-breakdown .expandable-row:hover .expand-icon {
+  color: var(--ea-fg-secondary);
+}
+
+.ea-detail-breakdown .sub-row {
+  border-bottom-color: color-mix(in srgb, var(--ea-border-soft) 50%, transparent) !important;
+}

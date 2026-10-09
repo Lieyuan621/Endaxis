@@ -42,10 +42,7 @@ import { layoutEnemyStatusRows } from './enemyStatusRows';
 import { layoutEnemyDamageHits } from './enemyDamageHitLayout';
 import { findBuffDamageSegment } from './enemyBuffDamageHits';
 import { isPhysicalStatusRowBuff } from './physicalStatusDisplay';
-import {
-  enemyStatusRowSize,
-  MONITOR_SECTION_TOPBAR_HEIGHT as SECTION_TOPBAR_HEIGHT,
-} from './monitorSectionMinimums';
+import { enemyStatusRowSize } from './monitorSectionMinimums';
 import { projectAttachmentConversionLinks } from '../../../core/projection/attachmentContinuations';
 import TimelineConnectorStroke from '../components/TimelineConnectorStroke.vue';
 
@@ -75,9 +72,11 @@ const props = defineProps<{
   hudSnapshot: EnemyCombatHudSnapshotModel;
   enemyName: string;
   enemyLevel: number;
+  compact?: boolean;
   poiseKnotThresholds: readonly number[];
   hudLabels: {
     status: string;
+    compactStatus: string;
     hp: string;
     poise: string;
     recovering: string;
@@ -118,13 +117,13 @@ onMounted(() => {
 onBeforeUnmount(() => resizeObserver?.disconnect());
 const iconSize = computed(() =>
   enemyStatusRowSize(
-    height.value - SECTION_TOPBAR_HEIGHT,
+    height.value - ICON_TOP,
     Math.max(statusRows.value.rowCount, ...entitySegments.value.map(segment => segment.lane + 1)),
   ),
 );
 const rowPitch = computed(() => iconSize.value + 4);
 const durationBarColor = useDurationBarColor();
-const ICON_TOP = 0;
+const ICON_TOP = 2;
 
 const REACTION_BUFF_IDS: Readonly<Record<string, keyof typeof commonBuffPresentationNameKeys>> = {
   electrification: 'buff_common_pulse_pulse_conduct_triggered_do',
@@ -195,13 +194,13 @@ const entityDamageHits = computed(() => {
     return [
       {
         ...hit,
-        top: SECTION_TOPBAR_HEIGHT + segment.lane * rowPitch.value + iconSize.value - 3 + index * 7,
+        top: ICON_TOP + segment.lane * rowPitch.value + iconSize.value - 3 + index * 7,
       },
     ];
   });
 });
 function entityTop(lane: number) {
-  return SECTION_TOPBAR_HEIGHT + lane * rowPitch.value;
+  return ICON_TOP + lane * rowPitch.value;
 }
 const markers = computed(() =>
   props.viz.markers.map((marker, index) => {
@@ -235,10 +234,7 @@ const markers = computed(() =>
       x:
         pointX(marker.frame) +
         (statusRows.value.markerPositions[index]?.slot ?? 0) * (iconSize.value + 2),
-      top:
-        SECTION_TOPBAR_HEIGHT +
-        ICON_TOP +
-        (statusRows.value.markerPositions[index]?.row ?? 0) * rowPitch.value,
+      top: ICON_TOP + (statusRows.value.markerPositions[index]?.row ?? 0) * rowPitch.value,
       title,
     };
   }),
@@ -266,7 +262,6 @@ const damageHits = computed(() =>
         : undefined,
       x: pointX(entry.frame),
       top:
-        SECTION_TOPBAR_HEIGHT +
         ICON_TOP +
         // 与附着行共用布局；伤害不参与图标横向错位。
         row * rowPitch.value +
@@ -326,8 +321,7 @@ const buffs = computed(() =>
       hideIcon,
       left: start + (hideIcon ? iconSize.value : 0),
       iconOffset: (statusRows.value.iconSlots.get(buff) ?? 0) * (iconSize.value + 2),
-      top:
-        SECTION_TOPBAR_HEIGHT + ICON_TOP + (statusRows.value.lanes.get(buff) ?? 0) * rowPitch.value,
+      top: ICON_TOP + (statusRows.value.lanes.get(buff) ?? 0) * rowPitch.value,
       barWidthPx: Math.max(0, right - start - iconSize.value - 2),
       color: resolveDurationBarColor(durationBarColor.value, 'enemy', buff),
       title,
@@ -414,6 +408,7 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
       :snapshot="hudSnapshot"
       :name="enemyName"
       :level="enemyLevel"
+      :compact="compact"
       :show-poise="false"
       :poise-knot-thresholds="poiseKnotThresholds"
       :labels="hudLabels"

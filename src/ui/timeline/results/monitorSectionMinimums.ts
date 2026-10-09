@@ -13,17 +13,31 @@ export interface MonitorSectionLayout {
   readonly rects: Record<MonitorSectionKey, MonitorSectionRect>;
 }
 
-export const MONITOR_SECTION_TOPBAR_HEIGHT = 14;
 export const MONITOR_RESIZE_HANDLE_REACH = 6;
 export const MONITOR_COLLAPSED_STRIP_HEIGHT = 14;
 export const MONITOR_MINIMUM_HEIGHT = 116;
+const MONITOR_EXPANDED_MINIMUM_HEIGHT = 200;
 export const MONITOR_MAXIMUM_HEIGHT = 520;
-export const MONITOR_MINIMUM_EXPANDED_BODY_SPACE = 96;
+export const DEFAULT_MONITOR_SECTION_WEIGHTS = {
+  affliction: 3,
+  poise: 1,
+  sp: 2,
+} satisfies MonitorSectionValues;
 
 const monitorSectionKeys: readonly MonitorSectionKey[] = ['affliction', 'poise', 'sp'];
-/** 容纳三段标题与最小展开内容，供工作台短屏滚动边界复用。 */
-export const MONITOR_MINIMUM_CONTENT_HEIGHT =
-  MONITOR_MINIMUM_EXPANDED_BODY_SPACE + monitorSectionKeys.length * MONITOR_SECTION_TOPBAR_HEIGHT;
+/** 容纳展开的紧凑内容；短窗口由工作台整体滚动，不裁切监视区输入。 */
+export function monitorMinimumContentHeight(collapsedCount = 0): number {
+  const collapsed = Math.min(2, Math.max(0, Math.round(collapsedCount)));
+  const expanded = monitorSectionKeys.length - collapsed;
+  const largestBodyMinimums = Object.values(monitorSectionBodyMinimums())
+    .sort((a, b) => b - a)
+    .slice(0, expanded);
+  return Math.max(
+    collapsed === 0 ? MONITOR_EXPANDED_MINIMUM_HEIGHT : MONITOR_MINIMUM_HEIGHT,
+    largestBodyMinimums.reduce((sum, minimum) => sum + minimum, 0) +
+      collapsed * MONITOR_COLLAPSED_STRIP_HEIGHT,
+  );
+}
 
 /** 旧版按可用高度压缩图标，行间距固定为 4px；低于 14px 时由区域裁切。 */
 export function enemyStatusRowSize(bodyHeight: number, rowCount: number): number {
@@ -50,45 +64,51 @@ export function resizeMonitorSectionBodies(
   return { ...bodies, [upper]: nextUpper, [lower]: total - nextUpper };
 }
 
-/** 与旧版一致：内容密度不能抬高分隔条的拖动下限。 */
+/** 三段紧凑布局中仍能完整放下数值、进度条与技力输入的最小高度。 */
 export function monitorSectionBodyMinimums() {
   return {
-    affliction: 46,
-    poise: 26,
-    sp: 52,
+    affliction: 54,
+    poise: 32,
+    // 三行 22px 输入、两段 4px 行距、上下内边距及区块边线。
+    sp: 86,
   } satisfies Record<MonitorSectionKey, number>;
 }
 
 /**
- * Reproduces main's resource-monitor geometry. Expanded sections receive exact pixel heights;
- * collapsed strips and topbars are removed before distributing the remaining body space.
+ * Expanded sections receive exact pixel heights; only collapsed strips consume layout space.
+ * The floating chevrons overlay section edges and do not reserve a topbar.
  */
 export function resolveMonitorSectionLayout(
   measuredHeight: number,
   collapsed: Record<MonitorSectionKey, boolean>,
   weights: MonitorSectionValues,
 ): MonitorSectionLayout {
-  const totalHeight = Math.min(
-    MONITOR_MAXIMUM_HEIGHT,
-    Math.max(MONITOR_MINIMUM_HEIGHT, Math.round(measuredHeight || 200)),
-  );
   const expanded = monitorSectionKeys.filter(key => !collapsed[key]);
   const minimums = monitorSectionBodyMinimums();
-  const expandedBodySpace = Math.max(
-    MONITOR_MINIMUM_EXPANDED_BODY_SPACE,
-    totalHeight -
-      MONITOR_SECTION_TOPBAR_HEIGHT * expanded.length -
-      MONITOR_COLLAPSED_STRIP_HEIGHT * (monitorSectionKeys.length - expanded.length),
+  const minimumBodySpace = expanded.reduce((sum, key) => sum + minimums[key], 0);
+  const collapsedStripSpace =
+    MONITOR_COLLAPSED_STRIP_HEIGHT * (monitorSectionKeys.length - expanded.length);
+  const totalHeight = Math.min(
+    MONITOR_MAXIMUM_HEIGHT,
+    Math.max(
+      monitorMinimumContentHeight(monitorSectionKeys.length - expanded.length),
+      minimumBodySpace + collapsedStripSpace,
+      Math.round(measuredHeight || 200),
+    ),
   );
+  const expandedBodySpace = Math.max(minimumBodySpace, totalHeight - collapsedStripSpace);
   const bodies: MonitorSectionValues = { affliction: 0, poise: 0, sp: 0 };
 
   if (expanded.length === 1) {
     bodies[expanded[0]!] = expandedBodySpace;
   } else if (expanded.length > 0) {
     const normalizedWeights: MonitorSectionValues = {
-      affliction: Math.max(0.1, Number(weights.affliction) || 2),
-      poise: Math.max(0.1, Number(weights.poise) || 1),
-      sp: Math.max(0.1, Number(weights.sp) || 3),
+      affliction: Math.max(
+        0.1,
+        Number(weights.affliction) || DEFAULT_MONITOR_SECTION_WEIGHTS.affliction,
+      ),
+      poise: Math.max(0.1, Number(weights.poise) || DEFAULT_MONITOR_SECTION_WEIGHTS.poise),
+      sp: Math.max(0.1, Number(weights.sp) || DEFAULT_MONITOR_SECTION_WEIGHTS.sp),
     };
     const totalWeight = expanded.reduce((sum, key) => sum + normalizedWeights[key], 0);
     const minimumSum = expanded.reduce((sum, key) => sum + minimums[key], 0);
@@ -137,7 +157,7 @@ export function resolveMonitorSectionLayout(
         {
           bodyHeight,
           stripHeight,
-          shellHeight: bodyHeight + stripHeight + (isCollapsed ? 0 : MONITOR_SECTION_TOPBAR_HEIGHT),
+          shellHeight: bodyHeight + stripHeight,
         },
       ];
     }),

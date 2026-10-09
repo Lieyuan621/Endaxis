@@ -1115,7 +1115,7 @@ function onClose(): void {
           >›</EaButton
         >
       </div>
-      <div v-if="damageDetails.length > 0" class="hit-detail-content">
+      <div v-if="damageDetails.length > 0" class="ea-detail-breakdown">
         <template
           v-for="detail in damageDetails.slice(damageIndex, damageIndex + 1)"
           :key="detail.key"
@@ -1480,10 +1480,6 @@ function onClose(): void {
   cursor: help;
   vertical-align: baseline;
 }
-.hit-detail-content {
-  color: var(--ea-fg, #f0f0f0);
-  font-size: 13px;
-}
 .hit-detail-pager {
   display: flex;
   justify-content: flex-end;
@@ -1493,91 +1489,8 @@ function onClose(): void {
   color: var(--ea-fg-muted);
   font-size: 12px;
 }
-.section-label {
-  margin: 12px 0 6px;
-  color: var(--ea-fg-muted, #aaa);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-.section-label:first-child {
-  margin-top: 0;
-}
-.stat-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-.stat-table tr {
-  border-bottom: 1px solid var(--ea-border-soft, rgb(255 255 255 / 6%));
-}
-.stat-table tr:last-child {
-  border-bottom: 0;
-}
-.stat-table td {
-  padding: 5px 4px;
-}
-.label-cell {
-  color: var(--ea-fg-secondary, #ddd);
-}
 .skill-source-label {
   overflow-wrap: anywhere;
-}
-.value-cell {
-  color: var(--ea-fg, #eee);
-  font-family: monospace;
-  text-align: right;
-  white-space: nowrap;
-}
-.bold {
-  font-weight: 600;
-}
-.dim {
-  opacity: 0.72;
-  font-size: 12px;
-}
-.indent-1 {
-  padding-left: 16px !important;
-}
-.indent-2 {
-  padding-left: 28px !important;
-}
-.indent-3 {
-  padding-left: 40px !important;
-}
-.indent-4 {
-  padding-left: 52px !important;
-}
-.expandable-row {
-  cursor: pointer;
-}
-.expandable-row:hover {
-  background: var(--ea-hover-fill, rgb(255 255 255 / 5%));
-}
-.expandable-row.is-disabled {
-  cursor: default;
-}
-.expandable-row.is-disabled:hover {
-  background: transparent;
-}
-.expand-icon {
-  margin-right: 4px;
-  vertical-align: -2px;
-  color: var(--ea-fg-muted, #888);
-  font-size: 12px;
-  transition:
-    transform 0.18s ease,
-    color 0.18s ease;
-}
-.expand-icon.is-open {
-  transform: rotate(90deg);
-  color: var(--ea-fg-secondary, #bbb);
-}
-.expandable-row:hover .expand-icon {
-  color: var(--ea-fg-secondary, #bbb);
-}
-.sub-row {
-  border-bottom-color: var(--ea-border-soft, rgb(255 255 255 / 3%)) !important;
 }
 tr.is-main {
   background: color-mix(in srgb, var(--ea-gold, #ffc107) 10%, transparent);

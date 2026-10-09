@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { resolveMonitorSectionLayout } from './results/monitorSectionMinimums';
+import {
+  DEFAULT_MONITOR_SECTION_WEIGHTS,
+  resolveMonitorSectionLayout,
+} from './results/monitorSectionMinimums';
 import {
   resolveWorkbenchBottomHeight,
   resolveWorkbenchBottomHeightBounds,
@@ -16,7 +19,7 @@ describe('workbench bottom panel geometry', () => {
   it.each([
     [0, 240],
     [1, 180],
-    [2, 138],
+    [2, 120],
   ])('folds %i sections without clipping the remaining monitor content', (count, minimum) => {
     expect(resolveWorkbenchBottomHeightBounds(1080, 240, count).minimum).toBe(minimum);
     expect(resolveWorkbenchBottomHeight(1080, 1, false, count)).toBe(minimum);
@@ -29,13 +32,13 @@ describe('workbench bottom panel geometry', () => {
     expect(resolveWorkbenchBottomHeight(height, requested, false)).toBe(expected);
   });
 
-  it('shrinks below the preferred minimum in a short window and hides a collapsed panel', () => {
-    expect(resolveWorkbenchBottomHeight(720, 1, false)).toBe(149);
+  it('scrolls the workbench instead of clipping compact monitor controls in a short window', () => {
+    expect(resolveWorkbenchBottomHeight(720, 1, false)).toBe(200);
     expect(resolveWorkbenchBottomHeight(1080, 1, true)).toBe(0);
   });
 
   it('lowers the minimum only when the viewport cannot preserve 520px of timeline', () => {
-    expect(resolveWorkbenchBottomHeightBounds(720, 240)).toEqual({ minimum: 149, maximum: 149 });
+    expect(resolveWorkbenchBottomHeightBounds(720, 240)).toEqual({ minimum: 200, maximum: 200 });
     expect(resolveWorkbenchBottomHeightBounds(1080, 240)).toEqual({
       minimum: 240,
       maximum: 509,
@@ -47,7 +50,7 @@ describe('workbench bottom panel geometry', () => {
     const sections = resolveMonitorSectionLayout(
       height,
       { affliction: false, poise: false, sp: false },
-      { affliction: 2, poise: 1, sp: 3 },
+      DEFAULT_MONITOR_SECTION_WEIGHTS,
     );
     const contentHeight = Object.values(sections.rects).reduce(
       (sum, section) => sum + section.shellHeight,
@@ -57,9 +60,9 @@ describe('workbench bottom panel geometry', () => {
       minimum: height,
       maximum: height,
     });
-    expect(height).toBe(138);
+    expect(height).toBe(200);
     expect(contentHeight).toBeLessThanOrEqual(height);
-    expect(resolveWorkbenchBottomHeight(400, 120, false, 2)).toBe(height);
+    expect(resolveWorkbenchBottomHeight(400, 120, false, 2)).toBe(116);
     expect(resolveWorkbenchBottomHeight(400, 240, true)).toBe(0);
   });
 

@@ -7558,8 +7558,9 @@ function setMobileGuideFrame(frame: number | null): void {
             :expand-label="t('timelineGrid.prep.expand')"
             @collapse-panel="collapsePanel"
           >
-            <template #affliction>
+            <template #affliction="{ compact }">
               <TimelineEnemyEffects
+                :compact="compact"
                 @open-damage-detail="
                   hitDetailTarget = null;
                   enemyDamageDetailSequence = $event;
@@ -7609,6 +7610,7 @@ function setMobileGuideFrame(frame: number | null): void {
                 :poise-knot-thresholds="scenario.enemy.editable.stagger.knotThresholds"
                 :hud-labels="{
                   status: t('resourceMonitor.modules.enemyStatus'),
+                  compactStatus: t('resourceMonitor.modules.enemyStatusCompact'),
                   hp: t('timeline.simGuide.enemyHp'),
                   poise: t('timeline.simGuide.poise'),
                   recovering: t('timeline.simGuide.poiseRecovering'),
@@ -7622,8 +7624,9 @@ function setMobileGuideFrame(frame: number | null): void {
                 @open-buff-detail="openBuffDetail"
               />
             </template>
-            <template #poise>
+            <template #poise="{ compact }">
               <TimelineResourceCurves
+                :compact="compact"
                 :poise-broken-segments="poiseBrokenSegments"
                 :poise-knot-segments="poiseKnotSegments"
                 :poise-knot-thresholds="scenario.enemy.editable.stagger.knotThresholds"
@@ -7631,7 +7634,13 @@ function setMobileGuideFrame(frame: number | null): void {
                 :sp-curve="simulationRun.resourceCurves.sp"
                 :poise-curve="simulationRun.poiseCurve"
                 :visible-kinds="['poise']"
-                :poise-label="t('resourceMonitor.modules.stagger')"
+                :poise-label="
+                  t(
+                    compact
+                      ? 'resourceMonitor.modules.staggerCompact'
+                      : 'resourceMonitor.modules.stagger',
+                  )
+                "
                 :timeline-width="timelineWidth"
                 :duration-frames="scenario.battle.durationFrames"
                 :cursor-frame="simulationRun.frame"
@@ -7643,8 +7652,9 @@ function setMobileGuideFrame(frame: number | null): void {
                 :scroll-left="timelineScrollLeft"
               />
             </template>
-            <template #sp>
+            <template #sp="{ compact }">
               <TimelineResourceCurves
+                :compact="compact"
                 :sp-curve="simulationRun.resourceCurves.sp"
                 :visible-kinds="['sp']"
                 :timeline-width="timelineWidth"
