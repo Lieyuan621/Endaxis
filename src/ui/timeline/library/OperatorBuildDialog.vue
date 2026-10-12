@@ -8,6 +8,7 @@ import { EaTooltip, EaMinusIcon, EaPlusIcon } from '@/design-system';
  */
 import { EaButton, EaDialog, EaDialogActions } from '../../../design-system/index';
 import { computed } from 'vue';
+import type { Modifier } from '@popperjs/core/index.d.ts';
 import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
 import OperatorAvatar from '../../components/OperatorAvatar.vue';
 import { useI18n } from 'vue-i18n';
@@ -32,6 +33,7 @@ import {
 } from '../../progression';
 import { GameRichTextRenderer } from '../../presentation';
 import OperatorSkillTooltip from './OperatorSkillTooltip.vue';
+
 import './armoryDialogTheme.css';
 import {
   DEFAULT_TRUST_ATTRIBUTE_BONUS,
@@ -60,6 +62,44 @@ import {
   resolveOperatorSkillIcon,
 } from './operatorFormPresentation';
 
+// 优先向上展开，触及视口顶部后整体下移；整屏仍放不下时才滚动。
+const skillTooltipHeight: Modifier<'skillTooltipHeight', Record<string, never>> = {
+  name: 'skillTooltipHeight',
+  enabled: true,
+  phase: 'beforeRead',
+  fn: ({ state }) => {
+    const viewport = window.visualViewport;
+    // 上下各留 12px，另外扣除弹层的两条 1px 边框。
+    const height = Math.max(0, (viewport?.height ?? window.innerHeight) - 26);
+    state.elements.popper.style.setProperty('--skill-tooltip-max-height', `${height}px`);
+    state.styles.popper = Object.assign(state.styles.popper ?? {}, {
+      '--skill-tooltip-max-height': `${height}px`,
+    });
+    // 高度约束改变后，本轮定位必须使用约束后的尺寸。
+    state.rects.popper.height = state.elements.popper.offsetHeight;
+  },
+  effect: ({ state, instance }) => {
+    // Ctrl 展开和形态切换会改变内容尺寸，必须重新计算定位。
+    const observer = new ResizeObserver(() => void instance.update());
+    observer.observe(state.elements.popper);
+    const viewport = window.visualViewport;
+    const update = () => void instance.update();
+    viewport?.addEventListener('resize', update);
+    viewport?.addEventListener('scroll', update);
+    return () => {
+      observer.disconnect();
+      viewport?.removeEventListener('resize', update);
+      viewport?.removeEventListener('scroll', update);
+    };
+  },
+};
+const skillTooltipPopperOptions = {
+  modifiers: [
+    skillTooltipHeight,
+    { name: 'flip', enabled: false },
+    { name: 'preventOverflow', options: { padding: 12, altAxis: true, tether: false } },
+  ],
+};
 const LEVELS = [1, 20, 40, 60, 80, 90] as const satisfies readonly OperatorLevel[];
 const SKILL_ORDER = PLAYER_SKILL_INPUTS;
 
@@ -303,6 +343,7 @@ function maxOut(): void {
       :model-value="visible"
       width="760px"
       append-to-body
+      align-center
       class="armory-dialog next-armory-dialog"
       @update:model-value="emit('update:visible', $event)"
     >
@@ -423,6 +464,7 @@ function maxOut(): void {
                   effect="dark"
                   :show-after="120"
                   :enterable="true"
+                  :popper-options="skillTooltipPopperOptions"
                   popper-class="operator-edit-tooltip-popper"
                 >
                   <template #content>
@@ -433,6 +475,7 @@ function maxOut(): void {
                       :skill-level="operator.skillLevels[source] ?? 1"
                       :skill-type-name="skillTypeName(source)"
                       :active-form-key="activeFormKey"
+                      :talent-states="operator.talentStates"
                     />
                   </template>
                   <div class="skill-icon-frame" :style="{ borderColor: skillBorderColor(source) }">

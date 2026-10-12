@@ -5,28 +5,23 @@
 import { COMBAT_STEP_STATE, STEP_RESULT_MODE, type ActionStepState } from '../state/actionState';
 import type { CombatExecutionContext } from './combatStep';
 
-/** 下标对应程序中的步骤；宿主必须即时读取本次步进的数据。 */
+/** 宿主接收当前条目和本次调用的上下文，不跨调用保存临时上下文。 */
 export interface ActionSequenceExecutionHost<Key = number> {
   canExecute(): boolean;
-  execute(index: Key): boolean;
-  reset(index: Key, reason?: 'normal' | 'afterInstant'): void;
-  tick(index: Key, deltaTime: number): void;
-  end(index: Key): void;
-}
-
-/** 数组步骤和图节点共用生命周期算法；枚举顺序由各自程序决定。 */
-export interface ActionExecutionEntries<Key> {
-  readonly entries: { entries(): IterableIterator<[Key, ActionStepState]> };
+  executeStep(index: Key, context: CombatExecutionContext): boolean;
+  resetStep(index: Key, context: CombatExecutionContext, reason?: 'normal' | 'afterInstant'): void;
+  tickStep(index: Key, deltaTime: number, context: CombatExecutionContext): void;
+  endStep(index: Key, context: CombatExecutionContext): void;
 }
 
 export function executeActionSequence<Key>(
-  state: ActionExecutionEntries<Key>,
+  entries: Iterable<[Key, ActionStepState]>,
   context: CombatExecutionContext,
   host: ActionSequenceExecutionHost<Key>,
   resetAfterExecute = false,
 ): boolean {
   context.sequence ??= { resultMode: STEP_RESULT_MODE.normal };
-  for (const [index, entry] of state.entries.entries()) {
+  for (const [index, entry] of entries) {
     if (entry.state === COMBAT_STEP_STATE.ended) continue;
     if (entry.state !== COMBAT_STEP_STATE.pending) return false;
 
@@ -38,7 +33,7 @@ export function executeActionSequence<Key>(
     entry.state = COMBAT_STEP_STATE.started;
     let result: boolean;
     try {
-      result = entry.executionPermitted ? host.execute(index) : false;
+      result = entry.executionPermitted ? host.executeStep(index, context) : false;
       if (resultMode === STEP_RESULT_MODE.invertNextResult) {
         context.sequence!.resultMode = STEP_RESULT_MODE.normal;
         result = !result;
@@ -53,9 +48,9 @@ export function executeActionSequence<Key>(
             entry.state === COMBAT_STEP_STATE.ticking) &&
           entry.executionPermitted
         )
-          host.end(index);
+          host.endStep(index, context);
         entry.state = COMBAT_STEP_STATE.ended;
-        host.reset(index, 'afterInstant');
+        host.resetStep(index, context, 'afterInstant');
         entry.state = COMBAT_STEP_STATE.pending;
         entry.executeResult = false;
         entry.executionPermitted = false;
@@ -67,11 +62,12 @@ export function executeActionSequence<Key>(
 }
 
 export function resetActionSequence<Key>(
-  state: ActionExecutionEntries<Key>,
+  entries: Iterable<[Key, ActionStepState]>,
+  context: CombatExecutionContext,
   host: ActionSequenceExecutionHost<Key>,
 ): void {
-  for (const [index, entry] of state.entries.entries()) {
-    host.reset(index);
+  for (const [index, entry] of entries) {
+    host.resetStep(index, context);
     entry.state = COMBAT_STEP_STATE.pending;
     entry.executeResult = false;
     entry.executionPermitted = false;
@@ -79,11 +75,12 @@ export function resetActionSequence<Key>(
 }
 
 export function tickActionSequence<Key>(
-  state: ActionExecutionEntries<Key>,
+  entries: Iterable<[Key, ActionStepState]>,
   deltaTime: number,
+  context: CombatExecutionContext,
   host: ActionSequenceExecutionHost<Key>,
 ): void {
-  for (const [index, entry] of state.entries.entries()) {
+  for (const [index, entry] of entries) {
     if (entry.state !== COMBAT_STEP_STATE.started && entry.state !== COMBAT_STEP_STATE.ticking) {
       continue;
     }
@@ -91,20 +88,21 @@ export function tickActionSequence<Key>(
     if (host.canExecute() === false) continue;
 
     entry.state = COMBAT_STEP_STATE.ticking;
-    host.tick(index, deltaTime);
+    host.tickStep(index, deltaTime, context);
   }
 }
 
 export function endActionSequence<Key>(
-  state: ActionExecutionEntries<Key>,
+  entries: Iterable<[Key, ActionStepState]>,
+  context: CombatExecutionContext,
   host: ActionSequenceExecutionHost<Key>,
 ): void {
-  for (const [index, entry] of state.entries.entries()) {
+  for (const [index, entry] of entries) {
     if (
       (entry.state === COMBAT_STEP_STATE.started || entry.state === COMBAT_STEP_STATE.ticking) &&
       entry.executionPermitted
     )
-      host.end(index);
+      host.endStep(index, context);
     // 尚未开始的动作不调用 End，但也必须封闭，直到 Reset。
     entry.state = COMBAT_STEP_STATE.ended;
   }

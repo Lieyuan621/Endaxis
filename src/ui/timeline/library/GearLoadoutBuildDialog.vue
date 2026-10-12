@@ -209,6 +209,7 @@ const activeSetBonuses = computed(() => {
       :model-value="visible"
       width="980px"
       append-to-body
+      align-center
       class="gear-loadout-dialog next-armory-dialog"
       @update:model-value="emit('update:visible', $event)"
     >

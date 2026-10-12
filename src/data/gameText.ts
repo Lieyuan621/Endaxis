@@ -255,6 +255,27 @@ export function getOperatorCombatSkillDescription(
   return readTrimmedText(formSkill?.description) || readTrimmedText(skill?.description) || '';
 }
 
+export function getOperatorCombatSkillDetails(
+  slug: string,
+  skillKey: string,
+  locale: string,
+  level: number,
+  formKey?: string | null,
+): readonly { label: string; value: string }[] {
+  const { skill } = getOperatorCombatSkillEntry(slug, skillKey, locale, formKey);
+  const details = skill?.details as
+    | { levels: number[]; rows: Array<{ label: string; values: string[]; formKey?: string }> }
+    | undefined;
+  if (!details) return [];
+  const rank = Math.max(
+    0,
+    details.levels.findLastIndex(rank => rank <= level),
+  );
+  return details.rows
+    .filter(row => !row.formKey || row.formKey === formKey)
+    .map(row => ({ label: row.label, value: row.values[rank] ?? '' }));
+}
+
 export function getOperatorCombatSkillFormKeys(
   slug: string,
   skillKey: string,

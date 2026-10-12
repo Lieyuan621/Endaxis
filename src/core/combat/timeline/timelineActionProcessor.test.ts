@@ -46,28 +46,33 @@ class StepProbeSequence implements TimelineExecution<ProbeSequenceState> {
   }
 
   execute(context: CombatExecutionContext): void {
-    executeActionSequence(this.runtimeState, context, this.#host(context));
+    executeActionSequence(this.runtimeState.entries.entries(), context, this.#host(context));
   }
 
   reset(context: CombatExecutionContext): void {
-    resetActionSequence(this.runtimeState, this.#host(context));
+    resetActionSequence(this.runtimeState.entries.entries(), context, this.#host(context));
   }
 
   tick(deltaTime: number, context: CombatExecutionContext): void {
-    tickActionSequence(this.runtimeState, deltaTime, this.#host(context));
+    tickActionSequence(
+      this.runtimeState.entries.entries(),
+      deltaTime,
+      context,
+      this.#host(context),
+    );
   }
 
   end(context: CombatExecutionContext): void {
-    endActionSequence(this.runtimeState, this.#host(context));
+    endActionSequence(this.runtimeState.entries.entries(), context, this.#host(context));
   }
 
   #host(context: CombatExecutionContext): ActionSequenceExecutionHost<number> {
     return {
       canExecute: () => true,
-      execute: index => this.#steps[index]!.tryExecute(context),
-      reset: index => this.#steps[index]!.reset(context),
-      tick: (index, deltaTime) => this.#steps[index]!.tick(deltaTime, context),
-      end: index => this.#steps[index]!.end(context),
+      executeStep: index => this.#steps[index]!.tryExecute(context),
+      resetStep: index => this.#steps[index]!.reset(context),
+      tickStep: (index, deltaTime) => this.#steps[index]!.tick(deltaTime, context),
+      endStep: index => this.#steps[index]!.end(context),
     };
   }
 }

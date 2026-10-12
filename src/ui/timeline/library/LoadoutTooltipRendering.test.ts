@@ -59,12 +59,14 @@ describe('构筑 tooltip 渲染', () => {
       skillLevel: 1,
       skillTypeName: '战技',
     });
-    expect(html).toMatch(
-      /operator-skill-tooltip-resource[^>]*><span[^>]*>技力<\/span><span[^>]*>100<\/span>/,
+    expect(html.replace(/<!--.*?-->/g, '')).toMatch(
+      /operator-skill-tooltip-resource[^>]*><span[^>]*>技力消耗<\/span><span[^>]*>100<\/span>/,
     );
+    expect(html).toContain('按住 Ctrl 展开完整面板');
+    expect(html).not.toContain('空中普通攻击伤害');
   });
 
-  it('诀的两种形态显示各自说明与相同的原生基础冷却', async () => {
+  it('诀的两种形态显示各自说明与形态修正后的冷却', async () => {
     const operator = gameDataRepository.getOperator('arcane');
     for (const [form, name] of [
       ['int', '阵诀·智'],
@@ -79,8 +81,17 @@ describe('构筑 tooltip 渲染', () => {
         activeFormKey: form,
       });
       expect(html).toContain(name);
-      expect(html).toContain('18秒');
+      expect(html).toContain(form === 'int' ? '12秒' : '18秒');
     }
+    const disabled = await renderComponent(OperatorSkillTooltip, {
+      operator,
+      operatorSlug: 'arcane',
+      skillKey: 'comboSkill',
+      skillLevel: 12,
+      activeFormKey: 'int',
+      talentStates: { '0': 0 },
+    });
+    expect(disabled).toContain('18秒');
   });
 
   it('曜夜选择 tooltip 按潜能状态渲染正确等级和值', async () => {

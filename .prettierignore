@@ -8,3 +8,5 @@ build
 *.log
 coverage
 package-lock.json
+# Generated locale tables keep level arrays on one line in the locale compiler.
+src/i18n/game-locales/*/operators.json

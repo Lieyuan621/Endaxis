@@ -5,9 +5,40 @@ import { expect, it } from 'vitest';
 import { generateGameLocaleCandidate } from '../src/domains/locales/gameLocaleCandidate.ts';
 import {
   compileWeaponSkillText,
+  compileOperatorSkillDetails,
   operatorLocaleIdentities,
 } from '../src/domains/locales/gameLocales.ts';
 import { normalizeRichText, replacePlaceholders } from '../src/domains/locales/localeText.ts';
+
+it('技能详情使用同等级成员变量，保留原生显示精度和形态归属', () => {
+  const member = (level: number, value: number) => ({
+    level,
+    blackboard: [{ key: 'scale', value }],
+    subDescDataList: [
+      { name: '倍率', desc: '{scale:0%}', conditionId: 'form_int' },
+      { name: '显示值', desc: '0.34', conditionId: '' },
+    ],
+  });
+  const result = compileOperatorSkillDetails(
+    [
+      [member(1, 0.2), member(2, 0.4)],
+      [
+        { level: 1, description: '共享 {scale:0%}' },
+        { level: 2, description: '共享 {scale:0%}' },
+      ],
+    ],
+    {},
+    { form_int: 'int' },
+    '技能',
+    'test',
+  );
+  expect(result.levels).toEqual([1, 2]);
+  expect(result.rows).toEqual([
+    { label: '倍率', values: ['20%', '40%'], formKey: 'int' },
+    { label: '显示值', values: ['0.34', '0.34'] },
+    { label: '技能', values: ['共享 20%', '共享 40%'] },
+  ]);
+});
 
 it('本地化排除身份来自干员配置，不能排除正式干员或接收错误身份', () => {
   const entry = { slug: 'sample', charId: 'chr_main' };

@@ -214,6 +214,7 @@ function maxOut(): void {
       :model-value="visible"
       width="700px"
       append-to-body
+      align-center
       class="armory-dialog next-armory-dialog"
       @update:model-value="emit('update:visible', $event)"
     >

@@ -4751,7 +4751,7 @@
       "empty": "No matching weapon found",
       "equipped": "Equipped",
       "fullPotentialActive": "Full potential",
-      "fullPotentialHint": "Hold Ctrl to preview full potential",
+      "fullPotentialHint": "Hold {key} to preview full potential",
       "searchPlaceholder": "Search weapon name...",
       "title": "Select Weapon",
       "unequipTooltip": "Unequip current weapon"
@@ -4806,6 +4806,8 @@
         "ultimateEnergy": "Ultimate Energy",
         "spCost": "SP Cost",
         "ultimateEnergyCost": "Ultimate Energy Cost",
+        "expandHint": "Hold {key} to show all skill details",
+        "expandedHint": "Release {key} to collapse skill details",
         "seconds": "s"
       }
     },

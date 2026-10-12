@@ -34,26 +34,28 @@ function createSession() {
       const state = step.state;
       const host: ActionSequenceExecutionHost = {
         canExecute: () => state.enabled,
-        execute: index => {
+        executeStep: index => {
           state.calls.push(`execute:${index}`);
-          if (input === 'interrupt') endActionSequence(state.sequence, host);
+          if (input === 'interrupt')
+            endActionSequence(state.sequence.entries.entries(), state.context, host);
           return input !== 'invert';
         },
-        reset: index => {
+        resetStep: index => {
           state.calls.push(`reset:${index}`);
         },
-        tick: index => {
+        tickStep: index => {
           state.calls.push(`tick:${index}`);
         },
-        end: index => {
+        endStep: index => {
           state.calls.push(`end:${index}`);
         },
       };
-      if (input === 'tick') tickActionSequence(state.sequence, 1, host);
+      if (input === 'tick')
+        tickActionSequence(state.sequence.entries.entries(), 1, state.context, host);
       else {
         if (input === 'invert')
           state.context.sequence!.resultMode = STEP_RESULT_MODE.invertNextResult;
-        executeActionSequence(state.sequence, state.context, host);
+        executeActionSequence(state.sequence.entries.entries(), state.context, host);
       }
     },
   );

@@ -28,9 +28,7 @@ npm run verify:real-timeline-checkpoints -- '<项目JSON路径>' [方案序号] 
 
 这是 Node 模块环境的计算测量，不是浏览器 FPS。首次运行含热身成本，模拟入口耗时包含编译和记录整理，不能称为纯内核耗时。
 
-全量公开轴的两版本验收、测量方法和逐轴结果见[模拟对比报告](../../docs/development/simulation-comparison.md)。
-
-后续空分支裁剪、光环同步优化及 CPU 采样结论见[裁剪与性能验证](../../docs/development/simulation-pruning-performance.md)。
+跨提交测量应交替运行两个版本，比较同一方案多次热身后计时的中位数。CPU 采样用于定位热点，加速比例使用未采样计时；同时核对输入、定义及结果变化，不能把行为变化带来的工作量变化全部归因于执行效率。
 
 浏览器需另测主线程、Worker、数据传输、Vue 更新和布局绘制。内存区分存活对象、历史、定义、缓存与进程峰值；单次 RSS 或 GC 前后数字不能证明泄漏。
 

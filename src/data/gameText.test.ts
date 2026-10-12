@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, test } from 'vitest';
 import { ensureLocaleResources } from '../i18n';
 import {
   getOperatorCombatSkillDescription,
+  getOperatorCombatSkillDetails,
   getOperatorCombatSkillName,
   getOperatorCombatSkillFormKeys,
   getOperatorFormName,
@@ -35,6 +36,15 @@ describe('game text localization', () => {
   });
 
   test('zh reads operator form labels separately from form-specific skill descriptions', () => {
+    expect(getOperatorCombatSkillDetails('xaihi', 'basicAttack', 'zh-CN', 1)[3]).toEqual({
+      label: '普攻第四段倍率',
+      value: '33%',
+    });
+    expect(getOperatorCombatSkillDetails('xaihi', 'basicAttack', 'zh-CN', 2)[3]?.value).toBe('36%');
+    const int = getOperatorCombatSkillDetails('arcane', 'battleSkill', 'zh-CN', 1, 'int');
+    const will = getOperatorCombatSkillDetails('arcane', 'battleSkill', 'zh-CN', 1, 'will');
+    expect(int.map(row => row.value)).toEqual(['222%', '10']);
+    expect(will.map(row => row.value)).toEqual(['133%', '10']);
     expect(getOperatorGameName('arcane', 'zh-CN')).toBe('诀');
     expect(getOperatorFormName('arcane', 'int', 'zh-CN')).toBe('阵诀·智');
     expect(getOperatorFormName('arcane', 'will', 'zh-CN')).toBe('阵诀·意');

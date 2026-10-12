@@ -4768,7 +4768,7 @@
       "empty": "没有找到匹配的武器",
       "equipped": "已装备",
       "fullPotentialActive": "满潜效果",
-      "fullPotentialHint": "按住 Ctrl 查看满潜效果",
+      "fullPotentialHint": "按住 {key} 查看满潜效果",
       "searchPlaceholder": "搜索武器名称...",
       "title": "选择武器",
       "unequipTooltip": "卸下当前武器"
@@ -4823,6 +4823,8 @@
         "ultimateEnergy": "终结技能量",
         "spCost": "技力消耗",
         "ultimateEnergyCost": "所需终结技能量",
+        "expandHint": "按住 {key} 展开完整面板",
+        "expandedHint": "松开 {key} 收起完整面板",
         "seconds": "秒"
       }
     },

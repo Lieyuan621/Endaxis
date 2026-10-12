@@ -25,6 +25,74 @@ export interface LocaleIdentities {
   readonly gears: Readonly<Record<string, string>>;
 }
 export type LocaleTables = Readonly<Record<string, SourceRecord>>;
+
+/** 原生技能详情按成员、等级提供，保留其显示精度，不从伤害图反推。 */
+export function compileOperatorSkillDetails(
+  members: readonly (readonly SourceRecord[])[],
+  texts: Readonly<Record<string, unknown>>,
+  conditionForms: Readonly<Record<string, string>>,
+  groupName: string,
+  context: string,
+) {
+  const levels = [
+    ...new Set(members.flatMap(items => items.map(item => requireInteger(item.level, context)))),
+  ].sort((a, b) => a - b);
+  const byLevel = Object.fromEntries(
+    levels.map(level => {
+      const patches = members
+        .map(
+          items =>
+            items.find(item => item.level === level) ??
+            [...items].sort((a, b) => Number(a.level) - Number(b.level)).at(-1),
+        )
+        .filter((item): item is SourceRecord => !!item);
+      const shared: Record<string, number> = {};
+      for (const patch of patches) addBlackboardEntries(shared, patch.blackboard, context);
+      const rows = patches.flatMap(patch => {
+        const values: Record<string, number> = { ...shared };
+        for (const [key, value] of Object.entries({ ...patches.at(-1), ...patch }))
+          if (typeof value === 'number') values[key] = value;
+        addBlackboardEntries(values, patch.blackboard, context);
+        const render = (value: unknown) =>
+          normalizeRichText(
+            replacePlaceholders(resolveText(value, texts), values, context),
+            context,
+          );
+        const name = render(patch.skillName) || groupName;
+        const rows: Array<{ label: string; value: string; formKey?: string }> = [];
+        const description = render(patch.description);
+        if (description) rows.push({ label: name, value: description });
+        for (const entry of requireArray(patch.subDescDataList ?? [], context)) {
+          const item = requireRecord(entry, context);
+          const condition = item.conditionId
+            ? requireNonEmptyString(item.conditionId, context)
+            : '';
+          const formKey = conditionForms[condition];
+          if (condition && !formKey)
+            throw new Error(`${context}: unknown detail condition ${condition}`);
+          const label = render(item.name) || name;
+          const value = render(item.desc);
+          if (value) rows.push({ label, value, ...(formKey ? { formKey } : {}) });
+        }
+        return rows;
+      });
+      return [level, rows];
+    }),
+  );
+  const first = byLevel[levels[0]] ?? [];
+  const shape = (rows: typeof first) =>
+    JSON.stringify(rows.map(({ label, formKey }) => ({ label, formKey })));
+  if (Object.values(byLevel).some(rows => shape(rows) !== shape(first)))
+    throw new Error(`${context}: skill detail rows changed between levels`);
+  return {
+    levels,
+    rows: first.map(({ value: _value, ...row }, index) => ({
+      ...row,
+      values: levels.map(level => byLevel[level][index].value),
+    })),
+  };
+}
+
 type Document = Record<string, SourceRecord>;
 // 使用领域编译共用的原生属性枚举，避免文本占位符维护第二份编号表。
 const attributeNames = ATTRIBUTE_TYPES.slice(0, -1);
@@ -209,6 +277,7 @@ export function compileGameLocales(
         indexes.add(Number(match[2]));
       }
       const forms: Document = {};
+      const conditionForms: Record<string, string> = {};
       for (const index of [...indexes].sort((a, b) => a - b)) {
         if (
           !['Desc', 'DescInactive', 'Icon', 'Id', 'Name', 'PostDesc'].some(field =>
@@ -221,6 +290,7 @@ export function compileGameLocales(
           { str: 'strength', agi: 'agility', wisd: 'int', will: 'will' } as Record<string, string>
         )[conditionId.split('_').at(-1)!.toLowerCase()];
         if (!formKey) throw new Error(`${context}: unmapped condition id ${conditionId}`);
+        conditionForms[conditionId] = formKey;
         const name = plain(requiredText(group[`conditionName${index}`], context, true), context);
         const post = requiredText(group[`conditionPostDesc${index}`], context, true);
         for (const field of ['Desc', 'DescInactive'])
@@ -237,6 +307,13 @@ export function compileGameLocales(
       combatSkills[key] = {
         name: plain(text(group.name), context),
         description: baseDescription,
+        details: compileOperatorSkillDetails(
+          array(group.skillIdList, context).map(id => bundles(requireNonEmptyString(id, context))),
+          texts,
+          conditionForms,
+          text(group.name),
+          context,
+        ),
         ...(Object.keys(forms).length ? { forms } : {}),
       };
     }

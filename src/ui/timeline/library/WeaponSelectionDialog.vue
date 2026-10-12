@@ -7,6 +7,7 @@ import { EaTooltip } from '@/design-system';
  */
 import { EaButton, EaDeleteIcon, EaDialog, EaInput } from '../../../design-system/index';
 import { computed, ref, watch } from 'vue';
+import { primaryModifier } from '../../keyboard/primaryModifier';
 import {
   useKeyboardInputRegion,
   useKeyboardShortcutScope,
@@ -55,6 +56,7 @@ interface WeaponRarityGroup {
 const { locale } = useI18n({ useScope: 'global' });
 const searchQuery = ref('');
 const fullPotential = ref(false);
+const modifier = primaryModifier();
 const region = useKeyboardInputRegion({
   label: 'weapon-selection',
   modal: true,
@@ -68,7 +70,7 @@ useKeyboardShortcutScope({
   blockLowerScopes: true,
   handle: () => false,
   observeKeyboardState: event => {
-    fullPotential.value = event?.ctrlKey ?? false;
+    fullPotential.value = event?.[modifier.key] ?? false;
   },
 });
 

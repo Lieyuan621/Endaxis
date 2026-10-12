@@ -13,6 +13,7 @@ export {
   getGearSetGameDescription,
   getGearSetGameName,
   getOperatorCombatSkillDescription,
+  getOperatorCombatSkillDetails,
   getOperatorCombatSkillFormKeys,
   getOperatorCombatSkillName,
   getOperatorFormName,

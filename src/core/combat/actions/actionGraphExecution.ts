@@ -188,7 +188,10 @@ function wrapMacroHost(
   };
 }
 
-export class ActionGraphExecution extends CombatStep {
+export class ActionGraphExecution
+  extends CombatStep
+  implements ActionSequenceExecutionHost<GraphNodeBinding>
+{
   readonly runtimeState: ActionGraphExecutionState;
   // 生命周期对象随实例保持稳定，枚举时复用绑定与状态的配对，不逐帧分配包装。
   readonly #bindings = new Map<string, [GraphNodeBinding, ActionStepState]>();
@@ -1003,25 +1006,33 @@ export class ActionGraphExecution extends CombatStep {
       : { ...context, sequence: this.host.executionPolicy };
   }
 
-  #executionHost(context: CombatExecutionContext): ActionSequenceExecutionHost<GraphNodeBinding> {
-    return {
-      canExecute: () => this.host.canExecute(),
-      execute: binding => binding.execute(context),
-      reset: (binding, reason) =>
-        binding.reset(reason === undefined ? context : { ...context, resetReason: reason }),
-      tick: (binding, dt) => binding.tick(dt, context),
-      end: binding => binding.end(context),
-    };
+  canExecute(): boolean {
+    return this.host.canExecute();
+  }
+
+  executeStep(binding: GraphNodeBinding, context: CombatExecutionContext): boolean {
+    return binding.execute(context);
+  }
+
+  resetStep(
+    binding: GraphNodeBinding,
+    context: CombatExecutionContext,
+    reason?: 'normal' | 'afterInstant',
+  ): void {
+    binding.reset(reason === undefined ? context : { ...context, resetReason: reason });
+  }
+
+  tickStep(binding: GraphNodeBinding, deltaTime: number, context: CombatExecutionContext): void {
+    binding.tick(deltaTime, context);
+  }
+
+  endStep(binding: GraphNodeBinding, context: CombatExecutionContext): void {
+    binding.end(context);
   }
 
   tryExecute(context: CombatExecutionContext, resetAfterExecute = false): boolean {
     context = this.#executionContext(context);
-    return executeActionSequence(
-      { entries: { entries: () => this.#entries(true, true) } },
-      context,
-      this.#executionHost(context),
-      resetAfterExecute,
-    );
+    return executeActionSequence(this.#entries(true, true), context, this, resetAfterExecute);
   }
 
   executeInstant(context: CombatExecutionContext): boolean {
@@ -1033,26 +1044,16 @@ export class ActionGraphExecution extends CombatStep {
   reset(context: CombatExecutionContext): void {
     context = this.#executionContext(context);
     this.runtimeState.closed = false;
-    resetActionSequence(
-      { entries: { entries: () => this.#entries(true, false) } },
-      this.#executionHost(context),
-    );
+    resetActionSequence(this.#entries(true, false), context, this);
     this.runtimeState.closed = false;
   }
   tick(deltaTime: number, context: CombatExecutionContext): void {
     context = this.#executionContext(context);
-    tickActionSequence(
-      { entries: { entries: () => this.#entries(false, false) } },
-      deltaTime,
-      this.#executionHost(context),
-    );
+    tickActionSequence(this.#entries(false, false), deltaTime, context, this);
   }
   end(context: CombatExecutionContext): void {
     context = this.#executionContext(context);
     this.runtimeState.closed = true;
-    endActionSequence(
-      { entries: { entries: () => this.#entries(false, false) } },
-      this.#executionHost(context),
-    );
+    endActionSequence(this.#entries(false, false), context, this);
   }
 }

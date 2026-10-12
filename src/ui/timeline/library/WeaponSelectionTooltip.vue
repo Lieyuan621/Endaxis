@@ -4,6 +4,7 @@
  * 和按需加载的游戏文本推导显示值，不读取旧武器定义或 Build 状态。
  */
 import { computed } from 'vue';
+import { primaryModifier } from '../../keyboard/primaryModifier';
 import { useI18n } from 'vue-i18n';
 import { getWeaponSkillDescription, getWeaponSkillName } from '../../gameText';
 import { GameRichTextRenderer } from '../../presentation';
@@ -20,6 +21,7 @@ const props = defineProps<{
 }>();
 
 const { t, locale } = useI18n({ useScope: 'global' });
+const modifier = primaryModifier();
 const textSlug = computed(() => props.weapon.assetSlug ?? props.weapon.slug);
 function traitLevel(trait: WeaponTraitDefinition): number {
   const index = props.weapon.traits.indexOf(trait);
@@ -71,6 +73,7 @@ const preview = computed(() => ({
           fullPotential
             ? 'timelineGrid.weaponDialog.fullPotentialActive'
             : 'timelineGrid.weaponDialog.fullPotentialHint',
+          { key: modifier.label },
         )
       }}
     </div>
