@@ -172,6 +172,28 @@ describe('CombatVitalsConditionExecutor', () => {
       ),
     ).toBe(true);
     expect(resolveTarget).toHaveBeenCalledWith('enemy', undefined);
+    const positiveHealthCondition = {
+      kind: 'healthCompare' as const,
+      target: 'contextTarget' as const,
+      contextKey: 'smart_target',
+      valueType: 'current' as const,
+      operator: 'greater' as const,
+      value: { kind: 'constant' as const, value: 0 },
+    };
+    const context = { blackboard: new ActionBlackboard(), targetContext };
+    expect(executor.evaluate(positiveHealthCondition, context)).toBe(true);
+    expect(executor.evaluate({ ...positiveHealthCondition, valueType: 'ratio' }, context)).toBe(
+      true,
+    );
+    expect(
+      executor.evaluate(
+        { ...positiveHealthCondition, value: { kind: 'constant', value: 1 } },
+        context,
+      ),
+    ).toBe(false);
+    expect(enemyVitals.health).toBe(0);
+    targetContext.set('smart_target', []);
+    expect(executor.evaluate(positiveHealthCondition, context)).toBe(false);
   });
 
   it('resolves the current forEach operator for a health condition', () => {

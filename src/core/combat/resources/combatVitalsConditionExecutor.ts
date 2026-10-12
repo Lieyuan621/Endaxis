@@ -56,14 +56,14 @@ export class CombatVitalsConditionExecutor implements CombatOperationExecutor {
           : condition.target === 'currentTarget'
             ? this.#resolveCurrentTarget(context)
             : this.dependencies.resolveTarget(condition.target, context.buffSourceId);
+      const threshold = resolveActionValueOperand(condition.value, context.blackboard);
+      // 木桩模拟允许血量耗尽后继续执行：已有目标的「生命值 > 0」存活门禁始终放行。
+      // 不修改生命账本、不放行空目标，也不改变其他阈值或比较方式。
+      if (vitals !== undefined && condition.operator === 'greater' && threshold === 0) return true;
       // 原生取首个目标；没有目标时生命和最大生命均为零，比例保持 0/0。
       const health = vitals?.health ?? 0;
       const current = condition.valueType === 'ratio' ? health / (vitals?.maxHealth ?? 0) : health;
-      return compareCombatNumbers(
-        current,
-        resolveActionValueOperand(condition.value, context.blackboard),
-        condition.operator,
-      );
+      return compareCombatNumbers(current, threshold, condition.operator);
     }
     const vitals =
       condition.target === 'currentTarget'
