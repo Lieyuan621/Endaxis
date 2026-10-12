@@ -54,29 +54,6 @@ export interface SkillCastInheritanceState {
   nextId: number;
 }
 
-export interface BuffProgressPoint {
-  readonly frame: number;
-  readonly ratio: number | null;
-}
-
-export interface BuffProgressCurveState {
-  readonly targetId: string;
-  readonly buffId: string;
-  readonly instanceId: number;
-  readonly showInBattleSkillButton: boolean;
-  readonly showInUltimateButton: boolean;
-  readonly showInHpBar: boolean;
-  readonly weakBattleSkillStyle: boolean;
-  durationSeconds: number | null;
-  readonly points: BuffProgressPoint[];
-}
-
-/** Buff 进度曲线历史及仍需采样的实例索引。 */
-export interface BuffProgressRecorderState {
-  readonly curves: Map<string, BuffProgressCurveState>;
-  readonly runtimeCurveKeys: Map<string, Set<string>>;
-}
-
 /** 连携条件求值后可保存到候选窗口的数据。 */
 export interface ComboCastParameters {
   readonly inputTarget: RuntimeTargetRef;
@@ -341,7 +318,6 @@ export interface StandardCombatEnvironmentState {
   readonly enemyVitals: CombatVitalsState;
   readonly operatorVitals: Map<string, CombatVitalsState>;
   readonly knockDown: OrdinaryKnockDownState | null;
-  readonly buffProgress: BuffProgressRecorderState;
   readonly poiseBreakBuffs: Set<number>;
   readonly postSkillRequestListeners: PostSkillRequestListenerState;
 }

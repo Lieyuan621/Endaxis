@@ -139,10 +139,6 @@
   ],
   "resolvedDefinitionDepthPositions": [
     {
-      "key": "definition/buff/<0>/childPresentations/[]/presentation/orderPriority",
-      "previousReason": "depth-limit"
-    },
-    {
       "key": "definition/buff/<0>/damageModifiers/[]/processors/[]/<0>/addition/<1>",
       "previousReason": "depth-limit"
     },
@@ -184,10 +180,6 @@
     },
     {
       "key": "definition/buff/<0>/shields/[]/value/<2>/multiplier/<1>",
-      "previousReason": "depth-limit"
-    },
-    {
-      "key": "definition/buff/<1>/childPresentations/[]/presentation/orderPriority",
       "previousReason": "depth-limit"
     },
     {

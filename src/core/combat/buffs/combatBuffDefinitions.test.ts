@@ -144,11 +144,6 @@ describe('compileCombatBuffDefinitions', () => {
             icon: 'endaxis:icons/icon_buff_visible',
             visible: true,
             showInSquadIcon: true,
-            orderPriority: {
-              useDirectoryValue: false,
-              value: 3,
-              category: 'CommonCharBuff',
-            },
           },
         },
       ],
@@ -161,11 +156,6 @@ describe('compileCombatBuffDefinitions', () => {
       icon: 'endaxis:icons/icon_buff_visible',
       visible: true,
       showInSquadIcon: true,
-      orderPriority: {
-        useDirectoryValue: false,
-        value: 3,
-        category: 'CommonCharBuff',
-      },
     });
   });
 

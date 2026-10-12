@@ -377,49 +377,18 @@ export interface CombatBuffPresentation {
   readonly nameKey?: string;
   /** 内置图片资源引用。 */
   readonly icon?: ImageRef;
-  /** 是否允许界面显示这个 Buff。 */
+  /** false 禁止显示；缺省时由图标或显示位置决定。无图标也需要显示时设为 true。 */
   readonly visible?: boolean;
-  /** 是否显示在普通头顶状态栏。 */
+  /** 是否显示在普通头顶状态栏；与 showInHeadBarAttached 同为 false 时排除敌人状态栏。 */
   readonly showInHeadBarCommon?: boolean;
   /** 是否显示在附着状态头顶栏。 */
   readonly showInHeadBarAttached?: boolean;
   /** 是否显示在队伍头像附近。 */
   readonly showInSquadIcon?: boolean;
-  /** 是否只为当前主控干员显示。 */
-  readonly onlyShowForMainCharacter?: boolean;
-  /** 是否在主控干员生命条上播放闪烁。 */
-  readonly blinkInMainCharHpBar?: boolean;
-  /** 是否在生命条上显示剩余进度。 */
-  readonly showProgressInHpBar?: boolean;
-  /** 是否在普通技能按钮上显示剩余进度。 */
-  readonly showProgressInNormalSkillButton?: boolean;
-  /** 普通技能按钮是否使用弱化样式的进度。 */
-  readonly useWeakProgressInNormalSkillButton?: boolean;
-  /** 是否在终结技按钮上显示剩余进度。 */
-  readonly showProgressInUltimateSkillButton?: boolean;
-  /** Buff 变化时是否强制发送图标刷新事件。 */
-  readonly forceRaiseIconEvent?: boolean;
-  /** 是否显示警告背景。 */
-  readonly showWarningBackground?: boolean;
-  /** 是否播放强提示进入动画。 */
-  readonly playStrongInAnimation?: boolean;
-  /** 是否配置了干员生命条特效类型。 */
-  readonly hasCharHpBarVfxType?: boolean;
-  /** 干员生命条使用的特效类型。 */
-  readonly charHpBarVfxType?: string;
-  /** Buff 在队伍头像区域使用的图标样式。 */
+  /** 原生图标分类；SpellAbnormal 用于异常分层和显示计数，其余样式使用缺省表现。 */
   readonly iconStyleInSquad?: string;
-  /** 元素异常显示使用的颜色类型。 */
+  /** 元素异常颜色；缺省使用附着元素或来源颜色。 */
   readonly abnormalColorType?: string;
-  /** 多个 Buff 图标同时出现时的排序设置。 */
-  readonly orderPriority?: {
-    /** 是否使用资源目录中配置的排序值。 */
-    readonly useDirectoryValue: boolean;
-    /** 同类图标之间的排序数值。 */
-    readonly value: number;
-    /** 图标所属的排序类别。 */
-    readonly category: string;
-  };
 }
 
 /** 一个子 Buff 的 ID 及其单独显示配置。 */

@@ -74,6 +74,31 @@ import { compileActionNode } from '../../src/compiler/actions/combatActionLeafPr
 import { parseComboCacheActionSource } from '../../src/source/inputControlActions.ts';
 
 describe('公共 Buff 运行时投影', () => {
+  it('精简图标配置时保留显式隐藏、无图标显示及敌人状态栏排除语义', () => {
+    const source = sourceFixture();
+    const project = (overrides: Partial<BuffRuntimeSource['presentation']>) =>
+      compileBuffRuntimeDefinitionSource(
+        { ...source, presentation: { ...source.presentation, ...overrides } },
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        { gameplayTagRegistry: fixtureGameplayTagRegistry },
+      ).presentation;
+
+    expect(project({})).toEqual({
+      icon: 'endaxis:icons/icon_battle_buff_atk_up',
+      showInHeadBarCommon: false,
+      showInHeadBarAttached: false,
+      showInSquadIcon: true,
+    });
+    expect(project({ hasIcon: false })).toMatchObject({ visible: false });
+    expect(project({ spritePath: '' })).toMatchObject({ visible: true });
+    const enemyPresentation = project({ showInHeadBarCommon: true });
+    expect(enemyPresentation).toMatchObject({ showInHeadBarCommon: true });
+    expect(enemyPresentation).not.toHaveProperty('showInHeadBarAttached');
+  });
+
   it('输入目标的敌人类型证明只作用于成功分支', () => {
     const meta = {
       isEnable: true,
@@ -3787,12 +3812,8 @@ describe('公共 Buff 运行时投影', () => {
     expect(definitionWithoutResponses).toMatchObject({
       stackingType: 'unique',
       presentation: {
-        visible: true,
         icon: 'endaxis:icons/icon_battle_buff_atk_up',
         showInSquadIcon: true,
-        showProgressInNormalSkillButton: true,
-        useWeakProgressInNormalSkillButton: true,
-        showWarningBackground: true,
       },
       blackboard: { atk_up: 0.05, duration: 15 },
       attributeModifiers: [

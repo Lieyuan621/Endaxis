@@ -164,7 +164,6 @@ import type { OperationType, SkillDefinition } from '../../core/game-data/operat
 import { listOperatorSkillDefinitionBindings } from '../../core/game-data/operatorSkillDefinitions';
 import { createEmptyProject } from '../../core/project/createProject';
 import { getProjectDefinitionLibrary } from '../../core/project/projectDefinitionLibrary';
-import { resolveControlTimeline } from '../../core/project/resolveControlTimeline';
 import {
   PROJECT_FPS,
   type EndaxisProjectDocument,
@@ -3146,24 +3145,6 @@ const operatorPassiveUiTimelineSegments = computed(() => {
       );
 });
 
-const operatorControlTimeline = computed(() => {
-  const timeline = resolveControlTimeline(
-    scenario.value.tracks,
-    scenario.value.battle.controlSwitches,
-    -scenario.value.battle.prepFrames,
-  );
-  if (projectedControlSwitches.value.length === 0) return timeline;
-  const automatic = projectedControlSwitches.value.map(marker => ({
-    startFrame: marker.frame,
-    operatorId: scenario.value.tracks[marker.trackIndex]?.id ?? null,
-  }));
-  return {
-    segments: [...timeline.segments, ...automatic].sort(
-      (left, right) => left.startFrame - right.startFrame,
-    ),
-  };
-});
-
 /** 旧版底部摘要固定取最后一次敌人受伤时刻，而不是跟随隐藏的编辑光标。 */
 const collapsedMonitorSectionCount = ref(0);
 const enemyLastDamageFrame = computed(() => {
@@ -3186,8 +3167,6 @@ const combatHudSnapshot = computed(() => {
     receiptEntries: publishedReceiptEntries.value,
     operatorSkillSlots: combatHudInitialSkillSlots.value,
     operatorPassiveUis: combatHudOperatorPassiveUis.value,
-    buffProgressCurves: current.buffProgressCurves,
-    controlTimeline: operatorControlTimeline.value,
   });
 });
 

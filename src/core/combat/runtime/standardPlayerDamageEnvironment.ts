@@ -61,7 +61,6 @@ import {
 import { BuffDefinitionOperationTarget } from '../buffs/buffDefinitionOperationTarget';
 import type { RegisterBuffAbilityEventAction } from '../buffs/buffLifecycleSequenceRuntime';
 import { resolveBuffModifierNumber } from '../buffs/buffModifierNumberSource';
-import { BuffProgressRecorder, type BuffProgressCurve } from '../buffs/buffProgressRecorder';
 import {
   compileCombatBuffDefinitions,
   CompiledCombatBuffDefinitions,
@@ -332,8 +331,6 @@ export interface StandardPlayerDamageEnvironmentOptions {
   readonly tagRegistry?: GameplayTagRegistry;
   /** 当前帧主控身份由场景控制时间线提供；仅在伤害修正使用该条件时需要。 */
   readonly isOperatorControlled?: (operatorId: string, frame: number) => boolean;
-  /** 原生角色专属 HUD 直接跟踪的 Buff；与通用图标进度标志相互独立。 */
-  readonly passiveProgressBuffIdsByOperator?: ReadonlyMap<string, ReadonlySet<string>>;
   /**
    * 普通倒地的装配端口，由调用方提供倒地结束后的处理。
    * 标准伤害模拟到期直接解除倒地，不模拟起身动画阶段。
@@ -401,7 +398,6 @@ export class StandardPlayerDamageEnvironment {
     ((definitionOperatorId: string) => ProjectileRuntimeDependencies) | null = null;
   readonly #operatorPanels = new Map<string, ResolvedOperatorPanel>();
   readonly #operatorVitals = new Map<string, CombatVitals>();
-  readonly #buffProgress: BuffProgressRecorder;
   #clock: CombatClock | null = null;
   #isOperatorControlled: ((operatorId: string, frame: number) => boolean) | undefined;
   #receipt: CombatReceiptSink | null = null;
@@ -436,7 +432,6 @@ export class StandardPlayerDamageEnvironment {
     this.#eventStates = options.restoredEventStates ?? new Map();
     this.#postSkillRequestListenerState =
       restored?.postSkillRequestListeners ?? createPostSkillRequestListenerState();
-    this.#buffProgress = new BuffProgressRecorder(restored?.buffProgress);
     for (const [operatorId, state] of restored?.operatorVitals ?? []) {
       const vitals = CombatVitals.bindRuntimeState(state);
       this.#bindHealthChangeEvent(operatorId, vitals);
@@ -545,7 +540,6 @@ export class StandardPlayerDamageEnvironment {
       enemyVitals: this.#enemyVitals.runtimeState,
       operatorVitals: new Map(),
       knockDown: this.#enemyKnockDown?.runtimeState ?? null,
-      buffProgress: this.#buffProgress.runtimeState,
       poiseBreakBuffs: this.#poiseBreakBuffs.runtimeState,
       postSkillRequestListeners: this.#postSkillRequestListenerState,
     };
@@ -724,10 +718,6 @@ export class StandardPlayerDamageEnvironment {
       },
       resolveOperatorVitals: operatorId => this.#requireOperatorVitals(operatorId),
     };
-  }
-
-  get buffProgressCurves(): readonly BuffProgressCurve[] {
-    return this.#buffProgress.snapshot();
   }
 
   get enemyVitals(): CombatVitals {
@@ -1299,9 +1289,6 @@ export class StandardPlayerDamageEnvironment {
         (handle, restoredRegistrationId) =>
           this.#registerPostSkillRequest(operatorId, handle, restoredRegistrationId),
         definitionOperatorId => this.#requireProjectileRuntimeDependencies(definitionOperatorId),
-      );
-      runtime.configureAdvancedObserver(() =>
-        this.#buffProgress.sample(container, this.#requireClock().frame),
       );
       this.#operatorBuffRuntimes.set(operatorId, runtime);
     }
@@ -1975,61 +1962,16 @@ export class StandardPlayerDamageEnvironment {
           ...(currentPresentation?.showInSquadIcon === undefined
             ? {}
             : { showInSquadIcon: currentPresentation.showInSquadIcon }),
-          ...(currentPresentation?.onlyShowForMainCharacter === undefined
-            ? {}
-            : { onlyShowForMainCharacter: currentPresentation.onlyShowForMainCharacter }),
-          ...(currentPresentation?.showProgressInHpBar === undefined
-            ? {}
-            : { showProgressInHpBar: currentPresentation.showProgressInHpBar }),
-          ...(currentPresentation?.showProgressInNormalSkillButton === undefined
-            ? {}
-            : {
-                showProgressInNormalSkillButton:
-                  currentPresentation.showProgressInNormalSkillButton,
-              }),
-          ...(currentPresentation?.useWeakProgressInNormalSkillButton === undefined
-            ? {}
-            : {
-                useWeakProgressInNormalSkillButton:
-                  currentPresentation.useWeakProgressInNormalSkillButton,
-              }),
-          ...(currentPresentation?.showProgressInUltimateSkillButton === undefined
-            ? {}
-            : {
-                showProgressInUltimateSkillButton:
-                  currentPresentation.showProgressInUltimateSkillButton,
-              }),
-          ...(currentPresentation?.showWarningBackground === undefined
-            ? {}
-            : { showWarningBackground: currentPresentation.showWarningBackground }),
           ...(currentPresentation?.iconStyleInSquad === undefined
             ? {}
             : { iconStyleInSquad: currentPresentation.iconStyleInSquad }),
           ...(currentPresentation?.abnormalColorType === undefined
             ? {}
             : { abnormalColorType: currentPresentation.abnormalColorType }),
-          ...(currentPresentation?.orderPriority === undefined
-            ? {}
-            : {
-                orderUseDirectoryValue: currentPresentation.orderPriority.useDirectoryValue,
-                orderPriorityValue: currentPresentation.orderPriority.value,
-                orderPriorityCategory: currentPresentation.orderPriority.category,
-              }),
         },
       });
     };
     recordPresentation('BuffApplied', buff.definition.id, presentation);
-    if (ownerId !== 'enemy') {
-      this.#buffProgress.register(
-        ownerId,
-        buff,
-        buff.definition.id,
-        presentation,
-        clock.frame,
-        this.options.passiveProgressBuffIdsByOperator?.get(ownerId)?.has(buff.definition.id) ===
-          true,
-      );
-    }
     for (const child of buff.definition.childPresentations ?? []) {
       recordPresentation(
         'BuffPresentationStarted',
@@ -2037,9 +1979,6 @@ export class StandardPlayerDamageEnvironment {
         child.presentation,
         buff.definition.id,
       );
-      if (ownerId !== 'enemy') {
-        this.#buffProgress.register(ownerId, buff, child.buffId, child.presentation, clock.frame);
-      }
     }
   }
 
@@ -2062,9 +2001,6 @@ export class StandardPlayerDamageEnvironment {
   ): void {
     if (this.#clock === null || this.#receipt === null) {
       throw new Error(`Buff on '${ownerId}' finished before the environment was bound to a battle`);
-    }
-    if (ownerId !== 'enemy') {
-      this.#buffProgress.finish(ownerId, buff, this.#clock.frame);
     }
     this.#receipt.record({
       frame: this.#clock.frame,

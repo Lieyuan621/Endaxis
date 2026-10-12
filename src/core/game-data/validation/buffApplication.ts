@@ -8,7 +8,6 @@ import {
   push,
   asRecord,
   requireString,
-  requireFiniteNumber,
   requireBoolean,
   requireEnum,
   validateLevelValues,
@@ -462,20 +461,8 @@ export function validateBuffDefinition(
                 'showInHeadBarCommon',
                 'showInHeadBarAttached',
                 'showInSquadIcon',
-                'onlyShowForMainCharacter',
-                'blinkInMainCharHpBar',
-                'showProgressInHpBar',
-                'showProgressInNormalSkillButton',
-                'useWeakProgressInNormalSkillButton',
-                'showProgressInUltimateSkillButton',
-                'forceRaiseIconEvent',
-                'showWarningBackground',
-                'playStrongInAnimation',
-                'hasCharHpBarVfxType',
-                'charHpBarVfxType',
                 'iconStyleInSquad',
                 'abnormalColorType',
-                'orderPriority',
               ].includes(key)
             ) {
               push(out, `${path}.presentation.${key}`, 'unknown Buff presentation field');
@@ -484,7 +471,7 @@ export function validateBuffDefinition(
           if (presentationRecord.icon !== undefined) {
             requireString(presentationRecord, 'icon', `${path}.presentation`, out);
           }
-          for (const key of ['iconStyleInSquad', 'abnormalColorType', 'charHpBarVfxType']) {
+          for (const key of ['iconStyleInSquad', 'abnormalColorType']) {
             if (presentationRecord[key] !== undefined) {
               requireString(presentationRecord, key, `${path}.presentation`, out);
             }
@@ -494,40 +481,9 @@ export function validateBuffDefinition(
             'showInHeadBarCommon',
             'showInHeadBarAttached',
             'showInSquadIcon',
-            'onlyShowForMainCharacter',
-            'blinkInMainCharHpBar',
-            'showProgressInHpBar',
-            'showProgressInNormalSkillButton',
-            'useWeakProgressInNormalSkillButton',
-            'showProgressInUltimateSkillButton',
-            'forceRaiseIconEvent',
-            'showWarningBackground',
-            'playStrongInAnimation',
-            'hasCharHpBarVfxType',
           ]) {
             if (presentationRecord[key] !== undefined) {
               requireBoolean(presentationRecord, key, `${path}.presentation`, out);
-            }
-          }
-          if (presentationRecord.orderPriority !== undefined) {
-            const order = asRecord(
-              presentationRecord.orderPriority,
-              `${path}.presentation.orderPriority`,
-              out,
-            );
-            if (order !== null) {
-              for (const key of Object.keys(order)) {
-                if (!['useDirectoryValue', 'value', 'category'].includes(key)) {
-                  push(
-                    out,
-                    `${path}.presentation.orderPriority.${key}`,
-                    'unknown Buff icon order field',
-                  );
-                }
-              }
-              requireBoolean(order, 'useDirectoryValue', `${path}.presentation.orderPriority`, out);
-              requireFiniteNumber(order, 'value', `${path}.presentation.orderPriority`, out);
-              requireString(order, 'category', `${path}.presentation.orderPriority`, out);
             }
           }
         }

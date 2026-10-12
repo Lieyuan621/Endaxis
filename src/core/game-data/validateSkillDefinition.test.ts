@@ -385,14 +385,8 @@ describe('validateSkillDefinition', () => {
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,
-        onlyShowForMainCharacter: false,
         iconStyleInSquad: 'Default',
         abnormalColorType: 'Physical',
-        orderPriority: {
-          useDirectoryValue: false,
-          value: 0,
-          category: 'CommonCharBuff',
-        },
       },
     };
     expect(validateBuff(definition)).toEqual([]);

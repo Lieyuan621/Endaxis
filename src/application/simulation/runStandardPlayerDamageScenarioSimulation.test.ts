@@ -3232,7 +3232,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
     ).toContainEqual(
       expect.objectContaining({
         icon: 'endaxis:icons/icon_energy_fusion_pulse',
-        showInHeadBarCommon: false,
+        placement: 'upper',
         showInHeadBarAttached: true,
       }),
     );

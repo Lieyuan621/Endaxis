@@ -1042,9 +1042,6 @@ describe('registered generated operators', () => {
         },
       },
     ]);
-    expect(
-      xaihi.buffDefinitions?.['buff_chr_0011_seraph_ultimate_effect']?.presentation?.visible,
-    ).toBe(true);
     const run = (withUltimate: boolean) => {
       const scenario = createEmptyScenario(`scenario:xaihi:${withUltimate}`, '熙海终结技增幅回归');
       scenario.battle.durationFrames = 180;

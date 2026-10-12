@@ -2,7 +2,7 @@
 import { commonBuffDefinitions as generatedDefinitions } from './generated/commonBuffDefinitions.generated';
 
 /**
- * 战斗定义只保留原生运行事实。Endaxis 展示名属于应用层，按 Buff ID 从独立配置查询，
- * 不注入定义、编译产物或单次模拟回执。
+ * 展示名保存在 Buff 自身的 presentation.nameKey，与其他 Buff 使用相同的读取规则。
+ * 回执只记录 Buff 身份，不复制本地化名称。
  */
 export const commonBuffDefinitions = generatedDefinitions;

@@ -250,7 +250,7 @@ describe('Buff display name', () => {
       ),
     ).toBe(zh.effects.name.razorClawmark);
   });
-  it('按输入元素命名复合状态及其产物', () => {
+  it('读取复合状态 Buff 自身的名称，不按 Buff ID 猜测', () => {
     const names = { heat: '燃烧', electric: '导电', cryo: '冻结', nature: '腐蚀' };
     for (const [element, name] of Object.entries(names)) {
       const factory = compoundStatusFactories.factories.find(
@@ -258,9 +258,9 @@ describe('Buff display name', () => {
       );
       expect(factory, element).toBeDefined();
       if (factory === undefined) continue;
-      for (const id of [factory.id, factory.createdBuff.buffId]) {
-        expect(resolveBuffDisplayName(id, i18n, undefined, '来源技能')).toBe(name);
-      }
+      expect(resolveBuffDisplayName(factory.createdBuff.buffId, i18n, undefined, '来源技能')).toBe(
+        name,
+      );
     }
     expect(resolveBuffDisplayName('buff_common_pulse_natural_triggered', i18n)).toBe('导电');
     expect(resolveBuffDisplayName('buff_common_pulse_unknown_triggered', i18n)).toBe(

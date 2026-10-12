@@ -8,8 +8,6 @@ import { skillSettingResources } from '../../data/combat/skillSettings';
  * 随机样本等输入由调用方给；环境不支持的东西在跑之前就报错。
  */
 import type { CombatBuffDefinitionsDocument } from '../../../packages/game-data-contract/src/buffs';
-import type { BuffProgressCurve } from '../../core/combat/buffs/buffProgressRecorder';
-import { BuffProgressRecorder } from '../../core/combat/buffs/buffProgressRecorder';
 import type { PlayerDamageNonRandomRuntimeSnapshot } from '../../core/combat/damage/playerActiveDamageInput';
 import type { CompoundStatusFactoriesDocument } from '../../core/combat/infliction/compoundStatusFactories';
 import type { SkillSettingsDocument } from '../../core/combat/infliction/skillSettings';
@@ -97,7 +95,6 @@ export interface EnemyVitalsSimulationResult {
 export interface StandardPlayerDamageScenarioResult extends ScenarioSimulationResult {
   readonly finalEnemyHealth: number;
   readonly enemyVitals: EnemyVitalsSimulationResult;
-  readonly buffProgressCurves: readonly BuffProgressCurve[];
 }
 
 export interface PreparedStandardPlayerDamageScenarioRuntime {
@@ -146,17 +143,6 @@ export function prepareStandardPlayerDamageScenarioRuntime(
     input.options.liveInputInitialFrame === undefined ? input.scenario.battle.controlSwitches : [],
     input.options.liveInputInitialFrame ?? -input.scenario.battle.prepFrames,
   );
-  const passiveProgressBuffIdsByOperator = new Map<string, ReadonlySet<string>>();
-  for (const track of input.scenario.tracks) {
-    if (track === null || track.operator === null) continue;
-    const passiveUi = input.options.index.getOperator(track.operator.operatorSlug)?.passiveUi;
-    if (passiveUi?.kind !== 'buffProgress') continue;
-    passiveProgressBuffIdsByOperator.set(
-      track.id,
-      new Set([passiveUi.normalBuffId, passiveUi.ultimateBuffId]),
-    );
-  }
-
   const restoredEnvironmentBase = {
     reactionCriticalOverrides: input.scenario.battle.reactionCriticalOverrides,
     resolveNonRandomRuntimeSnapshot: input.resolveNonRandomRuntimeSnapshot,
@@ -169,7 +155,6 @@ export function prepareStandardPlayerDamageScenarioRuntime(
     },
     isOperatorControlled: (operatorId: string, frame: number) =>
       isOperatorControlledAt(controlTimeline, operatorId, frame),
-    passiveProgressBuffIdsByOperator,
     ...(input.elementalInflictionDocument === undefined
       ? {}
       : { elementalInflictionDocument: input.elementalInflictionDocument }),
@@ -277,7 +262,6 @@ export function collectStandardPlayerDamageStateGraphResult(
   const vitals = environmentState.enemyVitals;
   return Object.freeze({
     ...result,
-    buffProgressCurves: new BuffProgressRecorder(environmentState.buffProgress).snapshot(),
     finalEnemyHealth: vitals.health,
     enemyVitals: Object.freeze({
       initialHealth: compiled.enemy.health,

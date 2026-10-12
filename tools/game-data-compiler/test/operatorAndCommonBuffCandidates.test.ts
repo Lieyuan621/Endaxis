@@ -357,7 +357,6 @@ describe('干员与公共 Buff 共用规划', () => {
       expect(changes.length > 0).toBe(optimization !== 'off');
       expect(await fs.readdir(input.commonBuffOutput)).toEqual([
         'commonBuffDefinitions.generated.ts',
-        'commonBuffPresentationNames.generated.ts',
       ]);
     },
   );

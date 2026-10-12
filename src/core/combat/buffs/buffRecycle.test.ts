@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CombatAttributeSet } from '../attributes/combatAttributes';
 import { CombatBuffContainer } from './combatBuffs';
-import { BuffProgressRecorder } from './buffProgressRecorder';
 import { AbilitySystemRuntime } from '../abilities/abilitySystemRuntime';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 
@@ -59,27 +58,6 @@ describe('Buff instance recycling', () => {
     expect(previous.isRecycled).toBe(true);
     expect(created.isRecycled).toBe(false);
   });
-  it('退出容器不删除已经完成的进度历史', () => {
-    const recorder = new BuffProgressRecorder();
-    const owner = new CombatBuffContainer<string>(
-      'owner',
-      new CombatAttributeSet<string>(),
-      undefined,
-      null,
-      undefined,
-      buff => recorder.finish('owner', buff, 1),
-    );
-    const buff = owner.add({ id: 'history', stackingType: 'unique', durationSeconds: 2 }, 'owner')!;
-    recorder.register('owner', buff, 'history', undefined, 0, true);
-    buff.finish('other');
-    const history = recorder.snapshot();
-    owner.recycleFinishedBuffs();
-    recorder.sample(owner, 2);
-    expect(owner.buffs).toHaveLength(0);
-    expect(recorder.snapshot()).toEqual(history);
-    expect(history).toHaveLength(1);
-  });
-
   it('同一个函数的多次订阅可按句柄独立注销', () => {
     const owner = new CombatBuffContainer<never>('owner', new CombatAttributeSet<never>());
     const buff = owner.add({ id: 'callbacks', stackingType: 'unique' }, 'owner')!;

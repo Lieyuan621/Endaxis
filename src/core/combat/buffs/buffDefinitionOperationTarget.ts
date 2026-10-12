@@ -60,7 +60,6 @@ export class BuffDefinitionOperationTarget<Key extends string>
   >();
   #resolveLifecycleOperations:
     ((source: BuffLifecycleOperationSource) => CombatOperationExecutor) | null = null;
-  #advancedObserver: (() => void) | null = null;
   #bindRestoredSkillAffixObjectReference: BindRestoredSkillAffixObjectReference | undefined;
   constructor(
     readonly container: CombatBuffContainer<Key>,
@@ -409,7 +408,6 @@ export class BuffDefinitionOperationTarget<Key extends string>
 
   advanceFrame(): void {
     this.container.tick(COMBAT_FRAME_INTERVAL);
-    this.#advancedObserver?.();
   }
 
   /** Buff 容器的默认时间是全局缩放时间，与技能冷却的默认时间不同。 */
@@ -419,12 +417,6 @@ export class BuffDefinitionOperationTarget<Key extends string>
       entityDeltaSeconds: deltas.selfScaledDeltaSeconds,
       globalAndSelfDeltaSeconds: deltas.globalAndSelfScaledDeltaSeconds,
     });
-    this.#advancedObserver?.();
-  }
-
-  configureAdvancedObserver(observer: () => void): void {
-    if (this.#advancedObserver !== null) throw new Error('advanced observer is configured');
-    this.#advancedObserver = observer;
   }
 
   releaseAll(): void {

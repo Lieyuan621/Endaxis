@@ -669,6 +669,51 @@ const schema_741e6ba26ed9 = {
   optional: true,
   description: 'Buff 启用期间提供的霸体值和抗冲击值，可作用于持有者或 Buff 来源。',
 } as const;
+const schema_79be2adc5b0c = {
+  nameKey: {
+    kind: 'string',
+    optional: true,
+    description: '此 Buff 的显示名称翻译键；仅供界面使用。',
+  },
+  icon: {
+    kind: 'string',
+    semantics: { aliases: ['ImageRef'] },
+    optional: true,
+    description: '内置图片资源引用。',
+  },
+  visible: {
+    kind: 'boolean',
+    optional: true,
+    description: 'false 禁止显示；缺省时由图标或显示位置决定。无图标也需要显示时设为 true。',
+  },
+  showInHeadBarCommon: {
+    kind: 'boolean',
+    optional: true,
+    description: '是否显示在普通头顶状态栏；与 showInHeadBarAttached 同为 false 时排除敌人状态栏。',
+  },
+  showInHeadBarAttached: {
+    kind: 'boolean',
+    optional: true,
+    description: '是否显示在附着状态头顶栏。',
+  },
+  showInSquadIcon: { kind: 'boolean', optional: true, description: '是否显示在队伍头像附近。' },
+  iconStyleInSquad: {
+    kind: 'string',
+    optional: true,
+    description: '原生图标分类；SpellAbnormal 用于异常分层和显示计数，其余样式使用缺省表现。',
+  },
+  abnormalColorType: {
+    kind: 'string',
+    optional: true,
+    description: '元素异常颜色；缺省使用附着元素或来源颜色。',
+  },
+} as const;
+const schema_86ccf8004067 = {
+  kind: 'object',
+  fields: schema_79be2adc5b0c,
+  optional: true,
+  description: 'Buff 自身的图标、颜色、排序位置和进度条等显示设置。\n不参与战斗计算的显示信息。',
+} as const;
 const schema_0dfab30a4bb5 = {
   kind: 'union',
   variants: [
@@ -847,6 +892,23 @@ const schema_37edd074d3b3 = {
   optional: true,
   description:
     '指定的其他 Buff 成功加入同一持有者时，对当前 Buff 的关键词倍率执行赋值、加法或乘法。',
+} as const;
+const schema_822e7f4d19cb = {
+  kind: 'array',
+  element: {
+    kind: 'object',
+    fields: {
+      buffId: { kind: 'string', referenceKind: 'buff', description: '子 Buff ID。' },
+      presentation: {
+        kind: 'object',
+        fields: schema_79be2adc5b0c,
+        description: '子 Buff 的显示规则。',
+      },
+    },
+  },
+  semantics: { arrayElement: {} },
+  optional: true,
+  description: '跟随本体同时出现和消失的额外显示图标；它们没有独立战斗效果和生命周期。',
 } as const;
 const schema_78c333188111 = {
   kind: 'array',
@@ -1053,121 +1115,6 @@ const schema_f15fd9ff6614 = {
   },
   semantics: schema_140af2d9bf58,
   description: '按顺序执行的治疗处理器。',
-} as const;
-const schema_b034c8a9493a = {
-  nameKey: {
-    kind: 'string',
-    optional: true,
-    description: '此 Buff 的显示名称翻译键；仅供界面使用。',
-  },
-  icon: {
-    kind: 'string',
-    semantics: { aliases: ['ImageRef'] },
-    optional: true,
-    description: '内置图片资源引用。',
-  },
-  visible: { kind: 'boolean', optional: true, description: '是否允许界面显示这个 Buff。' },
-  showInHeadBarCommon: {
-    kind: 'boolean',
-    optional: true,
-    description: '是否显示在普通头顶状态栏。',
-  },
-  showInHeadBarAttached: {
-    kind: 'boolean',
-    optional: true,
-    description: '是否显示在附着状态头顶栏。',
-  },
-  showInSquadIcon: { kind: 'boolean', optional: true, description: '是否显示在队伍头像附近。' },
-  onlyShowForMainCharacter: {
-    kind: 'boolean',
-    optional: true,
-    description: '是否只为当前主控干员显示。',
-  },
-  blinkInMainCharHpBar: {
-    kind: 'boolean',
-    optional: true,
-    description: '是否在主控干员生命条上播放闪烁。',
-  },
-  showProgressInHpBar: {
-    kind: 'boolean',
-    optional: true,
-    description: '是否在生命条上显示剩余进度。',
-  },
-  showProgressInNormalSkillButton: {
-    kind: 'boolean',
-    optional: true,
-    description: '是否在普通技能按钮上显示剩余进度。',
-  },
-  useWeakProgressInNormalSkillButton: {
-    kind: 'boolean',
-    optional: true,
-    description: '普通技能按钮是否使用弱化样式的进度。',
-  },
-  showProgressInUltimateSkillButton: {
-    kind: 'boolean',
-    optional: true,
-    description: '是否在终结技按钮上显示剩余进度。',
-  },
-  forceRaiseIconEvent: {
-    kind: 'boolean',
-    optional: true,
-    description: 'Buff 变化时是否强制发送图标刷新事件。',
-  },
-  showWarningBackground: { kind: 'boolean', optional: true, description: '是否显示警告背景。' },
-  playStrongInAnimation: {
-    kind: 'boolean',
-    optional: true,
-    description: '是否播放强提示进入动画。',
-  },
-  hasCharHpBarVfxType: {
-    kind: 'boolean',
-    optional: true,
-    description: '是否配置了干员生命条特效类型。',
-  },
-  charHpBarVfxType: { kind: 'string', optional: true, description: '干员生命条使用的特效类型。' },
-  iconStyleInSquad: {
-    kind: 'string',
-    optional: true,
-    description: 'Buff 在队伍头像区域使用的图标样式。',
-  },
-  abnormalColorType: {
-    kind: 'string',
-    optional: true,
-    description: '元素异常显示使用的颜色类型。',
-  },
-  orderPriority: {
-    kind: 'object',
-    fields: {
-      useDirectoryValue: { kind: 'boolean', description: '是否使用资源目录中配置的排序值。' },
-      value: { kind: 'number', description: '同类图标之间的排序数值。' },
-      category: { kind: 'string', description: '图标所属的排序类别。' },
-    },
-    optional: true,
-    description: '多个 Buff 图标同时出现时的排序设置。',
-  },
-} as const;
-const schema_468ea0e8eb03 = {
-  kind: 'object',
-  fields: schema_b034c8a9493a,
-  optional: true,
-  description: 'Buff 自身的图标、颜色、排序位置和进度条等显示设置。\n不参与战斗计算的显示信息。',
-} as const;
-const schema_608a2392c7f2 = {
-  kind: 'array',
-  element: {
-    kind: 'object',
-    fields: {
-      buffId: { kind: 'string', referenceKind: 'buff', description: '子 Buff ID。' },
-      presentation: {
-        kind: 'object',
-        fields: schema_b034c8a9493a,
-        description: '子 Buff 的显示规则。',
-      },
-    },
-  },
-  semantics: { arrayElement: {} },
-  optional: true,
-  description: '跟随本体同时出现和消失的额外显示图标；它们没有独立战斗效果和生命周期。',
 } as const;
 const schema_a2f7c7d1976f = {
   kind: 'array',
@@ -3009,8 +2956,8 @@ export const definitionSchemas = {
             description: '允许驱散所需的最低等级；省略表示不可驱散。',
           },
           affixSkillCastIdentity: schema_ceffc9c43558,
-          presentation: schema_468ea0e8eb03,
-          childPresentations: schema_608a2392c7f2,
+          presentation: schema_86ccf8004067,
+          childPresentations: schema_822e7f4d19cb,
           timeClock: schema_dfe7358daaf2,
           applyTags: schema_8b88c642c1c1,
           ignoreTagImmune: {
@@ -3096,8 +3043,8 @@ export const definitionSchemas = {
             description: '允许驱散所需的最低等级；省略表示不可驱散。',
           },
           affixSkillCastIdentity: schema_ceffc9c43558,
-          presentation: schema_468ea0e8eb03,
-          childPresentations: schema_608a2392c7f2,
+          presentation: schema_86ccf8004067,
+          childPresentations: schema_822e7f4d19cb,
           timeClock: schema_dfe7358daaf2,
           applyTags: schema_8b88c642c1c1,
           ignoreTagImmune: {

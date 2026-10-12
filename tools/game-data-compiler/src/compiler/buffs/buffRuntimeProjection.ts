@@ -2038,31 +2038,23 @@ export function isAfterEnemyDefeatedOnlyBuffRuntime(source: BuffRuntimeSource): 
 
 function compilePresentation(source: BuffPresentationSource): CompiledBuffPresentationSource {
   return {
-    visible: source.hasIcon,
+    // 有图标时 visible 缺省即可显示；无图标的显式显示和显式隐藏不能省略。
+    ...(!source.hasIcon || source.spritePath === '' ? { visible: source.hasIcon } : {}),
     ...(source.spritePath === ''
       ? {}
       : { icon: imageRefFromPath(`/icons/${source.spritePath}.webp`) }),
-    showInHeadBarCommon: source.showInHeadBarCommon,
-    showInHeadBarAttached: source.showInHeadBarAttached,
-    showInSquadIcon: source.showInSquadIcon,
-    onlyShowForMainCharacter: source.onlyShowForMainCharacter,
-    blinkInMainCharHpBar: source.blinkInMainCharHpBar,
-    showProgressInHpBar: source.showProgressInHpBar,
-    showProgressInNormalSkillButton: source.showProgressInNormalSkillButton,
-    useWeakProgressInNormalSkillButton: source.useWeakProgressInNormalSkillButton,
-    showProgressInUltimateSkillButton: source.showProgressInUltimateSkillButton,
-    forceRaiseIconEvent: source.forceRaiseIconEvent,
-    showWarningBackground: source.showWarningBackground,
-    playStrongInAnimation: source.playStrongInAnimation,
-    hasCharHpBarVfxType: source.hasCharHpBarVfxType,
-    charHpBarVfxType: source.charHpBarVfxType,
-    iconStyleInSquad: source.iconStyleInSquad,
-    abnormalColorType: source.abnormalColorType,
-    orderPriority: {
-      useDirectoryValue: source.orderUseDirectoryValue,
-      value: source.orderPriorityValue,
-      category: source.orderPriorityEnum,
-    },
+    // 两个显式 false 共同表示不进入敌人状态栏；缺省并不等价。
+    ...(!source.showInHeadBarCommon && !source.showInHeadBarAttached
+      ? { showInHeadBarCommon: false, showInHeadBarAttached: false }
+      : {
+          ...(source.showInHeadBarCommon ? { showInHeadBarCommon: true } : {}),
+          ...(source.showInHeadBarAttached ? { showInHeadBarAttached: true } : {}),
+        }),
+    ...(source.showInSquadIcon ? { showInSquadIcon: true } : {}),
+    ...(source.iconStyleInSquad === 'SpellAbnormal' ? { iconStyleInSquad: 'SpellAbnormal' } : {}),
+    ...(source.abnormalColorType !== 'Physical'
+      ? { abnormalColorType: source.abnormalColorType }
+      : {}),
   };
 }
 

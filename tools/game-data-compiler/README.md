@@ -45,12 +45,14 @@ npm run rebuild:game-data -- --source-root '<冻结来源目录>' --version '<�
 | `config/equipmentAssets.json`                    | 对象资源有歧义，需要明确别名                     |
 | `config/systemBuffRoots.json`                    | 自动引用范围之外还需要的系统根 Buff              |
 | `config/globalBuffIdentities.json`               | 新增全局 Buff 身份                               |
-| `config/commonBuffPresentationNames.json`        | 公共 Buff 需要明确本地化名称                     |
+| `config/buffPresentationNames.ts`                | Buff 自身需要明确本地化名称或补充展示图标        |
 | `config/contingencyContractSimulationScope.json` | 确认合约效果的模拟范围                           |
 | `config/enemies/runtime-defaults.json`           | 有依据的敌人运行默认值变化                       |
 | `config/enemies/selection-categories.json`       | 新敌人的选择分类、未分类或隐藏状态               |
 
 普通技能、天赋和潜能不逐项配置编译器，编译路径从原始动作推断。路由关系和递归技能组等确需人工确认的配置保留在对象定义中。递归放置策略必须校验起止技能、段数预算和回退序列，不按干员名称分派。
+
+Buff 的 `presentation` 只发布界面使用的字段，省略等价默认值。保留显式隐藏、无图标的显式显示，以及两个头顶栏标志均为 `false` 的排除语义；原生动画、特效和图标排序配置不进入正式定义。完整原生字段仍在来源解析层读取和校验。
 
 `config/operators.json` 的技能项可声明 `timelineBlockFollowUpSkillId`，以同干员另一技能
 可接续的时刻作为块宽边界，覆盖默认接续目标。此项专用于显示，不要求目标是结束技能，

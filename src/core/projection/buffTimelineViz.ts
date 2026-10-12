@@ -82,17 +82,8 @@ export interface BuffTimelineSegment {
   readonly showInHeadBarCommon?: boolean;
   readonly showInHeadBarAttached?: boolean;
   readonly showInSquadIcon?: boolean;
-  readonly onlyShowForMainCharacter?: boolean;
-  readonly showProgressInHpBar?: boolean;
-  readonly showProgressInNormalSkillButton?: boolean;
-  readonly useWeakProgressInNormalSkillButton?: boolean;
-  readonly showProgressInUltimateSkillButton?: boolean;
-  readonly showWarningBackground?: boolean;
   readonly iconStyleInSquad?: string;
   readonly abnormalColorType?: string;
-  readonly orderUseDirectoryValue?: boolean;
-  readonly orderPriorityValue?: number;
-  readonly orderPriorityCategory?: string;
 }
 
 export interface PositionedBuffTimelineSegment extends BuffTimelineSegment {
@@ -864,25 +855,12 @@ function projectBuffSegments(
       ...copyOptionalBoolean(data, 'showInHeadBarCommon'),
       ...copyOptionalBoolean(data, 'showInHeadBarAttached'),
       ...copyOptionalBoolean(data, 'showInSquadIcon'),
-      ...copyOptionalBoolean(data, 'onlyShowForMainCharacter'),
-      ...copyOptionalBoolean(data, 'showProgressInHpBar'),
-      ...copyOptionalBoolean(data, 'showProgressInNormalSkillButton'),
-      ...copyOptionalBoolean(data, 'useWeakProgressInNormalSkillButton'),
-      ...copyOptionalBoolean(data, 'showProgressInUltimateSkillButton'),
-      ...copyOptionalBoolean(data, 'showWarningBackground'),
       ...(optionalString(data, 'iconStyleInSquad') === undefined
         ? {}
         : { iconStyleInSquad: optionalString(data, 'iconStyleInSquad') }),
       ...(optionalString(data, 'abnormalColorType') === undefined
         ? {}
         : { abnormalColorType: optionalString(data, 'abnormalColorType') }),
-      ...copyOptionalBoolean(data, 'orderUseDirectoryValue'),
-      ...(optionalNumber(data, 'orderPriorityValue') === undefined
-        ? {}
-        : { orderPriorityValue: optionalNumber(data, 'orderPriorityValue') }),
-      ...(optionalString(data, 'orderPriorityCategory') === undefined
-        ? {}
-        : { orderPriorityCategory: optionalString(data, 'orderPriorityCategory') }),
     });
   }
   return [...closed, ...open.values()].sort(

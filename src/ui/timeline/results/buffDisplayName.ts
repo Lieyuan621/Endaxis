@@ -3,8 +3,8 @@ import type {
   BuffDamageEffect,
 } from '../../../core/combat/receipt/combatReceipt';
 import { isCorrosionTimelineBuff } from '../../../core/projection/buffTimelineViz';
-import { compoundStatusFactories } from '../../../data/buffs/compoundStatusFactories';
-import { commonBuffPresentationNameKeys } from '../../../data/buffs/generated/commonBuffPresentationNames.generated';
+import { elementalAttachments } from '../../../data/buffs/elementalAttachments';
+import { commonBuffDefinitions } from '../../../data/buffs/commonDefinitions';
 
 const ARTS_TYPES = ['heat', 'electric', 'cryo', 'nature'] as const;
 
@@ -101,19 +101,7 @@ function aggregateDamageEffects(effects: readonly BuffDamageEffect[]): BuffDamag
   });
 }
 
-// 反应方向来自已解析配方，而不是拆分 Buff ID 猜测。
-const COMPOUND_NAME_KEYS = {
-  heat: 'combustion',
-  electric: 'electrification',
-  cryo: 'solidification',
-  nature: 'corrosion',
-} as const;
-const compoundNameKeys: Readonly<Record<string, string>> = Object.fromEntries(
-  compoundStatusFactories.factories.flatMap(factory => [
-    [factory.id, COMPOUND_NAME_KEYS[factory.incomingElement]],
-    [factory.createdBuff.buffId, COMPOUND_NAME_KEYS[factory.incomingElement]],
-  ]),
-);
+const elementalBuffDefinitions = new Map(elementalAttachments.buffs.map(buff => [buff.id, buff]));
 
 const scenarioBuffNameKeys: Readonly<Record<string, string>> = {
   'scenario:custom-values': 'timeline.globalModifiers.title',
@@ -370,7 +358,7 @@ export function resolveSimpleBuffModifierDisplayName(
 }
 
 /**
- * 展示配置只在应用层按 Buff ID 查询，不随定义穿过编译、运行时和回执。
+ * 优先读取当前定义的名称，未提供时读取公共 Buff 自身的 presentation.nameKey。
  * 未配置的 Buff 使用来源名和可证明的单属性摘要，Buff ID 是透明的最后回退。
  */
 export function resolveBuffDisplayName(
@@ -382,12 +370,11 @@ export function resolveBuffDisplayName(
 ): string {
   const customName = operatorNameKeys.get(buffId);
   if (typeof customName === 'object') return customName.text;
-  // 公共 Buff 的产品配置是展示名的权威入口；运行时和投影只需提供稳定 Buff ID。
   const configuredNameKey =
     scenarioBuffNameKeys[buffId] ??
     customName ??
-    commonBuffPresentationNameKeys[buffId as keyof typeof commonBuffPresentationNameKeys] ??
-    compoundNameKeys[buffId];
+    commonBuffDefinitions[buffId]?.presentation?.nameKey ??
+    elementalBuffDefinitions.get(buffId)?.presentation?.nameKey;
   const key = configuredNameKey?.trim();
   if (key) {
     const effectKey = `effects.name.${key}`;

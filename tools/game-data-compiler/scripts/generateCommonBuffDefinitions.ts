@@ -1,4 +1,6 @@
 import type { GraphSharedEntityValueUsage } from '../src/compiler/optimization/graphValueOptimization.ts';
+import { createGraphSharedEntityValueUsageCollector } from '../src/compiler/optimization/graphValueOptimization.ts';
+import { compileEntityValueConsumers } from './compileEntityValueConsumers.ts';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,7 +17,7 @@ import {
   requireNonEmptyString,
   requireRecord,
 } from '../src/source/primitives.ts';
-import { planOperatorDefinition } from './planOperatorDefinition.ts';
+import { projectOperatorDefinition } from './planOperatorDefinition.ts';
 import { OperatorPlanningSources } from './operatorPlanningSources.ts';
 import { compileStandardStumpBuffClosure } from '../src/compiler/buffs/standardStumpBuffClosure.ts';
 import { GameplayTagRegistry } from '../src/source/nativeGameplayTags.ts';
@@ -42,16 +44,18 @@ interface Arguments {
 }
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
-const presentationNamesPath = path.resolve(
-  scriptDirectory,
-  '../config/commonBuffPresentationNames.json',
-);
 
 /**
  * 从所有正式干员的原始闭包收集公共 Buff，并生成一份全局只读目录。
  * 干员只负责暴露“使用了哪些公共 ID”；重复 ID 必须得到完全一致的定义，不能靠导入顺序覆盖。
  */
 export async function generateCommonBuffDefinitions(args: Arguments) {
+  const externalUsage =
+    args.optimization !== 'off' ? await compileEntityValueConsumers(args) : undefined;
+  const usage = externalUsage
+    ? createGraphSharedEntityValueUsageCollector(externalUsage.commonAbilityEntityDefinitions)
+    : undefined;
+  if (externalUsage) usage!.addUsage(externalUsage);
   const sources = new OperatorPlanningSources(args);
   const manifest = requireRecord(sources.readJson(args.manifest), args.manifest);
   const slugs = requireArray(manifest.operators, `${args.manifest}.operators`).map((value, index) =>
@@ -65,7 +69,7 @@ export async function generateCommonBuffDefinitions(args: Arguments) {
 
   const collector = createCommonBuffCollector();
   for (const slug of slugs) {
-    const plan = planOperatorDefinition({
+    const plan = projectOperatorDefinition({
       ...args,
       sources,
       slug,
@@ -73,10 +77,16 @@ export async function generateCommonBuffDefinitions(args: Arguments) {
       auditOutput: path.join('tmp', 'game-data-audit', 'operator-definitions', slug),
     });
     collector.add(slug, plan.commonBuffDefinitions);
+    usage?.addOperator(plan.operator);
     sources.releaseOperator();
   }
   collectSystemBuffDefinitions(args, collector, sources);
-  const rendered = await renderCommonBuffDefinitions(collector.definitions, args.optimization);
+  usage?.addBuffDefinitions(collector.definitions);
+  const rendered = await renderCommonBuffDefinitions(
+    collector.definitions,
+    args.optimization,
+    usage?.finish(),
+  );
   if (args.check) checkGeneratedDefinitionFiles(args.output, rendered.files);
   else await writeGeneratedDefinitionFiles(args.output, rendered.files);
   return {
@@ -150,24 +160,13 @@ export async function renderCommonBuffDefinitions(
 ) {
   const optimized = finalizeCommonBuffDefinitions(collected, mode, sharedUsage);
   const definitions = optimized.definitions;
-  const presentationNameKeys = readPresentationNameKeys(presentationNamesPath);
 
   const prettierConfig = (await resolveConfig(path.resolve('.prettierrc.json'))) ?? {};
   const content = await format(renderCommonBuffDefinitionsSource(definitions), {
     ...prettierConfig,
     parser: 'typescript',
   });
-  const presentationNamesContent = await format(
-    renderCommonBuffPresentationNamesSource(presentationNameKeys),
-    { ...prettierConfig, parser: 'typescript' },
-  );
-  const files = [
-    { relativePath: 'commonBuffDefinitions.generated.ts', content },
-    {
-      relativePath: 'commonBuffPresentationNames.generated.ts',
-      content: presentationNamesContent,
-    },
-  ];
+  const files = [{ relativePath: 'commonBuffDefinitions.generated.ts', content }];
   return {
     files,
     buffCount: Object.keys(definitions).length,
@@ -219,27 +218,6 @@ export function readSystemBuffRootDeclarations(sourcePath: string): SystemBuffRo
 
 export function readSystemBuffRoots(sourcePath: string): string[] {
   return readSystemBuffRootDeclarations(sourcePath).map(item => item.buffId);
-}
-
-export function readPresentationNameKeys(sourcePath: string): Record<string, string> {
-  const source = requireRecord(read(sourcePath), sourcePath);
-  const result: Record<string, string> = {};
-  for (const [buffId, value] of Object.entries(source)) {
-    result[requireNonEmptyString(buffId, `${sourcePath}.<key>`)] = requireNonEmptyString(
-      value,
-      `${sourcePath}.${buffId}`,
-    );
-  }
-  return result;
-}
-
-export function renderCommonBuffPresentationNamesSource(
-  presentationNameKeys: Readonly<Record<string, string>>,
-): string {
-  return (
-    `/** 由 tools/game-data-compiler 公共 Buff 生成器生成；不要手工编辑。 */\n` +
-    `export const commonBuffPresentationNameKeys = Object.freeze(${JSON.stringify(presentationNameKeys, null, 2)} as const);\n`
-  );
 }
 
 export interface CommonBuffCollector<T> {

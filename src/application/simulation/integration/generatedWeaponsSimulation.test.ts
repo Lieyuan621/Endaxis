@@ -131,7 +131,7 @@ describe('生成武器的正式模拟门禁', () => {
         sourceId: 'track:weapon-owner',
         targetId: 'track:weapon-owner',
         data: {
-          visible: true,
+          showInSquadIcon: true,
           icon: 'endaxis:icons/icon_battle_buff_atk_up',
           sourceActionId: expect.stringContaining('weapon-trait:'),
         },
@@ -224,7 +224,7 @@ describe('生成武器的正式模拟门禁', () => {
     expect(applied[0]).toMatchObject({
       sourceId: 'track:weapon-owner',
       targetId: 'track:weapon-owner',
-      data: { visible: true },
+      data: { showInSquadIcon: true, icon: 'endaxis:icons/icon_battle_buff_atk_up' },
     });
     const end = result.receiptEntries.find(
       entry => entry.event === 'BuffFinished' && entry.data?.buffId === 'buff_wpn_sword_0010_valid',

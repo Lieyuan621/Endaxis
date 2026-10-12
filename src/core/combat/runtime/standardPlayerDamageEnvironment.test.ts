@@ -135,7 +135,6 @@ it('恢复环境直接绑定账本和事件目录，不重新登记监听或改�
   expect(restored.runtimeState.postSkillRequestListeners).toBe(
     saved.environment.postSkillRequestListeners,
   );
-  expect(restored.runtimeState.buffProgress).toBe(saved.environment.buffProgress);
   const restoredReceived = vi.fn();
   restored
     .eventsFor('enemy')
@@ -3645,17 +3644,8 @@ describe('StandardPlayerDamageEnvironment', () => {
             visible: true,
             icon: 'endaxis:icons/icon_battle_buff_atk_up',
             showInSquadIcon: true,
-            showProgressInHpBar: true,
-            showProgressInNormalSkillButton: true,
-            useWeakProgressInNormalSkillButton: true,
-            showWarningBackground: true,
             iconStyleInSquad: 'LifeTime',
             abnormalColorType: 'Fire',
-            orderPriority: {
-              useDirectoryValue: false,
-              value: 12,
-              category: 'CommonCharBuff',
-            },
           },
           childPresentations: [
             {
@@ -3684,15 +3674,8 @@ describe('StandardPlayerDamageEnvironment', () => {
         visible: true,
         icon: 'endaxis:icons/icon_battle_buff_atk_up',
         showInSquadIcon: true,
-        showProgressInHpBar: true,
-        showProgressInNormalSkillButton: true,
-        useWeakProgressInNormalSkillButton: true,
-        showWarningBackground: true,
         iconStyleInSquad: 'LifeTime',
         abnormalColorType: 'Fire',
-        orderUseDirectoryValue: false,
-        orderPriorityValue: 12,
-        orderPriorityCategory: 'CommonCharBuff',
       },
     });
     expect(receipt.entries.find(entry => entry.event === 'BuffPresentationStarted')).toMatchObject({
@@ -3709,17 +3692,6 @@ describe('StandardPlayerDamageEnvironment', () => {
       context.clock.advanceFrame();
       runtime.advanceFrame!();
     }
-    expect(environment.buffProgressCurves).toHaveLength(1);
-    expect(environment.buffProgressCurves[0]).toMatchObject({
-      targetId: 'operator',
-      buffId: 'buff:operator-visible',
-      instanceId: 1,
-      showInBattleSkillButton: true,
-      showInHpBar: true,
-      weakBattleSkillStyle: true,
-    });
-    expect(environment.buffProgressCurves[0]?.points.map(point => point.frame)).toEqual([0, 3]);
-    expect(environment.buffProgressCurves[0]?.points[1]?.ratio).toBeCloseTo(0.98);
   });
 
   it('真实伤害事件通过公共分派器进入 OnTakeDamage 连携条件', () => {

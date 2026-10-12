@@ -13,6 +13,7 @@ const ELEMENTS = {
   heat: {
     native: 'Fire',
     id: 'fire',
+    nameKey: 'effects.name.heat_infliction',
     icon: 'endaxis:icons/icon_energy_fusion_fire',
     tag: 'Skill/Character/Common/SpellInflict/FireInflict',
     burstDamageType: 'heat',
@@ -30,6 +31,7 @@ const ELEMENTS = {
   electric: {
     native: 'Pulse',
     id: 'pulse',
+    nameKey: 'effects.name.electric_infliction',
     icon: 'endaxis:icons/icon_energy_fusion_pulse',
     tag: 'Skill/Character/Common/SpellInflict/PulseInflict',
     burstDamageType: 'electric',
@@ -46,6 +48,7 @@ const ELEMENTS = {
   cryo: {
     native: 'Cryst',
     id: 'cryst',
+    nameKey: 'effects.name.cryo_infliction',
     icon: 'endaxis:icons/icon_energy_fusion_cryst',
     tag: 'Skill/Character/Common/SpellInflict/CrystInflict',
     burstDamageType: 'cryo',
@@ -62,6 +65,7 @@ const ELEMENTS = {
   nature: {
     native: 'Natural',
     id: 'natural',
+    nameKey: 'effects.name.nature_infliction',
     icon: 'endaxis:icons/icon_energy_fusion_nature',
     tag: 'Skill/Character/Common/SpellInflict/NaturalInflict',
     burstDamageType: 'nature',
@@ -80,20 +84,9 @@ function attachmentDefinition(element: InflictionElement): CombatBuffDefinitionE
   return {
     id: `buff_common_energy_shard_attached_${metadata.id}`,
     presentation: {
-      visible: true,
+      nameKey: metadata.nameKey,
       icon: metadata.icon,
-      showInHeadBarCommon: false,
       showInHeadBarAttached: true,
-      showInSquadIcon: false,
-      onlyShowForMainCharacter: false,
-      showProgressInHpBar: false,
-      showProgressInNormalSkillButton: false,
-      useWeakProgressInNormalSkillButton: false,
-      showProgressInUltimateSkillButton: false,
-      showWarningBackground: false,
-      iconStyleInSquad: 'Default',
-      abnormalColorType: 'Physical',
-      orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
     },
     applyTags: [metadata.tag],
     stackingType: 'enhanceAndRefresh',
@@ -187,21 +180,7 @@ function conductStatus(
 ): CombatBuffDefinitionEntry {
   return {
     id,
-    presentation: {
-      visible: true,
-      icon: 'endaxis:icons/icon_battle_conduct',
-      showInHeadBarCommon: true,
-      showInHeadBarAttached: false,
-      showInSquadIcon: false,
-      onlyShowForMainCharacter: false,
-      iconStyleInSquad: 'SpellAbnormal',
-      abnormalColorType: 'Pulse',
-      orderPriority: {
-        useDirectoryValue: false,
-        value: 0,
-        category: 'AttachedAndAbnormal',
-      },
-    },
+    presentation: visibleCompoundPresentation('electric'),
     stackingType: 'stack',
     stackingKey: 'pulse_triggered',
     priority: 0,
@@ -258,25 +237,33 @@ function compoundDamage(
 }
 
 const STATUS_PRESENTATION = {
-  heat: { icon: 'endaxis:icons/icon_battle_burning', abnormalColorType: 'Fire' },
-  cryo: { icon: 'endaxis:icons/icon_battle_frozen', abnormalColorType: 'Cryst' },
-  nature: { icon: 'endaxis:icons/icon_battle_corrupt', abnormalColorType: 'Natural' },
+  heat: {
+    nameKey: 'effects.name.combustion',
+    icon: 'endaxis:icons/icon_battle_burning',
+    abnormalColorType: 'Fire',
+  },
+  electric: {
+    nameKey: 'effects.name.electrification',
+    icon: 'endaxis:icons/icon_battle_conduct',
+    abnormalColorType: 'Pulse',
+  },
+  cryo: {
+    nameKey: 'effects.name.solidification',
+    icon: 'endaxis:icons/icon_battle_frozen',
+    abnormalColorType: 'Cryst',
+  },
+  nature: {
+    nameKey: 'effects.name.corrosion',
+    icon: 'endaxis:icons/icon_battle_corrupt',
+    abnormalColorType: 'Natural',
+  },
 } as const;
 
 function visibleCompoundPresentation(element: keyof typeof STATUS_PRESENTATION) {
   return {
-    visible: true,
     ...STATUS_PRESENTATION[element],
     showInHeadBarCommon: true,
-    showInHeadBarAttached: false,
-    showInSquadIcon: false,
-    onlyShowForMainCharacter: false,
     iconStyleInSquad: 'SpellAbnormal',
-    orderPriority: {
-      useDirectoryValue: false,
-      value: 0,
-      category: 'AttachedAndAbnormal',
-    },
   };
 }
 

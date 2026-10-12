@@ -449,58 +449,19 @@ function parseOptionalPresentation(
     'showInHeadBarCommon',
     'showInHeadBarAttached',
     'showInSquadIcon',
-    'onlyShowForMainCharacter',
-    'blinkInMainCharHpBar',
-    'showProgressInHpBar',
-    'showProgressInNormalSkillButton',
-    'useWeakProgressInNormalSkillButton',
-    'showProgressInUltimateSkillButton',
-    'forceRaiseIconEvent',
-    'showWarningBackground',
-    'playStrongInAnimation',
-    'hasCharHpBarVfxType',
-    'charHpBarVfxType',
     'iconStyleInSquad',
     'abnormalColorType',
-    'orderPriority',
   ]);
-  const optionalString = (
-    key: 'icon' | 'charHpBarVfxType' | 'iconStyleInSquad' | 'abnormalColorType',
-  ) =>
+  const optionalString = (key: 'icon' | 'iconStyleInSquad' | 'abnormalColorType') =>
     input[key] === undefined
       ? {}
       : { [key]: requireNonEmptyString(input[key], `${presentationPath}.${key}`) };
   const optionalBoolean = (
-    key:
-      | 'visible'
-      | 'showInHeadBarCommon'
-      | 'showInHeadBarAttached'
-      | 'showInSquadIcon'
-      | 'onlyShowForMainCharacter'
-      | 'blinkInMainCharHpBar'
-      | 'showProgressInHpBar'
-      | 'showProgressInNormalSkillButton'
-      | 'useWeakProgressInNormalSkillButton'
-      | 'showProgressInUltimateSkillButton'
-      | 'forceRaiseIconEvent'
-      | 'showWarningBackground'
-      | 'playStrongInAnimation'
-      | 'hasCharHpBarVfxType',
+    key: 'visible' | 'showInHeadBarCommon' | 'showInHeadBarAttached' | 'showInSquadIcon',
   ) =>
     input[key] === undefined
       ? {}
       : { [key]: requireBoolean(input[key], `${presentationPath}.${key}`) };
-  let orderPriority: CombatBuffPresentation['orderPriority'];
-  if (input.orderPriority !== undefined) {
-    const orderPath = `${presentationPath}.orderPriority`;
-    const order = requireObject(input.orderPriority, orderPath);
-    requireOnlyKeys(order, orderPath, ['useDirectoryValue', 'value', 'category']);
-    orderPriority = {
-      useDirectoryValue: requireBoolean(order.useDirectoryValue, `${orderPath}.useDirectoryValue`),
-      value: requireFiniteNumber(order.value, `${orderPath}.value`),
-      category: requireNonEmptyString(order.category, `${orderPath}.category`),
-    };
-  }
   return {
     presentation: {
       ...optionalString('icon'),
@@ -508,20 +469,8 @@ function parseOptionalPresentation(
       ...optionalBoolean('showInHeadBarCommon'),
       ...optionalBoolean('showInHeadBarAttached'),
       ...optionalBoolean('showInSquadIcon'),
-      ...optionalBoolean('onlyShowForMainCharacter'),
-      ...optionalBoolean('blinkInMainCharHpBar'),
-      ...optionalBoolean('showProgressInHpBar'),
-      ...optionalBoolean('showProgressInNormalSkillButton'),
-      ...optionalBoolean('useWeakProgressInNormalSkillButton'),
-      ...optionalBoolean('showProgressInUltimateSkillButton'),
-      ...optionalBoolean('forceRaiseIconEvent'),
-      ...optionalBoolean('showWarningBackground'),
-      ...optionalBoolean('playStrongInAnimation'),
-      ...optionalBoolean('hasCharHpBarVfxType'),
-      ...optionalString('charHpBarVfxType'),
       ...optionalString('iconStyleInSquad'),
       ...optionalString('abnormalColorType'),
-      ...(orderPriority === undefined ? {} : { orderPriority }),
     },
   };
 }

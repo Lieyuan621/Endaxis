@@ -37,10 +37,6 @@ const curves = {
 function project(
   frame: number,
   entries: readonly CombatReceiptEntry[],
-  buffProgressCurves: Parameters<typeof projectCombatHudSnapshot>[0]['buffProgressCurves'] = [],
-  controlTimeline: Parameters<typeof projectCombatHudSnapshot>[0]['controlTimeline'] = {
-    segments: [{ startFrame: 0, operatorId: 'track:1' }],
-  },
   operatorPassiveUis: Parameters<typeof projectCombatHudSnapshot>[0]['operatorPassiveUis'] = [],
 ) {
   return projectCombatHudSnapshot({
@@ -65,8 +61,6 @@ function project(
       ],
     },
     receiptEntries: entries,
-    buffProgressCurves,
-    controlTimeline,
     operatorPassiveUis,
     operatorSkillSlots: [
       {
@@ -139,148 +133,6 @@ describe('projectCombatHudSnapshot', () => {
     ]);
   });
 
-  it('replays native skill-button progress pointers without falling back to older Buffs', () => {
-    const progress = (
-      sequence: number,
-      frame: number,
-      event: 'BuffApplied' | 'BuffFinished',
-      buffId: string,
-      instanceId: number,
-      flags: CombatReceiptEntry['data'] = {},
-    ): CombatReceiptEntry => ({
-      sequence,
-      frame,
-      time: frame / 30,
-      event,
-      targetId: 'track:1',
-      data: { buffId, instanceId, layers: 1, ...flags },
-    });
-    const entries = [
-      progress(0, 2, 'BuffApplied', 'older', 1, {
-        showProgressInNormalSkillButton: true,
-      }),
-      progress(1, 4, 'BuffApplied', 'newer', 2, {
-        showProgressInNormalSkillButton: true,
-        useWeakProgressInNormalSkillButton: true,
-        showProgressInUltimateSkillButton: true,
-      }),
-      progress(2, 6, 'BuffFinished', 'older', 1),
-      progress(3, 8, 'BuffFinished', 'newer', 2),
-    ];
-
-    expect(project(5, entries).operators[0]).toMatchObject({
-      battleSkillProgress: { buffId: 'newer', instanceId: 2, weakStyle: true },
-      ultimateProgress: { buffId: 'newer', instanceId: 2, weakStyle: true },
-    });
-    expect(project(7, entries).operators[0]?.battleSkillProgress?.buffId).toBe('newer');
-    expect(project(8, entries).operators[0]).toMatchObject({
-      battleSkillProgress: null,
-      ultimateProgress: null,
-    });
-
-    expect(
-      project(5, entries, [
-        {
-          targetId: 'track:1',
-          buffId: 'newer',
-          instanceId: 2,
-          showInBattleSkillButton: true,
-          showInUltimateButton: true,
-          showInHpBar: false,
-          weakBattleSkillStyle: true,
-          points: [
-            { frame: 4, ratio: 1 },
-            { frame: 6, ratio: 0.5 },
-          ],
-        },
-      ]).operators[0],
-    ).toMatchObject({
-      battleSkillProgress: { ratio: 0.75 },
-      ultimateProgress: { ratio: 0.75 },
-    });
-  });
-
-  it('replays native main-character HP progress selection across the whole squad', () => {
-    const hpProgress = (
-      sequence: number,
-      frame: number,
-      event: 'BuffApplied' | 'BuffFinished',
-      targetId: string,
-      buffId: string,
-      instanceId: number,
-    ): CombatReceiptEntry => ({
-      sequence,
-      frame,
-      time: frame / 30,
-      event,
-      targetId,
-      data: {
-        buffId,
-        instanceId,
-        layers: 1,
-        ...(event === 'BuffApplied' ? { showProgressInHpBar: true } : {}),
-      },
-    });
-    const entries = [
-      hpProgress(0, 2, 'BuffApplied', 'track:1', 'main', 1),
-      hpProgress(1, 3, 'BuffApplied', 'track:2', 'ally', 2),
-      hpProgress(2, 8, 'BuffFinished', 'track:1', 'main', 1),
-    ];
-    const progressCurves = [
-      {
-        targetId: 'track:1',
-        buffId: 'main',
-        instanceId: 1,
-        showInBattleSkillButton: false,
-        showInUltimateButton: false,
-        showInHpBar: true,
-        weakBattleSkillStyle: false,
-        points: [
-          { frame: 2, ratio: 1 },
-          { frame: 12, ratio: 0 },
-        ],
-      },
-      {
-        targetId: 'track:2',
-        buffId: 'ally',
-        instanceId: 2,
-        showInBattleSkillButton: false,
-        showInUltimateButton: false,
-        showInHpBar: true,
-        weakBattleSkillStyle: false,
-        points: [
-          { frame: 3, ratio: 1 },
-          { frame: 13, ratio: 0 },
-        ],
-      },
-    ];
-    const timeline = {
-      segments: [
-        { startFrame: 0, operatorId: 'track:1' },
-        { startFrame: 5, operatorId: 'track:2' },
-        { startFrame: 6, operatorId: null },
-      ],
-    } as const;
-
-    // 新队友 Buff 不覆盖主控自己的候选；切到队友后立即选择队友候选。
-    expect(project(4, entries, progressCurves, timeline).mainCharacterHpProgress).toMatchObject({
-      targetId: 'track:1',
-      buffId: 'main',
-      ratio: 0.8,
-    });
-    expect(project(5, entries, progressCurves, timeline).mainCharacterHpProgress).toMatchObject({
-      targetId: 'track:2',
-      buffId: 'ally',
-      ratio: 0.8,
-    });
-    // 无主控时保持仍有效的当前指针；结束非当前 Buff 不影响它。
-    expect(project(8, entries, progressCurves, timeline).mainCharacterHpProgress).toMatchObject({
-      targetId: 'track:2',
-      buffId: 'ally',
-      ratio: 0.5,
-    });
-  });
-
   it('rejects frames outside the simulated snapshot range', () => {
     expect(() =>
       projectCombatHudSnapshot({
@@ -320,7 +172,7 @@ describe('projectCombatHudSnapshot', () => {
       },
     ];
     expect(
-      project(4, numericEntries, [], undefined, [
+      project(4, numericEntries, [
         {
           operatorId: 'track:1',
           definition: {
@@ -350,37 +202,17 @@ describe('projectCombatHudSnapshot', () => {
       },
     ];
     expect(
-      project(
-        4,
-        buffEntries,
-        [
-          {
-            targetId: 'track:1',
-            buffId: 'normal-music',
-            instanceId: 8,
-            showInBattleSkillButton: false,
-            showInUltimateButton: false,
-            showInHpBar: false,
-            weakBattleSkillStyle: false,
-            points: [
-              { frame: 2, ratio: 1 },
-              { frame: 6, ratio: 0 },
-            ],
+      project(4, buffEntries, [
+        {
+          operatorId: 'track:1',
+          definition: {
+            kind: 'buffProgress',
+            appearance: 'liinoMusic',
+            normalBuffId: 'normal-music',
+            ultimateBuffId: 'ultimate-music',
           },
-        ],
-        undefined,
-        [
-          {
-            operatorId: 'track:1',
-            definition: {
-              kind: 'buffProgress',
-              appearance: 'liinoMusic',
-              normalBuffId: 'normal-music',
-              ultimateBuffId: 'ultimate-music',
-            },
-          },
-        ],
-      ).operators[0]?.passiveUi,
-    ).toMatchObject({ kind: 'buffProgress', mode: 'normal', ratio: 0.5 });
+        },
+      ]).operators[0]?.passiveUi,
+    ).toMatchObject({ kind: 'buffProgress', mode: 'normal' });
   });
 });
